@@ -346,22 +346,36 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         const platformId = await projectService(log).getPlatformId(projectId)
         const now = new Date().toISOString()
-        const childRun = await flowRunDispatchRepo().save({
-            id: apId(),
-            projectId,
-            flowId: parentRun.flowId,
-            flowVersionId: parentRun.flowVersionId,
-            environment: parentRun.environment,
-            parentRunId,
-            parentWaitpointId: barrier?.id,
-            dispatchIndex,
-            failParentOnFailure: false,
-            status: FlowRunStatus.QUEUED,
-            created: now,
-            updated: now,
-            tags: [],
-            steps: {},
-        })
+        const id = apId()
+        await flowRunDispatchRepo()
+            .createQueryBuilder()
+            .insert()
+            .into('flow_run')
+            .values({
+                id,
+                projectId,
+                flowId: parentRun.flowId,
+                flowVersionId: parentRun.flowVersionId,
+                environment: parentRun.environment,
+                parentRunId,
+                parentWaitpointId: barrier?.id ?? null,
+                dispatchIndex,
+                failParentOnFailure: false,
+                status: FlowRunStatus.QUEUED,
+                created: now,
+                updated: now,
+                tags: [],
+            })
+            .orIgnore()
+            .execute()
+
+        const childRun = isNil(barrier)
+            ? await flowRunDispatchRepo().findOneByOrFail({ id, projectId })
+            : await flowRunDispatchRepo().findOneByOrFail({ projectId, parentWaitpointId: barrier.id, dispatchIndex })
+        if (childRun.id !== id) {
+            log.info({ flowRun: { id: childRun.id }, project: { id: projectId }, waitpoint: { id: barrier?.id }, dispatchIndex }, '[flowRunService#dispatchChild] This barrier already has a child for this dispatch index; returning it instead of dispatching a duplicate')
+            return { id: childRun.id, attributedToBarrier: true }
+        }
 
         const { error } = await tryCatch(() => addToQueue({
             flowRun: childRun,

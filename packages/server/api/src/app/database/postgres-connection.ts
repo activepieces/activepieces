@@ -414,6 +414,7 @@ import { AddParentWaitpointIdToFlowRun1819000000000 } from './migration/postgres
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
 import { AddResumeDeadlineIndexToWaitpoint1820000000000 } from './migration/postgres/1820000000000-AddResumeDeadlineIndexToWaitpoint'
 import { AddDispatchTrackingToFanIn1821000000000 } from './migration/postgres/1821000000000-AddDispatchTrackingToFanIn'
+import { AddUniqueDispatchIndexPerFanInBarrier1822000000000 } from './migration/postgres/1822000000000-AddUniqueDispatchIndexPerFanInBarrier'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -843,6 +844,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddParentWaitpointIdToFlowRun1819000000000,
         AddResumeDeadlineIndexToWaitpoint1820000000000,
         AddDispatchTrackingToFanIn1821000000000,
+        AddUniqueDispatchIndexPerFanInBarrier1822000000000,
     ]
     return migrations
 }

@@ -184,6 +184,35 @@ describe('POST /v1/flow-runs/dispatch', () => {
         expect(children).toEqual([{ id: response.json().id, status: FlowRunStatus.QUEUED, dispatchIndex: 1 }])
     })
 
+    it('returns the child already dispatched for an index instead of attributing a second one to the barrier', async () => {
+        const { flowRun } = await createParent()
+        const barrier = createMockWaitpoint({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'batches',
+            isFanIn: true,
+            dispatchDigest: 'a'.repeat(64),
+        })
+        await db.save('waitpoint', barrier)
+        const token = await engineTokenFor(ctx.project.id, ctx.platform.id)
+        const body = {
+            parentRunId: flowRun.id,
+            entryStepName: BODY_ENTRY_STEP,
+            seedSteps: {},
+            parentWaitpointId: barrier.id,
+            dispatchIndex: 1,
+            dispatchKey: `${barrier.id}-1`,
+        }
+
+        const first = await dispatch({ token, body })
+        const second = await dispatch({ token, body })
+
+        expect(second.statusCode).toBe(StatusCodes.CREATED)
+        expect(second.json().id).toBe(first.json().id)
+        const children = await fanInBarrier.listChildren({ parentWaitpointId: barrier.id, projectId: ctx.project.id })
+        expect(children).toHaveLength(1)
+    })
+
     it('creates the child without attribution when the barrier does not resolve', async () => {
         const { flowRun } = await createParent()
         const token = await engineTokenFor(ctx.project.id, ctx.platform.id)

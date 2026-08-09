@@ -5,7 +5,7 @@ import { formUtils } from '@/features/pieces/utils/form-utils';
 
 const schema = formUtils.buildPieceSchema(
   FlowActionType.PROCESS_IN_BATCHES,
-  undefined,
+  '',
   null,
 );
 

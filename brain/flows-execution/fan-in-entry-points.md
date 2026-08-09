@@ -156,6 +156,12 @@ engine-only endpoint, and it is the only new endpoint the feature needs.
   environment are all derived from the parent run row, so a caller cannot point a child at another project.
 - The child row is **saved synchronously** (not through `runsMetadataQueue`, which is async), then queued;
   if queueing throws, the row is deleted so a pre-created row can never hang as a permanently `QUEUED` child.
+- **The insert is idempotent per `(parentWaitpointId, dispatchIndex)`** — `ON CONFLICT DO NOTHING` against
+  the unique partial index `idx_run_parent_waitpoint_dispatch_index`, then read the row back by barrier and
+  index; a second dispatch of an index this barrier already has returns the existing child id and queues
+  nothing. Without it the BullMQ dispatch key deduped the *job* but not the *row*, so a re-dispatched index
+  left a phantom `QUEUED` child that never runs and never turns terminal — the barrier then waits out
+  `AP_PAUSED_FLOW_TIMEOUT_DAYS` instead of releasing.
 - `entryStepName` rides on the **BEGIN** job data and operation, and the seed rides in the ordinary
   `payload` slot (so it offloads to a file when large). In `flow.operation.ts` a BEGIN carrying an entry step
   restores the seed instead of building a trigger step, then calls `flowExecutor.execute()` from that action —
@@ -164,17 +170,18 @@ engine-only endpoint, and it is the only new endpoint the feature needs.
   caller-supplied key alone would be a cross-tenant id, and the separator must be `-` (a custom BullMQ job id
   rejects `:`).
 - Barrier attribution is validated at creation and **dropped** if it does not resolve in the project, rather
-  than failing the dispatch.
+  than failing the dispatch. **A 201 is therefore not proof the child joined the barrier** — a dispatcher that
+  ignores `attributedToBarrier` counts an unattributed child toward `expectedChildren` that `countChildren`
+  can never see, and the parent waits out `AP_PAUSED_FLOW_TIMEOUT_DAYS`. `PROCESS_IN_BATCHES` treats
+  `attributedToBarrier: false` as a dispatch failure so the seal expects one fewer child; the orphan runs on.
 
-### The dispatch loop is not resumable
+### The dispatch loop is resumable on the `PROCESS_IN_BATCHES` path — shipped
 
-If the dispatching step dies mid-loop (sandbox timeout, killed worker, flow timeout) you get orphaned
-children plus either an unsealed barrier or a failed run. The dispatch key
-(`ap-dispatch-key: <barrierId>-<index>` → BullMQ jobId) only dedupes while a child job is still queued or
-active; once it completes a replay would create duplicates, so `createFanInBarrier` throws instead.
+If the dispatching step dies mid-loop (sandbox timeout, killed worker, flow timeout) the parent re-enters
+the step and **dispatches only the complement of the indices the barrier already has**, then seals. The
+CSV piece has none of this: it still hits the blunt "children present → throw".
 
-`parentWaitpointId` makes the real fix possible: **skip the indices this barrier already dispatched and
-send only the rest.** Two clauses have to hold, and neither of them separates CSV from `PROCESS_IN_BATCHES`.
+Two clauses have to hold, and neither of them separates CSV from `PROCESS_IN_BATCHES`.
 
 **1. The resume index must come from the set of dispatched indices, never from the child count.**
 Dispatch is concurrent (`maxInFlight: 5`) so completions land out of order, and child rows materialise
@@ -189,13 +196,17 @@ covers exactly the window the rows do not: index present → skip; index absent 
 dispatch and the key swallows it; index absent and job gone → genuinely needs dispatching.
 
 `flow_run.dispatchIndex` and `waitpoint.dispatchDigest` are **shipped columns**
-(`1821000000000-AddDispatchTrackingToFanIn`), and `fanInBarrier.listChildren` reads the set as rows —
-never a `COUNT` or a `MAX` — on the partial `idx_run_parent_waitpoint_id`, so no new index. **Nothing
-writes `dispatchIndex` yet.** The columns landed while the API window was still free; the writer is a
-`ap-dispatch-index` header threaded `webhook-request-converter` → `EXECUTE_WEBHOOK` job → worker →
-`submitPayloads` → `queueOrCreateInstantly`, which is additive and non-breaking, so it lands with the
-dispatcher. Until then `dispatchedIndices` is `[]` on every response — the empty array means "no
-dispatcher has run", not "no children were dispatched".
+(`1821000000000-AddDispatchTrackingToFanIn`), `POST /v1/flow-runs/dispatch` writes the index, and
+`fanInBarrier.listChildren` reads the set as rows — never a `COUNT` or a `MAX`. **The webhook path still
+does not write it**, so `dispatchedIndices` is `[]` for a CSV-piece barrier; an empty array means "no
+index-writing dispatcher has run", not "no children were dispatched".
+
+The dispatcher computes the complement in the engine
+(`process-in-batches-executor.ts`: `missingIndices` over `fanIn.dispatchedIndices`) and never derives a
+resume point from a count. `fanIn.sealed` short-circuits it to an empty complement: a barrier that already
+carries an `expectedChildren` finished dispatching, so re-entry dispatches nothing and only re-pauses —
+dispatching a previously failed-to-dispatch index at that point would add a child the sealed
+`expectedChildren` does not account for and make the released counts sum wrong.
 
 **2. The source must be stable bytes.** Batching is *deterministic* — `fanOutBatches` derives
 `batchIndex` from position alone and `createCsvParser` is pure given the same `delimiter`, so the same
@@ -212,9 +223,11 @@ dispatched payload (extracted seed union + resolved items) on `POST /v1/waitpoin
 the barrier at creation, and re-entry fails the parent on mismatch before dispatching further — match is
 what proves complement dispatch safe.
 
-**The server compares the digest, not the engine.** `createFanInBarrier` throws when a barrier that already
-has children is re-entered with a different digest; a stored `null` digest (a row predating the column)
-keeps the older, blunter "children present → throw". The server still never learns what the items are — it
+**The server compares the digest, not the engine — shipped in `assertReEntryIsSafe`.** `createFanInBarrier`
+throws when a barrier that already has children is re-entered with a different digest, and the throw happens
+inside the create transaction *before* any leftover-barrier delete, so the mismatched parent fails with its
+already-dispatched children still attributed to the old barrier and still running. A stored `null` digest
+(a row predating the column) keeps the older, blunter "children present → throw". The server never learns what the items are — it
 compares two opaque hashes. This inverts the original design, which had the server return the stored digest
 and the dispatcher compare: the guard is the only thing between a re-entering dispatcher and duplicate
 children, and a guard in the caller is one the caller can forget. Sending a digest is therefore mandatory
@@ -378,6 +391,14 @@ already used in that worker). Only needed at or above the `AP_MAX_FAN_IN_CHILDRE
   `PROCESS_IN_BATCHES` the cost of forgetting is not a duplicated read — it is a second full fan-out, with a
   fresh barrier, every time anything downstream of the batch step pauses (an approval, a delay). Order matters:
   `isPaused` (resume with the released summary) → `isCompleted` (do nothing) → dispatch.
+- **A crash-resumed dispatch loses the previous attempt's failed-to-dispatch *labels*, not its counts.**
+  The batch step's paused output carries `failedToDispatchIndices` so the released summary can label an
+  exception `failedToDispatch` rather than `notStarted`; a re-entry writes a fresh paused output holding only
+  its own failures, because the indices are never persisted server-side (only the count is, on the barrier).
+  So an index that failed to dispatch on attempt 1 and again on attempt 2 is labelled correctly, but one that
+  failed on attempt 1 and was never retried reads as `notStarted`. Every count in the summary stays truthful —
+  `failedToDispatch` comes from the barrier row. Persist the indices only if the label starts driving a UI
+  affordance.
 - **Seeded prior-step state goes through the same restore filter as a resume, which drops FAILED steps.**
   `isStepRestorable` keeps FAILED only for waitpoint resumes, so seeding a child through that path silently
   loses an upstream step that failed under continue-on-failure — the body's reference to it would resolve

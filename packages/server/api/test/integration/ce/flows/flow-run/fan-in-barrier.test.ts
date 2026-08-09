@@ -351,6 +351,19 @@ describe('createFanInBarrier', () => {
         expect(second.waitpoint.id).toBe(first.waitpoint.id)
     })
 
+    it('adopts the new digest when a barrier with no children is re-entered for a different payload', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        const changedDigest = 'c'.repeat(64)
+
+        const second = await createBarrier({ flowRunId: flowRun.id, dispatchDigest: changedDigest })
+
+        expect(second.waitpoint.id).toBe(first.waitpoint.id)
+        expect(await db.findOneByOrFail('waitpoint', { id: first.waitpoint.id })).toMatchObject({ dispatchDigest: changedDigest })
+        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING], dispatchIndices: [0] })
+        await expect(createBarrier({ flowRunId: flowRun.id, dispatchDigest: changedDigest })).resolves.toBeDefined()
+    })
+
     it('rejects a fan-in create with no dispatch digest', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
 
@@ -377,20 +390,45 @@ describe('createFanInBarrier', () => {
         }
     })
 
-    it('refuses to re-enter a barrier that already dispatched children, even from the same payload', async () => {
+    it('reuses a barrier that already dispatched children when the payload digest still matches, reporting the dispatched indices', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const first = await createBarrier({ flowRunId: flowRun.id })
-        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED] })
+        await createChildren({
+            parentWaitpointId: first.waitpoint.id,
+            statuses: [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED],
+            dispatchIndices: [3, 0],
+        })
 
-        await expect(createBarrier({ flowRunId: flowRun.id })).rejects.toThrow()
+        const second = await createBarrier({ flowRunId: flowRun.id })
+
+        expect(second.inserted).toBe(false)
+        expect(second.waitpoint.id).toBe(first.waitpoint.id)
+        expect(second.fanIn).toEqual({ sealed: false, expectedChildren: null, dispatchedIndices: [0, 3] })
     })
 
-    it('refuses to re-enter a barrier whose payload digest changed', async () => {
+    it('reports a re-entered barrier as sealed once it carries an expected child count', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const first = await createBarrier({ flowRunId: flowRun.id })
-        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING], dispatchIndices: [0] })
+        await db.update('waitpoint', first.waitpoint.id, { expectedChildren: 2 })
+
+        const second = await createBarrier({ flowRunId: flowRun.id })
+
+        expect(second.fanIn).toEqual({ sealed: true, expectedChildren: 2, dispatchedIndices: [0] })
+    })
+
+    it('refuses to re-enter a barrier whose payload digest changed, leaving the barrier and its children alone', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const first = await createBarrier({ flowRunId: flowRun.id })
+        const [straggler] = await createChildren({ parentWaitpointId: first.waitpoint.id, statuses: [FlowRunStatus.RUNNING], dispatchIndices: [0] })
 
         await expect(createBarrier({ flowRunId: flowRun.id, dispatchDigest: 'b'.repeat(64) })).rejects.toThrow()
+
+        expect(await db.findOneBy('waitpoint', { id: first.waitpoint.id })).not.toBeNull()
+        expect(await db.findOneByOrFail('flow_run', { id: straggler.id })).toMatchObject({
+            parentWaitpointId: first.waitpoint.id,
+            status: FlowRunStatus.RUNNING,
+        })
     })
 
     it('refuses to re-enter a barrier that has children but no stored digest', async () => {

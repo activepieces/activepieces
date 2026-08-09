@@ -91,8 +91,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
                 const children = await fanInBarrier.listChildren({ parentWaitpointId: existing.id, projectId: params.projectId, entityManager })
-                assertReEntryIsSafe({ children })
-                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id }, childCount: children.length }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it')
+                assertReEntryIsSafe({ children, storedDigest: existing.dispatchDigest, sentDigest: dispatchDigest })
+                if (children.length === 0 && existing.dispatchDigest !== dispatchDigest) {
+                    await repo.update({ id: existing.id }, { dispatchDigest })
+                }
+                log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id }, childCount: children.length, sealed: !isNil(existing.expectedChildren) }, '[waitpointService#createFanInBarrier] Barrier already exists for this step, reusing it so the dispatcher can send only the missing batches')
                 return { inserted: false, waitpoint: existing, fanIn: toBarrierState({ barrier: existing, children }) }
             }
             if (!isNil(existing)) {
@@ -328,14 +331,22 @@ function assertFanInChildrenWithinLimit({ dispatched }: AssertFanInChildrenWithi
     }
 }
 
-function assertReEntryIsSafe({ children }: AssertReEntryIsSafeParams): void {
+function assertReEntryIsSafe({ children, storedDigest, sentDigest }: AssertReEntryIsSafeParams): void {
     if (children.length === 0) {
         return
     }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
-    })
+    if (isNil(storedDigest)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This fan-in step already dispatched subflows, so it cannot be started again — re-running the dispatch loop would create duplicate children. Retry the parent run from the beginning instead of retrying the step.' },
+        })
+    }
+    if (storedDigest !== sentDigest) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This fan-in step already dispatched subflows for a different set of items, so it cannot pick up where it left off — one run must never mix two different lists. Retry the parent run from the beginning.' },
+        })
+    }
 }
 
 function toBarrierState({ barrier, children }: ToBarrierStateParams): FanInBarrierState {
@@ -390,6 +401,8 @@ type AssertFanInChildrenWithinLimitParams = {
 
 type AssertReEntryIsSafeParams = {
     children: FanInChild[]
+    storedDigest: string | null
+    sentDigest: string
 }
 
 type CompleteFanInBarrierParams = {

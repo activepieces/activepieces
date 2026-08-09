@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FanInSummary, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FanInBarrierState, FanInSummary, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
 import { childRunClient } from '../piece-context/child-run-client'
 import { waitpointClient } from '../piece-context/waitpoint-client'
@@ -68,19 +68,32 @@ async function dispatchBatches({ action, executionState, constants }: ExecutePar
             dispatchDigest: digestOf({ seed, items }),
         })
 
-        const dispatchBatch = (batchIndex: number): Promise<unknown> => childRunClient.dispatch({
-            apiUrl: constants.internalApiUrl,
-            engineToken: constants.engineToken,
-            parentRunId: constants.flowRunId,
-            entryStepName: bodyEntryStep.name,
-            seedSteps: { ...seed, [action.name]: batchOutput(batches[batchIndex]) },
-            parentWaitpointId: barrier.id,
-            dispatchIndex: batchIndex,
-            dispatchKey: `${barrier.id}-${batchIndex}`,
-        })
+        const dispatchBatch = async (batchIndex: number): Promise<void> => {
+            const { attributedToBarrier } = await childRunClient.dispatch({
+                apiUrl: constants.internalApiUrl,
+                engineToken: constants.engineToken,
+                parentRunId: constants.flowRunId,
+                entryStepName: bodyEntryStep.name,
+                seedSteps: { ...seed, [action.name]: batchOutput(batches[batchIndex]) },
+                parentWaitpointId: barrier.id,
+                dispatchIndex: batchIndex,
+                dispatchKey: `${barrier.id}-${batchIndex}`,
+            })
+            if (!attributedToBarrier) {
+                throw userError({ name: 'ProcessInBatchesBatchUnattributed', message: `Batch ${batchIndex} started without being attached to this step, so this step can never learn how it ended.` })
+            }
+        }
 
-        await dispatchBatch(0)
-        const failedToDispatchIndices = await dispatchRemaining({ batchCount: batches.length, dispatchBatch })
+        const fanIn = barrier.fanIn ?? FRESH_BARRIER
+        const remaining = fanIn.sealed ? [] : missingIndices({ batchCount: batches.length, dispatchedIndices: fanIn.dispatchedIndices })
+        const nothingDispatchedYet = fanIn.dispatchedIndices.length === 0
+        if (nothingDispatchedYet && remaining.length > 0) {
+            await dispatchBatch(remaining[0])
+        }
+        const failedToDispatchIndices = await dispatchConcurrently({
+            indices: nothingDispatchedYet ? remaining.slice(1) : remaining,
+            dispatchBatch,
+        })
 
         await waitpointClient.seal({
             apiUrl: constants.internalApiUrl,
@@ -142,19 +155,23 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
     return succeed({ action, executionState, stepOutput, output: summary, stepStartTime })
 }
 
-async function dispatchRemaining({ batchCount, dispatchBatch }: DispatchRemainingParams): Promise<number[]> {
+function missingIndices({ batchCount, dispatchedIndices }: MissingIndicesParams): number[] {
+    const dispatched = new Set(dispatchedIndices)
+    return Array.from({ length: batchCount }, (_, batchIndex) => batchIndex).filter((batchIndex) => !dispatched.has(batchIndex))
+}
+
+async function dispatchConcurrently({ indices, dispatchBatch }: DispatchConcurrentlyParams): Promise<number[]> {
+    const pending = [...indices]
     const failedToDispatchIndices: number[] = []
-    let nextBatchIndex = 1
     const dispatchUntilDrained = async (): Promise<void> => {
-        while (nextBatchIndex < batchCount) {
-            const batchIndex = nextBatchIndex++
+        for (let batchIndex = pending.shift(); !isNil(batchIndex); batchIndex = pending.shift()) {
             const { error } = await tryCatch(() => dispatchBatch(batchIndex))
             if (!isNil(error)) {
                 failedToDispatchIndices.push(batchIndex)
             }
         }
     }
-    const workers = Math.min(MAX_DISPATCHES_IN_FLIGHT, Math.max(batchCount - 1, 0))
+    const workers = Math.min(MAX_DISPATCHES_IN_FLIGHT, pending.length)
     await Promise.all(Array.from({ length: workers }, dispatchUntilDrained))
     return failedToDispatchIndices.sort((a, b) => a - b)
 }
@@ -259,6 +276,12 @@ const PendingBatches = z.object({
     failedToDispatchIndices: z.array(z.number().int().nonnegative()),
 })
 
+const FRESH_BARRIER: FanInBarrierState = {
+    sealed: false,
+    expectedChildren: null,
+    dispatchedIndices: [],
+}
+
 const NOTHING_PENDING: PendingBatches = {
     totalItems: 0,
     batchSize: 1,
@@ -277,9 +300,14 @@ type ExecuteParams = {
     constants: EngineConstants
 }
 
-type DispatchRemainingParams = {
+type MissingIndicesParams = {
     batchCount: number
-    dispatchBatch: (batchIndex: number) => Promise<unknown>
+    dispatchedIndices: number[]
+}
+
+type DispatchConcurrentlyParams = {
+    indices: number[]
+    dispatchBatch: (batchIndex: number) => Promise<void>
 }
 
 type AssertNotScopedParams = {

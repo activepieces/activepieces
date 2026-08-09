@@ -302,6 +302,143 @@ describe('process in batches executor', () => {
         }))
     })
 
+    it('dispatches only the batches whose indices are absent when re-entering after a crash', async () => {
+        mockCreateWaitpoint.mockResolvedValue({
+            id: 'barrier-id',
+            resumeUrl: 'http://localhost/resume',
+            fanIn: { sealed: false, expectedChildren: null, dispatchedIndices: [0, 2] },
+        })
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3,4] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(mockDispatch.mock.calls.map(([call]) => call.dispatchIndex).sort()).toEqual([1, 3])
+        expect(mockSealFanIn).toHaveBeenCalledWith(expect.objectContaining({ expectedChildren: 4, failedToDispatch: 0 }))
+    })
+
+    it('computes the complement from the dispatched indices, so a gap below the highest present index is sent', async () => {
+        mockCreateWaitpoint.mockResolvedValue({
+            id: 'barrier-id',
+            resumeUrl: 'http://localhost/resume',
+            fanIn: { sealed: false, expectedChildren: null, dispatchedIndices: [0, 1, 2, 4] },
+        })
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3,4,5] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(mockDispatch).toHaveBeenCalledTimes(1)
+        expect(mockDispatch.mock.calls[0][0].dispatchIndex).toBe(3)
+        expect(mockDispatch.mock.calls[0][0].seedSteps['batches'].output.items).toEqual([4])
+    })
+
+    it('counts a rejected complement dispatch instead of throwing, because children are already running', async () => {
+        mockCreateWaitpoint.mockResolvedValue({
+            id: 'barrier-id',
+            resumeUrl: 'http://localhost/resume',
+            fanIn: { sealed: false, expectedChildren: null, dispatchedIndices: [0] },
+        })
+        mockDispatch.mockRejectedValueOnce(new Error('rejected'))
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(mockDispatch).toHaveBeenCalledTimes(2)
+        expect(mockSealFanIn).toHaveBeenCalledWith(expect.objectContaining({ expectedChildren: 2, failedToDispatch: 1 }))
+    })
+
+    it('dispatches nothing when the barrier it re-enters is already sealed', async () => {
+        mockCreateWaitpoint.mockResolvedValue({
+            id: 'barrier-id',
+            resumeUrl: 'http://localhost/resume',
+            fanIn: { sealed: true, expectedChildren: 2, dispatchedIndices: [0, 1] },
+        })
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(mockDispatch).not.toHaveBeenCalled()
+    })
+
+    it('counts a batch the server could not attach to the barrier as a dispatch failure', async () => {
+        mockDispatch
+            .mockResolvedValueOnce({ id: 'child-0', attributedToBarrier: true })
+            .mockResolvedValueOnce({ id: 'orphan', attributedToBarrier: false })
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(mockSealFanIn).toHaveBeenCalledWith(expect.objectContaining({ expectedChildren: 2, failedToDispatch: 1 }))
+    })
+
+    it('fails the step when the server refuses the re-entry, dispatching nothing', async () => {
+        mockCreateWaitpoint.mockRejectedValue(new Error('This fan-in step already dispatched subflows for a different set of items'))
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ [1,2,3] }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+        })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants(),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+        expect(mockDispatch).not.toHaveBeenCalled()
+        expect(mockSealFanIn).not.toHaveBeenCalled()
+    })
+
     it('resumes with the released summary as the step output', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1,2,3] }}', batchSize: 1 })
 
