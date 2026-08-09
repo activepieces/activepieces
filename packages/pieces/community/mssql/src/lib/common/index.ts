@@ -62,6 +62,14 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
         'The connection string still contains the {your_password} placeholder from the Azure portal. Replace it with your actual password.'
       );
     }
+    // the parser drops Authentication= entirely and falls back to SQL auth, so
+    // an Entra string would fail as a bare "Login failed" instead of saying why
+    const entra = trimmed.match(/Authentication\s*=\s*(Active Directory[^;]*)/i);
+    if (entra) {
+      throw new Error(
+        `This piece supports SQL Server authentication only, but the connection string asks for "${entra[1].trim()}". Copy the ADO.NET (SQL authentication) string from the Azure portal instead, or fill in the Username and Password fields.`
+      );
+    }
     const parsed = sql.ConnectionPool.parseConnectionString(trimmed);
     if (requestTimeoutMs) {
       parsed.requestTimeout = requestTimeout;
@@ -106,8 +114,23 @@ export async function mssqlConnect(
   auth: MssqlAuth,
   requestTimeoutMs?: number
 ): Promise<sql.ConnectionPool> {
-  const pool = new sql.ConnectionPool(buildConfig(auth, requestTimeoutMs));
-  await pool.connect();
+  const config = buildConfig(auth, requestTimeoutMs);
+  const pool = new sql.ConnectionPool(config);
+  try {
+    await pool.connect();
+  } catch (e) {
+    await pool.close().catch(() => undefined);
+    // resolving an instance name is a UDP 1434 lookup that simply times out
+    // where that port is blocked, giving no clue which port to open
+    if (config.options?.instanceName) {
+      throw new Error(
+        `${
+          (e as Error).message
+        } Connecting by instance name ("${config.options.instanceName}") requires the SQL Server Browser service on UDP port 1434, which many networks block. Address the server by host and port instead, for example myhost,1433.`
+      );
+    }
+    throw e;
+  }
   return pool;
 }
 
