@@ -367,6 +367,7 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         value:
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+        attempts: otp?.attempts ?? 0,
     }
 }
 

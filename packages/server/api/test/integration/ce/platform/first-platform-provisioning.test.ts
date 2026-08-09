@@ -1,0 +1,148 @@
+import { apId } from '@activepieces/core-utils'
+import { PlatformRole, UserStatus } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { authenticationUtils } from '../../../../src/app/authentication/authentication-utils'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { platformService } from '../../../../src/app/platform/platform.service'
+import { createMockPlatform, createMockUserIdentity } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance | null = null
+
+const EMAIL = 'first.platform@example.com'
+
+async function seedVerifiedIdentity(): Promise<string> {
+    const identity = createMockUserIdentity({ email: EMAIL, verified: true })
+    await databaseConnection().getRepository('user_identity').save(identity)
+    return identity.id
+}
+
+async function onboardingToken(identityId: string): Promise<string> {
+    const response = await authenticationUtils(app!.log).getOnboardingResponse({ identityId })
+    return response.token
+}
+
+async function createViaRoute({ token, name }: { token: string, name: string }) {
+    return app?.inject({
+        method: 'POST',
+        url: '/api/v1/platforms',
+        headers: { authorization: `Bearer ${token}` },
+        body: { name },
+    })
+}
+
+function createFirstPlatform(identityId: string) {
+    return platformService(app!.log).createPlatformWithProject({
+        identityId,
+        name: 'Ahmad',
+        invalidatePreviousTokens: true,
+        isFirstPlatform: true,
+    })
+}
+
+async function strandUser(identityId: string): Promise<string> {
+    const userId = apId()
+    await databaseConnection().getRepository('user').save({
+        id: userId,
+        identityId,
+        platformId: null,
+        platformRole: PlatformRole.ADMIN,
+        status: UserStatus.ACTIVE,
+    })
+    return userId
+}
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+beforeEach(async () => {
+    await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_identity').createQueryBuilder().delete().execute()
+})
+
+describe('First platform provisioning', () => {
+    it('gives one identity a single platform however many times it asks', async () => {
+        const identityId = await seedVerifiedIdentity()
+
+        const first = await createFirstPlatform(identityId)
+        const second = await createFirstPlatform(identityId)
+
+        expect(second.platformId).toBe(first.platformId)
+        expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        expect(await databaseConnection().getRepository('project').count()).toBe(1)
+        expect(await databaseConnection().getRepository('user').count()).toBe(1)
+    })
+
+    it('reuses a user left unlinked by an interrupted attempt instead of creating a second one', async () => {
+        const identityId = await seedVerifiedIdentity()
+        await strandUser(identityId)
+
+        await createFirstPlatform(identityId)
+
+        expect(await databaseConnection().getRepository('user').count()).toBe(1)
+    })
+
+    it('adopts a platform whose owner link never landed instead of building a second one', async () => {
+        const identityId = await seedVerifiedIdentity()
+        const strandedUserId = await strandUser(identityId)
+        await databaseConnection().getRepository('platform').save(
+            createMockPlatform({ ownerId: strandedUserId }),
+        )
+
+        const response = await createFirstPlatform(identityId)
+
+        expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        const relinked = await databaseConnection().getRepository('user').findOneBy({ id: strandedUserId })
+        expect(relinked?.platformId).toBe(response.platformId)
+    })
+
+    it('repairs a platform left without a project instead of wedging the identity', async () => {
+        const identityId = await seedVerifiedIdentity()
+        const first = await createFirstPlatform(identityId)
+        await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+
+        const retry = await createFirstPlatform(identityId)
+
+        expect(retry.platformId).toBe(first.platformId)
+        expect(await databaseConnection().getRepository('project').count()).toBe(1)
+        expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+    })
+
+    it('rotates once when two first-platform creations race, so neither session is stranded', async () => {
+        const identityId = await seedVerifiedIdentity()
+
+        const [first, second] = await Promise.all([
+            createFirstPlatform(identityId),
+            createFirstPlatform(identityId),
+        ])
+
+        const after = await databaseConnection().getRepository('user_identity').findOneBy({ id: identityId })
+        const versionOf = (token: string) =>
+            JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).tokenVersion
+        expect(versionOf(first.token)).toBe(after?.tokenVersion)
+        expect(versionOf(second.token)).toBe(after?.tokenVersion)
+    })
+
+    it('serves the onboarding route without provisioning a second platform', async () => {
+        const identityId = await seedVerifiedIdentity()
+        const token = await onboardingToken(identityId)
+
+        const created = await createViaRoute({ token, name: 'Ahmad' })
+
+        expect(created?.statusCode).toBe(StatusCodes.OK)
+        expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        const identity = await databaseConnection().getRepository('user_identity').findOneBy({ id: identityId })
+        expect(identity?.tokenVersion).not.toBe(
+            JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).tokenVersion,
+        )
+    })
+})
