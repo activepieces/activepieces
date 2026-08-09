@@ -141,6 +141,31 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('platform').count()).toBe(0)
         })
 
+        it('creates the platform from the name once the name step completes', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body?.projectId).not.toBeNull()
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            expect(identity?.firstName).toBe('Ahmad')
+            expect(identity?.lastName).toBe('Bin Tash')
+            const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
+            expect(platform?.name).toBe("Ahmad's")
+            const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
+            expect(project?.displayName).toBe("Ahmad's Project")
+        })
+
         it('consumes one code exactly once, even when two confirmations race it', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
@@ -154,6 +179,76 @@ describe('Passwordless Authentication API', () => {
             const verdicts = await Promise.all([confirm(), confirm()])
 
             expect(verdicts.filter((verdict) => verdict)).toHaveLength(1)
+        })
+
+        it('creates one platform for one identity, even when the name step is submitted twice', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const completeSignUp = () => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            const first = await completeSignUp()
+            const second = await completeSignUp()
+
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.json()?.platformId).toBe(first?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('project').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('creates one platform even when the other onboarding route races the name step', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const viaNameStep = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+            const viaPlatformRoute = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { name: 'Ahmad' },
+            })
+
+            expect(viaNameStep?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.json()?.platformId).toBe(viaNameStep?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('does not rename the account when completion is replayed', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const complete = (fullName: string) => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName },
+            })
+            await complete('Ahmad Tash')
+
+            const replay = await complete('Someone Else')
+
+            expect(replay?.statusCode).toBe(StatusCodes.OK)
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            expect(identity?.firstName).toBe('Ahmad')
+            expect(identity?.lastName).toBe('Tash')
         })
 
         it('sets the USER_CREATED flag only once a code is verified', async () => {
