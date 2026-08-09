@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
-const { createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getEnginePathMock } = vi.hoisted(() => ({
+const { createSandboxMock, isolateProcessMock, simpleProcessMock, getGlobalCacheCommonPathMock, getGlobalCodeCachePathMock, getGlobalCacheFlowsPathMock, getEnginePathMock } = vi.hoisted(() => ({
     createSandboxMock: vi.fn(),
     isolateProcessMock: vi.fn(() => ({ create: vi.fn() })),
     simpleProcessMock: vi.fn(() => ({ create: vi.fn() })),
     getGlobalCacheCommonPathMock: vi.fn(() => '/tmp/cache/common'),
     getGlobalCodeCachePathMock: vi.fn(() => '/tmp/cache/codes'),
+    getGlobalCacheFlowsPathMock: vi.fn(() => '/tmp/cache/flows'),
     getEnginePathMock: vi.fn(() => '/tmp/cache/common/main.js'),
 }))
 
@@ -26,6 +27,7 @@ vi.mock('../../src/lib/cache/cache-paths', () => ({
     cacheUtils: () => ({
         getGlobalCacheCommonPath: getGlobalCacheCommonPathMock,
         getGlobalCodeCachePath: getGlobalCodeCachePathMock,
+        getGlobalCacheFlowsPath: getGlobalCacheFlowsPathMock,
         getEnginePath: getEnginePathMock,
     }),
 }))
