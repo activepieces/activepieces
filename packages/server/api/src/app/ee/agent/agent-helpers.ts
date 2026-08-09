@@ -1,5 +1,7 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch, unique } from '@activepieces/core-utils'
+import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -113,6 +115,16 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 // Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
 // (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
 // regardless of which tier the user picked for the main turn.
+async function resolveFastModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const providerConfig = await resolveChatProvider({ platformId, log })
+    return agentAiUtils.createChatModel({
+        provider: providerConfig.provider,
+        auth: providerConfig.auth,
+        config: providerConfig.config,
+        modelId: resolveFastModelId({ provider: providerConfig.provider }),
+    })
+}
+
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
@@ -222,6 +234,7 @@ export const agentHelpers = {
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
+    resolveFastModel,
     resolveChatProviderName,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,

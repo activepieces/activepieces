@@ -78,7 +78,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 locale: req.query.locale as LocalesEnum | undefined,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
@@ -98,7 +98,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 locale: req.query.locale as LocalesEnum | undefined,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
-            const visiblePiece = isNil(policy) ? piece : policy.filterPieceComponents(piece)
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
             return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
@@ -160,6 +160,19 @@ function filterModelActionsByAudience(piece: PieceMetadataModel, audience: Piece
         ...piece,
         actions: filterActionsByAudience(piece.actions, audience),
     }
+}
+
+function applyVisibilityPolicy({ policy, piece }: { policy: Awaited<ReturnType<typeof resolveVisibility>>, piece: PieceMetadataModel }): PieceMetadataModel {
+    if (isNil(policy)) {
+        return piece
+    }
+    if (!policy.isPieceVisible(piece.name)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { message: `piece_metadata_not_found pieceName=${piece.name}` },
+        })
+    }
+    return policy.filterPieceComponents(piece)
 }
 
 const RegistryPiecesRequest = {

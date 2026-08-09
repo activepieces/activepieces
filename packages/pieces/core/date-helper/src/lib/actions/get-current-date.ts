@@ -7,6 +7,7 @@ import {
   getCorrectedFormat,
   apDayjs
 } from '../common';
+import { getCurrentDateActionOutputSchema } from '../output-schemas';
 
 export const getCurrentDate = createAction({
   audience: 'both',
@@ -41,7 +42,8 @@ export const getCurrentDate = createAction({
       defaultValue: 'UTC',
     }),
   },
-  async run(context) {    
+  outputSchema: getCurrentDateActionOutputSchema,
+  async run(context) {
     const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone;
     return { result: apDayjs().tz(timeZone).format(timeFormat) };

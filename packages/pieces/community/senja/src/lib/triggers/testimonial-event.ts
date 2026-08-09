@@ -7,6 +7,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, mapTestimonial } from '../common';
+import { testimonialEventTriggerOutputSchema } from '../output-schemas';
 
 export const testimonialEventTrigger = createTrigger({
   auth: senjaAuth,
@@ -83,6 +84,7 @@ export const testimonialEventTrigger = createTrigger({
     updated_at: '2024-01-15T10:30:00Z',
   },
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: testimonialEventTriggerOutputSchema,
 
   async onEnable(_context) {
     // Senja does not provide a programmatic webhook registration API.

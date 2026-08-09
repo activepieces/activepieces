@@ -1,6 +1,7 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/pieces-framework';
+import { deletedRecordTriggerOutputSchema } from '../output-schemas';
 
 export const deletedRecordTrigger = createTrigger({
     name: 'deletedRecord',
@@ -14,6 +15,7 @@ export const deletedRecordTrigger = createTrigger({
         table_id: tablesCommon.table_id,
     },
     sampleData: {},
+    outputSchema: deletedRecordTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const tableExternalId = context.propsValue.table_id;
