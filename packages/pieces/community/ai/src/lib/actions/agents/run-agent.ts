@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AgentPieceProps, AgentProviderModel, AgentResult } from '@activepieces/pieces-framework';
+import { AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 // Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
 // budget, or it fires mid-run and throws away an answer that was still coming.
@@ -125,9 +125,8 @@ export const runAgent = createAction({
         instruction: context.propsValue.prompt,
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
-        ...(isNil((context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model)
-          ? {}
-          : { modelName: (context.propsValue.aiProviderModel as AgentProviderModel).model }),
+        ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
+        ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
         tools: context.propsValue.agentTools ?? [],
         structuredOutput: context.propsValue.structuredOutput ?? [],
       },

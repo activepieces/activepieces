@@ -60,6 +60,13 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
+async function resolveRunProvider({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    if (isNil(provider)) {
+        return resolveChatProvider({ platformId, log })
+    }
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider })
+}
+
 async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
     if (isNil(chatProvider)) {
@@ -235,6 +242,7 @@ export const agentHelpers = {
     resolveModelIdForAnalytics,
     resolveFastModelId,
     resolveFastModel,
+    resolveRunProvider,
     resolveChatProviderName,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,

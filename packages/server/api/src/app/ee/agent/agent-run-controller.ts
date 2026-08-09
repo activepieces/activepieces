@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, unique } from '@activepieces/core-utils'
-import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -13,7 +13,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, flowRunId, waitpointId, tools, structuredOutput } = request.body
+        const { instruction, modelName, provider, flowRunId, waitpointId, tools, structuredOutput } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -63,6 +63,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 waitpointId,
                 tools: pieceTools,
                 structuredOutput,
+                provider,
             },
         })
 
@@ -85,6 +86,7 @@ const StartAgentRunRequest = z.object({
     tools: z.array(AgentTool).max(MAX_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_OUTPUT_FIELDS).optional(),
     modelName: z.string().optional(),
+    provider: z.enum(AIProviderName).optional(),
 })
 
 const StartAgentRunResponse = z.object({

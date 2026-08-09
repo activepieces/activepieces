@@ -163,7 +163,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
-            agentHelpers.resolveChatProvider({ platformId, log }),
+            agentHelpers.resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', input.provider) }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
