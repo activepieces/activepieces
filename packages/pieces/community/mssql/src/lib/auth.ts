@@ -10,7 +10,7 @@ export const mssqlAuth = PieceAuth.CustomAuth({
     connection_string: Property.LongText({
       displayName: 'Connection String',
       description:
-        'Azure SQL only. In the Azure portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) string — not one of the Active Directory variants, which this piece does not support. Address the server as host,1433 rather than by a named instance such as myhost\\SQLEXPRESS, since instance lookup needs UDP port 1434. Replace the {your_password} placeholder with your password, and if your password contains a semicolon, wrap it in double quotes like Password="my;pass"; otherwise it is cut off at the semicolon. When this is filled in, the host, port, database, username, password and encryption fields below are ignored — only CA Certificate and Minimum TLS Version still apply, since a connection string cannot express them.',
+        'Azure SQL only. In the portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) one — not an Active Directory variant. Replace the {your_password} placeholder, and quote a password containing a semicolon: Password="my;pass";. When set, the fields below are ignored apart from CA Certificate and Minimum TLS Version.',
       required: false,
     }),
     host: Property.ShortText({

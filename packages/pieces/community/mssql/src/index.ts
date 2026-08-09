@@ -11,8 +11,7 @@ export const mssql = createPiece({
   description:
     "Microsoft's relational database engine, on-premise or as Azure SQL",
   minimumSupportedRelease: '0.36.1',
-  // TODO(PIE-381): flip to https://cdn.activepieces.com/pieces/mssql.png once uploaded
-  logoUrl: '/mssql.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/mssql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['OdaiAhmed99'],
   auth: mssqlAuth,
