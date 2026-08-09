@@ -39,9 +39,11 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         }
         const parsedExpiresIn = Number(connection.expires_in)
         const expiresIn = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 60 * 60
+        const parsedClaimedAt = Number(connection.claimed_at)
+        const claimedAt = Number.isFinite(parsedClaimedAt) && parsedClaimedAt > 0 ? parsedClaimedAt : 0
         const refreshThreshold = 15 * 60
         return (
-            secondsSinceEpoch + refreshThreshold >= connection.claimed_at + expiresIn
+            secondsSinceEpoch + refreshThreshold >= claimedAt + expiresIn
         )
     },
     isUserError: (e: unknown): boolean => {

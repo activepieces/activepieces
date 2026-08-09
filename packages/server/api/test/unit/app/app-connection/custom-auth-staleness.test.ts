@@ -55,12 +55,12 @@ describe('computeTokenRefreshAt', () => {
     })
 
     it('coerces a string expires_in from a third-party token response', () => {
-        expect(computeTokenRefreshAt('3300' as never)).toBe(NOW + 3300 - BUFFER_SECONDS)
+        expect(computeTokenRefreshAt('3300')).toBe(NOW + 3300 - BUFFER_SECONDS)
     })
 
     it('returns undefined (never refresh) for a non-numeric or infinite expires_in', () => {
-        expect(computeTokenRefreshAt('not-a-number' as never)).toBeUndefined()
-        expect(computeTokenRefreshAt('1e999' as never)).toBeUndefined()
+        expect(computeTokenRefreshAt('not-a-number')).toBeUndefined()
+        expect(computeTokenRefreshAt('1e999')).toBeUndefined()
     })
 
     it('clamps the buffer to half the lifetime for short-lived tokens', () => {

@@ -1,11 +1,11 @@
 import { OAuth2GrantType } from '@activepieces/shared'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { oauth2Util } from '../../../../src/app/app-connection/app-connection-service/oauth2/oauth2-util'
 
 const util = oauth2Util({} as never)
 const nowSeconds = Math.round(Date.now() / 1000)
 
-function connectionWith({ claimedAt, expiresIn }: { claimedAt: number, expiresIn?: number | string }): never {
+function connectionWith({ claimedAt, expiresIn }: { claimedAt: number | string, expiresIn?: number | string }): never {
     return {
         access_token: 'token',
         refresh_token: 'refresh',
@@ -16,6 +16,15 @@ function connectionWith({ claimedAt, expiresIn }: { claimedAt: number, expiresIn
 }
 
 describe('oauth2Util.isExpired', () => {
+    beforeAll(() => {
+        vi.useFakeTimers()
+        vi.setSystemTime(nowSeconds * 1000)
+    })
+
+    afterAll(() => {
+        vi.useRealTimers()
+    })
+
     it('numeric expires_in 3600, claimed 2h ago → expired', () => {
         expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2 * 60 * 60, expiresIn: 3600 }))).toBe(true)
     })
@@ -46,6 +55,18 @@ describe('oauth2Util.isExpired', () => {
 
     it('infinite expires_in falls back to 1h: claimed 2h ago → expired', () => {
         expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2 * 60 * 60, expiresIn: '1e999' }))).toBe(true)
+    })
+
+    it('string claimed_at is coerced (would concatenate with expires_in otherwise) → expired', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: String(nowSeconds - 2 * 60 * 60), expiresIn: 3600 }))).toBe(true)
+    })
+
+    it('non-numeric claimed_at is treated as epoch → expired', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: 'not-a-number', expiresIn: 3600 }))).toBe(true)
+    })
+
+    it('infinite claimed_at is treated as epoch → expired', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: '1e999', expiresIn: 3600 }))).toBe(true)
     })
 })
 

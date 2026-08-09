@@ -319,10 +319,10 @@ export function isCustomAuthTokenStale(value: { access_token?: string, token_ref
 // before expiry, but never earlier than half the token's lifetime — otherwise a
 // token whose TTL is shorter than the buffer would be considered stale the instant
 // it is minted, refreshing on every fetch and defeating the cache. `expiresIn` is
-// coerced with Number() because third-party responses may carry it as a string; any
+// typed as unknown because it comes from a third-party token response; any
 // non-positive or non-finite result means the token never expires, so it never
 // needs refreshing.
-export function computeTokenRefreshAt(expiresIn: number): number | undefined {
+export function computeTokenRefreshAt(expiresIn: unknown): number | undefined {
     const expiresInSeconds = Number(expiresIn)
     if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
         return undefined
