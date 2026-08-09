@@ -1,4 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, ErrorCode, FanInBarrierState, FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,7 +8,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
-import { fanInBarrier, FanInChild, FanInChildCounts } from './fan-in-barrier'
+import { fanInBarrier, FanInChild, FanInChildCounts, FanInReleaseReason } from './fan-in-barrier'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
@@ -161,7 +162,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         const counts = await fanInBarrier.countChildren({ parentWaitpointId: sealed.id, projectId: params.projectId })
         if (fanInBarrier.isReleasable({ counts, barrier: sealed })) {
-            await this.completeFanInBarrier({ barrier: sealed, projectId: params.projectId, counts, timedOut: false })
+            await this.completeFanInBarrier({ barrier: sealed, projectId: params.projectId, counts, releaseReason: 'seal' })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: sealed.id } }, '[waitpointService#sealFanInBarrier] All children terminal at seal; completed barrier, PAUSED-upload reconciliation will resume')
             return { waitpoint: await waitpointRepo().findOneByOrFail({ id: sealed.id }), alreadySealed, timeoutAt: effectiveTimeoutAt }
         }
@@ -184,14 +185,25 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return waitpoint
     },
 
-    async completeFanInBarrier({ barrier, projectId, counts, timedOut }: CompleteFanInBarrierParams): Promise<CompleteResult> {
+    async completeFanInBarrier({ barrier, projectId, counts, releaseReason }: CompleteFanInBarrierParams): Promise<CompleteResult> {
         const children = await fanInBarrier.listChildren({ parentWaitpointId: barrier.id, projectId })
-        return this.complete({
+        const result = await this.complete({
             flowRunId: barrier.flowRunId,
             projectId,
             waitpointId: barrier.id,
-            resumePayload: { body: fanInBarrier.toSummary({ counts, barrier, timedOut, children }), headers: {}, queryParams: {} },
+            resumePayload: { body: fanInBarrier.toSummary({ counts, barrier, timedOut: releaseReason === 'timeout', children }), headers: {}, queryParams: {} },
         })
+        if (result.completedExisting) {
+            wideEvent.set({
+                fanIn: {
+                    barrierId: barrier.id,
+                    expectedChildren: barrier.expectedChildren ?? 0,
+                    releaseReason,
+                    stragglers: counts.stillRunning,
+                },
+            })
+        }
+        return result
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -384,7 +396,7 @@ type CompleteFanInBarrierParams = {
     barrier: Waitpoint
     projectId: string
     counts: FanInChildCounts
-    timedOut: boolean
+    releaseReason: FanInReleaseReason
 }
 
 type HasPendingFanInBarrierParams = {

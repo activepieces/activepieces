@@ -1,9 +1,11 @@
-import { apId } from '@activepieces/core-utils'
-import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
+import { ExecutionType, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
+import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
 import { maybeResumeFanInBarrier, runsMetadataQueue } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
 import { fanInBarrier, FanInSummary } from '../../../../../src/app/flows/flow-run/waitpoint/fan-in-barrier'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/flows/flow-run/waitpoint/resume-delay-handler'
@@ -1266,3 +1268,176 @@ describe('sweepOverdueDeadlines', () => {
         expect(await sweepOverdueDeadlines({ log: app.log })).toContain(waitpoints[0].id)
     })
 })
+
+describe('fan-in release wide events', () => {
+    function captureWideEvents() {
+        const captured: CapturedWideEvent[] = []
+        const original = wideEvent.set
+        vi.spyOn(wideEvent, 'set').mockImplementation((fields) => {
+            captured.push({ fields: structuredClone(fields), inScope: !isNil(wideEvent.current()) })
+            original(fields)
+        })
+        return captured
+    }
+
+    function releasesOf({ captured, barrierId }: { captured: CapturedWideEvent[], barrierId: string }) {
+        return captured
+            .map((event) => ({ fanIn: event.fields.fanIn, inScope: event.inScope }))
+            .filter((event): event is { fanIn: Record<string, unknown>, inScope: boolean } =>
+                typeof event.fanIn === 'object'
+                && !isNil(event.fanIn)
+                && 'releaseReason' in event.fanIn
+                && event.fanIn.barrierId === barrierId)
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('emits one event naming the predicate when the last child goes terminal', async () => {
+        const captured = captureWideEvents()
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED] })
+
+        await maybeResumeFanInBarrier({ parentWaitpointId: barrier.id, projectId: ctx.project.id, log: app.log })
+
+        expect(releasesOf({ captured, barrierId: barrier.id }).map((event) => event.fanIn)).toEqual([{
+            barrierId: barrier.id,
+            expectedChildren: 2,
+            releaseReason: 'predicate',
+            stragglers: 0,
+        }])
+    })
+
+    it('emits one event naming the timeout, carrying the children it left running', async () => {
+        const captured = captureWideEvents()
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 3 })
+        await createChildren({
+            parentWaitpointId: barrier.id,
+            statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.RUNNING],
+        })
+
+        await handleResumeDelayWaitpoint({
+            data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+            log: app.log,
+        })
+
+        expect(releasesOf({ captured, barrierId: barrier.id }).map((event) => event.fanIn)).toEqual([{
+            barrierId: barrier.id,
+            expectedChildren: 3,
+            releaseReason: 'timeout',
+            stragglers: 2,
+        }])
+    })
+
+    it('emits one event naming the seal when every child is already terminal', async () => {
+        const captured = captureWideEvents()
+        const { flowRun } = await createParentRun()
+        const { waitpoint: barrier } = await createBarrier({ flowRunId: flowRun.id })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+
+        await waitpointService(app.log).sealFanInBarrier({
+            waitpointId: barrier.id,
+            projectId: ctx.project.id,
+            expectedChildren: 1,
+        })
+
+        expect(releasesOf({ captured, barrierId: barrier.id }).map((event) => event.fanIn)).toEqual([{
+            barrierId: barrier.id,
+            expectedChildren: 1,
+            releaseReason: 'seal',
+            stragglers: 0,
+        }])
+    })
+
+    it('emits nothing from the deadline sweep, which only re-arms the queued job', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+        await db.update('waitpoint', barrier.id, { resumeDateTime: dayjs().subtract(5, 'minute').toISOString() })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED] })
+        const realHandler = systemJobHandlers.getJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT)
+        systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async () => {})
+        const captured = captureWideEvents()
+
+        try {
+            expect(await sweepOverdueDeadlines({ log: app.log })).toContain(barrier.id)
+
+            expect(releasesOf({ captured, barrierId: barrier.id })).toEqual([])
+        }
+        finally {
+            systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, realHandler)
+        }
+    })
+
+    it('reaches the logs from the runs-metadata worker, which opens a scope of its own', async () => {
+        const captured = captureWideEvents()
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 1 })
+        const [child] = await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.RUNNING] })
+
+        await runsMetadataQueue(app.log).add({ id: child.id, projectId: ctx.project.id, status: FlowRunStatus.SUCCEEDED })
+
+        await vi.waitFor(() => {
+            expect(releasesOf({ captured, barrierId: barrier.id })).toEqual([{
+                fanIn: { barrierId: barrier.id, expectedChildren: 1, releaseReason: 'predicate', stragglers: 0 },
+                inScope: true,
+            }])
+        }, { timeout: 15_000 })
+    })
+
+    it('reaches the logs from the system-jobs worker, which opens a scope of its own', async () => {
+        const captured = captureWideEvents()
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING] })
+
+        await systemJobsSchedule(app.log).upsertJob({
+            job: {
+                name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+                jobId: systemJobIds.resumeDelay({ waitpointId: barrier.id }),
+            },
+            schedule: { type: 'one-time', date: dayjs() },
+        })
+
+        await vi.waitFor(() => {
+            expect(releasesOf({ captured, barrierId: barrier.id })).toEqual([{
+                fanIn: { barrierId: barrier.id, expectedChildren: 2, releaseReason: 'timeout', stragglers: 1 },
+                inScope: true,
+            }])
+        }, { timeout: 15_000 })
+    })
+})
+
+describe('per-child barrier attribution', () => {
+    it('travels on the child flow-run job so every child of a barrier shares one filter', async () => {
+        const { flow, flowVersion } = await createParentRun()
+        const parentWaitpointId = apId()
+
+        const child = await flowRunService(app.log).start({
+            flowId: flow.id,
+            projectId: ctx.project.id,
+            flowVersionId: flowVersion.id,
+            platformId: ctx.platform.id,
+            environment: RunEnvironment.PRODUCTION,
+            executionType: ExecutionType.BEGIN,
+            payload: {},
+            parentWaitpointId,
+            failParentOnFailure: true,
+            executeTrigger: false,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            streamStepProgress: StreamStepProgress.NONE,
+        })
+
+        const [job] = await findQueuedJobsForRun(child.id)
+        expect(job.data).toMatchObject({ parentWaitpointId })
+    })
+})
+
+type CapturedWideEvent = {
+    fields: Record<string, unknown>
+    inScope: boolean
+}

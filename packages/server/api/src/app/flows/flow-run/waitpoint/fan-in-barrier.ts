@@ -143,6 +143,8 @@ export type FanInException = {
     dispatchIndex: number | null
 }
 
+export type FanInReleaseReason = 'predicate' | 'timeout' | 'seal'
+
 type ChildQueryParams = {
     parentWaitpointId: string
     projectId: string

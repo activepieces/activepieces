@@ -96,24 +96,25 @@ whose nested body is a *section* of steps, batched out to child runs.
   a USER-type step failure). A 1M-row batched fan-out at 100/batch still lands exactly on
   the default, so a self-hoster running wider has to raise it — and past ~10k the runs-metadata lock
   becomes the real bottleneck (see below).
-- **Operability.** Nothing can answer "how many barriers are open right now", "how many released on
-  timeout this week", or "which have stragglers". For a primitive whose failure mode is a multi-day
-  silent hang, that is the gap to close before an entry point ships:
-  `wideEvent.set({ fanIn: { barrierId, expectedChildren, releaseReason, stragglers, latencyMs } })` at
-  each release site. **Correction: not "almost nothing" — `wideEvent.set()` is a silent no-op outside an
-  active `wideEvent.run()` scope** (`packages/server/utils/src/wide-event.ts`, an `AsyncLocalStorage`
-  wrapper), and 3 of the 4 release sites have no such scope today: the predicate release
-  (`maybeResumeFanInBarrier`, in the `runsMetadataQueue` BullMQ worker) and both the timeout release and
-  the deadline sweep (`resume-delay-handler.ts` / `sweepOverdueDeadlines`, in the `systemJobsSchedule`
-  worker) never call `wideEvent.run(...)`. Only the partial-dispatch seal runs inside an HTTP request and
-  therefore inside a live wide event already. So the prerequisite is wrapping those two BullMQ workers in
-  `wideEvent.run()` — mirroring what `worker.ts:349` already does for job execution — not just adding
-  `.set()` calls. Also note the deadline sweep only re-arms the BullMQ job; it never itself releases the
-  barrier or computes child counts, so it isn't a "release" event in the same sense as the other three.
-  **Per-child observability is closer to free than this implied**, though: every batch child is a normal
-  `EXECUTE_FLOW` job, and `worker.ts:349` already wraps job execution in `wideEvent.run()` with
-  `flowRun.id`/`flow.id`/`project.id` seeded — it just doesn't carry `parentWaitpointId` yet, so
-  "all children of barrier X" is one field away from queryable, not a second event stream.
+- **Operability — shipped.** Every release emits `fanIn: { barrierId, expectedChildren, releaseReason,
+  stragglers }` on the ambient wide event, so "which barriers released this week and why", "how many
+  children did each expect" and "how many stragglers did each leave" are one query. `releaseReason` is
+  `predicate | timeout | seal`; the straggler count is the `stillRunning` the release path already
+  computed, so no extra query. There is no `latencyMs` — add it against a concrete dashboard need.
+  The single emit site is `waitpointService.completeFanInBarrier`, gated on `completedExisting` so a
+  losing evaluator in a race emits nothing and each barrier releases exactly once in the logs. The
+  deadline sweep is deliberately silent: it only re-arms the BullMQ job and never calls
+  `completeFanInBarrier`.
+  Two of the three release sites needed a scope first — **`wideEvent.set()` is a silent no-op outside an
+  active `wideEvent.run()`** (`packages/server/utils/src/wide-event.ts`, an `AsyncLocalStorage` wrapper) —
+  so the `runsMetadataQueue` worker (predicate release) and the `systemJobsSchedule` worker (timeout
+  release) now each open one, mirroring what `worker.ts` does for job execution. The seal already ran
+  inside an HTTP request.
+  **Per-child attribution is one field, not a second event stream**: `parentWaitpointId` rides
+  `ExecuteFlowJobData` (optional, so pre-upgrade jobs still parse) from `addToQueue`, and the worker seeds
+  `fanIn: { barrierId }` into the per-job wide event beside the run, flow and project ids — so "every child
+  of barrier X" is `fanIn.barrierId = X`, the same filter that finds its release event. The runs-metadata
+  worker's own event carries it too, which covers a child whose job predates the field.
 - **`ap-parent-waitpoint-id` is stamped from an unauthenticated header with no ownership check.**
   `webhook-request-converter.ts` validates the *format* only — nothing checks the waitpoint exists, is
   `isFanIn`, is PENDING, or belongs to the flow's project. Cross-tenant is blocked by `countChildren`'s
@@ -345,6 +346,11 @@ already used in that worker). Only needed at or above the `AP_MAX_FAN_IN_CHILDRE
 
 ### Gotchas
 
+- **`wideEvent.set()` deep-merges into the object you passed it, so a test that captures those objects
+  sees them mutate later.** Capturing `wideEvent.set` calls with `vi.spyOn` and pushing the raw `fields`
+  into an array gives you references the logger keeps merging into: an earlier `{ fanIn: { barrierId } }`
+  silently grows the later release's `releaseReason`/`stragglers`, and one release reads as two. `structuredClone`
+  the fields at capture time. (The merge itself is what you want in production — one `fanIn` group per event.)
 - **A rejected waitpoint call used to page oncall.** `waitpoint-client.ts` turned *every* non-ok response
   into `EngineGenericError`, which is `ExecutionErrorType.ENGINE` → job `INTERNAL_ERROR` → pager. Both
   server-side rejections a dispatcher can trigger are user-data conditions — a `dispatchDigest` mismatch and

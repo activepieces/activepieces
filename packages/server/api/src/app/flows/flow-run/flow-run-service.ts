@@ -642,6 +642,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
         sampleData: params.sampleData,
         logsFileId,
+        parentWaitpointId: params.flowRun.parentWaitpointId ?? undefined,
     }
     const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
         ? {

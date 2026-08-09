@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { FlowRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
@@ -8,6 +9,11 @@ import { resumeService } from './resume-service'
 import { waitpointService } from './waitpoint-service'
 
 export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDelayWaitpointParams): Promise<void> {
+    wideEvent.set({
+        project: { id: data.projectId },
+        flowRun: { id: data.flowRunId },
+        waitpoint: { id: data.waitpointId },
+    })
     const flowRun = await flowRunService(log).getOne({ id: data.flowRunId, projectId: data.projectId })
     if (isNil(flowRun)) {
         log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
@@ -44,7 +50,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
         barrier: waitpoint,
         projectId: data.projectId,
         counts,
-        timedOut: true,
+        releaseReason: 'timeout',
     })
     const released = result.waitpoint ?? await waitpointService(log).findFanInBarrierById({ waitpointId: waitpoint.id, projectId: data.projectId })
     if (isNil(released)) {
