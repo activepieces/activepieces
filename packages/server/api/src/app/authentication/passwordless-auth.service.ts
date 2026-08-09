@@ -122,6 +122,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             identityId,
             name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
+            isFirstPlatform: true,
         })
     },
 })

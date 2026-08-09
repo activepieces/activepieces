@@ -1,8 +1,10 @@
-import { OtpState, OtpType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { OtpState, OtpType, PlatformRole, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -176,6 +178,134 @@ describe('Passwordless Authentication API', () => {
             const verdicts = await Promise.all([confirm(), confirm()])
 
             expect(verdicts.filter((verdict) => verdict)).toHaveLength(1)
+        })
+
+        it('creates one platform for one identity, even when the name step is submitted twice', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const completeSignUp = () => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            const first = await completeSignUp()
+            const second = await completeSignUp()
+
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.statusCode).toBe(StatusCodes.OK)
+            expect(second?.json()?.platformId).toBe(first?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('project').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('creates one platform even when the other onboarding route races the name step', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const viaNameStep = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+            const viaPlatformRoute = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/platforms',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { name: 'Ahmad' },
+            })
+
+            expect(viaNameStep?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.statusCode).toBe(StatusCodes.OK)
+            expect(viaPlatformRoute?.json()?.platformId).toBe(viaNameStep?.json()?.platformId)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('reuses a user left unlinked by an interrupted attempt instead of creating a second one', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            await databaseConnection().getRepository('user').save({
+                id: apId(),
+                identityId: identity!.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('adopts a platform whose owner link never landed instead of building a second one', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            const strandedUserId = apId()
+            await databaseConnection().getRepository('user').save({
+                id: strandedUserId,
+                identityId: identity!.id,
+                platformId: null,
+                platformRole: PlatformRole.ADMIN,
+                status: UserStatus.ACTIVE,
+            })
+            await databaseConnection().getRepository('platform').save(
+                createMockPlatform({ ownerId: strandedUserId }),
+            )
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+            expect(await databaseConnection().getRepository('user').count()).toBe(1)
+            const relinked = await databaseConnection().getRepository('user').findOneBy({ id: strandedUserId })
+            expect(relinked?.platformId).toBe(response?.json()?.platformId)
+        })
+
+        it('repairs a platform left without a project instead of wedging the identity', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const completeSignUp = () => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+            const first = await completeSignUp()
+            await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+
+            const retry = await completeSignUp()
+
+            expect(retry?.statusCode).toBe(StatusCodes.OK)
+            expect(retry?.json()?.platformId).toBe(first?.json()?.platformId)
+            expect(await databaseConnection().getRepository('project').count()).toBe(1)
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
         })
 
         it('sets the USER_CREATED flag only once a code is verified', async () => {
