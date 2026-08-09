@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { DEFAULT_BATCH_SIZE, FlowActionType, FlowCreatorType, FlowOperationType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -165,6 +165,28 @@ async function createFlowAndGetId(mcp: ProjectScopedMcpServer, flowName: string)
     const match = text(result).match(/\(id: (\S+?)\)/)
     if (!match) throw new Error(`Could not extract flowId from: ${text(result)}`)
     return match[1]
+}
+
+async function addBatchStep({ mcp, platformId, flowId, items, batchSize = DEFAULT_BATCH_SIZE }: { mcp: ProjectScopedMcpServer, platformId: string, flowId: string, items: string, batchSize?: number }): Promise<void> {
+    await flowService(mockLog).update({
+        id: flowId,
+        projectId: mcp.projectId,
+        userId: null,
+        platformId,
+        operation: {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: {
+                    type: FlowActionType.PROCESS_IN_BATCHES,
+                    name: 'step_1',
+                    displayName: 'Process in Batches',
+                    valid: true,
+                    settings: { items, batchSize },
+                },
+            },
+        },
+    })
 }
 
 describe('MCP Tools integration', () => {
@@ -2635,5 +2657,142 @@ describe('MCP Tools integration', () => {
         const mcp1 = makeMcp(ctx1.project.id)
         const result = await apReadStepSettingsTool(mcp1, mockLog).execute({ flowId, stepName: 'trigger' })
         expect(text(result)).toContain('❌ Flow not found')
+    })
+
+    it('ap_flow_structure — describes a batch step, its settings and its nestable body', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Structure Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}', batchSize: 25 })
+
+        const output = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
+
+        expect(output).toContain('step_1 | PROCESS_IN_BATCHES | "Process in Batches"')
+        expect(output).toContain('items: {{trigger.items}}')
+        expect(output).toContain('batchSize: 25')
+        expect(output).toContain(`stepLocationRelativeToParent="${StepLocationRelativeToParent.INSIDE_BATCH}"`)
+        expect(output).toContain('Step types: trigger = EMPTY | PIECE_TRIGGER; action = CODE | PIECE | LOOP_ON_ITEMS | PROCESS_IN_BATCHES | ROUTER')
+    })
+
+    it('ap_flow_structure — an invalid batch step reports a reason', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Invalid Batch Structure Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '' })
+
+        const output = text(await apFlowStructureTool(mcp, mockLog).execute({ flowId }))
+
+        expect(output).toMatch(/step_1 \| PROCESS_IN_BATCHES \|.*\| invalid \(items expression missing or batchSize below 1\)/)
+    })
+
+    it('ap_flow_structure — a step in a batch body reports the batch as its parent', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Body Structure Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}' })
+        await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+            stepType: FlowActionType.CODE,
+            displayName: 'Inside Batch',
+        })
+
+        const result = await apFlowStructureTool(mcp, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('parent: step_1 | inside_batch')
+        expect(result.structuredContent?.steps).toContainEqual(
+            expect.objectContaining({ name: 'step_2', parentName: 'step_1', relationship: 'inside_batch' }),
+        )
+    })
+
+    it('ap_add_step — describes INSIDE_BATCH and adds a step into a batch body', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Add Step Test')
+
+        const description = apAddStepTool(mcp, mockLog).inputSchema.stepLocationRelativeToParent.description
+        expect(description).toContain(StepLocationRelativeToParent.INSIDE_BATCH)
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}' })
+
+        const result = await apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+            stepType: FlowActionType.CODE,
+            displayName: 'Inside Batch',
+        })
+
+        expect(text(result)).toContain('✅')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.firstLoopAction.name).toBe('step_2')
+    })
+
+    it('ap_add_step / ap_build_flow / ap_validate_step_config — cannot create a batch step', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Authoring Closed Test')
+
+        await expect(apAddStepTool(mcp, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            displayName: 'Process in Batches',
+        })).rejects.toThrow()
+
+        const buildResult = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Batch Build Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{ type: FlowActionType.PROCESS_IN_BATCHES, displayName: 'Process in Batches' }],
+        })
+        expect(text(buildResult)).toContain('❌')
+
+        const validateResult = await apValidateStepConfigTool(mcp, mockLog).execute({
+            stepType: FlowActionType.PROCESS_IN_BATCHES,
+            input: {},
+        })
+        expect(text(validateResult)).toContain('❌')
+    })
+
+    it('ap_build_flow — INSIDE_BATCH is not an accepted nesting location', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+
+        const result = await apBuildFlowTool({ mcp }, mockLog).execute({
+            flowName: 'Batch Location Closed Flow',
+            trigger: { pieceName: '@activepieces/piece-test-email', triggerName: 'new_email' },
+            steps: [{
+                type: FlowActionType.CODE,
+                displayName: 'Nested',
+                parentStepName: 'step_1',
+                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+            }],
+        })
+
+        expect(text(result)).toContain('❌')
+    })
+
+    it('ap_update_step — cannot edit a batch step\'s settings', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await createFlowAndGetId(mcp, 'Batch Update Closed Test')
+
+        await addBatchStep({ mcp, platformId: ctx.platform.id, flowId, items: '{{trigger.items}}', batchSize: 25 })
+
+        const result = await apUpdateStepTool(mcp, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            loopItems: '{{trigger.other}}',
+        })
+
+        expect(text(result)).toContain('❌')
+        expect(text(result)).toContain('LOOP_ON_ITEMS')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.version.trigger.nextAction.settings).toMatchObject({ items: '{{trigger.items}}', batchSize: 25 })
     })
 })
