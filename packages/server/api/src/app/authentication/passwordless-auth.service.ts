@@ -2,7 +2,6 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { ApFlagId, AuthenticationResponse, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedLock } from '../database/redis-connections'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
@@ -118,32 +117,21 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
-        // Serialised on its own key so simultaneous submissions cannot both
-        // decide they are the one finishing the sign-up. The nesting order is
-        // always this lock then the platform one, so the two cannot deadlock.
-        return distributedLock(log).runExclusive({
-            key: `complete-sign-up-${identityId}`,
-            timeoutInSeconds: 30,
-            fn: async () => {
-                const existingUsers = await userService(log).getByIdentityId({ identityId })
-                const alreadySignedUp = existingUsers.some((user) => !isNil(user.platformId))
-                // The name goes in before the account exists. Writing it after
-                // would lose it for good if provisioning succeeded and this
-                // request then died: the retry finds the account already made
-                // and would never write the name its owner actually typed.
-                if (!alreadySignedUp) {
-                    await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
-                }
-                const { response, provisioned } = await platformService(log).createPlatformWithProject({
-                    identityId,
-                    name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
-                    invalidatePreviousTokens: false,
-                    isFirstPlatform: true,
-                    callerTokenVersion: undefined,
-                })
-                return { response, signedUp: provisioned }
+        // The name is written inside the provisioning lock and only by the call
+        // that provisions, so a replay cannot rename an established account, the
+        // platform route cannot race it, and an interruption after the account
+        // exists cannot leave the address-derived placeholder behind.
+        const { response, provisioned } = await platformService(log).createPlatformWithProject({
+            identityId,
+            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+            invalidatePreviousTokens: false,
+            isFirstPlatform: true,
+            callerTokenVersion: undefined,
+            beforeProvision: async () => {
+                await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
             },
         })
+        return { response, signedUp: provisioned }
     },
 })
 
