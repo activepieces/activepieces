@@ -76,7 +76,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
-    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform, callerTokenVersion }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform, callerTokenVersion, beforeProvision }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
         return distributedLock(log).runExclusive({
             key: `create-platform-${identityId}`,
             timeoutInSeconds: 30,
@@ -99,6 +99,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
                 const orphanedPlatform = isNil(unlinkedUser) ? null : await platformRepo().findOneBy({ ownerId: unlinkedUser.id })
                 if (!isNil(unlinkedUser) && !isNil(orphanedPlatform)) {
+                    await beforeProvision?.()
                     await userService(log).addOwnerToPlatform({ id: unlinkedUser.id, platformId: orphanedPlatform.id })
                     const response = await finishExistingPlatform({
                         user: await userService(log).getOneOrFail({ id: unlinkedUser.id }),
@@ -110,6 +111,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                     })
                     return { response, provisioned: true }
                 }
+                await beforeProvision?.()
                 const newUser = unlinkedUser
                     ?? await userService(log).create({
                         identityId,
@@ -399,6 +401,10 @@ type CreatePlatformWithProjectParams = {
     invalidatePreviousTokens: boolean
     isFirstPlatform: boolean
     callerTokenVersion: string | undefined
+    // Runs inside the provisioning lock and only when this call is the one
+    // provisioning, so whatever it writes is serialised with account creation
+    // and cannot be lost by an interruption after the account exists.
+    beforeProvision?: () => Promise<void>
 }
 
 type FinishExistingPlatformParams = {
