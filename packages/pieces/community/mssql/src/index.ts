@@ -2,6 +2,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { mssqlAuth } from './lib/auth';
 import actions from './lib/actions';
+import { newOrUpdatedRow } from './lib/triggers/new-or-updated-row';
 
 export { mssqlAuth };
 
@@ -16,5 +17,5 @@ export const mssql = createPiece({
   authors: ['OdaiAhmed99'],
   auth: mssqlAuth,
   actions,
-  triggers: [],
+  triggers: [newOrUpdatedRow],
 });

@@ -1,6 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import { MssqlAuth, mssqlConnect, mssqlGetColumns, mssqlGetTables } from '.';
+import {
+  MssqlAuth,
+  MssqlTable,
+  mssqlConnect,
+  mssqlGetColumns,
+  mssqlGetTables,
+} from '.';
 
 export const warningMarkdown = Property.MarkDown({
   value: `
@@ -10,8 +16,8 @@ export const warningMarkdown = Property.MarkDown({
 });
 
 export const mssqlProps = {
-  table: (required = true) =>
-    Property.Dropdown({
+  table: <R extends boolean = true>(required: R = true as R) =>
+    Property.Dropdown<MssqlTable, R, typeof mssqlAuth>({
       auth: mssqlAuth,
       displayName: 'Table',
       description: 'The table to work with.',
