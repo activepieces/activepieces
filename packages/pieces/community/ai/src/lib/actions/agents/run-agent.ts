@@ -127,7 +127,7 @@ export const runAgent = createAction({
         waitpointId: waitpoint.id,
         ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
         ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
-        tools: context.propsValue.agentTools ?? [],
+        tools: toolsWithoutResolvedAuth(context.propsValue.agentTools ?? []),
         structuredOutput: context.propsValue.structuredOutput ?? [],
       },
     });
@@ -136,3 +136,19 @@ export const runAgent = createAction({
     return {};
   },
 });
+
+// The engine resolves {{connections[...]}} in every step input, so a connection pinned on a tool
+// arrives here as the decrypted credential rather than its id. The server wants the id and rebuilds
+// the reference itself, so anything that is not an id is dropped rather than sent.
+function toolsWithoutResolvedAuth(tools: unknown[]): unknown[] {
+  return tools.map((tool) => {
+    const piece = (tool as { pieceMetadata?: { predefinedInput?: { auth?: unknown } } }).pieceMetadata;
+    const auth = piece?.predefinedInput?.auth;
+    if (isNil(auth) || typeof auth === 'string') {
+      return tool;
+    }
+    throw new Error(
+      'This agent step pins a connection in a form the server cannot accept yet. Remove the pinned connection from the tool, or wait for the update that stores it by reference.',
+    );
+  });
+}

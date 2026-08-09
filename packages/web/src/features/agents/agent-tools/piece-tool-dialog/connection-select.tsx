@@ -17,11 +17,12 @@ type ConnectionDropdownProps = {
   showError?: boolean;
 };
 
+// Older steps stored the connection as a template. It is stored by id now, so both are read.
 function unwrapConnection(input?: unknown): string | undefined {
   if (typeof input !== 'string') return undefined;
 
   const match = input.match(/^\{\{connections\['([^']+)'\]\}\}$/);
-  return match?.[1];
+  return match?.[1] ?? input;
 }
 
 export const ConnectionDropdown = React.memo(
@@ -67,7 +68,7 @@ export const ConnectionDropdown = React.memo(
 
     const handleChange = (selectedValue: string | null) => {
       if (selectedValue) {
-        onChange(`{{connections['${selectedValue}']}}`);
+        onChange(selectedValue);
       } else {
         setConnectionDialogOpen(true);
       }
@@ -81,7 +82,7 @@ export const ConnectionDropdown = React.memo(
           setOpen={(open, connection) => {
             setConnectionDialogOpen(open);
             if (connection) {
-              onChange(`{{connections['${connection.externalId}']}}`);
+              onChange(connection.externalId);
               refetchConnections();
             }
           }}
