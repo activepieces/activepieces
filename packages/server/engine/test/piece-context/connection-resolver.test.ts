@@ -1,5 +1,5 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, FetchError } from '@activepieces/shared'
+import { AppConnectionStatus, AppConnectionType, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, ErrorCode, FetchError } from '@activepieces/shared'
 import { createConnectionResolver } from '../../src/lib/piece-context/connection-resolver'
 
 const RESOLVER_PARAMS = {
@@ -112,6 +112,35 @@ describe('connection-resolver service', () => {
         vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
 
         const resolver = createConnectionResolver(RESOLVER_PARAMS)
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionLoadingError)
+    })
+
+    it('sends the piece name so the server can enforce the binding', async () => {
+        const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify(makeConnection()),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName: '@activepieces/piece-slack' })
+        await resolver.obtain('my-connection')
+
+        expect(fetchSpy.mock.calls[0][0]).toContain('&pieceName=%40activepieces%2Fpiece-slack')
+    })
+
+    it('throws ConnectionPieceMismatchError when the server rejects the binding', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(
+            JSON.stringify({ code: ErrorCode.MCP_PIECE_CONNECTION_MISMATCH, params: {} }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } },
+        ))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName: '@activepieces/piece-slack' })
+        await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionPieceMismatchError)
+    })
+
+    it('throws ConnectionLoadingError on a non-mismatch error even when a piece name is sent', async () => {
+        vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
+
+        const resolver = createConnectionResolver({ ...RESOLVER_PARAMS, pieceName: '@activepieces/piece-slack' })
         await expect(resolver.obtain('my-connection')).rejects.toThrow(ConnectionLoadingError)
     })
 

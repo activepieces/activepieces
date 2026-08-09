@@ -35,6 +35,12 @@ export class ConnectionLoadingError extends ExecutionError {
     }
 }
 
+export class ConnectionPieceMismatchError extends ExecutionError {
+    constructor(connectionName: string, pieceName: string, cause?: unknown) {
+        super('ConnectionPieceMismatch', formatMessage(`connection (${connectionName}) does not belong to piece (${pieceName})`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)

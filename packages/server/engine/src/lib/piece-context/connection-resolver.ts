@@ -1,11 +1,12 @@
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ConnectionPieceMismatchError, ErrorCode, ExecutionError, FetchError } from '@activepieces/shared'
 import { utils } from '../utils'
 
-export const createConnectionResolver = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionResolverParams): ConnectionResolver => {
+export const createConnectionResolver = ({ projectId, engineToken, apiUrl, contextVersion, pieceName }: CreateConnectionResolverParams): ConnectionResolver => {
     return {
         async obtain(externalId: string): Promise<AppConnectionValue> {
-            const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
+            const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}${isNil(pieceName) ? '' : `&pieceName=${encodeURIComponent(pieceName)}`}`
 
             const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError((async () => {
                 const response = await fetch(url, {
@@ -18,7 +19,8 @@ export const createConnectionResolver = ({ projectId, engineToken, apiUrl, conte
                 if (!response.ok) {
                     return handleResponseError({
                         externalId,
-                        httpStatus: response.status,
+                        pieceName,
+                        response,
                     })
                 }
                 const connection: AppConnection = await response.json()
@@ -42,12 +44,20 @@ export const createConnectionResolver = ({ projectId, engineToken, apiUrl, conte
     }
 }
 
-const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorParams): never => {
-    if (httpStatus === 404) {
+const handleResponseError = async ({ externalId, pieceName, response }: HandleResponseErrorParams): Promise<never> => {
+    if (response.status === 404) {
         throw new ConnectionNotFoundError(externalId)
+    }
+    if (!isNil(pieceName) && await isPieceMismatchResponse(response)) {
+        throw new ConnectionPieceMismatchError(externalId, pieceName)
     }
 
     throw new ConnectionLoadingError(externalId)
+}
+
+const isPieceMismatchResponse = async (response: Response): Promise<boolean> => {
+    const { data: body } = await tryCatch<{ code?: string }, Error>(() => response.json())
+    return body?.code === ErrorCode.MCP_PIECE_CONNECTION_MISMATCH
 }
 
 const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
@@ -86,11 +96,13 @@ type CreateConnectionResolverParams = {
     apiUrl: string
     engineToken: string
     contextVersion: ContextVersion | undefined
+    pieceName?: string
 }
 
 type HandleResponseErrorParams = {
     externalId: string
-    httpStatus: number
+    pieceName: string | undefined
+    response: Response
 }
 
 type HandleFetchErrorParams = {

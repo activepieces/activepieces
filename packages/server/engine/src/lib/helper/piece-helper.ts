@@ -46,6 +46,7 @@ export const pieceHelper = {
                 engineToken: constants.engineToken,
                 contextVersion: piece.getContextInfo?.().version,
                 stepNames: constants.stepNames,
+                pieceName: operation.pieceName,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -73,6 +74,7 @@ export const pieceHelper = {
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                     contextVersion: piece.getContextInfo?.().version,
+                    pieceName: operation.pieceName,
                 }),
             }
           
