@@ -8,6 +8,7 @@ export enum FlowActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
+    PROCESS_IN_BATCHES = 'PROCESS_IN_BATCHES',
     ROUTER = 'ROUTER',
 }
 
@@ -108,6 +109,22 @@ export const LoopOnItemsActionSchema = z.object({
     ...commonActionProps,
     type: z.literal(FlowActionType.LOOP_ON_ITEMS),
     settings: LoopOnItemsActionSettings,
+})
+
+export const ProcessInBatchesActionSettings = z.object({
+    ...commonActionSettings,
+    items: z.string(),
+    batchSize: z.number().int().min(1, { message: 'batchSizeMustBeAtLeastOne' }).default(10),
+    errorHandlingOptions: ActionErrorHandlingOptions,
+})
+export type ProcessInBatchesActionSettings = z.infer<
+  typeof ProcessInBatchesActionSettings
+>
+
+export const ProcessInBatchesActionSchema = z.object({
+    ...commonActionProps,
+    type: z.literal(FlowActionType.PROCESS_IN_BATCHES),
+    settings: ProcessInBatchesActionSettings,
 })
 
 export enum BranchOperator {
@@ -301,6 +318,10 @@ export const FlowAction: z.ZodType<FlowAction> = z.lazy(() =>
             nextAction: FlowAction.optional(),
             firstLoopAction: FlowAction.optional(),
         }),
+        ProcessInBatchesActionSchema.extend({
+            nextAction: FlowAction.optional(),
+            firstLoopAction: FlowAction.optional(),
+        }),
         z.object({
             ...commonActionProps,
             type: z.literal(FlowActionType.ROUTER),
@@ -326,6 +347,7 @@ export const SingleActionSchema = z.discriminatedUnion('type', [
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
+    ProcessInBatchesActionSchema,
     RouterActionSchema,
 ])
 
@@ -342,6 +364,7 @@ export type FlowAction =
     | (BaseActionProps & { type: FlowActionType.CODE, settings: CodeActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.PIECE, settings: PieceActionSettings, nextAction?: FlowAction, continueOnFailureBranches?: ContinueOnFailureBranches })
     | (BaseActionProps & { type: FlowActionType.LOOP_ON_ITEMS, settings: LoopOnItemsActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
+    | (BaseActionProps & { type: FlowActionType.PROCESS_IN_BATCHES, settings: ProcessInBatchesActionSettings, nextAction?: FlowAction, firstLoopAction?: FlowAction })
     | (BaseActionProps & { type: FlowActionType.ROUTER, settings: RouterActionSettings, nextAction?: FlowAction, children: (FlowAction | null)[] })
 
 export type RouterAction = BaseActionProps & {
@@ -354,6 +377,13 @@ export type RouterAction = BaseActionProps & {
 export type LoopOnItemsAction = BaseActionProps & {
     type: FlowActionType.LOOP_ON_ITEMS
     settings: LoopOnItemsActionSettings
+    nextAction?: FlowAction
+    firstLoopAction?: FlowAction
+}
+
+export type ProcessInBatchesAction = BaseActionProps & {
+    type: FlowActionType.PROCESS_IN_BATCHES
+    settings: ProcessInBatchesActionSettings
     nextAction?: FlowAction
     firstLoopAction?: FlowAction
 }

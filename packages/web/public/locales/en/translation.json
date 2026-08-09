@@ -2483,5 +2483,8 @@
   "Remove selected image": "Remove selected image",
   "{name} will be deleted for everyone. This cannot be undone.": "{name} will be deleted for everyone. This cannot be undone.",
   "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.": "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.",
-  "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}."
+  "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}.",
+  "batchSizeMustBeAtLeastOne": "Batch size must be at least 1",
+  "Process in Batches": "Process in Batches",
+  "Split a list into batches and run them in parallel. Batches don't finish in order.": "Split a list into batches and run them in parallel. Batches don't finish in order."
 }

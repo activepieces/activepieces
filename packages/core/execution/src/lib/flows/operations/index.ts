@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Nullable } from '@activepieces/core-utils'
 import { Metadata } from '@activepieces/core-utils'
-import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
+import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, ProcessInBatchesActionSchema, ProcessInBatchesActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
@@ -106,6 +106,7 @@ export type AddNoteRequest = z.infer<typeof AddNoteRequest>
 export enum StepLocationRelativeToParent {
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
+    INSIDE_BATCH = 'INSIDE_BATCH',
     INSIDE_BRANCH = 'INSIDE_BRANCH',
     INSIDE_ON_SUCCESS_BRANCH = 'INSIDE_ON_SUCCESS_BRANCH',
     INSIDE_ON_FAILURE_BRANCH = 'INSIDE_ON_FAILURE_BRANCH',
@@ -151,6 +152,7 @@ export type DeleteActionRequest = z.infer<typeof DeleteActionRequest>
 export const UpdateActionRequest = z.union([
     CodeActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: CodeActionSettings.omit({ sampleData: true }) })),
     LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
+    ProcessInBatchesActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: ProcessInBatchesActionSettings.omit({ sampleData: true }) })),
     PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
     RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
 ])

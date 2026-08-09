@@ -40,13 +40,16 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
             })
         }
         switch (step.type) {
-            case FlowActionType.LOOP_ON_ITEMS: {
+            case FlowActionType.LOOP_ON_ITEMS:
+            case FlowActionType.PROCESS_IN_BATCHES: {
                 if (step.firstLoopAction) {
                     steps.push({
                         type: FlowOperationType.ADD_ACTION,
                         request: {
                             parentStep: step.name,
-                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+                            stepLocationRelativeToParent: step.type === FlowActionType.LOOP_ON_ITEMS
+                                ? StepLocationRelativeToParent.INSIDE_LOOP
+                                : StepLocationRelativeToParent.INSIDE_BATCH,
                             action: removeAnySubsequentAction(step.firstLoopAction),
                         },
                     })
@@ -142,7 +145,8 @@ function removeAnySubsequentAction(action: FlowAction): FlowAction {
             })
             break
         }
-        case FlowActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS:
+        case FlowActionType.PROCESS_IN_BATCHES: {
             delete clonedAction.firstLoopAction
             break
         }
