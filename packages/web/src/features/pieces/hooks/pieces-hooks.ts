@@ -538,6 +538,9 @@ const getExploreTabContent = (
   const loopPiece = queryResult.find(
     (piece) => piece.type === FlowActionType.LOOP_ON_ITEMS,
   );
+  const processInBatchesPiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.PROCESS_IN_BATCHES,
+  );
 
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
@@ -552,6 +555,13 @@ const getExploreTabContent = (
   }
   if (loopPiece) {
     hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
+  }
+  if (processInBatchesPiece) {
+    hightlightedPiecesCategory.metadata.splice(
+      loopPiece ? 6 : 5,
+      0,
+      processInBatchesPiece,
+    );
   }
   if (pinnedPieces.length > 0) {
     hightlightedPiecesCategory.metadata = [

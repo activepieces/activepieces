@@ -17,6 +17,7 @@ import {
   PieceTrigger,
   FlowTrigger,
   BranchExecutionType,
+  DEFAULT_BATCH_SIZE,
   RouterExecutionType,
   flowStructureUtil,
   StepSettings,
@@ -98,7 +99,8 @@ const isStepInitiallyValid = (
         requireAuth: pieceSelectorItem.actionOrTrigger.requireAuth,
       });
     }
-    case FlowActionType.LOOP_ON_ITEMS: {
+    case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES: {
       if (
         overrideDefaultSettings &&
         'input' in overrideDefaultSettings &&
@@ -194,6 +196,18 @@ const getDefaultStepValues = ({
           type: FlowActionType.LOOP_ON_ITEMS,
           settings: overrideDefaultSettings ?? {
             items: '',
+          },
+        },
+        common,
+      );
+    case FlowActionType.PROCESS_IN_BATCHES:
+      return deepMergeAndCast<FlowAction>(
+        {
+          type: FlowActionType.PROCESS_IN_BATCHES,
+          settings: overrideDefaultSettings ?? {
+            items: '',
+            batchSize: DEFAULT_BATCH_SIZE,
+            errorHandlingOptions,
           },
         },
         common,

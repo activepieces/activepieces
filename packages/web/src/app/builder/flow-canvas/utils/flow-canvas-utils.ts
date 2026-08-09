@@ -8,6 +8,7 @@ import {
   flowStructureUtil,
   FlowVersion,
   LoopOnItemsAction,
+  ProcessInBatchesAction,
   RouterAction,
   StepLocationRelativeToParent,
   FlowTrigger,
@@ -135,7 +136,7 @@ const createStepGraph: (params: {
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== FlowActionType.LOOP_ON_ITEMS &&
+      !sharedFlowCanvasUtils.isContainerStep(step) &&
       step.type !== FlowActionType.ROUTER &&
       !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
@@ -159,14 +160,13 @@ const buildFlowGraph: (params: {
     graphAlongSize: layout.stepAlongSize + layout.spaceAlongBetweenSteps,
     orientation,
   });
-  const childGraph =
-    step.type === FlowActionType.LOOP_ON_ITEMS
-      ? buildLoopChildGraph({ step, orientation })
-      : step.type === FlowActionType.ROUTER
-      ? buildRouterChildGraph({ step, orientation })
-      : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
-      ? buildContinueOnFailureBranchesGraph({ step, orientation })
-      : null;
+  const childGraph = sharedFlowCanvasUtils.isContainerStep(step)
+    ? buildLoopChildGraph({ step, orientation })
+    : step.type === FlowActionType.ROUTER
+    ? buildRouterChildGraph({ step, orientation })
+    : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
+    ? buildContinueOnFailureBranchesGraph({ step, orientation })
+    : null;
 
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
   const nextStepGraph = buildFlowGraph({
@@ -270,10 +270,14 @@ const calculateGraphBoundingBox = ({
 };
 
 const buildLoopChildGraph: (params: {
-  step: LoopOnItemsAction;
+  step: LoopOnItemsAction | ProcessInBatchesAction;
   orientation: CanvasOrientation;
 }) => ApGraph = ({ step, orientation }) => {
   const layout = getLayout(orientation);
+  const stepLocationRelativeToParent =
+    step.type === FlowActionType.PROCESS_IN_BATCHES
+      ? StepLocationRelativeToParent.INSIDE_BATCH
+      : StepLocationRelativeToParent.INSIDE_LOOP;
   const childGraph = step.firstLoopAction
     ? buildFlowGraph({
         step: step.firstLoopAction,
@@ -283,8 +287,7 @@ const buildLoopChildGraph: (params: {
         parentStep: step,
         nodeData: {
           parentStepName: step.name,
-          stepLocationRelativeToParent:
-            StepLocationRelativeToParent.INSIDE_LOOP,
+          stepLocationRelativeToParent,
           edgeId: `${step.name}-loop-start-edge`,
         },
         orientation,
@@ -334,6 +337,7 @@ const buildLoopChildGraph: (params: {
       type: ApEdgeType.LOOP_START_EDGE as const,
       data: {
         isLoopEmpty: isNil(step.firstLoopAction),
+        stepLocationRelativeToParent,
       },
     },
     {
@@ -649,7 +653,7 @@ const isSkipped = (stepName: string, trigger: FlowTrigger) => {
     .findPathToStep(trigger, stepName)
     .filter(
       (stepInPath) =>
-        stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
+        sharedFlowCanvasUtils.isContainerStep(stepInPath) ||
         stepInPath.type === FlowActionType.ROUTER ||
         sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
     )

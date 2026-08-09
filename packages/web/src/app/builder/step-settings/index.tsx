@@ -41,6 +41,7 @@ import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { ProcessInBatchesSettings } from './process-in-batches-settings';
 import { RouterSettings } from './router-settings';
 import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
@@ -157,9 +158,11 @@ const StepSettingsContainer = () => {
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
-    [FlowActionType.CODE, FlowActionType.PIECE].includes(
-      modifiedStep.type as FlowActionType,
-    ) && !isNil(stepMetadata);
+    [
+      FlowActionType.CODE,
+      FlowActionType.PIECE,
+      FlowActionType.PROCESS_IN_BATCHES,
+    ].includes(modifiedStep.type as FlowActionType) && !isNil(stepMetadata);
 
   const runAgentStep =
     modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
@@ -182,6 +185,11 @@ const StepSettingsContainer = () => {
       >
         {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
           <LoopsSettings readonly={readonly}></LoopsSettings>
+        )}
+        {modifiedStep.type === FlowActionType.PROCESS_IN_BATCHES && (
+          <ProcessInBatchesSettings
+            readonly={readonly}
+          ></ProcessInBatchesSettings>
         )}
         {modifiedStep.type === FlowActionType.CODE && (
           <CodeSettings readonly={readonly}></CodeSettings>
@@ -225,7 +233,7 @@ const StepSettingsContainer = () => {
             hideRetryOnFailure={
               stepMetadata.type === FlowActionType.PIECE
                 ? stepMetadata.errorHandlingOptions?.retryOnFailure?.hide
-                : false
+                : stepMetadata.type === FlowActionType.PROCESS_IN_BATCHES
             }
           ></ActionErrorHandlingForm>
         )}

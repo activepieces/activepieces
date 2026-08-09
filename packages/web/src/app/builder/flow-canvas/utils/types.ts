@@ -67,6 +67,7 @@ export type ApButtonData = {
       stepLocationRelativeToParent:
         | StepLocationRelativeToParent.AFTER
         | StepLocationRelativeToParent.INSIDE_LOOP
+        | StepLocationRelativeToParent.INSIDE_BATCH
         | StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH
         | StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH;
     }
@@ -131,6 +132,9 @@ export type ApLoopStartEdge = Edge & {
   type: ApEdgeType.LOOP_START_EDGE;
   data: {
     isLoopEmpty: boolean;
+    stepLocationRelativeToParent:
+      | StepLocationRelativeToParent.INSIDE_LOOP
+      | StepLocationRelativeToParent.INSIDE_BATCH;
   };
 };
 

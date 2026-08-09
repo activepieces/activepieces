@@ -2486,5 +2486,12 @@
   "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}.",
   "batchSizeMustBeAtLeastOne": "Batch size must be at least 1",
   "Process in Batches": "Process in Batches",
-  "Split a list into batches and run them in parallel. Batches don't finish in order.": "Split a list into batches and run them in parallel. Batches don't finish in order."
+  "Split a list into batches and run them in parallel. Batches don't finish in order.": "Split a list into batches and run them in parallel. Batches don't finish in order.",
+  "batchSizeMustBeAWholeNumber": "Batch size must be a whole number",
+  "Items per Batch": "Items per Batch",
+  "Batches run in parallel. Completion order is not guaranteed.": "Batches run in parallel. Completion order is not guaranteed.",
+  "Smaller batches run wider, up to what your workers can run at once.": "Smaller batches run wider, up to what your workers can run at once.",
+  "Paste Inside Batch": "Paste Inside Batch",
+  "Continue on Failure": "Continue on Failure",
+  "Lets the flow carry on when this step fails.": "Lets the flow carry on when this step fails."
 }

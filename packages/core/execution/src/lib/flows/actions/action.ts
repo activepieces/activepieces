@@ -111,10 +111,12 @@ export const LoopOnItemsActionSchema = z.object({
     settings: LoopOnItemsActionSettings,
 })
 
+export const DEFAULT_BATCH_SIZE = 10
+
 export const ProcessInBatchesActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
-    batchSize: z.number().int().min(1, { message: 'batchSizeMustBeAtLeastOne' }).default(10),
+    batchSize: z.number().int({ message: 'batchSizeMustBeAWholeNumber' }).min(1, { message: 'batchSizeMustBeAtLeastOne' }).default(DEFAULT_BATCH_SIZE),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type ProcessInBatchesActionSettings = z.infer<

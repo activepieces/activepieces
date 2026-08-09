@@ -160,7 +160,7 @@ export const FlowCanvas = React.memo(
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          step.type === FlowActionType.LOOP_ON_ITEMS ||
+          sharedFlowCanvasUtils.isContainerStep(step) ||
           step.type === FlowActionType.ROUTER ||
           sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ) {
@@ -268,6 +268,7 @@ FlowCanvas.displayName = 'FlowCanvas';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
     case FlowActionType.ROUTER:
       return step.children.reduce((routerKey, child) => {

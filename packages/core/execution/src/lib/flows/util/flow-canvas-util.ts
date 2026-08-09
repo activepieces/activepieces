@@ -209,6 +209,7 @@ export const flowCanvasUtils = {
         buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
+    isContainerStep,
     hasContinueOnFailureBranches,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,

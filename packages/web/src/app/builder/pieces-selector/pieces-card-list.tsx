@@ -218,6 +218,7 @@ const getItemHeight = (
   const isCoreAction =
     pieceMetadata.type === FlowActionType.CODE ||
     pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionType.PROCESS_IN_BATCHES ||
     pieceMetadata.type === FlowActionType.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;
