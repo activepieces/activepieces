@@ -4,9 +4,11 @@ icon: 🪃
 
 # Fan-in entry points
 
-The [fan-in barrier](./flow-runs.md) ships **dormant** — the server-side join is complete and no piece
-calls it. This page is what the first caller has to deal with. Read decision 000015 first for why the
-barrier is shaped the way it is; everything here is downstream of that.
+The [fan-in barrier](./flow-runs.md) has **one shipped caller**: the `PROCESS_IN_BATCHES` core step. The
+CSV piece is still fire-and-forget and still has to be converted. This page is what a caller has to deal
+with — what the shipped one dealt with, and what the next one inherits. Read decision 000015 first for why
+the barrier is shaped the way it is, and [000025](../decisions/000025-batch-children-dispatch-through-a-dedicated-endpoint-with-a-synchronous-child-row.md)
+for the transport underneath the shipped one; everything here is downstream of those.
 
 **Binding constraint, settled: if it fans out, it must fan in.** No fire-and-forget fan-out action,
 ever. `callFlow.waitForResponse` (a single fire-and-forget call, not a fan-out) stays as it is.
@@ -15,42 +17,55 @@ For how other platforms answered the same questions — concurrency scope, per-b
 [Fan-out prior art](./fan-out-prior-art.md). Most relevant here: **nothing in the industry re-attaches a
 retried child to a closed parent aggregate**, so the re-attachment problem below is one we are inventing.
 
-### The two candidates
+### A. Stream CSV to Subflows — still outstanding
 
-**A. Stream CSV to Subflows.** Exists on `origin/feat/stream-csv-to-subflows` as a **fire-and-forget**
-action (`packages/pieces/core/subflows/src/lib/actions/stream-csv-to-flow.ts` plus a bounded-window
-dispatcher in `lib/fan-out.ts`, `maxInFlight: 5`). It must be converted to fan in before it ships.
-Children go through `POST /v1/webhooks/:flowId` to a *separate* flow carrying a Callable Flow trigger.
+Exists on `origin/feat/stream-csv-to-subflows` as a **fire-and-forget** action
+(`packages/pieces/core/subflows/src/lib/actions/stream-csv-to-flow.ts` plus a bounded-window dispatcher in
+`lib/fan-out.ts`, `maxInFlight: 5`). It must be converted to fan in before it ships. Children go through
+`POST /v1/webhooks/:flowId` to a *separate* flow carrying a Callable Flow trigger, which is why almost
+nothing the batch step built for itself comes free here: the webhook path writes no dispatch index, creates
+the child row two BullMQ hops late, and cannot run the parent's version from a mid-graph step. Concretely it
+still owes the version-floor guard, a resumable dispatch loop, and a stable-source rule (see both below).
 
-**B. Process in Batches step.** A new **`FlowActionType.PROCESS_IN_BATCHES`** core action — a loop-shaped container
-whose nested body is a *section* of steps, batched out to child runs.
+### B. Process in Batches — shipped
 
-- **Not** a `LOOP_ON_ITEMS` mode. Costs a case in ~43 live sites that branch on `LOOP_ON_ITEMS` — but
+`FlowActionType.PROCESS_IN_BATCHES` is a core action: a loop-shaped container whose nested body is a
+*section* of steps, batched out to child runs. It is the barrier's first and so far only caller.
+
+- **Not** a `LOOP_ON_ITEMS` mode. Cost a case in ~43 live sites that branch on `LOOP_ON_ITEMS` — but
   **no `LATEST_FLOW_SCHEMA_VERSION` bump**, an early assumption since overturned (see the bump gotcha on
   [flows](./flows.md)); buys honest semantics — a loop's output is per-iteration results, a
   batched fan-out's is a fan-in summary, and conflating them is a silent output-shape change.
-- Children run the **parent's** `flowVersionId` starting at a section entry step. `flowExecutor.execute()`
-  already starts from any action node (`packages/server/engine/src/lib/handler/flow-executor.ts`), and
-  `stepNameToTest` is existing precedent for executing a subset of a version. No hidden flow rows, no
-  publish-time sync problem, no orphans when the section is deleted. The body terminates itself
-  (`nextAction` is null at the end of the nested chain), so no exit marker is needed.
-- **Section inputs**: statically extract the body's `{{ stepX.* }}` references at dispatch and resolve
-  them from the parent's live state, so only what is referenced travels. **The utility already exists** —
-  `extractReferencedStepNames` in `packages/server/engine/src/lib/variables/props-resolver.ts` (substring
-  match of the flow's step names against the JSON-stringified unresolved input) feeding
-  `FlowExecutorContext.currentState(referencedStepNames)`, which is how *every* step in *every* run already
-  resolves. What is missing is only the union over a body section rather than one step's input; an earlier
-  version of this page wrongly said no utility existed and pointed at `flowStructureUtil.transferStep`.
-  A token can only resolve if its step name appears literally in the unresolved input, so that union is a
-  **provable superset** of what any body step could address — referenced-only is parity with a full
-  snapshot, not a narrowing of it. Code steps do not weaken this: `code-executor.ts` passes
-  `inputs: resolvedInput` (the step's declared `settings.input` only), so there is no broad context handle.
-- **Dispatch runs in the engine sandbox** against a new `POST /v1/flow-runs/dispatch`. These children
-  cannot use `POST /v1/webhooks/:flowId` — that resolves the *published* version and runs a trigger.
-  Rejected alternative: a server-side fan-out job (materialises the whole item list to storage and adds
-  a job type).
+- Children run the **parent's** `flowVersionId` starting at the body's entry step (`firstLoopAction`).
+  `flowExecutor.execute()` already starts from any action node, and `stepNameToTest` was existing precedent
+  for executing a subset of a version. No hidden flow rows, no publish-time sync problem, no orphans when
+  the section is deleted. The body terminates itself (`nextAction` is null at the end of the nested chain),
+  so no exit marker is needed.
+- **Section inputs**: the body's `{{ stepX.* }}` references are extracted statically at dispatch and
+  resolved from the parent's live state, so only what is referenced travels — `buildSeed` in
+  `process-in-batches-executor.ts` unions `extractReferencedStepNames` over
+  `flowStructureUtil.getAllChildSteps(action)`. A token can only resolve if its step name appears literally
+  in the unresolved input, so that union is a **provable superset** of what any body step could address —
+  referenced-only is parity with a full snapshot, not a narrowing of it. Code steps do not weaken this:
+  `code-executor.ts` passes `inputs: resolvedInput` (the step's declared `settings.input` only), so there is
+  no broad context handle. (An earlier version of this page wrongly said no utility existed and pointed at
+  `flowStructureUtil.transferStep`.)
+  The one reference that cannot travel is a step scoped to an **enclosing loop iteration**: it is absent
+  from `executionState.steps` but present via `getStepOutput`, and `assertNotScopedToEnclosingIteration`
+  turns that into a USER-type failure naming the step rather than silently seeding empty.
+- **Dispatch runs in the engine sandbox** against `POST /v1/flow-runs/dispatch` — see the transport section
+  below. Rejected alternative: a server-side fan-out job (materialises the whole item list to storage and
+  adds a job type).
+- **The batch's items reach the body as the step's own output** — the dispatcher seeds
+  `{ [stepName]: { items: batch } }` alongside the extracted seed, so `{{ step_1.items }}` inside the body
+  is the slice, and a nested `LOOP_ON_ITEMS` over it is how a body handles one item at a time.
+- **Sizing guidance is documentation, not a builder affordance.** The builder carries one numberless helper
+  line; the four ceilings (downstream tolerance → the knee → the per-batch timeout → retry blast radius)
+  live in [the step's user docs](../../docs/flows/process-in-batches.mdx). A computed prefill from the
+  concurrency limit was killed twice over: it is *anti-correlated* with the optimum (a bigger plan prefills
+  a slower default), and a prefill is a persisted build-time concurrency figure that outlives a plan change.
 
-### What the first entry point forces
+### What an entry point forces
 
 - **Version floor — CSV piece only.** `sealFanIn` was added to `RunContext` without bumping
   `ContextVersion` / `MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION` (see the contract comment
@@ -295,10 +310,10 @@ If a dispatch created the child row synchronously (QUEUED) before returning, the
 `sealed ∧ no non-terminal child`, and `expectedChildren`, `failedToDispatch` and `notStarted` all
 disappear, along with the whole "accepted but never materialised" class.
 
-**That comes free on the `PROCESS_IN_BATCHES` path.** `POST /v1/flow-runs/dispatch` is a new endpoint, so it can
-insert the row synchronously at no cost to the existing hot webhook path; `expectedChildren` then survives
-only for the CSV piece. Caveat: a pre-created QUEUED row that never runs relocates the hang rather than
-removing it, unless the job's failure paths mark it terminal.
+**That came free on the `PROCESS_IN_BATCHES` path, and the collapse was still not taken** — `expectedChildren`
+has to exist for the CSV piece regardless, and one predicate serving both paths beats two. Why the
+synchronous row was worth building anyway, and what it costs, is
+[000025](../decisions/000025-batch-children-dispatch-through-a-dedicated-endpoint-with-a-synchronous-child-row.md).
 
 **On the `fan_in_child` join-table alternative** — considered and rejected for now. The mechanism that kills
 `expectedChildren` is *synchronous child-row creation*, not the table, and that works just as well on
@@ -311,7 +326,9 @@ join hop, and — if the join row duplicates child status — puts a write back 
 transaction, which is exactly what decision 000015 removed. It is also **less hard-to-reverse than it
 looks**: no barrier outlives `AP_PAUSED_FLOW_TIMEOUT_DAYS` and attribution is written once at dispatch, so
 the table can be added later with a dual-write over one retention window and no backfill of live state.
-Revisit it when `POST /v1/flow-runs/dispatch` is built.
+`POST /v1/flow-runs/dispatch` is now built and the table was still not needed — the parent-side batch
+browser reads children off the partial index on `flow_run.parentWaitpointId` directly. Revisit it only if
+straggler *cancellation* gets built.
 
 ### A fan-in timeout leaves stragglers running
 
@@ -319,8 +336,10 @@ The barrier releases with `stillRunning > 0` and nothing cancels those children.
 `FLOW_TIMEOUT_SECONDS`, except descendants paused on their own waitpoints, so the leak is bounded but
 real. This is a **new capability, not a wiring job**: `getAllChildRuns` is recursive on `parentRunId` with
 `CANCELLABLE_STATUSES = [PAUSED, QUEUED]`, so it cannot stop a RUNNING child. Doing it properly needs a
-`parentWaitpointId`-scoped variant plus a decision about half-finished side effects. It belongs with the
-entry point that can expose the choice to the user.
+`parentWaitpointId`-scoped variant plus a decision about half-finished side effects. **The first entry point
+shipped without it** — `PROCESS_IN_BATCHES` states it as accepted behaviour in the step's docs instead
+(cancel reaches a batch only while its whole ancestor chain is QUEUED or PAUSED, and a straggler's only
+trace is a bare `stillRunning` count).
 
 ### Hard ceiling — state it, do not try to fix it in v1
 
@@ -331,10 +350,10 @@ dispatch throughput. Serial dispatch is what does not scale.
 
 The earlier decision that rejected server-side dispatch for v1 as the wrong shape still stands — but it
 also rejected fan-in itself on reasoning the barrier has since invalidated: the parent now *pauses* rather
-than blocking inside the step, so the 600s bounds parse-and-dispatch only, not the wait. **Amend that
-decision when the entry point lands.** (It is cited in the review as "000015", which is now this barrier's
-number — the server-side-dispatch decision is not in this repo, so find it in Craftspace before citing a
-number for it.)
+than blocking inside the step, so the 600s bounds parse-and-dispatch only, not the wait. That decision is
+**not in this repo** and is still unamended: it lives in Craftspace and has to be edited there by hand.
+Do not cite a number for it — the "000015" it is filed under in an old review is this barrier's number
+here, not its own.
 
 ### Slice refs a barrier's children read cannot expire inside the barrier window — except one gap
 
@@ -357,6 +376,10 @@ surface that browses children (run-detail panel, ops tooling): it needs a childr
 child runs by `parentWaitpointId` plus the persisted dispatch index — and since list surfaces hide barrier
 children by default (`parentWaitpointId IS NULL`), that query is an explicit include, not the default list.
 A summary-only UI avoids the new surface but can never open a succeeded batch's logs.
+
+**The batch browser took that route, not the summary-only one.** The parent's run detail lists a batch
+step's children by `parentWaitpointId` + `dispatchIndex` and opens each one's own log file, so a *succeeded*
+batch is reachable — which the summary alone could never do.
 
 The query itself is cheap and needs **no new index**: the partial index the barrier work already shipped
 (`flow-run-entity.ts`, columns `['parentWaitpointId', 'projectId', 'status']`,
