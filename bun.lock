@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.128.0",
+      "version": "0.128.2",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -6890,7 +6890,7 @@
     },
     "packages/pieces/community/pinterest": {
       "name": "@activepieces/piece-pinterest",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9898,7 +9898,7 @@
     },
     "packages/pieces/community/youtrack": {
       "name": "@activepieces/piece-youtrack",
-      "version": "0.0.5",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10354,7 +10354,7 @@
     },
     "packages/pieces/core/math-helper": {
       "name": "@activepieces/piece-math-helper",
-      "version": "0.0.28",
+      "version": "0.0.29",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
