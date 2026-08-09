@@ -76,7 +76,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
-    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform, callerTokenVersion }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
         return distributedLock(log).runExclusive({
             key: `create-platform-${identityId}`,
             timeoutInSeconds: 30,
@@ -84,7 +84,16 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
                 const linkedUser = existingUsers.find((user) => !isNil(user.platformId))
                 if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
-                    const response = await finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens: false, identityId, log })
+                    // Rotate here only when the caller's own token is still the
+                    // current one. That means provisioning finished without ever
+                    // rotating — an interrupted attempt — so retiring the
+                    // credential now stands nothing up. If a rotation has already
+                    // happened, this is a duplicate of a call that issued a
+                    // session, and rotating again would kill it.
+                    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+                    const rotationStillOwed = invalidatePreviousTokens
+                        && isSameTokenVersion(identity.tokenVersion, callerTokenVersion)
+                    const response = await finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens: rotationStillOwed, identityId, log })
                     return { response, provisioned: false }
                 }
                 const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
@@ -280,6 +289,15 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
 })
 
+// A never-rotated identity carries no version at all, so two absent values are
+// the same version, not two unknowns.
+function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
+    if (isNil(current) && isNil(caller)) {
+        return true
+    }
+    return current === caller
+}
+
 function personalProjectName(platformName: string): string {
     return /['’]s$/.test(platformName) ? `${platformName} Project` : `${platformName}'s Project`
 }
@@ -380,6 +398,7 @@ type CreatePlatformWithProjectParams = {
     name: string
     invalidatePreviousTokens: boolean
     isFirstPlatform: boolean
+    callerTokenVersion: string | undefined
 }
 
 type FinishExistingPlatformParams = {

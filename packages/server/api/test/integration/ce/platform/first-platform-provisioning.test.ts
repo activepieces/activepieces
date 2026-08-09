@@ -32,12 +32,13 @@ async function createViaRoute({ token, name }: { token: string, name: string }) 
     })
 }
 
-async function createFirstPlatform(identityId: string) {
+async function createFirstPlatform(identityId: string, callerTokenVersion?: string) {
     const { response } = await platformService(app!.log).createPlatformWithProject({
         identityId,
         name: 'Ahmad',
         invalidatePreviousTokens: true,
         isFirstPlatform: true,
+        callerTokenVersion,
     })
     return response
 }
@@ -48,7 +49,13 @@ function provisionFirstPlatform(identityId: string) {
         name: 'Ahmad',
         invalidatePreviousTokens: true,
         isFirstPlatform: true,
+        callerTokenVersion: undefined,
     })
+}
+
+async function tokenVersionOf(identityId: string): Promise<string> {
+    const identity = await databaseConnection().getRepository('user_identity').findOneBy({ id: identityId })
+    return identity!.tokenVersion
 }
 
 async function strandUser(identityId: string): Promise<string> {
@@ -136,6 +143,31 @@ describe('First platform provisioning', () => {
         expect(retry.platformId).toBe(first.platformId)
         expect(await databaseConnection().getRepository('project').count()).toBe(1)
         expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+    })
+
+    it('finishes the rotation an interrupted attempt never got to', async () => {
+        const identityId = await seedVerifiedIdentity()
+        const strandedUserId = await strandUser(identityId)
+        await databaseConnection().getRepository('platform').save(
+            createMockPlatform({ ownerId: strandedUserId }),
+        )
+        await databaseConnection().getRepository('user')
+            .update(strandedUserId, { platformId: (await databaseConnection().getRepository('platform').findOneBy({ ownerId: strandedUserId }))!.id })
+        const beforeRetry = await tokenVersionOf(identityId)
+
+        await createFirstPlatform(identityId, beforeRetry)
+
+        expect(await tokenVersionOf(identityId)).not.toBe(beforeRetry)
+    })
+
+    it('leaves the token version alone for a duplicate that carries a spent version', async () => {
+        const identityId = await seedVerifiedIdentity()
+        await createFirstPlatform(identityId, await tokenVersionOf(identityId))
+        const afterFirst = await tokenVersionOf(identityId)
+
+        await createFirstPlatform(identityId, 'a-version-from-before-the-rotation')
+
+        expect(await tokenVersionOf(identityId)).toBe(afterFirst)
     })
 
     it('rotates once when two first-platform creations race, so neither session is stranded', async () => {
