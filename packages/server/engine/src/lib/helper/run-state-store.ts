@@ -22,7 +22,10 @@ export const runStateStore = {
     init({ runId }: { runId: string }): void {
         runStateStore.dispose()
         try {
-            const base = getBasePath()
+            const { parent, base, isSandboxed } = getStoreLocation()
+            if (isSandboxed) {
+                sweepSandboxStores(parent)
+            }
             fs.mkdirSync(base, { recursive: true })
             const filePath = path.join(base, `${runId}.sqlite`)
             fs.rmSync(filePath, { force: true })
@@ -144,10 +147,21 @@ export const runStateStore = {
     },
 }
 
-function getBasePath(): string {
+function getStoreLocation(): { parent: string, base: string, isSandboxed: boolean } {
     const executionMode = process.env.AP_EXECUTION_MODE as ExecutionMode | undefined
     const isSandboxed = executionMode === ExecutionMode.SANDBOX_PROCESS || executionMode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
-    const base = isSandboxed ? os.tmpdir() : process.env.AP_FLOWS_CACHE_PATH!
+    const parent = isSandboxed ? os.tmpdir() : process.env.AP_FLOWS_CACHE_PATH!
     const utcDate = new Date().toISOString().slice(0, 10)
-    return path.join(base, `${RUN_STATE_STORE_DIR_PREFIX}${utcDate}`)
+    const base = path.join(parent, `${RUN_STATE_STORE_DIR_PREFIX}${utcDate}`)
+    return { parent, base, isSandboxed }
+}
+
+function sweepSandboxStores(parent: string): void {
+    tryCatchSync(() => {
+        for (const entry of fs.readdirSync(parent)) {
+            if (entry.startsWith(RUN_STATE_STORE_DIR_PREFIX)) {
+                fs.rmSync(path.join(parent, entry), { recursive: true, force: true })
+            }
+        }
+    })
 }

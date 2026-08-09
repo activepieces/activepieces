@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { FlowActionType, GenericStepOutput, RUN_STATE_STORE_DIR_PREFIX, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ExecutionMode, FlowActionType, GenericStepOutput, RUN_STATE_STORE_DIR_PREFIX, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { runStateStore } from '../../src/lib/helper/run-state-store'
 
 const ROOT_PATH = '[]'
@@ -108,6 +108,49 @@ describe('runStateStore', () => {
             finally {
                 process.env.AP_FLOWS_CACHE_PATH = savedCachePath
             }
+        })
+    })
+
+    describe('sweep on init in sandboxed mode', () => {
+        const savedMode = process.env.AP_EXECUTION_MODE
+        let savedTmpDir: string | undefined
+        let sandboxParent: string
+
+        beforeEach(() => {
+            runStateStore.dispose()
+            savedTmpDir = process.env.TMPDIR
+            sandboxParent = fs.mkdtempSync(path.join(os.tmpdir(), 'run-state-sandbox-'))
+            process.env.TMPDIR = sandboxParent
+            process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
+        })
+
+        afterEach(() => {
+            runStateStore.dispose()
+            process.env.AP_EXECUTION_MODE = savedMode
+            if (savedTmpDir === undefined) {
+                delete process.env.TMPDIR
+            }
+            else {
+                process.env.TMPDIR = savedTmpDir
+            }
+            fs.rmSync(sandboxParent, { recursive: true, force: true })
+        })
+
+        test('removes leftover store dirs from prior runs but keeps unrelated box files', () => {
+            const parent = os.tmpdir()
+            const staleDir = path.join(parent, `${RUN_STATE_STORE_DIR_PREFIX}2000-01-01`)
+            fs.mkdirSync(staleDir, { recursive: true })
+            fs.writeFileSync(path.join(staleDir, 'prior-run.sqlite'), 'prior tenant data')
+            const unrelated = path.join(parent, 'piece-scratch.tmp')
+            fs.writeFileSync(unrelated, 'keep me')
+
+            runStateStore.init({ runId: RUN_ID })
+
+            expect(fs.existsSync(staleDir)).toBe(false)
+            expect(fs.existsSync(unrelated)).toBe(true)
+            expect(runStateStore.isInitialized()).toBe(true)
+            putStep({ name: 'step_1', output: { a: 1 } })
+            expect(runStateStore.getStepOutput({ name: 'step_1', stepPath: ROOT_PATH })).toBeDefined()
         })
     })
 
