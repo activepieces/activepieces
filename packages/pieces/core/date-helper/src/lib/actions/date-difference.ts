@@ -70,7 +70,7 @@ export const dateDifferenceAction = createAction({
     }),
   },
   async run(context) {
-    
+
     const inputStartDate = context.propsValue.startDate;
     const startDateFormat = getCorrectedFormat(context.propsValue.startDateFormat);
     const inputEndDate = context.propsValue.endDate;
