@@ -1,5 +1,6 @@
 import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { Job } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
@@ -14,6 +15,7 @@ import { systemJobIds, SystemJobName } from '../../../../../src/app/helper/syste
 import { systemJobHandlers } from '../../../../../src/app/helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import { redisMetadataKey } from '../../../../../src/app/workers/job'
+import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockWaitpoint } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -50,23 +52,27 @@ async function createParentRun(status: FlowRunStatus = FlowRunStatus.PAUSED) {
     return { flow, flowVersion, flowRun }
 }
 
-async function createChildren({ parentRunId, parentWaitpointId, statuses }: {
+async function createChildren({ parentRunId, parentWaitpointId, statuses, dispatchIndices }: {
     parentRunId?: string
     parentWaitpointId?: string
     statuses: FlowRunStatus[]
+    dispatchIndices?: number[]
 }) {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const flowVersion = createMockFlowVersion({ flowId: flow.id, state: FlowVersionState.LOCKED })
     await db.save('flow_version', flowVersion)
-    const children = statuses.map((status) => createMockFlowRun({
-        projectId: ctx.project.id,
-        flowId: flow.id,
-        flowVersionId: flowVersion.id,
-        status,
-        parentRunId,
-        parentWaitpointId,
-        environment: RunEnvironment.PRODUCTION,
+    const children = statuses.map((status, index) => ({
+        ...createMockFlowRun({
+            projectId: ctx.project.id,
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            status,
+            parentRunId,
+            parentWaitpointId,
+            environment: RunEnvironment.PRODUCTION,
+        }),
+        dispatchIndex: dispatchIndices?.[index] ?? null,
     }))
     for (const child of children) {
         await db.save('flow_run', child)
@@ -94,6 +100,19 @@ async function seedBarrier({ flowRunId, expectedChildren, status, resumePayload,
     })
     await db.save('waitpoint', waitpoint)
     return waitpoint
+}
+
+async function findQueuedJobsForRun(runId: string): Promise<Job[]> {
+    const queues = jobQueue(app.log).getAllQueues()
+    const jobsPerQueue = await Promise.all(queues.map((queue) => queue.getJobs(['waiting', 'prioritized', 'delayed', 'active', 'completed', 'failed'])))
+    return jobsPerQueue.flat().filter((job) => {
+        const data: unknown = job.data
+        return typeof data === 'object' && data !== null && 'runId' in data && data.runId === runId
+    })
+}
+
+function child({ status, dispatchIndex }: { status: FlowRunStatus, dispatchIndex: number | null }) {
+    return { id: apId(), status, dispatchIndex }
 }
 
 const DISPATCH_DIGEST = 'a'.repeat(64)
@@ -207,8 +226,14 @@ describe('fanInBarrier predicate', () => {
     it('reports every bucket exactly, without baseline arithmetic', async () => {
         const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 4 })
         const counts = { succeeded: 2, failed: 1, canceled: 1, stillRunning: 0, terminal: 4 }
+        const children = [
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }),
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 1 }),
+            child({ status: FlowRunStatus.FAILED, dispatchIndex: 2 }),
+            child({ status: FlowRunStatus.CANCELED, dispatchIndex: 3 }),
+        ]
 
-        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false, children })
 
         expect(summary).toEqual({
             expected: 4,
@@ -219,14 +244,19 @@ describe('fanInBarrier predicate', () => {
             notStarted: 0,
             failedToDispatch: 0,
             timedOut: false,
+            exceptions: [{ runId: children[2].id, dispatchIndex: 2 }],
         })
     })
 
     it('reports items that never reached the subflow and folds them into the expected total', async () => {
         const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 2, failedToDispatch: 1 })
         const counts = { succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, terminal: 2 }
+        const children = [
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }),
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 1 }),
+        ]
 
-        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false })
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false, children })
 
         expect(summary).toEqual({
             expected: 3,
@@ -237,18 +267,55 @@ describe('fanInBarrier predicate', () => {
             notStarted: 0,
             failedToDispatch: 1,
             timedOut: false,
+            exceptions: [{ runId: null, dispatchIndex: 2 }],
         })
     })
 
     it('reports an accepted dispatch that never produced a run as notStarted', async () => {
         const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 3 })
         const counts = { succeeded: 1, failed: 0, canceled: 0, stillRunning: 1, terminal: 1 }
+        const children = [
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }),
+            child({ status: FlowRunStatus.RUNNING, dispatchIndex: 2 }),
+        ]
 
-        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: true })
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: true, children })
 
         expect(summary.notStarted).toBe(1)
         expect(summary.expected).toBe(3)
         expect(summary.timedOut).toBe(true)
+        expect(summary.exceptions).toEqual([{ runId: null, dispatchIndex: 1 }])
+    })
+
+    it('names every failed child and nothing else', async () => {
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 4 })
+        const counts = { succeeded: 1, failed: 2, canceled: 0, stillRunning: 1, terminal: 3 }
+        const children = [
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }),
+            child({ status: FlowRunStatus.TIMEOUT, dispatchIndex: 1 }),
+            child({ status: FlowRunStatus.INTERNAL_ERROR, dispatchIndex: 2 }),
+            child({ status: FlowRunStatus.RUNNING, dispatchIndex: 3 }),
+        ]
+
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: true, children })
+
+        expect(summary.exceptions).toEqual([
+            { runId: children[1].id, dispatchIndex: 1 },
+            { runId: children[2].id, dispatchIndex: 2 },
+        ])
+    })
+
+    it('names no child when nothing failed and nothing is missing', async () => {
+        const barrier = createMockWaitpoint({ isFanIn: true, expectedChildren: 2 })
+        const counts = { succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, terminal: 2 }
+        const children = [
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }),
+            child({ status: FlowRunStatus.SUCCEEDED, dispatchIndex: 1 }),
+        ]
+
+        const summary = fanInBarrier.toSummary({ counts, barrier, timedOut: false, children })
+
+        expect(summary.exceptions).toEqual([])
     })
 
     it('releases on the dispatched count, not on the requested count', async () => {
@@ -464,20 +531,35 @@ describe('sealFanInBarrier', () => {
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
-        expect(summary).toEqual({ expected: 2, succeeded: 1, failed: 1, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 0, timedOut: false })
+        expect(summary).toEqual({ expected: 2, succeeded: 1, failed: 1, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 0, timedOut: false, exceptions: [{ runId: expect.any(String), dispatchIndex: null }] })
         expect(await systemJobsSchedule(app.log).getJob(systemJobIds.resumeDelay({ waitpointId: barrier.id }))).toBeUndefined()
+    })
+
+    it('names the failed child by run id and dispatch index in the released summary', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const barrier = await seedBarrier({ flowRunId: flowRun.id })
+        const children = await createChildren({
+            parentWaitpointId: barrier.id,
+            statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.FAILED],
+            dispatchIndices: [0, 1],
+        })
+
+        const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2 })
+
+        const summary = waitpoint.resumePayload?.body as FanInSummary
+        expect(summary.exceptions).toEqual([{ runId: children[1].id, dispatchIndex: 1 }])
     })
 
     it('persists the undispatched item count and reports it in the summary', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const barrier = await seedBarrier({ flowRunId: flowRun.id })
-        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED], dispatchIndices: [0, 1] })
 
         const { waitpoint } = await seal({ waitpointId: barrier.id, expectedChildren: 2, failedToDispatch: 1 })
 
         expect(waitpoint.status).toBe(WaitpointStatus.COMPLETED)
         const summary = waitpoint.resumePayload?.body as FanInSummary
-        expect(summary).toEqual({ expected: 3, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 1, timedOut: false })
+        expect(summary).toEqual({ expected: 3, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 1, timedOut: false, exceptions: [{ runId: null, dispatchIndex: 2 }] })
     })
 
     it('does not release the second barrier of a run off the first barrier children (loop regression)', async () => {
@@ -745,6 +827,38 @@ describe('handleResumeDelayWaitpoint', () => {
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
         const straggler = await db.findOneByOrFail<{ status: FlowRunStatus }>('flow_run', { id: children[1].id })
         expect(straggler.status).toBe(FlowRunStatus.RUNNING)
+    })
+
+    it('resumes with the stored verdict when it loses the release race, never with an empty payload', async () => {
+        const { flowRun } = await createParentRun()
+        const barrier = await seedBarrier({ flowRunId: flowRun.id, expectedChildren: 2 })
+        await createChildren({ parentWaitpointId: barrier.id, statuses: [FlowRunStatus.SUCCEEDED, FlowRunStatus.SUCCEEDED] })
+        const winnerSummary = { expected: 2, succeeded: 2, failed: 0, canceled: 0, stillRunning: 0, notStarted: 0, failedToDispatch: 0, timedOut: false, exceptions: [] }
+        const countChildren = fanInBarrier.countChildren
+        const spy = vi.spyOn(fanInBarrier, 'countChildren').mockImplementation(async (params) => {
+            const counts = await countChildren(params)
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: barrier.id,
+                resumePayload: { body: winnerSummary, headers: {}, queryParams: {} },
+            })
+            return counts
+        })
+
+        try {
+            await handleResumeDelayWaitpoint({
+                data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+                log: app.log,
+            })
+        }
+        finally {
+            spy.mockRestore()
+        }
+
+        const jobs = await findQueuedJobsForRun(flowRun.id)
+        expect(jobs).toHaveLength(1)
+        expect(jobs[0].data).not.toMatchObject({ payload: { type: 'inline', value: null } })
     })
 
     it('resumes an already completed barrier with its stored verdict', async () => {

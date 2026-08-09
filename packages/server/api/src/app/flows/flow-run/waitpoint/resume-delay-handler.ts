@@ -46,6 +46,12 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
         counts,
         timedOut: true,
     })
+    const released = result.waitpoint ?? await waitpointService(log).findFanInBarrierById({ waitpointId: waitpoint.id, projectId: data.projectId })
+    if (isNil(released)) {
+        log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: waitpoint.id } },
+            '[RESUME_DELAY_WAITPOINT] Barrier was already released and consumed by another evaluator, nothing to resume')
+        return
+    }
     if (!result.completedExisting) {
         log.warn({ flowRun: { id: data.flowRunId }, waitpoint: { id: waitpoint.id } },
             '[RESUME_DELAY_WAITPOINT] Barrier was already completed without a resume reaching the queue, recovering it with the stored verdict')
@@ -53,7 +59,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     await resumeService(log).resumeFromWaitpoint({
         flowRunId: data.flowRunId,
         waitpointId: waitpoint.id,
-        resumePayload: result.waitpoint?.resumePayload ?? waitpoint.resumePayload,
+        resumePayload: released.resumePayload,
         releasingFanInBarrier: true,
     })
 }

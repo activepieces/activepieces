@@ -185,11 +185,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async completeFanInBarrier({ barrier, projectId, counts, timedOut }: CompleteFanInBarrierParams): Promise<CompleteResult> {
+        const children = await fanInBarrier.listChildren({ parentWaitpointId: barrier.id, projectId })
         return this.complete({
             flowRunId: barrier.flowRunId,
             projectId,
             waitpointId: barrier.id,
-            resumePayload: { body: fanInBarrier.toSummary({ counts, barrier, timedOut }), headers: {}, queryParams: {} },
+            resumePayload: { body: fanInBarrier.toSummary({ counts, barrier, timedOut, children }), headers: {}, queryParams: {} },
         })
     },
 

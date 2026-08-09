@@ -25,7 +25,7 @@ async function countChildren({ parentWaitpointId, projectId, entityManager }: Ch
         if (row.status === FlowRunStatus.CANCELED) {
             return { ...counts, canceled: counts.canceled + count, terminal: counts.terminal + count }
         }
-        if (isFlowRunStateTerminal({ status: row.status, ignoreInternalError: false })) {
+        if (hasFailed(row.status)) {
             return { ...counts, failed: counts.failed + count, terminal: counts.terminal + count }
         }
         return { ...counts, stillRunning: counts.stillRunning + count }
@@ -61,19 +61,43 @@ function isReleasable({ counts, barrier }: EvaluateBarrierParams): boolean {
     return counts.terminal >= barrier.expectedChildren
 }
 
-function toSummary({ counts, barrier, timedOut }: ToSummaryParams): FanInSummary {
+function toSummary({ counts, barrier, timedOut, children }: ToSummaryParams): FanInSummary {
     const expectedChildren = barrier.expectedChildren ?? 0
     const accountedFor = counts.succeeded + counts.failed + counts.canceled + counts.stillRunning
+    const expected = expectedChildren + barrier.failedToDispatch
+    const notStarted = Math.max(expectedChildren - accountedFor, 0)
     return {
-        expected: expectedChildren + barrier.failedToDispatch,
+        expected,
         succeeded: counts.succeeded,
         failed: counts.failed,
         canceled: counts.canceled,
         stillRunning: counts.stillRunning,
-        notStarted: Math.max(expectedChildren - accountedFor, 0),
+        notStarted,
         failedToDispatch: barrier.failedToDispatch,
         timedOut,
+        exceptions: toExceptions({ children, expected, withoutARow: notStarted + barrier.failedToDispatch }),
     }
+}
+
+function toExceptions({ children, expected, withoutARow }: ToExceptionsParams): FanInException[] {
+    const failed = children
+        .filter((child) => hasFailed(child.status))
+        .map((child) => ({ runId: child.id, dispatchIndex: child.dispatchIndex }))
+    if (withoutARow === 0) {
+        return failed
+    }
+    const dispatched = new Set(children.map((child) => child.dispatchIndex))
+    const missing = Array.from({ length: expected }, (_, index) => index)
+        .filter((index) => !dispatched.has(index))
+        .slice(0, withoutARow)
+        .map((dispatchIndex) => ({ runId: null, dispatchIndex }))
+    return [...failed, ...missing]
+}
+
+function hasFailed(status: FlowRunStatus): boolean {
+    return status !== FlowRunStatus.SUCCEEDED
+        && status !== FlowRunStatus.CANCELED
+        && isFlowRunStateTerminal({ status, ignoreInternalError: false })
 }
 
 const EMPTY_COUNTS: FanInChildCounts = {
@@ -111,6 +135,12 @@ export type FanInSummary = {
     notStarted: number
     failedToDispatch: number
     timedOut: boolean
+    exceptions: FanInException[]
+}
+
+export type FanInException = {
+    runId: string | null
+    dispatchIndex: number | null
 }
 
 type ChildQueryParams = {
@@ -128,4 +158,11 @@ type ToSummaryParams = {
     counts: FanInChildCounts
     barrier: Waitpoint
     timedOut: boolean
+    children: FanInChild[]
+}
+
+type ToExceptionsParams = {
+    children: FanInChild[]
+    expected: number
+    withoutARow: number
 }

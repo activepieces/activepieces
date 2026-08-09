@@ -89,7 +89,11 @@ whose nested body is a *section* of steps, batched out to child runs.
   is skipped, so a test-step batch is never throttled.
 - **The child cap is `AP_MAX_FAN_IN_CHILDREN`, default 10000** (was a hardcoded 1000 in the zod schema;
   now an app system prop enforced in `waitpointService.sealFanInBarrier` against
-  `expectedChildren + failedToDispatch`). A 1M-row batched fan-out at 100/batch still lands exactly on
+  `expectedChildren + failedToDispatch`, and pre-flighted at *create* against the optional
+  `intendedChildren` the dispatcher declares — so an over-cap fan-out is refused with zero children
+  dispatched, not after thousands are already running. The cap value never enters the sandbox: the engine
+  sends a count, the server owns the limit, and the refusal is a 409 the engine's waitpoint client maps to
+  a USER-type step failure). A 1M-row batched fan-out at 100/batch still lands exactly on
   the default, so a self-hoster running wider has to raise it — and past ~10k the runs-metadata lock
   becomes the real bottleneck (see below).
 - **Operability.** Nothing can answer "how many barriers are open right now", "how many released on
