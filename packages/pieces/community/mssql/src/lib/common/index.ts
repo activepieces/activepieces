@@ -13,6 +13,12 @@ export type MssqlTable = {
   table_name: string;
 };
 
+// 334: OUTPUT without INTO is rejected on a table with enabled triggers, at
+// compile time, so nothing has been written when this fires
+export function isOutputBlockedByTrigger(e: unknown): boolean {
+  return (e as { number?: number }).number === 334;
+}
+
 // hand-rolled because no maintained T-SQL identifier escaper exists on npm
 export function quoteId(identifier: string): string {
   if (identifier.includes('\0')) {
@@ -25,7 +31,7 @@ export function quoteTable(table: MssqlTable): string {
   return `${quoteId(table.table_schema)}.${quoteId(table.table_name)}`;
 }
 
-export function buildConfig(auth: MssqlAuth): sql.config {
+export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.config {
   const {
     connection_string,
     host,
@@ -39,6 +45,7 @@ export function buildConfig(auth: MssqlAuth): sql.config {
     min_tls_version,
   } = auth.props;
 
+  const requestTimeout = requestTimeoutMs ? Number(requestTimeoutMs) : TIMEOUT_MS;
   const cryptoCredentialsDetails: Record<string, string> = {};
   if (certificate && certificate.trim().length > 0) {
     cryptoCredentialsDetails['ca'] = certificate.trim();
@@ -56,6 +63,9 @@ export function buildConfig(auth: MssqlAuth): sql.config {
       );
     }
     const parsed = sql.ConnectionPool.parseConnectionString(trimmed);
+    if (requestTimeoutMs) {
+      parsed.requestTimeout = requestTimeout;
+    }
     // a connection string cannot express a CA bundle or a TLS floor
     if (Object.keys(cryptoCredentialsDetails).length > 0) {
       parsed.options = {
@@ -82,7 +92,7 @@ export function buildConfig(auth: MssqlAuth): sql.config {
     user,
     password,
     connectionTimeout: TIMEOUT_MS,
-    requestTimeout: TIMEOUT_MS,
+    requestTimeout,
     options: {
       encrypt: encrypt ?? true,
       trustServerCertificate: trust_server_certificate ?? false,
@@ -92,8 +102,11 @@ export function buildConfig(auth: MssqlAuth): sql.config {
 }
 
 // one pool per execution, closed by the caller — a shared singleton would leak across flows
-export async function mssqlConnect(auth: MssqlAuth): Promise<sql.ConnectionPool> {
-  const pool = new sql.ConnectionPool(buildConfig(auth));
+export async function mssqlConnect(
+  auth: MssqlAuth,
+  requestTimeoutMs?: number
+): Promise<sql.ConnectionPool> {
+  const pool = new sql.ConnectionPool(buildConfig(auth, requestTimeoutMs));
   await pool.connect();
   return pool;
 }

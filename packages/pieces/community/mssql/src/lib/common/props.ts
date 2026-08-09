@@ -40,8 +40,12 @@ export const mssqlProps = {
         }
       },
     }),
-  column: (displayName: string, description: string, required = true) =>
-    Property.Dropdown({
+  column: <R extends boolean = true>(
+    displayName: string,
+    description: string,
+    required: R = true as R
+  ) =>
+    Property.Dropdown<string, R, typeof mssqlAuth>({
       auth: mssqlAuth,
       displayName,
       description,
