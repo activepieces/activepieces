@@ -146,11 +146,11 @@ export async function mssqlGetTables(
   }));
 }
 
-// single-column primary key, used as a tiebreaker so ordering is a total order
-export async function mssqlGetPrimaryKey(
+// every primary key column, in key order -- composite keys included
+export async function mssqlGetKeyColumns(
   pool: sql.ConnectionPool,
   table: MssqlTable
-): Promise<string | undefined> {
+): Promise<string[]> {
   const result = await pool
     .request()
     .input('table_schema', table.table_schema)
@@ -163,10 +163,32 @@ export async function mssqlGetPrimaryKey(
         AND c.TABLE_SCHEMA = t.TABLE_SCHEMA
        WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'
          AND t.TABLE_SCHEMA = @table_schema
-         AND t.TABLE_NAME = @table_name`
+         AND t.TABLE_NAME = @table_name
+       ORDER BY c.ORDINAL_POSITION`
     );
-  const rows = result.recordset ?? [];
-  return rows.length === 1 ? rows[0]['COLUMN_NAME'] : undefined;
+  return (result.recordset ?? []).map((row) => row['COLUMN_NAME']);
+}
+
+// ORDER BY rejects these types, so they cannot be part of a tiebreaker
+const UNSORTABLE = ['text', 'ntext', 'image', 'xml', 'geography', 'geometry'];
+
+export async function mssqlGetSortableColumns(
+  pool: sql.ConnectionPool,
+  table: MssqlTable
+): Promise<string[]> {
+  const result = await pool
+    .request()
+    .input('table_schema', table.table_schema)
+    .input('table_name', table.table_name)
+    .query(
+      `SELECT COLUMN_NAME, DATA_TYPE
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = @table_schema AND TABLE_NAME = @table_name
+       ORDER BY ORDINAL_POSITION`
+    );
+  return (result.recordset ?? [])
+    .filter((row) => !UNSORTABLE.includes(String(row['DATA_TYPE']).toLowerCase()))
+    .map((row) => row['COLUMN_NAME']);
 }
 
 export async function mssqlGetColumns(

@@ -10,7 +10,8 @@ import { mssqlAuth } from '../auth';
 import {
   MssqlTable,
   mssqlConnect,
-  mssqlGetPrimaryKey,
+  mssqlGetKeyColumns,
+  mssqlGetSortableColumns,
   quoteId,
   quoteTable,
 } from '../common';
@@ -62,22 +63,26 @@ const polling: Polling<
       // dedupe slices positionally on an exact id, so the ordering must be a
       // total order: rows tied on the chosen column (one multi-row INSERT gives
       // them all the same timestamp) would otherwise shift between polls and be
-      // dropped or replayed. The primary key breaks the tie and makes the id
-      // unique; without one the row hash is the best available fallback.
-      const primaryKey = await mssqlGetPrimaryKey(pool, table);
-      // ordering by the key itself is already total, and repeating a column in
-      // ORDER BY is an error
-      const tieBreak =
-        primaryKey && primaryKey !== order_by
-          ? `, ${quoteId(primaryKey)} ${order_direction}`
-          : '';
+      // dropped or replayed. The primary key breaks the tie; a table without one
+      // falls back to ordering on every sortable column, which leaves only
+      // wholly identical rows tied, and those are interchangeable anyway.
+      const keyColumns = await mssqlGetKeyColumns(pool, table);
+      const tieColumns =
+        keyColumns.length > 0
+          ? keyColumns
+          : await mssqlGetSortableColumns(pool, table);
+
+      // repeating a column in ORDER BY is an error
+      const orderBy = [order_by, ...tieColumns.filter((c) => c !== order_by)]
+        .map((c) => `${quoteId(c)} ${order_direction}`)
+        .join(', ');
 
       // first run takes only the newest page; later runs walk back to the marker
       const query = marker
         ? `SELECT * FROM ${target} WHERE ${column} ${
             order_direction === 'ASC' ? '<=' : '>='
-          } @marker ORDER BY ${column} ${order_direction}${tieBreak}`
-        : `SELECT TOP (${PAGE_SIZE}) * FROM ${target} ORDER BY ${column} ${order_direction}${tieBreak}`;
+          } @marker ORDER BY ${orderBy}`
+        : `SELECT TOP (${PAGE_SIZE}) * FROM ${target} ORDER BY ${orderBy}`;
 
       const request = pool.request();
       if (marker) {
@@ -88,9 +93,10 @@ const polling: Polling<
         const value = row[order_by];
         const orderValue =
           value instanceof Date ? value.toISOString() : String(value);
-        const discriminator = primaryKey
-          ? String(row[primaryKey])
-          : crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
+        const discriminator =
+          keyColumns.length > 0
+            ? keyColumns.map((c) => String(row[c])).join('~')
+            : crypto.createHash('md5').update(JSON.stringify(row)).digest('hex');
         return { id: `${orderValue}|${discriminator}`, data: row };
       });
     } finally {
