@@ -221,6 +221,31 @@ function AuthStep({
     );
   }
 
+  // Ahead of the mail-configuration branches on purpose. Someone holding an
+  // onboarding token has already proven their address and owes us only a name,
+  // and whether this deployment can send mail has no bearing on that. Behind
+  // them, a first user on an instance with no SMTP would register, land here,
+  // and be shown a sign-in form with no way to finish.
+  if (step === 'verified') {
+    return (
+      <DrawerShell>
+        <VerifiedFlash />
+      </DrawerShell>
+    );
+  }
+
+  if (step === 'name') {
+    return (
+      <DrawerShell>
+        <Heading
+          title={t('What should we call you?')}
+          subtitle={t('This names your workspace and how we greet you.')}
+        />
+        <NameStep />
+      </DrawerShell>
+    );
+  }
+
   // No email delivery configured (e.g. bare self-hosted): passwords stay the
   // primary path, with the classic sign-in / sign-up forms.
   if (!passwordlessAvailable) {
@@ -289,26 +314,6 @@ function AuthStep({
       <DrawerShell>
         <BackLink onClick={() => setStep('password')} />
         <ResetStep />
-      </DrawerShell>
-    );
-  }
-
-  if (step === 'verified') {
-    return (
-      <DrawerShell>
-        <VerifiedFlash />
-      </DrawerShell>
-    );
-  }
-
-  if (step === 'name') {
-    return (
-      <DrawerShell>
-        <Heading
-          title={t('What should we call you?')}
-          subtitle={t('This names your workspace and how we greet you.')}
-        />
-        <NameStep />
       </DrawerShell>
     );
   }
