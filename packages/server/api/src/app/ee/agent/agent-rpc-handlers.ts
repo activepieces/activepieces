@@ -516,15 +516,22 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
         }
-        const { result, resolvedInput } = await pieceToolRunner.runFromInstruction({
-            model: await agentHelpers.resolveFastModel({ platformId: conversation.platformId, log }),
+        const { projectId, platformId } = conversation
+        const model = await agentHelpers.resolveFastModel({ platformId, log })
+        const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
+            model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
             instruction: input.instruction,
-            projectId: conversation.projectId,
-            platformId: conversation.platformId,
+            projectId,
+            platformId,
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
-        })
+        }))
+        if (!isNil(runError) || isNil(run)) {
+            log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
+            throw runError
+        }
+        const { result, resolvedInput } = run
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
         return { result }
     },
