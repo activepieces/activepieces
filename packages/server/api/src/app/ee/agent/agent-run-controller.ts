@@ -79,6 +79,7 @@ const MAX_TOOLS = 100
 const CUSTOM_API_CALL = 'custom_api_call'
 const BUILT_IN_TOOL_PREFIX = 'ap_'
 const MAX_OUTPUT_FIELDS = 50
+const MAX_STEP_BUDGET = 1_000
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
@@ -86,7 +87,7 @@ const StartAgentRunRequest = z.object({
     waitpointId: ApId,
     tools: z.array(AgentTool).max(MAX_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_OUTPUT_FIELDS).optional(),
-    maxSteps: z.number().int().positive().optional(),
+    maxSteps: z.number().int().positive().max(MAX_STEP_BUDGET).optional(),
     modelName: z.string().optional(),
     provider: z.enum(AIProviderName).optional(),
 })
