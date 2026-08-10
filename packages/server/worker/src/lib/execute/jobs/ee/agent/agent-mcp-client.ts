@@ -105,17 +105,17 @@ async function connectAgentMcpTools({ tools, log }: {
 }): Promise<AgentMcpToolsConnection> {
     const clients: Awaited<ReturnType<typeof createMCPClient>>[] = []
     const toolSet: ToolSet = {}
-    for (const tool of tools) {
+    for (const [serverIndex, tool] of tools.entries()) {
         const connection = await connectAgentMcpTool({ tool, log })
         if (!connection) {
             continue
         }
         clients.push(connection.client)
         for (const [name, fn] of Object.entries(connection.toolSet)) {
-            const key = mcpToolNameUtils.createToolName(`${tool.toolName}_${name}`)
-            if (!isNil(toolSet[key])) {
-                log.warn({ tool: { name: key } }, '[agentMcpClient] Two configured servers advertise the same tool, keeping the first')
-                continue
+            const preferred = mcpToolNameUtils.createToolName(`${tool.toolName}_${name}`)
+            const key = isNil(toolSet[preferred]) ? preferred : mcpToolNameUtils.createToolName(`${tool.toolName}_${serverIndex}_${name}`)
+            if (key !== preferred) {
+                log.warn({ tool: { name: key } }, '[agentMcpClient] Two configured servers resolve to the same tool name, keeping both apart by position')
             }
             toolSet[key] = fn
         }

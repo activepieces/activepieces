@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { buildAuthHeaders, McpAuthConfig, McpProtocol } from '@activepieces/shared'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
@@ -58,6 +59,7 @@ function createSafeMcpFetch({ extraHeaders, timeoutMs, maxResponseBytes }: {
                 responseType: 'stream',
                 validateStatus: () => true,
                 timeout: 0,
+                ...(isNil(init?.signal) ? {} : { signal: init.signal }),
             })
             return new Response(Readable.toWeb(streamed.data), {
                 status: streamed.status,
