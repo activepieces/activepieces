@@ -6,6 +6,7 @@ import { passwordHasher } from '../../../../src/app/authentication/lib/password-
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { passwordlessAuthService } from '../../../../src/app/authentication/passwordless-auth.service'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -263,6 +264,34 @@ describe('Passwordless Authentication API', () => {
             expect(viaPlatformRoute?.json()?.platformId).toBe(viaNameStep?.json()?.platformId)
             expect(await databaseConnection().getRepository('platform').count()).toBe(1)
             expect(await databaseConnection().getRepository('user').count()).toBe(1)
+        })
+
+        it('still applies the submitted name when the platform route provisioned first', async () => {
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            await verifyCode({ email: EMAIL, code: otp!.value })
+            const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            // The other onboarding route wins the provisioning lock and creates the
+            // account with no name. Driven directly because it rotates the token,
+            // so over HTTP the two calls have to be genuinely concurrent.
+            await platformService(app!.log).createPlatformWithProject({
+                identityId: identity!.id,
+                name: 'Whatever',
+                invalidatePreviousTokens: true,
+                isFirstPlatform: true,
+                callerTokenVersion: undefined,
+                beforeProvision: undefined,
+            })
+
+            const { signedUp } = await passwordlessAuthService(app!.log).completeSignUp({
+                identityId: identity!.id,
+                fullName: 'Zoe Quinn',
+            })
+
+            expect(signedUp).toBe(false)
+            const named = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+            expect(named?.firstName).toBe('Zoe')
+            expect(named?.lastName).toBe('Quinn')
         })
 
         it('does not rename the account when completion is replayed', async () => {

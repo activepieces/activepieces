@@ -117,23 +117,37 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
-        // The name is written inside the provisioning lock and only by the call
-        // that provisions, so a replay cannot rename an established account, the
-        // platform route cannot race it, and an interruption after the account
-        // exists cannot leave the address-derived placeholder behind.
+        const writeNames = async (): Promise<void> => {
+            await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
+        }
+        // Written inside the provisioning lock by the call that provisions, so a
+        // replay cannot rename an established account and an interruption after
+        // the account exists cannot lose it.
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
             name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,
-            beforeProvision: async () => {
-                await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
-            },
+            beforeProvision: writeNames,
         })
+        // POST /v1/platforms takes the same lock and provisions without a name, so
+        // it can win and leave the seeded placeholder behind for good. If nothing
+        // has named this identity yet, the name step's submission still applies.
+        if (!provisioned && await carriesSeededName({ identityId, log })) {
+            await writeNames()
+        }
         return { response, signedUp: provisioned }
     },
 })
+
+// The placeholder requestCode seeds is exactly the email local part with no
+// surname, so an identity still carrying it has never been through a name step.
+async function carriesSeededName({ identityId, log }: CarriesSeededNameParams): Promise<boolean> {
+    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+    return identity.firstName === signupNames.firstNameFromEmail(identity.email)
+        && identity.lastName === ''
+}
 
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
     await authenticationUtils(log).assertEmailAuthIsEnabled({
@@ -158,6 +172,11 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
 type RequestCodeParams = {
     email: string
     platformId: string | null
+}
+
+type CarriesSeededNameParams = {
+    identityId: string
+    log: FastifyBaseLogger
 }
 
 type CompleteSignUpResult = {
