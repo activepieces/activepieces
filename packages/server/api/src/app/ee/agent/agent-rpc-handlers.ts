@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -14,6 +14,7 @@ import { resumeService } from '../../flows/flow-run/waitpoint/resume-service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { runFlowAsTool } from '../../mcp/mcp-server-builder'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -518,6 +519,20 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
         })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        return { result }
+    },
+
+    async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a flow tool' } })
+        }
+        const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId })
+        if (isNil(flow)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
+        }
+        const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
         return { result }
     },
 

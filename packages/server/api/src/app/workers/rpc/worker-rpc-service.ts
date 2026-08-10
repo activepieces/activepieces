@@ -333,6 +333,10 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
         },
 
+        async executeFlowTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeFlowTool(input)
+        },
+
         async updateFlowStepProgress(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
         },

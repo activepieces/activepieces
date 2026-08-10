@@ -56,6 +56,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: 'true',
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: 'false',
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: DefaultProjectRole.EDITOR,

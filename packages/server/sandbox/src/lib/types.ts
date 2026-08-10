@@ -112,6 +112,7 @@ export type SandboxSettings = {
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
     SSRF_ALLOW_LIST: string[]
+    ENFORCE_CONNECTION_PIECE_BINDING: boolean
     WORKER_GROUP_ID?: string | undefined
     PROJECT_WORKER?: boolean | undefined
 }
