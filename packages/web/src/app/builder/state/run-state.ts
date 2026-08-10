@@ -234,14 +234,23 @@ export const createRunState = (
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
       socket.on('error', handleError);
+      // Each update carries the whole output, so one that arrives late must not undo a newer one.
+      let lastSequence = 0;
       const handleOnProgress = (response: TestStepProgressEvent) => {
-        if (response.runId === runId && response.output) {
-          get().setSampleDataLocally({
-            stepName: stepName,
-            type: 'output',
-            value: response.output,
-          });
+        const sequence = response.sequence ?? 0;
+        if (
+          response.runId !== runId ||
+          !response.output ||
+          sequence < lastSequence
+        ) {
+          return;
         }
+        lastSequence = sequence;
+        get().setSampleDataLocally({
+          stepName: stepName,
+          type: 'output',
+          value: response.output,
+        });
       };
       socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);
       set((state) => ({

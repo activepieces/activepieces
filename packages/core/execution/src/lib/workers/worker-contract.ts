@@ -92,6 +92,7 @@ export type WorkerToApiContract = {
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
+    updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
@@ -208,6 +209,13 @@ export type ExecutePieceToolRequest = {
 
 export type ExecutePieceToolResponse = {
     result: unknown
+}
+
+export type UpdateFlowStepProgressRequest = {
+    conversationId: string
+    flowRunId: string
+    output: unknown
+    sequence: number
 }
 
 export type ResumeFlowStepRequest = {
