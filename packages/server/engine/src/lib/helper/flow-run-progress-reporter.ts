@@ -2,8 +2,8 @@ import { promisify } from 'node:util'
 import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { OutputContext, OutputSchema } from '@activepieces/pieces-framework'
+import { applySensitivePaths, DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -11,6 +11,7 @@ import { engineRunApi } from '../api/engine-run-api'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
+import { collectSensitiveOutputPaths } from '../variables/output-sensitive-paths'
 
 
 const zstdCompress = promisify(zstdCompressCallback)
@@ -71,17 +72,18 @@ export const flowRunProgressReporter = {
         })
     },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
-        const { engineConstants } = params
+        const { engineConstants, outputSchema } = params
         return {
-            update: async (params: { data: unknown }) => {
-                // Streaming output is best-effort — a failed push must never fail the run.
+            update: async (updateParams: { data: unknown }) => {
+                const sensitivePaths = collectSensitiveOutputPaths(outputSchema, updateParams.data)
+                const redactedOutput = applySensitivePaths(updateParams.data, sensitivePaths)
                 const { error } = await tryCatch(() => engineRunApi.updateStepProgress({
                     apiUrl: engineConstants.internalApiUrl,
                     engineToken: engineConstants.engineToken,
                     request: {
                         projectId: engineConstants.projectId,
                         runId: engineConstants.flowRunId,
-                        output: params.data,
+                        output: redactedOutput,
                     },
                 }))
                 if (error) {
@@ -246,6 +248,7 @@ type UpdateStepProgressParams = {
 
 type CreateOutputContextParams = {
     engineConstants: EngineConstants
+    outputSchema: OutputSchema | undefined
 }
 
 type ExtractStepResponse = {

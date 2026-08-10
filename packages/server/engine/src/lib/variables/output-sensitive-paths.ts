@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework'
+import { escapeSensitivePathSegment } from '@activepieces/shared'
 
 export function collectSensitiveOutputPaths(outputSchema: OutputSchema | undefined, rawOutput: unknown): string[] | undefined {
     if (isNil(outputSchema) || isNil(outputSchema.fields) || outputSchema.fields.length === 0) {
@@ -14,7 +15,8 @@ function walkFields({ fields, rawValue, prefix }: WalkParams): string[] {
 }
 
 function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawValue: unknown, prefix: string }): string[] {
-    const currentPath = prefix === '' ? field.key : `${prefix}.${field.key}`
+    const encodedKey = escapeSensitivePathSegment(field.key)
+    const currentPath = prefix === '' ? encodedKey : `${prefix}.${encodedKey}`
     if (field.sensitive) {
         return [currentPath]
     }
@@ -34,7 +36,8 @@ function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawV
 
 function readAt(value: unknown, key: string): unknown {
     if (isNil(value) || typeof value !== 'object') return undefined
-    return (value as Record<string, unknown>)[key]
+    const record = value as Record<string, unknown>
+    return Object.hasOwn(record, key) ? record[key] : undefined
 }
 
 type WalkParams = {

@@ -1,4 +1,4 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { applySensitivePaths, CreateStepRunRequestBody, flowStructureUtil, GetSampleDataRequest, PrincipalType, SampleDataFileType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -29,7 +29,11 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
             stepName: request.query.stepName,
             type: request.query.type,
         })
-        return sampleData
+        if (request.query.type !== SampleDataFileType.OUTPUT) {
+            return sampleData
+        }
+        const step = flowStructureUtil.getStepOrThrow(request.query.stepName, flow.version.trigger)
+        return applySensitivePaths(sampleData, step.settings.sampleData?.sensitiveOutputPaths)
     })
 }
 
