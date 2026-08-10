@@ -1,4 +1,4 @@
-import { applySensitivePaths, FlowActionType, GenericStepOutput, LoopStepResult, StepOutput } from '@activepieces/shared'
+import { applySensitivePaths, FlowActionType, LoopStepResult, StepOutput } from '@activepieces/shared'
 
 export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): Record<string, StepOutput> {
     const entries = Object.entries(steps).map(([name, step]) => [name, redactStep(step)] as const)
@@ -6,23 +6,16 @@ export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): R
 }
 
 function redactStep(step: StepOutput): StepOutput {
-    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-        return redactLoopStep(step)
-    }
-    const redactedOutput = applySensitivePaths(step.output, step.sensitiveOutputPaths)
-    return step.setOutput(redactedOutput).setSensitiveOutputPaths(undefined)
-}
-
-function redactLoopStep(step: GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>): StepOutput {
-    const redactedOutput = applySensitivePaths(step.output, step.sensitiveOutputPaths)
-    if (!isLoopStepResult(redactedOutput)) {
-        return step.setSensitiveOutputPaths(undefined)
+    const { sensitiveOutputPaths, ...rest } = step
+    const output = applySensitivePaths(rest.output, sensitiveOutputPaths)
+    if (step.type !== FlowActionType.LOOP_ON_ITEMS || !isLoopStepResult(output)) {
+        return { ...rest, output } as StepOutput
     }
     const withRedactedIterations: LoopStepResult = {
-        ...redactedOutput,
-        iterations: redactedOutput.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
+        ...output,
+        iterations: output.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
     }
-    return step.setOutput(withRedactedIterations).setSensitiveOutputPaths(undefined)
+    return { ...rest, output: withRedactedIterations } as StepOutput
 }
 
 function isLoopStepResult(value: unknown): value is LoopStepResult {
