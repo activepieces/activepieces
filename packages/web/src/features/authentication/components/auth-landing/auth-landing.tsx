@@ -18,12 +18,11 @@ const NUDGE_STREAK_WINDOW_MS = 700;
 export function AuthLanding({ initialMode }: AuthLandingProps) {
   const { setForceLightMode } = useTheme();
   const redirectAfterLogin = useRedirectAfterLogin();
-  // An onboarding token is a half-finished sign-up, not a session: the member
-  // still owes us a name. Treating it as signed in would bounce them to the
-  // default route, which sends platform-less sessions right back here.
-  const signedIn =
-    !isNil(authenticationSession.getToken()) &&
-    !authenticationSession.isOnboarding();
+  // An onboarding token counts as signed in here: DefaultRoute checks it before
+  // the authenticated branch and hands it to /create-platform, so a half-finished
+  // sign-up that comes back to this screen resumes where it stopped instead of
+  // being shown an email field it has already filled in.
+  const signedIn = !isNil(authenticationSession.getToken());
   const panelRef = useRef<HTMLElement | null>(null);
   const nudgeRef = useRef<{
     lastAt: number;
