@@ -67,6 +67,14 @@ function decodeMarker(id: unknown): unknown[] | undefined {
 // canonical value -- md5 per id keeps the store entry small and bounded
 type TieSeen = { v: string; ids?: string[]; overflow?: boolean };
 
+// A freshly computed seen set is parked as pending, keyed by the lastItem
+// marker the caller is about to commit, and trusted only once that marker is
+// observed back. items() cannot know whether its caller's checkpoint write
+// will land, and committing the set eagerly meant a poll that died in between
+// left digests of rows it never returned -- suppressing them forever. Pending
+// that never matches is dropped, so a torn poll redelivers instead of losing.
+type TieSeenPending = { expected: string; seen: TieSeen };
+
 const TIE_SEEN_LIMIT = 2000;
 
 const digest = (text: string) =>
@@ -155,6 +163,17 @@ const polling: Polling<
       // delivered at that value.
       const boundary = marker !== undefined && !shapeChanged ? marker[0] : undefined;
       const bounded = boundary !== undefined && boundary !== null;
+      const pending = await store.get<TieSeenPending>('tieSeenPending');
+      if (pending) {
+        if (
+          lastItemId !== null &&
+          lastItemId !== undefined &&
+          String(lastItemId) === pending.expected
+        ) {
+          await store.put<TieSeen>('tieSeen', pending.seen);
+        }
+        await store.delete('tieSeenPending');
+      }
       const seen = bounded
         ? await store.get<TieSeen>('tieSeen')
         : null;
@@ -231,12 +250,21 @@ const polling: Polling<
           });
         }
         const ids = [...new Set([...carried, ...atBoundary])];
-        await store.put<TieSeen>(
-          'tieSeen',
+        const next: TieSeen =
           ids.length > TIE_SEEN_LIMIT
             ? { v: nextBoundaryKey, overflow: true }
-            : { v: nextBoundaryKey, ids }
-        );
+            : { v: nextBoundaryKey, ids };
+        const expected = fresh[0]?.id;
+        if (expected === undefined) {
+          // nothing was delivered: the checkpoint will not move and every
+          // digest here is already committed, so writing direct is idempotent
+          await store.put<TieSeen>('tieSeen', next);
+        } else {
+          await store.put<TieSeenPending>('tieSeenPending', {
+            expected,
+            seen: next,
+          });
+        }
       }
 
       // The sentinel pins the positional slice: everything before it is what
