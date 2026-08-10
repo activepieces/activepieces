@@ -42,6 +42,22 @@ vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
     pieceToolRunner: { runFromInstruction: mockRunFromInstruction },
 }))
 
+const { mockGetOnePopulated } = vi.hoisted(() => ({
+    mockGetOnePopulated: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/flows/flow/flow.service', () => ({
+    flowService: () => ({ getOnePopulated: mockGetOnePopulated }),
+}))
+
+const { mockRunFlowAsTool } = vi.hoisted(() => ({
+    mockRunFlowAsTool: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] }),
+}))
+
+vi.mock('../../../../../src/app/mcp/mcp-server-builder', () => ({
+    runFlowAsTool: mockRunFlowAsTool,
+}))
+
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
     agentAiUtils: { createChatModel: () => ({}) },
@@ -365,6 +381,56 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
         await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
         expect(mockRunFromInstruction).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
+    async function runFlowTool(conversation: unknown, flowId = 'flow-1') {
+        mockRunFlowAsTool.mockClear()
+        mockGetOnePopulated.mockClear()
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).executeFlowTool({
+            conversationId: 'conv-1',
+            toolName: 'run_subflow',
+            flowId,
+            toolInput: { foo: 'bar' },
+            returnsResponse: false,
+        })
+    }
+
+    it('refuses a CHAT conversation, never touching the flow lookup or execution', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the flow lookup is never left unscoped', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flowId that does not belong to the conversation\'s own project (cross-project)', async () => {
+        // getOnePopulated is scoped by { id, projectId } — a flow that exists but in a
+        // different project resolves to null, exactly as it would against the real DB.
+        mockGetOnePopulated.mockResolvedValue(null)
+
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-in-other-project')).rejects.toThrow()
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-in-other-project', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('runs the flow scoped to the conversation\'s own project when everything checks out', async () => {
+        mockGetOnePopulated.mockResolvedValue({ id: 'flow-1', version: { displayName: 'My Flow' } })
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).toHaveBeenCalledTimes(1)
     })
 })
 

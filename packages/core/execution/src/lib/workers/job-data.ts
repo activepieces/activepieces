@@ -307,6 +307,15 @@ export const AgentPromptOverride = z.object({
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 
+export const ResolvedAgentFlowTool = z.object({
+    toolName: z.string(),
+    flowId: z.string(),
+    description: z.string(),
+    inputSchema: z.record(z.string(), z.unknown()),
+    returnsResponse: z.boolean(),
+})
+export type ResolvedAgentFlowTool = z.infer<typeof ResolvedAgentFlowTool>
+
 export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AGENT_RUN),
@@ -320,6 +329,7 @@ export const ExecuteAgentRunJobData = z.object({
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentPieceTool).optional(),
+    flowTools: z.array(ResolvedAgentFlowTool).optional(),
     structuredOutput: z.array(AgentOutputField).optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
