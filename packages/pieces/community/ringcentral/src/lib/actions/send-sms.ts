@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ringcentralAuth } from '../common/auth';
 import { ringcentralCommon } from '../common/client';
+import { smsFromNumberDropdown } from '../common/props';
 
 export const sendSms = createAction({
   auth: ringcentralAuth,
@@ -9,12 +10,7 @@ export const sendSms = createAction({
   displayName: 'Send SMS',
   description: 'Send an SMS text message from one of your RingCentral numbers.',
   props: {
-    from: Property.ShortText({
-      displayName: 'From',
-      description:
-        'A RingCentral phone number with SMS enabled, in E.164 format (e.g. +14155550100).',
-      required: true,
-    }),
+    from: smsFromNumberDropdown,
     to: Property.Array({
       displayName: 'To',
       description: 'Recipient phone number(s) in E.164 format (e.g. +14155550123).',

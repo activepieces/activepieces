@@ -22,9 +22,9 @@ already can.
 
 | Action | Endpoint | Notes |
 |---|---|---|
-| Send SMS | `POST /restapi/v1.0/account/~/extension/~/sms` | From must be an SMS-enabled RingCentral number |
+| Send SMS | `POST /restapi/v1.0/account/~/extension/~/sms` | From is a dropdown of the extension's SMS-enabled numbers |
 | Make Call (RingOut) | `POST /restapi/v1.0/account/~/extension/~/ring-out` | Two-legged: calls "from" first, then connects "to" |
-| Send Team Messaging Post | `POST /team-messaging/v1/chats/{chatId}/posts` | Markdown supported |
+| Send Team Messaging Post | `POST /team-messaging/v1/chats/{chatId}/posts` | Markdown supported; Chat is a dropdown |
 | Get Call Log | `GET /restapi/v1.0/account/~/extension/~/call-log` | Direction/type/date filters, paging via perPage |
 | Get Extension Info | `GET /restapi/v1.0/account/~/extension/~` | The authenticated extension's profile |
 | Get Message | `GET /restapi/v1.0/account/~/extension/~/message-store/{messageId}` | Reads a text or voicemail back, including its attachment list |
@@ -33,6 +33,14 @@ already can.
 
 Reads retry on 5xx; writes never do, because a replayed RingOut dials someone twice and a replayed
 SMS sends twice. Every request carries a 30s timeout.
+
+**The From dropdown lists only numbers carrying the `SmsSender` feature.** RingCentral assigns some
+numbers to an extension for caller ID only; those come back with `features: ['CallerId']` and are
+refused at send time with `MSG-242 FeatureNotAvailable`. Filtering the list is what keeps that from
+being a run-time surprise. If the dropdown reports no numbers, none on the extension are SMS-enabled.
+
+The Chat dropdown follows RingCentral's page tokens rather than reading the first page only, so a
+chat past the first 250 is still selectable.
 
 ## Triggers
 
@@ -72,6 +80,7 @@ Behaviour worth knowing:
 | `src/lib/common/client.test.ts` | server selection, timeout/retry policy, error translation |
 | `src/lib/common/subscription-trigger.test.ts` | handshake, lifecycle, subscriptionId filtering, dedupe |
 | `src/lib/actions/actions.test.ts` | prop-to-request mapping per action, attachment resolution and download |
+| `src/lib/common/props.test.ts` | dropdown option building: SMS capability filter, chat paging |
 | `src/lib/triggers/triggers.test.ts` | the event filters each trigger subscribes to, inbound filtering |
 
 Run with `bun run test` from this directory.

@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { ringcentralAuth } from '../common/auth';
 import { ringcentralCommon } from '../common/client';
+import { chatDropdown } from '../common/props';
 
 export const sendTeamMessage = createAction({
   auth: ringcentralAuth,
@@ -9,11 +10,7 @@ export const sendTeamMessage = createAction({
   displayName: 'Send Team Messaging Post',
   description: 'Post a message to a RingCentral Team Messaging chat, group, or team.',
   props: {
-    chatId: Property.ShortText({
-      displayName: 'Chat ID',
-      description: 'The ID of the chat, group, or team to post the message to.',
-      required: true,
-    }),
+    chatId: chatDropdown,
     text: Property.LongText({
       displayName: 'Message',
       description: 'The text content of the post. Supports Markdown.',
