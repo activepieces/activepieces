@@ -321,7 +321,7 @@ export const httpSendRequestAction = createAction({
     }
 
     const formBodyInput =
-      body && body_type === 'form_data' ? (body['data'] as FormDataField[]) : undefined;
+      body && body_type === 'form_data' ? ((body['data'] ?? []) as FormDataField[]) : undefined;
 
     if (body && formBodyInput === undefined) {
       request.body = body['data'];
