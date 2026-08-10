@@ -318,14 +318,17 @@ export function isCustomAuthTokenStale(value: { access_token?: string, token_ref
 // Returns the unix timestamp at which the token should be refreshed: 15 minutes
 // before expiry, but never earlier than half the token's lifetime — otherwise a
 // token whose TTL is shorter than the buffer would be considered stale the instant
-// it is minted, refreshing on every fetch and defeating the cache. `expiresIn <= 0`
-// means the token never expires, so it never needs refreshing.
-export function computeTokenRefreshAt(expiresIn: number): number | undefined {
-    if (expiresIn <= 0) {
+// it is minted, refreshing on every fetch and defeating the cache. `expiresIn` is
+// typed as unknown because it comes from a third-party token response; any
+// non-positive or non-finite result means the token never expires, so it never
+// needs refreshing.
+export function computeTokenRefreshAt(expiresIn: unknown): number | undefined {
+    const expiresInSeconds = Number(expiresIn)
+    if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
         return undefined
     }
-    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresIn / 2))
-    return dayjs().unix() + expiresIn - buffer
+    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
+    return dayjs().unix() + expiresInSeconds - buffer
 }
 
 function pieceRefreshSupportCacheKey(connection: Pick<AppConnection, 'platformId' | 'pieceName' | 'pieceVersion'>): string {
