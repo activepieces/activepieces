@@ -31,7 +31,7 @@ async function replaceTokensAsync(
 }
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -54,6 +54,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     apiUrl,
                     currentState,
                     scriptSession,
+                    pieceName,
                 }
                 const resolvedInput = await applyFunctionToValues<T>(
                     unresolvedInput,
@@ -84,7 +85,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'scriptSession'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'scriptSession' | 'pieceName'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -139,10 +140,10 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
-    const { input, currentState, engineToken, projectId, apiUrl, censoredInput, scriptSession } = params
+    const { input, currentState, engineToken, projectId, apiUrl, censoredInput, scriptSession, pieceName } = params
 
     if (formulaEvaluator.containsWrapper(input)) {
-        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, scriptSession, contextVersion: params.contextVersion }
+        const formulaOptions = { engineToken, projectId, apiUrl, currentState, censoredInput, scriptSession, pieceName, contextVersion: params.contextVersion }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
         const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
         if (error) {
@@ -159,6 +160,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
         scriptSession,
+        pieceName,
     }
     const inputContainsOnlyOneTokenToResolve =
         tokensThatNeedResolving.length === 1 &&
@@ -222,7 +224,7 @@ function parseVariableName(variableName: string): string | null {
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, engineToken, projectId, apiUrl, censoredInput } = params
+    const { variableName, engineToken, projectId, apiUrl, censoredInput, pieceName } = params
     const connectionName = parseConnectionNameOnly(variableName)
     if (isNil(connectionName)) {
         return ''
@@ -230,7 +232,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
+    const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion, pieceName }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
@@ -358,7 +360,7 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     return []
 }
 
-type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion' | 'scriptSession'>
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput' | 'contextVersion' | 'scriptSession' | 'pieceName'>
 
 async function preResolveFormulaVars({ expression, resolveOptions }: {
     expression: string
@@ -391,6 +393,7 @@ async function preResolveFormulaVars({ expression, resolveOptions }: {
 
 type ResolveSingleTokenParams = {
     variableName: string
+    pieceName?: string
     currentState: Record<string, unknown>
     engineToken: string
     projectId: string
@@ -402,6 +405,7 @@ type ResolveSingleTokenParams = {
 
 type ResolveInputInternalParams = {
     input: string
+    pieceName?: string
     engineToken: string
     projectId: string
     apiUrl: string
@@ -429,6 +433,7 @@ type ResolveResult<T = unknown> = {
 
 type PropsResolverParams = {
     engineToken: string
+    pieceName?: string
     projectId: string
     apiUrl: string
     contextVersion: ContextVersion | undefined

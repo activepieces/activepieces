@@ -17,7 +17,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
     }) {
         const stepStartTime = performance.now()
         const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
-            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
+            constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<LoopOnActionResolvedSettings>({
                 unresolvedInput: {
                     items: action.settings.items,
                 },

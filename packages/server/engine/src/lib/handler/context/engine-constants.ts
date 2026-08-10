@@ -162,13 +162,14 @@ export class EngineConstants {
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
         })
     }
-    public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {
+    public getPropsResolver({ contextVersion, pieceName }: GetPropsResolverParams): PropsResolver {
         return createPropsResolver({
             projectId: this.projectId,
             engineToken: this.engineToken,
             apiUrl: this.internalApiUrl,
             contextVersion,
             stepNames: this.stepNames,
+            pieceName,
         })
     }
     private async getProject(): Promise<Project> {
@@ -226,6 +227,11 @@ function flowFields(flowVersion: FlowFieldsSource | undefined) {
         triggerPieceName: flowVersion.trigger?.settings.pieceName,
         stepNames: isNil(flowVersion.trigger) ? [] : flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name),
     }
+}
+
+type GetPropsResolverParams = {
+    contextVersion: ContextVersion | undefined
+    pieceName?: string
 }
 
 type SharedFieldsSource = {
