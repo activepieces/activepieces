@@ -136,6 +136,7 @@
   ],
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
-    "axios": "1.18.0"
+    "axios": "1.18.0",
+    "nanoid": "3.3.17"
   }
 }
