@@ -9,6 +9,10 @@ export const CreateFlowRequest = z.object({
     projectId: z.string(),
     templateId: z.string().optional(),
     metadata: z.optional(Metadata),
+    /**Optional stable identifier for the flow. When omitted the server generates one.
+     * Lets callers (e.g. git-sync / external deploy tooling) create a flow with a known
+     * externalId so redeploys can find and update it in place instead of duplicating. */
+    externalId: z.string().optional(),
 })
 
 export type CreateFlowRequest = z.infer<typeof CreateFlowRequest>
