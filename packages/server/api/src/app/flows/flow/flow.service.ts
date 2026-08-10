@@ -30,6 +30,17 @@ import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+        if (!isNil(externalId)) {
+            const existingFlow = await flowRepo().findOneBy({ projectId, externalId })
+            if (!isNil(existingFlow)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `A flow with externalId '${externalId}' already exists in project '${projectId}'.`,
+                    },
+                })
+            }
+        }
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
