@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -49,7 +49,9 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-            if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
+            // Any waitpoint may carry a deadline, not only a delay. A webhook waitpoint whose caller
+            // never comes back would otherwise hold the run forever.
+            if (!isNil(params.resumeDateTime)) {
                 await systemJobsSchedule(log).upsertJob({
                     job: {
                         name: SystemJobName.RESUME_DELAY_WAITPOINT,

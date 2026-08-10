@@ -2,19 +2,20 @@ import { AgentPieceTool, AgentResult, AgentStepBlock, AgentTaskStatus, ContentBl
 
 const MAX_RESULT_LENGTH = 262_144
 
-export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOutput, failure }: {
+export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOutput, failure, stillRunning }: {
     prompt: string
     uiParts: PersistedAgentPart[]
     timestamp: string
     tools: AgentPieceTool[]
     structuredOutput?: Record<string, unknown>
     failure?: string
+    stillRunning?: boolean
 }): AgentResult {
     const configured = new Map(tools.map((tool) => [tool.toolName, tool.pieceMetadata]))
     const steps = withinBudget(uiParts.flatMap((part) => toStepBlocks({ part, timestamp, configured })))
     const anyToolFailed = uiParts.some((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.ERROR)
     if (failure === undefined) {
-        return { prompt, steps, status: anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED, ...(structuredOutput === undefined ? {} : { structuredOutput }) }
+        return { prompt, steps, status: stillRunning === true ? AgentTaskStatus.IN_PROGRESS : (anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED), ...(structuredOutput === undefined ? {} : { structuredOutput }) }
     }
     return {
         prompt,
@@ -26,10 +27,14 @@ export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOu
 
 function withinBudget(steps: AgentStepBlock[]): AgentStepBlock[] {
     let spent = 0
-    const kept = steps.filter((step) => {
+    const kept: AgentStepBlock[] = []
+    for (const step of steps) {
         spent += JSON.stringify(step).length
-        return spent <= MAX_RESULT_LENGTH
-    })
+        if (spent > MAX_RESULT_LENGTH) {
+            break
+        }
+        kept.push(step)
+    }
     if (kept.length === steps.length) {
         return kept
     }
