@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
 import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
@@ -112,7 +112,12 @@ async function connectAgentMcpTools({ tools, log }: {
         }
         clients.push(connection.client)
         for (const [name, fn] of Object.entries(connection.toolSet)) {
-            toolSet[mcpToolNameUtils.createToolName(name)] = fn
+            const key = mcpToolNameUtils.createToolName(`${tool.toolName}_${name}`)
+            if (!isNil(toolSet[key])) {
+                log.warn({ tool: { name: key } }, '[agentMcpClient] Two configured servers advertise the same tool, keeping the first')
+                continue
+            }
+            toolSet[key] = fn
         }
     }
     return { clients, toolSet }
@@ -336,10 +341,6 @@ type McpConnection = {
     mcpToolSet: Record<string, unknown>
 }
 
-type AgentMcpToolsConnection = {
-    clients: Awaited<ReturnType<typeof createMCPClient>>[]
-    toolSet: ToolSet
-}
 
 export const agentMcpClient = {
     connect: connectMcpClient,
@@ -349,4 +350,8 @@ export const agentMcpClient = {
     withToolTimeouts,
     classifyMcpAuthError,
     redactMcpAuthSecrets,
+}
+type AgentMcpToolsConnection = {
+    clients: Awaited<ReturnType<typeof createMCPClient>>[]
+    toolSet: ToolSet
 }

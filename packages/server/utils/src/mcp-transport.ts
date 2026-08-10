@@ -2,6 +2,7 @@ import { buildAuthHeaders, McpAuthConfig, McpProtocol } from '@activepieces/shar
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
+import { Readable } from 'node:stream'
 import { safeHttp } from './safe-http'
 
 function normalizeRequestHeaders(headers: RequestInit['headers']): Record<string, string> {
@@ -47,11 +48,25 @@ function createSafeMcpFetch({ extraHeaders, timeoutMs, maxResponseBytes }: {
 }): typeof fetch {
     return async (input, init) => {
         const url = input instanceof URL ? input.toString() : (typeof input === 'string' ? input : input.url)
+        const headers = { ...extraHeaders, ...normalizeRequestHeaders(init?.headers) }
+        const method = init?.method ?? 'GET'
+        const wantsEventStream = Object.entries(headers).some(([key, value]) => key.toLowerCase() === 'accept' && value.includes(EVENT_STREAM_MEDIA_TYPE))
+
+        if (wantsEventStream) {
+            const streamed = await safeHttp.axios.request<Readable>({
+                method, url, headers, data: init?.body,
+                responseType: 'stream',
+                validateStatus: () => true,
+                timeout: 0,
+            })
+            return new Response(Readable.toWeb(streamed.data), {
+                status: streamed.status,
+                headers: normalizeResponseHeaders(streamed.headers),
+            })
+        }
+
         const response = await safeHttp.axios.request<ArrayBuffer>({
-            method: init?.method ?? 'GET',
-            url,
-            headers: { ...extraHeaders, ...normalizeRequestHeaders(init?.headers) },
-            data: init?.body,
+            method, url, headers, data: init?.body,
             responseType: 'arraybuffer',
             validateStatus: () => true,
             timeout: timeoutMs,
@@ -84,6 +99,8 @@ function createSafeMcpTransport({ protocol, serverUrl, auth, timeoutMs = DEFAULT
 export const mcpTransport = {
     createTransport: createSafeMcpTransport,
 }
+
+const EVENT_STREAM_MEDIA_TYPE = 'text/event-stream'
 
 export const DEFAULT_MCP_TIMEOUT_MS = 30_000
 export const DEFAULT_MCP_MAX_RESPONSE_BYTES = 5 * 1024 * 1024
