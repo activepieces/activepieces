@@ -1,4 +1,3 @@
-import { isNil } from '@activepieces/core-utils'
 import { applySensitivePaths, FlowActionType, GenericStepOutput, LoopStepResult, StepOutput } from '@activepieces/shared'
 
 export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): Record<string, StepOutput> {
@@ -27,11 +26,8 @@ function redactLoopStep(step: GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, Lo
 }
 
 function isLoopStepResult(value: unknown): value is LoopStepResult {
-    if (isNil(value) || typeof value !== 'object') {
+    if (typeof value !== 'object' || value === null) {
         return false
     }
-    if (!('iterations' in value)) {
-        return false
-    }
-    return Array.isArray(value.iterations)
+    return 'iterations' in value && Array.isArray(value.iterations)
 }
