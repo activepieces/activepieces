@@ -1,3 +1,4 @@
+
 import { JobData, WorkerJobType } from '@activepieces/shared'
 import { eventDestinationJob } from './jobs/event-destination'
 import { executeActionJob } from './jobs/execute-action'
@@ -49,6 +50,7 @@ const registry: Partial<Record<WorkerJobType, JobHandler>> = {
 // Heavy handlers are loaded on first use so their dependency graph never enters worker memory unless
 // such a job actually runs. The agent run drags the whole ai-sdk cluster (@ai-sdk/*, ai, mcp) — by
 // far the largest weight — so deferring its evaluation keeps a flow-only worker's idle RSS small.
+// MCP tools (including Gmail MCP) are loaded as part of the agent run handler.
 const lazyLoaders: Partial<Record<WorkerJobType, () => Promise<JobHandler>>> = {
     [WorkerJobType.EXECUTE_AGENT_RUN]: async () => (await import('./jobs/ee/agent/execute-agent-run')).executeAgentRunJob,
 }
