@@ -34,6 +34,8 @@ Three types: `PieceAuth.SecretText()` with validate callback, `PieceAuth.OAuth2(
 - `context.propsValue` — resolved input properties
 - `context.store` — key-value persistence (put/get/delete, persists across executions)
 - `context.files` — file upload/download. `files.write({ fileName, data })` accepts a `Readable` as well as a `Buffer`; pass a source stream (e.g. an S3 `getObject().Body`) to stream large files to storage without buffering them in the sandbox.
+  - Input side: `Property.File({ streaming: true })` resolves to `ApStreamingFile = { filename, extension?, size?, body: Readable }` instead of the buffered `ApFile`. Prefer a destination client that takes a stream of unknown length (S3 `lib-storage` `Upload`, Azure `uploadStream`, Google Drive `media.body`, SFTP `client.put`); `size` is best-effort (absent on chunked or `Content-Encoding`-compressed sources), so only reach for it when the API demands a `Content-Length`, and keep a `readableToBuffer` fallback on that path.
+  - `httpClient` **does not retry stream bodies** — `retries` is forced to `0` when the body is a `Readable` or `form-data`, because the retry loop would replay an already-drained stream and send a truncated body. Buffer the body if you need retries. See [Large File Streaming](../../docs/build-pieces/piece-reference/large-file-streaming.mdx).
 - `context.connections` — manage OAuth connections
 - `context.server` — API access (token, apiUrl, publicUrl)
 - `context.run.stop({ response })` — stop flow, return HTTP response
