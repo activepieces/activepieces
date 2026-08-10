@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
+import { newFollowerTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
@@ -91,6 +92,7 @@ export const newFollowerOnAccount = createTrigger({
     createdAt: '2023-06-01T12:00:00.000Z'
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newFollowerTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);
