@@ -25,7 +25,9 @@ A step that had them set keeps running; the stored values are ignored. If you re
 
 #### What you need to do
 
-Nothing, unless you edit an agent step. Published flows pin their piece version and keep running the old path until you edit and re-lock them.
+Nothing on upgrade. Existing flows keep running exactly as before.
+
+The thing to watch is editing. Editing any part of a flow re-locks it, which moves its agent step to the new path even if you did not touch that step.
 
 Before re-locking a flow whose agent step uses a sub-flow, an MCP server, a knowledge base or a custom API call, wait for support for those to land. Re-locking it now will make the step fail.
 
