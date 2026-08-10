@@ -158,7 +158,10 @@ function AuthStep({
   const { data: userCreated } = flagsHooks.useFlag<boolean>(
     ApFlagId.USER_CREATED,
   );
-  const firstUser = userCreated === false;
+  // Absent, not false: the flag has no row until the first account exists, so a
+  // fresh install omits it from /v1/flags entirely. Flags are loaded through a
+  // suspense query, so undefined here means missing rather than still loading.
+  const firstUser = userCreated !== true;
   const effectiveMode: AuthMode = firstUser ? 'signup' : mode;
   const emailAuthEnabled = emailAuthEnabledFlag ?? true;
   const passwordlessAvailable = emailAuthEnabled && !!smtpConfigured;
