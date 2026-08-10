@@ -303,8 +303,8 @@ export const newOrUpdatedRow = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, propsValue, auth });
+    const { store, auth, propsValue, isRepublish } = context;
+    await pollingHelper.onEnable(polling, { store, propsValue, auth, isRepublish });
   },
   async onDisable(context) {
     const { store, auth, propsValue } = context;
