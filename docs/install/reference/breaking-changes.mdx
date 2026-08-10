@@ -5,33 +5,6 @@ icon: "hammer"
 ---
 
 
-## Unreleased
-
-### What has changed?
-
-#### The Agent step runs on the server instead of inside the flow engine
-
-An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes.
-
-The step's inputs and its output shape are unchanged, so anything reading `structuredOutput` or the step's result keeps working. What changes is where it runs, which tools it can reach, and how it fails.
-
-An agent step running on the server can use the piece actions configured on it. Sub-flow, MCP and knowledge-base tools are not supported there yet, and a step configured with one is rejected rather than run without it. `custom_api_call` is also refused, because an unattended agent choosing a URL and method with your connection's credentials is not something we will do without a person watching.
-
-#### Max steps and web search are no longer step settings
-
-The Agent step used to offer a max-steps limit and a web-search toggle. Both are gone. The server applies its own ceiling on how many turns an agent takes, and web search follows what the platform has configured rather than the step.
-
-A step that had them set keeps running; the stored values are ignored. If you relied on a low max-steps to bound an agent, the server's ceiling is higher, so check any step where that mattered.
-
-#### What you need to do
-
-Nothing on upgrade. Existing flows keep running exactly as before.
-
-The thing to watch is editing. Editing any part of a flow re-locks it, which moves its agent step to the new path even if you did not touch that step.
-
-Before re-locking a flow whose agent step uses a sub-flow, an MCP server, a knowledge base or a custom API call, wait for support for those to land. Re-locking it now will make the step fail.
-
-
 ## 0.87.0
 
 ### What has changed?
