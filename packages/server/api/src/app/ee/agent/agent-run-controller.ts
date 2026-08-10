@@ -26,12 +26,14 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
         const pieceTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.PIECE)
-        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE)
+        const mcpTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.MCP)
+        const supportedTools = [...pieceTools, ...mcpTools]
+        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE && type !== AgentToolType.MCP)
         if (unsupported.length > 0) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions and MCP servers` } })
         }
         const usesCompletionTool = (structuredOutput?.length ?? 0) > 0
-        const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
+        const reserved = supportedTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
         if (reserved.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A tool cannot be named ${unique(reserved).join(' or ')}: names starting with "${BUILT_IN_TOOL_PREFIX}" belong to the agent's own tools` } })
         }
@@ -61,7 +63,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
                 waitpointId,
-                tools: pieceTools,
+                tools: supportedTools,
                 structuredOutput,
             },
         })

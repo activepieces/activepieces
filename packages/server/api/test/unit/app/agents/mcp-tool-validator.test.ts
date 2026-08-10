@@ -2,7 +2,8 @@ import { safeHttp } from '@activepieces/server-utils'
 import { AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@activepieces/server-utils', () => ({
+vi.mock('@activepieces/server-utils', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
     safeHttp: { axios: { request: vi.fn() } },
 }))
 
