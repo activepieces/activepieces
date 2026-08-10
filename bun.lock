@@ -5832,6 +5832,21 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/microsoft-sql-server": {
+      "name": "@activepieces/piece-microsoft-sql-server",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "mssql": "12.7.0",
+      },
+      "devDependencies": {
+        "@types/mssql": "9.1.9",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/microsoft-teams": {
       "name": "@activepieces/piece-microsoft-teams",
       "version": "0.6.1",
@@ -6106,21 +6121,6 @@
         "@activepieces/pieces-framework": "workspace:*",
       },
       "devDependencies": {
-        "tslib": "2.6.2",
-      },
-    },
-    "packages/pieces/community/mssql": {
-      "name": "@activepieces/piece-mssql",
-      "version": "0.0.1",
-      "dependencies": {
-        "@activepieces/core-piece-types": "workspace:*",
-        "@activepieces/core-utils": "workspace:*",
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "mssql": "12.7.0",
-      },
-      "devDependencies": {
-        "@types/mssql": "9.1.9",
         "tslib": "2.6.2",
       },
     },
@@ -11876,6 +11876,8 @@
 
     "@activepieces/piece-microsoft-sharepoint": ["@activepieces/piece-microsoft-sharepoint@workspace:packages/pieces/community/microsoft-sharepoint"],
 
+    "@activepieces/piece-microsoft-sql-server": ["@activepieces/piece-microsoft-sql-server@workspace:packages/pieces/community/microsoft-sql-server"],
+
     "@activepieces/piece-microsoft-teams": ["@activepieces/piece-microsoft-teams@workspace:packages/pieces/community/microsoft-teams"],
 
     "@activepieces/piece-microsoft-teams-bot": ["@activepieces/piece-microsoft-teams-bot@workspace:packages/pieces/community/microsoft-teams-bot"],
@@ -11915,8 +11917,6 @@
     "@activepieces/piece-moveo-ai": ["@activepieces/piece-moveo-ai@workspace:packages/pieces/community/moveo-ai"],
 
     "@activepieces/piece-moxie-crm": ["@activepieces/piece-moxie-crm@workspace:packages/pieces/community/moxie-crm"],
-
-    "@activepieces/piece-mssql": ["@activepieces/piece-mssql@workspace:packages/pieces/community/mssql"],
 
     "@activepieces/piece-muna-ai": ["@activepieces/piece-muna-ai@workspace:packages/pieces/community/muna-ai"],
 
