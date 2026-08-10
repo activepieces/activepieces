@@ -133,6 +133,7 @@ export const WorkerSettingsResponse = z.object({
     EDITION: z.string(),
     NETWORK_MODE: z.enum(NetworkMode),
     SSRF_ALLOW_LIST: z.array(z.string()),
+    ENFORCE_CONNECTION_PIECE_BINDING: z.boolean(),
     PAGE_ONCALL_WEBHOOK: z.string().optional(),
     APP_VERSION: z.string().optional(),
     PROJECT_WORKER: z.boolean().optional(),
