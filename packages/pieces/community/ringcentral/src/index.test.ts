@@ -9,15 +9,17 @@ describe('piece metadata', () => {
   it('declares the expected surface', () => {
     const m = meta();
     expect(m.displayName).toBe('RingCentral');
-    expect(Object.keys(m.actions)).toHaveLength(6);
+    expect(Object.keys(m.actions)).toHaveLength(8);
     expect(Object.keys(m.triggers)).toHaveLength(3);
   });
 
   it('exposes every action and trigger by name', () => {
     expect(Object.keys(meta().actions).sort()).toEqual([
       'custom_api_call',
+      'download_message_attachment',
       'get_call_log',
       'get_extension_info',
+      'get_message',
       'make_call',
       'send_sms',
       'send_team_message',

@@ -27,6 +27,8 @@ already can.
 | Send Team Messaging Post | `POST /team-messaging/v1/chats/{chatId}/posts` | Markdown supported |
 | Get Call Log | `GET /restapi/v1.0/account/~/extension/~/call-log` | Direction/type/date filters, paging via perPage |
 | Get Extension Info | `GET /restapi/v1.0/account/~/extension/~` | The authenticated extension's profile |
+| Get Message | `GET /restapi/v1.0/account/~/extension/~/message-store/{messageId}` | Reads a text or voicemail back, including its attachment list |
+| Download Message Attachment | `GET .../message-store/{messageId}/content/{attachmentId}` | Returns a file. Resolves the attachment id and name from the message when not given |
 | Custom API Call | any | Bearer token of this connection |
 
 Reads retry on 5xx; writes never do, because a replayed RingOut dials someone twice and a replayed
@@ -39,9 +41,14 @@ All three are WebHook subscriptions (`/restapi/v1.0/subscription`) built by one 
 
 | Trigger | Event filter | Kept deliveries |
 |---|---|---|
-| New Inbound SMS | `message-store/instant?type=SMS` | `direction === 'Inbound'` |
+| New Inbound SMS or MMS | `message-store/instant?type=SMS` + `?type=MMS` | `direction === 'Inbound'` |
 | New Voicemail | `message-store/instant?type=VoiceMail` | all |
 | New Team Messaging Post | `glip/posts` | `eventType === 'PostAdded'` |
+
+Two event filters on the text trigger, not one: the `type` parameter takes a single value, so an
+SMS-only subscription never fires for a picture message. That matters because a driver answering
+"send your POD" replies with an MMS. Pair the trigger with **Download Message Attachment** to pull
+the media itself, since the delivery carries only attachment metadata, never the bytes.
 
 Behaviour worth knowing:
 
@@ -64,6 +71,7 @@ Behaviour worth knowing:
 | `src/index.test.ts` | piece surface: auth wiring, action/trigger names |
 | `src/lib/common/client.test.ts` | server selection, timeout/retry policy, error translation |
 | `src/lib/common/subscription-trigger.test.ts` | handshake, lifecycle, subscriptionId filtering, dedupe |
-| `src/lib/actions/actions.test.ts` | prop-to-request mapping per action |
+| `src/lib/actions/actions.test.ts` | prop-to-request mapping per action, attachment resolution and download |
+| `src/lib/triggers/triggers.test.ts` | the event filters each trigger subscribes to, inbound filtering |
 
 Run with `bun run test` from this directory.

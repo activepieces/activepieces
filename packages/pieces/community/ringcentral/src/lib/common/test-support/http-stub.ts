@@ -8,6 +8,7 @@ export type Recorded = {
   queryParams?: Record<string, string>;
   timeout?: number;
   retries?: number;
+  responseType?: string;
   authentication?: { type: string; token?: string };
 };
 
@@ -35,6 +36,7 @@ export function stubHttp() {
       queryParams: req.queryParams,
       timeout: req.timeout,
       retries: req.retries,
+      responseType: req.responseType,
       authentication: req.authentication,
     });
 
@@ -71,6 +73,18 @@ export function memStore() {
     },
     delete: async (k: string) => {
       m.delete(k);
+    },
+  };
+}
+
+/** In-memory stand-in for `context.files`, which the attachment download writes through. */
+export function memFiles() {
+  const written: Array<{ fileName: string; data: Buffer }> = [];
+  return {
+    written,
+    write: async ({ fileName, data }: { fileName: string; data: Buffer }) => {
+      written.push({ fileName, data });
+      return `mock://files/${fileName}`;
     },
   };
 }

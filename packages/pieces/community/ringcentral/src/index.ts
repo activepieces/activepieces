@@ -9,6 +9,8 @@ import { makeCall } from './lib/actions/make-call';
 import { sendTeamMessage } from './lib/actions/send-team-message';
 import { getCallLog } from './lib/actions/get-call-log';
 import { getExtensionInfo } from './lib/actions/get-extension-info';
+import { getMessage } from './lib/actions/get-message';
+import { downloadMessageAttachment } from './lib/actions/download-message-attachment';
 import { newInboundSms } from './lib/triggers/new-inbound-sms';
 import { newVoicemail } from './lib/triggers/new-voicemail';
 import { newTeamMessage } from './lib/triggers/new-team-message';
@@ -28,6 +30,8 @@ export const ringcentral = createPiece({
     sendTeamMessage,
     getCallLog,
     getExtensionInfo,
+    getMessage,
+    downloadMessageAttachment,
     createCustomApiCallAction({
       auth: ringcentralAuth,
       baseUrl: (auth) =>

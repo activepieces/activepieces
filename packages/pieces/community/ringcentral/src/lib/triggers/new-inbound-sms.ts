@@ -5,9 +5,16 @@ export const newInboundSms = createSubscriptionTrigger<{
   direction?: string;
 }>({
   name: 'new_inbound_sms',
-  displayName: 'New Inbound SMS',
-  description: 'Triggers when a new inbound SMS message is received.',
-  eventFilters: ['/restapi/v1.0/account/~/extension/~/message-store/instant?type=SMS'],
+  displayName: 'New Inbound SMS or MMS',
+  description:
+    'Triggers when a new inbound text message is received, with or without media attached.',
+  // Two filters rather than one: the type parameter takes a single value, so SMS-only would miss
+  // every picture message. That matters because a driver answering "send your POD" replies with a
+  // photo, which arrives as MMS. Use Download Message Attachment to fetch the media itself.
+  eventFilters: [
+    '/restapi/v1.0/account/~/extension/~/message-store/instant?type=SMS',
+    '/restapi/v1.0/account/~/extension/~/message-store/instant?type=MMS',
+  ],
   // The instant message-store filter also fires for what this extension sends.
   accept: (message) => message.direction === 'Inbound',
   sampleData: {

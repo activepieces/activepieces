@@ -77,12 +77,15 @@ async function sendRequest<T = unknown>({
   resourcePath,
   body,
   queryParams,
+  responseType,
 }: {
   auth: OAuth2PropertyValue;
   method: HttpMethod;
   resourcePath: string;
   body?: unknown;
   queryParams?: QueryParams;
+  /** `arraybuffer` for the binary endpoints, e.g. message attachment content. Defaults to JSON. */
+  responseType?: HttpRequest['responseType'];
 }): Promise<T> {
   const request: HttpRequest = {
     method,
@@ -93,6 +96,7 @@ async function sendRequest<T = unknown>({
     },
     body,
     queryParams,
+    responseType,
     timeout: REQUEST_TIMEOUT_MS,
     retries: method === HttpMethod.GET ? READ_RETRIES : 0,
   };
