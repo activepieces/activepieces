@@ -3,6 +3,7 @@ import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { distributedLock } from '../../database/redis-connections'
 import { emailService } from '../../ee/helper/email/email-service'
 import { userIdentityService } from '../user-identity/user-identity-service'
 import { otpGenerator } from './lib/otp-generator'
@@ -59,42 +60,49 @@ export const otpService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    // Serialised per credential, because the budget and the single-use guarantee
+    // both need read-then-write to be indivisible, and neither `affected` nor
+    // RETURNING can carry that: an UPDATE reports both on postgres and neither on
+    // the embedded driver the tests run against. Inside the lock a plain read and
+    // delete are enough, and the increment stays raw SQL so it cannot touch
+    // `updated` and silently extend the credential's life.
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
-        const otp = await spendAttempt({ identityId, type })
-        if (isNil(otp)) {
-            return false
-        }
-        const otpIsPending = otp.state === OtpState.PENDING
-        const otpIsNotExpired = !otpIsExpired(otp)
-        const otpMatches = otp.value === value
-        const verdict = otpIsNotExpired && otpMatches && otpIsPending
-        if (verdict) {
-            return consumeOtp(otp.id)
-        }
-        if (otp.attempts >= MAX_ATTEMPTS) {
-            await repo().delete({ id: otp.id })
-            log.warn({ identityId, type }, '[otpService#confirm] attempt budget exhausted, credential discarded')
-        }
-        return false
+        return distributedLock(log).runExclusive({
+            key: `otp-confirm-${identityId}-${type}`,
+            timeoutInSeconds: 15,
+            fn: async () => {
+                const otp = await repo().findOneBy({ identityId, type })
+                if (isNil(otp)) {
+                    return false
+                }
+                if (otp.attempts >= MAX_ATTEMPTS) {
+                    await discard({ otp, identityId, type, log })
+                    return false
+                }
+                const otpIsPending = otp.state === OtpState.PENDING
+                const otpIsNotExpired = !otpIsExpired(otp)
+                const otpMatches = otp.value === value
+                if (otpIsNotExpired && otpMatches && otpIsPending) {
+                    await repo().delete({ id: otp.id })
+                    return true
+                }
+                await countAttempt(otp.id)
+                if (otp.attempts + 1 >= MAX_ATTEMPTS) {
+                    await discard({ otp, identityId, type, log })
+                }
+                return false
+            },
+        })
     },
 })
 
-async function spendAttempt({ identityId, type }: SpendAttemptParams): Promise<SpentAttempt | null> {
-    const rows: SpentAttempt[] = await repo().query(
-        `UPDATE "otp" SET "attempts" = "attempts" + 1
-         WHERE "identityId" = $1 AND "type" = $2 AND "attempts" < $3
-         RETURNING "id", "value", "state", "updated", "attempts"`,
-        [identityId, type, MAX_ATTEMPTS],
-    )
-    return rows[0] ?? null
+async function countAttempt(otpId: string): Promise<void> {
+    await repo().query('UPDATE "otp" SET "attempts" = "attempts" + 1 WHERE "id" = $1', [otpId])
 }
 
-async function consumeOtp(otpId: string): Promise<boolean> {
-    const rows: { id: string }[] = await repo().query(
-        'DELETE FROM "otp" WHERE "id" = $1 RETURNING "id"',
-        [otpId],
-    )
-    return rows.length === 1
+async function discard({ otp, identityId, type, log }: DiscardParams): Promise<void> {
+    await repo().delete({ id: otp.id })
+    log.warn({ identityId, type }, '[otpService#confirm] attempt budget exhausted, credential discarded')
 }
 
 function otpIsExpired(otp: OtpModel): boolean {
@@ -107,17 +115,11 @@ type CreateParams = {
     type: OtpType
 }
 
-type SpendAttemptParams = {
+type DiscardParams = {
+    otp: OtpModel
     identityId: string
     type: OtpType
-}
-
-type SpentAttempt = {
-    id: string
-    value: string
-    state: OtpState
-    updated: string
-    attempts: number
+    log: FastifyBaseLogger
 }
 
 type ConfirmParams = {
