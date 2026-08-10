@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
 import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -38,6 +38,13 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const reserved = (tools ?? []).filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
         if (reserved.length > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `A tool cannot be named ${unique(reserved).join(' or ')}: names starting with "${BUILT_IN_TOOL_PREFIX}" belong to the agent's own tools` } })
+        }
+        const duplicated = unique((tools ?? []).map((tool) => tool.toolName).filter((name, index, all) => all.indexOf(name) !== index))
+        if (duplicated.length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Two tools are both named ${duplicated.join(', ')}: each tool on a step needs its own name, or one silently replaces the other` },
+            })
         }
         if (pieceTools.some((tool) => tool.pieceMetadata.actionName === CUSTOM_API_CALL)) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent step cannot use a custom API call: it would let the agent send this project\'s credentials to any address it chooses' } })
@@ -100,8 +107,14 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
             params: { message: `An agent step cannot use flow tool(s) ${unique(missing.map((tool) => tool.toolName)).join(', ')}: the referenced flow was not found in this project` },
         })
     }
+    const runnableByExternalId = new Map(await Promise.all(matchedFlows.map(async (flow) => {
+        const runnable = isNil(flow.publishedVersionId) || flow.publishedVersionId === flow.version.id
+            ? flow
+            : await flowService(log).getOnePopulatedOrThrow({ id: flow.id, projectId, versionId: flow.publishedVersionId })
+        return [flow.externalId, runnable] as const
+    })))
     return flowToolRequests.map((toolRequest) => {
-        const flow = flowsByExternalId.get(toolRequest.externalFlowId)
+        const flow = runnableByExternalId.get(toolRequest.externalFlowId)
         assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
         const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
         const inputShape = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
