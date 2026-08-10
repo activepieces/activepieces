@@ -14,7 +14,8 @@ import { pieceMetadataService } from './metadata/piece-metadata-service'
 // Resolves a piece to a single downloadable link (see ADR 0002 — "Pieces are distributed as links").
 // Official/registry pieces resolve to a signed-S3 object when cached, else to the npm tarball (and a
 // lazy SYSTEM job caches it for next time). Custom (ARCHIVE) pieces are served straight from the file
-// store. Always platform-scoped via the engine token's platformId.
+// store. Always platform-scoped via the engine token's platformId, never project-scoped: piece sets are
+// catalog governance and must not gate execution.
 export const pieceBundle = (log: FastifyBaseLogger) => ({
     async resolve({ name, version, archiveId, platformId, projectId }: ResolveParams): Promise<PieceBundleResolution> {
         // ARCHIVE pieces are addressed by archiveId — they may not be registered in metadata yet
@@ -27,8 +28,9 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
         if (isNil(name) || isNil(version)) {
             return { type: 'not-found' }
         }
-        const metadata = await pieceMetadataService(log).get({ name, version, platformId, projectId })
+        const metadata = await pieceMetadataService(log).get({ name, version, platformId })
         if (isNil(metadata)) {
+            log.warn({ piece: { name, version }, platform: { id: platformId }, project: { id: projectId } }, '[pieceBundle] Piece metadata not found')
             return { type: 'not-found' }
         }
         if (metadata.packageType === PackageType.ARCHIVE && !isNil(metadata.archiveId)) {
