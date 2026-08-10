@@ -12,6 +12,18 @@ const recordFields: OutputSchema['fields'] = [
   { key: 'createdAt', label: 'Created At', format: 'datetime' },
 ];
 
+const mediaFlagFields: OutputSchema['fields'] = [
+  { key: 'hasImages', label: 'Has Images', format: 'boolean' },
+  { key: 'hasVideo', label: 'Has Video', format: 'boolean' },
+  { key: 'hasExternalLink', label: 'Has External Link', format: 'boolean' },
+];
+
+const postRefFields: OutputSchema['fields'] = [
+  { key: 'uri', label: 'Post URI' },
+  { key: 'cid', label: 'CID' },
+  { key: 'author', label: 'Author', children: authorFields },
+];
+
 const postFields: OutputSchema['fields'] = [
   { key: 'uri', label: 'Post URI' },
   { key: 'cid', label: 'CID' },
@@ -31,6 +43,16 @@ export const createPostOutputSchema: OutputSchema = {
       key: 'mainPost',
       label: 'Main Post',
       children: [
+        { key: 'uri', label: 'Post URI' },
+        { key: 'cid', label: 'CID' },
+      ],
+    },
+    {
+      key: 'threadPosts',
+      label: 'Thread Posts',
+      labelKey: 'uri',
+      description: 'The follow-up posts of a thread, in order; empty for a single post.',
+      listItems: [
         { key: 'uri', label: 'Post URI' },
         { key: 'cid', label: 'CID' },
       ],
@@ -125,9 +147,7 @@ export const newPostTriggerOutputSchema: OutputSchema = {
       children: [
         { key: 'query', label: 'Query' },
         { key: 'matchedTerms', label: 'Matched Terms' },
-        { key: 'hasImages', label: 'Has Images', format: 'boolean' },
-        { key: 'hasVideo', label: 'Has Video', format: 'boolean' },
-        { key: 'hasExternalLink', label: 'Has External Link', format: 'boolean' },
+        ...mediaFlagFields,
       ],
     },
   ],
@@ -141,7 +161,25 @@ export const newTimelinePostsTriggerOutputSchema: OutputSchema = {
       label: 'Feed Context',
       children: [
         { key: 'isRepost', label: 'Is Repost', format: 'boolean' },
+        {
+          key: 'repostBy',
+          label: 'Reposted By',
+          children: authorFields,
+          description: 'Who reposted this into the timeline; null when not a repost.',
+        },
         { key: 'isReply', label: 'Is Reply', format: 'boolean' },
+        {
+          key: 'replyToPost',
+          label: 'Replied-To Post',
+          children: postRefFields,
+          description: 'The post this one replies to; null when not a reply.',
+        },
+        {
+          key: 'replyToRoot',
+          label: 'Thread Root Post',
+          children: postRefFields,
+          description: 'The root post of the reply thread; null when not a reply.',
+        },
       ],
     },
   ],
@@ -154,9 +192,14 @@ export const newPostsByAuthorTriggerOutputSchema: OutputSchema = {
       key: 'postContext',
       label: 'Post Context',
       children: [
-        { key: 'authorHandle', label: 'Author Handle' },
         { key: 'isReply', label: 'Is Reply', format: 'boolean' },
+        {
+          key: 'replyTo',
+          label: 'Replied-To Post URI',
+          description: 'URI of the post this one replies to; null when not a reply.',
+        },
         { key: 'isRepost', label: 'Is Repost', format: 'boolean' },
+        ...mediaFlagFields,
       ],
     },
   ],
@@ -169,9 +212,9 @@ export const newFollowerTriggerOutputSchema: OutputSchema = {
     { key: 'displayName', label: 'Display Name' },
     { key: 'description', label: 'Bio' },
     { key: 'avatar', label: 'Avatar', format: 'image' },
-    { key: 'followersCount', label: 'Followers Count', format: 'number' },
-    { key: 'followsCount', label: 'Follows Count', format: 'number' },
-    { key: 'postsCount', label: 'Posts Count', format: 'number' },
+    // followersCount/followsCount/postsCount are deliberately absent: the
+    // trigger reads getFollowers(), whose ProfileView never carries the
+    // counts, so the emitted values are a hardcoded 0
     { key: 'indexedAt', label: 'Indexed At', format: 'datetime' },
     { key: 'createdAt', label: 'Account Created At', format: 'datetime' },
   ],

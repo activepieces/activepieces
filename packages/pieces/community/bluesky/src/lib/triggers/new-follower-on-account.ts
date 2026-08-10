@@ -78,9 +78,9 @@ export const newFollowerOnAccount = createTrigger({
     description: 'A new user who just followed your account',
     avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:example123/example@jpeg',
     banner: 'https://cdn.bsky.app/img/banner/plain/did:plc:example123/example@jpeg',
-    followersCount: 42,
-    followsCount: 156,
-    postsCount: 78,
+    followersCount: 0,
+    followsCount: 0,
+    postsCount: 0,
     indexedAt: '2024-01-01T12:00:00.000Z',
     viewer: {
       muted: false,
