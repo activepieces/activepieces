@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -34,7 +34,8 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+// The only chat tools an unattended run keeps: reading the public web needs no one present.
+export const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -583,19 +584,20 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     if (source === AgentRunSource.CHAT) {
         return allTools
     }
-    // Nobody is watching an unattended run, so anything that asks the user a question is not just
-    // useless, it ends the task: the agent reads the empty answer as a refusal and gives up.
-    const chatOnlyToolNames = [...Object.keys(displayTools), ...Object.keys(buildPlanTools), ...Object.keys(phaseTools), ...UNATTENDED_FORBIDDEN_TOOLS]
+    // Listed, not subtracted. Everything else in the chat set assumes someone is reading and can
+    // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
         runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
         log,
     })
-    const unattendedTools = omit(allTools, chatOnlyToolNames)
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    return { ...configuredTools, ...unattendedTools, ...completionTool }
+    const unattendedWebTools: ToolSet = Object.fromEntries(
+        Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name)),
+    )
+    return { ...configuredTools, ...unattendedWebTools, ...completionTool }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
