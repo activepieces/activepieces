@@ -1,7 +1,7 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, WorkerJobType } from '@activepieces/shared'
-import { createUIMessageStream, generateText, isLoopFinished, isStepCount, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
+import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
@@ -190,7 +190,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
 
             const turn = await runAgentTurn({
-                ...spreadIfDefined('stopWhen', isNil(data.maxSteps) ? undefined : [isLoopFinished(), isStepCount(data.maxSteps)]),
+                ...spreadIfDefined('stepCeiling', data.maxSteps),
                 model,
                 fastModel: dryRun ? undefined : fastModel,
                 provider,
