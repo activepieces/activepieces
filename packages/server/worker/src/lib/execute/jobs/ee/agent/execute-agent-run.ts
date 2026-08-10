@@ -166,6 +166,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             const allTools = buildToolSet({
+                provider,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
@@ -414,8 +415,9 @@ async function releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, ou
 }
 
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, configuredPieceTools, structuredOutput, captureStructured }: {
     ctx: JobContext
+    provider: AIProviderName
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: AgentPhase }
@@ -588,7 +590,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider }),
         log,
     })
     const completionTool = structuredOutput.length === 0

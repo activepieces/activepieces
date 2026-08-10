@@ -517,7 +517,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
         }
         const { projectId, platformId } = conversation
-        const model = await agentHelpers.resolveFastModel({ platformId, log })
+        const model = await agentHelpers.resolveFastModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
         const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
             model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },

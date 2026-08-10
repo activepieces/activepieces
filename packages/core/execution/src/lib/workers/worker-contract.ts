@@ -206,6 +206,7 @@ export type ExecutePieceToolRequest = {
     conversationId: string
     toolName: string
     instruction: string
+    provider?: AIProviderName
     piece: AgentPieceToolMetadata
 }
 
