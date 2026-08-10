@@ -266,32 +266,27 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('user').count()).toBe(1)
         })
 
-        it('still applies the submitted name when the platform route provisioned first', async () => {
+        it('does not rename an account whose chosen name matches its address', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
-            await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+            const complete = (fullName: string) => app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName },
+            })
+            // A single word matching the address local part persists exactly the
+            // shape requestCode seeds, so it cannot be told apart from "never
+            // named" by looking at the stored values.
+            await complete('Ahmad')
+
+            await complete('Someone Else')
+
             const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
-            // The other onboarding route wins the provisioning lock and creates the
-            // account with no name. Driven directly because it rotates the token,
-            // so over HTTP the two calls have to be genuinely concurrent.
-            await platformService(app!.log).createPlatformWithProject({
-                identityId: identity!.id,
-                name: 'Whatever',
-                invalidatePreviousTokens: true,
-                isFirstPlatform: true,
-                callerTokenVersion: undefined,
-                beforeProvision: undefined,
-            })
-
-            const { signedUp } = await passwordlessAuthService(app!.log).completeSignUp({
-                identityId: identity!.id,
-                fullName: 'Zoe Quinn',
-            })
-
-            expect(signedUp).toBe(false)
-            const named = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
-            expect(named?.firstName).toBe('Zoe')
-            expect(named?.lastName).toBe('Quinn')
+            expect(identity?.firstName).toBe('Ahmad')
+            expect(identity?.lastName).toBe('')
         })
 
         it('does not rename the account when completion is replayed', async () => {

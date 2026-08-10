@@ -131,23 +131,15 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             callerTokenVersion: undefined,
             beforeProvision: writeNames,
         })
-        // POST /v1/platforms takes the same lock and provisions without a name, so
-        // it can win and leave the seeded placeholder behind for good. If nothing
-        // has named this identity yet, the name step's submission still applies.
-        if (!provisioned && await carriesSeededName({ identityId, log })) {
-            await writeNames()
-        }
+        // Deliberately no fallback for the case where POST /v1/platforms wins the
+        // lock and provisions without a name. Detecting "never named" from the
+        // stored values cannot be done: a member at ahmad@example.com who signs
+        // up as "Ahmad" persists exactly the seeded shape, so any such check lets
+        // a replay rename an established account — a worse failure than the one it
+        // would fix, and reachable only by an API caller racing the name step.
         return { response, signedUp: provisioned }
     },
 })
-
-// The placeholder requestCode seeds is exactly the email local part with no
-// surname, so an identity still carrying it has never been through a name step.
-async function carriesSeededName({ identityId, log }: CarriesSeededNameParams): Promise<boolean> {
-    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-    return identity.firstName === signupNames.firstNameFromEmail(identity.email)
-        && identity.lastName === ''
-}
 
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
     await authenticationUtils(log).assertEmailAuthIsEnabled({
@@ -172,11 +164,6 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
 type RequestCodeParams = {
     email: string
     platformId: string | null
-}
-
-type CarriesSeededNameParams = {
-    identityId: string
-    log: FastifyBaseLogger
 }
 
 type CompleteSignUpResult = {
