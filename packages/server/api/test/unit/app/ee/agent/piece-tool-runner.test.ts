@@ -1,9 +1,9 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetOrThrow, mockExecuteAdhocAction, mockResolveProperty, mockCompleter } = vi.hoisted(() => ({
+const { mockGetOrThrow, mockExecutePieceActionRun, mockResolveProperty, mockCompleter } = vi.hoisted(() => ({
     mockGetOrThrow: vi.fn(),
-    mockExecuteAdhocAction: vi.fn(),
+    mockExecutePieceActionRun: vi.fn(),
     mockResolveProperty: vi.fn(),
     mockCompleter: vi.fn(),
 }))
@@ -14,7 +14,7 @@ vi.mock('../../../../../src/app/pieces/metadata/piece-metadata-service', () => (
 }))
 
 vi.mock('../../../../../src/app/mcp/tools/flow-run-utils', () => ({
-    executeAdhocAction: mockExecuteAdhocAction,
+    executePieceActionRun: mockExecutePieceActionRun,
 }))
 
 vi.mock('../../../../../src/app/mcp/tools/mcp-utils', () => ({
@@ -50,13 +50,13 @@ describe('pieceToolRunner.runFromInstruction', () => {
         vi.clearAllMocks()
         mockGetOrThrow.mockResolvedValue(metadataWith({ text: { displayName: 'Text', required: true, type: PropertyType.SHORT_TEXT } }))
         mockCompleter.mockResolvedValue({ text: 'hello' })
-        mockExecuteAdhocAction.mockResolvedValue({ content: [{ type: 'text', text: 'sent' }] })
+        mockExecutePieceActionRun.mockResolvedValue({ content: [{ type: 'text', text: 'sent' }] })
     })
 
     it('executes the action with the input the model filled in', async () => {
         await run()
 
-        expect(mockExecuteAdhocAction).toHaveBeenCalledWith(expect.objectContaining({
+        expect(mockExecutePieceActionRun).toHaveBeenCalledWith(expect.objectContaining({
             pieceName: '@activepieces/piece-slack',
             actionName: 'send_message',
             input: { text: 'hello' },
@@ -66,7 +66,7 @@ describe('pieceToolRunner.runFromInstruction', () => {
     it('does not pin a version on execution, because the adhoc path validates against the latest', async () => {
         await run()
 
-        const call = mockExecuteAdhocAction.mock.calls[0]?.[0] ?? {}
+        const call = mockExecutePieceActionRun.mock.calls[0]?.[0] ?? {}
         expect(call).not.toHaveProperty('pieceVersion')
     })
 
@@ -113,13 +113,13 @@ describe('pieceToolRunner.runFromInstruction', () => {
         mockGetOrThrow.mockResolvedValue({ version: '1.0.0', actions: {} })
 
         await expect(run()).rejects.toThrow()
-        expect(mockExecuteAdhocAction).not.toHaveBeenCalled()
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
     })
 
     it('does not execute anything when input filling fails', async () => {
         mockCompleter.mockRejectedValue(new Error('model unavailable'))
 
         await expect(run()).rejects.toThrow(/model unavailable/)
-        expect(mockExecuteAdhocAction).not.toHaveBeenCalled()
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
     })
 })

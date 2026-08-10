@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
@@ -164,6 +164,59 @@ describe('codeBuilder.processCodeStep', () => {
 
         expect(installMock).toHaveBeenCalledTimes(2)
         expect(buildMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('rebuilds when the compiled artifact was deleted out of band, instead of serving a phantom cache hit', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const compiledPath = codeCache(codesFolderPath).compiledStepPath({
+            flowVersionId: artifact.flowVersionId,
+            stepName: artifact.name,
+        })
+        installMock.mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock.mockImplementation(async () => {
+            await writeFile(compiledPath, 'exports.code = async () => 42', 'utf8')
+            return { stdout: '', stderr: '' }
+        })
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+        expect(buildMock).toHaveBeenCalledTimes(1)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+        expect(buildMock).toHaveBeenCalledTimes(1)
+
+        await rm(compiledPath)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+        expect(buildMock).toHaveBeenCalledTimes(2)
+        await expect(readFile(compiledPath, 'utf8')).resolves.toContain('exports.code')
+    })
+
+    it('builds once when concurrent runs provision the same step, instead of each rebuilding over the others', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const compiledPath = codeCache(codesFolderPath).compiledStepPath({
+            flowVersionId: artifact.flowVersionId,
+            stepName: artifact.name,
+        })
+        installMock.mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock.mockImplementation(async () => {
+            await writeFile(compiledPath, 'exports.code = async () => 42', 'utf8')
+            return { stdout: '', stderr: '' }
+        })
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        const concurrentCount = 5
+        const statuses = await Promise.all(
+            Array.from({ length: concurrentCount }, () => builder.processCodeStep({ artifact, codesFolderPath })),
+        )
+
+        expect(statuses).toEqual(Array.from({ length: concurrentCount }, () => 'success'))
+        expect(buildMock).toHaveBeenCalledTimes(1)
+        await expect(readFile(compiledPath, 'utf8')).resolves.toContain('exports.code')
     })
 
     it('caches a deterministic compile failure — install is not re-run for unchanged source', async () => {

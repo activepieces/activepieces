@@ -1,3 +1,4 @@
+import { AgentPieceToolMetadata } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
@@ -90,6 +91,9 @@ export type WorkerToApiContract = {
     heartbeatAgentConversation(input: HeartbeatAgentConversationRequest): Promise<void>
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
+    resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
+    updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
+    executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
 
@@ -194,6 +198,31 @@ export type ExecuteAgentToolRequest = {
     userId: string
     source: AgentRunSource
     conversationId?: string
+}
+
+export type ExecutePieceToolRequest = {
+    conversationId: string
+    toolName: string
+    instruction: string
+    piece: AgentPieceToolMetadata
+}
+
+export type ExecutePieceToolResponse = {
+    result: unknown
+}
+
+export type UpdateFlowStepProgressRequest = {
+    conversationId: string
+    flowRunId: string
+    output: unknown
+    sequence: number
+}
+
+export type ResumeFlowStepRequest = {
+    conversationId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
 }
 
 export type ExecuteAgentToolResponse = {

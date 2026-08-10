@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -8,6 +8,9 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { fileService } from '../../file/file.service'
 import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
+import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { resumeService } from '../../flows/flow-run/waitpoint/resume-service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -23,10 +26,13 @@ import { chatUsageTracker } from './chat-usage-tracker'
 import { agentMcp } from './mcp/agent-mcp'
 import { agentPrompt } from './prompt/agent-prompt'
 import { executeCrossProjectTool } from './tools/agent-tools'
+import { pieceToolRunner } from './tools/piece-tool-runner'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+
 
 const MAX_EMAIL_RECIPIENTS = 10
 const MAX_EMAIL_SUBJECT_LENGTH = 300
@@ -465,8 +471,58 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[agentRpc#updateProjectContext] Project context updated')
     },
 
+    async updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void> {
+        const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: input.conversationId }, select: ['source', 'projectId'] })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            log.warn({ conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId } }, '[agentRpc#updateFlowStepProgress] Refused progress for a run that is not a flow step')
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can report step progress' } })
+        }
+        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
+        engineRunCallbackService(log).updateStepProgress({
+            projectId: conversation.projectId,
+            request: { projectId: conversation.projectId, runId: flowRun.id, output: input.output, sequence: input.sequence },
+        })
+    },
+
+    async resumeFlowStep(input: ResumeFlowStepRequest): Promise<void> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can resume a flow' } })
+        }
+        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
+        const { stale } = await resumeService(log).resumeFromWaitpoint({
+            flowRunId: flowRun.id,
+            waitpointId: input.waitpointId,
+            resumePayload: { body: sanitizeObjectForPostgresql(input.output), headers: {}, queryParams: {} },
+        })
+        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: flowRun.id }, waitpoint: { id: input.waitpointId } }
+        if (stale) {
+            log.warn(resumeFields, '[agentRpc#resumeFlowStep] Nothing to resume, so the flow keeps waiting unless another attempt already released it')
+            return
+        }
+        log.info(resumeFields, '[agentRpc#resumeFlowStep] Handed the result back to the flow')
+    },
+
+    async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
+        }
+        const { result, resolvedInput } = await pieceToolRunner.runFromInstruction({
+            model: await agentHelpers.resolveFastModel({ platformId: conversation.platformId, log }),
+            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
+            instruction: input.instruction,
+            projectId: conversation.projectId,
+            platformId: conversation.platformId,
+            log,
+            ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
+        })
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        return { result }
+    },
+
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
-        const chatOnlyTool = input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName)
+        const chatOnlyTool = input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName)
         if (chatOnlyTool && input.source !== AgentRunSource.CHAT) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
@@ -584,6 +640,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
 
+        if (conversation.source !== AgentRunSource.CHAT) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a chat run can send email' } })
+        }
+
         // Fence the send to the active streaming owner. A run parked on an email approval must not
         // resume and send once it's been superseded (activeRunId changed) OR cancelled/finished
         // (status left STREAMING). Cancellation flips status to IDLE without touching activeRunId,
@@ -697,7 +757,7 @@ async function loadOrStartConversation({ conversationId, platformId, userId, sou
     }
     const existing = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (!isNil(existing)) {
-        if (existing.platformId !== platformId || existing.userId !== userId) {
+        if (existing.platformId !== platformId || existing.userId !== userId || existing.source !== AgentRunSource.FLOW_STEP) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That conversation belongs to someone else' } })
         }
         return existing
@@ -715,12 +775,12 @@ async function loadOrStartConversation({ conversationId, platformId, userId, sou
     })
 }
 
-async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string | null> {
-    if (isNil(conversationId)) {
-        return null
+async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string> {
+    const conversation = isNil(conversationId) ? null : await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (isNil(conversation?.projectId)) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'A flow-step run must be confined to a project' } })
     }
-    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
-    return conversation?.projectId ?? null
+    return conversation.projectId
 }
 
 function byteLengthOf(value: unknown): number {

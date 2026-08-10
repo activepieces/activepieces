@@ -29,7 +29,7 @@ async function fillInput({ action, instruction, predefinedInput, ports }: FillIn
             schema,
             prompt: extractionPrompt({ instruction, propertyNames, resolvedInput, choices }),
         })
-        resolvedInput = { ...resolvedInput, ...filled }
+        resolvedInput = { ...resolvedInput, ...omit(withoutTemplates(filled), ['auth']), ...pinned }
     }
     return resolvedInput
 }
@@ -63,6 +63,10 @@ async function choicesFor({ action, propertyNames, resolvedInput, ports }: {
         return result?.status === 'options' ? ([propertyName, result.options] as const) : null
     }))
     return Object.fromEntries(resolved.filter((entry) => !isNil(entry)))
+}
+
+function withoutTemplates(filled: Record<string, unknown>): Record<string, unknown> {
+    return JSON.parse(JSON.stringify(filled, (_key, value) => typeof value === 'string' ? value.replace(/\{(?=\{)/g, '{ ') : value))
 }
 
 function resolveFor({ action, ports, propertyName, resolvedInput }: {

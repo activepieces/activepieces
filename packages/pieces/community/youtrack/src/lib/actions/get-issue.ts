@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
-import { issueDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
+import { youtrackAuth } from '../auth';
+import { issueDropdown, ISSUE_FIELDS, flattenIssue, youtrackApiCall } from '../common';
+import { getIssueActionOutputSchema } from '../output-schemas';
 
 export const getIssueAction = createAction({
   auth: youtrackAuth,
   name: 'get_issue',
+  outputSchema: getIssueActionOutputSchema,
   displayName: 'Get Issue',
   description: 'Retrieves full details of an issue including all custom field values.',
   audience: 'both',
@@ -20,6 +22,6 @@ export const getIssueAction = createAction({
       path: '/issues/' + context.propsValue.issue,
       queryParams: { fields: ISSUE_FIELDS },
     });
-    return flattenObject(response.body);
+    return flattenIssue(response.body);
   },
 });

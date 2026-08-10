@@ -183,6 +183,104 @@ describe('Piece Component Filtering (EE)', () => {
         })
     })
 
+    describe('GET /v1/pieces/:name (direct fetch respects piece sets)', () => {
+        const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+
+        async function setupPieceSetScenario(hiddenPieces: string[]) {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Test Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            return { mockPlatform, mockProject, token }
+        }
+
+        it('direct fetch returns 404 for a hidden piece when projectId is passed', async () => {
+            const { mockProject, token } = await setupPieceSetScenario(['@activepieces/piece-ai'])
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(404)
+        })
+
+        it('direct fetch returns 200 for a visible piece when projectId is passed', async () => {
+            const { mockProject, token } = await setupPieceSetScenario([])
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+            expect(response.json().name).toBe('@activepieces/piece-ai')
+        })
+
+        it('direct fetch without projectId returns 200 even for a hidden piece (existing-step lookup path)', async () => {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Test Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['@activepieces/piece-ai'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+        })
+    })
+
     describe('GET /v1/pieces (component filters via piece sets)', () => {
         async function setupComponentPieceSetScenario(opts: {
             selectedActions?: Record<string, string[]>

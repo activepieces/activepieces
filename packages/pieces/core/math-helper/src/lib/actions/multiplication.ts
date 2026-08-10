@@ -3,10 +3,12 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
+import { multiplicationActionOutputSchema } from '../output-schemas';
 
 export const multiplication = createAction({
   audience: 'both',
   name: 'multiplication_math',
+  outputSchema: multiplicationActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Multiplication',
   description: 'Multiply first number by the second number',

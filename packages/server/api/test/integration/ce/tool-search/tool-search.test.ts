@@ -97,11 +97,11 @@ async function nullEmbeddingCount(): Promise<number> {
     return count
 }
 
-type IndexRowProbe = { pieceVersion: string, embeddingInputHash: string, embedding: string | null, modelVersion: string }
+type IndexRowProbe = { pieceVersion: string, embeddingInputHash: string, embedding: string | null, modelVersion: string, retrievalDoc: string }
 
 async function getIndexRow(pieceName: string, objectName: string): Promise<IndexRowProbe | undefined> {
     const rows = await databaseConnection().query(
-        `SELECT "pieceVersion", "embeddingInputHash", "embedding"::text AS embedding, "modelVersion"
+        `SELECT "pieceVersion", "embeddingInputHash", "embedding"::text AS embedding, "modelVersion", "retrievalDoc"
          FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2`,
         [pieceName, objectName],
     )
@@ -445,7 +445,95 @@ describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
         expect(second.objectsIndexed).toBe(4)
         expect(second.objectsEmbedded).toBe(0)
         expect(second.objectsDeleted).toBe(0)
+        expect(second.passes).toBe(1)
         expect(await indexRowCount()).toBe(4)
+    })
+})
+
+describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing mid-reconcile)', () => {
+    function embedderPublishingMidRun(publish: (call: number) => Promise<unknown>, calls = 1): ToolSearchEmbedder {
+        let call = 0
+        return {
+            ...fakeEmbedder,
+            embed: async (texts) => {
+                if (call < calls) {
+                    call++
+                    await publish(call)
+                }
+                return texts.map(bagOfWords)
+            },
+        }
+    }
+
+    function trelloPiece(version: string): ReturnType<typeof createMockPieceMetadata> {
+        return createMockPieceMetadata({
+            name: '@activepieces/piece-trello',
+            displayName: 'Trello',
+            version,
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { create_card: action({ name: 'create_card', displayName: 'Create Card', description: 'Create a new card on a Trello board' }) },
+            triggers: {},
+        })
+    }
+
+    it('indexes a piece published after the snapshot was taken instead of dropping it', async () => {
+        await seedCatalog()
+        const embedder = embedderPublishingMidRun(() => db.save('piece_metadata', trelloPiece('1.0.0')))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(2)
+        expect(result.objectsIndexed).toBe(5)
+        expect(result.objectsEmbedded).toBe(5)
+        expect(await indexRowCount()).toBe(5)
+        expect((await getIndexRow('@activepieces/piece-trello', 'create_card'))?.embedding).not.toBeNull()
+    })
+
+    it('refreshes a description republished mid-reconcile — the stale text is gone from the index', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect((await getIndexRow('@activepieces/piece-gmail', 'send_email'))?.retrievalDoc).toContain('Send an email via Gmail')
+
+        await db.save('piece_metadata', trelloPiece('1.0.0'))
+        const embedder = embedderPublishingMidRun(() => db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-gmail',
+            displayName: 'Gmail',
+            version: '1.0.1',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_email: action({ name: 'send_email', displayName: 'Send Email', description: 'Create and send a new email message via Gmail' }) },
+            triggers: {},
+        })))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(2)
+        const gmail = await getIndexRow('@activepieces/piece-gmail', 'send_email')
+        expect(gmail?.retrievalDoc).not.toContain('Send an email via Gmail')
+        expect(gmail?.retrievalDoc).toContain('Create and send a new email message via Gmail')
+        expect(gmail?.pieceVersion).toBe('1.0.1')
+        expect(gmail?.embedding).not.toBeNull()
+    })
+
+    it('stops at the trailing-pass cap when the catalog keeps changing, rather than looping', async () => {
+        await seedCatalog()
+        const embedder = embedderPublishingMidRun((call) => db.save('piece_metadata', createMockPieceMetadata({
+            name: `@activepieces/piece-churn-${call}`,
+            displayName: `Churn ${call}`,
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_message: action({ name: 'send_message', displayName: 'Send Message', description: `Send message number ${call}` }) },
+            triggers: {},
+        })), Number.MAX_SAFE_INTEGER)
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(3)
+        expect(result.objectsIndexed).toBe(6)
+        expect(await indexRowCount()).toBe(6)
+        expect(await nullEmbeddingCount()).toBe(0)
     })
 })
 

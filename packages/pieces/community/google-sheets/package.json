@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-google-sheets",
-  "version": "0.16.6",
+  "version": "0.16.7",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
@@ -13,7 +13,7 @@
     "gaxios": "6.7.1",
     "google-auth-library": "10.5.0",
     "lodash": "4.18.1",
-    "nanoid": "3.3.8",
+    "nanoid": "3.3.17",
     "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"

@@ -1,6 +1,7 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { deleteTableActionOutputSchema } from '../output-schemas';
 
 export const deleteTable = createAction({
   audience: 'both',
@@ -12,6 +13,7 @@ export const deleteTable = createAction({
   props: {
     table_id: tablesCommon.table_id,
   },
+  outputSchema: deleteTableActionOutputSchema,
   async run(context) {
     const { table_id } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(table_id, context);

@@ -329,6 +329,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
+        async executePieceTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
+        },
+
+        async updateFlowStepProgress(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
+        },
+
+        async resumeFlowStep(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
+        },
+
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
         },
