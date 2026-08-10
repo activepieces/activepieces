@@ -10,7 +10,7 @@ import {
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const deleteRowsAction = createAction({
   auth: mssqlAuth,
   name: 'delete_rows',
   displayName: 'Delete Rows',

@@ -3,7 +3,7 @@ import { mssqlAuth } from '../auth';
 import { mssqlConnect, mssqlGetTables } from '../common';
 import { getTablesActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const getTablesAction = createAction({
   auth: mssqlAuth,
   name: 'get_tables',
   displayName: 'Get Tables',

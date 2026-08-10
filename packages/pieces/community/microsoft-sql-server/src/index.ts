@@ -1,10 +1,13 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { mssqlAuth } from './lib/auth';
-import actions from './lib/actions';
-import { newOrUpdatedRow } from './lib/triggers/new-or-updated-row';
-
-export { mssqlAuth };
+import { findRowsAction } from './lib/actions/find-rows';
+import { insertRowAction } from './lib/actions/insert-row';
+import { updateRowsAction } from './lib/actions/update-rows';
+import { deleteRowsAction } from './lib/actions/delete-rows';
+import { getTablesAction } from './lib/actions/get-tables';
+import { runQueryAction } from './lib/actions/run-query';
+import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row';
 
 export const mssql = createPiece({
   displayName: 'Microsoft SQL Server',
@@ -15,6 +18,13 @@ export const mssql = createPiece({
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ['OdaiAhmed99'],
   auth: mssqlAuth,
-  actions,
-  triggers: [newOrUpdatedRow],
+  actions: [
+    findRowsAction,
+    insertRowAction,
+    updateRowsAction,
+    deleteRowsAction,
+    getTablesAction,
+    runQueryAction,
+  ],
+  triggers: [newOrUpdatedRowTrigger],
 });

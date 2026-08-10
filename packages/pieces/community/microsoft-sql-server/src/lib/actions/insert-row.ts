@@ -8,8 +8,9 @@ import {
   quoteTable,
 } from '../common';
 import { mssqlProps } from '../common/props';
+import { insertRowActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const insertRowAction = createAction({
   auth: mssqlAuth,
   name: 'insert_row',
   displayName: 'Insert Row',
@@ -29,6 +30,7 @@ export default createAction({
       required: true,
     }),
   },
+  outputSchema: insertRowActionOutputSchema,
   async run(context) {
     const { table, values } = context.propsValue;
     const entries = Object.entries(values ?? {});

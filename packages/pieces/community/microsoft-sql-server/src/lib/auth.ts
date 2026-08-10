@@ -6,17 +6,19 @@ import {
 import { mssqlConnect } from './common';
 
 export const mssqlAuth = PieceAuth.CustomAuth({
+  description:
+    'For Azure SQL, use the Connection String field: in the portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) one — not an Active Directory variant. Replace the {your_password} placeholder, and quote a password containing a semicolon: Password="my;pass";.',
   props: {
     connection_string: Property.LongText({
       displayName: 'Connection String',
       description:
-        'Azure SQL only. In the portal open your database, choose Connection strings, and copy the ADO.NET (SQL authentication) one — not an Active Directory variant. Replace the {your_password} placeholder, and quote a password containing a semicolon: Password="my;pass";. When set, the fields below are ignored apart from CA Certificate and Minimum TLS Version.',
+        'Azure SQL only. When set, the fields below are ignored except CA Certificate and Minimum TLS Version.',
       required: false,
     }),
     host: Property.ShortText({
       displayName: 'Host',
       description:
-        'The hostname or address of the SQL Server, e.g. sql.example.com. Use the host and port below rather than a named instance, since instance lookup needs UDP port 1434.',
+        'The hostname or address of the SQL Server. Use Host and Port rather than a named instance, which needs UDP port 1434.',
       required: false,
     }),
     port: Property.Number({
@@ -44,21 +46,20 @@ export const mssqlAuth = PieceAuth.CustomAuth({
     encrypt: Property.Checkbox({
       displayName: 'Encrypt Connection',
       description:
-        'Encrypt the connection with TLS. Required by Azure SQL. Turn this off only for an on-premise server that has no TLS configured at all.',
+        'Encrypt the connection with TLS. Required by Azure SQL; turn off only for an on-premise server with no TLS configured.',
       required: true,
       defaultValue: true,
     }),
     trust_server_certificate: Property.Checkbox({
       displayName: 'Trust Server Certificate',
       description:
-        'Skip verification of the server certificate. Turn this on for an on-premise server using a self-signed certificate. Leave it off for Azure SQL, or whenever you supply a CA certificate below.',
+        'Skip server certificate verification, for an on-premise server with a self-signed certificate. Leave off for Azure SQL or when a CA certificate is supplied below.',
       required: true,
       defaultValue: false,
     }),
     certificate: Property.LongText({
       displayName: 'CA Certificate',
-      description:
-        'Optional. Paste a CA certificate in PEM format to verify a self-signed server certificate properly instead of trusting it blindly.',
+      description: 'Optional CA certificate (PEM) to verify a self-signed server certificate.',
       required: false,
     }),
     min_tls_version: Property.StaticDropdown({

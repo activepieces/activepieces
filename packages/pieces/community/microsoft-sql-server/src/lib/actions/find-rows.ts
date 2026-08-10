@@ -4,7 +4,7 @@ import { MssqlTable, mssqlConnect, quoteId, quoteTable } from '../common';
 import { mssqlProps, warningMarkdown } from '../common/props';
 import { findRowsActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const findRowsAction = createAction({
   auth: mssqlAuth,
   name: 'find_rows',
   displayName: 'Find Rows',
@@ -35,7 +35,12 @@ export default createAction({
         'Values for the @placeholders used in the condition. Enter the name without the @ prefix.',
       required: false,
     }),
-    order_by: mssqlProps.column('Order By', 'Column to sort the rows by.', false),
+    order_by: mssqlProps.column(
+      'Order By',
+      'Column to sort the rows by.',
+      false,
+      true
+    ),
     order_direction: Property.StaticDropdown({
       displayName: 'Order Direction',
       required: false,

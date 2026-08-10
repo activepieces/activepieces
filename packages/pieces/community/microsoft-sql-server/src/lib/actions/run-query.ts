@@ -4,7 +4,7 @@ import { mssqlConnect } from '../common';
 import { warningMarkdown } from '../common/props';
 import { runQueryActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const runQueryAction = createAction({
   auth: mssqlAuth,
   name: 'run_query',
   displayName: 'Run Query',

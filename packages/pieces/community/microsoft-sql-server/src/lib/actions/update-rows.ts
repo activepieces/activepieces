@@ -10,7 +10,7 @@ import {
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
-export default createAction({
+export const updateRowsAction = createAction({
   auth: mssqlAuth,
   name: 'update_rows',
   displayName: 'Update Rows',

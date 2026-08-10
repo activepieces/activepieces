@@ -43,6 +43,12 @@ export const runQueryActionOutputSchema: OutputSchema = {
   ],
 };
 
+export const insertRowActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'row', label: 'Inserted Row', value: '', dynamicKey: true },
+  ],
+};
+
 export const findRowsActionOutputSchema: OutputSchema = {
   fields: [
     {

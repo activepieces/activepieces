@@ -283,7 +283,13 @@ const polling: Polling<
   },
 };
 
-export const newOrUpdatedRow = createTrigger({
+const pollingDescription = `Polls for rows newest-first by the column you order by, and stops once it reaches the last row already delivered.
+
+- Order by a **created** timestamp or **id** for new rows only; a **last-modified** timestamp also catches edits, but only if it changes on every update.
+- Best with an **identity column, primary key, or unique constraint** to tell apart rows sharing an order value — without one, identical rows may not each raise their own event.
+- Rows where the order column is **empty** are skipped, and a row moved **backwards** behind already-seen rows goes unnoticed.`;
+
+export const newOrUpdatedRowTrigger = createTrigger({
   auth: mssqlAuth,
   name: 'new-or-updated-row',
   displayName: 'New or Updated Row',
@@ -294,15 +300,7 @@ export const newOrUpdatedRow = createTrigger({
   },
   props: {
     description: Property.MarkDown({
-      value: `**How this works:** the trigger reads the most recent rows using the column you order by, then keeps polling until it reaches the last row it already saw.
-      \n
-      Order by a **created** timestamp or an auto-incrementing **id** to catch new rows only. Order by a **last-modified** timestamp to catch edits too — but the column must change on every update, otherwise edits go unnoticed.
-      \n
-      Works best on a table with an **identity column, primary key or unique constraint**, which lets rows sharing an order value be told apart.
-      \n
-      Rows where the chosen column is **empty** are skipped, since an empty value cannot mark a position to resume from.
-      \n
-      Two further limits. If the table has no key at all, rows identical in every column cannot be told apart, so a second identical row may not raise its own event. And a change that moves a row's order value **backwards**, behind rows already seen, goes unnoticed — the trigger only ever looks forward from the newest value it has delivered.`,
+      value: pollingDescription,
     }),
     table: mssqlProps.table(),
     order_by: mssqlProps.column(
