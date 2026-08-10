@@ -8,7 +8,7 @@ Prefer webhooks when the API supports them -- they are instant and use fewer res
 
 ## Polling Trigger
 
-Use when the API does NOT support webhooks. Activepieces polls every ~5 minutes.
+Use when the API has no webhook support. Activepieces polls every ~5 minutes.
 
 Two deduplication strategies:
 - **TIMEBASED** -- Each item has a timestamp; only items newer than last poll are returned
@@ -16,14 +16,14 @@ Two deduplication strategies:
 
 **Always pass the whole `context`** to `pollingHelper.onEnable` / `onDisable` / `poll` / `test` -- never a subset like `{ store, auth, propsValue }`. Every field on the helper's param type is optional, so a partial object type-checks and whatever you left out is dropped in silence. The set also grows: `onEnable` now reads `context.isRepublish` to keep the existing `lastPoll`/`lastItem` when a running flow is republished, so a subset call still resets the checkpoint and drops every event since the last poll.
 
-**Editing an existing polling trigger? Fix its call while you're there.** Most pieces in the repo still pass the subset. If you touch one -- new trigger, bug fix, anything -- switch every `pollingHelper` call in that piece to pass `context`. You are already bumping the version and rebuilding, so the fix costs nothing extra and gets verified with your change; a one-shot codemod across every piece instead means a huge unreviewable diff and a forced version bump on pieces nobody runs. Mention the fix in your PR description so it doesn't read as an unrelated change.
+**Editing an existing polling trigger? Fix every `pollingHelper` call in the piece while you're there.** Most pieces in the repo still pass the subset — the SKILL.md carve-out explains why fix-on-touch beats a repo-wide codemod. Mention the fix in your PR description so it doesn't read as an unrelated change.
 
 ### TIMEBASED Polling (most common)
 
 ```typescript
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -135,7 +135,7 @@ Use when the API supports webhook registration. The flow:
 ```typescript
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 export const newRecordWebhookTrigger = createTrigger({
   auth: myAppAuth,
