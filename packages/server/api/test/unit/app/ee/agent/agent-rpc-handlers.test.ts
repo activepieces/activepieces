@@ -414,8 +414,6 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
     })
 
     it('refuses a flowId that does not belong to the conversation\'s own project (cross-project)', async () => {
-        // getOnePopulated is scoped by { id, projectId } — a flow that exists but in a
-        // different project resolves to null, exactly as it would against the real DB.
         mockGetOnePopulated.mockResolvedValue(null)
 
         await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-in-other-project')).rejects.toThrow()
