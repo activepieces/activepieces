@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, unique } from '@activepieces/core-utils'
-import { AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentOutputField, AgentPieceTool, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -25,10 +25,12 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
-        const pieceTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.PIECE)
-        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE)
+        const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.KNOWLEDGE_BASE]
+        const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
+        const pieceTools = supportedTools.filter((tool): tool is AgentPieceTool => tool.type === AgentToolType.PIECE)
+        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions` } })
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions and knowledge base search` } })
         }
         const usesCompletionTool = (structuredOutput?.length ?? 0) > 0
         const reserved = pieceTools.filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
@@ -61,7 +63,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
                 waitpointId,
-                tools: pieceTools,
+                tools: supportedTools,
                 structuredOutput,
             },
         })

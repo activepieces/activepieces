@@ -25,6 +25,20 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
+const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
+    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
+    mockKbSearch: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
+}))
+
+vi.mock('ai', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    embed: () => Promise.resolve({ embedding: [0.1, 0.2] }),
+}))
+
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
     agentApprovalGate: {},
 }))
@@ -58,6 +72,7 @@ type QueryBuilderMock = {
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         resolveFastModel: () => ({}),
+        resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             findOne: mockFindOne,
@@ -450,5 +465,38 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
 
         expect(mockGetFlowRun).not.toHaveBeenCalled()
         expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may search, and only its own project\'s knowledge base', () => {
+    async function search(conversation: unknown) {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+    }
+
+    it('refuses a CHAT conversation, never reaching the knowledge base', async () => {
+        await expect(search({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1', platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so no query is ever left unscoped', async () => {
+        await expect(search({ id: 'conv-1', source: 'FLOW_STEP', projectId: null, platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('scopes both the file lookup and the search to the conversation\'s own project', async () => {
+        await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        expect(mockGetFileOrThrow).toHaveBeenCalledWith({ projectId: 'proj-own', id: 'kb-1' })
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'proj-own' }))
     })
 })

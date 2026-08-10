@@ -1,4 +1,4 @@
-import { AgentPieceTool, AgentResult, AgentStepBlock, AgentTaskStatus, ContentBlockType, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, AgentToolType, ContentBlockType, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ToolCallStatus, ToolCallType } from '@activepieces/shared'
 
 const MAX_RESULT_LENGTH = 262_144
 
@@ -6,12 +6,12 @@ export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOu
     prompt: string
     uiParts: PersistedAgentPart[]
     timestamp: string
-    tools: AgentPieceTool[]
+    tools: AgentTool[]
     structuredOutput?: Record<string, unknown>
     failure?: string
     stillRunning?: boolean
 }): AgentResult {
-    const configured = new Map(tools.map((tool) => [tool.toolName, tool.pieceMetadata]))
+    const configured = new Map(tools.map((tool) => [tool.toolName, tool]))
     const steps = withinBudget(uiParts.flatMap((part) => toStepBlocks({ part, timestamp, configured })))
     const anyToolFailed = uiParts.some((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.ERROR)
     if (failure === undefined) {
@@ -41,18 +41,21 @@ function withinBudget(steps: AgentStepBlock[]): AgentStepBlock[] {
     return [...kept, { type: ContentBlockType.MARKDOWN, markdown: `The last ${steps.length - kept.length} steps are not shown here because the result grew too large. The full transcript has them.` }]
 }
 
-function toStepBlocks({ part, timestamp, configured }: { part: PersistedAgentPart, timestamp: string, configured: Map<string, AgentPieceTool['pieceMetadata']> }): AgentStepBlock[] {
+function toStepBlocks({ part, timestamp, configured }: { part: PersistedAgentPart, timestamp: string, configured: Map<string, AgentTool> }): AgentStepBlock[] {
     switch (part.type) {
         case PersistedAgentPartType.TEXT:
         case PersistedAgentPartType.REASONING:
             return part.text.trim().length === 0 ? [] : [{ type: ContentBlockType.MARKDOWN, markdown: part.text }]
         case PersistedAgentPartType.TOOL_CALL: {
-            const piece = configured.get(part.toolName)
+            const tool = configured.get(part.toolName)
+            const variant = tool?.type === AgentToolType.PIECE
+                ? { toolCallType: ToolCallType.PIECE as const, pieceName: tool.pieceMetadata.pieceName, pieceVersion: tool.pieceMetadata.pieceVersion, actionName: tool.pieceMetadata.actionName }
+                : tool?.type === AgentToolType.KNOWLEDGE_BASE
+                    ? { toolCallType: ToolCallType.KNOWLEDGE_BASE as const, displayName: tool.sourceName, sourceType: tool.sourceType }
+                    : { toolCallType: ToolCallType.UNKNOWN as const, displayName: part.title ?? part.toolName }
             return [{
                 type: ContentBlockType.TOOL_CALL,
-                ...(piece === undefined
-                    ? { toolCallType: ToolCallType.UNKNOWN, displayName: part.title ?? part.toolName }
-                    : { toolCallType: ToolCallType.PIECE, pieceName: piece.pieceName, pieceVersion: piece.pieceVersion, actionName: piece.actionName }),
+                ...variant,
                 toolName: part.toolName,
                 toolCallId: part.toolCallId,
                 input: part.input,

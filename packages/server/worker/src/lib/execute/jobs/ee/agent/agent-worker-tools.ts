@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
@@ -1476,6 +1476,38 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     ]))
 }
 
+function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+    tools: AgentKnowledgeBaseTool[]
+    runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools
+        .filter((configured) => configured.sourceType === KnowledgeBaseSourceType.FILE)
+        .map((configured) => [
+            configured.toolName,
+            tool({
+                description: `Search the "${configured.sourceName}" knowledge base file for relevant information. Use this when you need facts, policies, or content from this document.`,
+                inputSchema: z.object({
+                    query: z.string().describe('The search query to find relevant information'),
+                }),
+                execute: async ({ query }) => {
+                    callsMade += 1
+                    if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                        log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredKnowledgeBaseTool] Refused, this run has already searched enough')
+                        return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
+                    }
+                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    if (error) {
+                        log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
+                        return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
+                    }
+                    return truncateLargeResult(data.result)
+                },
+            }),
+        ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1524,6 +1556,7 @@ export const agentWorkerTools = {
     createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
+    createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
