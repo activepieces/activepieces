@@ -117,7 +117,7 @@ describe('Auto-create personal projects toggle', () => {
         expect(response.token).toBeDefined()
     })
 
-    it('throws NO_PROJECT_ACCESS when the user has zero projects', async () => {
+    it('returns projectId: null when the user has zero projects', async () => {
         const { mockPlatform } = await mockAndSaveBasicSetup({
             platform: { autoCreatePersonalProjects: false },
         })
@@ -132,15 +132,14 @@ describe('Auto-create personal projects toggle', () => {
         })
         await databaseConnection().getRepository('user').save(orphanUser)
 
-        await expect(
-            authenticationUtils(mockLog).getProjectAndToken({
-                userId: orphanUser.id,
-                platformId: mockPlatform.id,
-                projectId: null,
-            }),
-        ).rejects.toMatchObject({
-            error: { code: 'NO_PROJECT_ACCESS' },
+        const response = await authenticationUtils(mockLog).getProjectAndToken({
+            userId: orphanUser.id,
+            platformId: mockPlatform.id,
+            projectId: null,
         })
+
+        expect(response.projectId).toBeNull()
+        expect(response.token).toBeDefined()
     })
 
     it('allows a platform admin to DELETE a PERSONAL project while its owner is alive', async () => {

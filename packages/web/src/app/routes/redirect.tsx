@@ -39,24 +39,20 @@ const RedirectPage: React.FC = React.memo(() => {
             code,
           });
           authenticationSession.saveResponse(data, false);
-          if (isNil(data.projectId)) {
+          if (isNil(data.platformId)) {
             navigate('/create-platform');
             return;
           }
           navigate(from);
         } catch (e) {
-          const errorCode =
-            api.isError(e) && (e.response?.data as { code: ErrorCode })?.code;
-          if (errorCode === ErrorCode.INVITATION_ONLY_SIGN_UP) {
+          if (
+            api.isError(e) &&
+            (e.response?.data as { code: ErrorCode })?.code ===
+              ErrorCode.INVITATION_ONLY_SIGN_UP
+          ) {
             toast(t('Invitation only sign up'), {
               description: t(
                 'Please ask your administrator to add you to the organization.',
-              ),
-            });
-          } else if (errorCode === ErrorCode.NO_PROJECT_ACCESS) {
-            toast(t('No project access'), {
-              description: t(
-                'You do not have access to any project yet. Please ask your administrator to add you to a project.',
               ),
             });
           } else {

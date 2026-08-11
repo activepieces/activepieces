@@ -5,13 +5,10 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
-import {
-  FROM_QUERY_PARAM,
-  useDefaultRedirectPath,
-} from '@/lib/navigation-utils';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -51,15 +48,8 @@ const RedirectToCurrentProjectRoute: React.FC<
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const defaultRedirectPath = useDefaultRedirectPath();
-  const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   if (isNil(currentProjectId)) {
-    return (
-      <Navigate
-        to={`/sign-in?${new URLSearchParams({ from }).toString()}`}
-        replace
-      />
-    );
+    return <ProjectDashboardLayout>{null}</ProjectDashboardLayout>;
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(

@@ -65,7 +65,7 @@ const SignInForm: React.FC = () => {
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
 
-      if (isNil(data.projectId)) {
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }
@@ -112,14 +112,6 @@ const SignInForm: React.FC = () => {
           case ErrorCode.EMAIL_AUTH_DISABLED: {
             form.setError('root.serverError', {
               message: t(`Email authentication has been disabled`),
-            });
-            break;
-          }
-          case ErrorCode.NO_PROJECT_ACCESS: {
-            form.setError('root.serverError', {
-              message: t(
-                'You do not have access to any project yet. Please ask your administrator to add you to a project.',
-              ),
             });
             break;
           }

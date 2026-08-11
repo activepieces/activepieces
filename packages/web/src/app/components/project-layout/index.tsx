@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
@@ -18,6 +18,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
+import { NoProjectsState } from '../no-projects-state';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -53,9 +54,7 @@ export function ProjectDashboardLayout({
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
-  if (isNil(currentProjectId) || currentProjectId === '') {
-    return <Navigate to="/sign-in" replace />;
-  }
+  const hasNoProject = isNil(currentProjectId) || currentProjectId === '';
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -82,16 +81,32 @@ export function ProjectDashboardLayout({
   ];
 
   const hideHeader =
+    hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  if (hasNoProject) {
+    return (
+      <GlobalSearchProvider>
+        <ProjectDashboardLayoutInner
+          hideHeader
+          isEmbedded={isEmbedded}
+          currentProjectId=""
+        >
+          <NoProjectsState />
+        </ProjectDashboardLayoutInner>
+        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+      </GlobalSearchProvider>
+    );
+  }
+
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
+    <ProjectChangedRedirector currentProjectId={currentProjectId!}>
       <GlobalSearchProvider>
         <ProjectDashboardLayoutInner
           hideHeader={hideHeader}
           isEmbedded={isEmbedded}
-          currentProjectId={currentProjectId}
+          currentProjectId={currentProjectId!}
         >
           {children}
         </ProjectDashboardLayoutInner>
