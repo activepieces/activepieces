@@ -277,9 +277,6 @@ describe('Passwordless Authentication API', () => {
                 headers: { authorization: `Bearer ${onboardingToken}` },
                 body: { fullName },
             })
-            // A single word matching the address local part persists exactly the
-            // shape requestCode seeds, so it cannot be told apart from "never
-            // named" by looking at the stored values.
             await complete('Ahmad')
 
             await complete('Someone Else')

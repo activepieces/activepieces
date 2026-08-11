@@ -120,9 +120,6 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         const writeNames = async (): Promise<void> => {
             await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
         }
-        // Written inside the provisioning lock by the call that provisions, so a
-        // replay cannot rename an established account and an interruption after
-        // the account exists cannot lose it.
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
             name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
@@ -131,12 +128,6 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             callerTokenVersion: undefined,
             beforeProvision: writeNames,
         })
-        // Deliberately no fallback for the case where POST /v1/platforms wins the
-        // lock and provisions without a name. Detecting "never named" from the
-        // stored values cannot be done: a member at ahmad@example.com who signs
-        // up as "Ahmad" persists exactly the seeded shape, so any such check lets
-        // a replay rename an established account — a worse failure than the one it
-        // would fix, and reachable only by an API caller racing the name step.
         return { response, signedUp: provisioned }
     },
 })
