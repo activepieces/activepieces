@@ -219,6 +219,7 @@ export type ExecutePieceToolResponse = {
 export type ExecuteKnowledgeBaseToolRequest = {
     conversationId: string
     toolName: string
+    provider?: AIProviderName
     knowledgeBaseFileId: string
     query: string
 }
