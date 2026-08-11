@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient } from './agent-mcp-client'
@@ -82,6 +82,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         const configuredPieceTools = (data.tools ?? []).filter(isPieceTool)
         const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
+        const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
 
         const sendEventWithRetry = ({ event }: { event: AgentEvent }) =>
             retryWithBackoff({
@@ -175,6 +176,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 source,
                 configuredPieceTools,
                 configuredFlowTools: data.flowTools ?? [],
+                configuredKnowledgeBaseTools,
                 structuredOutput: data.structuredOutput ?? [],
                 captureStructured: (output) => {
                     structured.output = output
@@ -436,7 +438,11 @@ function isMcpTool(tool: AgentTool): tool is AgentMcpTool {
     return tool.type === AgentToolType.MCP
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools, configuredFlowTools, structuredOutput, captureStructured }: {
+function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
+    return tool.type === AgentToolType.KNOWLEDGE_BASE
+}
+
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -458,6 +464,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     abortSignal: AbortSignal
     configuredPieceTools: AgentPieceTool[]
     configuredFlowTools: ResolvedAgentFlowTool[]
+    configuredKnowledgeBaseTools: AgentKnowledgeBaseTool[]
     structuredOutput: AgentOutputField[]
     captureStructured: (output: Record<string, unknown>) => void
     source: AgentRunSource
@@ -621,7 +628,12 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    return { ...configuredTools, ...configuredFlowToolSet, ...unattendedTools, ...completionTool }
+    const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+        tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query }),
+        log,
+    })
+    return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedTools, ...completionTool }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {

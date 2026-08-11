@@ -113,30 +113,6 @@ describe('POST /v1/agents/runs', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 
-    it('refuses a tool kind it cannot run yet instead of dropping it silently', async () => {
-        const ctx = await createTestContext(app)
-        const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: 'job-5',
-            projectId: ctx.project.id,
-            platformId: ctx.platform.id,
-        })
-
-        const response = await app.inject({
-            method: 'POST',
-            url: RUNS_URL,
-            headers: { authorization: `Bearer ${engineToken}` },
-            body: {
-                instruction: 'do a thing',
-                flowRunId: apId(),
-                waitpointId: apId(),
-                tools: [{ type: 'KNOWLEDGE_BASE', toolName: 'search_kb', sourceType: 'FILE', sourceId: 'kb-1', sourceName: 'Handbook' }],
-            },
-        })
-
-        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('KNOWLEDGE_BASE')
-    })
-
     it('refuses two tools sharing a name, so neither silently replaces the other', async () => {
         const ctx = await createTestContext(app)
         const engineToken = await accessTokenManager(app.log).generateEngineToken({

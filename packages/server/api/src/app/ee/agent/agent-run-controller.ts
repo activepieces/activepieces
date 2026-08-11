@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentFlowTool, AgentOutputField, AgentPieceTool, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -28,13 +28,13 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
-        const pieceTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.PIECE)
-        const mcpTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.MCP)
-        const flowToolRequests = (tools ?? []).filter((tool) => tool.type === AgentToolType.FLOW)
-        const supportedTools = [...pieceTools, ...mcpTools]
-        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE && type !== AgentToolType.MCP && type !== AgentToolType.FLOW)
+        const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
+        const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
+        const pieceTools = supportedTools.filter((tool): tool is AgentPieceTool => tool.type === AgentToolType.PIECE)
+        const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions, flows and MCP servers` } })
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet` } })
         }
         const usesCompletionTool = (structuredOutput?.length ?? 0) > 0
         const reserved = (tools ?? []).filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)

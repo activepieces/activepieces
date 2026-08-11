@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
-import { ModelMessage } from 'ai'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { embed, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -14,6 +14,7 @@ import { resumeService } from '../../flows/flow-run/waitpoint/resume-service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
 import { runFlowAsTool } from '../../mcp/mcp-server-builder'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
@@ -33,6 +34,8 @@ const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
+const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
 
 const MAX_EMAIL_RECIPIENTS = 10
@@ -520,6 +523,35 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
         return { result }
+    },
+
+    async executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse> {
+        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
+        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can search a knowledge base' } })
+        }
+        const { projectId, platformId } = conversation
+        await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
+        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log })
+        const { embedding } = await embed({ model, value: input.query, providerOptions })
+        const results = await knowledgeBaseService(log).search({
+            projectId,
+            knowledgeBaseFileIds: [input.knowledgeBaseFileId],
+            queryEmbedding: agentAiUtils.toStorageEmbedding(embedding),
+            limit: KNOWLEDGE_BASE_SEARCH_LIMIT,
+            similarityThreshold: KNOWLEDGE_BASE_SIMILARITY_THRESHOLD,
+        })
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, project: { id: projectId }, resultCount: results.length }, '[agentRpc#executeKnowledgeBaseTool] Ran a knowledge base search')
+        if (results.length === 0) {
+            return { result: 'No relevant information found.' }
+        }
+        return {
+            result: results.map((result, index) => ({
+                rank: index + 1,
+                content: result.content,
+                relevanceScore: result.score,
+            })),
+        }
     },
 
     async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
