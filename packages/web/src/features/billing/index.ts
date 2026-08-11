@@ -4,6 +4,7 @@ export { FeatureUsageCards } from './components/feature-usage/feature-usage-card
 export { ProjectsUsageTable } from './components/feature-usage/projects-usage-table';
 export { CreditsCard } from './components/feature-usage/credits-card';
 export { CreditsUsageAlert } from './components/credits-usage-alert';
+export { ChatCreditsAlert } from './components/chat-credits-alert';
 export { CreditsActionButton } from './components/credits-action-button';
 export { SidebarUsageLimits } from './components/sidebar-usage-limits';
 export { CreditsInfoDialog } from './components/feature-usage/credits-info-dialog';

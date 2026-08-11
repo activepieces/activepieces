@@ -2,19 +2,16 @@ import { t } from 'i18next';
 import { AlertTriangle, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { CreditsActionButton } from '@/features/billing';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 
-export function CreditsBanner({
+import { CreditsActionButton } from './credits-action-button';
+
+export function ChatCreditsAlert({
   creditsExhausted,
   creditsPercentUsed,
   onDismiss,
-}: {
-  creditsExhausted?: boolean;
-  creditsPercentUsed?: number | null;
-  onDismiss?: () => void;
-}) {
+}: ChatCreditsAlertProps) {
   const isPlatformAdmin = useIsPlatformAdmin();
   const isError = Boolean(creditsExhausted);
 
@@ -53,3 +50,9 @@ export function CreditsBanner({
     </div>
   );
 }
+
+type ChatCreditsAlertProps = {
+  creditsExhausted?: boolean;
+  creditsPercentUsed?: number | null;
+  onDismiss?: () => void;
+};
