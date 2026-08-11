@@ -129,12 +129,12 @@ describe('POST /v1/agents/runs', () => {
                 instruction: 'do a thing',
                 flowRunId: apId(),
                 waitpointId: apId(),
-                tools: [{ type: 'MCP', toolName: 'call_mcp', serverUrl: 'https://example.com/mcp', protocol: 'streamable-http', auth: { type: 'none' } }],
+                tools: [{ type: 'KNOWLEDGE_BASE', toolName: 'search_kb', sourceType: 'FILE', sourceId: 'kb-1', sourceName: 'Handbook' }],
             },
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('MCP')
+        expect(JSON.stringify(response.json())).toContain('KNOWLEDGE_BASE')
     })
 
     it('refuses two tools sharing a name, so neither silently replaces the other', async () => {
