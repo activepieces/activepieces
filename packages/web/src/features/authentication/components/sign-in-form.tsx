@@ -115,6 +115,14 @@ const SignInForm: React.FC = () => {
             });
             break;
           }
+          case ErrorCode.NO_PROJECT_ACCESS: {
+            form.setError('root.serverError', {
+              message: t(
+                'You do not have access to any project yet. Please ask your administrator to add you to a project.',
+              ),
+            });
+            break;
+          }
           default: {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),

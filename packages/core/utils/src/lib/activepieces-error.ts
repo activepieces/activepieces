@@ -91,6 +91,7 @@ export type ApErrorParams =
     | ExecutionStateMissingParams
     | GenericErrorParams
     | SandboxCapacityExceededParams
+    | NoProjectAccessParams
 
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
@@ -123,6 +124,13 @@ export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTER
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
+{
+    message?: string
+}
+>
+
+export type NoProjectAccessParams = BaseErrorParams<
+ErrorCode.NO_PROJECT_ACCESS,
 {
     message?: string
 }
@@ -537,6 +545,7 @@ export enum ErrorCode {
     INVALID_OTP = 'INVALID_OTP',
     INVALID_SAML_RESPONSE = 'INVALID_SAML_RESPONSE',
     INVITATION_ONLY_SIGN_UP = 'INVITATION_ONLY_SIGN_UP',
+    NO_PROJECT_ACCESS = 'NO_PROJECT_ACCESS',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',

@@ -43,9 +43,9 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
             throw new ActivepiecesError({
-                code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+                code: ErrorCode.NO_PROJECT_ACCESS,
                 params: {
-                    message: 'No project found for user',
+                    message: 'User has no project access on this platform',
                 },
             })
         }
