@@ -18,7 +18,6 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { NoProjectsState } from '../no-projects-state';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
@@ -85,33 +84,26 @@ export function ProjectDashboardLayout({
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  const inner = (
+    <GlobalSearchProvider>
+      <ProjectDashboardLayoutInner
+        hideHeader={hideHeader}
+        isEmbedded={isEmbedded}
+        currentProjectId={currentProjectId ?? ''}
+      >
+        {children}
+      </ProjectDashboardLayoutInner>
+      {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+    </GlobalSearchProvider>
+  );
+
   if (hasNoProject) {
-    return (
-      <GlobalSearchProvider>
-        <ProjectDashboardLayoutInner
-          hideHeader
-          isEmbedded={isEmbedded}
-          currentProjectId=""
-        >
-          <NoProjectsState />
-        </ProjectDashboardLayoutInner>
-        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      </GlobalSearchProvider>
-    );
+    return inner;
   }
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId!}>
-      <GlobalSearchProvider>
-        <ProjectDashboardLayoutInner
-          hideHeader={hideHeader}
-          isEmbedded={isEmbedded}
-          currentProjectId={currentProjectId!}
-        >
-          {children}
-        </ProjectDashboardLayoutInner>
-        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      </GlobalSearchProvider>
+      {inner}
     </ProjectChangedRedirector>
   );
 }

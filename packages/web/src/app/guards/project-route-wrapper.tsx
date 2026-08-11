@@ -8,6 +8,7 @@ import { projectCollectionUtils } from '@/features/projects';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { NoProjectsState } from '../components/no-projects-state';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
@@ -49,7 +50,11 @@ const RedirectToCurrentProjectRoute: React.FC<
   const params = useParams();
   const [searchParams] = useSearchParams();
   if (isNil(currentProjectId)) {
-    return <ProjectDashboardLayout>{null}</ProjectDashboardLayout>;
+    return (
+      <ProjectDashboardLayout>
+        <NoProjectsState />
+      </ProjectDashboardLayout>
+    );
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(
