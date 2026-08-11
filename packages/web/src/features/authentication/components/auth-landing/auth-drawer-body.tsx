@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import {
   ArrowLeft,
@@ -21,13 +22,14 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -195,6 +197,11 @@ function AuthStep({
     return () => clearTimeout(timer);
   }, [step, setStep]);
 
+  const abandonOnboarding = useCallback(() => {
+    authenticationSession.clearSession();
+    setStep('method');
+  }, [setStep]);
+
   if (samlOpen) {
     return (
       <DrawerShell>
@@ -208,24 +215,6 @@ function AuthStep({
     );
   }
 
-  // No email/password auth at all — third-party only.
-  if (!emailAuthEnabled) {
-    return (
-      <DrawerShell>
-        <Heading title={t('Welcome')} />
-        <ThirdPartyLogin
-          isSignUp={mode === 'signup'}
-          onSamlClick={() => setSamlOpen(true)}
-        />
-      </DrawerShell>
-    );
-  }
-
-  // Ahead of the mail-configuration branches on purpose. Someone holding an
-  // onboarding token has already proven their address and owes us only a name,
-  // and whether this deployment can send mail has no bearing on that. Behind
-  // them, a first user on an instance with no SMTP would register, land here,
-  // and be shown a sign-in form with no way to finish.
   if (step === 'verified') {
     return (
       <DrawerShell>
@@ -241,7 +230,20 @@ function AuthStep({
           title={t('What should we call you?')}
           subtitle={t('This names your workspace and how we greet you.')}
         />
-        <NameStep />
+        <NameStep onSessionRejected={abandonOnboarding} />
+      </DrawerShell>
+    );
+  }
+
+  // No email/password auth at all — third-party only.
+  if (!emailAuthEnabled) {
+    return (
+      <DrawerShell>
+        <Heading title={t('Welcome')} />
+        <ThirdPartyLogin
+          isSignUp={mode === 'signup'}
+          onSamlClick={() => setSamlOpen(true)}
+        />
       </DrawerShell>
     );
   }
@@ -646,7 +648,7 @@ function VerifiedFlash() {
   );
 }
 
-function NameStep() {
+function NameStep({ onSessionRejected }: NameStepProps) {
   const redirectAfterLogin = useRedirectAfterLogin();
   const form = useForm<FullNameSchema>({
     resolver: zodResolver(FullNameZodSchema),
@@ -660,10 +662,18 @@ function NameStep() {
       authenticationSession.saveResponse(data, false);
       redirectAfterLogin();
     },
-    onError: () =>
+    onError: (error) => {
+      if (
+        api.isError(error) &&
+        error.response?.status === HttpStatusCode.Unauthorized
+      ) {
+        onSessionRejected();
+        return;
+      }
       form.setError('root.serverError', {
         message: t('Something went wrong, please try again later'),
-      }),
+      });
+    },
   });
 
   const onSubmit: SubmitHandler<FullNameSchema> = (data) => {
@@ -986,6 +996,10 @@ type CodeStepProps = {
 type EmailStepProps = {
   invitedEmail: string;
   onCodeSent: (email: string) => void;
+};
+
+type NameStepProps = {
+  onSessionRejected: () => void;
 };
 
 type AuthDrawerBodyProps = {
