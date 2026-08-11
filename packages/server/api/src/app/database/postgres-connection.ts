@@ -428,6 +428,7 @@ import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/po
 import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
 import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
 import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
+import { AddFlowProjectIdExternalIdUniqueIndex1821000000000 } from './migration/postgres/1821000000000-AddFlowProjectIdExternalIdUniqueIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -871,6 +872,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAutoCreatePersonalProjectsToPlatform1834000000000,
         WidenMcpOAuthState1835000000000,
         DropTeamsBotInstallation1836000000000,
+        AddFlowProjectIdExternalIdUniqueIndex1821000000000,
     ]
     return migrations
 }
