@@ -1509,6 +1509,7 @@
   "No projects yet": "No projects yet",
   "Waiting for access": "Waiting for access",
   "You're all signed in, but you've got no projects yet.": "You're all signed in, but you've got no projects yet.",
+  "You haven't been added to a project. Ask your workspace admin to invite you and you'll be up and running in no time.": "You haven't been added to a project. Ask your workspace admin to invite you and you'll be up and running in no time.",
   "Automatic personal project creation": "Automatic personal project creation",
   "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).": "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).",
   "Automatic personal project creation updated": "Automatic personal project creation updated",

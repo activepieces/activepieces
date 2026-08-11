@@ -15,9 +15,16 @@ export const NoProjectsState = () => {
         {t('Waiting for access')}
       </Badge>
 
-      <h1 className="text-2xl font-semibold text-foreground">
-        {t("You're all signed in, but you've got no projects yet.")}
-      </h1>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-foreground">
+          {t("You're all signed in, but you've got no projects yet.")}
+        </h1>
+        <p className="text-base text-muted-foreground">
+          {t(
+            "You haven't been added to a project. Ask your workspace admin to invite you and you'll be up and running in no time.",
+          )}
+        </p>
+      </div>
     </div>
   );
 };
