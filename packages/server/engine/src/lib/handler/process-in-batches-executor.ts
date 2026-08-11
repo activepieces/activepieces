@@ -65,7 +65,7 @@ async function dispatchBatches({ action, executionState, constants }: ExecutePar
             version: 'V1',
             isFanIn: true,
             intendedChildren: batches.length,
-            dispatchDigest: digestOf({ seed, items }),
+            dispatchDigest: digestOf(items),
         })
 
         const dispatchBatch = async (batchIndex: number): Promise<void> => {
@@ -258,8 +258,8 @@ function emptySummary({ totalItems, batchSize }: EmptySummaryParams): BatchSumma
     }
 }
 
-function digestOf({ seed, items }: DigestParams): string {
-    return createHash('sha256').update(JSON.stringify({ seed, items })).digest('hex')
+function digestOf(items: unknown[]): string {
+    return createHash('sha256').update(JSON.stringify(items)).digest('hex')
 }
 
 function userError({ name, message }: UserErrorParams): ExecutionError {
@@ -342,11 +342,6 @@ type ExceptionStatusParams = {
 type EmptySummaryParams = {
     totalItems: number
     batchSize: number
-}
-
-type DigestParams = {
-    seed: Record<string, StepOutput>
-    items: unknown[]
 }
 
 type SucceedParams = {

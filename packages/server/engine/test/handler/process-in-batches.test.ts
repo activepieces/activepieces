@@ -119,6 +119,48 @@ describe('process in batches executor', () => {
         }))
     })
 
+    it('digests the items alone, so a re-entry after the prefix re-ran matches', async () => {
+        const action = buildProcessInBatchesAction({
+            name: 'batches',
+            items: '{{ upstream.output.items }}',
+            batchSize: 1,
+            firstLoopAction: buildCodeAction({ name: 'echo_step', input: { carried: '{{ upstream.output.token }}' } }),
+        })
+        const upstreamWith = async (duration: number) => FlowExecutorContext.empty().upsertStep('upstream', GenericStepOutput.create({
+            input: {},
+            type: FlowActionType.CODE,
+            status: StepOutputStatus.SUCCEEDED,
+        }).setOutput({ items: [1, 2, 3], token: 'same' }).setDuration(duration))
+
+        await flowExecutor.execute({ action, executionState: await upstreamWith(11.5), constants: generateMockEngineConstants({ stepNames: ['upstream'] }) })
+        await flowExecutor.execute({ action, executionState: await upstreamWith(987.25), constants: generateMockEngineConstants({ stepNames: ['upstream'] }) })
+
+        const [first, second] = mockCreateWaitpoint.mock.calls.map(([call]) => call.dispatchDigest)
+        expect(first).toMatch(/^[a-f0-9]{64}$/)
+        expect(second).toEqual(first)
+    })
+
+    it('digests a different item list differently', async () => {
+        const digestFor = async (items: string) => {
+            mockCreateWaitpoint.mockClear()
+            await flowExecutor.execute({
+                action: buildProcessInBatchesAction({
+                    name: 'batches',
+                    items,
+                    batchSize: 1,
+                    firstLoopAction: buildCodeAction({ name: 'echo_step', input: {} }),
+                }),
+                executionState: FlowExecutorContext.empty(),
+                constants: generateMockEngineConstants(),
+            })
+            return mockCreateWaitpoint.mock.calls[0][0].dispatchDigest
+        }
+
+        expect(await digestFor('{{ [1,2,3] }}')).not.toEqual(await digestFor('{{ [1,2,4] }}'))
+        expect(await digestFor('{{ [1,2] }}')).not.toEqual(await digestFor('{{ [12] }}'))
+        expect(await digestFor('{{ ["a\\nb"] }}')).not.toEqual(await digestFor('{{ ["a","b"] }}'))
+    })
+
     it('pauses carrying the barrier id and the item sizing the run detail browses batches with', async () => {
         const action = buildProcessInBatchesAction({
             name: 'batches',
