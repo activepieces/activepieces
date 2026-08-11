@@ -94,6 +94,9 @@ function harness(props: Props) {
   return {
     store,
     enable: () => newOrUpdatedRowTrigger.onEnable(context),
+    /** what publishing an already-live flow again does */
+    republish: () =>
+      newOrUpdatedRowTrigger.onEnable({ ...context, isRepublish: true }),
     preview: async () => (await newOrUpdatedRowTrigger.test(context)) as Row[],
     poll,
     /** poll until a poll comes back empty, the way the scheduler would */
@@ -124,21 +127,29 @@ async function exec(statement: string): Promise<void> {
  * dropped before being created, so a run against a database that is not ours
  * can only ever touch its own tables.
  */
-const created: string[] = [];
-function nextTable(): { table_schema: string; table_name: string } {
-  const table_name = `${TABLE_PREFIX}${created.length + 1}`;
-  created.push(table_name);
-  return { table_schema: 'dbo', table_name };
+type Table = { table_schema: string; table_name: string };
+
+const created: Table[] = [];
+function nextTable(table_schema = 'dbo'): Table {
+  const table = {
+    table_schema,
+    table_name: `${TABLE_PREFIX}${created.length + 1}`,
+  };
+  created.push(table);
+  return table;
 }
 
-async function createTable(
-  table: { table_name: string },
-  body: string
-): Promise<void> {
+/** the same bracket-doubling the piece applies, for the setup statements */
+function quoted(table: Table): string {
+  const escape = (part: string) => `[${part.split(']').join(']]')}]`;
+  return `${escape(table.table_schema)}.${escape(table.table_name)}`;
+}
+
+async function createTable(table: Table, body: string): Promise<void> {
   await exec(
-    `IF OBJECT_ID('dbo.${table.table_name}', 'U') IS NOT NULL
-       DROP TABLE dbo.${table.table_name};
-     CREATE TABLE dbo.${table.table_name} (${body});`
+    `IF OBJECT_ID('${quoted(table)}', 'U') IS NOT NULL
+       DROP TABLE ${quoted(table)};
+     CREATE TABLE ${quoted(table)} (${body});`
   );
 }
 
@@ -190,9 +201,14 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     // leave the database as it was found
     for (const table of created) {
       await exec(
-        `IF OBJECT_ID('dbo.${table}', 'U') IS NOT NULL DROP TABLE dbo.${table};`
+        `IF OBJECT_ID('${quoted(table)}', 'U') IS NOT NULL DROP TABLE ${quoted(
+          table
+        )};`
       ).catch(() => undefined);
     }
+    await exec(`DROP SCHEMA IF EXISTS ap_poll_test_schema;`).catch(
+      () => undefined
+    );
     await pool.close();
   }, 120_000);
 
@@ -647,8 +663,19 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       ],
     },
     {
+      // '00123' is the case a JavaScript-typed cursor got wrong: it inferred a
+      // number, so the comparison switched to numeric semantics against an
+      // NVARCHAR column. The pipe and the JSON punctuation used to matter too,
+      // when the position was delimiter-joined text.
       type: 'nvarchar(100)',
-      values: [`N'aaa'`, `N'zzz'`, `N'日本語のテキスト'`],
+      values: [
+        `N'00123'`,
+        `N'a|b'`,
+        `N'{"v":1}'`,
+        `N'back\\slash'`,
+        `N'aaa'`,
+        `N'日本語のテキスト'`,
+      ],
     },
   ];
 
@@ -719,6 +746,469 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(new Set(ids(rows)).size).toBe(40);
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
+
+  // The "or Updated" half of the trigger's promise, which nothing else asserts.
+  it('delivers a row again each time it is edited', async () => {
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY,
+       payload nvarchar(50) NOT NULL,
+       updated_at datetime2(3) NOT NULL`
+    );
+    await exec(
+      `INSERT INTO ${quoted(table)} (payload, updated_at)
+       VALUES ('first', '2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'updated_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+    expect(await trigger.poll()).toHaveLength(0);
+
+    await exec(
+      `UPDATE ${quoted(table)} SET payload = 'edited once', updated_at = '2030-01-02'`
+    );
+    const first = await trigger.poll();
+    expect(first).toHaveLength(1);
+    expect(first[0]['payload']).toBe('edited once');
+
+    await exec(
+      `UPDATE ${quoted(table)} SET payload = 'edited twice', updated_at = '2030-01-03'`
+    );
+    const second = await trigger.poll();
+    expect(second).toHaveLength(1);
+    expect(second[0]['payload']).toBe('edited twice');
+
+    // and it settles: no further edit, no further event
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  it('keeps its position when the flow is republished', async () => {
+    // republishing re-runs onEnable; baselining again there would skip
+    // everything written since the trigger was first switched on
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+    const position = await trigger.store.get('cursor');
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-02')`
+    );
+    await trigger.republish();
+
+    expect(await trigger.store.get('cursor')).toEqual(position);
+    expect(ids(await trigger.poll())).toEqual([2]);
+  }, 120_000);
+
+  it('re-baselines on a fresh enable, skipping what came before', async () => {
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-02')`
+    );
+    // enabling again is a deliberate restart: start from now, not from history
+    await trigger.enable();
+
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  it('carries on after the row its position named is deleted', async () => {
+    // the position is a tuple of values, not a reference to a row, so the row
+    // it was read from can disappear without stranding the trigger
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(`DELETE FROM ${quoted(table)} WHERE id = 1`);
+    expect(await trigger.poll()).toHaveLength(0);
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-02')`
+    );
+    expect(ids(await trigger.poll())).toEqual([2]);
+  }, 120_000);
+
+  it('falls back to the default page size when max rows is nonsense', async () => {
+    // a limit of 0 would make TOP (0) return nothing forever
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+      max_rows: 0,
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at)
+       SELECT DATEADD(ms, n, '2030-01-01') FROM (${series(3)}) s`
+    );
+    const { rows } = await trigger.drain(5);
+    expect(rows).toHaveLength(3);
+  }, 120_000);
+
+  it('reads a table in a schema other than dbo', async () => {
+    await exec(
+      `IF SCHEMA_ID('ap_poll_test_schema') IS NULL EXEC('CREATE SCHEMA ap_poll_test_schema');`
+    );
+    const table = nextTable('ap_poll_test_schema');
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-01')`
+    );
+    expect(ids(await trigger.poll())).toEqual([1]);
+  }, 120_000);
+
+  it('handles column names holding a bracket or a space', async () => {
+    // quoteId doubles a closing bracket; anything less and these break the query
+    const table = nextTable();
+    await createTable(
+      table,
+      `[id] int IDENTITY(1,1) PRIMARY KEY,
+       [odd]]col] datetime2(3) NOT NULL,
+       [my col] nvarchar(20) NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'odd]col',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} ([odd]]col], [my col])
+       VALUES ('2030-01-01', 'kept')`
+    );
+    const rows = await trigger.poll();
+    expect(ids(rows)).toEqual([1]);
+    expect(rows[0]['my col']).toBe('kept');
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  it('previews an empty table without failing', async () => {
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, created_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+
+    expect(await trigger.preview()).toEqual([]);
+  }, 120_000);
+
+  it('refuses one ordering value bigger than the group ceiling', async () => {
+    // a keyless table cannot page inside a value, so past this size it says so
+    // instead of delivering part of a group
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int NOT NULL, created_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+      max_rows: 50,
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (id, created_at)
+       SELECT n, '2030-01-01T00:00:00.000' FROM (${series(2001)}) s`
+    );
+
+    await expect(trigger.poll()).rejects.toThrow(
+      /rows share one "created_at" value/
+    );
+  }, 240_000);
+
+  it('catches a row inserted into the tie group the position sits inside', async () => {
+    // The old cursor sliced positionally at one marker, so a row arriving with
+    // the saved ordering value but a key sorting after that marker was returned
+    // by the query and then dropped by the slice. The keyset compares
+    // (value, key) as a pair, so it is simply ahead of the position.
+    const table = nextTable();
+    await createTable(
+      table,
+      `id int IDENTITY(1,1) PRIMARY KEY, updated_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'updated_at',
+      order_direction: 'DESC',
+      max_rows: 2,
+    });
+    await trigger.enable();
+
+    // four rows sharing one value, so a page stops halfway through the group
+    await exec(
+      `INSERT INTO ${quoted(table)} (updated_at)
+       SELECT '2030-01-01T00:00:00.000' FROM (${series(4)}) s`
+    );
+    expect(ids(await trigger.poll())).toEqual([1, 2]);
+
+    // now a late arrival at the same value, with a higher key
+    await exec(
+      `INSERT INTO ${quoted(table)} (updated_at)
+       VALUES ('2030-01-01T00:00:00.000')`
+    );
+
+    const { rows } = await trigger.drain();
+    expect(ids(rows)).toEqual([3, 4, 5]);
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  it('raises an event for each of two byte-identical rows in a keyless table', async () => {
+    // The old design hashed a row's identity from its column values, so two
+    // rows SQL itself cannot tell apart collapsed into one event. Group mode
+    // needs no per-row identity: it hands over the whole ordering value.
+    const table = nextTable();
+    await createTable(
+      table,
+      `message nvarchar(50) NOT NULL, created_at datetime2(3) NOT NULL`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'created_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(
+      `INSERT INTO ${quoted(table)} (message, created_at) VALUES
+         ('restart', '2030-01-01T10:00:00.000'),
+         ('restart', '2030-01-01T10:00:00.000')`
+    );
+
+    const rows = await trigger.poll();
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row['message'])).toEqual(['restart', 'restart']);
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  it('does not re-fire an old row when its natural key is edited', async () => {
+    // Identity used to be hashed over the row's values, so renaming the key
+    // changed it and the row could return once looking new. The position is now
+    // a value tuple, and an edit that leaves the ordering column alone stays
+    // behind it.
+    const table = nextTable();
+    await createTable(
+      table,
+      `email nvarchar(100) NOT NULL, updated_at datetime2(3) NOT NULL`
+    );
+    await exec(`CREATE UNIQUE INDEX ix_email ON ${quoted(table)} (email);`);
+    await exec(
+      `INSERT INTO ${quoted(table)} (email, updated_at)
+       VALUES ('dave@old.com', '2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'updated_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    await exec(
+      `UPDATE ${quoted(table)} SET email = 'dave@new.com' WHERE email = 'dave@old.com'`
+    );
+    expect(await trigger.poll()).toHaveLength(0);
+
+    // and when the edit does touch the ordering column, it fires once
+    await exec(
+      `UPDATE ${quoted(table)} SET email = 'dave@newer.com', updated_at = '2030-01-02'`
+    );
+    const rows = await trigger.poll();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]['email']).toBe('dave@newer.com');
+    expect(await trigger.poll()).toHaveLength(0);
+  }, 120_000);
+
+  // Which columns become the tiebreaker is the trigger's most consequential
+  // decision: pick one that does not actually identify a row and the keyset
+  // silently steps over rows. These pin what it refuses to trust.
+  describe('choosing a tiebreaker', () => {
+    async function modeOf(table: Table, order_by: string) {
+      const trigger = harness({ table, order_by, order_direction: 'DESC' });
+      await trigger.enable();
+      return (await trigger.store.get('cursor')) as {
+        m: string;
+        c: string[];
+      };
+    }
+
+    it('will not trust a filtered unique index', async () => {
+      // a filtered index only enforces uniqueness over the rows it covers
+      const table = nextTable();
+      await createTable(
+        table,
+        `code nvarchar(20) NULL, updated_at datetime2(3) NOT NULL`
+      );
+      await exec(
+        `CREATE UNIQUE INDEX ix_filtered ON ${quoted(
+          table
+        )} (code) WHERE code IS NOT NULL;`
+      );
+
+      expect(await modeOf(table, 'updated_at')).toEqual({
+        v: 1,
+        m: 'group',
+        c: ['updated_at'],
+        k: null,
+      });
+    });
+
+    it('will not trust a nullable unique index', async () => {
+      // every comparison against NULL is UNKNOWN, which drops the row from the
+      // window rather than ordering it
+      const table = nextTable();
+      await createTable(
+        table,
+        `code nvarchar(20) NULL, updated_at datetime2(3) NOT NULL`
+      );
+      await exec(
+        `CREATE UNIQUE INDEX ix_nullable ON ${quoted(table)} (code);`
+      );
+
+      expect((await modeOf(table, 'updated_at')).m).toBe('group');
+    });
+
+    it('uses a non-nullable unique index when there is no primary key', async () => {
+      const table = nextTable();
+      await createTable(
+        table,
+        `code nvarchar(20) NOT NULL, updated_at datetime2(3) NOT NULL`
+      );
+      await exec(`CREATE UNIQUE INDEX ix_code ON ${quoted(table)} (code);`);
+
+      expect(await modeOf(table, 'updated_at')).toMatchObject({
+        m: 'keyset',
+        c: ['updated_at', 'code'],
+      });
+    });
+
+    it('will not use an identity that only a composite index makes unique', async () => {
+      // IDENTITY alone is not unique — a reseed or an IDENTITY_INSERT load can
+      // repeat values — so it is only trusted when an index says otherwise
+      const table = nextTable();
+      await createTable(
+        table,
+        `id int IDENTITY(1,1) NOT NULL,
+         tenant_id int NOT NULL,
+         updated_at datetime2(3) NOT NULL`
+      );
+      await exec(
+        `CREATE UNIQUE INDEX ix_composite ON ${quoted(
+          table
+        )} (id, tenant_id);`
+      );
+
+      expect(await modeOf(table, 'updated_at')).toMatchObject({
+        m: 'keyset',
+        c: ['updated_at', 'id', 'tenant_id'],
+      });
+    });
+
+    it('will not use a descending identity, and falls back to the key', async () => {
+      // IDENTITY(n,-1) counts downward, so a row added later does not sort
+      // ahead of the position
+      const table = nextTable();
+      await createTable(
+        table,
+        `id int IDENTITY(1000,-1) PRIMARY KEY, updated_at datetime2(3) NOT NULL`
+      );
+
+      // still keyset, because the primary key identifies the row either way
+      expect(await modeOf(table, 'updated_at')).toMatchObject({
+        m: 'keyset',
+        c: ['updated_at', 'id'],
+      });
+    });
+
+    it('prefers the identity over a wider primary key', async () => {
+      const table = nextTable();
+      await createTable(
+        table,
+        `id int IDENTITY(1,1) NOT NULL,
+         tenant_id int NOT NULL,
+         updated_at datetime2(3) NOT NULL,
+         CONSTRAINT pk_wide_${created.length} PRIMARY KEY (tenant_id, id)`
+      );
+      await exec(`CREATE UNIQUE INDEX ix_id ON ${quoted(table)} (id);`);
+
+      expect(await modeOf(table, 'updated_at')).toMatchObject({
+        m: 'keyset',
+        c: ['updated_at', 'id'],
+      });
+    });
+  });
 
   it('previews the newest rows without moving the position', async () => {
     const table = nextTable();

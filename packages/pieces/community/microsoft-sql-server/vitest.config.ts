@@ -7,6 +7,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // The integration suite talks to a real server, and against a remote one
+    // (Azure SQL) a single connect, TLS handshake and login can outlast the 5s
+    // default on its own. Set high enough that a slow link never looks like a
+    // failure, and let genuinely long tests raise it further per test.
+    testTimeout: 120_000,
   },
   resolve: {
     alias: {
