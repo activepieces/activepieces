@@ -1,7 +1,7 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
-import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -1508,6 +1508,43 @@ function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }
         ]))
 }
 
+const jsonSchema7Shape = z.custom<JSONSchema7>()
+
+function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+    tools: ResolvedAgentFlowTool[]
+    runFlowTool: (input: { toolName: string, flowId: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: configured.description,
+            inputSchema: jsonSchema(jsonSchema7Shape.parse(configured.inputSchema)),
+            execute: async (toolInput) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, returnsResponse: configured.returnsResponse, toolInput }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That flow failed: ${String(error)}`
+                        : `That flow was called but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
+                    return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1556,6 +1593,7 @@ export const agentWorkerTools = {
     createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
+    createConfiguredFlowTools,
     createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
     isSuccessResult,
