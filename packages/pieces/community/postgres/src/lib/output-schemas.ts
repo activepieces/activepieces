@@ -20,7 +20,7 @@ export const insertRowOutputSchema: OutputSchema = {
     {
       key: 'row',
       label: 'Inserted Row',
-      description: 'The inserted row as stored by the database, including defaults and generated ids. Its fields are the columns of the target table.',
+      description: 'The inserted row as stored by the database, including defaults and generated ids. Its fields are the columns of the target table. Null when Return Inserted Row is disabled.',
     },
     { key: 'rowCount', label: 'Inserted Rows', format: 'number' },
   ],

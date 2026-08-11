@@ -46,7 +46,7 @@ export const findRows = createAction({
     const clauses = [`SELECT ${selected} FROM ${postgresUtils.qualifiedName(table)}`];
     if (condition && condition.trim().length > 0) {
       if (queryArgs.length === 0 && condition.includes(';')) {
-        throw new Error('A condition with no Arguments cannot contain ";". Pass values through Arguments as $1, $2, ... instead.');
+        throw new Error('A condition with no Arguments cannot contain ";", because it would be sent to the database unprepared and could run as more than one statement. Move the value into Arguments and reference it as $1 — that also covers a semicolon inside a string literal.');
       }
       clauses.push(`WHERE ${condition}`);
     }

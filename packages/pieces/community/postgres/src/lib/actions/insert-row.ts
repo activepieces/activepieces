@@ -11,7 +11,7 @@ export const insertRow = createAction({
   audience: 'both',
   outputSchema: insertRowOutputSchema,
   aiMetadata: {
-    description: 'Inserts a single row into a PostgreSQL table from a map of column names to values, and returns the inserted row as stored by the database (including defaults and generated ids). Use to add a record. Not idempotent: each call performs a fresh INSERT, so repeating it adds duplicate rows or errors on a unique-key collision.',
+    description: 'Inserts a single row into a PostgreSQL table from a map of column names to values, and by default returns the inserted row as stored by the database (including defaults and generated ids). Use to add a record. Turn off Return Inserted Row when the connection only has INSERT permission, since returning the row also needs SELECT. Not idempotent: each call performs a fresh INSERT, so repeating it adds duplicate rows or errors on a unique-key collision.',
     idempotent: false,
   },
   props: {
@@ -21,9 +21,15 @@ export const insertRow = createAction({
       description: 'Column names mapped to the values to insert.',
       required: true,
     }),
+    return_row: Property.Checkbox({
+      displayName: 'Return Inserted Row',
+      description: 'Return the stored row, including generated ids and column defaults. Requires SELECT permission on the table as well as INSERT — turn this off for an append-only role.',
+      required: false,
+      defaultValue: true,
+    }),
   },
   async run(context) {
-    const { table, values } = context.propsValue;
+    const { table, values, return_row } = context.propsValue;
     const columns = Object.keys(values);
     if (columns.length === 0) {
       throw new Error('Values must contain at least one column.');
@@ -31,7 +37,7 @@ export const insertRow = createAction({
 
     const quotedColumns = columns.map((column) => postgresUtils.quoteIdentifier(column)).join(', ');
     const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
-    const query = `INSERT INTO ${postgresUtils.qualifiedName(table)} (${quotedColumns}) VALUES (${placeholders}) RETURNING *`;
+    const query = `INSERT INTO ${postgresUtils.qualifiedName(table)} (${quotedColumns}) VALUES (${placeholders})${return_row === false ? '' : ' RETURNING *'}`;
 
     const client = await pgClient(context.auth);
     try {
