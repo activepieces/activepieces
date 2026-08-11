@@ -8,7 +8,9 @@ export class AddFlowProjectIdExternalIdUniqueIndexSqlite1821000000000 implements
         // Postgres counterpart for the full rationale). Keep the most recently updated flow
         // per (projectId, externalId); rename the rest by appending their own unique id,
         // dropping nothing. Iterate until clean so an appended value that happens to match
-        // another existing externalId is resolved on a later pass (bounded for safety).
+        // another existing externalId is resolved on a later pass. The pass bound is the
+        // flow count (+1) — provably sufficient (see the Postgres counterpart), so the loop
+        // can never stop early with duplicates still present.
         const HAS_DUPLICATE = `
             SELECT 1 FROM (
                 SELECT ROW_NUMBER() OVER (
@@ -35,7 +37,9 @@ export class AddFlowProjectIdExternalIdUniqueIndexSqlite1821000000000 implements
                 WHERE ranked.rn > 1
             )
         `
-        for (let pass = 0; pass < 100; pass++) {
+        const [{ count }] = await queryRunner.query('SELECT COUNT(*) AS "count" FROM "flow"')
+        const maxPasses = Number(count) + 1
+        for (let pass = 0; pass < maxPasses; pass++) {
             const remaining = await queryRunner.query(HAS_DUPLICATE)
             if (remaining.length === 0) {
                 break

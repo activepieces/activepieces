@@ -17,9 +17,10 @@ export class AddFlowProjectIdExternalIdUniqueIndex1821000000000 implements Migra
         // already matches another flow's externalId (externalId and id share the apId
         // space), which would itself break the unique index. Each pass appends the row's
         // unique id, so any collision it introduces is a strictly smaller duplicate set
-        // resolved on the next pass; this converges in one pass on real data. The bound is
-        // a safety valve — if duplicates somehow remained, the index creation below fails
-        // loudly rather than silently leaving them.
+        // resolved on the next pass; this converges in one pass on real data. The pass
+        // bound is the flow count (+1), which is provably sufficient: each pass makes at
+        // least the longest-suffixed duplicate globally unique, so at most one pass per row
+        // is ever needed — the loop can never stop early with duplicates still present.
         const HAS_DUPLICATE = `
             SELECT 1 FROM (
                 SELECT ROW_NUMBER() OVER (
@@ -46,7 +47,9 @@ export class AddFlowProjectIdExternalIdUniqueIndex1821000000000 implements Migra
                 WHERE ranked.rn > 1
             )
         `
-        for (let pass = 0; pass < 100; pass++) {
+        const [{ count }] = await queryRunner.query('SELECT COUNT(*) AS "count" FROM "flow"')
+        const maxPasses = Number(count) + 1
+        for (let pass = 0; pass < maxPasses; pass++) {
             const remaining = await queryRunner.query(HAS_DUPLICATE)
             if (remaining.length === 0) {
                 break
