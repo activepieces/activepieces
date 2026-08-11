@@ -132,6 +132,14 @@ const rateLimitOptions: RateLimitOptions = {
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
+const emailCodeRateLimitOptions: RateLimitOptions = {
+    max: Number.parseInt(
+        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX),
+        10,
+    ),
+    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+}
+
 
 
 const SwitchPlatformRequestOptions = {
@@ -157,7 +165,7 @@ const SignUpRequestOptions = {
 const RequestEmailCodeRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: emailCodeRateLimitOptions,
     },
     schema: {
         body: RequestEmailCodeRequest,
