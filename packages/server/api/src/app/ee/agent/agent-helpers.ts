@@ -1,7 +1,8 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
-import { LanguageModel } from 'ai'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -129,6 +130,15 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
+async function resolveEmbeddingModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveChatProvider({ platformId, log })
+    return agentAiUtils.createEmbeddingModel({
+        provider: providerConfig.provider,
+        auth: providerConfig.auth,
+        config: providerConfig.config,
+    })
+}
+
 async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
     const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
     return result.error ? null : result.data
@@ -235,6 +245,7 @@ export const agentHelpers = {
     resolveModelIdForAnalytics,
     resolveFastModelId,
     resolveFastModel,
+    resolveEmbeddingModel,
     resolveChatProviderName,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
