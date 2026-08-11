@@ -1,9 +1,6 @@
 import { t } from 'i18next';
-import { LogOut, Mail, RefreshCw } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { authenticationSession } from '@/lib/authentication-session';
 
 export const NoProjectsState = () => {
   return (
@@ -28,36 +25,6 @@ export const NoProjectsState = () => {
           )}
         </p>
       </div>
-
-      <div className="flex items-center gap-2">
-        <Button asChild>
-          <a
-            href="mailto:?subject=Please%20add%20me%20to%20a%20project"
-            className="gap-2"
-          >
-            <Mail className="size-4" />
-            {t('Email your admin')}
-          </a>
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => window.location.reload()}
-        >
-          <RefreshCw className="size-4" />
-          {t('Refresh')}
-        </Button>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className="gap-2 text-muted-foreground"
-        onClick={() => authenticationSession.logOut()}
-      >
-        <LogOut className="size-4" />
-        {t('Log out')}
-      </Button>
     </div>
   );
 };
