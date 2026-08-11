@@ -34,9 +34,13 @@ vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
     knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
 }))
 
+const { mockEmbed } = vi.hoisted(() => ({
+    mockEmbed: vi.fn().mockResolvedValue({ embedding: new Array(768).fill(0.1) }),
+}))
+
 vi.mock('ai', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    embed: () => Promise.resolve({ embedding: [0.1, 0.2] }),
+    embed: () => mockEmbed(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
@@ -562,5 +566,21 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
 
         expect(mockGetFileOrThrow).toHaveBeenCalledWith({ projectId: 'proj-own', id: 'kb-1' })
         expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'proj-own' }))
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — a wrong-sized embedding is refused, not silently unmatched', () => {
+    it('refuses when the provider returns a vector the knowledge base cannot match', async () => {
+        mockEmbed.mockResolvedValueOnce({ embedding: new Array(1536).fill(0.1) })
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })).rejects.toThrow()
+
+        expect(mockKbSearch).not.toHaveBeenCalled()
     })
 })

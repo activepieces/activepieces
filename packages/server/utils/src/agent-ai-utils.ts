@@ -13,8 +13,13 @@ import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
 
 const MAX_WEB_SEARCH_RESULTS = 5
-const EMBEDDING_DIMENSIONS = 768
+export const EMBEDDING_DIMENSIONS = 768
 const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
+    openai: { dimensions: EMBEDDING_DIMENSIONS },
+}
+
+const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
+    openrouter: { dimensions: EMBEDDING_DIMENSIONS },
     openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
 
@@ -112,7 +117,7 @@ function createEmbeddingModel({ provider, auth, config }: {
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
         default:
             throw new Error(`Provider ${provider} does not support knowledge base search`)
     }

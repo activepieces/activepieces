@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, EMBEDDING_DIMENSIONS } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { embed, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -534,6 +534,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
         const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
+        if (embedding.length !== EMBEDDING_DIMENSIONS) {
+            log.error({ conversation: { id: input.conversationId }, expectedDimensions: EMBEDDING_DIMENSIONS, actualDimensions: embedding.length }, '[agentRpc#executeKnowledgeBaseTool] The embedding provider returned a vector of the wrong size, so a search would match nothing')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `This platform's embedding model returns ${embedding.length} dimensions, but knowledge bases store ${EMBEDDING_DIMENSIONS}. Searching would match nothing, so it is refused.` },
+            })
+        }
         const results = await knowledgeBaseService(log).search({
             projectId,
             knowledgeBaseFileIds: [input.knowledgeBaseFileId],
