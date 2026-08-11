@@ -39,9 +39,13 @@ decision rather than the code:
   match and the emitted brace re-pairs with the untouched one.
 - **Pinned values are applied after the model's answer.** Relying on the strict schema is
   not enough: `recoverFencedJson` parses fenced output with a bare `JSON.parse` and no zod.
-- **`custom_api_call` is refused on a step.** Model-chosen method, URL and body with the
-  connection's credential merged into the headers is credential exfiltration in one call.
-  It stays available in chat, where a human sees the request first.
+- **`custom_api_call` is allowed on a step.** It was refused at first, on the belief that the
+  model chose the whole URL and could therefore post a credential anywhere. That was wrong:
+  `joinBaseUrlWithRelativePath` in `pieces/common/src/lib/helpers/index.ts` fixes the host from
+  the piece's own auth and the model supplies only a relative path. The reach is other endpoints
+  of the API the connection already authorises, which is the same trust the rest of this
+  decision grants, so refusing it removed a real capability and bought nothing. Check what a
+  tool actually lets the model control before deciding it is an exfiltration path.
 - **A tool is capped per turn**, because nothing else bounds how often one turn fires an
   action, and chat's email tool already had two such limits.
 - **The resolved input is logged.** It was computed, redacted and discarded, and the adhoc

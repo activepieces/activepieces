@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentPieceTool, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -30,7 +30,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         }
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
-        const pieceTools = supportedTools.filter((tool): tool is AgentPieceTool => tool.type === AgentToolType.PIECE)
         const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
         const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
@@ -47,9 +46,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 code: ErrorCode.VALIDATION,
                 params: { message: `Two tools are both named ${duplicated.join(', ')}: each tool on a step needs its own name, or one silently replaces the other` },
             })
-        }
-        if (pieceTools.some((tool) => tool.pieceMetadata.actionName === CUSTOM_API_CALL)) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent step cannot use a custom API call: it would let the agent send this project\'s credentials to any address it chooses' } })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
@@ -133,7 +129,6 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
 const RUNS_PER_MINUTE = 60
 const MAX_INSTRUCTION_LENGTH = 51_200
 const MAX_TOOLS = 100
-const CUSTOM_API_CALL = 'custom_api_call'
 const BUILT_IN_TOOL_PREFIX = 'ap_'
 const MAX_OUTPUT_FIELDS = 50
 
