@@ -8,7 +8,7 @@ import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
-import { AgentPieceTool } from '../agents/tools'
+import { AgentTool } from '../agents/tools'
 import { AgentOutputField } from '../agents'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
@@ -328,7 +328,7 @@ export const ExecuteAgentRunJobData = z.object({
     source: z.enum(AgentRunSource).optional(),
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
-    tools: z.array(AgentPieceTool).optional(),
+    tools: z.array(AgentTool).optional(),
     flowTools: z.array(ResolvedAgentFlowTool).optional(),
     structuredOutput: z.array(AgentOutputField).optional(),
     modelName: z.string().nullable(),
