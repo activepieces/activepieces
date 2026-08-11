@@ -10,6 +10,44 @@ const authorFields: OutputSchema['fields'] = [
 const recordFields: OutputSchema['fields'] = [
   { key: 'text', label: 'Text' },
   { key: 'createdAt', label: 'Created At', format: 'datetime' },
+  {
+    key: 'embed',
+    label: 'Embed',
+    description: 'Media carried by the record itself — image/video blob refs, external link card or quoted post.',
+  },
+  {
+    key: 'langs',
+    label: 'Languages',
+    description: 'BCP-47 language codes declared on the post.',
+  },
+  {
+    key: 'tags',
+    label: 'Tags',
+    description: 'Hashtags stored on the record, without the leading #.',
+  },
+  {
+    key: 'reply',
+    label: 'Reply Refs',
+    description: 'The root and parent post refs when the record is a reply.',
+  },
+];
+
+const postEngagementFields: OutputSchema['fields'] = [
+  {
+    key: 'embed',
+    label: 'Embed',
+    description: 'Media attached to the post — images, video, external link card or quoted post. Shape varies by embed type.',
+  },
+  {
+    key: 'labels',
+    label: 'Labels',
+    description: 'Moderation labels applied to the post.',
+  },
+  {
+    key: 'viewer',
+    label: 'Viewer State',
+    description: 'The authenticated account\'s relationship to the post, such as the URIs of its own like and repost.',
+  },
 ];
 
 const mediaFlagFields: OutputSchema['fields'] = [
@@ -34,6 +72,7 @@ const postFields: OutputSchema['fields'] = [
   { key: 'repostCount', label: 'Repost Count', format: 'number' },
   { key: 'likeCount', label: 'Like Count', format: 'number' },
   { key: 'quoteCount', label: 'Quote Count', format: 'number' },
+  ...postEngagementFields,
 ];
 
 export const createPostOutputSchema: OutputSchema = {
@@ -74,21 +113,7 @@ export const findPostOutputSchema: OutputSchema = {
     { key: 'repostCount', label: 'Repost Count', format: 'number' },
     { key: 'likeCount', label: 'Like Count', format: 'number' },
     { key: 'quoteCount', label: 'Quote Count', format: 'number' },
-    {
-      key: 'embed',
-      label: 'Embed',
-      description: 'Media attached to the post — images, video, external link card or quoted post. Shape varies by embed type.',
-    },
-    {
-      key: 'labels',
-      label: 'Labels',
-      description: 'Moderation labels applied to the post.',
-    },
-    {
-      key: 'viewer',
-      label: 'Viewer State',
-      description: 'The authenticated account\'s relationship to the post, such as the URIs of its own like and repost.',
-    },
+    ...postEngagementFields,
     { key: 'retrievedAt', label: 'Retrieved At', format: 'datetime' },
   ],
 };
@@ -135,6 +160,11 @@ export const findThreadOutputSchema: OutputSchema = {
       children: [
         { key: 'post', label: 'Root Post', children: postFields },
         {
+          key: 'parent',
+          label: 'Parent Thread',
+          description: 'The parent post chain above this one, nested up to the requested parent height; absent at the top of a thread.',
+        },
+        {
           key: 'replies',
           label: 'Replies',
           description: 'Nested reply threads, each with its own post and replies.',
@@ -142,6 +172,14 @@ export const findThreadOutputSchema: OutputSchema = {
       ],
     },
     { key: 'requestedUri', label: 'Requested URI' },
+    {
+      key: 'parameters',
+      label: 'Parameters',
+      children: [
+        { key: 'depth', label: 'Depth', format: 'number' },
+        { key: 'parentHeight', label: 'Parent Height', format: 'number' },
+      ],
+    },
     {
       key: 'statistics',
       label: 'Statistics',
@@ -242,5 +280,15 @@ export const newFollowerTriggerOutputSchema: OutputSchema = {
     // counts, so the emitted values are a hardcoded 0
     { key: 'indexedAt', label: 'Indexed At', format: 'datetime' },
     { key: 'createdAt', label: 'Account Created At', format: 'datetime' },
+    {
+      key: 'viewer',
+      label: 'Viewer State',
+      description: 'The authenticated account\'s relationship to this follower — following/followedBy carry the follow record URIs, which is how you branch on whether to follow back.',
+    },
+    {
+      key: 'labels',
+      label: 'Labels',
+      description: 'Moderation labels applied to the follower\'s account.',
+    },
   ],
 };
