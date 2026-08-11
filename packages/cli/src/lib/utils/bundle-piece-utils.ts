@@ -303,15 +303,6 @@ const HAZARD_WARNING_IDS = new Set<string>([
     'commonjs-variable-in-esm',
 ])
 
-// Optional peer dependencies. Their consumer requires them inside a guard and carries on
-// without them: pg catches MODULE_NOT_FOUND and leaves `pg.native` null, and the mongodb
-// driver swaps in an error module that only surfaces if you switch the matching feature on.
-// None is ever installed, so there is no version to put in the manifest — and inventing one
-// would send the runtime installer after a package that needs a compiler on the host. They
-// stay external and undeclared, which is exactly the state their consumer expects.
-//
-// Distinct from NATIVE_EXTERNALS, which a piece genuinely needs: oracledb and sharp must be
-// declared, or the piece really would crash on a missing module.
 const OPTIONAL_EXTERNALS = new Set<string>([
     'pg-native',
     'mongodb-client-encryption', 'kerberos', 'snappy', '@mongodb-js/zstd', 'aws4',

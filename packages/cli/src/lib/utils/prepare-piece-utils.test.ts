@@ -90,9 +90,6 @@ describe('rewriteManifestForBundle', () => {
     })
 
     it('leaves an optional peer dependency out instead of failing on it', () => {
-        // pg statically requires pg-native, so esbuild externalizes it, but it is never
-        // installed and pg runs fine without it. Declaring it would make the runtime
-        // installer build a native addon the piece never calls.
         const { distPath, repoRoot } = setup({ pg: '8.11.3' })
 
         rewriteManifestForBundle({ distPath, external: ['pg', 'pg-native'], repoRoot })

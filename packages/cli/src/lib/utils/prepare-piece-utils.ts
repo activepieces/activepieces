@@ -62,9 +62,6 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
 
     const externalDeps: Record<string, string> = {}
     for (const dep of external) {
-        // Left out of the manifest on purpose, whether or not it happens to be installed
-        // here: its consumer guards the require, and declaring it would make every install
-        // of this piece build a native addon it never calls.
         if (bundlePieceUtils.OPTIONAL_EXTERNALS.has(dep)) {
             continue
         }
