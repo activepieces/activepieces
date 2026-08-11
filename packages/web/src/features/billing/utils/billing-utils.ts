@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  ApEdition,
   CreditsBillableFeature,
   PlanName,
   PlatformBillingInformation,
@@ -40,6 +41,24 @@ function formatCredits(credits: number): string {
   return credits >= COMPACT_CREDITS_FROM
     ? formatUtils.formatNumberCompact(credits)
     : formatUtils.formatNumber(credits);
+}
+
+function shouldShowCreditsAlert({
+  edition,
+  isEmbedded,
+  isProjectRoute,
+  isUnlimited,
+  isBillingEnforced,
+  severity,
+  isDismissalActive,
+}: ShouldShowCreditsAlertParams): boolean {
+  if (isEmbedded || !isProjectRoute || edition === ApEdition.COMMUNITY) {
+    return false;
+  }
+  if (isUnlimited || !isBillingEnforced || severity === 'default') {
+    return false;
+  }
+  return severity === 'error' || !isDismissalActive;
 }
 
 function resolveCreditsAction({
@@ -152,6 +171,7 @@ export const billingUtils = {
   percentUsed,
   creditsSeverity,
   formatCredits,
+  shouldShowCreditsAlert,
   resolveCreditsAction,
   resolveSeatCap,
   scheduledCapNotice,
@@ -161,6 +181,16 @@ export const billingUtils = {
 export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
 
 export type CreditsSeverity = 'default' | 'warning' | 'error';
+
+export type ShouldShowCreditsAlertParams = {
+  edition: ApEdition | null | undefined;
+  isEmbedded: boolean;
+  isProjectRoute: boolean;
+  isUnlimited: boolean;
+  isBillingEnforced: boolean;
+  severity: CreditsSeverity;
+  isDismissalActive: boolean;
+};
 
 export type CreditsAction =
   | { kind: 'unknown' }

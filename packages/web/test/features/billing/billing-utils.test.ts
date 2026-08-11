@@ -1,10 +1,14 @@
 import {
+  ApEdition,
   ConsumableFeatureId,
   CreditsBillableFeature,
 } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
-import { billingUtils } from '@/features/billing/utils/billing-utils';
+import {
+  billingUtils,
+  ShouldShowCreditsAlertParams,
+} from '@/features/billing/utils/billing-utils';
 import { formatUtils } from '@/lib/format-utils';
 
 const creditsFeature: CreditsBillableFeature = {
@@ -13,6 +17,16 @@ const creditsFeature: CreditsBillableFeature = {
   billingUnits: 1000,
   interval: null,
   autoTopUp: null,
+};
+
+const enforcedAtWarning: ShouldShowCreditsAlertParams = {
+  edition: ApEdition.CLOUD,
+  isEmbedded: false,
+  isProjectRoute: true,
+  isUnlimited: false,
+  isBillingEnforced: true,
+  severity: 'warning',
+  isDismissalActive: false,
 };
 
 describe('billingUtils.creditsSeverity', () => {
@@ -47,6 +61,98 @@ describe('billingUtils.formatCredits', () => {
     expect(billingUtils.formatCredits(2_500_000)).toBe(
       formatUtils.formatNumberCompact(2_500_000),
     );
+  });
+});
+
+describe('billingUtils.shouldShowCreditsAlert', () => {
+  it('shows a warning on an enforced platform that has not been dismissed', () => {
+    expect(billingUtils.shouldShowCreditsAlert(enforcedAtWarning)).toBe(true);
+  });
+
+  it('stays hidden when credits are metered but not enforced', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isBillingEnforced: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('stays hidden at the error severity when credits are not enforced', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isBillingEnforced: false,
+        severity: 'error',
+      }),
+    ).toBe(false);
+  });
+
+  it('ignores a dismissal once usage reaches the error severity', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        severity: 'error',
+        isDismissalActive: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('respects an active dismissal at the warning severity', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isDismissalActive: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('stays hidden below the warning severity', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        severity: 'default',
+      }),
+    ).toBe(false);
+  });
+
+  it('stays hidden on an unlimited balance', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isUnlimited: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('stays hidden when embedded, off a project route, or on community edition', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isEmbedded: true,
+      }),
+    ).toBe(false);
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        isProjectRoute: false,
+      }),
+    ).toBe(false);
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        edition: ApEdition.COMMUNITY,
+      }),
+    ).toBe(false);
+  });
+
+  it('still shows while the edition flag is loading', () => {
+    expect(
+      billingUtils.shouldShowCreditsAlert({
+        ...enforcedAtWarning,
+        edition: null,
+      }),
+    ).toBe(true);
   });
 });
 

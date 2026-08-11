@@ -27,6 +27,7 @@ export const CreditsUsageAlert = React.memo(() => {
     usage,
     isPlatformAdmin,
     isPaid,
+    isBillingEnforced,
     creditsRemaining,
     isUnlimited,
     percentUsed,
@@ -39,13 +40,15 @@ export const CreditsUsageAlert = React.memo(() => {
     creditsAlertDismissal.read({ platformId }),
   );
 
-  const visible =
-    !embedState.isEmbedded &&
-    location.pathname.startsWith(PROJECT_PATH_PREFIX) &&
-    edition !== ApEdition.COMMUNITY &&
-    !isUnlimited &&
-    severity !== 'default' &&
-    (severity === 'error' || !creditsAlertDismissal.isActive({ dismissedAt }));
+  const visible = billingUtils.shouldShowCreditsAlert({
+    edition,
+    isEmbedded: embedState.isEmbedded,
+    isProjectRoute: location.pathname.startsWith(PROJECT_PATH_PREFIX),
+    isUnlimited,
+    isBillingEnforced,
+    severity,
+    isDismissalActive: creditsAlertDismissal.isActive({ dismissedAt }),
+  });
   const { data: info } = billingQueries.usePlatformSubscription(
     platformId,
     visible && isPlatformAdmin,

@@ -153,7 +153,7 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
-  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+  const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
 
@@ -301,7 +301,7 @@ function ChatBoxContent({
               showBanner && !hasBlockingCard ? (
                 <CreditsBanner
                   creditsExhausted={credits.creditsExhausted}
-                  creditsWarning={credits.creditsWarning}
+                  creditsPercentUsed={credits.creditsPercentUsed}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null

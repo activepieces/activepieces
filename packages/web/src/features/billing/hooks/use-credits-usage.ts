@@ -22,6 +22,7 @@ export function useCreditsUsage(): CreditsUsage {
     usage,
     isPlatformAdmin,
     isPaid: billingUtils.isPaidPlan(platform.plan.plan),
+    isBillingEnforced: platform.billingEnforced === true,
     creditsRemaining,
     isUnlimited,
     percentUsed,
@@ -34,6 +35,7 @@ export type CreditsUsage = {
   usage: PlatformUsage | undefined;
   isPlatformAdmin: boolean;
   isPaid: boolean;
+  isBillingEnforced: boolean;
   creditsRemaining: number | null;
   isUnlimited: boolean;
   percentUsed: number;

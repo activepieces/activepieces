@@ -18,7 +18,8 @@ export function CreditsActionButton({
   className,
   variant = 'basic',
 }: CreditsActionButtonProps) {
-  const { platformId, isPlatformAdmin, isPaid } = useCreditsUsage();
+  const { platformId, isPlatformAdmin, isPaid, isBillingEnforced } =
+    useCreditsUsage();
   const { embedState } = useEmbedding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
@@ -26,6 +27,7 @@ export function CreditsActionButton({
 
   const canManageBilling =
     isPlatformAdmin &&
+    isBillingEnforced &&
     !embedState.isEmbedded &&
     edition !== ApEdition.COMMUNITY;
 

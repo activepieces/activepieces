@@ -3,17 +3,16 @@ import { AlertTriangle, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { CreditsActionButton } from '@/features/billing';
-import { CreditsWarning } from '@/features/chat/lib/chat-types';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 
 export function CreditsBanner({
   creditsExhausted,
-  creditsWarning,
+  creditsPercentUsed,
   onDismiss,
 }: {
   creditsExhausted?: boolean;
-  creditsWarning?: CreditsWarning | null;
+  creditsPercentUsed?: number | null;
   onDismiss?: () => void;
 }) {
   const isPlatformAdmin = useIsPlatformAdmin();
@@ -26,7 +25,7 @@ export function CreditsBanner({
           "You've reached your credits limit. Contact a platform admin to get more credits.",
         )
     : t("You've used {percentage}% of your credits.", {
-        percentage: creditsWarning?.percentage ?? 0,
+        percentage: creditsPercentUsed ?? 0,
       });
 
   return (
