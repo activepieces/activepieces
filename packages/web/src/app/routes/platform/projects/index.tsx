@@ -97,6 +97,9 @@ export default function ProjectsPage() {
         duration: 3000,
       });
     },
+    onError: () => {
+      toast.error(t('Failed to save changes. Please try again.'));
+    },
   });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
