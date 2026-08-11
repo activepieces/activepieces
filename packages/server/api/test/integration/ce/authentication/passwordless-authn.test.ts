@@ -1,8 +1,10 @@
 import { apId } from '@activepieces/core-utils'
-import { OtpState, OtpType, PlatformRole, UserStatus } from '@activepieces/shared'
+import { OtpState, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
+import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { createMockPlatform } from '../../../helpers/mocks'
@@ -12,10 +14,14 @@ let app: FastifyInstance | null = null
 
 const EMAIL = 'ahmad.tash@example.com'
 
+let callers = 0
+
 async function requestCode(email: string): Promise<number | undefined> {
+    callers += 1
     const response = await app?.inject({
         method: 'POST',
         url: '/api/v1/authentication/otp/request',
+        headers: { 'x-real-ip': `10.0.${Math.floor(callers / 256)}.${callers % 256}` },
         body: { email },
     })
     return response?.statusCode
@@ -32,6 +38,10 @@ async function verifyCode({ email, code }: { email: string, code: string }) {
 function wrongCodeFor(code: string): string {
     const shifted = (Number.parseInt(code, 10) + 1) % 1000000
     return shifted.toString().padStart(6, '0')
+}
+
+async function storedIdentity(email: string) {
+    return databaseConnection().getRepository('user_identity').findOneBy({ email })
 }
 
 async function storedOtp(email: string) {
@@ -125,6 +135,31 @@ describe('Passwordless Authentication API', () => {
             expect(body?.verified).toBe(true)
             expect(body?.token).toBeDefined()
             expect(await storedOtp(EMAIL)).toBeNull()
+        })
+
+        it('discards a password planted on the address before its owner proved the inbox', async () => {
+            const plantedPassword = 'PlantedPassword123!'
+            await userIdentityService(app!.log).create({
+                email: EMAIL,
+                password: plantedPassword,
+                firstName: 'Ahmad',
+                lastName: '',
+                trackEvents: true,
+                newsLetter: false,
+                provider: UserIdentityProvider.EMAIL,
+                verified: false,
+            })
+            const planted = await storedIdentity(EMAIL)
+            expect(await passwordHasher.compare(plantedPassword, planted!.password)).toBe(true)
+
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+            const response = await verifyCode({ email: EMAIL, code: otp!.value })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const afterVerification = await storedIdentity(EMAIL)
+            expect(afterVerification!.verified).toBe(true)
+            expect(await passwordHasher.compare(plantedPassword, afterVerification!.password)).toBe(false)
         })
 
         it('hands a brand-new member a pre-platform session so the name step can run', async () => {
