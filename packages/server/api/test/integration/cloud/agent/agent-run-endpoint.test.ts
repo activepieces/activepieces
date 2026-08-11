@@ -129,12 +129,39 @@ describe('POST /v1/agents/runs', () => {
                 instruction: 'do a thing',
                 flowRunId: apId(),
                 waitpointId: apId(),
-                tools: [{ type: 'FLOW', toolName: 'call_sub_flow', externalFlowId: 'flow-1' }],
+                tools: [{ type: 'KNOWLEDGE_BASE', toolName: 'search_kb', sourceType: 'FILE', sourceId: 'kb-1', sourceName: 'Handbook' }],
             },
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('FLOW')
+        expect(JSON.stringify(response.json())).toContain('KNOWLEDGE_BASE')
+    })
+
+    it('refuses two tools sharing a name, so neither silently replaces the other', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-dup',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'do a thing',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                tools: [
+                    { type: 'PIECE', toolName: 'shared_name', pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' } },
+                    { type: 'FLOW', toolName: 'shared_name', externalFlowId: 'flow-1' },
+                ],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('shared_name')
     })
 
     it('accepts the piece tools configured on the step', async () => {

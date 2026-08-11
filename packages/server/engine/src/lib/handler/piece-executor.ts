@@ -54,7 +54,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             devPieces: constants.devPieces,
         })
 
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion: piece.getContextInfo?.().version, pieceName: action.settings.pieceName }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -135,6 +135,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 target: 'actions',
                 hookResponse: params.hookResponse,
                 contextVersion: piece.getContextInfo?.().version,
+                pieceName: action.settings.pieceName,
             }),
             run: {
                 id: constants.flowRunId,
