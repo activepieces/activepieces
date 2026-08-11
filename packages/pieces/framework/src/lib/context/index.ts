@@ -1,5 +1,4 @@
 import {
-  AgentPieceTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
@@ -13,7 +12,6 @@ import {
 } from '@activepieces/core-piece-types';
 import type { SeekPage } from '@activepieces/core-utils';
 import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
-import { LanguageModel, Tool } from 'ai'
 import type { Readable } from 'node:stream'
 
 import {
@@ -231,7 +229,6 @@ type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
-  agent: AgentContext;
   run: RunContext;
   /** @deprecated Use waitpoint.buildResumeUrl() from createWaitpoint result instead */
   generateResumeUrl?: (params: {
@@ -261,15 +258,6 @@ export type ActionContext<
 
 
 
-
-export type ConstructToolParams = {
-  tools: AgentPieceTool[]
-  model: LanguageModel,
-}
-
-export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
-}
 
 export interface FilesService {
   write({
