@@ -48,3 +48,9 @@ Entry point: `runAgent`, the createAction in the `ai` piece registered in `packa
 - `packages/core/utils/src/lib/ssrf-ip-classifier.ts` and `packages/server/utils/src/safe-http.ts` — the SSRF guard on outbound calls
 
 Paths verified 2026-07-17. An earlier version pointed at `packages/core/shared/src/lib/automation/agents/`; those types now live in `packages/core/piece-types/src/lib/agents.ts` and `packages/core/execution/src/lib/agents/`.
+
+### Knowledge base gotchas
+
+- **A knowledge base uploaded through the UI is not searchable.** Nothing in the upload path generates chunk embeddings; `knowledge-base.controller.ts` only *accepts* an embedding on a chunk. Chunks land with `embedding IS NULL`, and search filters those out, so the result is an empty answer rather than an error.
+- **`knowledge_base_chunk` is created by a migration that records itself as run even when pgvector is absent.** A database that gains pgvector later never gets the table, because the migration is already marked complete. Deleting its row from `migrations` replays it safely, since the DDL is `CREATE TABLE IF NOT EXISTS`.
+- **Embeddings are stored at a fixed 768 dimensions, and most models do not return that.** `text-embedding-3-small` answers 1536, and the `dimensions` provider option is namespaced under `openai`, so the OpenRouter and managed paths never see it. `agentAiUtils.toStorageEmbedding` truncates and re-normalises instead, which is what the option does server-side and works whatever the provider returns. This only holds for Matryoshka-trained models — adding a model that is not one will truncate badly and silently.
