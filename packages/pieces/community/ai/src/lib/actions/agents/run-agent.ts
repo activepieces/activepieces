@@ -12,8 +12,6 @@ import { AgentPieceProps, AgentProviderModel, AgentResult, AgentToolType, spread
 // Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
 // budget, or it fires mid-run and throws away an answer that was still coming.
 const UNSUPPORTED_TOOL_NAMES: Record<string, string> = {
-  [AgentToolType.FLOW]: 'sub-flow',
-  [AgentToolType.MCP]: 'MCP server',
   [AgentToolType.KNOWLEDGE_BASE]: 'knowledge base',
 };
 
@@ -159,7 +157,7 @@ export const runAgent = createAction({
 // the reference itself, so anything that is not an id is dropped rather than sent.
 function assertEveryToolIsSupported(tools: unknown[]): void {
   const kinds = tools.map(toolKind).filter((kind): kind is string => !isNil(kind));
-  const unsupported = unique(kinds.filter((kind) => kind !== AgentToolType.PIECE));
+  const unsupported = unique(kinds.filter((kind) => !isNil(UNSUPPORTED_TOOL_NAMES[kind])));
   if (unsupported.length === 0) {
     return;
   }
