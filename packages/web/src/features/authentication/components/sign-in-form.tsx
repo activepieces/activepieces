@@ -65,7 +65,7 @@ const SignInForm: React.FC = () => {
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
 
-      if (isNil(data.projectId)) {
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }

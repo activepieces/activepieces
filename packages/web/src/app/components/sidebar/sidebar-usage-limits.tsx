@@ -19,6 +19,7 @@ import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
@@ -57,6 +58,10 @@ const SidebarUsageLimits = React.memo(() => {
   const isTrial = !isNil(info?.trialEndsAt);
 
   if (edition === ApEdition.COMMUNITY) {
+    return null;
+  }
+
+  if (isNil(authenticationSession.getProjectId())) {
     return null;
   }
 
