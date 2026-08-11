@@ -61,6 +61,21 @@ describe('signupNames', () => {
             ).toBe("Ahmad's")
         })
 
+        it('uses the whole fallback when neither the name nor the address yields a word', () => {
+            expect(
+                signupNames.platformNameFromPerson({ firstName: '', email: '___@activepieces.com' }),
+            ).toBe('My Platform')
+        })
+
+        it('stays inside the platform name limit when the address is one long word', () => {
+            const name = signupNames.platformNameFromPerson({
+                firstName: '',
+                email: `${'a'.repeat(120)}@activepieces.com`,
+            })
+
+            expect(name.length).toBeLessThanOrEqual(100)
+        })
+
         it('never produces a name the platform name rule rejects', () => {
             const safeString = new RegExp('^[^./]+$')
             const name = signupNames.platformNameFromPerson({

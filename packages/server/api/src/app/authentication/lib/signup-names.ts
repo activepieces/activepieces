@@ -32,8 +32,8 @@ function platformNameFromEmail(email: string): string {
 function platformNameFromPerson({ firstName, email }: PlatformNameFromPersonParams): string {
     const [given] = firstName.replace(SAFE_STRING_CHARS, '').trim().split(/\s+/)
     if (isNil(given) || given.length === 0) {
-        const [fromEmail] = platformNameFromEmail(email).split(' ')
-        return isNil(fromEmail) ? FALLBACK_PLATFORM_NAME : possessive(fromEmail)
+        const [fromEmail] = localPartTokens(email)
+        return isNil(fromEmail) ? FALLBACK_PLATFORM_NAME : possessive(fromEmail.slice(0, MAX_NAME_PART_LENGTH))
     }
     return possessive(given.slice(0, MAX_NAME_PART_LENGTH))
 }
