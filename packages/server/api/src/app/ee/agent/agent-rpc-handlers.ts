@@ -180,6 +180,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
                 userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email),
             ])
 
+        if (isFlowStep !== (conversation.source === AgentRunSource.FLOW_STEP)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The run asked for a different surface than the conversation it belongs to' } })
+        }
+
         const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
             ? userProjects.filter((p) => p.id === conversation.projectId)
             : userProjects
