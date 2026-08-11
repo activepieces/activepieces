@@ -22,66 +22,65 @@ const PaperAirplaneInJar = () => {
   return (
     <svg
       aria-hidden="true"
-      className="text-primary"
-      width="160"
-      height="160"
-      viewBox="0 0 160 160"
+      width="180"
+      height="180"
+      viewBox="0 0 180 180"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <ellipse cx="80" cy="140" rx="34" ry="4" className="fill-muted" />
-      <path
-        d="M46 60 Q46 56 50 56 L110 56 Q114 56 114 60 L110 138 Q110 142 106 142 L54 142 Q50 142 50 138 Z"
-        className="fill-background stroke-border"
-        strokeWidth="2"
-      />
-      <path
-        d="M46 60 L114 60"
-        className="stroke-border"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M52 68 L108 68"
-        className="stroke-border/60"
+      <ellipse cx="90" cy="164" rx="46" ry="4" className="fill-muted" />
+
+      <rect
+        x="52"
+        y="40"
+        width="76"
+        height="12"
+        rx="3"
+        className="fill-muted stroke-border"
         strokeWidth="1.5"
-        strokeLinecap="round"
       />
-      <g transform="translate(52 72) rotate(-15 28 28)">
+
+      <path
+        d="M56 52 L56 148 Q56 158 66 158 L114 158 Q124 158 124 148 L124 52 Z"
+        className="fill-primary/5 stroke-border"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M62 60 L62 146"
+        className="stroke-background"
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.9"
+      />
+
+      <g transform="translate(64 78) rotate(-8 26 22)">
         <path
-          d="M4 30 L56 8 L36 52 L28 34 Z"
-          className="fill-primary/20 stroke-primary"
+          d="M2 22 L52 4 L34 44 L26 28 Z"
+          className="fill-background stroke-primary"
           strokeWidth="2"
           strokeLinejoin="round"
         />
         <path
-          d="M4 30 L28 34 L36 52"
+          d="M2 22 L26 28 L34 44"
           className="stroke-primary"
           strokeWidth="2"
           strokeLinejoin="round"
           fill="none"
         />
         <path
-          d="M28 34 L56 8"
-          className="stroke-primary"
-          strokeWidth="2"
+          d="M26 28 L52 4"
+          className="stroke-primary/50"
+          strokeWidth="1.5"
           strokeLinecap="round"
+          strokeDasharray="2 3"
         />
       </g>
-      <path
-        d="M42 96 Q40 100 42 104"
-        className="stroke-primary/40"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d="M118 92 Q120 96 118 100"
-        className="stroke-primary/40"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        fill="none"
-      />
+
+      <circle cx="44" cy="72" r="2" className="fill-primary/30" />
+      <circle cx="140" cy="98" r="1.5" className="fill-primary/30" />
+      <circle cx="138" cy="130" r="2" className="fill-primary/30" />
+      <circle cx="42" cy="120" r="1.5" className="fill-primary/30" />
     </svg>
   );
 };
