@@ -146,83 +146,100 @@ export async function mssqlGetTables(
   }));
 }
 
-/**
- * An ascending IDENTITY that is also the sole key of a unique index: a row added
- * later always carries a higher value, so it cannot be stranded behind a cursor.
- * Both conditions matter. IDENTITY(n, -1) is legal and counts downward, and
- * IDENTITY alone is not unique -- a reseed or an IDENTITY_INSERT load can repeat
- * values unless a unique index enforces otherwise.
- */
-export async function mssqlGetIdentityColumn(
-  pool: sql.ConnectionPool,
-  table: MssqlTable
-): Promise<string | undefined> {
-  const result = await pool
-    .request()
-    .input('qualified', `${table.table_schema}.${table.table_name}`)
-    .query(
-      `SELECT c.name
-       FROM sys.identity_columns c
-       WHERE c.object_id = OBJECT_ID(@qualified)
-         AND c.increment_value > 0
-         AND EXISTS (
-           SELECT 1
-           FROM sys.indexes i
-           JOIN sys.index_columns ic
-             ON ic.object_id = i.object_id AND ic.index_id = i.index_id
-            AND ic.is_included_column = 0
-           WHERE i.object_id = c.object_id
-             AND i.is_unique = 1
-             AND i.has_filter = 0
-             AND ic.column_id = c.column_id
-           GROUP BY i.index_id
-           HAVING COUNT(*) = 1
-         )`
-    );
-  const rows = result.recordset ?? [];
-  return rows.length === 1 ? rows[0]['name'] : undefined;
-}
+export type MssqlColumn = {
+  name: string;
+  /** base system type name, e.g. 'datetime2' -- never an alias type */
+  type: string;
+  precision: number;
+  scale: number;
+  /** in bytes, and -1 for a max type */
+  maxLength: number;
+  nullable: boolean;
+};
+
+export type MssqlTableMeta = {
+  columns: MssqlColumn[];
+  /**
+   * An ascending IDENTITY that is also the sole key of a unique index: a row
+   * added later always carries a higher value, so it cannot be stranded behind
+   * a cursor, and it is immutable as well as unique. Both conditions matter.
+   * IDENTITY(n, -1) is legal and counts downward, and IDENTITY alone is not
+   * unique -- a reseed or an IDENTITY_INSERT load can repeat values unless a
+   * unique index enforces otherwise.
+   */
+  identity?: string;
+  /**
+   * Columns that uniquely identify a row, in key order. Prefers the primary
+   * key, then the narrowest non-nullable unique index -- a unique constraint
+   * identifies a row just as well as a declared key, and plenty of tables have
+   * only one. Empty when the table has neither.
+   */
+  keyColumns: string[];
+};
 
 /**
- * Columns that uniquely identify a row, in key order. Prefers the primary key,
- * then the narrowest non-nullable unique index -- a unique constraint identifies
- * a row just as well as a declared key, and plenty of tables have only one.
- * Empty when the table has neither.
+ * Everything the trigger needs to know about a table's shape, in one round
+ * trip. It used to be three separate queries issued on every single poll.
  */
-export async function mssqlGetKeyColumns(
+export async function mssqlGetTableMeta(
   pool: sql.ConnectionPool,
   table: MssqlTable
-): Promise<string[]> {
+): Promise<MssqlTableMeta> {
   const result = await pool
     .request()
     .input('qualified', `${table.table_schema}.${table.table_name}`)
     .query(
-      `SELECT i.index_id, i.is_primary_key, c.name AS column_name,
-              ic.key_ordinal, c.is_nullable
+      // TYPE_NAME(system_type_id) rather than a join on user_type_id: an alias
+      // type reports its own name, and only base types can be CONVERT targets.
+      `SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.precision,
+              c.scale, c.max_length, c.is_nullable
+       FROM sys.columns c
+       WHERE c.object_id = OBJECT_ID(@qualified)
+       ORDER BY c.column_id;
+
+       SELECT i.index_id, i.is_primary_key, c.name AS column_name, c.is_nullable
        FROM sys.indexes i
        JOIN sys.index_columns ic
          ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+        AND ic.is_included_column = 0
        JOIN sys.columns c
          ON c.object_id = i.object_id AND c.column_id = ic.column_id
        WHERE i.object_id = OBJECT_ID(@qualified)
          AND i.is_unique = 1
          AND i.has_filter = 0
-         AND ic.is_included_column = 0
-       ORDER BY i.index_id, ic.key_ordinal`
+       ORDER BY i.index_id, ic.key_ordinal;
+
+       SELECT name
+       FROM sys.identity_columns
+       WHERE object_id = OBJECT_ID(@qualified) AND increment_value > 0;`
     );
+
+  const [columnRows, indexRows, identityRows] = result.recordsets as Record<
+    string,
+    unknown
+  >[][];
+
+  const columns: MssqlColumn[] = (columnRows ?? []).map((row) => ({
+    name: String(row['name']),
+    type: String(row['type_name']).toLowerCase(),
+    precision: Number(row['precision']),
+    scale: Number(row['scale']),
+    maxLength: Number(row['max_length']),
+    nullable: Boolean(row['is_nullable']),
+  }));
 
   const indexes = new Map<
     number,
     { isPrimary: boolean; nullable: boolean; columns: string[] }
   >();
-  for (const row of result.recordset ?? []) {
+  for (const row of indexRows ?? []) {
     const id = Number(row['index_id']);
     const entry = indexes.get(id) ?? {
       isPrimary: Boolean(row['is_primary_key']),
       nullable: false,
       columns: [],
     };
-    entry.columns.push(row['column_name']);
+    entry.columns.push(String(row['column_name']));
     if (row['is_nullable']) entry.nullable = true;
     indexes.set(id, entry);
   }
@@ -236,10 +253,27 @@ export async function mssqlGetKeyColumns(
       if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
       return a.columns.length - b.columns.length;
     });
-  return candidates[0]?.columns ?? [];
+
+  const ascending =
+    (identityRows ?? []).length === 1
+      ? String(identityRows[0]['name'])
+      : undefined;
+  const identity =
+    ascending !== undefined &&
+    candidates.some(
+      (index) => index.columns.length === 1 && index.columns[0] === ascending
+    )
+      ? ascending
+      : undefined;
+
+  return {
+    columns,
+    identity,
+    keyColumns: candidates[0]?.columns ?? [],
+  };
 }
 
-// ORDER BY rejects these types, so they cannot be part of a tiebreaker
+// ORDER BY rejects these types, so no cursor can be built on them
 const UNSORTABLE = ['text', 'ntext', 'image', 'xml', 'geography', 'geometry'];
 
 export async function mssqlGetSortableColumns(
