@@ -114,6 +114,11 @@ export const findPostOutputSchema: OutputSchema = {
     { key: 'likeCount', label: 'Like Count', format: 'number' },
     { key: 'quoteCount', label: 'Quote Count', format: 'number' },
     ...postEngagementFields,
+    {
+      key: 'threadgate',
+      label: 'Threadgate',
+      description: 'The reply restrictions set on the post; absent when replies are open to everyone.',
+    },
     { key: 'retrievedAt', label: 'Retrieved At', format: 'datetime' },
   ],
 };
@@ -127,6 +132,11 @@ export const likePostOutputSchema: OutputSchema = {
     { key: 'postCid', label: 'Post CID' },
     { key: 'postAuthor', label: 'Post Author' },
     { key: 'postText', label: 'Post Text' },
+    {
+      key: 'selectionMethod',
+      label: 'Selection Method',
+      description: 'How the post was chosen — timeline or manual.',
+    },
     { key: 'likedAt', label: 'Liked At', format: 'datetime' },
   ],
 };
@@ -146,6 +156,11 @@ export const repostOutputSchema: OutputSchema = {
         { key: 'text', label: 'Text' },
         { key: 'createdAt', label: 'Created At', format: 'datetime' },
       ],
+    },
+    {
+      key: 'selectionMethod',
+      label: 'Selection Method',
+      description: 'How the post was chosen — timeline or manual.',
     },
     { key: 'repostedAt', label: 'Reposted At', format: 'datetime' },
   ],
@@ -218,6 +233,16 @@ export const newPostTriggerOutputSchema: OutputSchema = {
 export const newTimelinePostsTriggerOutputSchema: OutputSchema = {
   fields: [
     ...postFields,
+    {
+      key: 'reason',
+      label: 'Timeline Reason',
+      description: 'Why the item is in the timeline — carries the reposting account when it is a repost. Feed Context below exposes the same information flattened.',
+    },
+    {
+      key: 'reply',
+      label: 'Reply Refs',
+      description: 'The root and parent post refs when the item is a reply. Feed Context below exposes the same information flattened.',
+    },
     {
       key: 'feedContext',
       label: 'Feed Context',
