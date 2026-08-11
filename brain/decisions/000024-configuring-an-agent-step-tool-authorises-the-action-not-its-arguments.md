@@ -39,13 +39,16 @@ decision rather than the code:
   match and the emitted brace re-pairs with the untouched one.
 - **Pinned values are applied after the model's answer.** Relying on the strict schema is
   not enough: `recoverFencedJson` parses fenced output with a bare `JSON.parse` and no zod.
-- **`custom_api_call` is allowed on a step.** It was refused at first, on the belief that the
-  model chose the whole URL and could therefore post a credential anywhere. That was wrong:
-  `joinBaseUrlWithRelativePath` in `pieces/common/src/lib/helpers/index.ts` fixes the host from
-  the piece's own auth and the model supplies only a relative path. The reach is other endpoints
-  of the API the connection already authorises, which is the same trust the rest of this
-  decision grants, so refusing it removed a real capability and bought nothing. Check what a
-  tool actually lets the model control before deciding it is an exfiltration path.
+- **`custom_api_call` is allowed on a step, but only as a path.** It was refused outright at
+  first, on the belief that the model chose the whole URL. Reading only
+  `joinBaseUrlWithRelativePath` in `pieces/common/src/lib/helpers/index.ts` seemed to disprove
+  that, since the piece fixes the host from its own auth. Both readings were wrong: its caller
+  at `:363` uses the value verbatim when it starts with `http://` or `https://`, and
+  `authMapping` still attaches the connection's credentials, so an absolute URL sends them to a
+  host the model picked. The action is allowed and an absolute URL is refused server-side
+  before the call, which keeps the real capability &mdash; other endpoints of the same API &mdash;
+  and closes the escape. Trace a helper's callers before concluding what a value can be.
+
 - **A tool is capped per turn**, because nothing else bounds how often one turn fires an
   action, and chat's email tool already had two such limits.
 - **The resolved input is logged.** It was computed, redacted and discarded, and the adhoc
