@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -107,6 +108,7 @@ export type SendAgentEventRequest = {
 }
 
 export type GetAgentConfigRequest = {
+    provider?: AIProviderName
     conversationId: string
     runId?: string
     platformId: string
@@ -206,6 +208,7 @@ export type ExecutePieceToolRequest = {
     conversationId: string
     toolName: string
     instruction: string
+    provider?: AIProviderName
     piece: AgentPieceToolMetadata
 }
 
@@ -216,6 +219,7 @@ export type ExecutePieceToolResponse = {
 export type ExecuteKnowledgeBaseToolRequest = {
     conversationId: string
     toolName: string
+    provider?: AIProviderName
     knowledgeBaseFileId: string
     query: string
 }

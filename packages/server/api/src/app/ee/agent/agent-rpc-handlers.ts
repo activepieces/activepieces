@@ -161,20 +161,28 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
         const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, source: requestedSource, projectId: requestedProjectId } = input
 
-        const [conversation, providerConfig, userProjects, mcpCredentials, enabledAiTools, userMeta, agentMemory] = await Promise.all([
+        // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
+        // anyway meant an owner without an MCP token or a user record failed the run outright.
+        const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
+
+        const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
-            agentHelpers.resolveChatProvider({ platformId, log }),
+            agentHelpers.resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', input.provider) }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
-            agentMcp.getCredentials({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
-            userService(log).getMetaInformation({ id: userId }),
-            agentHelpers.getUserMemory({ platformId, userId }),
         ])
 
-        const isFlowStep = conversation.source === AgentRunSource.FLOW_STEP
-        const scopedMcpCredentials = isFlowStep ? { mcpServerUrl: null, mcpToken: null } : mcpCredentials
-        const runMemory = isFlowStep ? { instructions: null, memories: [] } : agentMemory
-        const runUserEmail = isFlowStep ? '' : userMeta.email
+        const [scopedMcpCredentials, runMemory, runUserEmail] = isFlowStep
+            ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, '']
+            : await Promise.all([
+                agentMcp.getCredentials({ platformId, userId, log }),
+                agentHelpers.getUserMemory({ platformId, userId }),
+                userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email),
+            ])
+
+        if (isFlowStep !== (conversation.source === AgentRunSource.FLOW_STEP)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The run asked for a different surface than the conversation it belongs to' } })
+        }
 
         const scopedProjects = conversation.source === AgentRunSource.FLOW_STEP
             ? userProjects.filter((p) => p.id === conversation.projectId)
@@ -223,8 +231,12 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        const tier = agentHelpers.resolveTier({ tierId: selectedModel })
-        const resolvedModelId = agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
+        const tier = agentHelpers.resolveTier({ tierId: isFlowStep ? null : selectedModel })
+        // Chat picks a tier and the tier picks the model. A flow step names the model itself, so
+        // running anything else would quietly ignore what the builder shows.
+        const resolvedModelId = isFlowStep && !isNil(modelName)
+            ? modelName
+            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -512,15 +524,22 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
         }
-        const { result, resolvedInput } = await pieceToolRunner.runFromInstruction({
-            model: await agentHelpers.resolveFastModel({ platformId: conversation.platformId, log }),
+        const { projectId, platformId } = conversation
+        const model = await agentHelpers.resolveFastModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
+            model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
             instruction: input.instruction,
-            projectId: conversation.projectId,
-            platformId: conversation.platformId,
+            projectId,
+            platformId,
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
-        })
+        }))
+        if (!isNil(runError) || isNil(run)) {
+            log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
+            throw runError
+        }
+        const { result, resolvedInput } = run
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
         return { result }
     },
@@ -532,7 +551,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log })
+        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,

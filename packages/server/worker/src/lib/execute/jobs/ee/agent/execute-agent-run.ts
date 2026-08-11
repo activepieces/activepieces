@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, isNil, isObject, omit, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -34,7 +34,8 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // `agent-evals` run could still execute ap_run_code against the developer's project.
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+// The only chat tools an unattended run keeps: reading the public web needs no one present.
+export const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -46,6 +47,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const config = await ctx.apiClient.getAgentConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('source', jobSource),
+            ...spreadIfDefined('provider', data.provider),
             ...spreadIfDefined('projectId', projectId),
             ...spreadIfDefined('promptOverride', promptOverride),
             ...spreadIfDefined('dryRun', dryRun),
@@ -168,6 +170,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
 
             const allTools = buildToolSet({
+                provider,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
@@ -189,9 +192,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
             })
 
-            // The step's own external MCP tools live for the whole turn, not a single call —
-            // withStepMcpTools guarantees every opened client is closed once the turn settles,
-            // win or lose, even if runAgentTurn throws.
             const turn = await agentMcpClient.withStepMcpTools({
                 tools: configuredMcpTools,
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
@@ -203,6 +203,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
 
                     return runAgentTurn({
+                        ...spreadIfDefined('stepCeiling', data.maxSteps),
                         model,
                         fastModel: dryRun ? undefined : fastModel,
                         provider,
@@ -442,8 +443,9 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
+    provider: AIProviderName
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: AgentPhase }
@@ -614,9 +616,11 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     if (source === AgentRunSource.CHAT) {
         return allTools
     }
+    // Listed, not subtracted. Everything else in the chat set assumes someone is reading and can
+    // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider }),
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
@@ -624,16 +628,18 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         runFlowTool: ({ toolName, flowId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, toolInput, returnsResponse }),
         log,
     })
-    const unattendedTools = omit(allTools, UNATTENDED_FORBIDDEN_TOOLS)
+    const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+        tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider }),
+        log,
+    })
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
-        tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query }),
-        log,
-    })
-    return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedTools, ...completionTool }
+    const unattendedWebTools: ToolSet = Object.fromEntries(
+        Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name)),
+    )
+    return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedWebTools, ...completionTool }
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
