@@ -54,6 +54,7 @@ vi.mock('@activepieces/server-utils', async () => {
     return {
         safeHttp: { axios: { request: mockAxiosRequest } },
         mcpTransport: {
+            isHttpUrl: (value: string) => value.startsWith('http://') || value.startsWith('https://'),
             createTransport: ({ protocol, serverUrl, auth }: { protocol: McpProtocol, serverUrl: string, auth: Parameters<typeof buildAuthHeaders>[0] }) => {
                 const headers = buildAuthHeaders(auth)
                 const url = new URL(serverUrl)

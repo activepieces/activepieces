@@ -53,33 +53,36 @@ function createSafeMcpFetch({ extraHeaders, timeoutMs, maxResponseBytes }: {
         const method = init?.method ?? 'GET'
         const wantsEventStream = Object.entries(headers).some(([key, value]) => key.toLowerCase() === 'accept' && value.includes(EVENT_STREAM_MEDIA_TYPE))
 
-        if (wantsEventStream) {
-            const streamed = await safeHttp.axios.request<Readable>({
-                method, url, headers, data: init?.body,
-                responseType: 'stream',
-                validateStatus: () => true,
-                timeout: 0,
-                ...(isNil(init?.signal) ? {} : { signal: init.signal }),
-            })
-            return new Response(Readable.toWeb(streamed.data), {
-                status: streamed.status,
-                headers: normalizeResponseHeaders(streamed.headers),
-            })
-        }
-
-        const response = await safeHttp.axios.request<ArrayBuffer>({
+        const response = await safeHttp.axios.request<Readable | ArrayBuffer>({
             method, url, headers, data: init?.body,
-            responseType: 'arraybuffer',
             validateStatus: () => true,
-            timeout: timeoutMs,
-            maxContentLength: maxResponseBytes,
-            maxBodyLength: maxResponseBytes,
+            ...(wantsEventStream
+                ? { responseType: 'stream', timeout: 0, ...(isNil(init?.signal) ? {} : { signal: init.signal }) }
+                : { responseType: 'arraybuffer', timeout: timeoutMs, maxContentLength: maxResponseBytes, maxBodyLength: maxResponseBytes }),
         })
-        return new Response(Buffer.from(response.data), {
+        const body = response.data instanceof Readable ? Readable.toWeb(response.data) : Buffer.from(response.data)
+        return new Response(body, {
             status: response.status,
             headers: normalizeResponseHeaders(response.headers),
         })
     }
+}
+
+function isHttpUrl(value: string): boolean {
+    try {
+        const url = new URL(value)
+        return url.protocol === 'http:' || url.protocol === 'https:'
+    }
+    catch {
+        return false
+    }
+}
+
+function toHttpUrl(value: string): URL {
+    if (!isHttpUrl(value)) {
+        throw new Error('An MCP server must be reached over http or https')
+    }
+    return new URL(value)
 }
 
 function createSafeMcpTransport({ protocol, serverUrl, auth, timeoutMs = DEFAULT_MCP_TIMEOUT_MS, maxResponseBytes = DEFAULT_MCP_MAX_RESPONSE_BYTES }: {
@@ -90,7 +93,7 @@ function createSafeMcpTransport({ protocol, serverUrl, auth, timeoutMs = DEFAULT
     maxResponseBytes?: number
 }): Transport {
     const headers = buildAuthHeaders(auth)
-    const url = new URL(serverUrl)
+    const url = toHttpUrl(serverUrl)
     const fetch = createSafeMcpFetch({ extraHeaders: headers, timeoutMs, maxResponseBytes })
     if (protocol === McpProtocol.SSE) {
         return new SSEClientTransport(url, { requestInit: { headers }, fetch })
@@ -99,6 +102,7 @@ function createSafeMcpTransport({ protocol, serverUrl, auth, timeoutMs = DEFAULT
 }
 
 export const mcpTransport = {
+    isHttpUrl,
     createTransport: createSafeMcpTransport,
 }
 

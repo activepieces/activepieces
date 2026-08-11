@@ -4,7 +4,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 
 export const mcpToolValidator = {
     async validateAgentMcpTool(tool: AgentMcpTool): Promise<ValidateAgentMcpToolResponse> {
-        if (!isValidUrl(tool.serverUrl)) {
+        if (!mcpTransport.isHttpUrl(tool.serverUrl)) {
             return { toolNames: undefined, error: GENERIC_ERROR }
         }
         const transport = mcpTransport.createTransport({
@@ -39,16 +39,6 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
     }
     finally {
         if (timer) clearTimeout(timer)
-    }
-}
-
-function isValidUrl(value: string): boolean {
-    try {
-        const url = new URL(value)
-        return url.protocol === 'http:' || url.protocol === 'https:'
-    }
-    catch {
-        return false
     }
 }
 
