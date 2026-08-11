@@ -1,12 +1,22 @@
 import { apId } from '@activepieces/core-utils'
-import { PlatformRole, UserStatus } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../../../src/app/authentication/authentication-utils'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { createMockPlatform, createMockUserIdentity } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+const trackProject = vi.fn()
+
+vi.mock('../../../../src/app/helper/telemetry.utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../src/app/helper/telemetry.utils')>()
+    return {
+        ...actual,
+        telemetry: (log: FastifyBaseLogger) => ({ ...actual.telemetry(log), trackProject }),
+    }
+})
 
 let app: FastifyInstance | null = null
 
@@ -79,6 +89,7 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+    trackProject.mockClear()
     await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
@@ -131,6 +142,20 @@ describe('First platform provisioning', () => {
         expect(await databaseConnection().getRepository('user').count()).toBe(1)
         const relinked = await databaseConnection().getRepository('user').findOneBy({ id: strandedUserId })
         expect(relinked?.platformId).toBe(response.platformId)
+    })
+
+    it('reports the signup it finished for a platform whose owner link never landed', async () => {
+        const identityId = await seedVerifiedIdentity()
+        const strandedUserId = await strandUser(identityId)
+        await databaseConnection().getRepository('platform').save(
+            createMockPlatform({ ownerId: strandedUserId }),
+        )
+
+        const response = await createFirstPlatform(identityId)
+
+        const signedUp = trackProject.mock.calls.filter(([, event]) => event.name === TelemetryEventName.SIGNED_UP)
+        expect(signedUp).toHaveLength(1)
+        expect(signedUp[0][0]).toBe(response.projectId)
     })
 
     it('repairs a platform left without a project instead of wedging the identity', async () => {

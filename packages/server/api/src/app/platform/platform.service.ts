@@ -111,11 +111,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 if (invalidatePreviousTokens) {
                     await rotateTokenVersion(identityId)
                 }
-                await authenticationUtils(log).sendTelemetry({
-                    identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
-                    user: owner,
-                    projectId: personalProject.id,
-                })
+                await reportSignup({ identityId, user: owner, projectId: personalProject.id, log })
                 const response = await authenticationUtils(log).getProjectAndToken({
                     userId: owner.id,
                     platformId: platform.id,
@@ -292,15 +288,27 @@ async function resumeProvisionedPlatform({ owner, identityId, name, invalidatePr
 
 async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, invalidatePreviousTokens, log }: LinkOwnerToPlatformParams): Promise<CreatePlatformWithProjectResult> {
     await userService(log).addOwnerToPlatform({ id: ownerId, platformId })
+    const owner = await userService(log).getOneOrFail({ id: ownerId })
     const response = await finishExistingPlatform({
-        user: await userService(log).getOneOrFail({ id: ownerId }),
+        user: owner,
         platformId,
         name,
         invalidatePreviousTokens,
         identityId,
         log,
     })
+    if (!isNil(response.projectId)) {
+        await reportSignup({ identityId, user: owner, projectId: response.projectId, log })
+    }
     return { response, provisioned: true }
+}
+
+async function reportSignup({ identityId, user, projectId, log }: ReportSignupParams): Promise<void> {
+    await authenticationUtils(log).sendTelemetry({
+        identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
+        user,
+        projectId,
+    })
 }
 
 function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
@@ -441,6 +449,12 @@ type FinishExistingPlatformParams = {
     name: string
     invalidatePreviousTokens: boolean
     identityId: string
+    log: FastifyBaseLogger
+}
+type ReportSignupParams = {
+    identityId: string
+    user: User
+    projectId: string
     log: FastifyBaseLogger
 }
 
