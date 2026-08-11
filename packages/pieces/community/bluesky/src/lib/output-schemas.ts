@@ -74,6 +74,21 @@ export const findPostOutputSchema: OutputSchema = {
     { key: 'repostCount', label: 'Repost Count', format: 'number' },
     { key: 'likeCount', label: 'Like Count', format: 'number' },
     { key: 'quoteCount', label: 'Quote Count', format: 'number' },
+    {
+      key: 'embed',
+      label: 'Embed',
+      description: 'Media attached to the post — images, video, external link card or quoted post. Shape varies by embed type.',
+    },
+    {
+      key: 'labels',
+      label: 'Labels',
+      description: 'Moderation labels applied to the post.',
+    },
+    {
+      key: 'viewer',
+      label: 'Viewer State',
+      description: 'The authenticated account\'s relationship to the post, such as the URIs of its own like and repost.',
+    },
     { key: 'retrievedAt', label: 'Retrieved At', format: 'datetime' },
   ],
 };
@@ -82,7 +97,9 @@ export const likePostOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'likeUri', label: 'Like URI' },
+    { key: 'likeCid', label: 'Like CID' },
     { key: 'postUri', label: 'Post URI' },
+    { key: 'postCid', label: 'Post CID' },
     { key: 'postAuthor', label: 'Post Author' },
     { key: 'postText', label: 'Post Text' },
     { key: 'likedAt', label: 'Liked At', format: 'datetime' },
@@ -93,11 +110,13 @@ export const repostOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'repostUri', label: 'Repost URI' },
+    { key: 'repostCid', label: 'Repost CID' },
     {
       key: 'originalPost',
       label: 'Original Post',
       children: [
         { key: 'uri', label: 'Post URI' },
+        { key: 'cid', label: 'CID' },
         { key: 'author', label: 'Author Handle' },
         { key: 'text', label: 'Text' },
         { key: 'createdAt', label: 'Created At', format: 'datetime' },
@@ -146,6 +165,11 @@ export const newPostTriggerOutputSchema: OutputSchema = {
       label: 'Search Context',
       children: [
         { key: 'query', label: 'Query' },
+        {
+          key: 'language',
+          label: 'Language',
+          description: 'The language filter the search ran with; null when unset.',
+        },
         { key: 'matchedTerms', label: 'Matched Terms' },
         ...mediaFlagFields,
       ],
@@ -192,6 +216,7 @@ export const newPostsByAuthorTriggerOutputSchema: OutputSchema = {
       key: 'postContext',
       label: 'Post Context',
       children: [
+        { key: 'authorHandle', label: 'Author Handle' },
         { key: 'isReply', label: 'Is Reply', format: 'boolean' },
         {
           key: 'replyTo',
