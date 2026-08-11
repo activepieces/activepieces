@@ -11,7 +11,7 @@ export const findRows = createAction({
   audience: 'both',
   outputSchema: findRowsOutputSchema,
   aiMetadata: {
-    description: 'Reads rows from a PostgreSQL table, optionally narrowed by a SQL WHERE condition and limited to specific columns. Use to look up or filter records by arbitrary criteria. The condition is interpolated raw into the query, so pass dynamic values through the args array and reference them as $1, $2 placeholders to avoid SQL injection. Read-only and idempotent.',
+    description: 'Reads rows from a PostgreSQL table, optionally narrowed by a SQL WHERE condition and limited to specific columns. Use to look up or filter records by arbitrary criteria. Returns at most 100 rows unless limit is raised or cleared. The condition is interpolated raw into the query, so pass dynamic values through the args array and reference them as $1, $2 placeholders to avoid SQL injection. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
@@ -30,8 +30,9 @@ export const findRows = createAction({
     columns: postgresCommon.columns,
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'The maximum number of rows to return. Leave empty to return every matching row.',
+      description: 'The maximum number of rows to return. Raise it to read more, or clear the field to return every matching row.',
       required: false,
+      defaultValue: 100,
     }),
   },
   async run(context) {
