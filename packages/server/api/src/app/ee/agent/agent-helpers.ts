@@ -130,10 +130,8 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
-async function resolveEmbeddingModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-    const providerConfig = isNil(provider)
-        ? await resolveChatProvider({ platformId, log })
-        : await aiProviderService(log).getConfigOrThrow({ platformId, provider })
+async function resolveEmbeddingModel({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveChatProvider({ platformId, log })
     return agentAiUtils.createEmbeddingModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,

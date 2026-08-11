@@ -532,7 +532,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,

@@ -175,7 +175,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
-                provider,
                 configuredFlowTools: data.flowTools ?? [],
                 configuredKnowledgeBaseTools,
                 structuredOutput: data.structuredOutput ?? [],
@@ -443,8 +442,7 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
-    provider: AIProviderName
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
@@ -632,7 +630,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider }),
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query }),
         log,
     })
     return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedTools, ...completionTool }
