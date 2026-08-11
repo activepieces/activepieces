@@ -1,10 +1,19 @@
 import { isNil } from '@activepieces/core-utils';
-import { PlanName, PlatformBillingInformation } from '@activepieces/shared';
+import {
+  CreditsBillableFeature,
+  PlanName,
+  PlatformBillingInformation,
+} from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 
+import { formatUtils } from '@/lib/format-utils';
+
 const DAILY_RESET_INTERVAL = 'day';
 const MINUTES_PER_HOUR = 60;
+const CREDITS_WARNING_PERCENT = 70;
+const CREDITS_DANGER_PERCENT = 90;
+const COMPACT_CREDITS_FROM = 1_000_000;
 
 function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
@@ -17,6 +26,40 @@ function percentUsed({ used, total }: PercentUsedParams): number {
   return Math.min(100, Math.round((used / total) * 100));
 }
 
+function creditsSeverity(percent: number): CreditsSeverity {
+  if (percent >= CREDITS_DANGER_PERCENT) {
+    return 'error';
+  }
+  if (percent >= CREDITS_WARNING_PERCENT) {
+    return 'warning';
+  }
+  return 'default';
+}
+
+function formatCredits(credits: number): string {
+  return credits >= COMPACT_CREDITS_FROM
+    ? formatUtils.formatNumberCompact(credits)
+    : formatUtils.formatNumber(credits);
+}
+
+function resolveCreditsAction({
+  isPaid,
+  info,
+}: ResolveCreditsActionParams): CreditsAction {
+  if (!isPaid) {
+    return { kind: 'upgrade' };
+  }
+  if (isNil(info)) {
+    return { kind: 'unknown' };
+  }
+  if (!isNil(info.trialEndsAt)) {
+    return { kind: 'upgrade' };
+  }
+  return isNil(info.creditsFeature)
+    ? { kind: 'unknown' }
+    : { kind: 'auto-recharge', feature: info.creditsFeature };
+}
+
 function resolveSeatCap(info: PlatformBillingInformation): SeatCap {
   const limit = info.plan.usersLimit ?? null;
   const scheduledCap = info.plan.scheduledUsersLimit ?? null;
@@ -27,7 +70,7 @@ function resolveSeatCap(info: PlatformBillingInformation): SeatCap {
     scheduledCap,
     effectiveLimit: capBinds ? scheduledCap : limit,
     scheduledPlanName: info.scheduledPlanName ?? t('Free'),
-    switchDate: dayjs(info.cancelAt).format('MMM D, YYYY'),
+    switchDate: dayjs(info.cancelAt).format(BILLING_DATE_FORMAT),
   };
 }
 
@@ -107,9 +150,28 @@ function formatTimeUntil(value: string): string {
 export const billingUtils = {
   isPaidPlan,
   percentUsed,
+  creditsSeverity,
+  formatCredits,
+  resolveCreditsAction,
   resolveSeatCap,
   scheduledCapNotice,
   resolveCreditsReset,
+};
+
+export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
+
+export type CreditsSeverity = 'default' | 'warning' | 'error';
+
+export type CreditsAction =
+  | { kind: 'unknown' }
+  | { kind: 'upgrade' }
+  | { kind: 'auto-recharge'; feature: CreditsBillableFeature };
+
+export type ResolveCreditsActionParams = {
+  isPaid: boolean;
+  info:
+    | Pick<PlatformBillingInformation, 'trialEndsAt' | 'creditsFeature'>
+    | undefined;
 };
 
 export type PercentUsedParams = {
