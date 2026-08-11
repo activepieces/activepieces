@@ -60,12 +60,6 @@ export const otpService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    // Serialised per credential, because the budget and the single-use guarantee
-    // both need read-then-write to be indivisible, and neither `affected` nor
-    // RETURNING can carry that: an UPDATE reports both on postgres and neither on
-    // the embedded driver the tests run against. Inside the lock a plain read and
-    // delete are enough, and the increment stays raw SQL so it cannot touch
-    // `updated` and silently extend the credential's life.
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
         return distributedLock(log).runExclusive({
             key: `otp-confirm-${identityId}-${type}`,
