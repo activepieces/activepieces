@@ -41,10 +41,12 @@ export const findRows = createAction({
       ? columns.map((column) => postgresUtils.quoteIdentifier(column)).join(', ')
       : '*';
 
+    const queryArgs = args ?? [];
+
     const clauses = [`SELECT ${selected} FROM ${postgresUtils.qualifiedName(table)}`];
     if (condition && condition.trim().length > 0) {
-      if (condition.includes(';')) {
-        throw new Error('Condition must be a single expression and cannot contain ";". Pass values through Arguments as $1, $2, ... instead.');
+      if (queryArgs.length === 0 && condition.includes(';')) {
+        throw new Error('A condition with no Arguments cannot contain ";". Pass values through Arguments as $1, $2, ... instead.');
       }
       clauses.push(`WHERE ${condition}`);
     }
@@ -57,7 +59,7 @@ export const findRows = createAction({
 
     const client = await pgClient(context.auth);
     try {
-      const result = await client.query(clauses.join(' '), args ?? []);
+      const result = await client.query(clauses.join(' '), queryArgs);
       return {
         rows: result.rows,
         rowCount: result.rowCount,
