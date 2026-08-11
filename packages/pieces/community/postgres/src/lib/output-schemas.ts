@@ -31,7 +31,7 @@ export const updateRowOutputSchema: OutputSchema = {
     {
       key: 'rows',
       label: 'Updated Rows',
-      description: 'The rows after the update; each row\'s fields are the columns of the target table.',
+      description: 'The rows after the update; each row\'s fields are the columns of the target table. Empty unless Return Updated Rows is enabled.',
     },
     { key: 'rowCount', label: 'Updated Row Count', format: 'number' },
   ],
@@ -42,7 +42,7 @@ export const deleteRowOutputSchema: OutputSchema = {
     {
       key: 'rows',
       label: 'Deleted Rows',
-      description: 'The rows as they were just before deletion; each row\'s fields are the columns of the target table.',
+      description: 'The rows as they were just before deletion; each row\'s fields are the columns of the target table. Empty unless Return Deleted Rows is enabled.',
     },
     { key: 'rowCount', label: 'Deleted Row Count', format: 'number' },
   ],
