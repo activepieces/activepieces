@@ -10,9 +10,28 @@ export class AddFlowProjectIdExternalIdUniqueIndex1821000000000 implements Migra
         // Resolve any pre-existing duplicates before adding the unique index, so the
         // migration succeeds on installs that accumulated them (e.g. via the old create
         // path that minted a fresh externalId and let redeploys duplicate a flow). Keep
-        // the most recently updated flow per (projectId, externalId) and give the losers a
-        // unique externalId instead of dropping them — no flow is lost.
-        await queryRunner.query(`
+        // the most recently updated flow per (projectId, externalId) and rename the rest
+        // by appending their own (unique) id instead of dropping them — no flow is lost.
+        //
+        // Iterate: appending '_dup_<id>' can, on pathological data, produce a value that
+        // already matches another flow's externalId (externalId and id share the apId
+        // space), which would itself break the unique index. Each pass appends the row's
+        // unique id, so any collision it introduces is a strictly smaller duplicate set
+        // resolved on the next pass; this converges in one pass on real data. The bound is
+        // a safety valve — if duplicates somehow remained, the index creation below fails
+        // loudly rather than silently leaving them.
+        const HAS_DUPLICATE = `
+            SELECT 1 FROM (
+                SELECT ROW_NUMBER() OVER (
+                    PARTITION BY "projectId", "externalId"
+                    ORDER BY "updated" DESC, "created" DESC, "id" DESC
+                ) AS rn
+                FROM "flow"
+            ) ranked
+            WHERE ranked.rn > 1
+            LIMIT 1
+        `
+        const RENAME_DUPLICATES = `
             UPDATE "flow"
             SET "externalId" = "externalId" || '_dup_' || "id"
             WHERE "id" IN (
@@ -26,7 +45,14 @@ export class AddFlowProjectIdExternalIdUniqueIndex1821000000000 implements Migra
                 ) ranked
                 WHERE ranked.rn > 1
             )
-        `)
+        `
+        for (let pass = 0; pass < 100; pass++) {
+            const remaining = await queryRunner.query(HAS_DUPLICATE)
+            if (remaining.length === 0) {
+                break
+            }
+            await queryRunner.query(RENAME_DUPLICATES)
+        }
         // Enforce project-scoped uniqueness so two flows can never share an externalId,
         // including under concurrent creates that race past the service-level pre-check.
         await queryRunner.query(`
