@@ -231,7 +231,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        const tier = agentHelpers.resolveTier({ tierId: selectedModel })
+        const tier = agentHelpers.resolveTier({ tierId: isFlowStep ? null : selectedModel })
         // Chat picks a tier and the tier picks the model. A flow step names the model itself, so
         // running anything else would quietly ignore what the builder shows.
         const resolvedModelId = isFlowStep && !isNil(modelName)
