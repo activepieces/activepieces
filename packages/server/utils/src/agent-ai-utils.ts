@@ -92,6 +92,15 @@ function readStringField(source: Record<string, unknown>, key: string): string {
     return typeof value === 'string' ? value : ''
 }
 
+function toStorageEmbedding(embedding: number[]): number[] {
+    if (embedding.length < EMBEDDING_DIMENSIONS) {
+        throw new Error(`This embedding model returns ${embedding.length} dimensions, fewer than the ${EMBEDDING_DIMENSIONS} a knowledge base stores`)
+    }
+    const truncated = embedding.slice(0, EMBEDDING_DIMENSIONS)
+    const magnitude = Math.sqrt(truncated.reduce((sum, value) => sum + value * value, 0))
+    return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
+}
+
 function createEmbeddingModel({ provider, auth, config }: {
     provider: AIProviderName
     auth: Record<string, unknown>
@@ -526,6 +535,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 export const agentAiUtils = {
     createChatModel,
     createEmbeddingModel,
+    toStorageEmbedding,
     supportsWebSearch,
     buildWebSearchTools,
     stripThinkingBlocks,

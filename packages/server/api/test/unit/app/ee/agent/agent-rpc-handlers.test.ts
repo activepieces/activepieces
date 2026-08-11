@@ -78,7 +78,7 @@ vi.mock('../../../../../src/app/mcp/mcp-server-builder', () => ({
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: () => ({}) },
+    agentAiUtils: { createChatModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
 }))
 
 type QueryBuilderMock = {
@@ -569,18 +569,18 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
     })
 })
 
-describe('agentRpcHandlers.executeKnowledgeBaseTool — a wrong-sized embedding is refused, not silently unmatched', () => {
-    it('refuses when the provider returns a vector the knowledge base cannot match', async () => {
+describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding is truncated to what the knowledge base stores', () => {
+    it('searches with a vector cut to the stored size rather than the provider\'s own', async () => {
         mockEmbed.mockResolvedValueOnce({ embedding: new Array(1536).fill(0.1) })
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
-        await expect(agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+        await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
             conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
-        })).rejects.toThrow()
+        })
 
-        expect(mockKbSearch).not.toHaveBeenCalled()
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ queryEmbedding: expect.objectContaining({ length: 768 }) }))
     })
 })
