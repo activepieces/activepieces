@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils';
+import { ColorName, ProjectType } from '@activepieces/shared';
 
 export const PROVIDER_USAGE_DASHBOARDS: Partial<
   Record<AIProviderName, string>
@@ -57,6 +58,23 @@ const GENERATED_PROJECT_NAMES = [
   'Revenue Ops',
   'Support Escalations',
   'Content Studio',
+];
+
+const PROJECTS_PER_NAME = 5;
+
+const PROJECT_COLORS: ColorName[] = [
+  ColorName.BLUE,
+  ColorName.GREEN,
+  ColorName.PURPLE,
+  ColorName.ORANGE,
+  ColorName.PINK,
+  ColorName.CYAN,
+  ColorName.RED,
+  ColorName.YELLOW,
+  ColorName.VIOLET,
+  ColorName.DARK_GREEN,
+  ColorName.LAVENDER,
+  ColorName.DEEP_ORANGE,
 ];
 
 export const MODEL_CATALOG: ModelFacts[] = [
@@ -256,54 +274,40 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   configured: {
     id: 'configured',
     label: 'Configured',
-    providers: [
-      providerStatus({
-        provider: AIProviderName.OPENAI,
-        lastUsedMinutesAgo: 8,
-      }),
-      providerStatus({
-        provider: AIProviderName.ANTHROPIC,
-        lastUsedMinutesAgo: 2,
-      }),
-      providerStatus({
-        provider: AIProviderName.GOOGLE,
-        lastUsedMinutesAgo: 45,
-      }),
-      providerStatus({
-        provider: AIProviderName.OPENROUTER,
-        lastUsedMinutesAgo: 180,
-      }),
-    ],
-    keys: [
-      providerKey({
-        id: 'key-openai',
+    projects: projectDirectory(),
+    configs: [
+      providerConfig({
+        id: 'config-openai',
         provider: AIProviderName.OPENAI,
         name: 'OpenAI',
         lastUsedMinutesAgo: 8,
       }),
-      providerKey({
-        id: 'key-anthropic-prod',
+      providerConfig({
+        id: 'config-anthropic-marketing',
         provider: AIProviderName.ANTHROPIC,
-        name: 'Anthropic – Prod',
+        name: 'Marketing',
         lastUsedMinutesAgo: 2,
+        modelIds: ['claude-sonnet-4-6', 'claude-haiku-4-5'],
       }),
-      providerKey({
-        id: 'key-anthropic-sandbox',
+      providerConfig({
+        id: 'config-anthropic-trusted',
         provider: AIProviderName.ANTHROPIC,
-        name: 'Anthropic – Sandbox',
+        name: 'Trusted projects',
         lastUsedMinutesAgo: 35,
+        projectIds: ['proj-marketing', 'proj-support', 'proj-sales'],
       }),
-      providerKey({
-        id: 'key-google',
+      providerConfig({
+        id: 'config-google',
         provider: AIProviderName.GOOGLE,
         name: 'Google Gemini',
         lastUsedMinutesAgo: 45,
       }),
-      providerKey({
-        id: 'key-openrouter',
+      providerConfig({
+        id: 'config-openrouter',
         provider: AIProviderName.OPENROUTER,
         name: 'OpenRouter',
         lastUsedMinutesAgo: 180,
+        exceptProjectIds: ['proj-internal', 'proj-gen-4'],
       }),
     ],
     chatProvider: AIProviderName.ANTHROPIC,
@@ -343,15 +347,10 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   defaults: {
     id: 'defaults',
     label: 'Fresh defaults',
-    providers: [
-      providerStatus({
-        provider: AIProviderName.ANTHROPIC,
-        lastUsedMinutesAgo: 15,
-      }),
-    ],
-    keys: [
-      providerKey({
-        id: 'key-anthropic',
+    projects: projectDirectory(),
+    configs: [
+      providerConfig({
+        id: 'config-anthropic',
         provider: AIProviderName.ANTHROPIC,
         name: 'Anthropic',
         lastUsedMinutesAgo: 15,
@@ -368,8 +367,8 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   empty: {
     id: 'empty',
     label: 'Empty platform',
-    providers: [],
-    keys: [],
+    projects: projectDirectory(),
+    configs: [],
     chatProvider: null,
     routing: { isDefault: true, tiers: [] },
     usage: [],
@@ -378,37 +377,23 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   'provider-down': {
     id: 'provider-down',
     label: 'Provider outage',
-    providers: [
-      providerStatus({
-        provider: AIProviderName.OPENAI,
-        down: true,
-        lastUsedMinutesAgo: 240,
-      }),
-      providerStatus({
-        provider: AIProviderName.ANTHROPIC,
-        lastUsedMinutesAgo: 5,
-      }),
-      providerStatus({
-        provider: AIProviderName.GOOGLE,
-        lastUsedMinutesAgo: 90,
-      }),
-    ],
-    keys: [
-      providerKey({
-        id: 'key-openai',
+    projects: projectDirectory(),
+    configs: [
+      providerConfig({
+        id: 'config-openai',
         provider: AIProviderName.OPENAI,
         name: 'OpenAI',
         down: true,
         lastUsedMinutesAgo: 240,
       }),
-      providerKey({
-        id: 'key-anthropic',
+      providerConfig({
+        id: 'config-anthropic',
         provider: AIProviderName.ANTHROPIC,
         name: 'Anthropic',
         lastUsedMinutesAgo: 5,
       }),
-      providerKey({
-        id: 'key-google',
+      providerConfig({
+        id: 'config-google',
         provider: AIProviderName.GOOGLE,
         name: 'Google Gemini',
         lastUsedMinutesAgo: 90,
@@ -435,25 +420,16 @@ export const SCENARIOS: Record<MockScenarioId, MockScenario> = {
   'limit-reached': {
     id: 'limit-reached',
     label: 'Limit reached',
-    providers: [
-      providerStatus({
-        provider: AIProviderName.OPENAI,
-        lastUsedMinutesAgo: 12,
-      }),
-      providerStatus({
-        provider: AIProviderName.ANTHROPIC,
-        lastUsedMinutesAgo: 3,
-      }),
-    ],
-    keys: [
-      providerKey({
-        id: 'key-openai',
+    projects: projectDirectory(),
+    configs: [
+      providerConfig({
+        id: 'config-openai',
         provider: AIProviderName.OPENAI,
         name: 'OpenAI',
         lastUsedMinutesAgo: 12,
       }),
-      providerKey({
-        id: 'key-anthropic',
+      providerConfig({
+        id: 'config-anthropic',
         provider: AIProviderName.ANTHROPIC,
         name: 'Anthropic',
         lastUsedMinutesAgo: 3,
@@ -476,50 +452,39 @@ function model(facts: ModelFacts): ModelFacts {
   return facts;
 }
 
-function providerStatus({
-  provider,
-  down,
-  lastUsedMinutesAgo,
-}: {
-  provider: AIProviderName;
-  down?: boolean;
-  lastUsedMinutesAgo?: number;
-}): MockProviderStatus {
-  return {
-    provider,
-    configured: true,
-    down,
-    lastUsedAt:
-      lastUsedMinutesAgo === undefined
-        ? undefined
-        : new Date(Date.now() - lastUsedMinutesAgo * 60_000).toISOString(),
-    usageDashboardUrl: PROVIDER_USAGE_DASHBOARDS[provider],
-    monitorGuideUrl: `https://www.activepieces.com/docs/ai/monitor-usage/${provider}`,
-  };
-}
-
-function providerKey({
+function providerConfig({
   id,
   provider,
   name,
   down,
   lastUsedMinutesAgo,
+  modelIds,
+  projectIds,
+  exceptProjectIds,
 }: {
   id: string;
   provider: AIProviderName;
   name: string;
   down?: boolean;
   lastUsedMinutesAgo?: number;
-}): MockProviderKey {
+  modelIds?: string[];
+  projectIds?: string[];
+  exceptProjectIds?: string[];
+}): MockProviderConfig {
   return {
     id,
     provider,
     name,
+    credentials: { apiKey: `sk-demo-key-${id.slice(-4)}` },
     down,
     lastUsedAt:
       lastUsedMinutesAgo === undefined
         ? undefined
         : new Date(Date.now() - lastUsedMinutesAgo * 60_000).toISOString(),
+    modelScope: modelIds === undefined ? 'all' : 'selected',
+    modelIds: modelIds ?? [],
+    projectScope: projectScopeOf({ projectIds, exceptProjectIds }),
+    projectIds: projectIds ?? exceptProjectIds ?? [],
   };
 }
 
@@ -629,6 +594,28 @@ function builtInTier({
   };
 }
 
+function projectScopeOf({
+  projectIds,
+  exceptProjectIds,
+}: {
+  projectIds?: string[];
+  exceptProjectIds?: string[];
+}): MockProjectScope {
+  if (exceptProjectIds !== undefined) {
+    return 'except';
+  }
+  return projectIds === undefined ? 'all' : 'selected';
+}
+
+function projectDirectory(): MockProject[] {
+  return standardUsage().map((usage, index) => ({
+    id: usage.projectId,
+    name: usage.projectName,
+    color: PROJECT_COLORS[index % PROJECT_COLORS.length],
+    type: ProjectType.TEAM,
+  }));
+}
+
 function standardUsage(): MockProjectAiUsage[] {
   return [
     {
@@ -672,7 +659,12 @@ function standardUsage(): MockProjectAiUsage[] {
 }
 
 function generatedUsage(): MockProjectAiUsage[] {
-  return GENERATED_PROJECT_NAMES.map((projectName, index) => {
+  return GENERATED_PROJECT_NAMES.flatMap((baseName, nameIndex) =>
+    Array.from({ length: PROJECTS_PER_NAME }, (_, batch) => ({
+      projectName: batch === 0 ? baseName : `${baseName} ${batch + 1}`,
+      index: nameIndex * PROJECTS_PER_NAME + batch,
+    })),
+  ).map(({ projectName, index }) => {
     const seed = index + 3;
     const creditsUsed = ((seed * 731) % 9_000) + 150;
     const hasLimit = seed % 3 !== 0;
@@ -726,21 +718,29 @@ export type MockTier = {
   slots: { main: MockSlot; backup1: MockSlot; backup2: MockSlot };
 };
 
-export type MockProviderStatus = {
-  provider: AIProviderName;
-  configured: boolean;
-  down?: boolean;
-  lastUsedAt?: string;
-  usageDashboardUrl?: string;
-  monitorGuideUrl?: string;
-};
+export type MockScope = 'all' | 'selected';
 
-export type MockProviderKey = {
+export type MockProjectScope = MockScope | 'except';
+
+export type MockProviderConfig = {
   id: string;
   provider: AIProviderName;
   name: string;
+  credentials: Record<string, string>;
+  headers?: Record<string, string>;
   down?: boolean;
   lastUsedAt?: string;
+  modelScope: MockScope;
+  modelIds: string[];
+  projectScope: MockProjectScope;
+  projectIds: string[];
+};
+
+export type MockProject = {
+  id: string;
+  name: string;
+  color: ColorName;
+  type: ProjectType;
 };
 
 export type MockProjectAiUsage = {
@@ -756,8 +756,8 @@ export type MockProjectAiUsage = {
 export type MockScenario = {
   id: MockScenarioId;
   label: string;
-  providers: MockProviderStatus[];
-  keys: MockProviderKey[];
+  projects: MockProject[];
+  configs: MockProviderConfig[];
   chatProvider: AIProviderName | null;
   routing: { isDefault: boolean; tiers: MockTier[] };
   usage: MockProjectAiUsage[];

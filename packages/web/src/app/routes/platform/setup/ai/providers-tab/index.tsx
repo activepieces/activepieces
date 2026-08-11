@@ -1,18 +1,26 @@
 import { AIProviderName } from '@activepieces/core-utils';
-import { apId, ColorName, ProjectType } from '@activepieces/shared';
+import { apId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
-  BookOpen,
-  ExternalLink,
+  Copy,
   MessageSquare,
+  MoreHorizontal,
   Plus,
-  Sparkles,
+  Settings2,
+  Trash2,
   TriangleAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -20,281 +28,463 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
+import { SectionHeader } from '../components/section-header';
 import {
+  MockProject,
+  MockProviderConfig,
   MODEL_CATALOG,
-  MockProviderKey,
-  MockScenario,
-  PROVIDER_USAGE_DASHBOARDS,
 } from '../mock/fixtures';
 
-import { AddKeyDialog } from './add-key-dialog';
-import {
-  ProviderConfig,
-  ProviderDetail,
-  ProjectOption,
-} from './provider-detail';
+import { ConfigDetail } from './config-detail';
+import { ConnectProviderDialog } from './connect-provider-dialog';
+import { ProjectSwatch } from './project-selection-panel';
+import { ProviderLogo } from './provider-logo';
 
-export function ProvidersTab({ scenario }: { scenario: MockScenario }) {
+export function ProvidersTab({
+  projects,
+  configs,
+  onConfigsChange,
+  chatProvider,
+  onChatProviderChange,
+}: {
+  projects: MockProject[];
+  configs: MockProviderConfig[];
+  onConfigsChange: (configs: MockProviderConfig[]) => void;
+  chatProvider: AIProviderName | null;
+  onChatProviderChange: (provider: AIProviderName) => void;
+}) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [chatProvider, setChatProvider] = useState(scenario.chatProvider);
-  const projects: ProjectOption[] = scenario.usage.map((usage, index) => ({
-    id: usage.projectId,
-    name: usage.projectName,
-    color: PROJECT_COLORS[index % PROJECT_COLORS.length],
-    type: ProjectType.TEAM,
-  }));
-  const [keys, setKeys] = useState<MockProviderKey[]>(() => scenario.keys);
-  const [configByKey, setConfigByKey] = useState<
-    Record<string, ProviderConfig>
-  >(() => initConfigs({ keys: scenario.keys, projects }));
-  const [addKeyOpen, setAddKeyOpen] = useState(false);
-  const [addKeyProvider, setAddKeyProvider] = useState<
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<MockProviderConfig | undefined>(
+    undefined,
+  );
+  const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
 
-  const openKey = (id: string) => {
+  const openConfig = (id: string) => {
     const next = new URLSearchParams(searchParams);
-    next.set('key', id);
+    next.set('config', id);
     setSearchParams(next);
   };
-  const closeKey = () => {
+  const closeConfig = () => {
     const next = new URLSearchParams(searchParams);
-    next.delete('key');
+    next.delete('config');
     setSearchParams(next);
   };
-  const openAddKey = (provider?: AIProviderName) => {
-    setAddKeyProvider(provider);
-    setAddKeyOpen(true);
+  const openConnect = (provider?: AIProviderName) => {
+    setEditing(undefined);
+    setDialogProvider(provider);
+    setDialogOpen(true);
   };
-  const createKey = ({
-    provider,
-    name,
-  }: {
-    provider: AIProviderName;
-    name: string;
-  }) => {
-    const id = apId();
-    setKeys((current) => [...current, { id, provider, name }]);
-    setConfigByKey((current) => ({
-      ...current,
-      [id]: {
-        enabledModelIds: new Set(
-          MODEL_CATALOG.filter((model) => model.provider === provider).map(
-            (model) => model.id,
-          ),
-        ),
-        scope: 'all',
-        selectedProjectIds: new Set(),
-      },
-    }));
-    setAddKeyOpen(false);
-    openKey(id);
+  const openReplaceCredentials = (config: MockProviderConfig) => {
+    setEditing(config);
+    setDialogProvider(undefined);
+    setDialogOpen(true);
   };
-
-  const activeKey = keys.find((key) => key.id === searchParams.get('key'));
-  const activeInfo = activeKey
-    ? providerInfoOf({ provider: activeKey.provider })
-    : undefined;
-  if (activeKey && activeInfo) {
-    return (
-      <ProviderDetail
-        keyName={activeKey.name}
-        info={activeInfo}
-        down={activeKey.down}
-        usageDashboardUrl={PROVIDER_USAGE_DASHBOARDS[activeKey.provider]}
-        monitorGuideUrl={`https://www.activepieces.com/docs/ai/monitor-usage/${activeKey.provider}`}
-        models={MODEL_CATALOG.filter(
-          (model) => model.provider === activeKey.provider,
-        )}
-        projects={projects}
-        config={configByKey[activeKey.id]}
-        onConfigChange={(next) =>
-          setConfigByKey((current) => ({ ...current, [activeKey.id]: next }))
-        }
-        onBack={closeKey}
-      />
+  const saveConfig = (config: MockProviderConfig) => {
+    onConfigsChange(
+      configs.some((candidate) => candidate.id === config.id)
+        ? configs.map((candidate) =>
+            candidate.id === config.id ? config : candidate,
+          )
+        : [...configs, config],
     );
-  }
+  };
+  const onConnected = (config: MockProviderConfig) => {
+    saveConfig(config);
+    if (!configs.some((candidate) => candidate.id === config.id)) {
+      openConfig(config.id);
+    }
+  };
+  const duplicateConfig = (config: MockProviderConfig) => {
+    onConfigsChange([
+      ...configs,
+      {
+        ...config,
+        id: apId(),
+        name: t('{name} (copy)', { name: config.name }),
+        lastUsedAt: undefined,
+      },
+    ]);
+  };
+  const deleteConfig = (id: string) => {
+    onConfigsChange(configs.filter((config) => config.id !== id));
+  };
 
-  const connectedProviders = [...new Set(keys.map((key) => key.provider))];
+  const connectedProviders = [...new Set(configs.map((c) => c.provider))];
   const available = SUPPORTED_AI_PROVIDERS.filter(
     ({ provider }) => !connectedProviders.includes(provider),
   );
-  const needsAttention = keys.filter((key) => key.down);
+
+  const activeConfig = configs.find(
+    (config) => config.id === searchParams.get('config'),
+  );
+  const activeInfo = activeConfig
+    ? providerInfoOf({ provider: activeConfig.provider })
+    : undefined;
+  if (activeConfig && activeInfo) {
+    return (
+      <>
+        <ConfigDetail
+          key={activeConfig.id}
+          config={activeConfig}
+          info={activeInfo}
+          projects={projects}
+          onSave={saveConfig}
+          onDelete={() => {
+            deleteConfig(activeConfig.id);
+            closeConfig();
+          }}
+          onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          onBack={closeConfig}
+        />
+        <ConnectProviderDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          editing={editing}
+          defaultProvider={dialogProvider}
+          onConnected={onConnected}
+        />
+      </>
+    );
+  }
 
   return (
     <>
-      {keys.length === 0 ? (
-        <EmptyProviders onConnect={openAddKey} />
-      ) : (
-        <div className="flex flex-col gap-10">
-          <section className="flex flex-col gap-4">
-            <div className="flex items-start justify-between gap-3">
-              <SectionHeader
-                title={t('Connected')}
-                count={keys.length}
-                description={t(
-                  'Each key is a separate connection you can manage on its own.',
-                )}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start justify-between gap-3">
+          <SectionHeader
+            title={t('Providers')}
+            count={configs.length}
+            description={
+              configs.length === 0
+                ? t(
+                    'Connect a provider to turn on chat, agents, and AI steps across your platform.',
+                  )
+                : t(
+                    'Each configuration is one API key with its own models and projects.',
+                  )
+            }
+          />
+          <Button size="sm" className="shrink-0" onClick={() => openConnect()}>
+            <Plus className="size-4" />
+            {t('Add configuration')}
+          </Button>
+        </div>
+
+        {configs.length === 0 ? (
+          <EmptyProviders onConnect={openConnect} />
+        ) : (
+          <>
+            {configs.some((config) => config.down) && (
+              <AttentionBanner
+                configs={configs.filter((config) => config.down)}
               />
-              <Button
-                size="sm"
-                className="shrink-0"
-                onClick={() => openAddKey()}
-              >
-                <Plus className="size-4" />
-                {t('Add key')}
-              </Button>
-            </div>
-            {needsAttention.length > 0 && (
-              <AttentionBanner keys={needsAttention} />
             )}
             <ChatProviderRow
               providers={connectedProviders}
               value={chatProvider}
-              onChange={setChatProvider}
+              onChange={onChatProviderChange}
             />
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              {keys.map((key) => (
-                <KeyCard
-                  key={key.id}
-                  providerKey={key}
-                  config={configByKey[key.id]}
-                  onOpen={() => openKey(key.id)}
+            <div className="flex flex-col gap-6">
+              {connectedProviders.map((provider) => (
+                <ProviderGroup
+                  key={provider}
+                  provider={provider}
+                  configs={configs.filter(
+                    (config) => config.provider === provider,
+                  )}
+                  projects={projects}
+                  onAdd={() => openConnect(provider)}
+                  onOpen={openConfig}
+                  onDuplicate={duplicateConfig}
+                  onDelete={deleteConfig}
                 />
               ))}
             </div>
-          </section>
+            {available.length > 0 && (
+              <section className="flex flex-col gap-4 border-t border-border/60 pt-6">
+                <SectionHeader
+                  title={t('Also available')}
+                  count={available.length}
+                  description={t(
+                    'Bring your own API key to connect any of these.',
+                  )}
+                />
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                  {available.map((info) => (
+                    <AvailableProviderCard
+                      key={info.provider}
+                      info={info}
+                      onConnect={() => openConnect(info.provider)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
 
-          {available.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <SectionHeader
-                title={t('Available')}
-                count={available.length}
-                description={t(
-                  'Bring your own API key to connect any of these.',
-                )}
-              />
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {available.map((providerInfo) => (
-                  <AvailableProviderCard
-                    key={providerInfo.provider}
-                    providerInfo={providerInfo}
-                    onConnect={() => openAddKey(providerInfo.provider)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      <AddKeyDialog
-        open={addKeyOpen}
-        onOpenChange={setAddKeyOpen}
-        defaultProvider={addKeyProvider}
-        onCreate={createKey}
+      <ConnectProviderDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        editing={editing}
+        defaultProvider={dialogProvider}
+        onConnected={onConnected}
       />
     </>
   );
 }
 
-function EmptyProviders({
-  onConnect,
+function ProviderGroup({
+  provider,
+  configs,
+  projects,
+  onAdd,
+  onOpen,
+  onDuplicate,
+  onDelete,
 }: {
-  onConnect: (provider: AIProviderName) => void;
+  provider: AIProviderName;
+  configs: MockProviderConfig[];
+  projects: MockProject[];
+  onAdd: () => void;
+  onOpen: (id: string) => void;
+  onDuplicate: (config: MockProviderConfig) => void;
+  onDelete: (id: string) => void;
 }) {
-  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
-    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
-  ).filter((info): info is AiProviderInfo => info !== undefined);
-  const others = SUPPORTED_AI_PROVIDERS.filter(
-    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
-  );
+  const info = providerInfoOf({ provider });
+  if (!info) {
+    return null;
+  }
 
   return (
-    <div className="flex flex-col gap-10">
-      <section className="flex flex-col gap-5 rounded-2xl bg-gradient-to-b from-primary/[0.06] to-transparent p-6">
-        <div className="flex flex-col items-start gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-            <Sparkles className="size-5 text-primary" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold tracking-tight">
-              {t('Add your first AI key')}
-            </h2>
-            <p className="max-w-xl text-sm text-muted-foreground">
-              {t(
-                'Turn on chat, agents, and AI steps across your platform. You’ll need an API key from the provider you choose.',
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {recommended.map((info) => (
-            <RecommendedProviderCard
-              key={info.provider}
-              info={info}
-              onConnect={() => onConnect(info.provider)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {others.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <SectionHeader
-            title={t('Or choose another provider')}
-            count={others.length}
-            description={t('Bring your own API key to connect any of these.')}
-          />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {others.map((providerInfo) => (
-              <AvailableProviderCard
-                key={providerInfo.provider}
-                providerInfo={providerInfo}
-                onConnect={() => onConnect(providerInfo.provider)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+    <section className="overflow-hidden rounded-xl border border-border/60">
+      <div className="flex items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-3">
+        <ProviderLogo info={info} />
+        <p className="flex-1 text-sm font-medium">{info.name}</p>
+        <Button variant="ghost" size="sm" onClick={onAdd}>
+          <Plus className="size-4" />
+          {t('Add configuration')}
+        </Button>
+      </div>
+      {configs.map((config) => (
+        <ConfigRow
+          key={config.id}
+          config={config}
+          projects={projects}
+          onOpen={() => onOpen(config.id)}
+          onDuplicate={() => onDuplicate(config)}
+          onDelete={() => onDelete(config.id)}
+        />
+      ))}
+    </section>
   );
 }
 
-function SectionHeader({
-  title,
-  count,
-  description,
+function ConfigRow({
+  config,
+  projects,
+  onOpen,
+  onDuplicate,
+  onDelete,
 }: {
-  title: string;
-  count: number;
-  description: string;
+  config: MockProviderConfig;
+  projects: MockProject[];
+  onOpen: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const providerModels = MODEL_CATALOG.filter(
+    (model) => model.provider === config.provider,
+  );
+  const selectedModelNames =
+    config.modelScope === 'all'
+      ? providerModels.map((model) => model.name)
+      : config.modelIds.map(
+          (modelId) =>
+            providerModels.find((model) => model.id === modelId)?.name ??
+            modelId,
+        );
+  const namedProjects = projects.filter((project) =>
+    config.projectIds.includes(project.id),
+  );
+  const allowedProjectCount =
+    config.projectScope === 'except'
+      ? projects.length - namedProjects.length
+      : namedProjects.length;
+
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-baseline gap-2">
-        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-        <span className="text-sm text-muted-foreground tabular-nums">
-          {count}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      className="flex cursor-pointer items-center gap-4 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/20"
+    >
+      <div className="flex min-w-0 flex-[2] flex-col gap-1">
+        <p className="truncate text-sm font-medium leading-none">
+          {config.name}
+        </p>
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span
+            className={cn(
+              'size-1.5 rounded-full',
+              config.down ? 'bg-destructive' : 'bg-success-500',
+            )}
+          />
+          {config.down ? t('Unreachable') : t('Active')}
+          {config.lastUsedAt && (
+            <>
+              <span aria-hidden>·</span>
+              {t('used')} {formatUtils.formatDate(new Date(config.lastUsedAt))}
+            </>
+          )}
         </span>
       </div>
-      <p className="text-sm text-muted-foreground">{description}</p>
+
+      <SummaryCell
+        label={
+          config.modelScope === 'all'
+            ? t('All models')
+            : t('{count} models', { count: selectedModelNames.length })
+        }
+        items={selectedModelNames}
+      />
+
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        {config.projectScope === 'all' ? (
+          <span className="truncate text-sm text-muted-foreground">
+            {t('All projects')}
+          </span>
+        ) : (
+          <ProjectChips
+            projects={namedProjects}
+            excluded={config.projectScope === 'except'}
+            allowedCount={allowedProjectCount}
+          />
+        )}
+      </div>
+
+      <div onClick={(event) => event.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="px-2">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onOpen}>
+              <Settings2 className="size-4" />
+              {t('Configure')}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy className="size-4" />
+              {t('Duplicate')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setDeleteOpen(true)}
+              className="text-destructive"
+            >
+              <Trash2 className="size-4" />
+              {t('Delete')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <ConfirmationDeleteDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title={t('Delete {name}', { name: config.name })}
+          message={t(
+            'Steps and agents using this configuration will stop working.',
+          )}
+          entityName={config.name}
+          mutationFn={async () => onDelete()}
+        />
+      </div>
     </div>
   );
 }
 
-function AttentionBanner({ keys }: { keys: MockProviderKey[] }) {
-  const names = keys.map((key) => key.name).join(', ');
+function SummaryCell({ label, items }: { label: string; items: string[] }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+          {label}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64">{items.join(', ')}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function ProjectChips({
+  projects,
+  excluded,
+  allowedCount,
+}: {
+  projects: MockProject[];
+  excluded: boolean;
+  allowedCount: number;
+}) {
+  const shown = projects.slice(0, 3);
+  const rest = projects.length - shown.length;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex min-w-0 items-center gap-1">
+          {excluded && (
+            <span className="shrink-0 text-sm text-muted-foreground">
+              {t('All except')}
+            </span>
+          )}
+          {shown.map((project) => (
+            <ProjectSwatch key={project.id} project={project} />
+          ))}
+          {rest > 0 && (
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {t('+{count}', { count: rest })}
+            </span>
+          )}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64">
+        {excluded
+          ? t('{count} projects have access. Excluded: {names}', {
+              count: allowedCount,
+              names: projects.map((project) => project.name).join(', '),
+            })
+          : projects.map((project) => project.name).join(', ')}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function AttentionBanner({ configs }: { configs: MockProviderConfig[] }) {
+  const names = configs.map((config) => config.name).join(', ');
   return (
     <div className="flex items-center gap-2.5 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5">
       <TriangleAlert className="size-4 shrink-0 text-destructive" />
       <p className="text-sm">
-        {keys.length === 1
+        {configs.length === 1
           ? t('{names} is unreachable — steps using it will fail.', { names })
           : t('{names} are unreachable — steps using them will fail.', {
               names,
@@ -337,13 +527,7 @@ function ChatProviderRow({
             return (
               <SelectItem key={provider} value={provider}>
                 <div className="flex items-center gap-2">
-                  {info?.logoUrl && (
-                    <img
-                      src={info.logoUrl}
-                      alt={provider}
-                      className="size-4 object-contain"
-                    />
-                  )}
+                  {info && <ProviderLogo info={info} size="sm" />}
                   <span>{info?.name ?? provider}</span>
                 </div>
               </SelectItem>
@@ -355,168 +539,77 @@ function ChatProviderRow({
   );
 }
 
-function KeyCard({
-  providerKey,
-  config,
-  onOpen,
-}: {
-  providerKey: MockProviderKey;
-  config: ProviderConfig;
-  onOpen: () => void;
-}) {
-  const info = providerInfoOf({ provider: providerKey.provider });
-  if (!info) {
-    return null;
-  }
-
-  const scopeLabel =
-    config.scope === 'all'
-      ? t('All projects')
-      : `${config.selectedProjectIds.size} ${
-          config.selectedProjectIds.size === 1 ? t('project') : t('projects')
-        }`;
-  const usageDashboardUrl = PROVIDER_USAGE_DASHBOARDS[providerKey.provider];
-  const monitorGuideUrl = `https://www.activepieces.com/docs/ai/monitor-usage/${providerKey.provider}`;
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      className="flex cursor-pointer flex-col rounded-xl border border-border/60 bg-card text-left transition-colors hover:border-border hover:bg-muted/20"
-    >
-      <div className="flex items-start gap-3 p-4">
-        <ProviderLogoTile info={info} />
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <p className="truncate text-sm font-medium leading-none">
-            {providerKey.name}
-          </p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  'size-1.5 rounded-full',
-                  providerKey.down ? 'bg-destructive' : 'bg-success-500',
-                )}
-              />
-              {providerKey.down ? t('Unreachable') : t('Active')}
-            </span>
-            <span aria-hidden>·</span>
-            <span>{info.name}</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {config.enabledModelIds.size} {t('models')} · {scopeLabel}
-            {providerKey.lastUsedAt && (
-              <>
-                {' · '}
-                {t('used')}{' '}
-                {formatUtils.formatDate(new Date(providerKey.lastUsedAt))}
-              </>
-            )}
-          </p>
-        </div>
-      </div>
-      <div className="mt-auto flex items-center gap-4 border-t border-border/60 px-4 py-2.5">
-        {usageDashboardUrl && (
-          <CardFooterLink
-            href={usageDashboardUrl}
-            icon={<ExternalLink className="size-3 shrink-0" />}
-            label={t('Usage dashboard')}
-          />
-        )}
-        <CardFooterLink
-          href={monitorGuideUrl}
-          icon={<BookOpen className="size-3 shrink-0" />}
-          label={t('Monitoring guide')}
-        />
-      </div>
-    </div>
-  );
-}
-
-function RecommendedProviderCard({
-  info,
+function EmptyProviders({
   onConnect,
 }: {
-  info: AiProviderInfo;
-  onConnect: () => void;
+  onConnect: (provider: AIProviderName) => void;
 }) {
+  const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
+    SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
+  ).filter((info): info is AiProviderInfo => info !== undefined);
+  const others = SUPPORTED_AI_PROVIDERS.filter(
+    ({ provider }) => !RECOMMENDED_PROVIDERS.includes(provider),
+  );
+
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border">
-      <ProviderLogoTile info={info} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-sm font-medium leading-none">{info.name}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {RECOMMENDED_TAGLINES[info.provider] ?? ''}
-        </p>
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {recommended.map((info) => (
+          <AvailableProviderCard
+            key={info.provider}
+            info={info}
+            tagline={RECOMMENDED_TAGLINES[info.provider]}
+            recommended
+            onConnect={() => onConnect(info.provider)}
+          />
+        ))}
       </div>
-      <Button size="sm" onClick={onConnect}>
-        {t('Connect')}
-      </Button>
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t('Or choose another provider')}
+        </p>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {others.map((info) => (
+            <AvailableProviderCard
+              key={info.provider}
+              info={info}
+              onConnect={() => onConnect(info.provider)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 function AvailableProviderCard({
-  providerInfo,
+  info,
+  tagline,
+  recommended,
   onConnect,
 }: {
-  providerInfo: AiProviderInfo;
+  info: AiProviderInfo;
+  tagline?: string;
+  recommended?: boolean;
   onConnect: () => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border">
-      <ProviderLogoTile info={providerInfo} />
-      <p className="min-w-0 flex-1 truncate text-sm font-medium">
-        {providerInfo.name}
-      </p>
-      <Button variant="outline" size="sm" onClick={onConnect}>
-        {t('Add key')}
+      <ProviderLogo info={info} />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="truncate text-sm font-medium leading-none">{info.name}</p>
+        {tagline && (
+          <p className="truncate text-xs text-muted-foreground">{tagline}</p>
+        )}
+      </div>
+      <Button
+        size="sm"
+        variant={recommended ? 'default' : 'outline'}
+        onClick={onConnect}
+      >
+        {t('Connect')}
       </Button>
     </div>
-  );
-}
-
-function ProviderLogoTile({ info }: { info: AiProviderInfo }) {
-  return (
-    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-      {info.logoUrl && (
-        <img
-          src={info.logoUrl}
-          alt={info.name}
-          className="size-5 object-contain"
-        />
-      )}
-    </div>
-  );
-}
-
-function CardFooterLink({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      onClick={(event) => event.stopPropagation()}
-      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-    >
-      {icon}
-      {label}
-    </a>
   );
 }
 
@@ -529,45 +622,6 @@ function providerInfoOf({
     (candidate) => candidate.provider === provider,
   );
 }
-
-function initConfigs({
-  keys,
-  projects,
-}: {
-  keys: MockProviderKey[];
-  projects: ProjectOption[];
-}): Record<string, ProviderConfig> {
-  const result: Record<string, ProviderConfig> = {};
-  keys.forEach((key) => {
-    const models = MODEL_CATALOG.filter(
-      (model) => model.provider === key.provider,
-    );
-    const scopedToSelected = key.provider === AIProviderName.OPENROUTER;
-    result[key.id] = {
-      enabledModelIds: new Set(models.map((model) => model.id)),
-      scope: scopedToSelected ? 'selected' : 'all',
-      selectedProjectIds: scopedToSelected
-        ? new Set(projects.slice(0, 3).map((project) => project.id))
-        : new Set(),
-    };
-  });
-  return result;
-}
-
-const PROJECT_COLORS: ColorName[] = [
-  ColorName.BLUE,
-  ColorName.GREEN,
-  ColorName.PURPLE,
-  ColorName.ORANGE,
-  ColorName.PINK,
-  ColorName.CYAN,
-  ColorName.RED,
-  ColorName.YELLOW,
-  ColorName.VIOLET,
-  ColorName.DARK_GREEN,
-  ColorName.LAVENDER,
-  ColorName.DEEP_ORANGE,
-];
 
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,

@@ -21,11 +21,12 @@ import {
   AiToolCapabilityInfo,
   AiToolProviderInfo,
 } from '../../ai-capabilities/catalog';
+import { SectionHeader } from '../components/section-header';
 import { MockScenario } from '../mock/fixtures';
 
 export function CapabilitiesTab({ scenario }: { scenario: MockScenario }) {
   const [configs, setConfigs] = useState<CapabilityConfigs>(
-    scenario.providers.length === 0 ? {} : SEEDED_CONFIGS,
+    scenario.configs.length === 0 ? {} : SEEDED_CONFIGS,
   );
 
   const updateConfig = ({
@@ -40,21 +41,13 @@ export function CapabilitiesTab({ scenario }: { scenario: MockScenario }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-2">
-          <h2 className="text-base font-semibold tracking-tight">
-            {t('Assistant capabilities')}
-          </h2>
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {AI_TOOL_CATALOG.length}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t(
-            'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
-          )}
-        </p>
-      </div>
+      <SectionHeader
+        title={t('Assistant capabilities')}
+        count={AI_TOOL_CATALOG.length}
+        description={t(
+          'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
+        )}
+      />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {AI_TOOL_CATALOG.map((capabilityInfo) => (
           <CapabilityCard

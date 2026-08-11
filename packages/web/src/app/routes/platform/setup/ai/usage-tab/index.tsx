@@ -1,13 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  ChartColumn,
-  ChevronLeft,
-  ChevronRight,
-  OctagonAlert,
-  Pencil,
-  Search,
-} from 'lucide-react';
+import { ChartColumn, OctagonAlert, Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
@@ -17,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
+import { SectionHeader } from '../components/section-header';
+import { pageSlice, TablePagination } from '../components/table-pagination';
 import { MockProjectAiUsage, MockScenario } from '../mock/fixtures';
 
 import { ProjectUsageDialog } from './project-usage-dialog';
@@ -33,12 +28,11 @@ export function UsageTab({ scenario }: { scenario: MockScenario }) {
   const filtered = rows.filter((row) =>
     row.projectName.toLowerCase().includes(search.trim().toLowerCase()),
   );
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, pageCount - 1);
-  const pageRows = filtered.slice(
-    currentPage * PAGE_SIZE,
-    (currentPage + 1) * PAGE_SIZE,
-  );
+  const { rows: pageRows, page: currentPage } = pageSlice({
+    items: filtered,
+    page,
+    pageSize: PAGE_SIZE,
+  });
   const editingRow = rows.find((row) => row.projectId === editingProjectId);
   const detailRow = rows.find((row) => row.projectId === detailProjectId);
 
@@ -121,21 +115,13 @@ export function UsageTab({ scenario }: { scenario: MockScenario }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-semibold tracking-tight">
-              {t('Projects')}
-            </h2>
-            <span className="text-sm text-muted-foreground tabular-nums">
-              {rows.length}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              'Click a project for a detailed breakdown. Bring-your-own-key numbers are estimates.',
-            )}
-          </p>
-        </div>
+        <SectionHeader
+          title={t('Projects')}
+          count={rows.length}
+          description={t(
+            'Click a project for a detailed breakdown. Bring-your-own-key numbers are estimates.',
+          )}
+        />
         <div className="relative w-64 shrink-0">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -169,41 +155,12 @@ export function UsageTab({ scenario }: { scenario: MockScenario }) {
         }
       />
 
-      {filtered.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {t('Showing {from}–{to} of {total}', {
-              from: currentPage * PAGE_SIZE + 1,
-              to: currentPage * PAGE_SIZE + pageRows.length,
-              total: filtered.length,
-            })}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={currentPage === 0}
-              onClick={() => setPage(currentPage - 1)}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="px-2 text-xs text-muted-foreground tabular-nums">
-              {t('Page {page} of {pages}', {
-                page: currentPage + 1,
-                pages: pageCount,
-              })}
-            </span>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              disabled={currentPage >= pageCount - 1}
-              onClick={() => setPage(currentPage + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <TablePagination
+        page={currentPage}
+        pageSize={PAGE_SIZE}
+        total={filtered.length}
+        onPageChange={setPage}
+      />
 
       <SetLimitDialog
         open={editingRow !== undefined}

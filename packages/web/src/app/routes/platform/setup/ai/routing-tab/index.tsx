@@ -6,6 +6,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
+import { SectionHeader } from '../components/section-header';
 import {
   MODEL_CATALOG,
   MockScenario,
@@ -98,21 +99,13 @@ export function RoutingTab({ scenario }: { scenario: MockScenario }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-base font-semibold tracking-tight">
-              {t('Tiers')}
-            </h2>
-            <span className="text-sm text-muted-foreground tabular-nums">
-              {tiers.length}
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              'Pick the model behind each tier — fallbacks take over automatically when it fails.',
-            )}
-          </p>
-        </div>
+        <SectionHeader
+          title={t('Tiers')}
+          count={tiers.length}
+          description={t(
+            'Pick the model behind each tier — fallbacks take over automatically when it fails.',
+          )}
+        />
         <div className="flex shrink-0 items-center gap-2">
           {!isDefault && (
             <ConfirmationDeleteDialog
