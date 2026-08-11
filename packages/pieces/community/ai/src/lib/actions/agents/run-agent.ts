@@ -7,14 +7,10 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AgentPieceProps, AgentProviderModel, AgentResult, AgentToolType, spreadIfDefined, unique } from '@activepieces/pieces-framework';
+import { AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 // Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
 // budget, or it fires mid-run and throws away an answer that was still coming.
-const UNSUPPORTED_TOOL_NAMES: Record<string, string> = {
-  [AgentToolType.KNOWLEDGE_BASE]: 'knowledge base',
-};
-
 const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000;
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
@@ -123,7 +119,6 @@ export const runAgent = createAction({
     }
 
     const agentTools = context.propsValue.agentTools ?? [];
-    assertEveryToolIsSupported(agentTools);
     const tools = toolsWithoutResolvedAuth(agentTools);
 
     const waitpoint = await context.run.createWaitpoint({
@@ -155,25 +150,6 @@ export const runAgent = createAction({
 // The engine resolves {{connections[...]}} in every step input, so a connection pinned on a tool
 // arrives here as the decrypted credential rather than its id. The server wants the id and rebuilds
 // the reference itself, so anything that is not an id is dropped rather than sent.
-function assertEveryToolIsSupported(tools: unknown[]): void {
-  const kinds = tools.map(toolKind).filter((kind): kind is string => !isNil(kind));
-  const unsupported = unique(kinds.filter((kind) => !isNil(UNSUPPORTED_TOOL_NAMES[kind])));
-  if (unsupported.length === 0) {
-    return;
-  }
-  const named = unsupported.map((kind) => UNSUPPORTED_TOOL_NAMES[kind] ?? kind).join(', ');
-  throw new Error(
-    `This agent step uses ${named} tools, which this version cannot run yet. Move the step back to its previous version, or replace those tools with piece actions.`,
-  );
-}
-
-function toolKind(tool: unknown): string | undefined {
-  if (typeof tool !== 'object' || isNil(tool) || !('type' in tool)) {
-    return undefined;
-  }
-  return typeof tool.type === 'string' ? tool.type : undefined;
-}
-
 function toolsWithoutResolvedAuth(tools: unknown[]): unknown[] {
   return tools.map((tool) => {
     const piece = (tool as { pieceMetadata?: { predefinedInput?: { auth?: unknown } } }).pieceMetadata;

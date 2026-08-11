@@ -55,6 +55,7 @@ type Settings = {
     EDITION: string
     NETWORK_MODE: NetworkMode
     SSRF_ALLOW_LIST: string[]
+    ENFORCE_CONNECTION_PIECE_BINDING: boolean
     REUSE_SANDBOX: string | undefined
 }
 
@@ -82,6 +83,7 @@ function buildSettings(overrides: Partial<Settings> = {}): Settings {
         EDITION: 'community',
         NETWORK_MODE: NetworkMode.UNRESTRICTED,
         SSRF_ALLOW_LIST: [],
+        ENFORCE_CONNECTION_PIECE_BINDING: false,
         REUSE_SANDBOX: undefined,
     }
     return { ...base, ...overrides }
@@ -165,6 +167,16 @@ describe('createSandboxForJob', () => {
                 AP_NETWORK_MODE: NetworkMode.STRICT,
             })
             expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
+        })
+
+        it('forwards AP_ENFORCE_CONNECTION_PIECE_BINDING only when enabled', () => {
+            const disabled = buildSettings({ ENFORCE_CONNECTION_PIECE_BINDING: false })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => disabled })
+            expect('AP_ENFORCE_CONNECTION_PIECE_BINDING' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+
+            const enabled = buildSettings({ ENFORCE_CONNECTION_PIECE_BINDING: true })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => enabled })
+            expect(createSandboxMock.mock.calls[1][2].env.AP_ENFORCE_CONNECTION_PIECE_BINDING).toBe('true')
         })
 
         it('omits AP_DEV_PIECES when DEV_PIECES is empty', () => {

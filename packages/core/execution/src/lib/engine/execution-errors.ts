@@ -35,6 +35,15 @@ export class ConnectionLoadingError extends ExecutionError {
     }
 }
 
+export class ConnectionPieceMismatchError extends ExecutionError {
+    constructor(connectionName: string, pieceName: string | undefined, cause?: unknown) {
+        const message = pieceName === undefined
+            ? `connection (${connectionName}) can't be used here: this step type has no piece identity to bind to`
+            : `connection (${connectionName}) does not belong to piece (${pieceName})`
+        super('ConnectionPieceMismatch', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
