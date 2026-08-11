@@ -49,14 +49,18 @@ All three are WebHook subscriptions (`/restapi/v1.0/subscription`) built by one 
 
 | Trigger | Event filter | Kept deliveries |
 |---|---|---|
-| New Inbound SMS or MMS | `message-store/instant?type=SMS` + `?type=MMS` | `direction === 'Inbound'` |
-| New Voicemail | `message-store/instant?type=VoiceMail` | all |
+| New Inbound SMS or MMS | `message-store/instant?type=SMS` | `direction === 'Inbound'` |
+| New Voicemail | `voicemail` | all |
 | New Team Messaging Post | `glip/posts` | `eventType === 'PostAdded'` |
 
-Two event filters on the text trigger, not one: the `type` parameter takes a single value, so an
-SMS-only subscription never fires for a picture message. That matters because a driver answering
-"send your POD" replies with an MMS. Pair the trigger with **Download Message Attachment** to pull
-the media itself, since the delivery carries only attachment metadata, never the bytes.
+One filter on the text trigger, and `type=SMS` is right for picture messages too. There is no MMS
+message type: RingCentral delivers an inbound MMS through the same filter with `type: 'SMS'` and an
+extra `MmsAttachment` part. Do not add `type=MMS`, an unrecognised type can fail the whole
+`createSubscription` call. Pair the trigger with **Download Message Attachment** to pull the media,
+since the delivery carries only attachment metadata, never the bytes.
+
+Voicemail uses its own event filter (`.../extension/~/voicemail`), not `message-store/instant`, which
+is documented for inbound SMS only.
 
 Behaviour worth knowing:
 

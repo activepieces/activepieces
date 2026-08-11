@@ -24,19 +24,23 @@ async function filtersFor(trigger: { onEnable: (c: unknown) => Promise<unknown> 
 }
 
 describe('subscribed event filters', () => {
-  it('covers MMS as well as SMS on the inbound text trigger', async () => {
-    // A driver answering "send your POD" replies with a photo, which arrives as MMS. The type
-    // parameter takes a single value, so an SMS-only filter silently never fires for those, and the
-    // whole document-chase flow looks like the driver never replied.
+  it('subscribes the inbound text trigger to type=SMS only, which already covers MMS', async () => {
+    // Guards against "widening" this to type=MMS. There is no MMS message type: RingCentral delivers
+    // an inbound picture message through this same filter with type: 'SMS' plus an MmsAttachment
+    // part, and an unrecognised type can fail createSubscription outright, breaking the trigger
+    // rather than widening it.
+    // https://developers.ringcentral.com/guide/messaging/sms/receiving-sms-mms
     expect(await filtersFor(newInboundSms)).toEqual([
       '/restapi/v1.0/account/~/extension/~/message-store/instant?type=SMS',
-      '/restapi/v1.0/account/~/extension/~/message-store/instant?type=MMS',
     ]);
   });
 
-  it('keeps voicemail on its own filter, so it is not folded into the text trigger', async () => {
+  it('subscribes voicemail to its own dedicated filter, not message-store/instant', async () => {
+    // message-store/instant is documented for inbound SMS only, so ?type=VoiceMail either fails
+    // validation on enable or enables and never delivers.
+    // https://developers.ringcentral.com/guide/notifications/event-filters/voicemail-message
     expect(await filtersFor(newVoicemail)).toEqual([
-      '/restapi/v1.0/account/~/extension/~/message-store/instant?type=VoiceMail',
+      '/restapi/v1.0/account/~/extension/~/voicemail',
     ]);
   });
 
@@ -46,14 +50,22 @@ describe('subscribed event filters', () => {
 });
 
 describe('inbound text filtering', () => {
-  it('keeps an inbound MMS', async () => {
+  it('keeps an inbound picture message, which arrives as type SMS with an MmsAttachment', async () => {
     const store = memStore();
     await store.put('ringcentral_new_inbound_sms_subscription_id', 'sub-1');
     const result = await newInboundSms.run({
       store,
       payload: {
         headers: {},
-        body: { subscriptionId: 'sub-1', body: { id: 5, direction: 'Inbound', type: 'MMS' } },
+        body: {
+          subscriptionId: 'sub-1',
+          body: {
+            id: 5,
+            direction: 'Inbound',
+            type: 'SMS',
+            attachments: [{ id: 222, type: 'MmsAttachment', contentType: 'image/jpeg' }],
+          },
+        },
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
@@ -67,7 +79,7 @@ describe('inbound text filtering', () => {
       store,
       payload: {
         headers: {},
-        body: { subscriptionId: 'sub-1', body: { id: 6, direction: 'Outbound', type: 'MMS' } },
+        body: { subscriptionId: 'sub-1', body: { id: 6, direction: 'Outbound', type: 'SMS' } },
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);

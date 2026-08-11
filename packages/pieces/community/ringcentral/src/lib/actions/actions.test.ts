@@ -127,10 +127,13 @@ const MESSAGE_ID = '1234567890';
 const MESSAGE_PATH = `/message-store/${MESSAGE_ID}`;
 const CONTENT_PATH = `/message-store/${MESSAGE_ID}/content/`;
 
-/** An MMS as RingCentral reports it: the text part plus the media part. */
+/**
+ * An MMS as RingCentral actually reports it: type is 'SMS' (there is no MMS type), and the media
+ * arrives as an extra MmsAttachment part alongside the Text part.
+ */
 const mmsWithPhoto = (overrides: Record<string, unknown> = {}) => ({
   id: Number(MESSAGE_ID),
-  type: 'MMS',
+  type: 'SMS',
   direction: 'Inbound',
   attachments: [
     { id: 111, type: 'Text', contentType: 'text/plain' },
@@ -147,7 +150,7 @@ describe('get_message', () => {
     const result = await getMessage.run(ctx({ messageId: MESSAGE_ID }));
 
     expect(stub.find(MESSAGE_PATH)?.method).toBe('GET');
-    expect(result).toMatchObject({ id: Number(MESSAGE_ID), type: 'MMS' });
+    expect(result).toMatchObject({ id: Number(MESSAGE_ID), type: 'SMS' });
   });
 
   it('escapes the id rather than interpolating it into the path raw', async () => {

@@ -8,13 +8,12 @@ export const newInboundSms = createSubscriptionTrigger<{
   displayName: 'New Inbound SMS or MMS',
   description:
     'Triggers when a new inbound text message is received, with or without media attached.',
-  // Two filters rather than one: the type parameter takes a single value, so SMS-only would miss
-  // every picture message. That matters because a driver answering "send your POD" replies with a
-  // photo, which arrives as MMS. Use Download Message Attachment to fetch the media itself.
-  eventFilters: [
-    '/restapi/v1.0/account/~/extension/~/message-store/instant?type=SMS',
-    '/restapi/v1.0/account/~/extension/~/message-store/instant?type=MMS',
-  ],
+  // ONE filter, and `type=SMS` is correct for picture messages too. Do not add `type=MMS`: there is
+  // no MMS message type. RingCentral delivers an inbound MMS through this same filter with
+  // `type: 'SMS'` and an `MmsAttachment` part, and an unrecognised type value can fail the whole
+  // createSubscription call, which would break the trigger rather than widen it.
+  // https://developers.ringcentral.com/guide/messaging/sms/receiving-sms-mms
+  eventFilters: ['/restapi/v1.0/account/~/extension/~/message-store/instant?type=SMS'],
   // The instant message-store filter also fires for what this extension sends.
   accept: (message) => message.direction === 'Inbound',
   sampleData: {
@@ -26,7 +25,12 @@ export const newInboundSms = createSubscriptionTrigger<{
     creationTime: '2024-01-15T18:30:00.000Z',
     readStatus: 'Unread',
     priority: 'Normal',
-    attachments: [{ id: 111, type: 'Text', contentType: 'text/plain' }],
+    // A text-only SMS carries just the Text part. An inbound MMS looks identical except for an
+    // extra MmsAttachment part, which is what Download Message Attachment fetches.
+    attachments: [
+      { id: 111, type: 'Text', contentType: 'text/plain' },
+      { id: 222, type: 'MmsAttachment', contentType: 'image/jpeg' },
+    ],
     direction: 'Inbound',
     availability: 'Alive',
     subject: 'Hello from a customer!',
