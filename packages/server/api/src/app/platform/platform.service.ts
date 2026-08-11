@@ -82,63 +82,44 @@ export const platformService = (log: FastifyBaseLogger) => ({
             timeoutInSeconds: 30,
             fn: async () => {
                 const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
-                const linkedUser = existingUsers.find((user) => !isNil(user.platformId))
-                if (!isNil(linkedUser) && !isNil(linkedUser.platformId)) {
-                    // Rotate here only when the caller's own token is still the
-                    // current one. That means provisioning finished without ever
-                    // rotating — an interrupted attempt — so retiring the
-                    // credential now stands nothing up. If a rotation has already
-                    // happened, this is a duplicate of a call that issued a
-                    // session, and rotating again would kill it.
-                    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-                    const rotationStillOwed = invalidatePreviousTokens
-                        && isSameTokenVersion(identity.tokenVersion, callerTokenVersion)
-                    const response = await finishExistingPlatform({ user: linkedUser, platformId: linkedUser.platformId, name, invalidatePreviousTokens: rotationStillOwed, identityId, log })
-                    return { response, provisioned: false }
+                const provisionedOwner = findProvisionedOwner(existingUsers)
+                const platformAlreadyProvisioned = !isNil(provisionedOwner)
+                if (platformAlreadyProvisioned) {
+                    return resumeProvisionedPlatform({ owner: provisionedOwner, identityId, name, invalidatePreviousTokens, callerTokenVersion, log })
                 }
-                const unlinkedUser = existingUsers.find((user) => isNil(user.platformId))
-                const orphanedPlatform = isNil(unlinkedUser) ? null : await platformRepo().findOneBy({ ownerId: unlinkedUser.id })
-                if (!isNil(unlinkedUser) && !isNil(orphanedPlatform)) {
+                const ownerWithoutPlatform = existingUsers.find((user) => isNil(user.platformId))
+                const unlinkedPlatform = isNil(ownerWithoutPlatform) ? null : await platformRepo().findOneBy({ ownerId: ownerWithoutPlatform.id })
+                const provisioningStoppedBeforeLinkingTheOwner = !isNil(ownerWithoutPlatform) && !isNil(unlinkedPlatform)
+                if (provisioningStoppedBeforeLinkingTheOwner) {
                     await beforeProvision?.()
-                    await userService(log).addOwnerToPlatform({ id: unlinkedUser.id, platformId: orphanedPlatform.id })
-                    const response = await finishExistingPlatform({
-                        user: await userService(log).getOneOrFail({ id: unlinkedUser.id }),
-                        platformId: orphanedPlatform.id,
-                        name,
-                        invalidatePreviousTokens,
-                        identityId,
-                        log,
-                    })
-                    return { response, provisioned: true }
+                    return linkOwnerToPlatform({ ownerId: ownerWithoutPlatform.id, platformId: unlinkedPlatform.id, identityId, name, invalidatePreviousTokens, log })
                 }
                 await beforeProvision?.()
-                const newUser = unlinkedUser
+                const owner = ownerWithoutPlatform
                     ?? await userService(log).create({
                         identityId,
                         platformRole: PlatformRole.ADMIN,
                         platformId: null,
                     })
-                const platform = await this.create({ ownerId: newUser.id, name })
-                const defaultProject = await projectService(log).create({
+                const platform = await this.create({ ownerId: owner.id, name })
+                const personalProject = await projectService(log).create({
                     displayName: personalProjectName(name),
-                    ownerId: newUser.id,
+                    ownerId: owner.id,
                     platformId: platform.id,
                     type: ProjectType.PERSONAL,
                 })
                 if (invalidatePreviousTokens) {
-                    await userIdentityRepository().update(identityId, {
-                        tokenVersion: nanoid(),
-                    })
+                    await rotateTokenVersion(identityId)
                 }
                 await authenticationUtils(log).sendTelemetry({
                     identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
-                    user: newUser,
-                    projectId: defaultProject.id,
+                    user: owner,
+                    projectId: personalProject.id,
                 })
                 const response = await authenticationUtils(log).getProjectAndToken({
-                    userId: newUser.id,
+                    userId: owner.id,
                     platformId: platform.id,
-                    projectId: defaultProject.id,
+                    projectId: personalProject.id,
                 })
                 return { response, provisioned: true }
             },
@@ -291,13 +272,46 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
 })
 
-// A never-rotated identity carries no version at all, so two absent values are
-// the same version, not two unknowns.
+function findProvisionedOwner(users: User[]): PlatformOwner | undefined {
+    return users.find((user): user is PlatformOwner => !isNil(user.platformId))
+}
+
+async function resumeProvisionedPlatform({ owner, identityId, name, invalidatePreviousTokens, callerTokenVersion, log }: ResumeProvisionedPlatformParams): Promise<CreatePlatformWithProjectResult> {
+    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+    const earlierAttemptNeverRotated = isSameTokenVersion(identity.tokenVersion, callerTokenVersion)
+    const response = await finishExistingPlatform({
+        user: owner,
+        platformId: owner.platformId,
+        name,
+        invalidatePreviousTokens: invalidatePreviousTokens && earlierAttemptNeverRotated,
+        identityId,
+        log,
+    })
+    return { response, provisioned: false }
+}
+
+async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, invalidatePreviousTokens, log }: LinkOwnerToPlatformParams): Promise<CreatePlatformWithProjectResult> {
+    await userService(log).addOwnerToPlatform({ id: ownerId, platformId })
+    const response = await finishExistingPlatform({
+        user: await userService(log).getOneOrFail({ id: ownerId }),
+        platformId,
+        name,
+        invalidatePreviousTokens,
+        identityId,
+        log,
+    })
+    return { response, provisioned: true }
+}
+
 function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
-    if (isNil(current) && isNil(caller)) {
-        return true
-    }
-    return current === caller
+    const neitherHasBeenRotated = isNil(current) && isNil(caller)
+    return neitherHasBeenRotated || current === caller
+}
+
+async function rotateTokenVersion(identityId: string): Promise<void> {
+    await userIdentityRepository().update(identityId, {
+        tokenVersion: nanoid(),
+    })
 }
 
 function personalProjectName(platformName: string): string {
@@ -319,9 +333,7 @@ async function finishExistingPlatform({ user, platformId, name, invalidatePrevio
             type: ProjectType.PERSONAL,
         })
     if (invalidatePreviousTokens) {
-        await userIdentityRepository().update(identityId, {
-            tokenVersion: nanoid(),
-        })
+        await rotateTokenVersion(identityId)
     }
     return authenticationUtils(log).getProjectAndToken({
         userId: user.id,
@@ -401,12 +413,28 @@ type CreatePlatformWithProjectParams = {
     invalidatePreviousTokens: boolean
     isFirstPlatform: boolean
     callerTokenVersion: string | undefined
-    // Runs inside the provisioning lock and only when this call is the one
-    // provisioning, so whatever it writes is serialised with account creation
-    // and cannot be lost by an interruption after the account exists.
     beforeProvision?: () => Promise<void>
 }
 
+type PlatformOwner = User & {
+    platformId: PlatformId
+}
+type ResumeProvisionedPlatformParams = {
+    owner: PlatformOwner
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
+    callerTokenVersion: string | undefined
+    log: FastifyBaseLogger
+}
+type LinkOwnerToPlatformParams = {
+    ownerId: UserId
+    platformId: PlatformId
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
+    log: FastifyBaseLogger
+}
 type FinishExistingPlatformParams = {
     user: User
     platformId: PlatformId
