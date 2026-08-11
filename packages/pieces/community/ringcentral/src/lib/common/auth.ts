@@ -1,4 +1,8 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  OAuth2AuthorizationMethod,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 
 export const ringcentralAuth = PieceAuth.OAuth2({
   description:
@@ -19,6 +23,10 @@ export const ringcentralAuth = PieceAuth.OAuth2({
       },
     }),
   },
+  // RingCentral's token endpoint answers client creds in the request body with OAU-123 "Client
+  // authentication is required" before it looks at the grant, and the framework defaults to
+  // OAuth2AuthorizationMethod.BODY. Refresh reads the same stored method, so BODY breaks reconnects too.
+  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   authUrl: 'https://{environment}/restapi/oauth/authorize',
   tokenUrl: 'https://{environment}/restapi/oauth/token',
   scope: [],

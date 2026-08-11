@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework';
+
 import { ringcentral } from './index';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +35,13 @@ describe('piece metadata', () => {
 
   it('points the logo at the pieces CDN', () => {
     expect(meta().logoUrl).toBe('https://cdn.activepieces.com/pieces/ringcentral.png');
+  });
+
+  it('authenticates the token exchange with a Basic header', () => {
+    // The framework defaults to client creds in the request body, which RingCentral's token endpoint
+    // answers with OAU-123 "Client authentication is required" before it even looks at the grant.
+    // Refresh reads the same stored method, so BODY breaks reconnects too.
+    expect(meta().auth.authorizationMethod).toBe(OAuth2AuthorizationMethod.HEADER);
   });
 
   it('lists its authors', () => {
