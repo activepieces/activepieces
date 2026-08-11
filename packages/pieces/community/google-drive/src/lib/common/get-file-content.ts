@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import {
   FilesService,
 } from '@activepieces/pieces-framework';
@@ -32,23 +33,25 @@ const googledlCall = async (
   const mimeType = await getMimeType(auth, fileId);
   const accessToken = await getAccessToken(auth);
 
-  const download = await fetch(url, {
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
-  })
-    .then((response) =>
-      response.ok ? response.blob() : Promise.reject(response)
-    )
-    .catch((error) =>
-      Promise.reject(
-        new Error(
-          `Error when download file:\n\tDownload file response: ${
-            (error as Error).message ?? error
-          }`
-        )
+  }).catch((error) =>
+    Promise.reject(
+      new Error(
+        `Error when download file:\n\tDownload file response: ${
+          (error as Error).message ?? error
+        }`
       )
+    )
+  );
+
+  if (!response.ok || !response.body) {
+    throw new Error(
+      `Error when download file:\n\tDownload file response: ${response.status} ${response.statusText}`
     );
+  }
 
   const extensionResult = extension(mimeType);
   const fileExtension = extensionResult ? '.' + extensionResult : '';
@@ -56,7 +59,8 @@ const googledlCall = async (
 
   return files.write({
     fileName: srcFileName,
-    data: Buffer.from(await download.arrayBuffer()),
+    // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit the fromWeb overload
+    data: Readable.fromWeb(response.body),
   });
 };
 

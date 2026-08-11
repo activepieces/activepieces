@@ -47,13 +47,19 @@ storage-to-storage transfers.
 
 ## Pieces that support streaming
 
-Streaming is enabled per action. Today:
+Streaming is enabled per action. "In" means the action reads its **input** file as a stream;
+"out" means it writes the file it produces **out** as a stream.
 
-| Piece | Action | Streams |
+| Piece | Streams in | Streams out |
 |---|---|---|
-| Amazon S3 | Upload File | The file it reads **in** |
-| Amazon S3 | Read File | The object it writes **out** |
-| Subflows | Stream CSV to Subflows | The CSV it reads **in** |
+| Amazon S3 | Upload File | Read File |
+| Azure Blob Storage | Create Blob | Read Blob |
+| Dropbox | Upload file | Download File |
+| Google Drive | Upload file | Read File Content, List files, Set public access, New File (trigger) |
+| Microsoft OneDrive | Upload file | Get File |
+| Microsoft SharePoint | Upload File | — |
+| FTP/SFTP | Upload File | Read File Content |
+| Subflows | Stream CSV to Subflows | — |
 
 More pieces are being enabled over time. Actions not listed here still work — they buffer
 the file in memory, which is fine within the [size limit](/install/reference/limits).
@@ -62,6 +68,23 @@ the file in memory, which is fine within the [size limit](/install/reference/lim
 Stream CSV to Subflows streams a CSV straight from the URL you give it and never writes the
 file into storage, so it is the one entry above that does **not** need S3 file storage.
 </Note>
+
+### Per-service upload ceilings
+
+Streaming removes the *memory* ceiling, not the destination API's own limit. Where a service caps
+what a single request can carry, the action switches to a chunked upload session above that cap:
+
+| Piece | One-request cap | Above it |
+|---|---|---|
+| Dropbox | [150 MB](https://developers.dropbox.com/dbx-performance-guide) (`/2/files/upload` answers `409 payload_too_large`) | `/2/files/upload_session/*`, 8 MiB chunks |
+| Microsoft SharePoint | [250 MB](https://learn.microsoft.com/en-us/graph/api/driveitem-put-content) (Graph's simple `PUT …/content`) | Graph upload session, 10 MiB chunks |
+| Microsoft OneDrive | 4 MiB | Graph upload session, 10 MiB chunks |
+
+These are pre-existing API limits rather than streaming limits, and each action now handles its own.
+One difference matters if your source doesn't report a size: Dropbox's session is offset-based, so it
+just streams the chunks as they arrive, while Graph wants the file's total length in every fragment's
+`Content-Range` header — so the two Microsoft actions buffer once to learn the length before they can
+chunk. Give those a source that reports `Content-Length` when you can.
 
 ## Building streaming actions
 
@@ -103,9 +126,13 @@ type ApStreamingFile = {
 };
 ```
 
-Consume `body` directly. Prefer an uploader that accepts a stream of unknown length — for S3
-that is `Upload` from `@aws-sdk/lib-storage`, which splits the body into ~5&nbsp;MB parts and
-needs no content length up front.
+Consume `body` directly. How you hand it to the destination depends on what that destination's
+client accepts — in order of preference:
+
+**1. A chunking uploader (best).** Accepts a stream of unknown length and buffers each part
+before sending it, so no content length is needed and parts are individually replayable. For S3
+that is `Upload` from `@aws-sdk/lib-storage`; for Azure Blob Storage,
+`blockBlobClient.uploadStream`.
 
 ```ts
 props: {
@@ -130,11 +157,31 @@ async run(context) {
 }
 ```
 
+**2. An SDK that takes a stream directly.** Some clients accept a `Readable` as-is — Google
+Drive's `media.body`, SFTP's `client.put`. Just pass `file.body`.
+
+**3. A single-request HTTP upload.** If the destination is a plain `PUT`/`POST` that needs an
+explicit `Content-Length`, you have to use `file.size` — and `size` is best-effort, so this
+path needs a buffered fallback for when it is missing. Dropbox, SharePoint and OneDrive all
+look like this:
+
+```ts
+import { buffer as readableToBuffer } from 'node:stream/consumers';
+
+const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
+let body;
+if (file.size != null) {
+  headers['Content-Length'] = String(file.size);
+  body = file.body;
+} else {
+  body = await readableToBuffer(file.body);
+}
+```
+
 `size` is informational and best-effort — it is `undefined` when the source reports no
 `Content-Length`, and it is also dropped when the response is compressed
 (`Content-Encoding: gzip`/`br`/`deflate`), because the decompressed body no longer matches the
-advertised length. Don't require it: only pass it to an API that needs an explicit content
-length, and make sure that path has a buffered fallback for when it is missing.
+advertised length. Don't require it: prefer pattern 1 or 2, which never need it.
 
 <Tip>
 `Property.File()` without `streaming` is unchanged — it still resolves to an `ApFile` with a
@@ -159,6 +206,12 @@ length, and make sure that path has a buffered fallback for when it is missing.
   source `Readable` can be read only once, so there is no retry of the transfer as a whole: a
   streamed `ctx.files.write` gets no S3-error fallback to database storage, and a step that
   fails after its stream is drained cannot simply be re-run against the same stream.
+- **`httpClient` does not retry a stream body at all.** The retry loop in `pieces-common`
+  reuses the body it serialized before the first attempt, and a stream is one-shot — retrying
+  would replay a drained stream and send a truncated body. So a request whose body is a
+  `Readable` (or a `form-data` payload, which is streamed too) runs its `retries` setting as
+  `0`. This applies to **any** piece sending a stream through `httpClient`, not just file
+  actions. If you need real retries, buffer the body instead.
 - **Multipart webhook signatures aren't verified.** Verifying an HMAC signature over an
   uploaded file needs the raw bytes held in memory, which is exactly what streaming avoids.
   Streamed multipart webhook uploads therefore skip signature verification. JSON, XML, form,
