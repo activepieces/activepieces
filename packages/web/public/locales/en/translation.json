@@ -1508,6 +1508,7 @@
   "Please ask your administrator to add you to the organization.": "Please ask your administrator to add you to the organization.",
   "You're all signed in, but you've got no projects yet.": "You're all signed in, but you've got no projects yet.",
   "Give your admin a nudge — once they add you to a project, refresh and you’re in.": "Give your admin a nudge — once they add you to a project, refresh and you’re in.",
+  "No projects yet": "No projects yet",
   "Automatic personal project creation": "Automatic personal project creation",
   "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).": "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).",
   "Automatic personal project creation updated": "Automatic personal project creation updated",
