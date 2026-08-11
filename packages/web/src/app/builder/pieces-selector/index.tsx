@@ -174,7 +174,9 @@ const PieceSelectorContent = ({
       modal={false}
       onOpenChange={(open) => {
         if (open) {
-          setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          if (isForEmptyTrigger || openSelectorOnClick) {
+            setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          }
           return;
         }
         clearSearch();
