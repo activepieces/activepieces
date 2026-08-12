@@ -31,5 +31,6 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 - **API & Endpoints** — route conventions and the security contract
 - **Server Module Anatomy** — the six files of a server module (entity → migration → repo → service → controller → module), and the manual registration steps nothing auto-discovers
 - **Web Feature Anatomy** — the frontend feature folder, its barrel, route guards, and when a query gets the global error dialog
+- **Cloud Deployment Paths** — canary → prod, the `cloud-hotfix` override, and the breaking-migration gate that blocks both
 - **CI PR Review Hygiene** — draft-first Greptile review, the per-area PR size gate, and the workflow conventions reviewers keep re-litigating
 - **Architecture Spine** — the load-bearing structure of the codebase, and the gotchas that come with it: request-body `.max()` as data loss, TypeORM soft-delete across a canary window, and canary not proxying websockets
