@@ -123,6 +123,71 @@ describe('cacheState', () => {
         })
     })
 
+    describe('memory memo bounds', () => {
+        it('evicts the least recently used folder once the entry cap is exceeded', async () => {
+            const folder = uniqueFolder()
+
+            await cacheState(folder).getOrSetCache({
+                key: 'evictedKey',
+                cacheMiss: () => false,
+                installFn: async () => 'evicted-value',
+                skipSave: () => false,
+            })
+
+            for (let i = 0; i < 600; i++) {
+                await cacheState(join(tmpdir(), `cache-state-flood-${randomUUID()}`)).getOrSetCache({
+                    key: 'floodKey',
+                    cacheMiss: () => false,
+                    installFn: async () => 'flood-value',
+                    skipSave: () => true,
+                })
+            }
+
+            await rm(join(folder, 'cache.json'), { force: true })
+
+            let reinstalled = false
+            const result = await cacheState(folder).getOrSetCache({
+                key: 'evictedKey',
+                cacheMiss: () => false,
+                installFn: async () => {
+                    reinstalled = true
+                    return 'reinstalled-value'
+                },
+                skipSave: () => false,
+            })
+
+            expect(reinstalled).toBe(true)
+            expect(result).toEqual({ cacheHit: false, state: 'reinstalled-value' })
+        })
+
+        it('never memoizes a single entry larger than the char budget', async () => {
+            const folder = uniqueFolder()
+            const oversized = 'x'.repeat(17 * 1024 * 1024)
+
+            await cacheState(folder).getOrSetCache({
+                key: 'bigKey',
+                cacheMiss: () => false,
+                installFn: async () => oversized,
+                skipSave: () => false,
+            })
+
+            await rm(join(folder, 'cache.json'), { force: true })
+
+            let reinstalled = false
+            await cacheState(folder).getOrSetCache({
+                key: 'bigKey',
+                cacheMiss: () => false,
+                installFn: async () => {
+                    reinstalled = true
+                    return 'small-value'
+                },
+                skipSave: () => false,
+            })
+
+            expect(reinstalled).toBe(true)
+        })
+    })
+
     describe('saveCache', () => {
         it('creates directory, reads existing cache, merges new key, writes atomically', async () => {
             const folder = uniqueFolder()
