@@ -255,7 +255,7 @@ async function getWorkflowDispatchTrigger(
   return parseWorkflowDispatchTrigger(parsed);
 }
 
-function parseWorkflowDispatchTrigger(
+export function parseWorkflowDispatchTrigger(
   parsed: unknown
 ): WorkflowDispatchTrigger {
   if (!parsed || typeof parsed !== 'object') {
