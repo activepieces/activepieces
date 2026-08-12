@@ -125,6 +125,14 @@ jobs:
             echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
           fi
 
+      - name: Deploy App to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
+
+      - name: Deploy Workers to production
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
+
       - name: Deploy App to canary
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -134,14 +142,6 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
-
-      - name: Deploy App to production
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
-
-      - name: Deploy Workers to production
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker.yml --skip-push; exit"'
 
       - uses: actions/checkout@v5
         with:
