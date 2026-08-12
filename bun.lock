@@ -3620,7 +3620,7 @@
     },
     "packages/pieces/community/github": {
       "name": "@activepieces/piece-github",
-      "version": "0.8.9",
+      "version": "0.8.10",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
