@@ -37,10 +37,11 @@ export const createExpenseAction = createAction({
 
 				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, Name, AccountType FROM Account STARTPOSITION 1 MAXRESULTS 1000`;
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/account#query-an-account
 				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksAccount>>({
 					method: HttpMethod.GET,
 					url: `${apiUrl}/query`,
-					queryParams: { query: query, minorversion: '70' },
+					queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
 					headers: {
 						Authorization: `Bearer ${access_token}`,
 						Accept: 'application/json',
@@ -93,10 +94,11 @@ export const createExpenseAction = createAction({
 				const companyId = props?.['companyId'];
 				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, DisplayName FROM Vendor STARTPOSITION 1 MAXRESULTS 1000`;
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
 				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
 					method: HttpMethod.GET,
 					url: `${apiUrl}/query`,
-					queryParams: { query: query, minorversion: '70' },
+					queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
 					headers: {
 						Authorization: `Bearer ${access_token}`,
 						Accept: 'application/json',
@@ -210,6 +212,7 @@ export const createExpenseAction = createAction({
 
 		const endpoint = 'purchase';
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/purchase#create-a-purchase
 		const response = await httpClient.sendRequest<{
 			Purchase: QuickbooksPurchase;
 			time: string;
@@ -217,7 +220,7 @@ export const createExpenseAction = createAction({
 		}>({
 			method: HttpMethod.POST,
 			url: `${apiUrl}/${endpoint}`,
-			queryParams: { minorversion: '70' },
+			queryParams: { minorversion: quickbooksCommon.minorVersion },
 			headers: {
 				Authorization: `Bearer ${access_token}`,
 				Accept: 'application/json',

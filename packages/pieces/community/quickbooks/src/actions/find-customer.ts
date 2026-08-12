@@ -34,12 +34,13 @@ export const findCustomerAction = createAction({
 			"\\'",
 		)}' MAXRESULTS 1`;
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickBooksCustomer>>({
 			method: HttpMethod.GET,
 			url: `${apiUrl}/query`,
 			queryParams: {
 				query: query,
-				minorversion: '70',
+				minorversion: quickbooksCommon.minorVersion,
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,

@@ -1,12 +1,30 @@
+// https://developer.intuit.com/app/developer/qbo/docs/develop/troubleshooting/data-migration-and-versioning
 const QUICKBOOKS_API_URL_SANDBOX = 'https://sandbox-quickbooks.api.intuit.com/v3/company';
 const QUICKBOOKS_API_URL_PRODUCTION = 'https://quickbooks.api.intuit.com/v3/company';
 
 export const quickbooksCommon = {
+    minorVersion: '75',
     getApiUrl: (realmId: string) => {
         const baseUrl = QUICKBOOKS_API_URL_PRODUCTION;
         return `${baseUrl}/${realmId}`;
     },
 };
+
+// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/change-data-capture
+export interface QuickbooksCdcEntityBlock<T> {
+    startPosition?: number;
+    maxResults?: number;
+    [entityName: string]: T[] | number | undefined;
+}
+
+export interface QuickbooksCdcResponse<T> {
+    CDCResponse?: { QueryResponse: QuickbooksCdcEntityBlock<T>[] }[];
+    Fault?: {
+        Error: { Message: string; Detail?: string; code: string }[];
+        type: string;
+    };
+    time?: string;
+}
 
 export interface QuickbooksEntityResponse<T> {
     QueryResponse?: {

@@ -75,9 +75,10 @@ export const findPaymentAction = createAction({
 		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const query = `SELECT * FROM Payment WHERE CustomerRef = '${customerId}'`;
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/payment#query-a-payment
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksPayment>>({
 			method: HttpMethod.GET,
-			url: `${apiUrl}/query?query=${encodeURIComponent(query)}&minorversion=70`,
+			url: `${apiUrl}/query?query=${encodeURIComponent(query)}&minorversion=${quickbooksCommon.minorVersion}`,
 			headers: {
 				Authorization: `Bearer ${context.auth.access_token}`,
 				Accept: 'application/json',

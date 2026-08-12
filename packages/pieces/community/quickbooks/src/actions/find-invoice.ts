@@ -136,12 +136,13 @@ export const findInvoiceAction = createAction({
 			"\\'",
 		)}' MAXRESULTS 1`;
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice#query-an-invoice
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickBooksInvoice>>({
 			method: HttpMethod.GET,
 			url: `${apiUrl}/query`,
 			queryParams: {
 				query: query,
-				minorversion: '70',
+				minorversion: quickbooksCommon.minorVersion,
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,

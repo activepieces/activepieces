@@ -40,11 +40,12 @@ export const createInvoiceAction = createAction({
 
 				const query = `SELECT Id, DisplayName FROM Customer STARTPOSITION 1 MAXRESULTS 1000`;
 
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
 				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksCustomer>>(
 					{
 						method: HttpMethod.GET,
 						url: `${apiUrl}/query`,
-						queryParams: { query: query, minorversion: '70' },
+						queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
 						headers: {
 							Authorization: `Bearer ${access_token}`,
 							Accept: 'application/json',
@@ -209,6 +210,7 @@ export const createInvoiceAction = createAction({
 			...(props['customerMemo'] && { CustomerMemo: { value: props['customerMemo'] } }),
 		};
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice#create-an-invoice
 		const response = await httpClient.sendRequest<{
 			Invoice: QuickbooksInvoice;
 			time: string;
@@ -216,7 +218,7 @@ export const createInvoiceAction = createAction({
 		}>({
 			method: HttpMethod.POST,
 			url: `${apiUrl}/invoice`,
-			queryParams: { minorversion: '70' },
+			queryParams: { minorversion: quickbooksCommon.minorVersion },
 			headers: {
 				Authorization: `Bearer ${access_token}`,
 				Accept: 'application/json',

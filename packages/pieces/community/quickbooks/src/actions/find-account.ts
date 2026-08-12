@@ -64,12 +64,13 @@ export const findAccountAction = createAction({
 		}
 		const query = `SELECT * FROM Account WHERE ${conditions.join(' AND ')} MAXRESULTS 1000`;
 
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/account#query-an-account
 		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksAccount>>({
 			method: HttpMethod.GET,
 			url: `${apiUrl}/query`,
 			queryParams: {
 				query: query,
-				minorversion: '70',
+				minorversion: quickbooksCommon.minorVersion,
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
