@@ -123,6 +123,31 @@ describe('cacheState', () => {
         })
     })
 
+    describe('saveCache', () => {
+        it('creates directory, reads existing cache, merges new key, writes atomically', async () => {
+            const folder = uniqueFolder()
+
+            await cacheState(folder).saveCache('existingKey', 'existingVal')
+            const result = await cacheState(folder).saveCache('newKey', 'newVal')
+
+            expect(result).toEqual({ existingKey: 'existingVal', newKey: 'newVal' })
+
+            const raw = await readFile(join(folder, 'cache.json'), 'utf8')
+            expect(JSON.parse(raw)).toEqual({ existingKey: 'existingVal', newKey: 'newVal' })
+        })
+
+        it('works when no prior cache file exists', async () => {
+            const folder = uniqueFolder()
+
+            const result = await cacheState(folder).saveCache('onlyKey', 'onlyVal')
+
+            expect(result).toEqual({ onlyKey: 'onlyVal' })
+
+            const raw = await readFile(join(folder, 'cache.json'), 'utf8')
+            expect(JSON.parse(raw)).toEqual({ onlyKey: 'onlyVal' })
+        })
+    })
+
     describe('memory memo bounds', () => {
         it('evicts the least recently used folder once the entry cap is exceeded', async () => {
             const folder = uniqueFolder()
@@ -185,31 +210,6 @@ describe('cacheState', () => {
             })
 
             expect(reinstalled).toBe(true)
-        })
-    })
-
-    describe('saveCache', () => {
-        it('creates directory, reads existing cache, merges new key, writes atomically', async () => {
-            const folder = uniqueFolder()
-
-            await cacheState(folder).saveCache('existingKey', 'existingVal')
-            const result = await cacheState(folder).saveCache('newKey', 'newVal')
-
-            expect(result).toEqual({ existingKey: 'existingVal', newKey: 'newVal' })
-
-            const raw = await readFile(join(folder, 'cache.json'), 'utf8')
-            expect(JSON.parse(raw)).toEqual({ existingKey: 'existingVal', newKey: 'newVal' })
-        })
-
-        it('works when no prior cache file exists', async () => {
-            const folder = uniqueFolder()
-
-            const result = await cacheState(folder).saveCache('onlyKey', 'onlyVal')
-
-            expect(result).toEqual({ onlyKey: 'onlyVal' })
-
-            const raw = await readFile(join(folder, 'cache.json'), 'utf8')
-            expect(JSON.parse(raw)).toEqual({ onlyKey: 'onlyVal' })
         })
     })
 })
