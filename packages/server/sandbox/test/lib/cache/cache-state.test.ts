@@ -22,7 +22,7 @@ afterEach(async () => {
 
 describe('cacheState', () => {
     describe('getOrSetCache', () => {
-        it('returns cache hit from memory on second call', async () => {
+        it('returns cache hit on second call', async () => {
             const folder = uniqueFolder()
             const cs = cacheState(folder)
 
@@ -35,7 +35,6 @@ describe('cacheState', () => {
 
             expect(result1).toEqual({ cacheHit: false, state: 'installed' })
 
-            // second call should hit memory cache
             const result2 = await cacheState(folder).getOrSetCache({
                 key: 'myKey',
                 cacheMiss: () => false,
@@ -46,14 +45,12 @@ describe('cacheState', () => {
             expect(result2).toEqual({ cacheHit: true, state: 'installed' })
         })
 
-        it('returns cache hit from disk when memory has not been populated for a new folder reference', async () => {
+        it('returns cache hit from disk for a key written by saveCache', async () => {
             const folder = uniqueFolder()
 
             // Seed cache.json on disk via saveCache
             await cacheState(folder).saveCache('diskKey', 'disk-value')
 
-            // Use a fresh folder path string (same value) but the module-level `cached` already has it
-            // from saveCache. Instead, let's test disk read by using getOrSetCache on a key that was saved.
             const result = await cacheState(folder).getOrSetCache({
                 key: 'diskKey',
                 cacheMiss: () => false,
@@ -148,68 +145,32 @@ describe('cacheState', () => {
         })
     })
 
-    describe('memory memo bounds', () => {
-        it('evicts the least recently used folder once the entry cap is exceeded', async () => {
+    describe('retention', () => {
+        it('holds nothing in memory between calls — disk is the only cache', async () => {
             const folder = uniqueFolder()
 
             await cacheState(folder).getOrSetCache({
-                key: 'evictedKey',
+                key: 'retainedKey',
                 cacheMiss: () => false,
-                installFn: async () => 'evicted-value',
-                skipSave: () => false,
-            })
-
-            for (let i = 0; i < 600; i++) {
-                await cacheState(join(tmpdir(), `cache-state-flood-${randomUUID()}`)).getOrSetCache({
-                    key: 'floodKey',
-                    cacheMiss: () => false,
-                    installFn: async () => 'flood-value',
-                    skipSave: () => true,
-                })
-            }
-
-            await rm(join(folder, 'cache.json'), { force: true })
-
-            let reinstalled = false
-            const result = await cacheState(folder).getOrSetCache({
-                key: 'evictedKey',
-                cacheMiss: () => false,
-                installFn: async () => {
-                    reinstalled = true
-                    return 'reinstalled-value'
-                },
-                skipSave: () => false,
-            })
-
-            expect(reinstalled).toBe(true)
-            expect(result).toEqual({ cacheHit: false, state: 'reinstalled-value' })
-        })
-
-        it('never memoizes a single entry larger than the char budget', async () => {
-            const folder = uniqueFolder()
-            const oversized = 'x'.repeat(17 * 1024 * 1024)
-
-            await cacheState(folder).getOrSetCache({
-                key: 'bigKey',
-                cacheMiss: () => false,
-                installFn: async () => oversized,
+                installFn: async () => 'first-value',
                 skipSave: () => false,
             })
 
             await rm(join(folder, 'cache.json'), { force: true })
 
             let reinstalled = false
-            await cacheState(folder).getOrSetCache({
-                key: 'bigKey',
+            const result = await cacheState(folder).getOrSetCache({
+                key: 'retainedKey',
                 cacheMiss: () => false,
                 installFn: async () => {
                     reinstalled = true
-                    return 'small-value'
+                    return 'second-value'
                 },
                 skipSave: () => false,
             })
 
             expect(reinstalled).toBe(true)
+            expect(result).toEqual({ cacheHit: false, state: 'second-value' })
         })
     })
 })
