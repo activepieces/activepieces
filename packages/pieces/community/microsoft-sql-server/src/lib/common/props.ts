@@ -12,12 +12,12 @@ function asTable(value: unknown): MssqlTable | null {
     : null;
 }
 
-function table<R extends boolean = true>(required: R = true as R) {
-  return Property.Dropdown<MssqlTable, R, typeof mssqlAuth>({
+function table() {
+  return Property.Dropdown<MssqlTable, true, typeof mssqlAuth>({
     auth: mssqlAuth,
     displayName: 'Table',
     description: 'The table to work with.',
-    required,
+    required: true,
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -44,15 +44,15 @@ function table<R extends boolean = true>(required: R = true as R) {
   });
 }
 
-function column<R extends boolean = true>({
+function column<R extends boolean>({
   displayName,
   description,
-  required = true as R,
+  required,
   sortableOnly = false,
 }: {
   displayName: string;
   description: string;
-  required?: R;
+  required: R;
   sortableOnly?: boolean;
 }) {
   return Property.Dropdown<string, R, typeof mssqlAuth>({

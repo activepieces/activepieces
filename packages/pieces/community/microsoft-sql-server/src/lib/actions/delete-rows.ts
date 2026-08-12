@@ -21,6 +21,7 @@ export const deleteRowsAction = createAction({
     search_column: mssqlProps.column({
       displayName: 'Search Column',
       description: 'Rows are deleted where this column equals the value below.',
+      required: true,
     }),
     search_value: Property.ShortText({
       displayName: 'Search Value',

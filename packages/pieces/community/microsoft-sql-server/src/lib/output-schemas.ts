@@ -52,6 +52,19 @@ export const insertRowActionOutputSchema: OutputSchema = {
   ],
 };
 
+export const newOrUpdatedRowTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'row',
+      label: 'Row',
+      value: '',
+      dynamicKey: true,
+      description:
+        'One row of the table you selected, carrying every column it has. Each poll hands over one event per row. Columns SQL Server would round on the way out — decimal, money and the date and time family — arrive as exact strings rather than numbers or dates.',
+    },
+  ],
+};
+
 export const findRowsActionOutputSchema: OutputSchema = {
   fields: [
     {

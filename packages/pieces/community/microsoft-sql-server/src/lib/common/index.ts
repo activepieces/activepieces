@@ -117,10 +117,9 @@ async function connect({
   } catch (e) {
     await pool.close().catch(() => undefined);
     if (config.options?.instanceName) {
+      const reason = e instanceof Error ? e.message : String(e);
       throw new Error(
-        `${
-          (e as Error).message
-        } Connecting by instance name ("${config.options.instanceName}") requires the SQL Server Browser service on UDP port 1434, which many networks block. Address the server by host and port instead, for example myhost,1433.`
+        `${reason} Connecting by instance name ("${config.options.instanceName}") requires the SQL Server Browser service on UDP port 1434, which many networks block. Address the server by host and port instead, for example myhost,1433.`
       );
     }
     throw e;
@@ -152,7 +151,7 @@ async function getTableMeta({
     .request()
     .input('schema', table.table_schema)
     .input('name', table.table_name)
-    .query(
+    .query<Record<string, unknown>>(
       `DECLARE @object int = OBJECT_ID(QUOTENAME(@schema) + '.' + QUOTENAME(@name));
 
        SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.precision,
@@ -180,10 +179,12 @@ async function getTableMeta({
        WHERE object_id = @object AND increment_value > 0;`
     );
 
-  const [columnRows, indexRows, identityRows] = result.recordsets as Record<
-    string,
-    unknown
-  >[][];
+  const recordsets: Record<string, unknown>[][] = Array.isArray(
+    result.recordsets
+  )
+    ? result.recordsets
+    : [];
+  const [columnRows, indexRows, identityRows] = recordsets;
 
   const columns: MssqlColumn[] = (columnRows ?? []).map((row) => ({
     name: String(row['name']),
@@ -239,6 +240,19 @@ async function getTableMeta({
   };
 }
 
+function bindParameters({
+  request,
+  parameters,
+}: {
+  request: sql.Request;
+  parameters: Record<string, unknown> | undefined;
+}): sql.Request {
+  for (const [name, value] of Object.entries(parameters ?? {})) {
+    request.input(name.replace(/^@/, ''), value ?? null);
+  }
+  return request;
+}
+
 async function writeReturningRows({
   bind,
   withOutput,
@@ -270,6 +284,7 @@ export const mssqlCommon = {
   connect,
   getTables,
   getTableMeta,
+  bindParameters,
   writeReturningRows,
 };
 

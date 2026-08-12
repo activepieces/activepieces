@@ -9,6 +9,7 @@ import { mssqlAuth } from '../auth';
 import { MssqlTable, mssqlCommon } from '../common';
 import { Cursor, OrderDirection, Plan, cursorUtils } from '../common/cursor';
 import { mssqlProps } from '../common/props';
+import { newOrUpdatedRowTriggerOutputSchema } from '../output-schemas';
 
 const CURSOR_KEY = 'cursor';
 const MAX_ROWS_PER_POLL = 200;
@@ -190,6 +191,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
     }),
   },
   sampleData: {},
+  outputSchema: newOrUpdatedRowTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   async test(context) {
     const pool = await mssqlCommon.connect({ auth: context.auth });

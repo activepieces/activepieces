@@ -143,6 +143,31 @@ describe('row projection', () => {
     expect(cursorUtils.exactColumn({ column: id })).toBe('[id]');
   });
 
+  it('renders the whole date family as text, so one row is not part string part Date', () => {
+    for (const type of [
+      'datetime2',
+      'datetimeoffset',
+      'datetime',
+      'smalldatetime',
+      'date',
+      'time',
+    ]) {
+      expect(
+        cursorUtils.exactColumn({ column: column('at', type, { scale: 7 }) })
+      ).toContain('CONVERT(varchar(max)');
+    }
+  });
+
+  it('renders every type the driver would round as text', () => {
+    for (const type of ['decimal', 'numeric', 'money', 'smallmoney']) {
+      expect(
+        cursorUtils.exactColumn({
+          column: column('amount', type, { precision: 19, scale: 4 }),
+        })
+      ).toContain('CONVERT(varchar(max)');
+    }
+  });
+
   it('qualifies an OUTPUT projection with its pseudo-table', () => {
     expect(
       cursorUtils.exactColumn({ column: updatedAt, prefix: 'INSERTED' })

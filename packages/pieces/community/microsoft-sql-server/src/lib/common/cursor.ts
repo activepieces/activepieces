@@ -49,6 +49,8 @@ const EXACT_TEXT_TYPES = new Set([
   'smallmoney',
   'datetime2',
   'datetimeoffset',
+  'datetime',
+  'smalldatetime',
   'time',
   'date',
 ]);
@@ -340,6 +342,15 @@ function projection(plan: Plan): string {
   )}`;
 }
 
+function drainPage({ plan, where }: { plan: Plan; where: string[] }): string {
+  return `SELECT TOP (@limit) ${projection(plan)} FROM ${
+    plan.target
+  } WHERE ${where.join(' AND ')} ORDER BY ${orderClause({
+    plan,
+    direction: plan.drain,
+  })}`;
+}
+
 function keysetPageQuery({
   plan,
   position,
@@ -351,12 +362,7 @@ function keysetPageQuery({
   if (position) {
     where.push(keysetAhead(plan));
   }
-  return `SELECT TOP (@limit) ${projection(plan)} FROM ${
-    plan.target
-  } WHERE ${where.join(' AND ')} ORDER BY ${orderClause({
-    plan,
-    direction: plan.drain,
-  })}`;
+  return drainPage({ plan, where });
 }
 
 function groupPageQuery({
@@ -375,12 +381,7 @@ function groupPageQuery({
       })}`
     );
   }
-  return `SELECT TOP (@limit) ${projection(plan)} FROM ${
-    plan.target
-  } WHERE ${where.join(' AND ')} ORDER BY ${orderClause({
-    plan,
-    direction: plan.drain,
-  })}`;
+  return drainPage({ plan, where });
 }
 
 function groupValueQuery(plan: Plan): string {
@@ -499,9 +500,7 @@ function reconcile({
 }
 
 export const cursorUtils = {
-  isCursorType,
   isTiebreakType,
-  isGroupableOrderType,
   isOrderable,
   declaredType,
   cursorText,

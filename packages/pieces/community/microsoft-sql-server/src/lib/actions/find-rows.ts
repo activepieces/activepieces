@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, isNil } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
 import { mssqlCommon } from '../common';
 import { cursorUtils } from '../common/cursor';
@@ -75,7 +75,7 @@ export const findRowsAction = createAction({
     const selected = (columns ?? []).map(String);
 
     let top = '';
-    if (limit !== undefined && limit !== null && `${limit}`.trim() !== '') {
+    if (!isNil(limit) && `${limit}`.trim() !== '') {
       const n = Number(limit);
       if (!Number.isInteger(n) || n < 1) {
         throw new Error(`Limit must be a whole number of 1 or more, got: ${limit}`);
@@ -112,10 +112,10 @@ export const findRowsAction = createAction({
         }`;
       }
 
-      const request = pool.request();
-      for (const [name, value] of Object.entries(parameters ?? {})) {
-        request.input(name.replace(/^@/, ''), value ?? null);
-      }
+      const request = mssqlCommon.bindParameters({
+        request: pool.request(),
+        parameters,
+      });
       const result = await request.query<Record<string, unknown>>(query);
       return result.recordset ?? [];
     } finally {

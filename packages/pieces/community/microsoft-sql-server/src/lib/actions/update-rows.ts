@@ -26,6 +26,7 @@ export const updateRowsAction = createAction({
     search_column: mssqlProps.column({
       displayName: 'Search Column',
       description: 'Rows are updated where this column equals the value below.',
+      required: true,
     }),
     search_value: Property.ShortText({
       displayName: 'Search Value',

@@ -44,10 +44,10 @@ export const runQueryAction = createAction({
       requestTimeoutMs: query_timeout,
     });
     try {
-      const request = pool.request();
-      for (const [name, value] of Object.entries(parameters ?? {})) {
-        request.input(name.replace(/^@/, ''), value ?? null);
-      }
+      const request = mssqlCommon.bindParameters({
+        request: pool.request(),
+        parameters,
+      });
       const result = await request.query<Record<string, unknown>>(query);
       const sets = (result.recordsets ?? []).map((set) => [...set]);
       const rows = sets[0] ?? [];
