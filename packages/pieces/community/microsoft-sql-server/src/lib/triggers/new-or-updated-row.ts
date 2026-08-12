@@ -30,24 +30,31 @@ type Props = {
   table: MssqlTable;
   order_by: string;
   order_direction: OrderDirection | undefined;
-  max_rows: number | undefined;
 };
 
 const CURSOR_KEY = 'cursor';
 
-const DEFAULT_MAX_ROWS = 200;
-const MAX_ROWS_CEILING = 1000;
+/**
+ * How many rows one poll may hand over. Deliberately a constant rather than a
+ * prop.
+ *
+ * Whether onEnable resumes or starts afresh is decided by isRepublish, which
+ * the platform computes as deepEqual over the trigger's entire input
+ * (flow-publish-utils.ts, isSameTrigger). That is exactly right for every input
+ * this trigger has -- table, order column and direction all change the plan, so
+ * editing one has to re-baseline -- and it was wrong for a page size, which
+ * changes nothing the cursor depends on. Editing it therefore threw away a
+ * backlog that was still perfectly readable.
+ *
+ * Rather than out-guess the platform's flag, the input no longer carries
+ * anything the cursor does not depend on, which leaves "the input changed" and
+ * "the plan changed" meaning the same thing.
+ */
+const MAX_ROWS_PER_POLL = 200;
 const PREVIEW_ROWS = 5;
 // Group mode has to hand a whole tie group over in one poll to stay exact, so
 // there is a size past which it refuses instead of delivering part of one.
 const GROUP_CEILING = 2000;
-
-function rowLimit(requested: number | undefined): number {
-  if (isNil(requested)) return DEFAULT_MAX_ROWS;
-  const rows = Math.floor(Number(requested));
-  if (!Number.isFinite(rows) || rows < 1) return DEFAULT_MAX_ROWS;
-  return Math.min(rows, MAX_ROWS_CEILING);
-}
 
 async function buildPlan(
   pool: sql.ConnectionPool,
@@ -193,12 +200,6 @@ export const newOrUpdatedRowTrigger = createTrigger({
         ],
       },
     }),
-    max_rows: Property.Number({
-      displayName: 'Maximum Rows Per Poll',
-      description: `How many rows a single poll may hand over, up to ${MAX_ROWS_CEILING}. Each row starts its own flow run. Whatever is left over waits for the next poll rather than being dropped.`,
-      required: false,
-      defaultValue: DEFAULT_MAX_ROWS,
-    }),
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
@@ -264,7 +265,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
         await store.put<Cursor>(CURSOR_KEY, await baseline(pool, plan));
         return [];
       }
-      const limit = rowLimit(propsValue.max_rows);
+      const limit = MAX_ROWS_PER_POLL;
       const page =
         plan.mode === 'keyset'
           ? await fetchKeysetPage(pool, plan, cursor, limit)
