@@ -219,22 +219,25 @@ export const newOrUpdatedRowTrigger = createTrigger({
     }
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
+    const { store, auth, propsValue, isRepublish } = context;
     const pool = await mssqlConnect(auth);
     try {
       const plan = await buildPlan(pool, propsValue);
-      // Republishing a flow re-runs onEnable, and baselining again would skip
-      // everything written since the trigger was switched on. Whether the saved
-      // position survives is decided by reconcile, which asks the only question
-      // that matters: can this plan still read it? The platform's isRepublish
-      // flag cannot stand in for that, because it compares the whole input
-      // object -- so editing Maximum Rows Per Poll, which has no bearing on the
-      // cursor, would otherwise discard a waiting backlog. A change that really
-      // does invalidate the position, such as a different order column or
-      // table, fails reconcile and re-baselines here as before.
-      const stored = reconcile(await store.get<Cursor>(CURSOR_KEY), plan);
-      if (!isNil(stored)) {
-        return;
+      // Republishing re-runs onEnable, and baselining there would skip
+      // everything written since the trigger was switched on. Switching a
+      // trigger on is the opposite case: it starts from the current head, so a
+      // spell of being disabled does not arrive as a burst of runs. That is the
+      // rule every polling trigger follows -- pollingHelper.onEnable keeps its
+      // position under isRepublish and baselines otherwise.
+      //
+      // The position also has to be one this plan can actually read, so a
+      // republish that changed the order column or the table re-baselines here
+      // rather than leaving a cursor for run() to reject on the next poll.
+      if (isRepublish) {
+        const stored = reconcile(await store.get<Cursor>(CURSOR_KEY), plan);
+        if (!isNil(stored)) {
+          return;
+        }
       }
       await store.put<Cursor>(CURSOR_KEY, await baseline(pool, plan));
     } finally {
@@ -242,7 +245,11 @@ export const newOrUpdatedRowTrigger = createTrigger({
     }
   },
   async onDisable() {
-    // The position is kept on purpose, so re-enabling resumes where it stopped.
+    // The position is left in the store rather than cleared, because a
+    // republish disables and re-enables the trigger and onEnable needs it to
+    // still be there. Switching the trigger back on by hand does not resume
+    // from it: that path baselines at the head, so the disabled period does not
+    // arrive as a burst of runs.
   },
   async run(context) {
     const { store, auth, propsValue } = context;
