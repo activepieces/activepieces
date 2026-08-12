@@ -1,21 +1,17 @@
 import { t } from 'i18next';
 import { AlertTriangle, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { CreditsWarning } from '@/features/chat/lib/chat-types';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 
-export function CreditsBanner({
+import { CreditsActionButton } from './credits-action-button';
+
+export function ChatCreditsAlert({
   creditsExhausted,
-  creditsWarning,
+  creditsPercentUsed,
   onDismiss,
-}: {
-  creditsExhausted?: boolean;
-  creditsWarning?: CreditsWarning | null;
-  onDismiss?: () => void;
-}) {
+}: ChatCreditsAlertProps) {
   const isPlatformAdmin = useIsPlatformAdmin();
   const isError = Boolean(creditsExhausted);
 
@@ -26,7 +22,7 @@ export function CreditsBanner({
           "You've reached your credits limit. Contact a platform admin to get more credits.",
         )
     : t("You've used {percentage}% of your credits.", {
-        percentage: creditsWarning?.percentage ?? 0,
+        percentage: creditsPercentUsed ?? 0,
       });
 
   return (
@@ -40,14 +36,7 @@ export function CreditsBanner({
     >
       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1">{message}</span>
-      {isPlatformAdmin && (
-        <Link
-          to="/platform/setup/billing"
-          className="shrink-0 text-sm font-medium underline"
-        >
-          {t('Show Usage')}
-        </Link>
-      )}
+      <CreditsActionButton className="shrink-0" variant="accent" />
       {!isError && (
         <Button
           variant="ghost"
@@ -61,3 +50,9 @@ export function CreditsBanner({
     </div>
   );
 }
+
+type ChatCreditsAlertProps = {
+  creditsExhausted?: boolean;
+  creditsPercentUsed?: number | null;
+  onDismiss?: () => void;
+};
