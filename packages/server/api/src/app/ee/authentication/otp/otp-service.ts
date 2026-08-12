@@ -8,7 +8,10 @@ import { emailService } from '../../helper/email/email-service'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
 
-const TEN_MINUTES = 10 * 60 * 1000
+const OTP_EXPIRATION_MS: Record<OtpType, number> = {
+    [OtpType.EMAIL_VERIFICATION]: 24 * 60 * 60 * 1000,
+    [OtpType.PASSWORD_RESET]: 10 * 60 * 1000,
+}
 
 const repo = repoFactory(OtpEntity)
 
@@ -26,8 +29,14 @@ export const otpService = (log: FastifyBaseLogger) => ({
             identityId: userIdentity.id,
             type,
         })
-        const otpIsNotExpired = existingOtp && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
-        if (otpIsNotExpired) {
+        const existingOtpIsReusable = existingOtp && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
+        if (existingOtpIsReusable) {
+            await emailService(log).sendOtp({
+                platformId,
+                userIdentity,
+                otp: existingOtp.value,
+                type,
+            })
             return
         }
         const newOtp: Omit<OtpModel, 'created'> = {
@@ -53,9 +62,8 @@ export const otpService = (log: FastifyBaseLogger) => ({
             type,
         })
         const otpIsPending = otp.state === OtpState.PENDING
-        const otpIsNotExpired = dayjs().diff(otp.updated, 'milliseconds') < TEN_MINUTES
         const otpMatches = otp.value === value
-        const verdict = otpIsNotExpired && otpMatches && otpIsPending
+        const verdict = !otpIsExpired(otp) && otpMatches && otpIsPending
         if (verdict) {
             await repo().update(otp.id, {
                 state: OtpState.CONFIRMED,
@@ -65,6 +73,10 @@ export const otpService = (log: FastifyBaseLogger) => ({
         return verdict
     },
 })
+
+function otpIsExpired(otp: OtpModel): boolean {
+    return dayjs().diff(otp.updated, 'milliseconds') >= OTP_EXPIRATION_MS[otp.type]
+}
 
 type CreateParams = {
     platformId: PlatformId | null
