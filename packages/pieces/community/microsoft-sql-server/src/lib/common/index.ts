@@ -273,28 +273,6 @@ export async function mssqlGetTableMeta(
   };
 }
 
-// ORDER BY rejects these types, so no cursor can be built on them
-const UNSORTABLE = ['text', 'ntext', 'image', 'xml', 'geography', 'geometry'];
-
-export async function mssqlGetSortableColumns(
-  pool: sql.ConnectionPool,
-  table: MssqlTable
-): Promise<string[]> {
-  const result = await pool
-    .request()
-    .input('table_schema', table.table_schema)
-    .input('table_name', table.table_name)
-    .query(
-      `SELECT COLUMN_NAME, DATA_TYPE
-       FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = @table_schema AND TABLE_NAME = @table_name
-       ORDER BY ORDINAL_POSITION`
-    );
-  return (result.recordset ?? [])
-    .filter((row) => !UNSORTABLE.includes(String(row['DATA_TYPE']).toLowerCase()))
-    .map((row) => row['COLUMN_NAME']);
-}
-
 export async function mssqlGetColumns(
   pool: sql.ConnectionPool,
   table: MssqlTable

@@ -5,9 +5,10 @@ import {
   MssqlTable,
   mssqlConnect,
   mssqlGetColumns,
-  mssqlGetSortableColumns,
+  mssqlGetTableMeta,
   mssqlGetTables,
 } from '.';
+import { isTiebreakType } from './cursor';
 
 export const warningMarkdown = Property.MarkDown({
   value: `
@@ -79,8 +80,15 @@ export const mssqlProps = {
         const pool = await mssqlConnect(auth as MssqlAuth);
         try {
           const target = table as { table_schema: string; table_name: string };
+          // isTiebreakType is the cursor's own rule, so the dropdown cannot
+          // offer a column the trigger would then refuse: it drops the types
+          // that have no lossless text form (xml, sql_variant, the spatial
+          // types) and the max types, which ORDER BY rejects and which a
+          // DATA_TYPE string alone cannot distinguish from their sized form.
           const columns = sortableOnly
-            ? await mssqlGetSortableColumns(pool, target)
+            ? (await mssqlGetTableMeta(pool, target)).columns
+                .filter((column) => isTiebreakType(column))
+                .map((column) => column.name)
             : await mssqlGetColumns(pool, target);
           return {
             disabled: false,
