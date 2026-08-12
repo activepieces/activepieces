@@ -5,10 +5,10 @@ import { oauth2Util } from '../../../../src/app/app-connection/app-connection-se
 const util = oauth2Util({} as never)
 const nowSeconds = Math.round(Date.now() / 1000)
 
-function connectionWith({ claimedAt, expiresIn }: { claimedAt: number | string, expiresIn?: number | string }): never {
+function connectionWith({ claimedAt, expiresIn, refreshToken = 'refresh' }: { claimedAt: number | string, expiresIn?: number | string, refreshToken?: string | null }): never {
     return {
         access_token: 'token',
-        refresh_token: 'refresh',
+        refresh_token: refreshToken,
         claimed_at: claimedAt,
         expires_in: expiresIn,
         grant_type: OAuth2GrantType.AUTHORIZATION_CODE,
@@ -67,6 +67,18 @@ describe('oauth2Util.isExpired', () => {
 
     it('infinite claimed_at is treated as epoch → expired', () => {
         expect(util.isExpired(connectionWith({ claimedAt: '1e999', expiresIn: 3600 }))).toBe(true)
+    })
+
+    it('no refresh_token: expired access token → expired (re-auth required)', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2 * 60 * 60, expiresIn: 3600, refreshToken: null }))).toBe(true)
+    })
+
+    it('no refresh_token: valid access token → not expired', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds, expiresIn: 3600, refreshToken: null }))).toBe(false)
+    })
+
+    it('no refresh_token: missing expires_in falls back to 1h → expired after 2h', () => {
+        expect(util.isExpired(connectionWith({ claimedAt: nowSeconds - 2 * 60 * 60, refreshToken: null }))).toBe(true)
     })
 })
 
