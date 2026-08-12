@@ -1,36 +1,15 @@
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import sql from 'mssql';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { MssqlAuth, mssqlConnect } from '../common';
+import { MssqlAuth, mssqlCommon } from '../common';
 import { newOrUpdatedRowTrigger } from './new-or-updated-row';
 
-/**
- * Drives the real trigger against a real SQL Server. These are the scenarios
- * that cannot be settled by inspecting generated SQL: a bulk UPDATE collapsing
- * thousands of rows onto one timestamp, sub-millisecond datetime2, a bigint
- * identity past the range a JavaScript number can hold.
- *
- * Two ways to point it at a server, and it skips entirely with neither.
- *
- * A throwaway container, which also gets its own database created and dropped:
- *
- *   docker run -d --name ap-mssql-test -e ACCEPT_EULA=Y \
- *     -e MSSQL_SA_PASSWORD='Str0ng!Passw0rd#2026' -p 1433:1433 \
- *     mcr.microsoft.com/mssql/server:2022-latest
- *   AP_MSSQL_TEST_HOST=localhost AP_MSSQL_TEST_PASSWORD='...' npx vitest run
- *
- * Or an existing server such as Azure SQL, via the same connection string a
- * user would paste into the piece. Nothing is created or dropped except tables
- * named with the TABLE_PREFIX below, so it is safe against a shared database
- * (it still needs rights to create tables in it):
- *
- *   AP_MSSQL_TEST_CONNECTION_STRING='Server=...;Database=...;User ID=...' npx vitest run
- */
+
 const connectionString = process.env['AP_MSSQL_TEST_CONNECTION_STRING'];
 const host = process.env['AP_MSSQL_TEST_HOST'];
 const enabled = Boolean(connectionString ?? host);
 
-/** every object this suite creates carries it, and it drops nothing else */
+
 const TABLE_PREFIX = 'ap_poll_test_';
 
 const auth = {
@@ -50,10 +29,7 @@ const auth = {
 
 type Row = Record<string, unknown>;
 
-/**
- * A store that round-trips through JSON exactly as the platform's does, so a
- * value the cursor could not actually persist fails here too.
- */
+
 function fakeStore() {
   const entries = new Map<string, string>();
   return {
@@ -77,6 +53,8 @@ type Props = {
   order_direction: 'ASC' | 'DESC';
 };
 
+type HookContext = never;
+
 function harness(props: Props) {
   const store = fakeStore();
   const context = {
@@ -84,21 +62,28 @@ function harness(props: Props) {
     propsValue: props,
     store,
     isRepublish: false,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+  };
 
   const poll = async (): Promise<Row[]> =>
-    (await newOrUpdatedRowTrigger.run(context)) as Row[];
+    (await newOrUpdatedRowTrigger.run(
+      context as unknown as HookContext
+    )) as Row[];
 
   return {
     store,
-    enable: () => newOrUpdatedRowTrigger.onEnable(context),
-    /** what publishing an already-live flow again does */
+    enable: () =>
+      newOrUpdatedRowTrigger.onEnable(context as unknown as HookContext),
     republish: () =>
-      newOrUpdatedRowTrigger.onEnable({ ...context, isRepublish: true }),
-    preview: async () => (await newOrUpdatedRowTrigger.test(context)) as Row[],
+      newOrUpdatedRowTrigger.onEnable({
+        ...context,
+        isRepublish: true,
+      } as unknown as HookContext),
+    preview: async () =>
+      (await newOrUpdatedRowTrigger.test(
+        context as unknown as HookContext
+      )) as Row[],
     poll,
-    /** poll until a poll comes back empty, the way the scheduler would */
+    
     drain: async (limit = 200) => {
       const rows: Row[] = [];
       let polls = 0;
@@ -121,11 +106,7 @@ async function exec(statement: string): Promise<void> {
   await pool.request().batch(statement);
 }
 
-/**
- * A table per test, so nothing leaks between them. Every name is prefixed, and
- * dropped before being created, so a run against a database that is not ours
- * can only ever touch its own tables.
- */
+
 type Table = { table_schema: string; table_name: string };
 
 const created: Table[] = [];
@@ -138,7 +119,7 @@ function nextTable(table_schema = 'dbo'): Table {
   return table;
 }
 
-/** the same bracket-doubling the piece applies, for the setup statements */
+
 function quoted(table: Table): string {
   const escape = (part: string) => `[${part.split(']').join(']]')}]`;
   return `${escape(table.table_schema)}.${escape(table.table_name)}`;
@@ -152,7 +133,7 @@ async function createTable(table: Table, body: string): Promise<void> {
   );
 }
 
-/** generates 1..n as a rowset, without a round trip per row */
+
 const series = (n: number) =>
   `SELECT TOP (${n}) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
    FROM sys.all_objects a CROSS JOIN sys.all_objects b`;
@@ -163,15 +144,17 @@ function ids(rows: Row[]): number[] {
 
 describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   beforeAll(async () => {
-    // Only the throwaway container gets its own database. A supplied connection
-    // string is used exactly as given: creating or dropping a database there
-    // would be presumptuous, and Azure SQL does not allow it from a user
-    // connection anyway.
+    
+    
+    
+    
     if (!connectionString) {
-      const bootstrap = await mssqlConnect({
-        ...auth,
-        props: { ...auth.props, database: 'master' },
-      } as MssqlAuth);
+      const bootstrap = await mssqlCommon.connect({
+        auth: {
+          ...auth,
+          props: { ...auth.props, database: 'master' },
+        },
+      });
       try {
         await bootstrap.request().batch(
           `IF DB_ID('ap_trigger_test') IS NOT NULL
@@ -185,7 +168,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
         await bootstrap.close();
       }
     }
-    pool = await mssqlConnect(auth);
+    pool = await mssqlCommon.connect({ auth });
     const server = await pool
       .request()
       .query<Row>(`SELECT DB_NAME() AS db, @@VERSION AS version`);
@@ -197,7 +180,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
 
   afterAll(async () => {
     if (!pool) return;
-    // leave the database as it was found
+    
     for (const table of created) {
       await exec(
         `IF OBJECT_ID('${quoted(table)}', 'U') IS NOT NULL DROP TABLE ${quoted(
@@ -212,8 +195,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('walks a backlog larger than one page without skipping the middle', async () => {
-    // the old design took the newest page and moved its cursor to that page's
-    // head, discarding every row between the old position and the page
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -250,10 +233,10 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('delivers every row of a 3000-row tie group from one bulk UPDATE', async () => {
-    // GETDATE() is a per-statement constant, so one UPDATE stamps every row it
-    // touches with the identical value. The old design stalled here: its page
-    // was ordered newest-first, so it re-read the same top 1000 rows forever and
-    // the remaining 2000 became unreachable.
+    
+    
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -273,7 +256,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // one statement, so every row lands on the identical value
+    
     await exec(`UPDATE ${table.table_name} SET updated_at = GETDATE()`);
 
     const { rows } = await trigger.drain();
@@ -287,10 +270,10 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 240_000);
 
   it('does not see a row written behind the position, as documented', async () => {
-    // this is the one loss polling cannot avoid: a value below the high-water
-    // mark, whether from a late-committing transaction, a clock that stepped
-    // back, or an explicit older timestamp. Pinned here so it stays a known
-    // limitation rather than becoming a surprise.
+    
+    
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -314,7 +297,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     );
     expect(await trigger.poll()).toHaveLength(0);
 
-    // and it recovers the moment a value moves past the position again
+    
     await exec(
       `INSERT INTO ${table.table_name} (updated_at) VALUES ('2031-01-01')`
     );
@@ -322,8 +305,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('does not redeliver a datetime2(7) row whose value is below the millisecond', async () => {
-    // the driver hands back a Date, which holds milliseconds, so a cursor read
-    // from the row value would sit below it and re-match it on every poll
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -354,8 +337,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('pages inside a tie group on a bigint identity past 2^53', async () => {
-    // node-mssql maps bigint to a JavaScript number, which rounds above 2^53;
-    // a cursor built from that value would skip or repeat rows
+    
+    
     const table = nextTable();
     const seed = '9007199254740992';
     await createTable(
@@ -372,8 +355,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // one shared ordering value, so the identity is the only discriminator and
-    // the page has to resume inside the group
+    
+    
     await exec(
       `INSERT INTO ${table.table_name} (updated_at)
        SELECT '2030-01-01T00:00:00.000' FROM (${series(5)}) s`
@@ -456,7 +439,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // smaller means newer here, so these are all new
+    
     await exec(
       `INSERT INTO ${table.table_name} (rank_no)
        SELECT 1000 - n FROM (${series(50)}) s`
@@ -465,7 +448,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     const { rows } = await trigger.drain();
     expect(rows).toHaveLength(50);
     const values = rows.map((row) => Number(row['rank_no']));
-    // delivered oldest first, which for this direction is largest first
+    
     expect(values).toEqual(values.slice().sort((a, b) => b - a));
   }, 120_000);
 
@@ -516,7 +499,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       });
       await trigger.enable();
 
-      // 100 distinct values, 5 rows each
+      
       await exec(
         `INSERT INTO ${table.table_name} (id, created_at)
          SELECT n, DATEADD(ms, n % 100, '2030-01-01') FROM (${series(500)}) s`
@@ -525,7 +508,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       const { rows, polls } = await trigger.drain();
       expect(rows).toHaveLength(500);
       expect(new Set(ids(rows)).size).toBe(500);
-      // a page of 40 holds 8 whole groups of 5, so this must not take 100 polls
+      
       expect(polls).toBeLessThan(20);
     }, 240_000);
 
@@ -550,8 +533,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
          SELECT n, '2030-01-01T00:00:00.000' FROM (${series(300)}) s`
       );
 
-      // trimming the trailing value would leave nothing, so the value is taken
-      // complete in one poll even though it exceeds the page
+      
+      
       const page = await trigger.poll();
       expect(page).toHaveLength(300);
       expect(await trigger.poll()).toHaveLength(0);
@@ -578,8 +561,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // dropping the key moves the plan from keyset to group mode, so the saved
-    // position no longer describes the same columns
+    
+    
     await exec(`ALTER TABLE ${table.table_name} DROP CONSTRAINT pk_shape`);
 
     expect(await trigger.poll()).toHaveLength(0);
@@ -590,9 +573,9 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(rows).toHaveLength(1);
   }, 120_000);
 
-  // One case per ordering type whose text rendering is not obviously exact.
-  // Each value must survive the trip out to the store and back into a
-  // comparison, or the row is redelivered forever or skipped outright.
+  
+  
+  
   const codecCases: { type: string; values: string[] }[] = [
     {
       type: 'time(7)',
@@ -621,7 +604,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     },
     {
       type: 'smalldatetime',
-      // ISO 8601 needs the seconds, or the literal itself is rejected
+      
       values: [
         `'2030-01-01T00:01:00'`,
         `'2030-01-01T00:02:00'`,
@@ -633,8 +616,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       values: ['1.0000000001', '1.0000000002', '999999999999999.9999999999'],
     },
     { type: 'float', values: ['0.1', '0.30000000000000004', '1.7e308'] },
-    // money renders only two decimals by default, so 0.0001 came back as 0.00
-    // and the position never advanced -- the row was redelivered forever
+    
+    
     { type: 'money', values: ['0.0001', '0.0002', '922337203685477.5807'] },
     { type: 'smallmoney', values: ['0.0001', '0.0002', '214748.3647'] },
     {
@@ -654,10 +637,10 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       ],
     },
     {
-      // '00123' is the case a JavaScript-typed cursor got wrong: it inferred a
-      // number, so the comparison switched to numeric semantics against an
-      // NVARCHAR column. The pipe and the JSON punctuation used to matter too,
-      // when the position was delimiter-joined text.
+      
+      
+      
+      
       type: 'nvarchar(100)',
       values: [
         `N'00123'`,
@@ -685,7 +668,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
         order_by: 'v',
         order_direction: 'DESC',
       });
-      // empty at enable, so every value below counts as new
+      
       await trigger.enable();
 
       await exec(
@@ -694,8 +677,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
           .join(', ')}`
       );
 
-      // draining to empty re-reads and re-binds the position between polls,
-      // which is where a lossy rendering shows up
+      
+      
       const { rows } = await trigger.drain();
       expect(rows).toHaveLength(values.length);
       expect(new Set(ids(rows)).size).toBe(values.length);
@@ -722,8 +705,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // 40 rows all sharing one timestamp, so the three-term keyset has to page
-    // through them on (tenant_id, code) alone
+    
+    
     await exec(
       `INSERT INTO ${table.table_name} (tenant_id, code, id, updated_at)
        SELECT n % 4, CONCAT('c', n), n, '2030-01-01T00:00:00.000'
@@ -736,7 +719,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
-  // The "or Updated" half of the trigger's promise, which nothing else asserts.
+  
   it('delivers a row again each time it is edited', async () => {
     const table = nextTable();
     await createTable(
@@ -772,13 +755,13 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(second).toHaveLength(1);
     expect(second[0]['payload']).toBe('edited twice');
 
-    // and it settles: no further edit, no further event
+    
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
   it('keeps its position when the flow is republished', async () => {
-    // republishing re-runs onEnable; baselining again there would skip
-    // everything written since the trigger was first switched on
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -825,15 +808,15 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     await exec(
       `INSERT INTO ${quoted(table)} (created_at) VALUES ('2030-01-02')`
     );
-    // enabling again is a deliberate restart: start from now, not from history
+    
     await trigger.enable();
 
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
   it('carries on after the row its position named is deleted', async () => {
-    // the position is a tuple of values, not a reference to a row, so the row
-    // it was read from can disappear without stranding the trigger
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -860,7 +843,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('falls back to the default page size when max rows is nonsense', async () => {
-    // a limit of 0 would make TOP (0) return nothing forever
+    
     const table = nextTable();
     await createTable(
       table,
@@ -906,7 +889,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('handles column names holding a bracket or a space', async () => {
-    // quoteId doubles a closing bracket; anything less and these break the query
+    
     const table = nextTable();
     await createTable(
       table,
@@ -949,8 +932,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('refuses one ordering value bigger than the group ceiling', async () => {
-    // a keyless table cannot page inside a value, so past this size it says so
-    // instead of delivering part of a group
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -975,10 +958,10 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 240_000);
 
   it('catches a row inserted into the tie group the position sits inside', async () => {
-    // The old cursor sliced positionally at one marker, so a row arriving with
-    // the saved ordering value but a key sorting after that marker was returned
-    // by the query and then dropped by the slice. The keyset compares
-    // (value, key) as a pair, so it is simply ahead of the position.
+    
+    
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -992,8 +975,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // A page holds 200 rows, so it takes more than that on one ordering value
-    // for a page to stop inside the group and leave the position there.
+    
+    
     await exec(
       `INSERT INTO ${quoted(table)} (updated_at)
        SELECT '2030-01-01T00:00:00.000' FROM (${series(250)}) s`
@@ -1002,7 +985,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       Array.from({ length: 200 }, (_, i) => i + 1)
     );
 
-    // now a late arrival at the same value, with a higher key
+    
     await exec(
       `INSERT INTO ${quoted(table)} (updated_at)
        VALUES ('2030-01-01T00:00:00.000')`
@@ -1016,9 +999,9 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('raises an event for each of two byte-identical rows in a keyless table', async () => {
-    // The old design hashed a row's identity from its column values, so two
-    // rows SQL itself cannot tell apart collapsed into one event. Group mode
-    // needs no per-row identity: it hands over the whole ordering value.
+    
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -1045,9 +1028,9 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
   }, 120_000);
 
   it('does not re-fire an old row when its natural key is edited behind the position', async () => {
-    // Only the backward direction stays quiet. 'n' sorts before 'o', so
-    // 'dave@new.com' lands behind the stored tuple. The forward case is the
-    // test below, and it does re-fire.
+    
+    
+    
     const table = nextTable();
     await createTable(
       table,
@@ -1071,7 +1054,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     );
     expect(await trigger.poll()).toHaveLength(0);
 
-    // and when the edit does touch the ordering column, it fires once
+    
     await exec(
       `UPDATE ${quoted(table)} SET email = 'dave@newer.com', updated_at = '2030-01-02'`
     );
@@ -1081,19 +1064,19 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
-  // A tiebreaker that is only unique, not immutable, cannot tell "this row
-  // moved" from "this row is new". Editing the key of an already-delivered row
-  // moves it relative to a position recorded from its old value, and the keyset
-  // predicate has nothing left to notice that with.
-  //
-  // Editing a key forward re-fires the row, which is pinned below. Editing one
-  // backward hides it, and if the row had not been delivered yet it is lost --
-  // that needs an undelivered row behind the position, so with the page size
-  // fixed it takes more than a page of rows sharing one ordering value, and is
-  // left unpinned rather than made slow.
-  //
-  // Neither is intended. The answer is an IDENTITY column, which planCursor
-  // prefers precisely because it cannot be edited.
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   it('re-fires a delivered row when its natural key is edited ahead of the position', async () => {
     const table = nextTable();
     await createTable(
@@ -1113,8 +1096,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
     await trigger.enable();
 
-    // 'z' sorts after 'o', so the row now sits ahead of its own recorded
-    // position and reads as undelivered.
+    
+    
     await exec(
       `UPDATE ${quoted(table)} SET email = 'dave@zzz.com' WHERE email = 'dave@old.com'`
     );
@@ -1123,9 +1106,9 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(rows[0]['email']).toBe('dave@zzz.com');
   }, 120_000);
 
-  // Which columns become the tiebreaker is the trigger's most consequential
-  // decision: pick one that does not actually identify a row and the keyset
-  // silently steps over rows. These pin what it refuses to trust.
+  
+  
+  
   describe('choosing a tiebreaker', () => {
     async function modeOf(table: Table, order_by: string) {
       const trigger = harness({ table, order_by, order_direction: 'DESC' });
@@ -1137,7 +1120,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     }
 
     it('will not trust a filtered unique index', async () => {
-      // a filtered index only enforces uniqueness over the rows it covers
+      
       const table = nextTable();
       await createTable(
         table,
@@ -1158,8 +1141,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
 
     it('will not trust a nullable unique index', async () => {
-      // every comparison against NULL is UNKNOWN, which drops the row from the
-      // window rather than ordering it
+      
+      
       const table = nextTable();
       await createTable(
         table,
@@ -1187,8 +1170,8 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
 
     it('will not use an identity that only a composite index makes unique', async () => {
-      // IDENTITY alone is not unique — a reseed or an IDENTITY_INSERT load can
-      // repeat values — so it is only trusted when an index says otherwise
+      
+      
       const table = nextTable();
       await createTable(
         table,
@@ -1209,15 +1192,15 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     });
 
     it('will not use a descending identity, and falls back to the key', async () => {
-      // IDENTITY(n,-1) counts downward, so a row added later does not sort
-      // ahead of the position
+      
+      
       const table = nextTable();
       await createTable(
         table,
         `id int IDENTITY(1000,-1) PRIMARY KEY, updated_at datetime2(3) NOT NULL`
       );
 
-      // still keyset, because the primary key identifies the row either way
+      
       expect(await modeOf(table, 'updated_at')).toMatchObject({
         m: 'keyset',
         c: ['updated_at:datetime2(3)', 'id:int'],

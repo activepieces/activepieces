@@ -1,14 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import {
-  MssqlTable,
-  isOutputBlockedByTrigger,
-  mssqlConnect,
-  mssqlGetTableMeta,
-  quoteId,
-  quoteTable,
-} from '../common';
-import { exactProjection } from '../common/cursor';
+import { mssqlCommon } from '../common';
+import { cursorUtils } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { insertRowActionOutputSchema } from '../output-schemas';
 
@@ -40,26 +33,23 @@ export const insertRowAction = createAction({
       throw new Error('Provide at least one column and value to insert.');
     }
 
-    const target = quoteTable(table as MssqlTable);
-    const columnList = entries.map(([column]) => quoteId(column)).join(', ');
+    const target = mssqlCommon.quoteTable(table);
+    const columnList = entries
+      .map(([column]) => mssqlCommon.quoteId(column))
+      .join(', ');
     const placeholders = entries.map((_, i) => `@p${i}`).join(', ');
-    const pool = await mssqlConnect(context.auth);
+    const pool = await mssqlCommon.connect({ auth: context.auth });
     try {
-      // OUTPUT INSERTED.* would hand the row back through the driver's own
-      // parsing, which rounds decimal and truncates the date family. See
-      // exactProjection in common/cursor.
-      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
-      const query = `INSERT INTO ${target} (${columnList}) OUTPUT ${exactProjection(
-        meta.columns,
-        'INSERTED'
+      const meta = await mssqlCommon.getTableMeta({ pool, table });
+      const query = `INSERT INTO ${target} (${columnList}) OUTPUT ${cursorUtils.exactProjection(
+        { columns: meta.columns, prefix: 'INSERTED' }
       )} VALUES (${placeholders})`;
       const request = pool.request();
       entries.forEach(([, value], i) => request.input(`p${i}`, value ?? null));
       const result = await request.query<Record<string, unknown>>(query);
       return result.recordset?.[0] ?? {};
     } catch (e) {
-      // no retry without OUTPUT here: that would lose the generated id
-      if (isOutputBlockedByTrigger(e)) {
+      if (mssqlCommon.isOutputBlockedByTrigger(e)) {
         throw new Error(
           `${target} has enabled triggers, so SQL Server refuses to return the inserted row. Use the Run Query action with an "OUTPUT INSERTED.* INTO @table" clause instead.`
         );

@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { mssqlConnect } from './common';
+import { mssqlCommon } from './common';
 
 export const mssqlAuth = PieceAuth.CustomAuth({
   description:
@@ -80,9 +80,11 @@ export const mssqlAuth = PieceAuth.CustomAuth({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const pool = await mssqlConnect({
-        type: AppConnectionType.CUSTOM_AUTH,
-        props: auth,
+      const pool = await mssqlCommon.connect({
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
       });
       try {
         await pool.request().query('SELECT 1');

@@ -1,14 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import {
-  MssqlTable,
-  isOutputBlockedByTrigger,
-  mssqlConnect,
-  mssqlGetTableMeta,
-  quoteId,
-  quoteTable,
-} from '../common';
-import { exactProjection } from '../common/cursor';
+import { mssqlCommon } from '../common';
+import { cursorUtils } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
@@ -30,10 +23,10 @@ export const updateRowsAction = createAction({
       description: 'Column name to new value.',
       required: true,
     }),
-    search_column: mssqlProps.column(
-      'Search Column',
-      'Rows are updated where this column equals the value below.'
-    ),
+    search_column: mssqlProps.column({
+      displayName: 'Search Column',
+      description: 'Rows are updated where this column equals the value below.',
+    }),
     search_value: Property.ShortText({
       displayName: 'Search Value',
       description: 'The value the search column must equal.',
@@ -48,13 +41,13 @@ export const updateRowsAction = createAction({
       throw new Error('Provide at least one column and value to update.');
     }
 
-    const target = quoteTable(table as MssqlTable);
+    const target = mssqlCommon.quoteTable(table);
     const assignments = entries
-      .map(([column], i) => `${quoteId(column)} = @p${i}`)
+      .map(([column], i) => `${mssqlCommon.quoteId(column)} = @p${i}`)
       .join(', ');
-    const where = `WHERE ${quoteId(search_column)} = @search`;
+    const where = `WHERE ${mssqlCommon.quoteId(search_column)} = @search`;
 
-    const pool = await mssqlConnect(context.auth);
+    const pool = await mssqlCommon.connect({ auth: context.auth });
     try {
       const bind = () => {
         const request = pool.request();
@@ -63,31 +56,17 @@ export const updateRowsAction = createAction({
         return request;
       };
 
-      // The driver rounds decimal and truncates the date family, so the row is
-      // rendered to text by the server. See exactProjection in common/cursor.
-      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
-      const output = exactProjection(meta.columns, 'INSERTED');
+      const meta = await mssqlCommon.getTableMeta({ pool, table });
+      const output = cursorUtils.exactProjection({
+        columns: meta.columns,
+        prefix: 'INSERTED',
+      });
 
-      let rows: Record<string, unknown>[] = [];
-      let affected: number[] = [];
-      try {
-        const result = await bind().query<Record<string, unknown>>(
-          `UPDATE ${target} SET ${assignments} OUTPUT ${output} ${where}`
-        );
-        rows = result.recordset ?? [];
-        affected = result.rowsAffected ?? [];
-      } catch (e) {
-        if (!isOutputBlockedByTrigger(e)) throw e;
-        const result = await bind().query<Record<string, unknown>>(
-          `UPDATE ${target} SET ${assignments} ${where}`
-        );
-        affected = result.rowsAffected ?? [];
-      }
-
-      return {
-        rows,
-        rows_affected: affected.reduce((a, b) => a + b, 0),
-      };
+      return await mssqlCommon.writeReturningRows({
+        bind,
+        withOutput: `UPDATE ${target} SET ${assignments} OUTPUT ${output} ${where}`,
+        withoutOutput: `UPDATE ${target} SET ${assignments} ${where}`,
+      });
     } finally {
       await pool.close();
     }
