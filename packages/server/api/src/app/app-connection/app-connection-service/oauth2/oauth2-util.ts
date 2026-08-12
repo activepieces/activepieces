@@ -30,13 +30,11 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
     },
     isExpired: (connection: BaseOAuth2ConnectionValue): boolean => {
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
-        const grantType = connection.grant_type ?? OAuth2GrantType.AUTHORIZATION_CODE
-        if (
-            grantType === OAuth2GrantType.AUTHORIZATION_CODE &&
-            !connection.refresh_token
-        ) {
-            return false
-        }
+        // AUTHORIZATION_CODE connections without a refresh_token cannot be refreshed
+        // once the access token expires. Fall through to the normal expiry check so
+        // they are flagged for re-authentication instead of being treated as
+        // never-expired and reused forever (which caused persistent 401s, e.g. Reddit
+        // when the piece did not request a refresh token).
         const parsedExpiresIn = Number(connection.expires_in)
         const expiresIn = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 60 * 60
         const parsedClaimedAt = Number(connection.claimed_at)
