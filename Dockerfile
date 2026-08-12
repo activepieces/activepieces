@@ -28,7 +28,8 @@ RUN apt-get update && \
         curl \
         ca-certificates \
         iptables \
-        libcap2
+        libcap2 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Download, extract, and clean up bun in a single layer so the zip never ships
 RUN export ARCH=$(uname -m) && \
