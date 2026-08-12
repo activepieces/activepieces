@@ -26,6 +26,7 @@ type EngineConstantsParams = {
     resumePayload?: ResumePayload
     runEnvironment?: RunEnvironment
     stepNameToTest?: string
+    entryStepName?: string
     logsFileId?: string
     timeoutInSeconds: number
     platformId: PlatformId
@@ -67,6 +68,7 @@ export class EngineConstants {
     public readonly resumePayload?: ResumePayload
     public readonly runEnvironment?: RunEnvironment
     public readonly stepNameToTest?: string
+    public readonly entryStepName?: string
     public readonly logsFileId?: string
     public readonly stepNames: string[] = []
     public readonly actionRunMode: boolean
@@ -112,6 +114,7 @@ export class EngineConstants {
         this.resumePayload = params.resumePayload
         this.runEnvironment = params.runEnvironment
         this.stepNameToTest = params.stepNameToTest
+        this.entryStepName = params.entryStepName
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
@@ -131,6 +134,7 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
+            entryStepName: input.entryStepName,
             logsFileId: input.logsFileId,
         })
     }

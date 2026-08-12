@@ -154,6 +154,43 @@ function makeFlowVersionWithTwoApprovals(): FlowVersion {
     }
 }
 
+function makeFlowVersionWithBatchBody(): FlowVersion {
+    const loopAction = (name: string): FlowAction => ({
+        name,
+        displayName: name,
+        type: FlowActionType.LOOP_ON_ITEMS,
+        skip: false,
+        valid: true,
+        settings: {
+            items: "{{ step_1['output'].items }}",
+        },
+    })
+    const batchStep: FlowAction = {
+        name: 'step_1',
+        displayName: 'Process in Batches',
+        type: FlowActionType.PROCESS_IN_BATCHES,
+        skip: false,
+        valid: true,
+        settings: {
+            items: "{{ step_1['output'].items }}",
+            batchSize: 2,
+        },
+        firstLoopAction: loopAction('step_2'),
+        nextAction: loopAction('step_3'),
+    }
+    return {
+        ...makeFlowVersion(),
+        trigger: {
+            name: 'trigger_1',
+            valid: true,
+            displayName: 'Test Trigger',
+            type: FlowTriggerType.EMPTY,
+            settings: {},
+            nextAction: batchStep,
+        },
+    }
+}
+
 function makeResumeOperation(overrides?: Partial<ResumeExecuteFlowOperation>): ResumeExecuteFlowOperation {
     return {
         projectId: 'proj-1',
@@ -468,6 +505,59 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(operation)
 
             expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+        })
+
+        it('resumes a batch child run from its entry step instead of walking the flow from the trigger', async () => {
+            // A Process in Batches child run starts at the batch body's entry step, with the parent's
+            // steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state log, so a
+            // resume re-enters the body. Without it the engine walks from the trigger: the paused body
+            // step is never re-entered (its BEGIN placeholder output sticks), and the step *after* the
+            // batch runs inside the child.
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-after-batch',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
+            })
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            step_1: {
+                                type: FlowActionType.PROCESS_IN_BATCHES,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: { items: [1, 2] },
+                            },
+                            step_2: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                        },
+                        tags: [],
+                        entryStepName: 'step_2',
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithBatchBody(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }
+
+            await flowOperation.execute(operation)
+
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.steps.step_2.output.iterations).toHaveLength(2)
+            expect(finalCtx.steps.step_3).toBeUndefined()
         })
     })
 

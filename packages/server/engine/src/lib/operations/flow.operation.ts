@@ -119,7 +119,7 @@ const executeSingleStepOrFlow = async (input: ResolvedExecuteFlowOperation, cons
     if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
         return executionState
     }
-    if (input.executionType === ExecutionType.BEGIN && !isNil(input.entryStepName)) {
+    if (!isNil(input.entryStepName)) {
         return flowExecutor.execute({
             action: flowStructureUtil.getActionOrThrow(input.entryStepName, input.flowVersion.trigger),
             executionState,
@@ -250,6 +250,7 @@ async function resolveExecuteFlowOperation(operation: ExecuteFlowOperation): Pro
     }
     return {
         ...operation,
+        entryStepName: operation.entryStepName ?? executionState.entryStepName,
         resumePayload: await resolveJobPayload({ payload: operation.resumePayload, apiUrl: operation.internalApiUrl, engineToken: operation.engineToken }) as ResumePayload,
         executionState,
     }

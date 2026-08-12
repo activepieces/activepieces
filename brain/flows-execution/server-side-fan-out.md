@@ -48,6 +48,14 @@ orders the queue but does not free the slot.
 
 ## Gotchas
 
+- **A child run's entry step has to survive a pause.** A child starts at the batch body's entry step with the
+  parent's steps seeded as SUCCEEDED, so the engine cannot walk from the trigger — the batch step itself would
+  read as already done and the walk would fall through to the step *after* the batch. `entryStepName` arrives on
+  the BEGIN job and is written into the child's own execution-state log, which RESUME already downloads and
+  cannot run without; nothing about it is stored on `flow_run`. When it was BEGIN-only, a body step that paused
+  (approval, delay) resumed from the trigger instead: its BEGIN placeholder output stayed forever (an approval
+  showed `approved: false`, the step stayed `PAUSED` on a run the UI reported as succeeded) and the post-batch
+  step ran a second time, inside the child.
 - **A stalled job is not evidence the worker died.** `stalledInterval` is 30s, `maxStalledCount` 3, and this
   job parses a multi-MB source on the event loop. Two dispatchers over one barrier is the normal case to
   design for, not the exotic one — which is why every child is preceded by a compare-and-set claim on its
@@ -75,3 +83,9 @@ orders the queue but does not free the slot.
   `FLOW_TIMEOUT_SECONDS`; the parent now pauses before its children exist.
 - **The source key is deleted on release and on cancel**, and carries a 1-day TTL as a backstop. A dispatcher
   that finds no source marks the remaining signals `NOT_DISPATCHED` rather than hanging.
+- **The parent's run timeline no longer measures dispatch cost, and the metric got *better-looking* as it
+  stopped meaning anything.** The parent's first leg is now one `POST /v1/waitpoints` call, so its `RUN`
+  phase reads ~90–120 ms whether it fans out 10 children or 200 — the benchmark's `dispatchMs` fell from
+  1 293 ms to 116 ms at 200 children purely because the loop moved into the dispatcher job. Measure the span
+  of the children's `created` timestamps instead (~4.3 ms per child at 200 wide). Any dashboard or benchmark
+  reading fan-out cost off the parent leg is silently reporting a constant.
