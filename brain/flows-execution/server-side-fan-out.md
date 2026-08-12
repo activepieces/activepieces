@@ -89,3 +89,10 @@ orders the queue but does not free the slot.
   1 293 ms to 116 ms at 200 children purely because the loop moved into the dispatcher job. Measure the span
   of the children's `created` timestamps instead (~4.3 ms per child at 200 wide). Any dashboard or benchmark
   reading fan-out cost off the parent leg is silently reporting a constant.
+- **`barrier-queue-factory.ts` is the module graph's acyclic leaf, not a testing seam.** `barrier-queue.ts`
+  already sits in two import cycles (with `barrier-service.ts` and with `fan-out-dispatcher-job.ts`), so the
+  factory file is where `barrierSourceKey` and the shared job types live for everyone who needs them without
+  the queue — `waitpoint-service.ts` imports the key alone. Folding the factory into `barrier-queue.ts` to
+  save the pass-through methods therefore adds a third cycle,
+  `waitpoint-service → barrier-queue → barrier-service → resume-service → waitpoint-service`. Move the
+  closure if you like; leave the key and the types on a leaf.

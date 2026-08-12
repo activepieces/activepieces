@@ -3,7 +3,7 @@ import { apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { distributedStore } from '../database/redis-connections'
@@ -92,8 +92,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async findById({ barrierId, projectId }: FindByIdParams): Promise<Waitpoint | null> {
-        const waitpoint = await waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER })
-        return waitpoint ?? null
+        return waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER })
     },
 
     async findSignalById({ signalId, projectId }: FindSignalByIdParams): Promise<WaitpointSignal | null> {
@@ -101,14 +100,10 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async listUnclaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<WaitpointSignal[]> {
-        return signalRepo()
-            .createQueryBuilder('signal')
-            .where('signal."waitpointId" = :barrierId', { barrierId })
-            .andWhere('signal."projectId" = :projectId', { projectId })
-            .andWhere('signal."status" = :status', { status: BarrierSignalStatus.PENDING })
-            .andWhere('signal."refId" IS NULL')
-            .orderBy('signal."sequence"', 'ASC')
-            .getMany()
+        return signalRepo().find({
+            where: { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() },
+            order: { sequence: 'ASC' },
+        })
     },
 
     async claimSignal({ signalId, refId, projectId }: ClaimSignalParams): Promise<boolean> {
