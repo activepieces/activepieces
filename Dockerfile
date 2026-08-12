@@ -10,11 +10,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     REDISMS_VERSION=7.4.2
 
-# Install all system dependencies in a single layer with cache mounts.
+# Install all system dependencies in a single layer. No apt cache mounts: docker-clean in the
+# node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
+# against rotated bullseye-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
         python3 \
