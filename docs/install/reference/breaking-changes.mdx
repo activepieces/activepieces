@@ -5,6 +5,22 @@ icon: "hammer"
 ---
 
 
+## 0.88.0
+
+### What has changed?
+
+#### The Process in Batches summary uses the shared wait shape
+
+The summary a Process in Batches step hands to the steps after it now uses the same field names as every other thing a flow waits on, so an expression written against it does not have to change when the wait does.
+
+`expected` is now `total`, and `failedToDispatch` is now `notDispatched`. `notStarted` is gone — it was always reported as `0` and never carried information. `rejected` is new and is always `0` for a batch step; it counts declined approvals on approval waits. The `exceptions` list is replaced by `signals`, which describes **every** batch rather than only the ones that did not succeed: each entry carries the batch index as `sequence`, an `outcome` of `SUCCEEDED`, `FAILED`, `CANCELED`, `NOT_DISPATCHED` or `PENDING`, and the `runId` of the run it produced. A step that waited on more than 100 batches reports `signalsTruncated: true` in place of the list.
+
+`barrierId`, `totalItems`, `batchSize`, `succeeded`, `failed`, `canceled`, `stillRunning` and `timedOut` are unchanged.
+
+### Do you need to take action?
+- Only if a flow reads the Process in Batches summary in an expression or a code step. Rename `expected` to `total` and `failedToDispatch` to `notDispatched`, drop any reference to `notStarted`, and rewrite an `exceptions` read as `signals` filtered on `outcome` — for example `{{ step_1.output.signals }}` filtered to entries whose `outcome` is not `SUCCEEDED`.
+- No database action is required. Runs that completed before the upgrade keep the summary they were written with.
+
 ## 0.87.0
 
 ### What has changed?

@@ -41,16 +41,19 @@ When every batch has finished, the step continues with a summary:
 | Field | Meaning |
 | --- | --- |
 | `barrierId` | the id that identifies this fan-out — quote it when asking an administrator to look a run up |
-| `totalItems`, `batchSize` | what was split, and how |
-| `expected` | how many batches were dispatched |
+| `totalItems`, `batchSize` | what was split, and how. `batchSize` is the size actually used, which may be larger than the one you asked for (see below) |
+| `total` | how many batches the step waited on |
 | `succeeded`, `failed`, `canceled` | how they ended |
-| `notStarted`, `failedToDispatch` | batches that never ran |
+| `notDispatched` | batches that never started, because the step could not dispatch them |
 | `stillRunning` | batches still running when the wait timed out |
+| `rejected` | always `0` for a batch step — the field belongs to the shared wait shape, where it counts declined approvals |
 | `timedOut` | whether the wait ended on its deadline rather than on the last batch |
-| `exceptions` | one entry per batch that did not succeed: `batchIndex`, the `itemStart`/`itemCount` it covered, a `status` of `failed`, `notStarted` or `failedToDispatch`, and `childRunId` — which is set only for `failed`, since the other two never produced a run |
+| `signals` | one entry per batch, in order: its `sequence` (the batch index), an `outcome` of `SUCCEEDED`, `FAILED`, `CANCELED`, `NOT_DISPATCHED` or `PENDING`, the `runId` of the run it produced (`null` when it never ran), and a `result` |
+| `signalsTruncated` | present and `true` instead of `signals` when the step waited on more than 100 batches |
 
-The summary does **not** list successful batches. To open one, use the batch browser on the run detail
-page (below).
+Unlike the old `exceptions` list, `signals` covers **every** batch, not only the ones that failed — filter it
+on `outcome` to get just the failures. To open a batch's run, use the batch browser on the run detail page
+(below).
 
 By default a failed batch fails the step. Turn on **Continue on Failure** to have the step succeed and
 hand the summary to the steps after it — a Router on `failed` is the usual next move.
@@ -59,6 +62,11 @@ hand the summary to the steps after it — a Router on `failed` is the usual nex
 
 Batch size is the one number to get right, and there is no single correct value. Four ceilings decide it,
 in this order.
+
+One hard cap sits above all four: a single step may not dispatch more than 10 000 batches (your
+administrator sets `AP_MAX_BARRIER_SIGNALS`). If your batch size would produce more than that, Activepieces
+**raises the batch size** so the count fits and reports the size it actually used in the summary. It never
+silently drops items.
 
 <Steps>
   <Step title="What the downstream service tolerates">
@@ -101,9 +109,10 @@ These are deliberate, not bugs. They are the price of running batches as indepen
 
 1. **Retry from the failed step re-runs batches that already succeeded.** With 100 batches and one failure,
    99 batches of external side effects happen a second time. Retrying many runs at once multiplies it.
-2. **Dispatched batches cannot be stopped.** Cancelling reaches a batch only while its whole chain is
-   queued or paused. An approval nested inside a running batch cannot be cancelled at all — it expires with
-   the paused-run timeout.
+2. **Batches already running cannot be stopped.** Cancelling the parent stops batches that have not been
+   created yet — usually within one batch — and reaches those whose whole chain is still queued or paused.
+   A batch already running is not interrupted, and an approval nested inside one cannot be cancelled at all:
+   it expires with the paused-run timeout.
 3. **Continue on Failure plus a timed-out wait yields a succeeded run with batches still writing.** The
    only trace is `timedOut: true` and a `stillRunning` count — the summary carries no ids for those
    batches. An administrator can find them from the summary's `barrierId`.

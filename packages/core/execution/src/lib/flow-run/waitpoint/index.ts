@@ -1,70 +1,127 @@
+import { isNil } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { RespondResponse } from '../execution/flow-execution'
 
+export function shouldReleaseBarrier({ policy, sealed, counts }: ShouldReleaseBarrierParams): boolean {
+    if (policy?.releaseOnFirstFailure === true && UNFAVOURABLE_SIGNAL_STATUSES.some((status) => countOf({ counts, status }) > 0)) {
+        return true
+    }
+    if (!isNil(policy?.requiredSuccesses) && countOf({ counts, status: BarrierSignalStatus.SUCCEEDED }) >= policy.requiredSuccesses) {
+        return true
+    }
+    if (!sealed) {
+        return false
+    }
+    return countOf({ counts, status: BarrierSignalStatus.PENDING }) === 0
+}
+
+function countOf({ counts, status }: { counts: BarrierSignalCounts, status: BarrierSignalStatus }): number {
+    return counts[status] ?? 0
+}
+
 export const WaitpointVersion = z.enum(['V0', 'V1'])
 export type WaitpointVersion = z.infer<typeof WaitpointVersion>
+
+export enum BarrierSignalStatus {
+    PENDING = 'PENDING',
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+    REJECTED = 'REJECTED',
+    CANCELED = 'CANCELED',
+    NOT_DISPATCHED = 'NOT_DISPATCHED',
+}
+
+export const BarrierPolicy = z.object({
+    requiredSuccesses: z.number().int().positive().optional(),
+    releaseOnFirstFailure: z.boolean().optional(),
+    reasonRequiredOn: z.enum(['none', 'reject', 'both']).optional(),
+})
+export type BarrierPolicy = z.infer<typeof BarrierPolicy>
+
+export const BarrierFanOutSource = z.object({
+    entryStepName: z.string(),
+    batchSize: z.number().int().positive(),
+    items: z.array(z.unknown()),
+    seedSteps: z.record(z.string(), z.unknown()),
+})
+export type BarrierFanOutSource = z.infer<typeof BarrierFanOutSource>
+
+export const CreateBarrierRequest = z.object({
+    policy: BarrierPolicy.optional(),
+    fanOut: BarrierFanOutSource.optional(),
+    signals: z.array(z.object({ label: z.string().optional() })).optional(),
+})
+export type CreateBarrierRequest = z.infer<typeof CreateBarrierRequest>
 
 export const CreateWaitpointRequest = z.object({
     flowRunId: z.string(),
     projectId: z.string(),
     stepName: z.string(),
-    type: z.enum(['DELAY', 'WEBHOOK']),
+    type: z.enum(['DELAY', 'WEBHOOK', 'BARRIER']),
     version: WaitpointVersion,
     resumeDateTime: z.string().optional(),
     responseToSend: RespondResponse.optional(),
     workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
-    isFanIn: z.boolean().optional(),
-    intendedChildren: z.number().int().nonnegative().optional(),
-    dispatchDigest: z.string().optional(),
+    barrier: CreateBarrierRequest.optional(),
 })
 export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
 
-export const FanInBarrierState = z.object({
-    sealed: z.boolean(),
-    expectedChildren: z.number().int().nonnegative().nullable(),
-    dispatchedIndices: z.array(z.number().int().nonnegative()),
+export const BarrierCreatedState = z.object({
+    signalCount: z.number().int().nonnegative(),
+    batchSize: z.number().int().positive(),
+    signals: z.array(z.object({
+        label: z.string().nullable(),
+        confirmUrl: z.string(),
+    })).optional(),
 })
-export type FanInBarrierState = z.infer<typeof FanInBarrierState>
+export type BarrierCreatedState = z.infer<typeof BarrierCreatedState>
 
 export const CreateWaitpointResponse = z.object({
     id: z.string(),
     resumeUrl: z.string(),
-    fanIn: FanInBarrierState.optional(),
+    barrier: BarrierCreatedState.optional(),
 })
 export type CreateWaitpointResponse = z.infer<typeof CreateWaitpointResponse>
 
-export const SealFanInBarrierRequest = z.object({
-    projectId: z.string(),
-    expectedChildren: z.number().int().nonnegative(),
-    failedToDispatch: z.number().int().nonnegative().optional(),
-    timeoutAt: z.string().optional(),
-})
-export type SealFanInBarrierRequest = z.infer<typeof SealFanInBarrierRequest>
-
-export const FanInException = z.object({
+export const BarrierSignalSummary = z.object({
+    sequence: z.number().int().nullable(),
+    label: z.string().nullable(),
+    outcome: z.enum(BarrierSignalStatus),
+    result: z.unknown().nullable(),
     runId: z.string().nullable(),
-    dispatchIndex: z.number().int().nullable(),
 })
-export type FanInException = z.infer<typeof FanInException>
+export type BarrierSignalSummary = z.infer<typeof BarrierSignalSummary>
 
-export const FanInSummary = z.object({
-    expected: z.number().int().nonnegative(),
+export const BarrierSummary = z.object({
+    total: z.number().int().nonnegative(),
     succeeded: z.number().int().nonnegative(),
     failed: z.number().int().nonnegative(),
+    rejected: z.number().int().nonnegative(),
     canceled: z.number().int().nonnegative(),
+    notDispatched: z.number().int().nonnegative(),
     stillRunning: z.number().int().nonnegative(),
-    notStarted: z.number().int().nonnegative(),
-    failedToDispatch: z.number().int().nonnegative(),
     timedOut: z.boolean(),
-    exceptions: z.array(FanInException),
+    signals: z.array(BarrierSignalSummary).optional(),
+    signalsTruncated: z.boolean().optional(),
 })
-export type FanInSummary = z.infer<typeof FanInSummary>
+export type BarrierSummary = z.infer<typeof BarrierSummary>
 
-export const SealFanInBarrierResponse = z.object({
-    expectedChildren: z.number().int().nonnegative(),
-    alreadySealed: z.boolean(),
-    released: z.boolean(),
-    timeoutAt: z.string(),
-})
-export type SealFanInBarrierResponse = z.infer<typeof SealFanInBarrierResponse>
+export const MAX_INLINE_BARRIER_SIGNALS = 100
+
+export const MAX_SIGNAL_REASON_LENGTH = 2000
+
+export const UNFAVOURABLE_SIGNAL_STATUSES = [
+    BarrierSignalStatus.FAILED,
+    BarrierSignalStatus.REJECTED,
+    BarrierSignalStatus.CANCELED,
+    BarrierSignalStatus.NOT_DISPATCHED,
+]
+
+export type BarrierSignalCounts = Partial<Record<BarrierSignalStatus, number>>
+
+export type ShouldReleaseBarrierParams = {
+    policy: BarrierPolicy | null | undefined
+    sealed: boolean
+    counts: BarrierSignalCounts
+}

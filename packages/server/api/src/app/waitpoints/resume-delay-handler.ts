@@ -1,10 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { SystemJobData, SystemJobName } from '../../../helper/system-jobs/common'
-import { flowRunService } from '../flow-run-service'
-import { fanInBarrier } from './fan-in-barrier'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { SystemJobData, SystemJobName } from '../helper/system-jobs/common'
+import { barrierService } from './barrier-service'
 import { resumeService } from './resume-service'
 import { waitpointService } from './waitpoint-service'
 
@@ -36,7 +36,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
         '[RESUME_DELAY_WAITPOINT] Resuming flow')
 
-    if (!waitpoint.isFanIn) {
+    if (waitpoint.type !== PauseType.BARRIER) {
         await resumeService(log).resumeFromWaitpoint({
             flowRunId: data.flowRunId,
             waitpointId: data.waitpointId,
@@ -45,29 +45,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
         return
     }
 
-    const counts = await fanInBarrier.countChildren({ parentWaitpointId: waitpoint.id, projectId: data.projectId })
-    const result = await waitpointService(log).completeFanInBarrier({
-        barrier: waitpoint,
-        projectId: data.projectId,
-        counts,
-        releaseReason: 'timeout',
-    })
-    const released = result.waitpoint ?? await waitpointService(log).findFanInBarrierById({ waitpointId: waitpoint.id, projectId: data.projectId })
-    if (isNil(released)) {
-        log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: waitpoint.id } },
-            '[RESUME_DELAY_WAITPOINT] Barrier was already released and consumed by another evaluator, nothing to resume')
-        return
-    }
-    if (!result.completedExisting) {
-        log.warn({ flowRun: { id: data.flowRunId }, waitpoint: { id: waitpoint.id } },
-            '[RESUME_DELAY_WAITPOINT] Barrier was already completed without a resume reaching the queue, recovering it with the stored verdict')
-    }
-    await resumeService(log).resumeFromWaitpoint({
-        flowRunId: data.flowRunId,
-        waitpointId: waitpoint.id,
-        resumePayload: released.resumePayload,
-        releasingFanInBarrier: true,
-    })
+    await barrierService(log).release({ barrier: waitpoint, timedOut: true, releaseReason: 'timeout' })
 }
 
 type HandleResumeDelayWaitpointParams = {

@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  BarrierSignalStatus,
   FlowActionType,
   FlowRunStatus,
   FlowTriggerType,
@@ -15,7 +16,7 @@ function parseStepOutput(output: unknown): BatchStepRunOutput | null {
 }
 
 function batchCount(output: BatchStepRunOutput): number {
-  return output.expected ?? Math.ceil(output.totalItems / output.batchSize);
+  return output.total ?? Math.ceil(output.totalItems / output.batchSize);
 }
 
 function isSkippedOnEmptyItems({
@@ -95,13 +96,10 @@ function failedToDispatchAt({
   output: BatchStepRunOutput;
   batchIndex: number;
 }): boolean {
-  return (
-    (output.failedToDispatchIndices ?? []).includes(batchIndex) ||
-    (output.exceptions ?? []).some(
-      (exception) =>
-        exception.batchIndex === batchIndex &&
-        exception.status === 'failedToDispatch',
-    )
+  return (output.signals ?? []).some(
+    (signal) =>
+      signal.sequence === batchIndex &&
+      signal.outcome === BarrierSignalStatus.NOT_DISPATCHED,
   );
 }
 
@@ -118,14 +116,13 @@ const BatchStepRunOutput = z.object({
   barrierId: z.string().nullable(),
   totalItems: z.number().int().nonnegative(),
   batchSize: z.number().int().positive(),
-  expected: z.number().int().nonnegative().optional(),
-  failedToDispatchIndices: z.array(z.number().int().nonnegative()).optional(),
-  exceptions: z
+  total: z.number().int().nonnegative().optional(),
+  signals: z
     .array(
       z.object({
-        batchIndex: z.number().int().nonnegative(),
-        status: z.enum(['failed', 'notStarted', 'failedToDispatch']),
-        childRunId: z.string().nullable(),
+        sequence: z.number().int().nonnegative().nullable(),
+        outcome: z.enum(BarrierSignalStatus),
+        runId: z.string().nullable(),
       }),
     )
     .optional(),

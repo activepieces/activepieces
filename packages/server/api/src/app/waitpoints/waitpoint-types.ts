@@ -1,5 +1,5 @@
 import { ApId } from '@activepieces/core-utils'
-import { FanInBarrierState, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
+import { BarrierPolicy, BarrierSignalStatus, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
@@ -32,10 +32,21 @@ type Waitpoint = {
     workerHandlerId: string | null
     httpRequestId: string | null
     resumePayload: WaitpointResumePayload | null
-    isFanIn: boolean
-    expectedChildren: number | null
-    failedToDispatch: number
-    dispatchDigest: string | null
+    sealed: boolean
+    policy: BarrierPolicy | null
+}
+
+type WaitpointSignal = {
+    id: ApId
+    created: string
+    updated: string
+    waitpointId: ApId
+    projectId: ApId
+    status: BarrierSignalStatus
+    refId: string | null
+    sequence: number | null
+    label: string | null
+    result: Record<string, unknown> | null
 }
 
 type CreateForPauseParams = {
@@ -48,15 +59,11 @@ type CreateForPauseParams = {
     responseToSend?: RespondResponse
     workerHandlerId?: string
     httpRequestId?: string
-    isFanIn?: boolean
-    intendedChildren?: number
-    dispatchDigest?: string
 }
 
 type CreateForPauseResult = {
     inserted: boolean
     waitpoint: Waitpoint
-    fanIn?: FanInBarrierState
 }
 
 type CompleteParams = {
@@ -88,4 +95,4 @@ type FindPendingByVersionParams = {
 }
 
 export { WaitpointStatus, WaitpointVersionEnum }
-export type { Waitpoint, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, FindPendingByVersionParams, HandleResumeSignalParams }
+export type { Waitpoint, WaitpointSignal, WaitpointResumePayload, CreateForPauseParams, CreateForPauseResult, CompleteParams, CompleteResult, FindPendingByVersionParams, HandleResumeSignalParams }

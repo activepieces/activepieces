@@ -1,8 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { systemJobIds, SystemJobName } from '../../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
+import { systemJobIds, SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 
 async function schedule({ flowRunId, projectId, waitpointId, resumeDateTime, log }: ScheduleParams): Promise<void> {
     await systemJobsSchedule(log).upsertJob({

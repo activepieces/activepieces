@@ -1,17 +1,13 @@
-import { createHash } from 'node:crypto'
-import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FanInBarrierState, FanInSummary, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { BarrierSummary, DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
-import { childRunClient } from '../piece-context/child-run-client'
 import { waitpointClient } from '../piece-context/waitpoint-client'
 import { utils } from '../utils'
 import { extractReferencedStepNames } from '../variables/props-resolver'
 import { BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { FlowExecutorContext } from './context/flow-execution-context'
-
-const MAX_DISPATCHES_IN_FLIGHT = 5
 
 export const processInBatchesExecutor: BaseExecutor<ProcessInBatchesAction> = {
     async handle({ action, executionState, constants }) {
@@ -21,11 +17,11 @@ export const processInBatchesExecutor: BaseExecutor<ProcessInBatchesAction> = {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
-        return dispatchBatches({ action, executionState, constants })
+        return handOverToDispatcher({ action, executionState, constants })
     },
 }
 
-async function dispatchBatches({ action, executionState, constants }: ExecuteParams): Promise<FlowExecutorContext> {
+async function handOverToDispatcher({ action, executionState, constants }: ExecuteParams): Promise<FlowExecutorContext> {
     const stepStartTime = performance.now()
     const stepOutput = GenericStepOutput.create({
         input: {},
@@ -43,69 +39,41 @@ async function dispatchBatches({ action, executionState, constants }: ExecutePar
             throw userError({ name: 'ProcessInBatchesItemsNotAList', message: 'The items you have selected must be a list.' })
         }
         const items = resolvedInput.items
-        const batchSize = action.settings.batchSize ?? DEFAULT_BATCH_SIZE
-        const batches = chunk(items, batchSize)
+        const requestedBatchSize = action.settings.batchSize ?? DEFAULT_BATCH_SIZE
         const bodyEntryStep = action.firstLoopAction
 
         if (!isNil(constants.stepNameToTest)) {
-            return succeed({ action, executionState, stepOutput, output: { items: batches[0] ?? [] }, stepStartTime })
+            return succeed({ action, executionState, stepOutput, output: { items: items.slice(0, requestedBatchSize) }, stepStartTime })
         }
-        if (batches.length === 0 || isNil(bodyEntryStep)) {
-            return succeed({ action, executionState, stepOutput, output: emptySummary({ totalItems: items.length, batchSize }), stepStartTime })
+        if (items.length === 0 || isNil(bodyEntryStep)) {
+            return succeed({ action, executionState, stepOutput, output: emptySummary({ totalItems: items.length, batchSize: requestedBatchSize }), stepStartTime })
         }
 
-        const seed = buildSeed({ action, executionState, constants })
-        const barrier = await waitpointClient.create({
+        const created = await waitpointClient.create({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
             flowRunId: constants.flowRunId,
             projectId: constants.projectId,
-            stepName: action.name,
-            type: PauseType.WEBHOOK,
+            stepName: executionState.currentPath.toWaitpointKey(action.name),
+            type: PauseType.BARRIER,
             version: 'V1',
-            isFanIn: true,
-            intendedChildren: batches.length,
-            dispatchDigest: digestOf(items),
-        })
-
-        const dispatchBatch = async (batchIndex: number): Promise<void> => {
-            const { attributedToBarrier } = await childRunClient.dispatch({
-                apiUrl: constants.internalApiUrl,
-                engineToken: constants.engineToken,
-                parentRunId: constants.flowRunId,
-                entryStepName: bodyEntryStep.name,
-                seedSteps: { ...seed, [action.name]: batchOutput(batches[batchIndex]) },
-                parentWaitpointId: barrier.id,
-                dispatchIndex: batchIndex,
-                dispatchKey: `${barrier.id}-${batchIndex}`,
-            })
-            if (!attributedToBarrier) {
-                throw userError({ name: 'ProcessInBatchesBatchUnattributed', message: `Batch ${batchIndex} started without being attached to this step, so this step can never learn how it ended.` })
-            }
-        }
-
-        const fanIn = barrier.fanIn ?? FRESH_BARRIER
-        const remaining = fanIn.sealed ? [] : missingIndices({ batchCount: batches.length, dispatchedIndices: fanIn.dispatchedIndices })
-        const nothingDispatchedYet = fanIn.dispatchedIndices.length === 0
-        if (nothingDispatchedYet && remaining.length > 0) {
-            await dispatchBatch(remaining[0])
-        }
-        const failedToDispatchIndices = await dispatchConcurrently({
-            indices: nothingDispatchedYet ? remaining.slice(1) : remaining,
-            dispatchBatch,
-        })
-
-        await waitpointClient.seal({
-            apiUrl: constants.internalApiUrl,
-            engineToken: constants.engineToken,
-            waitpointId: barrier.id,
-            projectId: constants.projectId,
-            expectedChildren: batches.length - failedToDispatchIndices.length,
-            failedToDispatch: failedToDispatchIndices.length,
+            barrier: {
+                fanOut: {
+                    entryStepName: bodyEntryStep.name,
+                    batchSize: requestedBatchSize,
+                    items: [...items],
+                    seedSteps: buildSeed({ action, executionState, constants }),
+                },
+            },
         })
 
         const paused = stepOutput
-            .setOutput({ barrierId: barrier.id, totalItems: items.length, batchSize, failedToDispatchIndices })
+            .setOutput({
+                barrierId: created.id,
+                totalItems: items.length,
+                batchSize: created.barrier?.batchSize ?? requestedBatchSize,
+                total: created.barrier?.signalCount ?? 0,
+            })
             .setStatus(StepOutputStatus.PAUSED)
             .setDuration(performance.now() - stepStartTime)
         return (await executionState.upsertStep(action.name, paused))
@@ -127,7 +95,7 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
         type: FlowActionType.PROCESS_IN_BATCHES,
         status: StepOutputStatus.RUNNING,
     })
-    const released = FanInSummary.safeParse(constants.resumePayload?.body)
+    const released = BarrierSummary.safeParse(constants.resumePayload?.body)
     if (!released.success) {
         return failStep({
             action,
@@ -138,42 +106,22 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
         })
     }
     const pending = PendingBatches.safeParse(pausedOutput?.output).data ?? NOTHING_PENDING
-    const summary = toBatchSummary({ released: released.data, pending })
+    const summary: BatchStepSummary = { ...pending, ...released.data }
+    const unsuccessful = summary.failed + summary.rejected + summary.notDispatched
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
 
-    if (!continueOnFailure && (summary.failed > 0 || summary.timedOut)) {
+    if (!continueOnFailure && (unsuccessful > 0 || summary.timedOut)) {
         return failStep({
             action,
             executionState,
             stepOutput: stepOutput.setOutput(summary),
             error: summary.timedOut
                 ? userError({ name: 'ProcessInBatchesTimedOut', message: `Process in Batches timed out with ${summary.stillRunning} batches still running.` })
-                : userError({ name: 'ProcessInBatchesBatchFailed', message: `${summary.failed} of ${summary.expected} batches failed.` }),
+                : userError({ name: 'ProcessInBatchesBatchFailed', message: `${unsuccessful} of ${summary.total} batches failed.` }),
             durationMs: performance.now() - stepStartTime,
         })
     }
     return succeed({ action, executionState, stepOutput, output: summary, stepStartTime })
-}
-
-function missingIndices({ batchCount, dispatchedIndices }: MissingIndicesParams): number[] {
-    const dispatched = new Set(dispatchedIndices)
-    return Array.from({ length: batchCount }, (_, batchIndex) => batchIndex).filter((batchIndex) => !dispatched.has(batchIndex))
-}
-
-async function dispatchConcurrently({ indices, dispatchBatch }: DispatchConcurrentlyParams): Promise<number[]> {
-    const pending = [...indices]
-    const failedToDispatchIndices: number[] = []
-    const dispatchUntilDrained = async (): Promise<void> => {
-        for (let batchIndex = pending.shift(); !isNil(batchIndex); batchIndex = pending.shift()) {
-            const { error } = await tryCatch(() => dispatchBatch(batchIndex))
-            if (!isNil(error)) {
-                failedToDispatchIndices.push(batchIndex)
-            }
-        }
-    }
-    const workers = Math.min(MAX_DISPATCHES_IN_FLIGHT, pending.length)
-    await Promise.all(Array.from({ length: workers }, dispatchUntilDrained))
-    return failedToDispatchIndices.sort((a, b) => a - b)
 }
 
 function buildSeed({ action, executionState, constants }: ExecuteParams): Record<string, StepOutput> {
@@ -197,69 +145,21 @@ function assertNotScopedToEnclosingIteration({ stepName, executionState }: Asser
     throw userError({ name: 'ProcessInBatchesIterationScopedReference', message: `A step inside this batch references "${stepName}", which belongs to the enclosing loop iteration and cannot travel to a batch. Move that step outside the loop, or copy the value it needs into a step above the batch.` })
 }
 
-function toBatchSummary({ released, pending }: ToBatchSummaryParams): BatchSummary {
-    return {
-        barrierId: pending.barrierId,
-        totalItems: pending.totalItems,
-        batchSize: pending.batchSize,
-        expected: released.expected,
-        succeeded: released.succeeded,
-        failed: released.failed,
-        canceled: released.canceled,
-        stillRunning: released.stillRunning,
-        notStarted: released.notStarted,
-        failedToDispatch: released.failedToDispatch,
-        timedOut: released.timedOut,
-        exceptions: released.exceptions.flatMap((exception) => {
-            if (isNil(exception.dispatchIndex)) {
-                return []
-            }
-            const itemStart = exception.dispatchIndex * pending.batchSize
-            return [{
-                batchIndex: exception.dispatchIndex,
-                itemStart,
-                itemCount: Math.max(Math.min(pending.batchSize, pending.totalItems - itemStart), 0),
-                status: exceptionStatus({ hasRun: !isNil(exception.runId), batchIndex: exception.dispatchIndex, pending }),
-                childRunId: exception.runId,
-            }]
-        }),
-    }
-}
-
-function exceptionStatus({ hasRun, batchIndex, pending }: ExceptionStatusParams): BatchExceptionStatus {
-    if (hasRun) {
-        return 'failed'
-    }
-    return pending.failedToDispatchIndices.includes(batchIndex) ? 'failedToDispatch' : 'notStarted'
-}
-
-function batchOutput(items: unknown[]): StepOutput {
-    return GenericStepOutput.create({
-        input: {},
-        type: FlowActionType.PROCESS_IN_BATCHES,
-        status: StepOutputStatus.SUCCEEDED,
-    }).setOutput({ items })
-}
-
-function emptySummary({ totalItems, batchSize }: EmptySummaryParams): BatchSummary {
+function emptySummary({ totalItems, batchSize }: EmptySummaryParams): BatchStepSummary {
     return {
         barrierId: null,
         totalItems,
         batchSize,
-        expected: 0,
+        total: 0,
         succeeded: 0,
         failed: 0,
+        rejected: 0,
         canceled: 0,
+        notDispatched: 0,
         stillRunning: 0,
-        notStarted: 0,
-        failedToDispatch: 0,
         timedOut: false,
-        exceptions: [],
+        signals: [],
     }
-}
-
-function digestOf(items: unknown[]): string {
-    return createHash('sha256').update(JSON.stringify(items)).digest('hex')
 }
 
 function userError({ name, message }: UserErrorParams): ExecutionError {
@@ -280,20 +180,12 @@ const PendingBatches = z.object({
     barrierId: z.string().nullable().default(null),
     totalItems: z.number().int().nonnegative(),
     batchSize: z.number().int().positive(),
-    failedToDispatchIndices: z.array(z.number().int().nonnegative()),
 })
-
-const FRESH_BARRIER: FanInBarrierState = {
-    sealed: false,
-    expectedChildren: null,
-    dispatchedIndices: [],
-}
 
 const NOTHING_PENDING: PendingBatches = {
     barrierId: null,
     totalItems: 0,
     batchSize: 1,
-    failedToDispatchIndices: [],
 }
 
 type PendingBatches = z.infer<typeof PendingBatches>
@@ -308,35 +200,14 @@ type ExecuteParams = {
     constants: EngineConstants
 }
 
-type MissingIndicesParams = {
-    batchCount: number
-    dispatchedIndices: number[]
-}
-
-type DispatchConcurrentlyParams = {
-    indices: number[]
-    dispatchBatch: (batchIndex: number) => Promise<void>
-}
-
 type AssertNotScopedParams = {
     stepName: string
     executionState: FlowExecutorContext
 }
 
-type ToBatchSummaryParams = {
-    released: FanInSummary
-    pending: PendingBatches
-}
-
 type UserErrorParams = {
     name: string
     message: string
-}
-
-type ExceptionStatusParams = {
-    hasRun: boolean
-    batchIndex: number
-    pending: PendingBatches
 }
 
 type EmptySummaryParams = {
@@ -352,25 +223,4 @@ type SucceedParams = {
     stepStartTime: number
 }
 
-export type BatchExceptionStatus = 'failed' | 'notStarted' | 'failedToDispatch'
-
-export type BatchSummary = {
-    barrierId: string | null
-    totalItems: number
-    batchSize: number
-    expected: number
-    succeeded: number
-    failed: number
-    canceled: number
-    stillRunning: number
-    notStarted: number
-    failedToDispatch: number
-    timedOut: boolean
-    exceptions: {
-        batchIndex: number
-        itemStart: number
-        itemCount: number
-        status: BatchExceptionStatus
-        childRunId: string | null
-    }[]
-}
+export type BatchStepSummary = PendingBatches & BarrierSummary

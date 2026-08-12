@@ -8,13 +8,13 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
+import { resumeController } from '../../waitpoints/resume-controller'
+import { handleResumeDelayWaitpoint } from '../../waitpoints/resume-delay-handler'
+import { waitpointController } from '../../waitpoints/waitpoint-controller'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunRepo } from './flow-run-service'
-import { resumeController } from './waitpoint/resume-controller'
-import { handleResumeDelayWaitpoint } from './waitpoint/resume-delay-handler'
-import { waitpointController } from './waitpoint/waitpoint-controller'
 
 const RUN_TELEMETRY_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 

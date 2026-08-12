@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { DispatchChildRunResponse, ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -15,6 +15,8 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { barrierService } from '../../waitpoints/barrier-service'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -24,7 +26,6 @@ import { FlowRunEntity, FlowRunWithDispatchIndex } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 import { streamStepProgressUtils } from './stream-step-progress'
-import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -342,7 +343,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
-    async dispatchChild({ projectId, parentRunId, entryStepName, seedSteps, parentWaitpointId, dispatchIndex, dispatchKey }: DispatchChildParams): Promise<DispatchChildRunResponse> {
+    async dispatchChild({ childRunId, projectId, parentRunId, entryStepName, seedSteps, parentWaitpointId, dispatchIndex, dispatchKey }: DispatchChildParams): Promise<void> {
         const parentRun = await flowRunRepo().findOneBy({ id: parentRunId, projectId })
         if (isNil(parentRun)) {
             throw new ActivepiecesError({
@@ -357,45 +358,32 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 params: { message: `The step ${entryStepName} does not exist in this flow version, so a child run cannot start from it.` },
             })
         }
-        const barrier = isNil(parentWaitpointId)
-            ? null
-            : await waitpointService(log).findFanInBarrierById({ waitpointId: parentWaitpointId, projectId })
-        if (!isNil(parentWaitpointId) && isNil(barrier)) {
-            log.warn({ flowRun: { id: parentRunId }, waitpoint: { id: parentWaitpointId } }, '[flowRunService#dispatchChild] The fan-in barrier does not resolve in this project; dispatching the child without attribution')
+        const barrier = await barrierService(log).findById({ barrierId: parentWaitpointId, projectId })
+        if (isNil(barrier)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'waitpoint', entityId: parentWaitpointId, message: 'The barrier this child would be attributed to no longer exists, so the child must not be created.' },
+            })
         }
 
         const platformId = await projectService(log).getPlatformId(projectId)
         const now = new Date().toISOString()
-        const id = apId()
-        await flowRunDispatchRepo()
-            .createQueryBuilder()
-            .insert()
-            .into('flow_run')
-            .values({
-                id,
-                projectId,
-                flowId: parentRun.flowId,
-                flowVersionId: parentRun.flowVersionId,
-                environment: parentRun.environment,
-                parentRunId,
-                parentWaitpointId: barrier?.id ?? null,
-                dispatchIndex,
-                failParentOnFailure: false,
-                status: FlowRunStatus.QUEUED,
-                created: now,
-                updated: now,
-                tags: [],
-            })
-            .orIgnore()
-            .execute()
-
-        const childRun = isNil(barrier)
-            ? await flowRunDispatchRepo().findOneByOrFail({ id, projectId })
-            : await flowRunDispatchRepo().findOneByOrFail({ projectId, parentWaitpointId: barrier.id, dispatchIndex })
-        if (childRun.id !== id) {
-            log.info({ flowRun: { id: childRun.id }, project: { id: projectId }, waitpoint: { id: barrier?.id }, dispatchIndex }, '[flowRunService#dispatchChild] This barrier already has a child for this dispatch index; returning it instead of dispatching a duplicate')
-            return { id: childRun.id, attributedToBarrier: true }
-        }
+        await flowRunDispatchRepo().insert({
+            id: childRunId,
+            projectId,
+            flowId: parentRun.flowId,
+            flowVersionId: parentRun.flowVersionId,
+            environment: parentRun.environment,
+            parentRunId,
+            parentWaitpointId: barrier.id,
+            dispatchIndex,
+            failParentOnFailure: false,
+            status: FlowRunStatus.QUEUED,
+            created: now,
+            updated: now,
+            tags: [],
+        })
+        const childRun = await flowRunDispatchRepo().findOneByOrFail({ id: childRunId, projectId })
 
         const { error } = await tryCatch(() => addToQueue({
             flowRun: childRun,
@@ -415,9 +403,11 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             throw error
         }
 
-        await flowRunSideEffects(log).onStart({ flowRun: childRun, platformId })
-        log.info({ flowRun: { id: childRun.id }, project: { id: projectId }, waitpoint: { id: barrier?.id }, dispatchIndex }, '[flowRunService#dispatchChild] Child run dispatched')
-        return { id: childRun.id, attributedToBarrier: !isNil(barrier) }
+        const { error: sideEffectError } = await tryCatch(() => flowRunSideEffects(log).onStart({ flowRun: childRun, platformId }))
+        if (sideEffectError) {
+            log.error({ error: sideEffectError, flowRun: { id: childRun.id }, project: { id: projectId }, fanIn: { barrierId: barrier.id }, dispatchIndex }, '[flowRunService#dispatchChild] Child run was enqueued but its start side effects failed')
+        }
+        log.info({ flowRun: { id: childRun.id }, project: { id: projectId }, fanIn: { barrierId: barrier.id }, dispatchIndex }, '[flowRunService#dispatchChild] Child run dispatched')
     },
 
     async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, parentWaitpointId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
@@ -952,11 +942,12 @@ export type AddToQueueParams = AddToQueueParamsCommon & (
 )
 
 type DispatchChildParams = {
+    childRunId: FlowRunId
     projectId: ProjectId
     parentRunId: FlowRunId
     entryStepName: string
     seedSteps: Record<string, unknown>
-    parentWaitpointId?: string
+    parentWaitpointId: string
     dispatchIndex: number
     dispatchKey: string
 }

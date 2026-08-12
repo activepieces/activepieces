@@ -1,6 +1,6 @@
 import { PauseType, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { Waitpoint, WaitpointStatus, WaitpointVersionEnum } from './waitpoint-types'
 
 type WaitpointSchema = Waitpoint & {
@@ -60,23 +60,13 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
-        isFanIn: {
+        sealed: {
             type: Boolean,
             nullable: false,
             default: false,
         },
-        expectedChildren: {
-            type: Number,
-            nullable: true,
-        },
-        failedToDispatch: {
-            type: Number,
-            nullable: false,
-            default: 0,
-        },
-        dispatchDigest: {
-            type: String,
-            length: 64,
+        policy: {
+            type: 'jsonb',
             nullable: true,
         },
     },

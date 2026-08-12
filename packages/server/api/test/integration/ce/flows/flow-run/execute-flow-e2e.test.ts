@@ -1145,7 +1145,7 @@ describe('Execute Flow E2E', () => {
             valid: true,
             settings: {
                 sourceCode: {
-                    code: 'export const code = async (inputs) => ({ succeeded: inputs.summary.succeeded, expected: inputs.summary.expected })',
+                    code: 'export const code = async (inputs) => ({ succeeded: inputs.summary.succeeded, total: inputs.summary.total })',
                     packageJson: '{}',
                 },
                 input: { summary: '{{step_1[\'output\']}}' },
@@ -1226,17 +1226,16 @@ describe('Execute Flow E2E', () => {
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_1.output).toEqual(
             expect.objectContaining({
-                expected: 3,
+                total: 3,
                 succeeded: 3,
                 failed: 0,
+                rejected: 0,
+                notDispatched: 0,
                 stillRunning: 0,
-                notStarted: 0,
-                failedToDispatch: 0,
                 timedOut: false,
-                exceptions: [],
             }),
         )
-        expect(result.steps.step_3.output).toEqual({ succeeded: 3, expected: 3 })
+        expect(result.steps.step_3.output).toEqual({ succeeded: 3, total: 3 })
 
         const children = await databaseConnection().getRepository('flow_run').findBy({ parentRunId: flowRun.id })
         expect(children).toHaveLength(3)

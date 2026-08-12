@@ -2,50 +2,124 @@
 status: accepted
 ---
 
-# Fan-in is a derived-state waitpoint barrier, not a counter or a poll
+# A barrier is a waitpoint plus one pre-created signal row per awaited thing
 
 ## Decision
-A parent flow that fans out to N subflows and waits for all of them pauses on a single **fan-in barrier waitpoint** (`is_fan_in = true`) carrying `expected_children` (null until sealed). Each dispatched child is attributed to that barrier by `flow_run.parentWaitpointId`, carried on the dispatch as `ap-parent-waitpoint-id`. Release is a **predicate re-derived from committed child state**, re-evaluated at seal, on every child terminal transition, and at timeout:
+"Pause this run until N things report back" is **one generic mechanism**: a `waitpoint` of type `BARRIER`
+carrying `sealed` and a nullable `policy` jsonb, plus one `waitpoint_signal` row per awaited thing, created
+up front. A signal carries `id` (primary key **and** the resume-link token — a random `apId`), `refId` (the
+child run or approval link it stands for, set by a compare-and-set claim), nullable `sequence` (the
+producer's ordinal), nullable `label` (the human name in the summary) and a small `result` jsonb.
 
-```
-release ⟺ expected_children IS NOT NULL                          (sealed)
-        ∧ no non-terminal child WHERE parentWaitpointId = barrier
-        ∧ terminal children WHERE parentWaitpointId = barrier >= expected_children
-```
+Release is an **unconditional floor rule**: a sealed barrier releases once no signal is still `PENDING`. No
+configuration can produce a hang; `policy` only ever releases *sooner* —`requiredSuccesses` (K-of-N
+approvals) and `releaseOnFirstFailure` (veto). Evaluation is a coalesced `EVALUATE_BARRIER` job on a
+dedicated queue, deduplicated on the barrier id, owned by the waitpoints module. The check is `EXISTS`, not
+`COUNT(*)`; the counts are taken exactly once, when building the summary of a barrier that has already been
+decided. Signals are deleted on release, in the same transaction that completes the waitpoint — summary
+first, then complete, then delete.
 
-No counter, no poll, and no write to the barrier row from a child's transaction.
+This supersedes the `isFanIn` / `expectedChildren` / `failedToDispatch` / `dispatchDigest` barrier, which
+never shipped in a tagged release and was removed rather than migrated.
 
 ## Context
-A run has **at most one PENDING waitpoint at any instant** (sequential executor + short-circuiting PAUSED), and the runs-metadata worker already fires on every child terminal transition and already resumes the parent for the fail-parent case (`markParentRunAsFailed`). So the release predicate has an evaluator for free; what it needs is a way for a finishing child to name *which* barrier it belongs to. This replaces the earlier temporary fan-in that self-resumed on a 30s DELAY and polled a count endpoint every wake (up to ~120 pause→resume→replay cycles for a 60-min wait).
+Four asks need the same primitive: array batching into subflows, streaming CSV batching, request-approval
+waiting on **multiple** approvals (K-of-N, veto, accept/reject reasons), and later parallel branches. The
+previous barrier could serve only the first: it counted *child runs* by `parentWaitpointId`, so anything
+without a run row — a human approval, a batch that never dispatched — had no way to be awaited.
 
-An incremented `terminal_children` counter was implemented first and rejected. An event counter is not idempotent, and every way it breaks produces the **worst available failure mode — a premature release**, where the parent proceeds on incomplete data and the run still looks green. Concretely: `FROM_FAILED_STEP` resets a child to QUEUED *without going through the metadata queue*, so its next terminal transition increments a second time for one child; `ON_LATEST_VERSION` starts a new run that copies `parentRunId`; a re-delivered EXECUTE_FLOW job replays the dispatch loop and creates 2N children against an `expected` of N. Every one of those releases the barrier while real work is still running.
-
-The first working version scoped the predicate to **`parentRunId`** and needed an immutable `fan_in_baseline` watermark to stay barrier-relative, because children of a *previous* barrier in the same run share `parentRunId`. That worked but bought three defects: a create-time guard that rejected any run with a non-terminal child (so fire-and-forget fan-out and wait-for-all fan-in could not coexist), an approximate summary, and a narrow premature-release window where an unrelated `ON_LATEST_VERSION` retry could inflate the count enough to cover a dispatched child whose row had not landed yet. Per-barrier attribution was pulled while the barrier still had **no entry point and no live rows** — as a code change rather than a data migration.
+Counting children also forced three separate concepts for "a thing that will never report": `expectedChildren`
+minus what exists, `failedToDispatch`, and `notStarted`. And it forced `expectedChildren` to exist at all,
+purely because child rows appeared later than the dispatch that created them.
 
 ## Why
-- **Derived state is idempotent by construction.** A retried child, a re-delivered BullMQ event, a duplicated dispatch and a replayed step are all non-events: they change the predicate's inputs, it re-reads them, and it either blocks (correctly) or releases (correctly). A retried child is non-terminal, so it *blocks* release and then releases again when it finishes. A doubled dispatch means the barrier waits for all 2N — late, but never short.
-- **Attribution per barrier, not per run, is what makes the count exact.** `parentWaitpointId` is set from the header at run creation, so the barrier counts only its own children. That deletes the baseline, the create-time guard, the mixed-pattern limitation and the premature-release window in one move, and makes the summary exact instead of baseline-subtracted. The barrier row exists before the first dispatch (create → dispatch → seal), so the id is always available to put on the wire. Timestamp scoping was rejected as the alternative: `flow_run.created` is app-clock while `waitpoint.created` is DB-clock, and skew breaks it in both directions.
-- **Exactly-once release rests on one mechanism, not three layers of counting.** Any number of evaluators may independently agree the predicate holds; `complete()`'s `SELECT … FOR UPDATE` + `status = PENDING` predicate admits exactly one, and `enqueueResume`'s `${runId}-resume-${waitpointId}` jobId dedupes the queue side.
-- **Removing the counter also removes a load ceiling.** The `+1` was a `SELECT … FOR UPDATE` on one row held for the rest of the child's transaction, serialising every child of a wide fan-out behind a single row while Redlock blocks up to 30s before failing. Under the predicate, only the last finishing child sees `stillRunning = 0`, so `complete()`'s lock is a multi-server tiebreak rather than the hot path.
-- **Crash recovery is a deliberate property, not an accident.** `complete()` and the resume enqueue are separate transactions, so a crash between them leaves a COMPLETED barrier with no resume. Three independent re-checks recover it: the runs-metadata job's own redelivery (`attempts: 5` plus BullMQ stall redelivery), the timeout job (which completes-or-recovers and then resumes **unconditionally**, using the stored payload so a normal verdict is not relabelled as a timeout), and the existing PAUSED-upload reconciliation. `handleResumeSignal`'s PAUSED branch deliberately omits a status filter so a COMPLETED barrier can still be consumed by id — do not add one.
-- **The timeout job is keyed per waitpoint** (`resume-delay-<waitpointId>`), not per run, and is removed when the waitpoint is consumed. `upsertJob` silently no-ops when a job already exists under the same id, and `patternChanged` is structurally false for one-time schedules, so the old per-run id meant a leftover 60-minute barrier timeout blocked the *next* `upsertJob` in that run — a second fan-in, or even a plain Delay step, would get no timeout backstop at all.
-- **Every sealed barrier has a timeout job — the invariant, not a caller convention.** A seal that omits one gets a 1-hour default server-side (and a warn) rather than no job at all; requested timeouts are still clamped to the `AP_PAUSED_FLOW_TIMEOUT_DAYS` ceiling. The short default is deliberate: omitting a timeout is a caller bug, and an hour surfaces it in development instead of hanging for a month behind a log line. The engine-side `assertDelayWithinTimeout` cannot be relied on: `AP_PAUSED_FLOW_TIMEOUT_DAYS` is never propagated into the sandbox env, so it computes `Number(undefined)` = `NaN` and never throws.
-- **The deadline is backstopped in both stores, because a Redis-only backstop is no backstop.** The `resume-delay-<waitpointId>` job lives in Redis; `waitpoint.resumeDateTime` lives in Postgres and, until `WAITPOINT_DEADLINE_SWEEP`, nothing read it — a flush, eviction or fresh instance left the barrier hanging until retention deleted the run. The sweep re-drives the deadline from Postgres once a minute and is deliberately **not** fan-in-scoped: a plain `DELAY` waitpoint had the identical exposure and is the far more common case, and `handleResumeDelayWaitpoint` already branches on `isFanIn`. It re-arms rather than resumes directly, so it is a query plus `upsertJob` — but **`upsertJob` is not purely no-op**: on a *failed* one-time job it calls `existingJob.retry()`, which is correct for the request-driven callers and wrong for a cron backstop, so the sweep skips a job that `isFailed()` on its own side rather than changing a helper with nine callers. Its cap is `ORDER BY resumeDateTime DESC LIMIT 500` and it is floored at `now - AP_PAUSED_FLOW_TIMEOUT_DAYS`: a backstop must not be starvable by the failures it exists to catch, and the poison rows are always the oldest ones. The attempt cap, backoff and dead-letter are BullMQ's (`attempts: 2`, exponential backoff, `removeOnFail: { age: ONE_MONTH }`, plus the paging `failed` listener) — a second counter in Postgres was rejected as building what already exists one layer down.
+- **One row per awaited thing collapses the three concepts into one.** A batch that never dispatched is a
+  signal with a `NOT_DISPATCHED` outcome. Nothing has to be inferred by subtraction, and the summary is exact
+  rather than reconstructed.
+- **One column per role, rather than one key doing three jobs.** A single caller-supplied `signalKey` would
+  have to be identity, idempotency key, ordinal and human label at once, and is wrong for at least one of
+  those in every use case. `sequence` is **nullable on purpose**: a producer that writes the barrier and all
+  N signals in one transaction already gets idempotency from the barrier's own `(flowRunId, stepName)` key.
+  Only the streaming dispatcher — re-entered by redelivery, re-parsing from row 0 — has to answer *"did I
+  already insert batch 4 200?"*, and `sequence` is that answer. Postgres treats NULLs as distinct, so the
+  partial unique index does not bite the rows that do not need it.
+- **Release stays a predicate re-derived from committed state, never an incremented counter.** A counter's
+  failure mode is a premature release on a green-looking run. Exactly-once release still rests on one
+  `UPDATE … WHERE status = PENDING` plus a deduplicated resume job id.
+- **Receiving is an upsert, last write wins.** It is not a state machine and does not reject a second write:
+  a retried child reports its terminal status again — possibly a different one — and the barrier must reflect
+  the latest truth, not the first. That also makes redelivery of the receive path free.
+- **The deadline is set at create and nothing moves it.** The floor rule needs an evaluation to fire; a
+  barrier nobody ever signals gets none, so the deadline is the only thing between "the dispatcher died hard"
+  and a run paused until retention deletes it. Seal does not touch it — the clamp with no requested value
+  already returns the ceiling, and a shorter deadline is a `policy` input, so both are known at create.
+- **Evaluation must be coalesced, and coalescing must not swallow its own last signal.** At 10 000 signals,
+  evaluating per signal is ~100M row reads. BullMQ holds a deduplication key while the job is queued *and*
+  active, so the handler's **first statement** is `removeDeduplicationKey`, and every producer commits its
+  signal row **before** enqueuing. Otherwise the final signal lands while the job meant to see it is already
+  running, its enqueue is dropped as a duplicate, and the barrier waits out its deadline holding a run that
+  was ready to resume.
 
 ## Consequences
-- **No fan-out entry point ships with this.** The whole vertical is in place and dormant: columns, predicate, release paths, timeout handler, `POST /v1/waitpoints`, the engine `sealFanIn` hook and `RunContext.sealFanIn`. The array-based `Fan Out to Subflows` action was removed; a streaming entry point lands later. **Binding constraint on it: if it fans out, it must fan in.** No fire-and-forget fan-out — a fan-out action never continues without joining.
-- **Deferred to the entry-point PR, and non-optional there:** (1) the version floor — adding `sealFanIn` to `RunContext` requires bumping `ContextVersion` and `MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION` together, or a piece from the registry calls a hook an older engine does not have (and `isFanIn` is silently dropped, so the parent pauses on a plain webhook waitpoint nothing resumes — a hang, not an error); (2) bounded dispatch concurrency; (3) `MAX_FAN_IN_CHILDREN` is 1000, which a batched fan-out can exceed (1M rows at 100/batch = 10k batches); (4) no operability — nothing can answer "how many barriers are open" or "which released on timeout". The full list, and what each candidate entry point forces, is on the `flows-execution/fan-in-entry-points` page.
-- **Sealing is once-only structurally, not by convention.** `expectedChildren IS NULL` is part of the seal's `UPDATE` predicate, so a second seal matches zero rows. Without it, `seal(10)` then `seal(1)` sets the expectation to 1 and — with one child succeeded and nine not yet materialised — `stillRunning = 0 ∧ terminal(1) >= 1` releases the barrier with nine children live, which is the one failure mode this whole design exists to make impossible. A duplicate seal is then a logged no-op that still re-evaluates the predicate against the original expectation, rather than an error: a re-delivered parent job after a successful seal must not fail the run.
-- **Release asks the cheap half of the predicate first.** Every child's terminal transition evaluates the barrier, so an unconditional `GROUP BY status` over all N children is N² row reads. `maybeResumeFanInBarrier` returns early on an unsealed barrier, then on a `LIMIT 1` existence probe for a non-terminal child, and only the last transition pays the aggregate that builds the exact summary. `idx_run_parent_waitpoint_id` is partial (`WHERE parentWaitpointId IS NOT NULL`) and covering (`parentWaitpointId, projectId, status`) so both the probe and the aggregate are index-only, and the index costs nothing to maintain on the ~100% of `flow_run` rows that are not fan-in children. `countChildren` keeps its `projectId` filter — that is what blocks cross-tenant poisoning of a barrier through the unauthenticated dispatch header.
-- **Re-entry into an existing PENDING barrier is only free before anything was dispatched.** If the barrier already has any child, the previous attempt ran part of the dispatch loop and re-running it would duplicate children — so re-entry throws. A genuine idempotent re-entry (a lost `POST /v1/waitpoints` response replayed before the loop starts) returns the existing barrier untouched. The `dispatchDigest` column and the `dispatchIndex` / `dispatchedIndices` pair were added to let a re-entering dispatcher *resume* a partial loop instead of throwing, but **nothing writes `dispatchIndex`** — there is no `ap-dispatch-index` header and no dispatcher — so `dispatchedIndices` is always empty and a resumed loop would have no way to skip what already went. Re-entry therefore stays fail-closed on any child until the entry-point PR wires the index; the columns ride along dormant rather than being dropped and re-migrated.
-- **The re-entry guard alone has a blind window, closed by a deterministic dispatch key.** A dispatch is accepted the moment `POST /v1/webhooks/:flowId` queues an `EXECUTE_WEBHOOK` job; the child's `flow_run` row only appears later. A parent job re-delivered in between (a killed worker stalls at `stalledInterval`, 30s) would find no children and re-run the loop. So each keyed dispatch carries `ap-dispatch-key: <barrierWaitpointId>-<index>`, which becomes the BullMQ job id: while the child job is still queued or active, the duplicate `add` is a no-op; once it completes, the row exists and the guard throws instead.
-- **A partial dispatch never leaves an unsealed barrier.** The loop is not idempotent and the children it already created cannot be recalled, so the dispatcher tolerates per-item failures instead of throwing mid-loop: it seals with the count actually accepted, waits on exactly those, and reports the shortfall as `failedToDispatch` (folded into the summary's `expected`). It throws only when *nothing* was accepted — the one case where nothing is running and a retry is safe.
-- **A child that is accepted but never produces a run row degrades to timeout release, and says so.** The flow was disabled or deleted between the dispatcher's check and the job, or the trigger sandbox timed out. The summary's `notStarted` names the shortfall directly instead of leaving the user to subtract buckets from `expected`.
-- **`retry(ON_LATEST_VERSION)` must copy `parentRunId` but never `parentWaitpointId`.** The barrier already counted the original child's terminal state; attributing a new run to it would inflate `terminal` and risk the premature release this scoping exists to prevent. `FROM_FAILED_STEP` retries in place (same row, same attribution) and correctly blocks release while non-terminal. A retried run also has its waitpoints cleared (`deleteByFlowRunId`), because a re-executed step must not inherit the previous attempt's barrier.
-- **`markParentRunAsFailed` must never complete a fan-in barrier.** It picks a waitpoint by run id and completes it with an `{status:'error'}` payload; landing on a barrier gives the fan-in step an error object as its output, and landing there *before* the seal skips sealing entirely. It looks up non-fan-in waitpoints only.
-- **A barrier is not externally resumable.** `POST /v1/flow-runs/:id/waitpoints/:id` is `ALL_PRINCIPAL_TYPES`, so without a guard anyone holding the id pair could release the barrier early and inject an arbitrary HTTP body as the fan-in step's output while children kept running. Only the predicate and the timeout may release a barrier. **The deprecated V0 route `/:id/requests/:requestId` is a fourth path and the guard has to reach it too** — it resolves a *V0* pending waitpoint, a barrier is always `V1`, so it falls through to the legacy handler, which reads no waitpoint at all and resumes any PAUSED run. The two legacy routes do **not** converge on one function (`/requests/:requestId` → `legacyResume`, `/requests/:requestId/sync` → `legacySyncResume`), so the guard goes in both, over one shared `waitpointService.hasPendingFanInBarrier` lookup.
-- **The V1 guard is `resumeFromWaitpointWithoutLock`'s, not the controller's, and it is opt-*out*.** A guard per controller handler is three guards and three duplicate waitpoint reads, and it misses the next service-level caller — `agent-rpc-handlers` already was one. But a blanket refusal inside the service cannot work either: the predicate (`maybeResumeFanInBarrier`, the PAUSED-upload reconciliation) and the timeout (`handleResumeDelayWaitpoint`) release barriers *through that same function*, so refusing every `isFanIn` waitpoint there would mean no barrier ever releases. So the refusal is the default and those four release paths pass `releasingFanInBarrier: true`. A new caller that forgets the flag is refused, which is the safe direction; a new caller that sets it wrongly is the only way through, and that is a deliberate act rather than an omission.
-- **Child failure is collected, never propagated — enforced by branch order, not by the dispatch header.** Barrier children are dispatched with `ap-fail-parent-on-failure = false`, but both headers are caller-supplied on an unauthenticated endpoint, so the runs-metadata worker tests `parentWaitpointId` **before** `shouldMarkParentAsFailed` and the two stay mutually exclusive. `parentRunId` always equals the barrier's `flowRunId`, so "fail the parent" and "release the barrier" target the same run and are contradictory; barrier semantics win. With the old ordering a child carrying both headers took the fail-parent branch, `findNonFanInByFlowRunId` returned null, `complete()` no-op'd, and the barrier hung until timeout. Timeout continues with `timedOut: true` and `stillRunning > 0`, leaving stragglers running — harmless now that they are attributed to the old barrier and cannot block the next one.
-- **Threading `parentWaitpointId` has one silent-drop trap:** `RUNS_METADATA_UPSERT_KEYS` in `runs-metadata-queue-factory.ts` is an allowlist, so a field missing from it vanishes between worker and row with no error — the same failure class as forgetting `getEntities()`. Pinned by a test.
-- **No foreign key on `parentWaitpointId`.** Waitpoints are deleted when a run finishes while children can outlive the barrier row, so an FK would either block that delete or null the attribution. Plain indexed `varchar(21)`; the index is created `CONCURRENTLY` because `flow_run` is one of the largest tables.
-- The waitpoint read paths need no new index: they all lead with `flowRunId` or the primary key. **Concurrent same-step barriers are not supported** — blocked anyway by the engine's single-pause model.
+- **Identity is path-keyed, and that needed no new column.** The engine sends `loop_1:3/loop_2:0/batch_step`
+  in the existing `stepName` field, which is only ever an identity key inside `waitpoint-service`. Which
+  fixes a live bug on the way past: a delay or approval **inside a loop** used to reuse one waitpoint row
+  across every iteration, so iteration 2 found iteration 1's COMPLETED row in `createForPause`'s pre-completed
+  check and skipped its pause entirely.
+- **Two per-run waitpoint reads stopped being sound and were fixed here.** `getByFlowRunId` became
+  `findPreCompletedByFlowRunId` — **null when any PENDING row exists for the run**, else the newest COMPLETED
+  one — because per-iteration rows mean a run can hold a COMPLETED leftover *and* an open PENDING pause at
+  once, and both callers delete the row they find and enqueue a resume. `findNonFanInByFlowRunId` became
+  `findNonBarrierByFlowRunId` and prefers PENDING, newest first. `findPendingByVersion` is **still** unsound
+  for parallel branches; nothing here creates that case.
+- **The resume guards moved to the entry point rather than becoming a flag.** `resumeFromWaitpoint`
+  **refuses barriers, always** — by addressed waitpoint type, or, on the by-run legacy routes, by "does this
+  run hold any PENDING barrier". Every unscoped route goes through it, so there is no `false` to forget and
+  no parameter to default wrong. What the guard is *not* is structural: `releaseBarrier` and
+  `releaseBarrierWithoutLock` are ordinary public members of `resumeService`, one `if` away from the guard
+  they skip, and neither project-scopes nor type-checks the waitpoint it is handed. `flow-runs-queue`'s
+  pre-completed recovery calls the unlocked variant from outside the module, so a module-private
+  `releaseBarrier` would not have worked as written. Treated as acceptable because the reachable surface —
+  the HTTP routes — is closed; if a third caller appears, make the boundary real rather than adding a
+  second convention.
+- **An external actor never addresses the waitpoint.** Their link carries a **signal id** on
+  `/v1/flow-runs/:id/signals/:signalId/confirm` — in the path, not the query string, because `resumePayload`
+  is built from `{ body, headers, queryParams }` and persisted with the run. The link must never carry
+  `label`: the route's entire guard is that every segment is unguessable, so a semantic segment lets one
+  legitimate approver substitute the string and cast the whole quorum.
+- **`result` is the first place unauthenticated free text reaches a jsonb column.** Bounded to 2 000
+  characters **server-side** (rejected at the page, never truncated), passed through
+  `sanitizeObjectForPostgresql()` before the insert, stored as text and rendered escaped.
+- **`flow_run.parentWaitpointId` and `dispatchIndex` both stay**; only the unique
+  `(parentWaitpointId, dispatchIndex)` index goes, because dispatch idempotency is the signal claim now.
+  `parentWaitpointId` is in the list-covering index that keeps batch children off the runs list; `dispatchIndex`
+  is what the builder's per-click lookup and the "Batch N" label read **after** the barrier resolved and its
+  signals were deleted.
+- **Accepted cost: ~40k row writes per 10 000-signal barrier** — insert, claim, receive, delete — on top of
+  the child runs themselves. Bounded, on a narrow table, and gone the moment the barrier resolves.
+- **A returning approver still sees a bare "already responded".** Signals die with the release, so there is
+  nothing left to tell them what they decided. Decision 000009's gap stays open.
+- **The machinery ships able to carry K-of-N approvals; no approval piece is rewired yet.** Per-signal links
+  and `reasonRequiredOn` exist now because retrofitting them means another migration.
+- **A waiting step publishes `BarrierSummary` itself, with no per-step adapter — which is a breaking change
+  for Process in Batches.** `expected` → `total`, `failedToDispatch` → `notDispatched`, `exceptions[]` →
+  `signals[]` covering *every* awaited thing rather than only the failures, `rejected` split out of `failed`,
+  and `notStarted` deleted (it was hardcoded `0`). The point is that an expression written against a waiting
+  step does not break when what the step waits on changes. The cost is one entry in
+  `docs/install/reference/breaking-changes.mdx` and a rewrite of the run detail's batch rail. Two fields the
+  spec's shape omits are kept because the rail cannot work without them: `barrierId` (what its child-run
+  queries key on) and `totalItems`/`batchSize` (the per-dot item ranges), spread around the summary.
+  `canceled` is an eighth count for the same reason.
+- **The release predicate is pure and lives in `core-execution`, not in the service.**
+  `shouldReleaseBarrier({ policy, sealed, counts })` takes counts rather than issuing its own queries, so one
+  `GROUP BY status` replaces up to three round-trips and the policy matrix is unit-testable without a
+  database. The `EXISTS`-not-`COUNT(*)` note above is therefore no longer literal — the decision it encodes
+  (take counts once, on a barrier being summarised) survives; the floor rule now reads the PENDING count out
+  of the same grouped row set.
+- **`policy` carries no deadline override.** The plan allowed "or the policy's shorter value"; nothing
+  produces one, so `resolveDeadline()` is `now + AP_PAUSED_FLOW_TIMEOUT_DAYS` and takes no arguments. Add the
+  field when a caller for it exists, not before.
+- **The 2 000-character reason bound stays a handler check, not a request schema.** The confirm route is
+  `app.all` serving an HTML form: a Zod `body` schema would also apply to the GET that renders the page, and
+  a schema rejection returns JSON where the handler returns a themed 400. The bound is enforced server-side
+  either way — this is about which response the browser gets.

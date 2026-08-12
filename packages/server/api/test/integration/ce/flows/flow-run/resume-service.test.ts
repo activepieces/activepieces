@@ -2,9 +2,9 @@ import { apId, spreadIfDefined } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowTriggerType, FlowVersionState, PauseType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyInstance } from 'fastify'
-import { resumeService } from '../../../../../src/app/flows/flow-run/waitpoint/resume-service'
-import { waitpointService } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-service'
-import { WaitpointStatus } from '../../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
+import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
+import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -93,7 +93,7 @@ async function createFlowRunAndWaitpoint(params: {
     return { flow, flowVersion, flowRun, waitpointId }
 }
 
-describe('resumeService resumeFromWaitpointWithoutLock', () => {
+describe('resumeService releaseBarrierWithoutLock', () => {
     it('consumes a PENDING waitpoint and enqueues resume when flow is PAUSED (worker-before-callback ordering)', async () => {
         const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
             projectId: ctx.project.id,
@@ -101,7 +101,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
             waitpointStatus: WaitpointStatus.PENDING,
         })
 
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -129,7 +129,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'early' } },
@@ -157,7 +157,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'quick' } },
@@ -185,7 +185,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
         })
 
         const bogusWaitpointId = apId()
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId: bogusWaitpointId,
             resumePayload: { body: { status: 'stale' } },
@@ -206,7 +206,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-manual-trigger', triggerName: 'manual_trigger' }),
         })
 
-        await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -223,7 +223,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
         })
 
-        await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -240,7 +240,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
         })
 
-        await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },

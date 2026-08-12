@@ -1,4 +1,8 @@
-import { FlowActionType, FlowRunStatus } from '@activepieces/shared';
+import {
+  BarrierSignalStatus,
+  FlowActionType,
+  FlowRunStatus,
+} from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -10,12 +14,25 @@ const pausedOutput: BatchStepRunOutput = {
   barrierId: 'barrier-id',
   totalItems: 5,
   batchSize: 2,
-  failedToDispatchIndices: [2],
+  total: 3,
+};
+
+const releasedOutput: BatchStepRunOutput = {
+  ...pausedOutput,
+  signals: [
+    { sequence: 2, outcome: BarrierSignalStatus.NOT_DISPATCHED, runId: null },
+  ],
 };
 
 describe('batchRailUtils.parseStepOutput', () => {
   it('reads the paused output the step writes before it waits', () => {
     expect(batchRailUtils.parseStepOutput(pausedOutput)).toEqual(pausedOutput);
+  });
+
+  it('reads the released summary the step writes when it resumes', () => {
+    expect(batchRailUtils.parseStepOutput(releasedOutput)).toEqual(
+      releasedOutput,
+    );
   });
 
   it('ignores an output that is not a batch step run', () => {
@@ -25,20 +42,24 @@ describe('batchRailUtils.parseStepOutput', () => {
 });
 
 describe('batchRailUtils.batchCount', () => {
-  it('counts the trailing partial batch', () => {
-    expect(batchRailUtils.batchCount(pausedOutput)).toBe(3);
+  it('counts the trailing partial batch when the barrier has not reported yet', () => {
+    expect(
+      batchRailUtils.batchCount({ ...pausedOutput, total: undefined }),
+    ).toBe(3);
   });
 
   it('counts nothing when the items resolved empty', () => {
     expect(
-      batchRailUtils.batchCount({ ...pausedOutput, totalItems: 0 }),
+      batchRailUtils.batchCount({
+        ...pausedOutput,
+        total: undefined,
+        totalItems: 0,
+      }),
     ).toBe(0);
   });
 
   it('trusts a released summary over the item arithmetic', () => {
-    expect(
-      batchRailUtils.batchCount({ ...pausedOutput, expected: 0 }),
-    ).toBe(0);
+    expect(batchRailUtils.batchCount({ ...pausedOutput, total: 0 })).toBe(0);
   });
 });
 
@@ -80,9 +101,9 @@ describe('batchRailUtils.itemRange', () => {
 });
 
 describe('batchRailUtils.dotStatuses', () => {
-  it('distinguishes the five states a batch can be in', () => {
+  it('distinguishes the states a batch can be in', () => {
     const statuses = batchRailUtils.dotStatuses({
-      output: pausedOutput,
+      output: releasedOutput,
       children: [
         { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
         { id: 'b', status: FlowRunStatus.FAILED, dispatchIndex: 1 },
@@ -93,25 +114,28 @@ describe('batchRailUtils.dotStatuses', () => {
 
   it('marks a batch with neither a child nor a dispatch failure as never started', () => {
     const statuses = batchRailUtils.dotStatuses({
-      output: { ...pausedOutput, failedToDispatchIndices: [] },
+      output: pausedOutput,
       children: [{ id: 'a', status: FlowRunStatus.RUNNING, dispatchIndex: 0 }],
     });
     expect(statuses).toEqual(['running', 'neverStarted', 'neverStarted']);
   });
 
-  it('reads the dispatch failures back off a released summary', () => {
+  it('does not treat a signal that merely failed as a dispatch failure', () => {
     const statuses = batchRailUtils.dotStatuses({
       output: {
         barrierId: 'barrier-id',
         totalItems: 2,
         batchSize: 1,
-        exceptions: [
-          { batchIndex: 1, status: 'failedToDispatch', childRunId: null },
+        total: 2,
+        signals: [
+          { sequence: 1, outcome: BarrierSignalStatus.FAILED, runId: 'child-1' },
         ],
       },
-      children: [{ id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 }],
+      children: [
+        { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
+      ],
     });
-    expect(statuses).toEqual(['succeeded', 'failedToDispatch']);
+    expect(statuses).toEqual(['succeeded', 'neverStarted']);
   });
 });
 
@@ -119,14 +143,14 @@ describe('batchRailUtils.childState', () => {
   it('separates a batch that never started from one that failed to dispatch', () => {
     expect(
       batchRailUtils.childState({
-        output: pausedOutput,
+        output: releasedOutput,
         batchIndex: 2,
         child: null,
       }),
     ).toBe('failedToDispatch');
     expect(
       batchRailUtils.childState({
-        output: pausedOutput,
+        output: releasedOutput,
         batchIndex: 1,
         child: null,
       }),
@@ -136,14 +160,14 @@ describe('batchRailUtils.childState', () => {
   it('separates a straggler from a run whose logs are gone', () => {
     expect(
       batchRailUtils.childState({
-        output: pausedOutput,
+        output: releasedOutput,
         batchIndex: 0,
         child: { id: 'a', status: FlowRunStatus.RUNNING, dispatchIndex: 0 },
       }),
     ).toBe('stillRunning');
     expect(
       batchRailUtils.childState({
-        output: pausedOutput,
+        output: releasedOutput,
         batchIndex: 0,
         child: { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
       }),

@@ -183,41 +183,16 @@ export type CreateWaitpointParams = {
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
-  isFanIn?: boolean;
-  intendedChildren?: number;
-  dispatchDigest?: string;
-};
-
-export type FanInBarrierState = {
-  sealed: boolean;
-  expectedChildren: number | null;
-  dispatchedIndices: number[];
 };
 
 export type CreateWaitpointResult = {
   id: string;
   resumeUrl: string;
-  fanIn?: FanInBarrierState;
   buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }) => string;
-};
-
-export type SealFanInParams = {
-  waitpointId: string;
-  expectedChildren: number;
-  failedToDispatch?: number;
-  timeoutAt?: string;
-};
-
-export type SealFanInResult = {
-  expectedChildren: number;
-  alreadySealed: boolean;
-  released: boolean;
-  timeoutAt: string;
 };
 
 export type CreateWaitpointHook = (params: CreateWaitpointParams) => Promise<CreateWaitpointResult>;
 export type WaitForWaitpointHook = (waitpointId: string) => void;
-export type SealFanInHook = (params: SealFanInParams) => Promise<SealFanInResult>;
 
 export type RunContext = {
   id: FlowRunId;
@@ -227,7 +202,6 @@ export type RunContext = {
   respond: RespondHook;
   createWaitpoint: CreateWaitpointHook;
   waitForWaitpoint: WaitForWaitpointHook;
-  sealFanIn: SealFanInHook;
 }
 
 export type OnStartContext<

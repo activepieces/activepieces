@@ -10,7 +10,7 @@ import { databaseConnection } from '../../../src/app/database/database-connectio
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
-import { Waitpoint, WaitpointStatus } from '../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import { Waitpoint, WaitpointStatus } from '../../../src/app/waitpoints/waitpoint-types'
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
@@ -409,10 +409,8 @@ export const createMockWaitpoint = (waitpoint?: Partial<Waitpoint>): Waitpoint =
         workerHandlerId: waitpoint?.workerHandlerId ?? null,
         httpRequestId: waitpoint?.httpRequestId ?? null,
         resumePayload: waitpoint?.resumePayload ?? null,
-        isFanIn: waitpoint?.isFanIn ?? false,
-        expectedChildren: waitpoint?.expectedChildren ?? null,
-        failedToDispatch: waitpoint?.failedToDispatch ?? 0,
-        dispatchDigest: waitpoint?.dispatchDigest ?? null,
+        sealed: waitpoint?.sealed ?? false,
+        policy: waitpoint?.policy ?? null,
     }
 }
 

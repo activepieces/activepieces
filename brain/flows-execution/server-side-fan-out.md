@@ -1,0 +1,77 @@
+---
+title: Server-side fan-out
+icon: 🪓
+---
+
+# Server-side fan-out
+
+**Status: shipped.** The dispatch loop that creates a batch step's children runs in a **worker job on the
+app**, not in the parent's engine sandbox. See decision
+[000026](../decisions/000026-batch-children-dispatch-from-a-server-side-worker-job.md) for why, and
+[000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) for the barrier it dispatches
+against.
+
+## The shape
+
+1. `PROCESS_IN_BATCHES` resolves its items and makes **one** call: `POST /v1/waitpoints` with
+   `type: BARRIER` and `barrier.fanOut = { entryStepName, batchSize, items, seedSteps }`.
+2. In one transaction the server creates the barrier waitpoint (`sealed = true`, deadline set) and one
+   `waitpoint_signal` row per batch, `sequence = 0..N-1`. **Arrays are born sealed.**
+3. The source (`entryStepName`, `seedSteps`, the chunked batches) goes to `distributedStore` under
+   `barrier_source:<barrierId>`; a `fan-out-dispatch` job carrying only the barrier id goes on the barrier
+   queue. The step pauses.
+4. The dispatcher claims each signal (`SET refId = $childRunId WHERE refId IS NULL`), then calls
+   `flowRunService.dispatchChild` in process. Bounded at 5 in flight.
+5. Each child's terminal transition writes its outcome onto its signal (`receive` by `refId`) and enqueues a
+   coalesced evaluation. The last one releases the barrier.
+
+## Where the jobs live
+
+Both jobs need Postgres, so **neither can be a `WorkerJobType`** — `AP_CONTAINER_TYPE=WORKER` boots no
+TypeORM connection and no Redis client. They run in the app process, on a **dedicated queue**
+(`QueueName.BARRIER_JOBS`, `barrier-queue-factory.ts` + a `new Worker` in `barrier-queue.ts`), copied from
+`runs-metadata-queue-factory.ts` and `flow-runs-queue.ts`.
+
+The shared `system-job-queue` was rejected: it cannot coalesce. `upsertJob` with `jobId = barrierId` looks
+like coalescing and behaves like a bug — while a job is active the next upsert finds it and no-ops, the last
+signal's evaluation is dropped, and there is no `removeDeduplicationKey` escape hatch because there is no
+deduplication key. BullMQ's own `deduplication` is the only mechanism in the repo with a documented way out
+of that window.
+
+## Costs, priced
+
+`benchmark/PROCESS-IN-BATCHES-BENCHMARK.md` S5 measured 200 children in **1 293 ms (~174/s)** on a quiet
+single-app/single-worker rig with warm sandboxes. Moving the loop server-side removes the HTTP hop but keeps
+the per-child cost: flow-version read, insert, `addToQueue`, `onStart`. Budget **~60 s of held poll slot at
+the 10 000 cap**, and re-derive the number rather than quoting an estimate. A priority above the children
+orders the queue but does not free the slot.
+
+## Gotchas
+
+- **A stalled job is not evidence the worker died.** `stalledInterval` is 30s, `maxStalledCount` 3, and this
+  job parses a multi-MB source on the event loop. Two dispatchers over one barrier is the normal case to
+  design for, not the exotic one — which is why every child is preceded by a compare-and-set claim on its
+  signal row rather than a "signals with no child yet" gap query.
+- **A cancel must stop the dispatcher.** `dispatchChild` rejects (`ENTITY_NOT_FOUND`) when the barrier no
+  longer resolves, and the dispatcher treats that as *stop, do not retry* — log, complete the job. Abort
+  latency is up to four extra attempts, not one: the `cancelled` flag is read at task entry and
+  `MAX_DISPATCHES_IN_FLIGHT` is 5, so four siblings can already be past it — each re-checks the barrier
+  inside `dispatchChild`, so an extra *child* needs a race between that check and the barrier's deletion.
+  `getAllChildRuns` cannot clean up after the fact: it is a one-shot recursive snapshot
+  taken *after* the parents are cancelled, so anything created later is never seen by it.
+- **A claim that reports `affected` is not a claim.** TypeORM's `UpdateQueryBuilder.execute()` does not
+  reliably populate `affected` on every driver here; the claim uses raw SQL with `RETURNING "id"` and checks
+  the returned rows. Getting this wrong makes every claim look failed and dispatches nothing, silently.
+- **The dispatcher releases its claim before rethrowing, which makes "`dispatchChild` throws ⇒ no child
+  exists" a load-bearing invariant.** A per-child failure nulls `refId` again so the retry can re-claim; only
+  an exhausted job marks the rest `NOT_DISPATCHED`. `dispatchChild` upholds its half by deleting the
+  `flow_run` row it inserted when `addToQueue` fails. Anything that throws *after* a successful `addToQueue`
+  breaks it: the child is queued and running, the claim is released, and the ~8-minute retry dispatches a
+  **second** child for the same batch — while the first child's completion signal is silently dropped,
+  because `receive({ refId })` no longer matches the row it nulled. `flowRunSideEffects.onStart` was exactly
+  that hole and is now wrapped in `tryCatch`. There is no unique index on
+  `flow_run (parentWaitpointId, dispatchIndex)` to backstop this, so keep the invariant in the code.
+- **Nothing bounds the dispatch window except the barrier deadline.** The old sandbox loop was bounded by
+  `FLOW_TIMEOUT_SECONDS`; the parent now pauses before its children exist.
+- **The source key is deleted on release and on cancel**, and carries a 1-day TTL as a backstop. A dispatcher
+  that finds no source marks the remaining signals `NOT_DISPATCHED` rather than hanging.

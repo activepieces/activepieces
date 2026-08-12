@@ -1,5 +1,5 @@
-import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, omit, Permission, SeekPage } from '@activepieces/core-utils'
-import { ApEdition, BulkActionOnRunsRequestBody, BulkArchiveActionOnRunsRequestBody, BulkCancelFlowRequestBody, CountFlowRunsByStatusRequest, CountFlowRunsByStatusResponse, DispatchChildRunRequest, DispatchChildRunResponse, FlowRun, ListFlowRunsRequestQuery, PlatformRole, PrincipalType, RetryFlowRequestBody, RunEnvironment, RunInternalErrorSource, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, omit, Permission, SeekPage } from '@activepieces/core-utils'
+import { ApEdition, BulkActionOnRunsRequestBody, BulkArchiveActionOnRunsRequestBody, BulkCancelFlowRequestBody, CountFlowRunsByStatusRequest, CountFlowRunsByStatusResponse, FlowRun, ListFlowRunsRequestQuery, PlatformRole, PrincipalType, RetryFlowRequestBody, RunEnvironment, RunInternalErrorSource, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -105,20 +105,6 @@ export const flowRunController: FastifyPluginAsyncZod = async (app) => {
         })
     })
 
-    app.post('/dispatch', DispatchChildRunRequestConfig, async (req, reply) => {
-        assertNotNullOrUndefined(req.principal.projectId, 'projectId')
-        const dispatched = await flowRunService(req.log).dispatchChild({
-            projectId: req.principal.projectId,
-            parentRunId: req.body.parentRunId,
-            entryStepName: req.body.entryStepName,
-            seedSteps: req.body.seedSteps,
-            parentWaitpointId: req.body.parentWaitpointId,
-            dispatchIndex: req.body.dispatchIndex,
-            dispatchKey: req.body.dispatchKey,
-        })
-        return reply.status(StatusCodes.CREATED).send(dispatched)
-    })
-
     app.post('/archive', ArchiveFlowRunRequest, async (req) => {
         return flowRunService(req.log).bulkArchive({
             projectId: req.projectId,
@@ -141,18 +127,6 @@ async function isRequesterPlatformAdmin(request: FastifyRequest): Promise<boolea
     }
     const user = await userService(request.log).getOneOrFail({ id: request.principal.id })
     return user.platformRole === PlatformRole.ADMIN
-}
-
-const DispatchChildRunRequestConfig = {
-    config: {
-        security: securityAccess.engine(),
-    },
-    schema: {
-        body: DispatchChildRunRequest,
-        response: {
-            [StatusCodes.CREATED]: DispatchChildRunResponse,
-        },
-    },
 }
 
 const FlowRunFilteredWithNoSteps = FlowRun.omit({ steps: true })
