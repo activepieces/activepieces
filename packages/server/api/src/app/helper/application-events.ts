@@ -1,4 +1,4 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
 import { ApplicationEvent, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -27,8 +27,8 @@ const listeners: ListenerRegistration = {
 type RawAuditEventParam = Pick<ApplicationEvent, 'data' | 'action'>
 
 type SendWorkerEventParams = RawAuditEventParam & {
-    projectId: string
-    platformId: string
+    projectId: ProjectId
+    platformId: PlatformId
 }
 
 export const applicationEvents = (log: FastifyBaseLogger) => ({
@@ -122,9 +122,9 @@ function isFastifyRequest(requestOrMeta: ApplicationEventSource): requestOrMeta 
 }
 
 export type MetaInformation = {
-    platformId: string
-    userId?: string | null
-    projectId?: string
+    platformId: PlatformId
+    userId?: UserId | null
+    projectId?: ProjectId
     ip?: string
 }
 

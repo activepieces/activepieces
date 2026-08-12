@@ -2,6 +2,7 @@ import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     ApplicationEventName,
     Flow,
+    FlowOperationRequest,
     FlowOperationType,
     FlowStatus,
     FlowTrigger,
@@ -288,10 +289,10 @@ describe('Flow application events', () => {
     })
 })
 
-const renameOperation = {
+const renameOperation: FlowOperationRequest = {
     type: FlowOperationType.CHANGE_NAME,
     request: { displayName: 'Renamed by the service' },
-} as const
+}
 
 type SeedPublishableFlowParams = {
     ctx: TestContext
