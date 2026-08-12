@@ -1,6 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import { MssqlTable, mssqlConnect, quoteId, quoteTable } from '../common';
+import {
+  MssqlTable,
+  mssqlConnect,
+  mssqlGetTableMeta,
+  quoteId,
+  quoteTable,
+} from '../common';
+import { exactColumn } from '../common/cursor';
 import { mssqlProps, warningMarkdown } from '../common/props';
 import { findRowsActionOutputSchema } from '../output-schemas';
 
@@ -72,8 +79,6 @@ export const findRowsAction = createAction({
     } = context.propsValue;
 
     const selected = (columns as string[] | undefined) ?? [];
-    const columnList =
-      selected.length > 0 ? selected.map((c) => quoteId(c)).join(', ') : '*';
 
     let top = '';
     if (limit !== undefined && limit !== null && `${limit}`.trim() !== '') {
@@ -84,18 +89,34 @@ export const findRowsAction = createAction({
       top = `TOP (${n}) `;
     }
 
-    let query = `SELECT ${top}${columnList} FROM ${quoteTable(table as MssqlTable)}`;
-    if (condition && condition.trim().length > 0) {
-      query += ` WHERE ${condition}`;
-    }
-    if (order_by) {
-      query += ` ORDER BY ${quoteId(order_by)} ${
-        order_direction === 'DESC' ? 'DESC' : 'ASC'
-      }`;
-    }
-
     const pool = await mssqlConnect(context.auth);
     try {
+      // The column types decide the SELECT list: decimal and the date family
+      // have to be rendered to text by the server, because the driver rounds
+      // them on the way back. See projection() in common/cursor.
+      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
+      const byName = new Map(meta.columns.map((c) => [c.name, c]));
+      const projected =
+        selected.length > 0
+          ? selected.map((name) => {
+              const column = byName.get(name);
+              return column ? exactColumn(column) : quoteId(name);
+            })
+          : meta.columns.map((column) => exactColumn(column));
+      const columnList = projected.length > 0 ? projected.join(', ') : '*';
+
+      let query = `SELECT ${top}${columnList} FROM ${quoteTable(
+        table as MssqlTable
+      )}`;
+      if (condition && condition.trim().length > 0) {
+        query += ` WHERE ${condition}`;
+      }
+      if (order_by) {
+        query += ` ORDER BY ${quoteId(order_by)} ${
+          order_direction === 'DESC' ? 'DESC' : 'ASC'
+        }`;
+      }
+
       const request = pool.request();
       for (const [name, value] of Object.entries(parameters ?? {})) {
         request.input(name.replace(/^@/, ''), value ?? null);

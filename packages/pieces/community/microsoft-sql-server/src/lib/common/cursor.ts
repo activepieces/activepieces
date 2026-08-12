@@ -171,6 +171,54 @@ export function cursorText(column: MssqlColumn): string {
   return `CONVERT(varchar(max), ${source}, ${style})`;
 }
 
+/**
+ * The same round-trip problem, for the row itself rather than the position.
+ *
+ * tedious reads a decimal as `value / 10 ** scale` in double arithmetic
+ * (value-parser.js, readNumeric), so anything beyond a double's ~15 significant
+ * digits is silently rounded and anything past 17 arrives in exponential
+ * notation. decimal(19,4) — an ordinary money column — already loses its last
+ * two digits, and decimal(38,0) comes back as 1.2345678901234568e+37. The date
+ * family goes through a JavaScript Date, which holds milliseconds, so
+ * datetime2(7) drops four digits of its fraction and a time column arrives as a
+ * date in 1970.
+ *
+ * None of it can be recovered once the driver has parsed the value, so these
+ * columns are rendered to text by the server, exactly as a cursor value is.
+ */
+const EXACT_TEXT_TYPES = new Set([
+  'decimal',
+  'numeric',
+  'money',
+  'smallmoney',
+  'datetime2',
+  'datetimeoffset',
+  'time',
+  'date',
+]);
+
+/** one SELECT-list entry, rendered as exact text where the driver would round it */
+export function exactColumn(column: MssqlColumn, prefix?: string): string {
+  const id = prefix
+    ? `${prefix}.${quoteId(column.name)}`
+    : quoteId(column.name);
+  if (!EXACT_TEXT_TYPES.has(column.type)) return id;
+  const style = outStyle(column);
+  const converted = `CONVERT(varchar(max), ${id}${
+    style === undefined ? '' : `, ${style}`
+  })`;
+  return `${converted} AS ${quoteId(column.name)}`;
+}
+
+/**
+ * A SELECT list for the whole row. `prefix` names the pseudo-table an OUTPUT
+ * clause reads from, INSERTED or DELETED.
+ */
+export function exactProjection(columns: MssqlColumn[], prefix?: string): string {
+  if (columns.length === 0) return prefix ? `${prefix}.*` : '*';
+  return columns.map((column) => exactColumn(column, prefix)).join(', ');
+}
+
 /** SQL that turns that text back into a value comparable against the column */
 export function cursorBind(column: MssqlColumn, parameter: string): string {
   const target = declaredType(column);
@@ -227,6 +275,8 @@ export type Plan = {
   mode: Mode;
   /** the ordering column first, then the tiebreakers; a position mirrors this */
   columns: MssqlColumn[];
+  /** every column of the table, for projecting the row the trigger hands over */
+  all: MssqlColumn[];
   target: string;
   /** the direction the drain walks, which is the reverse of how the table reads */
   drain: OrderDirection;
@@ -295,6 +345,7 @@ export function planCursor(
   return {
     mode: keyed ? 'keyset' : 'group',
     columns: keyed ? [order, ...tiebreakers] : [order],
+    all: meta.columns,
     target: quoteTable(table),
     // order_direction describes how the user reads the table: DESC means the
     // newest rows carry the largest values. The drain runs the other way, from
@@ -357,7 +408,7 @@ function keysetAhead(plan: Plan): string {
 }
 
 function projection(plan: Plan): string {
-  return `*, ${positionProjection(plan.columns)}`;
+  return `${exactProjection(plan.all)}, ${positionProjection(plan.columns)}`;
 }
 
 /**

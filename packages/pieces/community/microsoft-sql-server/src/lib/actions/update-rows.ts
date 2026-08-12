@@ -4,9 +4,11 @@ import {
   MssqlTable,
   isOutputBlockedByTrigger,
   mssqlConnect,
+  mssqlGetTableMeta,
   quoteId,
   quoteTable,
 } from '../common';
+import { exactProjection } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
@@ -61,11 +63,16 @@ export const updateRowsAction = createAction({
         return request;
       };
 
+      // The driver rounds decimal and truncates the date family, so the row is
+      // rendered to text by the server. See exactProjection in common/cursor.
+      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
+      const output = exactProjection(meta.columns, 'INSERTED');
+
       let rows: Record<string, unknown>[] = [];
       let affected: number[] = [];
       try {
         const result = await bind().query<Record<string, unknown>>(
-          `UPDATE ${target} SET ${assignments} OUTPUT INSERTED.* ${where}`
+          `UPDATE ${target} SET ${assignments} OUTPUT ${output} ${where}`
         );
         rows = result.recordset ?? [];
         affected = result.rowsAffected ?? [];

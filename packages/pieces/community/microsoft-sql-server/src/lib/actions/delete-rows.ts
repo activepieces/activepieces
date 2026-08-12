@@ -4,9 +4,11 @@ import {
   MssqlTable,
   isOutputBlockedByTrigger,
   mssqlConnect,
+  mssqlGetTableMeta,
   quoteId,
   quoteTable,
 } from '../common';
+import { exactProjection } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
@@ -43,11 +45,16 @@ export const deleteRowsAction = createAction({
     try {
       const bind = () => pool.request().input('search', search_value);
 
+      // The driver rounds decimal and truncates the date family, so the row is
+      // rendered to text by the server. See exactProjection in common/cursor.
+      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
+      const output = exactProjection(meta.columns, 'DELETED');
+
       let rows: Record<string, unknown>[] = [];
       let affected: number[] = [];
       try {
         const result = await bind().query<Record<string, unknown>>(
-          `DELETE FROM ${target} OUTPUT DELETED.* ${where}`
+          `DELETE FROM ${target} OUTPUT ${output} ${where}`
         );
         rows = result.recordset ?? [];
         affected = result.rowsAffected ?? [];

@@ -4,9 +4,11 @@ import {
   MssqlTable,
   isOutputBlockedByTrigger,
   mssqlConnect,
+  mssqlGetTableMeta,
   quoteId,
   quoteTable,
 } from '../common';
+import { exactProjection } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { insertRowActionOutputSchema } from '../output-schemas';
 
@@ -41,10 +43,16 @@ export const insertRowAction = createAction({
     const target = quoteTable(table as MssqlTable);
     const columnList = entries.map(([column]) => quoteId(column)).join(', ');
     const placeholders = entries.map((_, i) => `@p${i}`).join(', ');
-    const query = `INSERT INTO ${target} (${columnList}) OUTPUT INSERTED.* VALUES (${placeholders})`;
-
     const pool = await mssqlConnect(context.auth);
     try {
+      // OUTPUT INSERTED.* would hand the row back through the driver's own
+      // parsing, which rounds decimal and truncates the date family. See
+      // exactProjection in common/cursor.
+      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
+      const query = `INSERT INTO ${target} (${columnList}) OUTPUT ${exactProjection(
+        meta.columns,
+        'INSERTED'
+      )} VALUES (${placeholders})`;
       const request = pool.request();
       entries.forEach(([, value], i) => request.input(`p${i}`, value ?? null));
       const result = await request.query<Record<string, unknown>>(query);
