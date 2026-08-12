@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
-const { mockProjectFind, mockConversationFind, mockConversationDelete } = vi.hoisted(() => ({
+const { mockProjectFind, mockConversationDelete } = vi.hoisted(() => ({
     mockProjectFind: vi.fn().mockResolvedValue([]),
-    mockConversationFind: vi.fn().mockResolvedValue([]),
     mockConversationDelete: vi.fn().mockResolvedValue({ affected: 0 }),
 }))
 
@@ -10,7 +9,7 @@ vi.mock('../../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: (entity: { options?: { name?: string } }) => () => (
         entity?.options?.name === 'project'
             ? { find: mockProjectFind }
-            : { find: mockConversationFind, delete: mockConversationDelete }
+            : { delete: mockConversationDelete }
     ),
 }))
 
@@ -20,34 +19,33 @@ const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as never
 
 describe('agentRetention.deleteStaleFlowStepConversations', () => {
     it('only ever deletes flow-step conversations, so a chat is never swept', async () => {
-        mockProjectFind.mockResolvedValue([])
-        mockConversationFind.mockResolvedValue([])
-
-        await agentRetention(log).deleteStaleFlowStepConversations()
-
-        for (const call of mockConversationFind.mock.calls) {
-            expect(call[0].where.source).toBe('FLOW_STEP')
-        }
-        expect(mockConversationFind).toHaveBeenCalled()
-    })
-
-    it('sweeps a project with a shorter retention on its own boundary, not the default', async () => {
         mockProjectFind.mockResolvedValue([{ id: 'proj-short', executionDataRetentionDays: 1 }])
-        mockConversationFind.mockResolvedValue([])
 
         await agentRetention(log).deleteStaleFlowStepConversations()
 
-        const scoped = mockConversationFind.mock.calls.filter((call) => call[0].where.projectId !== undefined)
-        expect(scoped.length).toBeGreaterThan(0)
+        expect(mockConversationDelete).toHaveBeenCalled()
+        for (const [criteria] of mockConversationDelete.mock.calls) {
+            expect(criteria.source).toBe('FLOW_STEP')
+        }
     })
 
-    it('deletes what it finds and reports the count', async () => {
-        mockProjectFind.mockResolvedValue([])
-        mockConversationFind.mockResolvedValueOnce([{ id: 'conv-1' }, { id: 'conv-2' }]).mockResolvedValue([])
-        mockConversationDelete.mockResolvedValue({ affected: 2 })
+    it('does not sweep a project twice when its retention clamps back to the default', async () => {
+        mockConversationDelete.mockClear()
+        mockProjectFind.mockResolvedValue([{ id: 'proj-same', executionDataRetentionDays: 1 }])
 
         await agentRetention(log).deleteStaleFlowStepConversations()
 
-        expect(mockConversationDelete).toHaveBeenCalledWith({ id: expect.anything() })
+        const scoped = mockConversationDelete.mock.calls.filter(([criteria]) => criteria.projectId !== undefined)
+        expect(scoped.length + 1).toBe(mockConversationDelete.mock.calls.length)
+    })
+
+    it('sweeps only the default boundary when no project shortened its retention', async () => {
+        mockConversationDelete.mockClear()
+        mockProjectFind.mockResolvedValue([])
+
+        await agentRetention(log).deleteStaleFlowStepConversations()
+
+        expect(mockConversationDelete).toHaveBeenCalledTimes(1)
+        expect(mockConversationDelete.mock.calls[0][0].projectId).toBeUndefined()
     })
 })

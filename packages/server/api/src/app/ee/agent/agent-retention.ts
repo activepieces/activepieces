@@ -1,8 +1,9 @@
 import { apDayjs } from '@activepieces/server-utils'
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, Project } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { ProjectEntity } from '../../project/project-entity'
@@ -18,56 +19,35 @@ export const agentRetention = (log: FastifyBaseLogger) => ({
             where: { executionDataRetentionDays: LessThan(EXECUTION_DATA_RETENTION_DAYS) },
         })
 
-        const passes = [
+        const passes: [number, string[] | undefined][] = [
             ...groupProjectIdsByRetentionDays(shorterThanDefault).entries(),
-        ].map(([retentionDays, projectIds]) => ({ retentionDays, projectIds }))
+            [EXECUTION_DATA_RETENTION_DAYS, undefined],
+        ]
+        const deleted = await Promise.all(passes.map(([retentionDays, projectIds]) => deleteOlderThan({ retentionDays, projectIds })))
 
-        let deleted = 0
-        for (const pass of passes) {
-            deleted += await deleteOlderThan({ retentionDays: pass.retentionDays, projectIds: pass.projectIds })
-        }
-        deleted += await deleteOlderThan({ retentionDays: EXECUTION_DATA_RETENTION_DAYS, projectIds: undefined })
-
-        if (deleted > 0) {
-            log.info({ deletedCount: deleted }, '[agentRetention] Removed flow-step conversations past their project\'s retention')
+        const deletedCount = deleted.reduce((total, count) => total + count, 0)
+        if (deletedCount > 0) {
+            log.info({ deletedCount }, '[agentRetention] Removed flow-step conversations past their project\'s retention')
         }
     },
 })
 
 async function deleteOlderThan({ retentionDays, projectIds }: { retentionDays: number, projectIds: string[] | undefined }): Promise<number> {
-    let deleted = 0
-    for (;;) {
-        const stale = await conversationRepo().find({
-            select: ['id'],
-            where: {
-                source: AgentRunSource.FLOW_STEP,
-                created: LessThan(apDayjs().subtract(retentionDays, 'days').toISOString()),
-                ...(projectIds === undefined ? {} : { projectId: In(projectIds) }),
-            },
-            take: DELETE_BATCH_SIZE,
-        })
-        if (stale.length === 0) {
-            return deleted
-        }
-        const result = await conversationRepo().delete({ id: In(stale.map((row) => row.id)) })
-        deleted += result.affected ?? 0
-        if (stale.length < DELETE_BATCH_SIZE) {
-            return deleted
-        }
-    }
+    const { affected } = await conversationRepo().delete({
+        source: AgentRunSource.FLOW_STEP,
+        created: LessThan(apDayjs().subtract(retentionDays, 'days').toISOString()),
+        ...(projectIds === undefined ? {} : { projectId: In(projectIds) }),
+    })
+    return affected ?? 0
 }
 
-function groupProjectIdsByRetentionDays(projects: { id: string, executionDataRetentionDays?: number | null }[]): Map<number, string[]> {
-    const byRetentionDays = new Map<number, string[]>()
-    for (const project of projects) {
-        const days = project.executionDataRetentionDays ?? EXECUTION_DATA_RETENTION_DAYS
-        if (days >= EXECUTION_DATA_RETENTION_DAYS) {
-            continue
-        }
-        byRetentionDays.set(days, [...(byRetentionDays.get(days) ?? []), project.id])
-    }
-    return byRetentionDays
+function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executionDataRetentionDays'>[]): Map<number, string[]> {
+    return projects.reduce((byRetentionDays, project) => {
+        const days = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
+        return days >= EXECUTION_DATA_RETENTION_DAYS
+            ? byRetentionDays
+            : byRetentionDays.set(days, [...(byRetentionDays.get(days) ?? []), project.id])
+    }, new Map<number, string[]>())
 }
 
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
-const DELETE_BATCH_SIZE = 2_000
