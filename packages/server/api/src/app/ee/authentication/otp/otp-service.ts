@@ -30,20 +30,29 @@ export const otpService = (log: FastifyBaseLogger) => ({
             type,
         })
         const existingOtpIsReusable = existingOtp && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
-        const otp: Omit<OtpModel, 'created'> = {
-            id: existingOtp?.id ?? apId(),
+        if (existingOtpIsReusable) {
+            await emailService(log).sendOtp({
+                platformId,
+                userIdentity,
+                otp: existingOtp.value,
+                type,
+            })
+            return
+        }
+        const newOtp: Omit<OtpModel, 'created'> = {
+            id: apId(),
             updated: dayjs().toISOString(),
             type,
             identityId: userIdentity.id,
-            value: existingOtpIsReusable ? existingOtp.value : otpGenerator.generate(),
+            value: otpGenerator.generate(),
             state: OtpState.PENDING,
         }
-        await repo().upsert(otp, ['identityId', 'type'])
+        await repo().upsert(newOtp, ['identityId', 'type'])
         await emailService(log).sendOtp({
             platformId,
             userIdentity,
-            otp: otp.value,
-            type: otp.type,
+            otp: newOtp.value,
+            type: newOtp.type,
         })
     },
 
