@@ -593,12 +593,40 @@ describe('reconcile', () => {
     expect(cursorUtils.reconcile({ stored: crossed, plan })).toBeNull();
   });
 
-  it('discards a position from an older layout', () => {
+  it('keeps a position from an older layout that renders it the same way', () => {
     const stale = {
       ...cursorUtils.newCursor({ plan, position: ['a', 'b'] }),
       v: CURSOR_LAYOUT - 1,
     };
-    expect(cursorUtils.reconcile({ stored: stale, plan })).toBeNull();
+    expect(cursorUtils.reconcile({ stored: stale, plan })).toBe(stale);
+  });
+
+  it('discards a position from the layout that rendered datetimeoffset in UTC', () => {
+    const offsetAt = column('offset_at', 'datetimeoffset', { scale: 7 });
+    const offsetPlan = cursorUtils.planCursor({
+      meta: meta({ columns: [offsetAt, id, email] }),
+      propsValue: { ...descending, order_by: 'offset_at' },
+    });
+    const stale = {
+      ...cursorUtils.newCursor({
+        plan: offsetPlan,
+        position: ['2026-01-15T05:30:00.1234567Z', '1'],
+      }),
+      v: CURSOR_LAYOUT - 1,
+    };
+    expect(
+      cursorUtils.reconcile({ stored: stale, plan: offsetPlan })
+    ).toBeNull();
+  });
+
+  it('discards a position from a layout it knows nothing about', () => {
+    for (const v of [0, CURSOR_LAYOUT + 1]) {
+      const alien = {
+        ...cursorUtils.newCursor({ plan, position: ['a', 'b'] }),
+        v,
+      };
+      expect(cursorUtils.reconcile({ stored: alien, plan })).toBeNull();
+    }
   });
 
   it('discards a position whose length no longer matches', () => {

@@ -24,6 +24,10 @@ const HEX = 1;
 const FLOAT_FULL = 3;
 const MONEY_FULL = 2;
 
+const RERENDERED_AT_LAYOUT: Record<number, Set<string>> = {
+  2: new Set(['datetimeoffset']),
+};
+
 const CURSOR_TYPES = new Set([
   ...DATE_TYPES,
   ...BINARY_TYPES,
@@ -477,6 +481,25 @@ function newCursor({
   };
 }
 
+function isCompatibleLayout({
+  layout,
+  columns,
+}: {
+  layout: number;
+  columns: MssqlColumn[];
+}): boolean {
+  if (layout === CURSOR_LAYOUT) return true;
+  if (!Number.isInteger(layout) || layout < 1 || layout > CURSOR_LAYOUT) {
+    return false;
+  }
+  for (let step = layout + 1; step <= CURSOR_LAYOUT; step++) {
+    const rerendered = RERENDERED_AT_LAYOUT[step];
+    if (isNil(rerendered)) return false;
+    if (columns.some((column) => rerendered.has(column.type))) return false;
+  }
+  return true;
+}
+
 function reconcile({
   stored,
   plan,
@@ -487,7 +510,7 @@ function reconcile({
   if (isNil(stored)) return null;
   const shape = plan.columns.map(cursorShape);
   const matches =
-    stored.v === CURSOR_LAYOUT &&
+    isCompatibleLayout({ layout: stored.v, columns: plan.columns }) &&
     stored.m === plan.mode &&
     Array.isArray(stored.c) &&
     stored.c.length === shape.length &&
