@@ -20,6 +20,13 @@ async function renameTable(queryRunner: QueryRunner, from: string, to: string): 
     await queryRunner.query(`ALTER TABLE IF EXISTS "${from}" RENAME TO "${to}"`)
 }
 
+// The previous release still queries the old names, and a rolling deploy keeps it serving while
+// this runs. A view restores each old name in the same transaction as the rename, so the name is
+// never missing; single-table with no aggregate makes it auto-updatable, so writes work too.
+async function addCompatView(queryRunner: QueryRunner, oldName: string, newName: string): Promise<void> {
+    await queryRunner.query(`CREATE OR REPLACE VIEW "${oldName}" AS SELECT * FROM "${newName}"`)
+}
+
 export class RenameChatTablesToAgent1822000000000 implements Migration {
     name = 'RenameChatTablesToAgent1822000000000'
     breaking = false
@@ -42,9 +49,14 @@ export class RenameChatTablesToAgent1822000000000 implements Migration {
 
         await renameTable(queryRunner, 'chat_conversation', 'agent_conversation')
         await renameTable(queryRunner, 'user_chat_memory', 'user_memory')
+
+        await addCompatView(queryRunner, 'chat_conversation', 'agent_conversation')
+        await addCompatView(queryRunner, 'user_chat_memory', 'user_memory')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query('DROP VIEW IF EXISTS "chat_conversation"')
+        await queryRunner.query('DROP VIEW IF EXISTS "user_chat_memory"')
         await renameTable(queryRunner, 'agent_conversation', 'chat_conversation')
         await renameTable(queryRunner, 'user_memory', 'user_chat_memory')
 
