@@ -29,17 +29,23 @@ import { flowRepo } from './flow.repo'
 
 
 const POSTGRES_UNIQUE_VIOLATION = '23505'
+const SQLITE_UNIQUE_VIOLATION_MESSAGE = 'UNIQUE constraint failed'
 
 function isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
         return false
     }
     const driverError: unknown = error.driverError
+    if (typeof driverError !== 'object' || driverError === null) {
+        return false
+    }
+    if ('code' in driverError && driverError.code === POSTGRES_UNIQUE_VIOLATION) {
+        return true
+    }
     return (
-        typeof driverError === 'object' &&
-        driverError !== null &&
-        'code' in driverError &&
-        driverError.code === POSTGRES_UNIQUE_VIOLATION
+        'message' in driverError &&
+        typeof driverError.message === 'string' &&
+        driverError.message.includes(SQLITE_UNIQUE_VIOLATION_MESSAGE)
     )
 }
 
