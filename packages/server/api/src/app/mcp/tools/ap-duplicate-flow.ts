@@ -37,6 +37,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
 
                 const newFlow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    platformId: project.platformId,
                     ownerId: userId,
                     createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
@@ -49,7 +50,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     const updatedFlow = await flowService(log).update({
                         id: newFlow.id,
                         projectId: mcp.projectId,
-                        userId: null,
+                        userId: userId ?? null,
                         platformId: project.platformId,
                         operation: {
                             type: FlowOperationType.IMPORT_FLOW,
@@ -71,7 +72,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                 }
                 catch (importErr) {
                     try {
-                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId })
+                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId, platformId: project.platformId, userId })
                     }
                     catch { /* best-effort cleanup */ }
                     return mcpUtils.mcpToolError('Flow duplication failed', importErr)

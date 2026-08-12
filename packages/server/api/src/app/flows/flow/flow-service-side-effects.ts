@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
-import { FileType, Flow, FlowStatus, FlowVersion } from '@activepieces/shared'
+import { ApplicationEventName, FileType, Flow, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { applicationEvents, MetaInformation } from '../../helper/application-events'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
@@ -62,7 +63,75 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             fileType: FileType.SAMPLE_DATA_INPUT,
         })
     },
+
+    onCreated({ flow, ...meta }: OnCreatedParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow,
+            },
+        })
+    },
+
+    onOperationApplied({ flow, previousVersion, previousStatus, operation, ...meta }: OnOperationAppliedParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                flow: {
+                    id: flow.id,
+                    externalId: flow.externalId,
+                    created: flow.created,
+                    updated: flow.updated,
+                },
+                request: operation,
+                flowVersion: previousVersion,
+            },
+        })
+        for (const action of pickLifecycleActions({ operation, previousStatus })) {
+            applicationEvents(log).sendUserEvent(meta, {
+                action,
+                data: {
+                    flow,
+                    flowVersion: flow.version,
+                },
+            })
+        }
+    },
+
+    onDeleted({ flow, ...meta }: OnDeletedParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
 })
+
+function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
+    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
+        const newStatus = operation.request.status ?? FlowStatus.ENABLED
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
+        return isNil(transitionAction)
+            ? [ApplicationEventName.FLOW_PUBLISHED]
+            : [ApplicationEventName.FLOW_PUBLISHED, transitionAction]
+    }
+    if (operation.type === FlowOperationType.CHANGE_STATUS) {
+        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
+        return isNil(transitionAction) ? [] : [transitionAction]
+    }
+    return []
+}
+
+function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
+    if (newStatus === previousStatus) {
+        return undefined
+    }
+    return newStatus === FlowStatus.ENABLED
+        ? ApplicationEventName.FLOW_ACTIVATED
+        : ApplicationEventName.FLOW_DEACTIVATED
+}
 
 type PreUpdateStatusParams = {
     flowToUpdate: Flow
@@ -75,4 +144,29 @@ type PreUpdateStatusParams = {
 
 type PreDeleteParams = {
     flowToDelete: Flow
+}
+
+type OnCreatedParams = MetaInformation & {
+    flow: PopulatedFlow
+}
+
+type OnOperationAppliedParams = MetaInformation & {
+    flow: PopulatedFlow
+    previousVersion: FlowVersion
+    previousStatus: FlowStatus
+    operation: FlowOperationRequest
+}
+
+type OnDeletedParams = MetaInformation & {
+    flow: PopulatedFlow
+}
+
+type PickLifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+}
+
+type PickTransitionActionParams = {
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
 }
