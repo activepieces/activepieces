@@ -345,83 +345,6 @@ export const recordService = {
     },
 }
 
-type CreateParams = {
-    request: CreateRecordsRequest
-    projectId: string
-    logger: FastifyBaseLogger
-    fields?: Field[]
-}
-
-type ListParams = {
-    tableId: string
-    projectId: string
-    cursorRequest: Cursor | null
-    limit: number
-    filters: Filter[] | null
-    fields?: Field[]
-}
-
-type GetByIdParams = {
-    id: string
-    projectId: string
-}
-
-type UpdateParams = {
-    id: string
-    projectId: string
-    request: UpdateRecordRequest
-}
-
-type DeleteParams = {
-    ids: string[]
-    projectId: string
-}
-
-type DeleteAllParams = {
-    tableId: string
-    projectId: string
-}
-
-type TriggerWebhooksParams = {
-    projectId: string
-    tableId: string
-    eventType: TableWebhookEventType
-    data: Record<string, unknown>
-    logger: FastifyBaseLogger
-    authorization: string
-}
-type CountParams = {
-    projectId: string
-    tableId: string
-}
-
-type RecordInsertion = {
-    id: string
-    tableId: string
-    projectId: string
-    created: string
-}
-
-type CellInsertion = {
-    id: string
-    recordId: string
-    fieldId: string
-    projectId: string
-    value: string
-}
-
-type DoesCellValueMatchFilterParams = {
-    cell: Pick<Cell, 'value'>
-    filter: Filter
-    fieldType: FieldType | undefined
-}
-
-type OrderedFilterValidatorParams = {
-    cellValue: unknown
-    filterValue: string
-    cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean
-}
-
 function prepareRecordInsertions(
     records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
@@ -559,4 +482,79 @@ const dateFilterValidator = ({ cellValue, filterValue, cb }: OrderedFilterValida
 
 const isDateFieldType = (fieldType: FieldType | undefined): boolean => fieldType === FieldType.DATE || fieldType === FieldType.DATETIME
 
+type CreateParams = {
+    request: CreateRecordsRequest
+    projectId: string
+    logger: FastifyBaseLogger
+    fields?: Field[]
+}
 
+type ListParams = {
+    tableId: string
+    projectId: string
+    cursorRequest: Cursor | null
+    limit: number
+    filters: Filter[] | null
+    fields?: Field[]
+}
+
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    request: UpdateRecordRequest
+}
+
+type DeleteParams = {
+    ids: string[]
+    projectId: string
+}
+
+type DeleteAllParams = {
+    tableId: string
+    projectId: string
+}
+
+type TriggerWebhooksParams = {
+    projectId: string
+    tableId: string
+    eventType: TableWebhookEventType
+    data: Record<string, unknown>
+    logger: FastifyBaseLogger
+    authorization: string
+}
+type CountParams = {
+    projectId: string
+    tableId: string
+}
+
+type RecordInsertion = {
+    id: string
+    tableId: string
+    projectId: string
+    created: string
+}
+
+type CellInsertion = {
+    id: string
+    recordId: string
+    fieldId: string
+    projectId: string
+    value: string
+}
+
+type DoesCellValueMatchFilterParams = {
+    cell: Pick<Cell, 'value'>
+    filter: Filter
+    fieldType: FieldType | undefined
+}
+
+type OrderedFilterValidatorParams = {
+    cellValue: unknown
+    filterValue: string
+    cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean
+}
