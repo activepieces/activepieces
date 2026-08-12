@@ -75,7 +75,6 @@ type Props = {
   table: { table_schema: string; table_name: string };
   order_by: string;
   order_direction: 'ASC' | 'DESC';
-  max_rows?: number;
 };
 
 function harness(props: Props) {
@@ -231,7 +230,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'created_at',
       order_direction: 'DESC',
-      max_rows: 200,
     });
     await trigger.enable();
 
@@ -272,7 +270,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'updated_at',
       order_direction: 'DESC',
-      max_rows: 200,
     });
     await trigger.enable();
 
@@ -339,7 +336,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'updated_at',
       order_direction: 'DESC',
-      max_rows: 200,
     });
     await trigger.enable();
 
@@ -373,7 +369,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'updated_at',
       order_direction: 'DESC',
-      max_rows: 2,
     });
     await trigger.enable();
 
@@ -458,7 +453,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'rank_no',
       order_direction: 'ASC',
-      max_rows: 10,
     });
     await trigger.enable();
 
@@ -494,7 +488,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'rv',
       order_direction: 'DESC',
-      max_rows: 2,
     });
     await trigger.enable();
     expect(await trigger.poll()).toHaveLength(0);
@@ -520,7 +513,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
         table,
         order_by: 'created_at',
         order_direction: 'DESC',
-        max_rows: 40,
       });
       await trigger.enable();
 
@@ -550,7 +542,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
         table,
         order_by: 'created_at',
         order_direction: 'DESC',
-        max_rows: 50,
       });
       await trigger.enable();
 
@@ -693,7 +684,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
         table,
         order_by: 'v',
         order_direction: 'DESC',
-        max_rows: 1,
       });
       // empty at enable, so every value below counts as new
       await trigger.enable();
@@ -704,7 +694,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
           .join(', ')}`
       );
 
-      // max_rows of 1 forces the position to be re-read and re-bound per row,
+      // draining to empty re-reads and re-binds the position between polls,
       // which is where a lossy rendering shows up
       const { rows } = await trigger.drain();
       expect(rows).toHaveLength(values.length);
@@ -729,7 +719,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'updated_at',
       order_direction: 'DESC',
-      max_rows: 3,
     });
     await trigger.enable();
 
@@ -882,7 +871,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'created_at',
       order_direction: 'DESC',
-      max_rows: 0,
     });
     await trigger.enable();
 
@@ -973,7 +961,6 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'created_at',
       order_direction: 'DESC',
-      max_rows: 50,
     });
     await trigger.enable();
 
@@ -1002,16 +989,18 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       table,
       order_by: 'updated_at',
       order_direction: 'DESC',
-      max_rows: 2,
     });
     await trigger.enable();
 
-    // four rows sharing one value, so a page stops halfway through the group
+    // A page holds 200 rows, so it takes more than that on one ordering value
+    // for a page to stop inside the group and leave the position there.
     await exec(
       `INSERT INTO ${quoted(table)} (updated_at)
-       SELECT '2030-01-01T00:00:00.000' FROM (${series(4)}) s`
+       SELECT '2030-01-01T00:00:00.000' FROM (${series(250)}) s`
     );
-    expect(ids(await trigger.poll())).toEqual([1, 2]);
+    expect(ids(await trigger.poll())).toEqual(
+      Array.from({ length: 200 }, (_, i) => i + 1)
+    );
 
     // now a late arrival at the same value, with a higher key
     await exec(
@@ -1020,7 +1009,9 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     );
 
     const { rows } = await trigger.drain();
-    expect(ids(rows)).toEqual([3, 4, 5]);
+    expect(ids(rows)).toEqual(
+      Array.from({ length: 51 }, (_, i) => i + 201)
+    );
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
@@ -1053,11 +1044,10 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
-  it('does not re-fire an old row when its natural key is edited', async () => {
-    // Identity used to be hashed over the row's values, so renaming the key
-    // changed it and the row could return once looking new. The position is now
-    // a value tuple, and an edit that leaves the ordering column alone stays
-    // behind it.
+  it('does not re-fire an old row when its natural key is edited behind the position', async () => {
+    // Only the backward direction stays quiet. 'n' sorts before 'o', so
+    // 'dave@new.com' lands behind the stored tuple. The forward case is the
+    // test below, and it does re-fire.
     const table = nextTable();
     await createTable(
       table,
@@ -1091,6 +1081,48 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
     expect(await trigger.poll()).toHaveLength(0);
   }, 120_000);
 
+  // A tiebreaker that is only unique, not immutable, cannot tell "this row
+  // moved" from "this row is new". Editing the key of an already-delivered row
+  // moves it relative to a position recorded from its old value, and the keyset
+  // predicate has nothing left to notice that with.
+  //
+  // Editing a key forward re-fires the row, which is pinned below. Editing one
+  // backward hides it, and if the row had not been delivered yet it is lost --
+  // that needs an undelivered row behind the position, so with the page size
+  // fixed it takes more than a page of rows sharing one ordering value, and is
+  // left unpinned rather than made slow.
+  //
+  // Neither is intended. The answer is an IDENTITY column, which planCursor
+  // prefers precisely because it cannot be edited.
+  it('re-fires a delivered row when its natural key is edited ahead of the position', async () => {
+    const table = nextTable();
+    await createTable(
+      table,
+      `email nvarchar(100) NOT NULL, updated_at datetime2(3) NOT NULL`
+    );
+    await exec(`CREATE UNIQUE INDEX ix_email ON ${quoted(table)} (email);`);
+    await exec(
+      `INSERT INTO ${quoted(table)} (email, updated_at)
+       VALUES ('dave@old.com', '2030-01-01')`
+    );
+
+    const trigger = harness({
+      table,
+      order_by: 'updated_at',
+      order_direction: 'DESC',
+    });
+    await trigger.enable();
+
+    // 'z' sorts after 'o', so the row now sits ahead of its own recorded
+    // position and reads as undelivered.
+    await exec(
+      `UPDATE ${quoted(table)} SET email = 'dave@zzz.com' WHERE email = 'dave@old.com'`
+    );
+    const rows = await trigger.poll();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]['email']).toBe('dave@zzz.com');
+  }, 120_000);
+
   // Which columns become the tiebreaker is the trigger's most consequential
   // decision: pick one that does not actually identify a row and the keyset
   // silently steps over rows. These pin what it refuses to trust.
@@ -1120,7 +1152,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       expect(await modeOf(table, 'updated_at')).toEqual({
         v: 1,
         m: 'group',
-        c: ['updated_at'],
+        c: ['updated_at:datetime2(3)'],
         k: null,
       });
     });
@@ -1150,7 +1182,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
 
       expect(await modeOf(table, 'updated_at')).toMatchObject({
         m: 'keyset',
-        c: ['updated_at', 'code'],
+        c: ['updated_at:datetime2(3)', 'code:nvarchar(20)'],
       });
     });
 
@@ -1172,7 +1204,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
 
       expect(await modeOf(table, 'updated_at')).toMatchObject({
         m: 'keyset',
-        c: ['updated_at', 'id', 'tenant_id'],
+        c: ['updated_at:datetime2(3)', 'id:int', 'tenant_id:int'],
       });
     });
 
@@ -1188,7 +1220,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       // still keyset, because the primary key identifies the row either way
       expect(await modeOf(table, 'updated_at')).toMatchObject({
         m: 'keyset',
-        c: ['updated_at', 'id'],
+        c: ['updated_at:datetime2(3)', 'id:int'],
       });
     });
 
@@ -1205,7 +1237,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
 
       expect(await modeOf(table, 'updated_at')).toMatchObject({
         m: 'keyset',
-        c: ['updated_at', 'id'],
+        c: ['updated_at:datetime2(3)', 'id:int'],
       });
     });
   });

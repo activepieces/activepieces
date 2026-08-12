@@ -342,10 +342,19 @@ export function planCursor(
 
   // A row is identifiable by its ordering value plus something unique, and that
   // something has to be immutable to be worth trusting. An IDENTITY column is
-  // both, and it is ascending as well, so a row inserted later always sorts
-  // ahead of the position. A declared key is unique but editable, which makes an
-  // edited row look new once. Anything else -- no key at all, or a key on a type
-  // with no total order under plain comparison -- drops to group mode.
+  // both, and under the usual DESC ordering it is ascending too, so a row
+  // inserted later sorts ahead of the position.
+  //
+  // A declared key is unique but editable, and the keyset compares its value
+  // now against the value recorded then. Editing the key of a delivered row
+  // moves it: forward, and it is delivered a second time; backward, and it is
+  // hidden -- which loses it outright if it had not been delivered yet. There
+  // is no way to tell either apart from a genuine insert without keeping the
+  // rows themselves, so the key is used only when no identity exists, and both
+  // behaviours are pinned by tests rather than left to be discovered.
+  //
+  // Anything else -- no key at all, or a key on a type with no total order
+  // under plain comparison -- drops to group mode.
   const keyNames = meta.identity ? [meta.identity] : meta.keyColumns;
   const tiebreakers: MssqlColumn[] = [];
   let keyed = keyNames.length > 0;
