@@ -6,9 +6,10 @@ import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
-import { generateMockToken } from '../../../helpers/auth'
+import { generateMockExternalToken, generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
+    createMockSigningKey,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 
@@ -935,6 +936,237 @@ describe('SCIM 2.0 API', () => {
             expect(putResponse?.statusCode).toBe(StatusCodes.OK)
             const members = putResponse?.json().members.map((m: { value: string }) => m.value).sort()
             expect(members).toEqual([u2Id, u3Id].sort())
+        })
+    })
+
+    describe('SCIM scoping for embed-provisioned users', () => {
+
+        async function setupScimPlatformWithEmbedUser() {
+            const { mockPlatform, bearerToken } = await setupScimPlatform()
+
+            const mockSigningKey = createMockSigningKey({ platformId: mockPlatform.id })
+            await databaseConnection().getRepository('signing_key').save(mockSigningKey)
+
+            const { mockExternalToken } = generateMockExternalToken({
+                platformId: mockPlatform.id,
+                signingKeyId: mockSigningKey.id,
+                externalUserId: `embed-${apId()}`,
+            })
+            const embedLogin = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/managed-authn/external-token',
+                body: { externalAccessToken: mockExternalToken },
+            })
+            expect(embedLogin?.statusCode).toBe(StatusCodes.OK)
+            const embedUser: { id: string, email: string, token: string, projectId: string } = embedLogin?.json()
+
+            return {
+                bearerToken,
+                embedUserId: embedUser.id,
+                embedUserEmail: embedUser.email,
+                embedUserToken: embedUser.token,
+                embedProjectId: embedUser.projectId,
+            }
+        }
+
+        it('should omit embed-provisioned users from the user list', async () => {
+            const { bearerToken, embedUserId } = await setupScimPlatformWithEmbedUser()
+
+            const idpUser = mockIdpUser()
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: bearerToken },
+                body: idpUser,
+            })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+
+            const listResponse = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: bearerToken },
+            })
+
+            expect(listResponse?.statusCode).toBe(StatusCodes.OK)
+            const ids = listResponse?.json().Resources.map((r: { id: string }) => r.id)
+            expect(ids).toContain(createResponse?.json().id)
+            expect(ids).not.toContain(embedUserId)
+        })
+
+        it('should return an empty list when filtering by an embed user userName', async () => {
+            const { bearerToken, embedUserEmail } = await setupScimPlatformWithEmbedUser()
+
+            const filterResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/scim/v2/Users?filter=${encodeURIComponent(`userName eq "${embedUserEmail}"`)}`,
+                headers: { authorization: bearerToken },
+            })
+
+            expect(filterResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(filterResponse?.json().totalResults).toBe(0)
+        })
+
+        it('should return 404 for GET, PUT, and DELETE on an embed-provisioned user', async () => {
+            const { bearerToken, embedUserId } = await setupScimPlatformWithEmbedUser()
+
+            const getResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/scim/v2/Users/${embedUserId}`,
+                headers: { authorization: bearerToken },
+            })
+            expect(getResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            const putResponse = await app?.inject({
+                method: 'PUT',
+                url: `/api/v1/scim/v2/Users/${embedUserId}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+                    userName: 'replaced@example.com',
+                    active: false,
+                },
+            })
+            expect(putResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            const deleteResponse = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/scim/v2/Users/${embedUserId}`,
+                headers: { authorization: bearerToken },
+            })
+            expect(deleteResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should keep an embed user session alive when the IdP tries to deactivate them via PATCH', async () => {
+            const { bearerToken, embedUserId, embedUserToken, embedProjectId } = await setupScimPlatformWithEmbedUser()
+
+            const callAuthenticatedEndpoint = async () => app?.inject({
+                method: 'GET',
+                url: `/api/v1/flows?projectId=${embedProjectId}`,
+                headers: { authorization: `Bearer ${embedUserToken}` },
+            })
+
+            expect((await callAuthenticatedEndpoint())?.statusCode).toBe(StatusCodes.OK)
+
+            const patchResponse = await app?.inject({
+                method: 'PATCH',
+                url: `/api/v1/scim/v2/Users/${embedUserId}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+                    Operations: [{ op: 'replace', value: { active: false } }],
+                },
+            })
+            expect(patchResponse?.statusCode).toBe(StatusCodes.NOT_FOUND)
+
+            expect((await callAuthenticatedEndpoint())?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should not expose embed users as group members', async () => {
+            const { bearerToken, embedUserId, embedProjectId } = await setupScimPlatformWithEmbedUser()
+
+            const groupResponse = await app?.inject({
+                method: 'GET',
+                url: `/api/v1/scim/v2/Groups/${embedProjectId}`,
+                headers: { authorization: bearerToken },
+            })
+
+            expect(groupResponse?.statusCode).toBe(StatusCodes.OK)
+            const memberIds = groupResponse?.json().members.map((m: { value: string }) => m.value)
+            expect(memberIds).not.toContain(embedUserId)
+        })
+
+        it('should not add an embed user to a group via PATCH', async () => {
+            const { bearerToken, embedUserId } = await setupScimPlatformWithEmbedUser()
+
+            const groupResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Groups',
+                headers: { authorization: bearerToken },
+                body: mockIdpGroup(),
+            })
+            expect(groupResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const groupId = groupResponse?.json().id
+
+            const patchResponse = await app?.inject({
+                method: 'PATCH',
+                url: `/api/v1/scim/v2/Groups/${groupId}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+                    Operations: [
+                        {
+                            op: 'add',
+                            path: 'members',
+                            value: [{ value: embedUserId }],
+                        },
+                    ],
+                },
+            })
+
+            expect(patchResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(patchResponse?.json().members).toHaveLength(0)
+        })
+
+        it('should keep embed users project membership when the IdP removes them via group PATCH', async () => {
+            const { bearerToken, embedUserId, embedProjectId } = await setupScimPlatformWithEmbedUser()
+
+            const patchResponse = await app?.inject({
+                method: 'PATCH',
+                url: `/api/v1/scim/v2/Groups/${embedProjectId}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'],
+                    Operations: [
+                        {
+                            op: 'remove',
+                            path: `members[value eq "${embedUserId}"]`,
+                        },
+                    ],
+                },
+            })
+            expect(patchResponse?.statusCode).toBe(StatusCodes.OK)
+
+            const membership = await databaseConnection().getRepository('project_member').findOneBy({
+                projectId: embedProjectId,
+                userId: embedUserId,
+            })
+            expect(membership).not.toBeNull()
+        })
+
+        it('should keep embed users project membership when the IdP replaces group members via PUT', async () => {
+            const { bearerToken, embedUserId, embedProjectId } = await setupScimPlatformWithEmbedUser()
+
+            const putResponse = await app?.inject({
+                method: 'PUT',
+                url: `/api/v1/scim/v2/Groups/${embedProjectId}`,
+                headers: { authorization: bearerToken },
+                body: {
+                    schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'],
+                    displayName: 'Synced Group',
+                    members: [],
+                },
+            })
+            expect(putResponse?.statusCode).toBe(StatusCodes.OK)
+
+            const membership = await databaseConnection().getRepository('project_member').findOneBy({
+                projectId: embedProjectId,
+                userId: embedUserId,
+            })
+            expect(membership).not.toBeNull()
+        })
+
+        it('should reject creating a SCIM user over an embed identity from another platform', async () => {
+            const { embedUserEmail } = await setupScimPlatformWithEmbedUser()
+            const { bearerToken: otherPlatformToken } = await setupScimPlatform()
+
+            const createResponse = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/scim/v2/Users',
+                headers: { authorization: otherPlatformToken },
+                body: mockIdpUser({ email: embedUserEmail }),
+            })
+
+            expect(createResponse?.statusCode).toBe(StatusCodes.CONFLICT)
         })
     })
 })
