@@ -8,6 +8,20 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The `chat_conversation` and `user_chat_memory` tables are gone
+
+They were renamed to `agent_conversation` and `user_memory` in 0.87.1, and views under the old names were kept so a release still using them kept working while an upgrade rolled out. Those views are now removed.
+
+#### What you need to do
+
+Nothing, if you upgraded through 0.87.1 and are running a supported version. Activepieces itself has not used the old names since 0.87.1.
+
+If you query the database directly — a reporting tool, a dashboard, a backup script, an external integration — point it at `agent_conversation` and `user_memory`. The rows and columns are unchanged; only the names are.
+
+## Unreleased
+
+### What has changed?
+
 #### Agent steps move from the flow engine to the server
 
 An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
