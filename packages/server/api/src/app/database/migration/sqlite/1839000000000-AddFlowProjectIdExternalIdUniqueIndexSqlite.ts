@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddFlowProjectIdExternalIdUniqueIndexSqlite1824000000000 implements MigrationInterface {
-    name = 'AddFlowProjectIdExternalIdUniqueIndexSqlite1824000000000'
+export class AddFlowProjectIdExternalIdUniqueIndexSqlite1839000000000 implements MigrationInterface {
+    name = 'AddFlowProjectIdExternalIdUniqueIndexSqlite1839000000000'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Resolve any pre-existing duplicates before adding the unique index (see the
