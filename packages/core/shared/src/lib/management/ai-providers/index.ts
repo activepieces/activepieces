@@ -202,12 +202,22 @@ export const AIProvider = z.object({
 
 export type AIProvider = z.infer<typeof AIProvider>
 
+export const AiProviderModelScope = z.enum(['all', 'selected'])
+export type AiProviderModelScope = z.infer<typeof AiProviderModelScope>
+
+export const AiProviderProjectScope = z.enum(['all', 'selected', 'except'])
+export type AiProviderProjectScope = z.infer<typeof AiProviderProjectScope>
+
 export const AIProviderWithoutSensitiveData = z.object({
     id: z.string(),
     name: z.string(),
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
     enabledForChat: z.boolean(),
+    modelScope: AiProviderModelScope,
+    modelIds: z.array(z.string()),
+    projectScope: AiProviderProjectScope,
+    projectIds: z.array(z.string()),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
@@ -227,6 +237,10 @@ export const UpdateAIProviderRequest = z.object({
     config: AIProviderConfig.optional(),
     auth: AIProviderAuthConfig.optional(),
     enabledForChat: z.boolean().optional(),
+    modelScope: AiProviderModelScope.optional(),
+    modelIds: z.array(z.string()).optional(),
+    projectScope: AiProviderProjectScope.optional(),
+    projectIds: z.array(z.string()).optional(),
 })
 export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 

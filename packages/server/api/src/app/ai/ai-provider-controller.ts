@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, CreateAIProviderRequest, Principal, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -18,11 +18,11 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         if (provider === AIProviderName.ACTIVEPIECES) {
             await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
         }
-        return aiProviderService(app.log).getConfigOrThrow({ platformId, provider })
+        return aiProviderService(app.log).getConfigOrThrow({ platformId, provider, projectId: extractEngineProjectId(request.principal) })
     })
     app.get('/:provider/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).listModels(platformId, request.params.provider)
+        return aiProviderService(app.log).listModels({ platformId, provider: request.params.provider, projectId: extractEngineProjectId(request.principal) })
     })
     app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
@@ -37,6 +37,10 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         await aiProviderService(app.log).delete(platformId, request.params.id)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+function extractEngineProjectId(principal: Principal): string | undefined {
+    return principal.type === PrincipalType.ENGINE ? principal.projectId : undefined
 }
 
 const ListAIProviders = {

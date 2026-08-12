@@ -7,7 +7,7 @@ icon: 🧠
 Lets platform admins configure one or more LLM backends for AI pieces in flows. Also auto-provisions an "Activepieces" provider (backed by OpenRouter) whose credit balance and auto-top-up are metered by Autumn billing. EE/Cloud only (not registered in CE).
 
 ### Entities & services
-- **AIProvider** — platform-scoped: `displayName`, `platformId` (unique with `provider`), `provider` (AIProviderName enum), `auth` (EncryptedObject, AES-256 at rest), `config` (JSON), `enabledForChat`.
+- **AIProvider** — platform-scoped: `displayName`, `platformId` (indexed with `provider`, NOT unique — a platform can hold multiple keys per provider since the 2026-08 providers redesign), `provider` (AIProviderName enum), `auth` (EncryptedObject, AES-256 at rest), `config` (JSON), `enabledForChat`, plus per-key scoping: `modelScope` (`all|selected`) + `modelIds[]`, and `projectScope` (`all|selected|except`) + `projectIds[]` (GIN-indexed).
 - Backend under `packages/server/api/src/app/ai/`; shared schemas in `core/shared/.../ai-providers/`.
 - Supported providers (10): `openai`, `anthropic`, `google`, `azure`, `openrouter`, `bedrock`, `mistral`, `cloudflare-gateway`, `custom` (OpenAI-compatible, e.g. Ollama/LM Studio), `activepieces` (auto-provisioned via OpenRouter).
 
@@ -30,6 +30,8 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 
 ### Gotchas
 
+- **Multi-key resolution is deterministic, not configurable.** When several keys of one provider are eligible for a project, `resolveEligibleRow` picks by most specific `projectScope` (`selected` > `except` > `all`), newest `created` breaking ties — there is no priority/default field (decision: [providers-redesign-before-routing](../decisions/providers-redesign-before-routing.md)). Engine calls (`GET /:provider/config`, `GET /:provider/models`) resolve per the ENGINE principal's `projectId`; USER calls resolve platform-wide (admin UI sees everything). The ACTIVEPIECES provider stays a singleton — `create()` rejects it (`aiProvider.activepiecesIsManaged`).
+- **`mockAndSaveAIProvider` uses `save`, not upsert** — the old `(platformId, provider)` ON CONFLICT target died with the unique index; seeding the same provider twice now creates two keys, which is usually what a test wants.
 - ACTIVEPIECES auto-provision needs `OPENROUTER_PROVISION_KEY` env var set AND `aiCreditsEnabled` true.
 - **A failed `enrichWithKeysIfNeeded()` is self-sustaining, and it takes chat down with it.** `createKey` runs on the chat hot path — `chatHelpers.resolveChatProvider` → `getChatProvider` calls it whenever the platform's managed ACTIVEPIECES row has no `apiKey` — and the `save` happens *after* the OpenRouter call, so a failure persists nothing and the next chat turn calls `createKey` again. There is also no distributed lock or cache, so concurrent turns for one platform each mint a live key and only the last is saved; the orphans keep spending provisioning quota. Seen in prod 2026-07-30: `keys-modify-api-rpd-v2` 429 (OpenRouter's key create/modify bucket, 10k/day on the provision key — a *separate* limit from inference), which killed every chat turn for the affected platform in `getChatConfig` before the first token, with no recovery until the bucket reset at 00:00 UTC.
 - **`openrouter-api.ts` uses raw `fetch`** — no timeout, no retry, no `tryCatch`, and it bypasses the repo's `safeHttp` rule for outbound HTTP in `packages/server/api`. A `getKey` 408 from OpenRouter escapes the admin `increaseAiCredits` path as an unhandled rejection.

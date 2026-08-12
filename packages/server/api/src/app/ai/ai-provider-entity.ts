@@ -1,5 +1,5 @@
 import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
-import { AIProviderConfig, Platform } from '@activepieces/shared'
+import { AIProviderConfig, AiProviderModelScope, AiProviderProjectScope, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { z } from 'zod'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
@@ -13,6 +13,10 @@ const AIProviderEncrypted = z.object({
     auth: EncryptedObject,
     config: AIProviderConfig,
     enabledForChat: z.boolean().default(false),
+    modelScope: AiProviderModelScope.default('all'),
+    modelIds: z.array(z.string()).default([]),
+    projectScope: AiProviderProjectScope.default('all'),
+    projectIds: z.array(z.string()).default([]),
 })
 type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
@@ -50,12 +54,36 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             nullable: false,
             default: false,
         },
+        modelScope: {
+            type: String,
+            nullable: false,
+            default: 'all',
+        },
+        modelIds: {
+            type: String,
+            array: true,
+            nullable: false,
+        },
+        projectScope: {
+            type: String,
+            nullable: false,
+            default: 'all',
+        },
+        projectIds: {
+            type: String,
+            array: true,
+            nullable: false,
+        },
     },
     indices: [
         {
             name: 'idx_ai_provider_platform_id_provider',
             columns: ['platformId', 'provider'],
-            unique: true,
+        },
+        {
+            name: 'idx_ai_provider_project_ids_gin',
+            columns: ['projectIds'],
+            synchronize: false,
         },
     ],
     relations: {

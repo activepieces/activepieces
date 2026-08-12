@@ -677,7 +677,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -690,15 +690,21 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         }),
         config: aiProvider?.config ?? {},
         enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,
+        modelScope: aiProvider?.modelScope ?? 'all',
+        modelIds: aiProvider?.modelIds ?? [],
+        projectScope: aiProvider?.projectScope ?? 'all',
+        projectIds: aiProvider?.projectIds ?? [],
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
-    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
 }
+
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
