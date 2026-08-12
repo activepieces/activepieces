@@ -1,7 +1,8 @@
+import { isNil } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AgentRunSource, Project } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In, LessThan } from 'typeorm'
+import { LessThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { getEffectiveExecutionDataRetentionDays } from '../../file/file.service'
 import { system } from '../../helper/system/system'
@@ -32,12 +33,24 @@ export const agentRetention = (log: FastifyBaseLogger) => ({
     },
 })
 
+// Bounded so a backlog built up before retention existed drains across the hourly schedule
+// instead of one statement holding locks and WAL for however long it takes.
 async function deleteOlderThan({ retentionDays, projectIds }: { retentionDays: number, projectIds: string[] | undefined }): Promise<number> {
-    const { affected } = await conversationRepo().delete({
-        source: AgentRunSource.FLOW_STEP,
-        created: LessThan(apDayjs().subtract(retentionDays, 'days').toISOString()),
-        ...(projectIds === undefined ? {} : { projectId: In(projectIds) }),
-    })
+    const expiresBefore = apDayjs().subtract(retentionDays, 'days').toISOString()
+    const stale = conversationRepo()
+        .createQueryBuilder('conversation')
+        .select('conversation.id')
+        .where('conversation.source = :source', { source: AgentRunSource.FLOW_STEP })
+        .andWhere('conversation.created < :expiresBefore', { expiresBefore })
+        .limit(MAX_DELETED_PER_PASS)
+    if (!isNil(projectIds)) {
+        stale.andWhere('conversation.projectId IN (:...projectIds)', { projectIds })
+    }
+    const { affected } = await conversationRepo()
+        .createQueryBuilder()
+        .delete()
+        .where(`id IN (${stale.getQuery()})`, stale.getParameters())
+        .execute()
     return affected ?? 0
 }
 
@@ -51,3 +64,4 @@ function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executio
 }
 
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+const MAX_DELETED_PER_PASS = 10_000

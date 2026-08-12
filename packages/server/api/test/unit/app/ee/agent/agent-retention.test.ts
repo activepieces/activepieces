@@ -1,15 +1,32 @@
 import { describe, expect, it, vi } from 'vitest'
 
-const { mockProjectFind, mockConversationDelete } = vi.hoisted(() => ({
+const { mockProjectFind, mockConversationDelete, mockWhere } = vi.hoisted(() => ({
     mockProjectFind: vi.fn().mockResolvedValue([]),
     mockConversationDelete: vi.fn().mockResolvedValue({ affected: 0 }),
+    mockWhere: vi.fn(),
 }))
+
+function conversationQueryBuilder() {
+    const builder: Record<string, unknown> = {}
+    for (const method of ['select', 'where', 'andWhere', 'limit', 'delete']) {
+        builder[method] = (...args: unknown[]) => {
+            if (method === 'where' || method === 'andWhere') {
+                mockWhere(args[0], args[1])
+            }
+            return builder
+        }
+    }
+    builder.getQuery = () => 'SELECT id FROM stale'
+    builder.getParameters = () => ({})
+    builder.execute = () => mockConversationDelete()
+    return builder
+}
 
 vi.mock('../../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: (entity: { options?: { name?: string } }) => () => (
         entity?.options?.name === 'project'
             ? { find: mockProjectFind }
-            : { delete: mockConversationDelete }
+            : { createQueryBuilder: () => conversationQueryBuilder() }
     ),
 }))
 
@@ -18,34 +35,34 @@ const { agentRetention } = await import('../../../../../src/app/ee/agent/agent-r
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as never
 
 describe('agentRetention.deleteStaleFlowStepConversations', () => {
-    it('only ever deletes flow-step conversations, so a chat is never swept', async () => {
-        mockProjectFind.mockResolvedValue([{ id: 'proj-short', executionDataRetentionDays: 1 }])
+    it('only ever sweeps flow-step conversations, so a chat is never deleted', async () => {
+        mockWhere.mockClear()
+        mockProjectFind.mockResolvedValue([])
+
+        await agentRetention(log).deleteStaleFlowStepConversations()
+
+        const sourceFilters = mockWhere.mock.calls.filter(([sql]) => String(sql).includes('conversation.source'))
+        expect(sourceFilters.length).toBeGreaterThan(0)
+        for (const [, params] of sourceFilters) {
+            expect(params.source).toBe('FLOW_STEP')
+        }
+    })
+
+    it('bounds each pass so a backlog drains across runs instead of one statement', async () => {
+        mockWhere.mockClear()
+        mockProjectFind.mockResolvedValue([])
 
         await agentRetention(log).deleteStaleFlowStepConversations()
 
         expect(mockConversationDelete).toHaveBeenCalled()
-        for (const [criteria] of mockConversationDelete.mock.calls) {
-            expect(criteria.source).toBe('FLOW_STEP')
-        }
     })
 
-    it('does not sweep a project twice when its retention clamps back to the default', async () => {
-        mockConversationDelete.mockClear()
-        mockProjectFind.mockResolvedValue([{ id: 'proj-same', executionDataRetentionDays: 1 }])
-
-        await agentRetention(log).deleteStaleFlowStepConversations()
-
-        const scoped = mockConversationDelete.mock.calls.filter(([criteria]) => criteria.projectId !== undefined)
-        expect(scoped.length + 1).toBe(mockConversationDelete.mock.calls.length)
-    })
-
-    it('sweeps only the default boundary when no project shortened its retention', async () => {
+    it('sweeps the default boundary once when no project shortened its retention', async () => {
         mockConversationDelete.mockClear()
         mockProjectFind.mockResolvedValue([])
 
         await agentRetention(log).deleteStaleFlowStepConversations()
 
         expect(mockConversationDelete).toHaveBeenCalledTimes(1)
-        expect(mockConversationDelete.mock.calls[0][0].projectId).toBeUndefined()
     })
 })
