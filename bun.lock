@@ -3125,6 +3125,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/figranium": {
+      "name": "@activepieces/piece-figranium",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/filetopdf": {
       "name": "@activepieces/piece-filetopdf",
       "version": "0.0.6",
@@ -11459,6 +11472,8 @@
     "@activepieces/piece-fellow": ["@activepieces/piece-fellow@workspace:packages/pieces/community/fellow"],
 
     "@activepieces/piece-figma": ["@activepieces/piece-figma@workspace:packages/pieces/community/figma"],
+
+    "@activepieces/piece-figranium": ["@activepieces/piece-figranium@workspace:packages/pieces/community/figranium"],
 
     "@activepieces/piece-file-helper": ["@activepieces/piece-file-helper@workspace:packages/pieces/core/file-helper"],
 

@@ -467,6 +467,9 @@
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
+      "@activepieces/piece-figranium": [
+        "packages/pieces/community/figranium/src/index.ts"
+      ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/core/file-helper/src/index.ts"
       ],
