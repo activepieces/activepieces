@@ -1,29 +1,16 @@
-import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import {
     ApplicationEventName,
     EventDestinationScope,
     Flow,
-    FlowStatus,
-    FlowTrigger,
-    FlowTriggerType,
-    FlowVersion,
-    FlowVersionState,
-    McpServerType,
-    PackageType,
-    PieceType,
-    ProjectScopedMcpServer,
-    PropertyExecutionType,
-    TriggerStrategy,
-    TriggerTestStrategy,
-    WebhookHandshakeStrategy,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { apLockAndPublishTool } from '../../../../src/app/mcp/tools/ap-lock-and-publish'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
-import { createMockEventDestination, createMockFlow, createMockFlowVersion, createMockPieceMetadata } from '../../../helpers/mocks'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { mockMcpToolContext, seedPublishableFlow } from '../../../helpers/mcp-flow'
+import { createMockEventDestination } from '../../../helpers/mocks'
+import { createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const DESTINATION_URL = 'https://example.com/external-hook'
@@ -67,9 +54,9 @@ describe('MCP publish delivers flow.published to event destinations', () => {
             scope: EventDestinationScope.PLATFORM,
             url: DESTINATION_URL,
         }))
-        const { flow } = await seedDraftFlow(ctx)
+        const { flow } = await seedPublishableFlow({ ctx })
 
-        await apLockAndPublishTool({ mcp: mockMcpServer(ctx), userId: undefined }, mockLog).execute({ flowId: flow.id })
+        await apLockAndPublishTool(mockMcpToolContext(ctx), mockLog).execute({ flowId: flow.id })
         await vi.waitUntil(() => publishedJobs(addSpy).length > 0, { timeout: 5000, interval: 50 })
 
         const jobs = publishedJobs(addSpy)
@@ -87,9 +74,9 @@ describe('MCP publish delivers flow.published to event destinations', () => {
             scope: EventDestinationScope.PLATFORM,
             url: DESTINATION_URL,
         }))
-        const { flow } = await seedDraftFlow(ctx)
+        const { flow } = await seedPublishableFlow({ ctx })
 
-        await apLockAndPublishTool({ mcp: mockMcpServer(ctx), userId: undefined }, mockLog).execute({ flowId: flow.id })
+        await apLockAndPublishTool(mockMcpToolContext(ctx), mockLog).execute({ flowId: flow.id })
 
         const publishedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
         expect(publishedFlow.publishedVersionId).not.toBeNull()
@@ -111,71 +98,5 @@ function publishedJobs(spy: ReturnType<typeof vi.fn>): QueuedJobData[] {
         .filter((data) => data.jobType === WorkerJobType.EVENT_DESTINATION && data.payload?.action === ApplicationEventName.FLOW_PUBLISHED)
 }
 
-function mockMcpServer(ctx: TestContext): ProjectScopedMcpServer {
-    return {
-        id: 'mcp-server-id',
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        projectId: ctx.project.id,
-        platformId: ctx.platform.id,
-        type: McpServerType.PROJECT,
-        token: 'mcp-token',
-        disabledTools: [],
-    }
-}
 
-async function seedDraftFlow(ctx: TestContext): Promise<{ flow: Flow, flowVersion: FlowVersion }> {
-    const pieceMetadata = createMockPieceMetadata({
-        name: '@activepieces/piece-schedule',
-        version: '0.1.5',
-        triggers: {
-            every_hour: {
-                name: 'every_hour',
-                displayName: 'Every Hour',
-                description: 'Triggers the current flow every hour',
-                requireAuth: true,
-                props: {},
-                type: TriggerStrategy.WEBHOOK,
-                handshakeConfiguration: { strategy: WebhookHandshakeStrategy.NONE },
-                renewConfiguration: { strategy: WebhookRenewStrategy.NONE },
-                sampleData: {},
-                testStrategy: TriggerTestStrategy.TEST_FUNCTION,
-            },
-        },
-        pieceType: PieceType.OFFICIAL,
-        packageType: PackageType.REGISTRY,
-    })
-    await db.save('piece_metadata', pieceMetadata)
 
-    const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
-    await db.save('flow', flow)
-
-    const flowVersion = createMockFlowVersion({
-        flowId: flow.id,
-        updatedBy: ctx.user.id,
-        state: FlowVersionState.DRAFT,
-        valid: true,
-        trigger: scheduleTrigger(),
-    })
-    await db.save('flow_version', flowVersion)
-    return { flow, flowVersion }
-}
-
-function scheduleTrigger(): FlowTrigger {
-    return {
-        type: FlowTriggerType.PIECE,
-        settings: {
-            pieceName: '@activepieces/piece-schedule',
-            pieceVersion: '0.1.5',
-            input: { run_on_weekends: false },
-            triggerName: 'every_hour',
-            propertySettings: {
-                run_on_weekends: { type: PropertyExecutionType.MANUAL },
-            },
-        },
-        valid: true,
-        name: 'trigger',
-        displayName: 'Schedule',
-        lastUpdatedDate: new Date().toISOString(),
-    }
-}
