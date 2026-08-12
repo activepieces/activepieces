@@ -81,6 +81,10 @@ Object
 
 A module-level object keyed by cache path, holding whole flow-bundle manifests, never evicted (`cache-state.ts`). See the Gotchas on [[workers]].
 
+## Redact before you publish the findings
+
+The snapshot never leaves the box — but **its output carries the same data in miniature**. Constructor histograms and retainer paths are full of real `flowVersionId`s, and a retained string's preview can expose flow names, step config, and timestamps. Replace them with placeholders (`<flow-version-a>`) before they go into a PR description, an issue, a Slack message, or a doc. This repo's PRs are public. Getting this right at the snapshot step and then pasting the raw histogram into a public PR undoes the whole point.
+
 ## Clean up
 
 Remove the snapshot (it is large and it is sensitive), the helper scripts, and confirm every cgroup limit you touched is back to its original value.
