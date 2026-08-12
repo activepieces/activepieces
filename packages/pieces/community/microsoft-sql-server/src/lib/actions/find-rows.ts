@@ -112,9 +112,12 @@ export const findRowsAction = createAction({
         query += ` WHERE ${condition}`;
       }
       if (order_by) {
-        query += ` ORDER BY ${quoteId(order_by)} ${
-          order_direction === 'DESC' ? 'DESC' : 'ASC'
-        }`;
+        // Qualified with the table: a decimal or date column is projected as
+        // text under an alias of the same name, and a bare identifier in ORDER
+        // BY binds to that alias, sorting '10.0000' before '9.0000'.
+        query += ` ORDER BY ${quoteTable(table as MssqlTable)}.${quoteId(
+          order_by
+        )} ${order_direction === 'DESC' ? 'DESC' : 'ASC'}`;
       }
 
       const request = pool.request();

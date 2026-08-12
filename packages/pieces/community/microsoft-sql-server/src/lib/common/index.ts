@@ -1,4 +1,4 @@
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, isNil } from '@activepieces/pieces-framework';
 import sql from 'mssql';
 // type-only: importing the value would close an auth -> common -> auth cycle
 import type { mssqlAuth } from '../auth';
@@ -155,6 +155,8 @@ export type MssqlColumn = {
   /** in bytes, and -1 for a max type */
   maxLength: number;
   nullable: boolean;
+  /** set for the character types only; undefined for everything else */
+  collation?: string;
 };
 
 export type MssqlTableMeta = {
@@ -192,7 +194,7 @@ export async function mssqlGetTableMeta(
       // TYPE_NAME(system_type_id) rather than a join on user_type_id: an alias
       // type reports its own name, and only base types can be CONVERT targets.
       `SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.precision,
-              c.scale, c.max_length, c.is_nullable
+              c.scale, c.max_length, c.is_nullable, c.collation_name
        FROM sys.columns c
        WHERE c.object_id = OBJECT_ID(@qualified)
        ORDER BY c.column_id;
@@ -207,6 +209,13 @@ export async function mssqlGetTableMeta(
        WHERE i.object_id = OBJECT_ID(@qualified)
          AND i.is_unique = 1
          AND i.has_filter = 0
+         -- A disabled index still reports is_unique, and stops enforcing it.
+         -- Duplicates then land behind a strict keyset comparison and are
+         -- stepped over. Disabling every index for a bulk load and rebuilding
+         -- afterwards is ordinary ETL, and the metadata is byte-identical
+         -- either side of it, so nothing downstream can notice.
+         AND i.is_disabled = 0
+         AND i.is_hypothetical = 0
        ORDER BY i.index_id, ic.key_ordinal;
 
        SELECT name
@@ -226,6 +235,9 @@ export async function mssqlGetTableMeta(
     scale: Number(row['scale']),
     maxLength: Number(row['max_length']),
     nullable: Boolean(row['is_nullable']),
+    collation: isNil(row['collation_name'])
+      ? undefined
+      : String(row['collation_name']),
   }));
 
   const indexes = new Map<

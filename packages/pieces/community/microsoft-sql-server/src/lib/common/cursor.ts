@@ -219,13 +219,36 @@ export function exactProjection(columns: MssqlColumn[], prefix?: string): string
   return columns.map((column) => exactColumn(column, prefix)).join(', ');
 }
 
+/**
+ * What a saved position was rendered from. The name alone is not enough: the
+ * text is read back with CONVERT to the column's declared type, so narrowing
+ * the type under a live trigger rebinds the old text against the new one and
+ * SQL Server rounds it -- decimal(18,4) '12.3456' becomes decimal(18,2) '12.35'
+ * and the position steps past rows that were never delivered. Recording the
+ * type makes that re-baseline, the same way a renamed column already does.
+ */
+function cursorShape(column: MssqlColumn): string {
+  return `${column.name}:${declaredType(column)}`;
+}
+
 /** SQL that turns that text back into a value comparable against the column */
 export function cursorBind(column: MssqlColumn, parameter: string): string {
   const target = declaredType(column);
   const style = inStyle(column);
+  // cursorText renders a string column as nvarchar so no character is lost.
+  // Reading it back into varchar uses the DATABASE default collation's code
+  // page unless told otherwise, and every character the default cannot
+  // represent becomes '?'. The bound position is then a value no row can equal
+  // or exceed, so the frontier never advances and every row is redelivered on
+  // every poll, forever. Converting under the column's own collation keeps the
+  // code page that stored the value in the first place.
+  const source =
+    STRING_TYPES.has(column.type) && !isNil(column.collation)
+      ? `${parameter} COLLATE ${column.collation}`
+      : parameter;
   return style === undefined
-    ? `CONVERT(${target}, ${parameter})`
-    : `CONVERT(${target}, ${parameter}, ${style})`;
+    ? `CONVERT(${target}, ${source})`
+    : `CONVERT(${target}, ${source}, ${style})`;
 }
 
 /** the parameter type that matches how cursorText rendered the value */
@@ -367,9 +390,16 @@ function positionProjection(columns: MssqlColumn[]): string {
     .join(', ');
 }
 
+// Qualified with the table on purpose. The projection renders decimal and the
+// date family to text under an alias identical to the column name, and a bare
+// identifier in ORDER BY resolves against the SELECT list before the table --
+// so the page would come back in the text's order while WHERE compares the
+// column's real value. For decimal that is not the same order: '10.0000' sorts
+// before '9.0000', the page ends on the larger number, and the position moves
+// past rows that were never delivered. Qualifying forces the column.
 function orderClause(plan: Plan, direction: OrderDirection): string {
   return plan.columns
-    .map((column) => `${quoteId(column.name)} ${direction}`)
+    .map((column) => `${plan.target}.${quoteId(column.name)} ${direction}`)
     .join(', ');
 }
 
@@ -529,7 +559,7 @@ export function newCursor(plan: Plan, position: string[] | null): Cursor {
   return {
     v: CURSOR_LAYOUT,
     m: plan.mode,
-    c: plan.columns.map((column) => column.name),
+    c: plan.columns.map(cursorShape),
     k: position,
   };
 }
@@ -541,13 +571,13 @@ export function newCursor(plan: Plan, position: string[] | null): Cursor {
  */
 export function reconcile(stored: Cursor | null, plan: Plan): Cursor | null {
   if (isNil(stored)) return null;
-  const shape = plan.columns.map((column) => column.name);
+  const shape = plan.columns.map(cursorShape);
   const matches =
     stored.v === CURSOR_LAYOUT &&
     stored.m === plan.mode &&
     Array.isArray(stored.c) &&
     stored.c.length === shape.length &&
-    stored.c.every((name, index) => name === shape[index]) &&
+    stored.c.every((entry, index) => entry === shape[index]) &&
     (stored.k === null ||
       (Array.isArray(stored.k) &&
         stored.k.length === shape.length &&

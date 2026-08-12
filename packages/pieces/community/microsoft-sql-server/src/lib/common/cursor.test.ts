@@ -244,7 +244,7 @@ describe('drain direction', () => {
 
   it('baselines at the head, which is the reverse of the drain', () => {
     expect(baselineQuery(planCursor(meta(), descending))).toContain(
-      'ORDER BY [updated_at] DESC, [id] DESC'
+      'ORDER BY [dbo].[orders].[updated_at] DESC, [dbo].[orders].[id] DESC'
     );
   });
 });
@@ -257,7 +257,7 @@ describe('keyset page query', () => {
     // the old design took the newest page and moved the position to its head,
     // which silently discarded every row between the old position and that page
     expect(keysetPageQuery(plan, position)).toContain(
-      'ORDER BY [updated_at] ASC, [id] ASC'
+      'ORDER BY [dbo].[orders].[updated_at] ASC, [dbo].[orders].[id] ASC'
     );
   });
 
@@ -285,7 +285,7 @@ describe('keyset page query', () => {
     expect(query).toContain(
       '([updated_at] = CONVERT(datetime2(7), @p0, 126) AND [tenant_id] = CONVERT(int, @p1) AND [email] > CONVERT(varchar(200), @p2))'
     );
-    expect(query).toContain('ORDER BY [updated_at] ASC, [tenant_id] ASC, [email] ASC');
+    expect(query).toContain('ORDER BY [dbo].[orders].[updated_at] ASC, [dbo].[orders].[tenant_id] ASC, [dbo].[orders].[email] ASC');
   });
 
   it('binds one parameter per cursor column', () => {
@@ -321,7 +321,7 @@ describe('group page query', () => {
     expect(query).toContain(
       'WHERE [updated_at] IS NOT NULL AND [updated_at] > CONVERT(datetime2(7), @p0, 126)'
     );
-    expect(query).toContain('ORDER BY [updated_at] ASC');
+    expect(query).toContain('ORDER BY [dbo].[orders].[updated_at] ASC');
   });
 
   it('walks downward when the newest rows carry the smallest values', () => {
@@ -331,7 +331,7 @@ describe('group page query', () => {
     );
     const query = groupPageQuery(upward, ['2026-01-01T00:00:00.0000000']);
     expect(query).toContain('[updated_at] < CONVERT(datetime2(7), @p0, 126)');
-    expect(query).toContain('ORDER BY [updated_at] DESC');
+    expect(query).toContain('ORDER BY [dbo].[orders].[updated_at] DESC');
   });
 
   it('can ask for one exact ordering value, for a value bigger than a page', () => {
