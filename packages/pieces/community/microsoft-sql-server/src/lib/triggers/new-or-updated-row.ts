@@ -219,15 +219,23 @@ export const newOrUpdatedRowTrigger = createTrigger({
     }
   },
   async onEnable(context) {
-    const { store, auth, propsValue, isRepublish } = context;
-    // Republishing a flow re-runs onEnable. Baselining again there would skip
-    // everything written since the trigger was first switched on.
-    if (isRepublish && !isNil(await store.get<Cursor>(CURSOR_KEY))) {
-      return;
-    }
+    const { store, auth, propsValue } = context;
     const pool = await mssqlConnect(auth);
     try {
       const plan = await buildPlan(pool, propsValue);
+      // Republishing a flow re-runs onEnable, and baselining again would skip
+      // everything written since the trigger was switched on. Whether the saved
+      // position survives is decided by reconcile, which asks the only question
+      // that matters: can this plan still read it? The platform's isRepublish
+      // flag cannot stand in for that, because it compares the whole input
+      // object -- so editing Maximum Rows Per Poll, which has no bearing on the
+      // cursor, would otherwise discard a waiting backlog. A change that really
+      // does invalidate the position, such as a different order column or
+      // table, fails reconcile and re-baselines here as before.
+      const stored = reconcile(await store.get<Cursor>(CURSOR_KEY), plan);
+      if (!isNil(stored)) {
+        return;
+      }
       await store.put<Cursor>(CURSOR_KEY, await baseline(pool, plan));
     } finally {
       await pool.close();
