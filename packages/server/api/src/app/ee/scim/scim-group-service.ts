@@ -36,17 +36,12 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             type: ProjectType.TEAM,
         })
 
-        if (!isNil(request.members) && request.members.length > 0) {
-            await Promise.all(
-                request.members.map(async (member) =>
-                    addMemberToProject({
-                        userId: member.value,
-                        projectId: project.id,
-                        platformId,
-                        log,
-                    })),
-            )
-        }
+        await addMembersToProject({
+            userIds: (request.members ?? []).map((member) => member.value),
+            projectId: project.id,
+            platformId,
+            log,
+        })
 
         const members = await getProjectMembers(project.id, platformId, log)
         return toScimGroupResource(project.id, project.displayName, project.externalId ?? undefined, members, project.created, project.updated)
@@ -185,16 +180,12 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
             if (op === 'add' && operation.path === 'members') {
                 const memberValues = operation.value as ScimGroupMember[]
-                await Promise.all(
-                    memberValues.map(member =>
-                        addMemberToProject({
-                            userId: member.value,
-                            projectId,
-                            platformId,
-                            log,
-                        }),
-                    ),
-                )
+                await addMembersToProject({
+                    userIds: memberValues.map((member) => member.value),
+                    projectId,
+                    platformId,
+                    log,
+                })
             }
             else if (op === 'remove' && !isNil(operation.path) && operation.path.startsWith('members')) {
                 const match = operation.path.match(/members\[value\s+eq\s+"([^"]+)"\]/i)
@@ -265,31 +256,31 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function addMemberToProject(params: {
-    userId: string
+async function addMembersToProject(params: {
+    userIds: string[]
     projectId: string
     platformId: string
     log: FastifyBaseLogger
 }): Promise<void> {
-    const { userId, projectId, platformId, log } = params
-
-    const user = await userService(log).get({ id: userId })
-    if (isNil(user) || user.platformId !== platformId || user.status !== UserStatus.ACTIVE) {
+    const { userIds, projectId, platformId, log } = params
+    if (userIds.length === 0) {
         return
     }
 
-    const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
-    if (userIdentityHelper(log).isEmbeddedIdentity(identity)) {
-        return
-    }
+    const users = await userRepo().find({
+        where: { id: In(userIds), platformId, status: UserStatus.ACTIVE },
+        relations: { identity: true },
+    })
 
     const role = system.get<DefaultProjectRole>(AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE) ?? DefaultProjectRole.EDITOR
 
-    await projectMemberService(log).upsert({
-        userId,
-        projectId,
-        projectRoleName: role,
-    })
+    await Promise.all(users
+        .filter((user) => !userIdentityHelper(log).isEmbeddedIdentity(user.identity))
+        .map((user) => projectMemberService(log).upsert({
+            userId: user.id,
+            projectId,
+            projectRoleName: role,
+        })))
 }
 
 async function removeMemberFromProject(params: {
@@ -383,15 +374,12 @@ async function replaceMembers(params: {
     const visibleMembers = await getProjectMembers(projectId, platformId, log)
     const membersToDelete = visibleMembers.filter((member) => !requestedMemberIds.has(member.value))
 
-    await Promise.all(
-        requestedMembers.map(async (member) =>
-            addMemberToProject({
-                userId: member.value,
-                projectId,
-                platformId,
-                log,
-            })),
-    )
+    await addMembersToProject({
+        userIds: requestedMembers.map((member) => member.value),
+        projectId,
+        platformId,
+        log,
+    })
 
     await Promise.all(
         membersToDelete.map(async (member) =>
