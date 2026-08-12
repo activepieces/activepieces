@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import {
   ArrowUp,
   BarChart3,
@@ -32,7 +31,7 @@ export function AuthBackdrop() {
           <div className="flex items-center gap-2 border-b px-5 py-3 text-sm text-muted-foreground">
             <MessageCircle className="size-4" />
             <span className="font-medium text-foreground/80">
-              {t('Daily Stripe summary')}
+              Daily Stripe summary
             </span>
           </div>
           <div className="min-h-0 flex-1 overflow-hidden px-8 pt-8">
@@ -63,14 +62,14 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       <div className="flex items-center gap-2 rounded-md px-1.5 py-1">
         <img src={logoUrl} alt="" className="size-5 object-contain" />
         <span className="truncate text-sm font-medium text-foreground/80">
-          {t('Acme Inc')}
+          Acme Inc
         </span>
         <ChevronsUpDown className="ml-auto size-3.5 text-muted-foreground" />
       </div>
 
       <div className="flex items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground shadow-sm">
         <Plus className="size-4" strokeWidth={2.5} />
-        {t('New chat')}
+        New chat
       </div>
 
       <div className="flex flex-col gap-0.5">
@@ -84,14 +83,14 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
             }
           >
             <Icon className="size-4" />
-            {t(label)}
+            {label}
           </div>
         ))}
       </div>
 
       <div className="flex min-h-0 flex-col gap-1">
         <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
-          {t('Recent')}
+          Recent
         </span>
         {RECENT_CHATS.map((title, index) => (
           <div
@@ -102,7 +101,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
                 : 'truncate rounded-md px-2.5 py-1.5 text-[13px] text-muted-foreground'
             }
           >
-            {t(title)}
+            {title}
           </div>
         ))}
       </div>
@@ -119,7 +118,7 @@ function UserTurn({ text }: { text: string }) {
   return (
     <div className="flex justify-end">
       <div className="max-w-[80%] rounded-2xl rounded-br-md bg-muted px-4 py-3 text-[15px] leading-relaxed text-foreground/80">
-        {t(text)}
+        {text}
       </div>
     </div>
   );
@@ -131,11 +130,11 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
       {turn.activity && (
         <span className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-foreground/70">
           <Sparkles className="size-3" />
-          {t(turn.activity)}
+          {turn.activity}
         </span>
       )}
       <p className="text-[15px] leading-relaxed text-foreground/75">
-        {t(turn.text)}
+        {turn.text}
       </p>
       {turn.steps && (
         <div className="space-y-1.5 rounded-xl border bg-muted/30 p-3">
@@ -145,7 +144,7 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
               className="flex items-center gap-2 text-[13px] text-foreground/70"
             >
               <Check className="size-3.5 text-primary" strokeWidth={3} />
-              {t(step)}
+              {step}
             </div>
           ))}
         </div>
@@ -158,7 +157,7 @@ function ComposerFacsimile() {
   return (
     <div className="rounded-2xl border border-foreground/20 bg-background px-4 pb-2.5 pt-3.5">
       <p className="text-sm text-muted-foreground">
-        {t('Tell me what you need... (@ to mention, : for emoji)')}
+        Tell me what you need... (@ to mention, : for emoji)
       </p>
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-1">
