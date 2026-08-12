@@ -2013,6 +2013,17 @@ export const driveExportWorkspaceFileOutputSchema: OutputSchema = {
   ],
 };
 
+export const driveExportFolderAsZipOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'file',
+      label: 'Zip File URL',
+      value: '',
+      format: 'url',
+    },
+  ],
+};
+
 export const driveDeleteReplyOutputSchema: OutputSchema = {
   fields: [
     {

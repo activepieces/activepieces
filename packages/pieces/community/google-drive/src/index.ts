@@ -21,6 +21,7 @@ import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
 import { googleDriveDeleteFile } from './lib/action/delete-file';
 import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { driveExportFolderAsZip } from './lib/action/drive-export-folder-as-zip';
 import { googleDriveAuth, getAccessToken, GoogleDriveAuthValue } from './lib/auth';
 
 // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
@@ -100,6 +101,7 @@ export const googleDrive = createPiece({
     moveFileAction,
     googleDriveDeleteFile,
     googleDriveTrashFile,
+    driveExportFolderAsZip,
     // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
     driveCreateFolder,
     driveCreateFileFromText,
