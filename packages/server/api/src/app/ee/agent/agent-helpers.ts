@@ -1,5 +1,8 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { SharedV3ProviderOptions } from '@ai-sdk/provider'
+import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -58,6 +61,13 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
+async function resolveRunProvider({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    if (isNil(provider)) {
+        return resolveChatProvider({ platformId, log })
+    }
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider })
+}
+
 async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
     if (isNil(chatProvider)) {
@@ -107,14 +117,35 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     if (!isNil(tier)) {
         return tier.modelId
     }
-    return aiProviderUtils.isKnownChatModelId({ modelId: selectedModel }) ? selectedModel : null
+    return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-// Round one of the chat turn runs on the fastest tier so its first token streams in ~400ms
-// (the opener + first discovery) — fast enough to replace the bare "Thinking…" gap —
-// regardless of which tier the user picked for the main turn.
+async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+    return agentAiUtils.createChatModel({
+        provider: providerConfig.provider,
+        auth: providerConfig.auth,
+        config: providerConfig.config,
+        modelId: resolveFastModelId({ provider: providerConfig.provider }),
+    })
+}
+
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
+}
+
+async function resolveEmbeddingModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+    return agentAiUtils.createEmbeddingModel({
+        provider: providerConfig.provider,
+        auth: providerConfig.auth,
+        config: providerConfig.config,
+    })
+}
+
+async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
+    return result.error ? null : result.data
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {
@@ -217,6 +248,10 @@ export const agentHelpers = {
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
+    resolveFastModel,
+    resolveRunProvider,
+    resolveEmbeddingModel,
+    resolveChatProviderName,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

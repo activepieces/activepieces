@@ -1,6 +1,7 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { apId, createAction, FieldType, PieceAuth, Property, Table } from '@activepieces/pieces-framework';
 import * as z from 'zod/mini';
+import { createTableActionOutputSchema } from '../output-schemas';
 
 export const createTable = createAction({
   audience: 'both',
@@ -44,6 +45,7 @@ export const createTable = createAction({
       },
     }),
   },
+  outputSchema: createTableActionOutputSchema,
   async run(context) {
     const { name, fields } = context.propsValue;
 

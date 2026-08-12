@@ -121,6 +121,27 @@ describe('resolved endpoint, credentials and headers', () => {
         expect(headersOf(cfg)['api-key']).toBe('SECRET')
     })
 
+    it('attaches the caller metadata headers to managed OpenRouter traffic', () => {
+        const cfg = configOf(createLanguageModel({
+            provider: AIProviderName.ACTIVEPIECES,
+            auth: { apiKey: 'SECRET' },
+            config: {},
+            modelId: 'anthropic/claude',
+            options: { extraHeaders: { 'x-ap-platform-id': 'plat', 'x-ap-conversation-id': 'conv' } },
+        }))
+        const headers = headersOf(cfg)
+        expect(headers['Authorization']).toBe('Bearer SECRET')
+        expect(headers['x-ap-platform-id']).toBe('plat')
+        expect(headers['x-ap-conversation-id']).toBe('conv')
+    })
+
+    it('leaves OpenRouter headers untouched when no metadata is passed', () => {
+        const cfg = configOf(createLanguageModel({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'SECRET' }, config: {}, modelId: 'anthropic/claude' }))
+        const headers = headersOf(cfg)
+        expect(headers['x-ap-platform-id']).toBeUndefined()
+        expect(headers['Authorization']).toBe('Bearer SECRET')
+    })
+
     it('points Custom at its base URL and applies header precedence end to end', () => {
         const cfg = configOf(createLanguageModel({
             provider: AIProviderName.CUSTOM,

@@ -1,142 +1,301 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
-import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, PlatformBillingInformation, PrincipalType, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/shared'
+import { SeekPage, tryCatch } from '@activepieces/core-utils'
+import { AdjustUnconsumableFeatureQuantityParams, CancelSubscriptionRequest, CheckoutPlanParamsSchema, CheckoutSessionResponse, ConsumableProductAutoTopupParams, isNil, PlatformBillingInformation, PrincipalType, ProjectCreditUsage, PurchasablePlan, SetupPaymentParams } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
+import { distributedStore } from '../../../database/redis-connections'
+import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
-import { platformAiCreditsService } from './platform-ai-credits.service'
+import { userService } from '../../../user/user-service'
 import { platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
 
-export const platformPlanController: FastifyPluginAsyncZod = async (fastify) => {
+const FORCE_REFRESH_DEDUP_SECONDS = 60
+const DEFAULT_USAGE_PAGE_SIZE = 10
 
-    fastify.get('/info', InfoRequest, async (request) => {
-        const platform = await platformService(request.log).getOneOrThrow(request.principal.platform.id)
-        const [platformPlan, usage] = await Promise.all([
-            platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            platformPlanService(request.log).getUsage(platform.id),
-        ])
+export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
 
-        const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
-        const { endDate: nextBillingDate } = await platformPlanService(request.log).getBillingDates(platformPlan)
-
-        const nextBillingAmount = await platformPlanService(request.log).getNextBillingAmount({ subscriptionId: platformPlan.stripeSubscriptionId })
-
-        const response: PlatformBillingInformation = {
-            plan: platformPlan,
-            usage,
-            nextBillingAmount,
-            nextBillingDate,
-            cancelAt: cancelDate,
-        }
-        return response
+    app.get('/info', InfoRequest, async (request) => {
+        return getBillingInformation(request.log, request.principal.platform.id)
     })
 
-    fastify.post('/portal', {
-        config: {
-            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-        },
-    }, async (request) => {
-        return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
+    app.post('/refresh', RefreshRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        await distributedStore.runOnceWithin(
+            getEntitlementsForceRefreshKey(platformId),
+            FORCE_REFRESH_DEDUP_SECONDS,
+            () => billingProvider.get(request.log).refreshEntitlements(platformId),
+        )
+        return getBillingInformation(request.log, platformId)
     })
 
-    fastify.post('/create-checkout-session', CreateCheckoutSessionRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+    app.get('/plans', ListPlansRequest, async (request) => {
+        return billingProvider.get(request.log).listPlans(request.principal.platform.id)
+    })
 
-        const { newActiveFlowsLimit } = request.body
-
-        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
-
-        return stripeHelper(request.log).createNewSubscriptionCheckoutSession({
-            platformId: platformPlan.platformId,
-            customerId,
-            extraActiveFlows,
+    app.get('/projects-usage', ProjectsUsageRequest, async (request) => {
+        return platformPlanService(request.log).getCreditUsageByProject({
+            platformId: request.principal.platform.id,
+            startDate: request.query.startDate,
+            endDate: request.query.endDate,
+            cursor: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_USAGE_PAGE_SIZE,
+            userId: request.principal.id,
+            principalType: request.principal.type,
         })
     })
 
-    fastify.post('/update-active-flows-addon', UpdateActiveFlowsAddonRequest, async (request) => {
-        const { stripeCustomerId: customerId, ...platformPlan } = await platformPlanService(request.log).getOrCreateForPlatform(request.principal.platform.id)
-        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+    app.post('/checkout', CheckoutRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const result = await billingProvider.get(request.log).createCheckoutSession({
+            platformId,
+            planId: request.body.planId,
+            successUrl: request.body.successUrl,
+        })
+        await refreshWhenAppliedImmediately({ log: request.log, platformId, checkoutUrl: result.checkoutUrl })
+        return result
+    })
 
-        const { newActiveFlowsLimit } = request.body
+    app.post('/cancel', CancelRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.cancelSubscription({
+            platformId,
+            feedback: {
+                reasons: request.body.reasons,
+                comment: request.body.comment ?? null,
+                canceledByEmail: await resolveActorEmail(request.log, request.principal.id),
+            },
+        })
+        await provider.refreshEntitlements(platformId)
+    })
 
-        const baseActiveFlowsLimit = STANDARD_CLOUD_PLAN.activeFlowsLimit ?? 0
-        const currentActiveFlowsLimit =  platformPlan.activeFlowsLimit ?? 0
-        const extraActiveFlows = Math.max(0, newActiveFlowsLimit - baseActiveFlowsLimit)
-        const isFreeDowngrade = newActiveFlowsLimit === baseActiveFlowsLimit
+    app.post('/reactivate', ReactivateRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.reactivateSubscription({ platformId })
+        await provider.refreshEntitlements(platformId)
+    })
 
-        assertNotNullOrUndefined(platformPlan.stripeSubscriptionId, 'Subscription doesnt exist')
+    app.post('/portal', { config: PLATFORM_ADMIN_ONLY }, async (request) => {
+        const { url } = await billingProvider.get(request.log).getBillingPortalUrl({ platformId: request.principal.platform.id })
+        return url
+    })
 
-        const isUpgrade = newActiveFlowsLimit > currentActiveFlowsLimit
-        return stripeHelper(request.log).handleSubscriptionUpdate({
-            subscriptionId: platformPlan.stripeSubscriptionId,
-            extraActiveFlows,
-            isUpgrade, 
-            isFreeDowngrade,
+    app.post('/activate', ActivateLicenseRequest, async (request) => {
+        await billingProvider.get(request.log).activateLicense({
+            platformId: request.principal.platform.id,
+            licenseKey: request.body.licenseKey,
         })
     })
 
-    // AI Credits
-    fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
-        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+    app.post('/unconsumable-feature-quantity', AdjustUnconsumableFeatureQuantityRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        const { checkoutUrl } = await provider.adjustUnconsumableFeatureQuantity({
+            platformId,
+            featureId: request.body.featureId,
+            quantity: request.body.quantity,
+        })
+        await refreshWhenAppliedImmediately({ log: request.log, platformId, checkoutUrl })
+        return { paymentUrl: checkoutUrl }
     })
-    fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
-        return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)
+
+    app.post('/consumable-product-topups/auto-topup', ConsumableProductAutoTopupRequest, async (request) => {
+        const platformId = request.principal.platform.id
+        const provider = billingProvider.get(request.log)
+        await provider.configureAutoTopUp({
+            ...request.body,
+            platformId,
+        })
+        await provider.refreshEntitlements(platformId)
+        return {}
     })
+
+    app.post('/setup-payment', SetupPaymentRequest, async (request) => {
+        return billingProvider.get(request.log).setupPayment({
+            redirectUrl: request.body.redirectUrl,
+            platformId: request.principal.platform.id,
+        })
+    })
+}
+
+async function getBillingInformation(log: FastifyBaseLogger, platformId: string): Promise<PlatformBillingInformation> {
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const [platformPlan, usage, overview, billingEnforced] = await Promise.all([
+        platformPlanService(log).getOrCreateForPlatform(platform.id),
+        platformPlanService(log).getUsage(platform.id),
+        billingProvider.get(log).getBillingOverview(platform.id),
+        billingProvider.get(log).isBillingEnforced(platform.id),
+    ])
+
+    const { startDate: billingPeriodStart, endDate: nextBillingDate, nextBillingAmount, cancelAt, trialEndsAt, planName: autumnPlanName, scheduledPlanName, billingPortalAvailable, creditsResetInterval, creditsFeature, appSumoCreditsFeature, seatsFeature, includedSeats, additionalSeats, unavailable: billingUnavailable } = overview
+
+    const usageWithCredits = usage.creditsRemaining === null
+        ? { ...usage, creditsUsed: await fetchUnlimitedCreditsUsed({ log, platformId: platform.id, startDate: billingPeriodStart, endDate: nextBillingDate, fallback: usage.creditsUsed }) }
+        : usage
+
+    return {
+        plan: platformPlan,
+        usage: usageWithCredits,
+        creditsResetInterval,
+        autumnPlanName,
+        scheduledPlanName,
+        nextBillingAmount,
+        nextBillingDate,
+        cancelAt,
+        trialEndsAt,
+        creditsFeature,
+        appSumoCreditsFeature,
+        seatsFeature,
+        billingPortalAvailable,
+        billingEnforced,
+        billingUnavailable,
+        includedSeats,
+        additionalSeats,
+    }
+}
+
+async function refreshWhenAppliedImmediately({ log, platformId, checkoutUrl }: RefreshWhenAppliedImmediatelyParams): Promise<void> {
+    if (!isNil(checkoutUrl)) {
+        return
+    }
+    await billingProvider.get(log).refreshEntitlements(platformId)
+}
+
+async function resolveActorEmail(log: FastifyBaseLogger, userId: string): Promise<string | null> {
+    const { data: user, error } = await tryCatch(() => userService(log).getMetaInformation({ id: userId }))
+    if (!isNil(error) || isNil(user)) {
+        log.warn({ error, user: { id: userId } }, 'Failed to resolve the cancelling user email; recording the cancellation without it')
+        return null
+    }
+    return user.email
+}
+
+async function fetchUnlimitedCreditsUsed({ log, platformId, startDate, endDate, fallback }: { log: FastifyBaseLogger, platformId: string, startDate: string, endDate: string, fallback: number }): Promise<number> {
+    const { data: creditUsage, error } = await tryCatch(() => billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate }))
+    if (!isNil(error) || isNil(creditUsage)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to aggregate credit usage for an unlimited plan; reporting the cached value')
+        return fallback
+    }
+    return creditUsage.total
+}
+
+const PLATFORM_ADMIN_ONLY = {
+    security: securityAccess.platformAdminOnly([PrincipalType.USER]),
 }
 
 const InfoRequest = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    response: {
-        [StatusCodes.OK]: PlatformBillingInformation,
+    config: PLATFORM_ADMIN_ONLY,
+    schema: {
+        response: {
+            [StatusCodes.OK]: PlatformBillingInformation,
+        },
     },
 }
 
-const UpdateActiveFlowsAddonRequest = {
+const RefreshRequest = {
+    config: PLATFORM_ADMIN_ONLY,
     schema: {
-        body: UpdateActiveFlowsAddonParamsSchema,
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        response: {
+            [StatusCodes.OK]: PlatformBillingInformation,
+        },
     },
 }
 
-const CreateCheckoutSessionRequest = {
+const ProjectsUsageRequest = {
     schema: {
-        body: CreateCheckoutSessionParamsSchema,
+        querystring: z.object({
+            startDate: z.string().optional(),
+            endDate: z.string().optional(),
+            cursor: z.string().optional(),
+            limit: z.coerce.number().optional(),
+        }),
+        response: {
+            [StatusCodes.OK]: SeekPage(ProjectCreditUsage),
+        },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const ListPlansRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.array(PurchasablePlan),
+        },
+    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const CheckoutRequest = {
+    schema: {
+        body: CheckoutPlanParamsSchema,
+        response: {
+            [StatusCodes.OK]: CheckoutSessionResponse,
+        },
+    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const CancelRequest = {
+    config: PLATFORM_ADMIN_ONLY,
+    schema: {
+        body: CancelSubscriptionRequest,
     },
 }
 
-const CreateAICreditCheckoutSessionRequest = {
+const ReactivateRequest = {
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+
+const AdjustUnconsumableFeatureQuantityRequest = {
     schema: {
-        body: CreateAICreditCheckoutSessionParamsSchema,
+        body: AdjustUnconsumableFeatureQuantityParams,
         response: {
             [StatusCodes.OK]: z.object({
-                stripeCheckoutUrl: z.string(),
+                paymentUrl: z.string().nullable(),
             }),
         },
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
+    config: PLATFORM_ADMIN_ONLY,
 }
 
-const UpdateAICreditsAutoTopUpRequest = {
+const ActivateLicenseRequest = {
     schema: {
-        body: UpdateAICreditsAutoTopUpParamsSchema,
-        [StatusCodes.OK]: z.object({
-            stripeCheckoutUrl: z.string().optional(),
+        body: z.object({
+            licenseKey: z.string(),
         }),
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const ConsumableProductAutoTopupRequest = {
+    schema: {
+        body: ConsumableProductAutoTopupParams,
+        response: {
+            [StatusCodes.OK]: z.object({}),
+        },
     },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+const SetupPaymentRequest = {
+    schema: {
+        body: SetupPaymentParams,
+        response: {
+            [StatusCodes.OK]: z.object({
+                url: z.string().nullable(),
+            }),
+        },
+    },
+    config: PLATFORM_ADMIN_ONLY,
+}
+
+type RefreshWhenAppliedImmediatelyParams = {
+    log: FastifyBaseLogger
+    platformId: string
+    checkoutUrl: string | null
 }

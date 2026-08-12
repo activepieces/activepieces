@@ -1,12 +1,14 @@
 // Action: Create Issue
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
-import { projectDropdown, ISSUE_FIELDS, flattenObject, youtrackApiCall } from '../common';
+import { youtrackAuth } from '../auth';
+import { projectDropdown, ISSUE_FIELDS, flattenIssue, normalizeCustomFields, youtrackApiCall } from '../common';
+import { createIssueActionOutputSchema } from '../output-schemas';
 
 export const createIssueAction = createAction({
   auth: youtrackAuth,
   name: 'create_issue',
+  outputSchema: createIssueActionOutputSchema,
   displayName: 'Create Issue',
   description: 'Creates a new issue in a YouTrack project.',
   audience: 'both',
@@ -40,7 +42,8 @@ export const createIssueAction = createAction({
       summary: context.propsValue.summary,
     };
     if (context.propsValue.description) body['description'] = context.propsValue.description;
-    if (context.propsValue.customFieldsJson) body['customFields'] = context.propsValue.customFieldsJson;
+    const customFields = normalizeCustomFields(context.propsValue.customFieldsJson);
+    if (customFields) body['customFields'] = customFields;
 
     const response = await youtrackApiCall<Record<string, unknown>>({
       baseUrl,
@@ -50,6 +53,6 @@ export const createIssueAction = createAction({
       queryParams: { fields: ISSUE_FIELDS },
       body,
     });
-    return flattenObject(response.body);
+    return flattenIssue(response.body);
   },
 });

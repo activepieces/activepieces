@@ -3,7 +3,6 @@ import {
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
-  TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -36,6 +35,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
@@ -55,7 +55,6 @@ import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
-import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar({
@@ -78,21 +77,21 @@ export function ProjectDashboardSidebar({
   }, [searchOpen]);
 
   const shouldShowNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return currentUser?.platformRole === PlatformRole.ADMIN;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowSearchButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return true;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowInlineAddButton =
-    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    platform.plan.billedTeamProjectsLimit !== 0 &&
     currentUser?.platformRole === PlatformRole.ADMIN &&
     projects.filter((project) => project.type === ProjectType.TEAM).length ===
       0;

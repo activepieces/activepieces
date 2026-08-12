@@ -2,6 +2,7 @@ import { createAction, PieceAuth, Property } from '@activepieces/pieces-framewor
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PopulatedRecord } from '@activepieces/pieces-framework';
+import { getRecordActionOutputSchema } from '../output-schemas';
 
 export const getRecord = createAction({
   audience: 'both',
@@ -14,6 +15,7 @@ export const getRecord = createAction({
     table_id: tablesCommon.table_id,
     record_id: tablesCommon.record_id,
   },
+  outputSchema: getRecordActionOutputSchema,
   async run(context) {
     const { record_id } = context.propsValue;
 

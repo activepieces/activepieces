@@ -3,10 +3,12 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { subtractionActionOutputSchema } from '../output-schemas';
 
 export const subtraction = createAction({
   audience: 'both',
   name: 'subtraction_math',
+  outputSchema: subtractionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Subtraction',
   description: 'Subtract the first number from the second number',

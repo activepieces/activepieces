@@ -1,4 +1,5 @@
 import { ActivepiecesError, ApMultipartFile, ErrorCode, isMultipartFile, Permission, tryCatch } from '@activepieces/core-utils'
+import { EMBEDDING_DIMENSIONS } from '@activepieces/server-utils'
 import { FileCompression, FileType, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,7 +12,6 @@ import { knowledgeBaseService } from './knowledge-base.service'
 
 const KB_PRINCIPALS = [PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE] as const
 const KB_ALLOWED_MIME_TYPES = ['application/pdf', 'text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-const EMBEDDING_DIMENSIONS = 768
 
 export const knowledgeBaseController: FastifyPluginAsyncZod = async (fastify) => {
 

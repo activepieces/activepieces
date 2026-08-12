@@ -1,4 +1,4 @@
-import { PassThrough } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
@@ -72,11 +72,12 @@ export class FetchHttpClient extends BaseHttpClient {
           clearTimeout(timeoutId);
         }
       }
-    }, retries);
+    }, isStream ? 0 : retries);
 
     const successCeiling = followRedirects ? 300 : 400;
     if (response.status < 200 || response.status >= successCeiling) {
-      const errorBody = await parseResponseBody(response, responseType);
+      // A stream response can't carry an error message usefully; read the error body as text.
+      const errorBody = await parseResponseBody(response, responseType === 'stream' ? 'text' : responseType);
       const httpError = new HttpError(request.body, { status: response.status, responseBody: errorBody });
       console.error('[HttpClient#(sanitized error message)] Request failed:', httpError);
       throw httpError;
@@ -108,6 +109,9 @@ function serializeBody(
     body.pipe(stream);
     return { body: stream as unknown as BodyInit, extraHeaders: body.getHeaders(), isStream: true };
   }
+  if (body instanceof Readable) {
+    return { body: body as unknown as BodyInit, extraHeaders: {}, isStream: true };
+  }
   // Already a wire-ready body — pass through untouched.
   if (
     typeof body === 'string' ||
@@ -130,6 +134,9 @@ async function parseResponseBody(response: Response, responseType: ResponseType)
   switch (responseType) {
     case 'arraybuffer':
       return Buffer.from(await response.arrayBuffer());
+    case 'stream':
+      // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit the fromWeb overload
+      return isNil(response.body) ? Readable.from([]) : Readable.fromWeb(response.body);
     case 'blob':
       return await response.blob();
     case 'text':

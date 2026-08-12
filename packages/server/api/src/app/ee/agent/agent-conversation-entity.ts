@@ -70,6 +70,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             columns: ['platformId', 'userId', 'created', 'id'],
         },
         {
+            name: 'idx_agent_conversation_flow_step_created',
+            columns: ['created', 'projectId'],
+            where: `source = '${AgentRunSource.FLOW_STEP}'`,
+        },
+        {
             name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,

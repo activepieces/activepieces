@@ -57,6 +57,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
             .andWhere('agent_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
+            .andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
@@ -68,7 +69,11 @@ export const agentService = (log: FastifyBaseLogger) => ({
         if (isEvalConversationId(id)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
-        return agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
+        const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
+        if (conversation.source !== AgentRunSource.CHAT) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
+        }
+        return conversation
     },
 
     async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<AgentConversation> {

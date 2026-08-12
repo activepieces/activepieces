@@ -303,6 +303,11 @@ const HAZARD_WARNING_IDS = new Set<string>([
     'commonjs-variable-in-esm',
 ])
 
+const OPTIONAL_EXTERNALS = new Set<string>([
+    'pg-native',
+    'mongodb-client-encryption', 'kerberos', 'snappy', '@mongodb-js/zstd', 'aws4',
+])
+
 // Known-native packages: they ship a `.node` binary (or load one via a runtime-computed path)
 // and cannot be inlined. Always kept external, even under inline-by-default.
 const NATIVE_EXTERNALS = new Set<string>([
@@ -318,7 +323,7 @@ const NATIVE_EXTERNALS = new Set<string>([
     '@actual-app/api', 'pg-format', 'clarifai-nodejs-grpc',
 ])
 
-export const bundlePieceUtils = { bundlePiece, BUNDLE_FILENAME, readInlineConfig, unsafePackages }
+export const bundlePieceUtils = { bundlePiece, BUNDLE_FILENAME, readInlineConfig, unsafePackages, OPTIONAL_EXTERNALS }
 
 export type BundlePieceParams = {
     piecePath: string

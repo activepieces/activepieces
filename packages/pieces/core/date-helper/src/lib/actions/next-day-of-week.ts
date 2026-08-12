@@ -12,6 +12,7 @@ import {
 } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { nextDayOfWeekActionOutputSchema } from '../output-schemas';
 
 export const nextDayofWeek = createAction({
   audience: 'both',
@@ -77,7 +78,8 @@ export const nextDayofWeek = createAction({
       defaultValue: 'UTC',
     }),
   },
-  async run(context) {    
+  outputSchema: nextDayOfWeekActionOutputSchema,
+  async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       time: z.string().check(z.regex(/^\d\d:\d\d$/)),
     });
