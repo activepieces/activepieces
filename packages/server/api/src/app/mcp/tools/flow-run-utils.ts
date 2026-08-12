@@ -24,9 +24,10 @@ type PieceActionRunResult = {
     errorSummary?: string
 }
 
-export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
+export async function executeFlowTest({ flowId, projectId, userId, stepName, triggerTestData, log }: {
     flowId: string
     projectId: string
+    userId?: string
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
@@ -70,7 +71,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         const updatedFlow = await flowService(log).update({
             id: flow.id,
             projectId,
-            userId: null,
+            userId,
+            previousFlow: flow,
             platformId: project.platformId,
             operation: {
                 type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,

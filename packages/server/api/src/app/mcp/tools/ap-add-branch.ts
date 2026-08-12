@@ -64,6 +64,7 @@ export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

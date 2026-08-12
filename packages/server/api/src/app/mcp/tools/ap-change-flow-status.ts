@@ -60,6 +60,7 @@ export const apChangeFlowStatusTool = ({ mcp, userId }: McpToolContext, log: Fas
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

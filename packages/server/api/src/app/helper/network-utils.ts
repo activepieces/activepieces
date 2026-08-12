@@ -2,6 +2,8 @@ import dns from 'node:dns/promises'
 import os from 'os'
 import { isNil } from '@activepieces/core-utils'
 import { FastifyRequest } from 'fastify'
+import { system } from './system/system'
+import { AppSystemProp } from './system/system-props'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
@@ -62,6 +64,10 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
     return request.headers[clientIpHeader] as string
 }
 
+const clientIp = (request: FastifyRequest): string => {
+    return extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
+}
+
 const getRequestHost = (req: FastifyRequest): string => {
     // in Cloud edition custom hostnames x-forwareded-host will be the original custom hostname while req.hostname will be our main cloud hostname
     const xfh = req.headers['x-forwarded-host']
@@ -77,6 +83,7 @@ const getRequestBaseUrl = (req: FastifyRequest): string => {
 
 export const networkUtils = {
     extractClientRealIp,
+    clientIp,
     getPublicIp,
     getRequestHost,
     getRequestBaseUrl,

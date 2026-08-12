@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ApplicationEventName, FileType, Flow, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents, MetaInformation } from '../../helper/application-events'
@@ -64,7 +64,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         })
     },
 
-    onCreated({ flow, ...meta }: OnCreatedParams): void {
+    onCreated({ flow, ...meta }: FlowEventParams): void {
         applicationEvents(log).sendUserEvent(meta, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
@@ -87,7 +87,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 flowVersion: previousVersion,
             },
         })
-        for (const action of pickLifecycleActions({ operation, previousStatus })) {
+        for (const action of lifecycleActions({ operation, previousStatus, newStatus: flow.status })) {
             applicationEvents(log).sendUserEvent(meta, {
                 action,
                 data: {
@@ -98,7 +98,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         }
     },
 
-    onDeleted({ flow, ...meta }: OnDeletedParams): void {
+    onDeleted({ flow, ...meta }: FlowEventParams): void {
         applicationEvents(log).sendUserEvent(meta, {
             action: ApplicationEventName.FLOW_DELETED,
             data: {
@@ -107,30 +107,27 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             },
         })
     },
+
+    onDisabledByWorker({ flow, projectId, platformId }: OnDisabledByWorkerParams): void {
+        applicationEvents(log).sendWorkerEvent({
+            projectId,
+            platformId,
+            action: ApplicationEventName.FLOW_DEACTIVATED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
 })
 
-function pickLifecycleActions({ operation, previousStatus }: PickLifecycleActionsParams): ApplicationEventName[] {
-    if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
-        const newStatus = operation.request.status ?? FlowStatus.ENABLED
-        const transitionAction = pickTransitionAction({ previousStatus, newStatus })
-        return isNil(transitionAction)
-            ? [ApplicationEventName.FLOW_PUBLISHED]
-            : [ApplicationEventName.FLOW_PUBLISHED, transitionAction]
-    }
-    if (operation.type === FlowOperationType.CHANGE_STATUS) {
-        const transitionAction = pickTransitionAction({ previousStatus, newStatus: operation.request.status })
-        return isNil(transitionAction) ? [] : [transitionAction]
-    }
-    return []
-}
-
-function pickTransitionAction({ previousStatus, newStatus }: PickTransitionActionParams): ApplicationEventName | undefined {
-    if (newStatus === previousStatus) {
-        return undefined
-    }
-    return newStatus === FlowStatus.ENABLED
-        ? ApplicationEventName.FLOW_ACTIVATED
-        : ApplicationEventName.FLOW_DEACTIVATED
+function lifecycleActions({ operation, previousStatus, newStatus }: LifecycleActionsParams): ApplicationEventName[] {
+    const published = operation.type === FlowOperationType.LOCK_AND_PUBLISH
+    const changedStatus = (published || operation.type === FlowOperationType.CHANGE_STATUS) && newStatus !== previousStatus
+    return [
+        ...(published ? [ApplicationEventName.FLOW_PUBLISHED] : []),
+        ...(changedStatus ? [newStatus === FlowStatus.ENABLED ? ApplicationEventName.FLOW_ACTIVATED : ApplicationEventName.FLOW_DEACTIVATED] : []),
+    ]
 }
 
 type PreUpdateStatusParams = {
@@ -146,27 +143,24 @@ type PreDeleteParams = {
     flowToDelete: Flow
 }
 
-type OnCreatedParams = MetaInformation & {
+type FlowEventParams = MetaInformation & {
     flow: PopulatedFlow
 }
 
-type OnOperationAppliedParams = MetaInformation & {
-    flow: PopulatedFlow
+type OnOperationAppliedParams = FlowEventParams & {
     previousVersion: FlowVersion
     previousStatus: FlowStatus
     operation: FlowOperationRequest
 }
 
-type OnDeletedParams = MetaInformation & {
+type OnDisabledByWorkerParams = {
     flow: PopulatedFlow
+    projectId: ProjectId
+    platformId: PlatformId
 }
 
-type PickLifecycleActionsParams = {
+type LifecycleActionsParams = {
     operation: FlowOperationRequest
-    previousStatus: FlowStatus
-}
-
-type PickTransitionActionParams = {
     previousStatus: FlowStatus
     newStatus: FlowStatus
 }

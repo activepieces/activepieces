@@ -108,6 +108,7 @@ export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

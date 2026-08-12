@@ -52,6 +52,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

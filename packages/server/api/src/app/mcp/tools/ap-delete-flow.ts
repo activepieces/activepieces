@@ -22,6 +22,7 @@ export const apDeleteFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 await flowService(log).delete({
                     id: flowId,
                     projectId: mcp.projectId,
+                    previousFlow: flow ?? undefined,
                     userId,
                 })
                 return {

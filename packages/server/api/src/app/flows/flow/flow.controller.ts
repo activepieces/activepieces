@@ -1,10 +1,9 @@
-import { ApId, Permission, SeekPage } from '@activepieces/core-utils'
+import { ApId, Permission, SeekPage, UserId } from '@activepieces/core-utils'
 import { CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -13,8 +12,6 @@ import { platformPlanService } from '../../ee/platform/platform-plan/platform-pl
 import { projectLimitsService } from '../../ee/projects/project-plan/project-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { networkUtils } from '../../helper/network-utils'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
@@ -27,11 +24,10 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.projectId,
-            platformId: request.principal.platform.id,
             request: request.body,
-            ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
+            ownerId: actorUserId(request),
             templateId: request.body.templateId,
-            ip: extractClientIp(request),
+            ip: networkUtils.clientIp(request),
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -75,7 +71,6 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             }
         },
     }, async (request) => {
-        const userId = await authenticationUtils(request.log).extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -93,12 +88,12 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         }
         return flowService(request.log).update({
             id: request.params.id,
-            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
+            userId: actorUserId(request),
             platformId: request.principal.platform.id,
             projectId: request.projectId,
             operation: cleanOperation(request.body),
             previousFlow: flow,
-            ip: extractClientIp(request),
+            ip: networkUtils.clientIp(request),
         })
     })
 
@@ -159,16 +154,16 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.projectId,
-            platformId: request.principal.platform.id,
-            userId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
-            ip: extractClientIp(request),
+            previousFlow: flow,
+            userId: actorUserId(request),
+            ip: networkUtils.clientIp(request),
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
-function extractClientIp(request: FastifyRequest): string {
-    return networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
+function actorUserId(request: FastifyRequest): UserId | undefined {
+    return request.principal.type === PrincipalType.USER ? request.principal.id : undefined
 }
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {

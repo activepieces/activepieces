@@ -29,7 +29,7 @@ import { flowRepo } from './flow.repo'
 
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, platformId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -73,7 +73,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
         if (emitEvents) {
             flowSideEffects(log).onCreated({
-                platformId: platformId ?? await projectService(log).getPlatformId(projectId),
+                platformId: await projectService(log).getPlatformId(projectId),
                 projectId,
                 userId: ownerId,
                 ip,
@@ -323,7 +323,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
     async update({
         id,
-        userId: actorUserId,
+        userId = null,
         projectId,
         platformId,
         operation,
@@ -331,14 +331,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         ip,
         emitEvents = true,
     }: UpdateParams): Promise<PopulatedFlow> {
-        const userId = actorUserId ?? null
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
             : undefined
 
         let previouslyPublishedVersion: FlowVersion | undefined
         if (operation.type === FlowOperationType.LOCK_AND_PUBLISH || operation.type === FlowOperationType.CHANGE_STATUS) {
-            const flow = flowBeforeOperation ?? await this.getOneOrThrow({
+            const flow = await this.getOneOrThrow({
                 id,
                 projectId,
             })
@@ -456,7 +455,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowSideEffects(log).onOperationApplied({
                 platformId,
                 projectId,
-                userId: userId ?? undefined,
+                userId,
                 ip,
                 flow: updatedFlow,
                 previousVersion: flowBeforeOperation.version,
@@ -513,8 +512,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return publishedFlow
     },
 
-    async delete({ id, projectId, platformId, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
-        const flow = await this.getOnePopulatedOrThrow({
+    async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
+        const deletedFlow = emitEvents
+            ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
+            : undefined
+        const flow = await this.getOneOrThrow({
             id,
             projectId,
         })
@@ -531,13 +533,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             operationStatus: FlowOperationStatus.DELETING,
         })
         log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
-        if (emitEvents) {
+        if (!isNil(deletedFlow)) {
             flowSideEffects(log).onDeleted({
-                platformId: platformId ?? await projectService(log).getPlatformId(projectId),
+                platformId: await projectService(log).getPlatformId(projectId),
                 projectId,
                 userId,
                 ip,
-                flow,
+                flow: deletedFlow,
             })
         }
     },
@@ -547,7 +549,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const flows = await flowRepo().findBy({
             projectId: In(projectIds),
         })
-        await Promise.all(flows.map((flow) => this.delete({ id: flow.id, projectId: flow.projectId, platformId, emitEvents: false })))
+        await Promise.all(flows.map((flow) => this.delete({ id: flow.id, projectId: flow.projectId, emitEvents: false })))
     },
 
     async getTemplate({
@@ -787,7 +789,6 @@ const assertFlowIsNotNull: <T extends Flow>(
 
 type CreateParams = EventEmissionParams & {
     projectId: ProjectId
-    platformId?: PlatformId
     request: CreateFlowRequest
     ownerId?: UserId
     externalId?: string
@@ -841,7 +842,7 @@ type CountParams = {
 
 type UpdateParams = EventEmissionParams & {
     id: FlowId
-    userId: UserId | null | undefined
+    userId?: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
     platformId: PlatformId
@@ -858,8 +859,8 @@ type UpdatePublishedVersionIdParams = {
 type DeleteParams = EventEmissionParams & {
     id: FlowId
     projectId: ProjectId
-    platformId?: PlatformId
     userId?: UserId
+    previousFlow?: PopulatedFlow
 }
 
 type EventEmissionParams = {

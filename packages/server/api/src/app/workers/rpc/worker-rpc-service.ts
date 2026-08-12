@@ -1,6 +1,6 @@
 import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
-import { ApplicationEventName, ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
+import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
@@ -8,12 +8,12 @@ import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { preWarmWorkersService } from '../../flows/pre-warm-workers'
-import { applicationEvents } from '../../helper/application-events'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -289,15 +289,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                     request: { status: FlowStatus.DISABLED },
                 },
             })
-            applicationEvents(log).sendWorkerEvent({
-                projectId,
-                platformId,
-                action: ApplicationEventName.FLOW_DEACTIVATED,
-                data: {
-                    flow: disabledFlow,
-                    flowVersion: disabledFlow.version,
-                },
-            })
+            flowSideEffects(log).onDisabledByWorker({ flow: disabledFlow, projectId, platformId })
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 

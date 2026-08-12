@@ -119,6 +119,7 @@ export const apManageNotesTool = ({ mcp, userId }: McpToolContext, log: FastifyB
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

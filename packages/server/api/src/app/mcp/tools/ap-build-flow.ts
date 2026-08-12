@@ -70,19 +70,20 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
-                const platformId = await projectService(log).getPlatformId(projectId)
-                const flow = await flowService(log).create({
-                    projectId,
-                    platformId,
-                    ownerId: userId,
-                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
-                    request: { displayName: flowName, projectId },
-                })
+                const [platformId, flow] = await Promise.all([
+                    projectService(log).getPlatformId(projectId),
+                    flowService(log).create({
+                        projectId,
+                        ownerId: userId,
+                        createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
+                        request: { displayName: flowName, projectId },
+                    }),
+                ])
                 flowId = flow.id
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
-                    await flowService(log).delete({ id: flowId, projectId, platformId, userId }).catch((deleteErr) => {
+                    await flowService(log).delete({ id: flowId, projectId, userId }).catch((deleteErr) => {
                         log.warn({ error: deleteErr, flow: { id: flowId } }, 'Failed to clean up orphaned flow after trigger version resolution error')
                     })
                     return triggerVersionResult.error

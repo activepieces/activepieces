@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { ApplicationEvent, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { authenticationUtils } from '../authentication/authentication-utils'
@@ -70,10 +70,10 @@ async function enrichAuditEventParam(requestOrMeta: ApplicationEventSource, para
     if (isNil(meta)) {
         return undefined
     }
-    const project = meta.projectId ? await projectService(log).getOne(meta.projectId) : undefined
+    const project = isNil(meta.projectId) ? undefined : await projectService(log).getOne(meta.projectId)
     const userId = meta.userId ?? project?.ownerId
-    const user = userId ? await userService(log).getOneOrFail({ id: userId }) : undefined
-    const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({ id: user.identityId }) : undefined
+    const { data: user } = await tryCatch(async () => isNil(userId) ? undefined : userService(log).getOneOrFail({ id: userId }))
+    const identity = isNil(user?.identityId) ? undefined : await userIdentityService(log).getOneOrFail({ id: user.identityId })
     const eventToSave: unknown = {
         id: apId(),
         created: new Date().toISOString(),
@@ -98,9 +98,8 @@ async function enrichAuditEventParam(requestOrMeta: ApplicationEventSource, para
 }
 
 async function extractMetaInformation(requestOrMeta: ApplicationEventSource, log: FastifyBaseLogger): Promise<MetaInformation | undefined> {
-    const isRequest = 'principal' in requestOrMeta
-    if (isRequest) {
-        const request = requestOrMeta as FastifyRequest
+    if (isFastifyRequest(requestOrMeta)) {
+        const request = requestOrMeta
         const principal = request.principal
         if (!principal || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
             return undefined
@@ -115,14 +114,18 @@ async function extractMetaInformation(requestOrMeta: ApplicationEventSource, log
         }
         return meta
     }
-    return requestOrMeta as MetaInformation
+    return requestOrMeta
+}
+
+function isFastifyRequest(requestOrMeta: ApplicationEventSource): requestOrMeta is FastifyRequest {
+    return 'principal' in requestOrMeta
 }
 
 export type MetaInformation = {
     platformId: string
-    userId?: string
+    userId?: string | null
     projectId?: string
     ip?: string
 }
 
-export type ApplicationEventSource = FastifyRequest | MetaInformation
+type ApplicationEventSource = FastifyRequest | MetaInformation
