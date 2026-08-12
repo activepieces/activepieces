@@ -29,3 +29,11 @@ export const authnRateLimit: RateLimitOptions = {
     ),
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
+
+export const emailCodeRateLimit: RateLimitOptions = {
+    max: Number.parseInt(
+        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX),
+        10,
+    ),
+    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+}

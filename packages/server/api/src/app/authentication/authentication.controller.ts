@@ -1,9 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
 import { ApplicationEventName, PrincipalType, RequestEmailCodeRequest, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider, VerifyEmailCodeRequest } from '@activepieces/shared'
-import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { authnRateLimit, emailCodeRateLimit } from '../core/security/rate-limit'
 import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -124,28 +124,12 @@ export const authenticationController: FastifyPluginAsyncZod = async (
 
 }
 
-const rateLimitOptions: RateLimitOptions = {
-    max: Number.parseInt(
-        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
-        10,
-    ),
-    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
-}
-
-const emailCodeRateLimitOptions: RateLimitOptions = {
-    max: Number.parseInt(
-        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX),
-        10,
-    ),
-    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
-}
-
 
 
 const SwitchPlatformRequestOptions = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SwitchPlatformRequest,
@@ -155,7 +139,7 @@ const SwitchPlatformRequestOptions = {
 const SignUpRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SignUpRequest,
@@ -165,7 +149,7 @@ const SignUpRequestOptions = {
 const RequestEmailCodeRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: emailCodeRateLimitOptions,
+        rateLimit: emailCodeRateLimit,
     },
     schema: {
         body: RequestEmailCodeRequest,
@@ -175,7 +159,7 @@ const RequestEmailCodeRequestOptions = {
 const VerifyEmailCodeRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: VerifyEmailCodeRequest,
@@ -185,7 +169,7 @@ const VerifyEmailCodeRequestOptions = {
 const SignInRequestOptions = {
     config: {
         security: securityAccess.public(),
-        rateLimit: rateLimitOptions,
+        rateLimit: authnRateLimit,
     },
     schema: {
         body: SignInRequest,

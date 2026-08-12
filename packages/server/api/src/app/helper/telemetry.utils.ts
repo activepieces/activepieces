@@ -61,9 +61,6 @@ export const telemetry = (log: FastifyBaseLogger) => ({
         const project = await projectService(log).getOne(projectId)
         return this.trackUser(project!.ownerId, event, { platform: project!.platformId })
     },
-    // Before a platform exists there is no User row, only a UserIdentity — the
-    // same distinct id identify() falls back to, so the pre-platform funnel
-    // stitches to the same person once they finish signing up.
     async trackIdentity(identityId: string, event: TelemetryEvent): Promise<void> {
         return this.trackUser(identityId, event)
     },
