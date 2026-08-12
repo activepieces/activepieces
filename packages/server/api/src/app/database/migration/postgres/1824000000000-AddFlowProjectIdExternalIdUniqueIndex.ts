@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddFlowProjectIdExternalIdUniqueIndex1821000000000 implements Migration {
-    name = 'AddFlowProjectIdExternalIdUniqueIndex1821000000000'
+export class AddFlowProjectIdExternalIdUniqueIndex1824000000000 implements Migration {
+    name = 'AddFlowProjectIdExternalIdUniqueIndex1824000000000'
     breaking = false
     release = '0.87.0'
 
