@@ -1,6 +1,17 @@
 import { safeHttp } from '@activepieces/server-utils'
+import { AxiosError, AxiosHeaders } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { turnstile } from '../../../../src/app/authentication/lib/turnstile'
+
+function siteVerifyStatus(status: number): AxiosError {
+    return new AxiosError('siteverify failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status,
+        statusText: 'Bad Request',
+        data: {},
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+    })
+}
 
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn() } as unknown as FastifyBaseLogger
 
@@ -99,6 +110,14 @@ describe('turnstile', () => {
 
             await expect(turnstile.assertSolved({ token: 'good', remoteIp: undefined, log }))
                 .resolves.toBeUndefined()
+        })
+
+        it('refuses when siteverify answers with an error status, which is an answer rather than an outage', async () => {
+            configure({ site: 'site-key', secret: 'secret-key' })
+            vi.spyOn(safeHttp.axios, 'post').mockRejectedValue(siteVerifyStatus(400))
+
+            await expect(turnstile.assertSolved({ token: 'good', remoteIp: undefined, log }))
+                .rejects.toThrow()
         })
     })
 })

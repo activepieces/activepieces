@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/input-otp';
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
+import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -943,7 +944,7 @@ function requestErrorMessage(error: HttpError): string {
     if (errorCode === ErrorCode.EMAIL_AUTH_DISABLED) {
       return t('Email sign-in is disabled');
     }
-    if (errorCode === ErrorCode.VALIDATION && isCaptchaRejection(error)) {
+    if (captchaUtils.isRejection(error)) {
       return t('That verification expired. Please try again.');
     }
   }
@@ -952,12 +953,6 @@ function requestErrorMessage(error: HttpError): string {
 
 function serverErrorCode(error: HttpError): string | undefined {
   return (error.response?.data as { code?: string })?.code;
-}
-
-function isCaptchaRejection(error: HttpError): boolean {
-  const params = (error.response?.data as { params?: { message?: string } })
-    ?.params;
-  return params?.message === 'captchaVerificationFailed';
 }
 
 function codeErrorMessage(error: HttpError): string {

@@ -2,10 +2,11 @@ import { z } from 'zod'
 import { EmailType } from '../../user/user'
 
 export const MAX_FULL_NAME_LENGTH = 100
+export const MAX_CAPTCHA_TOKEN_LENGTH = 2048
 
 export const RequestEmailCodeRequest = z.object({
     email: EmailType,
-    captchaToken: z.string().trim().min(1).optional(),
+    captchaToken: z.string().trim().min(1).max(MAX_CAPTCHA_TOKEN_LENGTH).optional(),
 })
 
 export type RequestEmailCodeRequest = z.infer<typeof RequestEmailCodeRequest>

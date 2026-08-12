@@ -43,6 +43,7 @@ import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
+import { captchaUtils } from '../utils/captcha-utils';
 import { passwordValidation } from '../utils/password-validation-utils';
 
 import {
@@ -124,6 +125,12 @@ const SignUpForm = ({
           name: TelemetryEventName.SIGN_UP_FAILED,
           payload: { errorCode: errorCode ?? 'UNKNOWN' },
         });
+        if (captchaUtils.isRejection(error)) {
+          form.setError('root.serverError', {
+            message: t('That verification expired. Please try again.'),
+          });
+          return;
+        }
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),

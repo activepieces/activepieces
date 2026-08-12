@@ -61,7 +61,12 @@ export function TurnstileWidget({
 
     loadScript()
       .then(() => {
-        if (cancelled || !container.current || !window.turnstile) {
+        if (cancelled || !container.current) {
+          return;
+        }
+        if (!window.turnstile) {
+          setFailed(true);
+          onUnavailable();
           return;
         }
         widgetId = window.turnstile.render(container.current, {

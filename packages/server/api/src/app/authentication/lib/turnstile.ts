@@ -1,5 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
+import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -19,6 +20,10 @@ function siteKey(): string | undefined {
 function isConfigured(): boolean {
     return !isNil(configuredValue(AppSystemProp.TURNSTILE_SITE_KEY))
         && !isNil(configuredValue(AppSystemProp.TURNSTILE_SECRET_KEY))
+}
+
+function siteVerifyAnswered(error: unknown): boolean {
+    return isAxiosError(error) && !isNil(error.response)
 }
 
 function rejected(): ActivepiecesError {
@@ -50,11 +55,16 @@ async function assertSolved({ token, remoteIp, log }: AssertSolvedParams): Promi
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         },
     ))
-    // Cloudflare being unreachable must not take authentication down with it. A
-    // transport failure is our outage, not the visitor's, so it is allowed
-    // through and recorded; only a verdict Cloudflare actually returned refuses.
-    if (!isNil(error) || isNil(response)) {
+    if (!isNil(error)) {
+        if (siteVerifyAnswered(error)) {
+            log.warn({ error }, '[turnstile#assertSolved] siteverify answered with an error status, refusing')
+            throw rejected()
+        }
         log.warn({ error }, '[turnstile#assertSolved] challenge could not be verified, allowing the request through')
+        return
+    }
+    if (isNil(response)) {
+        log.warn('[turnstile#assertSolved] challenge could not be verified, allowing the request through')
         return
     }
     if (!response.data.success) {
