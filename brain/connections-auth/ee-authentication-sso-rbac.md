@@ -13,7 +13,7 @@ Enterprise auth layer extending CE with SAML 2.0 SSO, Google/GitHub federated OA
 ### How it works
 - **SAML SSO**: `POST /v1/authn/saml/login` returns IdP redirect; IdP POSTs assertion to ACS `POST /v1/authn/saml/acs`; service parses email/name → federatedAuthn → JWT. Gated by `platform.plan.ssoEnabled`.
 - **Federated OAuth (Google/GitHub)**: `/v1/authn/federated/login` returns redirect URL; `/v1/authn/federated/claim` exchanges code → JWT. Redirects always use `FRONTEND_URL` (no custom domain).
-- **OTP** (`EMAIL_VERIFICATION`, `PASSWORD_RESET`): 10-min expiry + 10-min resend window; states PENDING/CONFIRMED.
+- **OTP** (`EMAIL_VERIFICATION`, `PASSWORD_RESET`): per-type expiry (`OTP_EXPIRATION_MS` in `otp-service.ts`: 24h verification, 10-min reset); states PENDING/CONFIRMED. Resend re-delivers the existing pending OTP value WITHOUT touching the row — expiry stays anchored to the value's creation, so resends cannot extend a (possibly compromised) OTP's lifetime; a new value is generated only once the OTP is expired or confirmed (GIT-1733: the old early-return made resend a silent 204 no-op). Known bounded edge: a resend requested just before expiry delivers a short-lived link; the next resend regenerates.
 - **Enterprise local auth**: `verifyEmail` (confirms OTP → sets verified), `resetPassword` (confirms OTP → updates hash), both audit-logged.
 - **RBAC**: `assertPrincipalAccessToProject({principal, permission, projectId})` and `assertUserHasPermissionToFlow` (maps FlowOperationType → Permission). Authorization hooks: `platformMustHaveFeatureEnabled` (402 FEATURE_DISABLED), `projectMustBeTeamType`, `platformMustBeOwnedByCurrentUser`.
 
@@ -21,6 +21,7 @@ Enterprise auth layer extending CE with SAML 2.0 SSO, Google/GitHub federated OA
 - CE gets OTP flows + RBAC base types; **SSO, managed auth, federated OAuth are EE/Cloud only**.
 - SSO settings page wrapped in `LockedFeatureGuard` keyed on `ssoEnabled`.
 - Managed auth gated separately by `embeddingEnabled` (signing keys). See the Managed Auth page.
+- The authn rate limiter (`core/security/rate-limit.ts`) is registered with `global: false` — it protects NOTHING by default. Every public endpoint that sends email or does auth work must opt in per-route via `config.rateLimit` (see `authentication.controller.ts` / `otp-controller.ts` for the `API_RATE_LIMIT_AUTHN_*` pattern).
 
 ### Key files
 Entry point: `assertPrinicpalAccessToProject` (yes, misspelled in the source), exported from `project-role/rbac-service.ts` and called from `core/security/v2/authz/authorize.ts` on every project-scoped request.
