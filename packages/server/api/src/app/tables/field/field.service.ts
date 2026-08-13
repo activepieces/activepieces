@@ -39,6 +39,7 @@ export const fieldService = {
                 })
             }
             case FieldType.DATE:
+            case FieldType.DATETIME:
             case FieldType.NUMBER:
             case FieldType.TEXT: {
                 return this.create({

@@ -21,6 +21,8 @@ const getFieldTypeText = (fieldType: FieldType) => {
       return 'Single Select';
     case FieldType.DATE:
       return 'Date';
+    case FieldType.DATETIME:
+      return 'Date & Time';
     case FieldType.NUMBER:
       return 'Number';
     case FieldType.TEXT:
@@ -92,6 +94,7 @@ export const tablesCommon = {
           }))]));
           break;
         case FieldType.DATE:
+        case FieldType.DATETIME:
           fieldValidations[field.externalId] = z.optional(z.union([z.date(), z.pipe(z.string(), z.transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
@@ -130,6 +133,7 @@ export const tablesCommon = {
             });
             break;
           case FieldType.DATE:
+          case FieldType.DATETIME:
             fields[field.externalId] = Property.DateTime({
               displayName: field.name,
               description,

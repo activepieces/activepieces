@@ -16,7 +16,7 @@ export const readDataRangeAction = createAction({
 	displayName: 'Read Data Range',
 	description:
 		'Read cells from a range using A1 notation (e.g. A1:D10). Returns rows and the resolved range.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Reads raw cell values from a worksheet using an A1-notation range, where leaving the range empty reads the entire worksheet, with switchable orientation (one array per row or per column) and rendering (formatted text, unformatted values, or the underlying formulas). Use when an agent needs a specific block of cells or the formulas behind them; prefer Get All Rows or Find Rows when header-keyed row objects are wanted instead of positional arrays. Read-only and idempotent.',
