@@ -1,5 +1,5 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
@@ -46,8 +46,8 @@ import { validationUtils } from '@/lib/validation-utils';
 import { projectsTableColumns } from './columns';
 
 export default function ProjectsPage() {
-  const { platform, refetch: refetchPlatform } =
-    platformHooks.useCurrentPlatform();
+  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isEnabled = platform.plan.billedTeamProjectsLimit !== 0;
@@ -88,11 +88,10 @@ export default function ProjectsPage() {
     mutate: toggleAutoCreatePersonalProjects,
     isPending: isAutoCreatePersonalProjectsPending,
   } = useMutation({
-    mutationFn: async (autoCreatePersonalProjects: boolean) => {
-      await platformApi.update({ autoCreatePersonalProjects }, platform.id);
-      await refetchPlatform();
-    },
-    onSuccess: () => {
+    mutationFn: (autoCreatePersonalProjects: boolean) =>
+      platformApi.update({ autoCreatePersonalProjects }, platform.id),
+    onSuccess: (updatedPlatform) => {
+      setCurrentPlatform(queryClient, updatedPlatform);
       toast.success(t('Automatic personal project creation updated'), {
         duration: 3000,
       });
