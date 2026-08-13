@@ -1,12 +1,12 @@
 import dns from 'node:dns/promises'
 import os from 'os'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { FastifyRequest } from 'fastify'
 import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
 
 const GOOGLE_DNS = '216.239.32.10'
-const FORWARDED_HOST_PATTERN = /^[A-Za-z0-9._-]+(:\d{1,5})?$/
+const HOST_RESTRUCTURING_CHARACTERS = /[^A-Za-z0-9._\-:[\]]/
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 
 type IpMetadata = {
@@ -69,21 +69,27 @@ const clientIp = (request: FastifyRequest): string => {
     return extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
 }
 
+const firstForwardedValue = (header: string | string[] | undefined): string | undefined => {
+    return (Array.isArray(header) ? header[0] : header)?.split(',')[0]?.trim()
+}
+
 const getRequestHost = (req: FastifyRequest): string => {
     // in Cloud edition custom hostnames x-forwareded-host will be the original custom hostname while req.hostname will be our main cloud hostname
-    const xfh = req.headers['x-forwarded-host']
-    const forwardedHost = (Array.isArray(xfh) ? xfh[0] : xfh)?.split(',')[0]?.trim()
-    if (isNil(forwardedHost) || !FORWARDED_HOST_PATTERN.test(forwardedHost)) {
+    const forwardedHost = firstForwardedValue(req.headers['x-forwarded-host'])
+    if (isNil(forwardedHost) || forwardedHost === '' || HOST_RESTRUCTURING_CHARACTERS.test(forwardedHost)) {
         return req.hostname
     }
     return forwardedHost
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
-    const forwardedProto = req.headers['x-forwarded-proto'] as string | undefined
-    const candidate = forwardedProto?.split(',')[0]?.trim()
-    const protocol = candidate === 'http' || candidate === 'https' ? candidate : req.protocol
-    return `${protocol}://${getRequestHost(req)}`
+    const forwardedProto = firstForwardedValue(req.headers['x-forwarded-proto'])
+    const protocol = forwardedProto === 'http' || forwardedProto === 'https' ? forwardedProto : req.protocol
+    const baseUrl = `${protocol}://${getRequestHost(req)}`
+    if (tryCatchSync(() => new URL(baseUrl)).error) {
+        return `${req.protocol}://${req.hostname}`
+    }
+    return baseUrl
 }
 
 export const networkUtils = {

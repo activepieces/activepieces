@@ -113,6 +113,12 @@ describe('MCP OAuth input hardening', () => {
         ['space in proto', { 'x-forwarded-proto': 'a b' }],
         ['empty proto', { 'x-forwarded-proto': '' }],
         ['bogus proto', { 'x-forwarded-proto': 'ht#tp' }],
+        ['port above the valid range', { 'x-forwarded-host': 'evil.com:99999' }],
+        ['first out-of-range port', { 'x-forwarded-host': 'evil.com:65536' }],
+        ['out-of-range port in a forwarded chain', { 'x-forwarded-host': 'evil.com:99999, real.com' }],
+        ['truncated IPv6 literal', { 'x-forwarded-host': '[::1' }],
+        ['credentials in host', { 'x-forwarded-host': 'user:pass@evil.com' }],
+        ['path injected into host', { 'x-forwarded-host': 'evil.com/x' }],
     ])('never lets a malformed forwarding header reach URL construction (%s)', async (_name, headers) => {
         const client = await newClient()
 
@@ -128,6 +134,25 @@ describe('MCP OAuth input hardening', () => {
         const issuer: string = metadata.json().issuer
         if (!issuer.startsWith('http://') && !issuer.startsWith('https://')) {
             throw new Error(`metadata advertised a non-http issuer: ${issuer}`)
+        }
+    })
+
+    it.each([
+        ['plain custom domain', 'customer.example.com'],
+        ['custom domain with port', 'customer.example.com:8080'],
+        ['default https port', 'customer.example.com:443'],
+        ['max valid port', 'customer.example.com:65535'],
+        ['ipv6 literal', '[::1]:8080'],
+    ])('still reflects a well-formed forwarded host so custom domains keep working (%s)', async (_name, host) => {
+        const res = await app.inject({
+            method: 'GET',
+            url: '/.well-known/oauth-authorization-server',
+            headers: { 'x-forwarded-host': host, 'x-forwarded-proto': 'https' },
+        })
+
+        const issuer: string = res.json().issuer
+        if (issuer !== `https://${host}`) {
+            throw new Error(`expected issuer https://${host}, got ${issuer}`)
         }
     })
 })

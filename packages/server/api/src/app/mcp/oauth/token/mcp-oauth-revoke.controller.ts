@@ -32,7 +32,7 @@ const RevokeRequest = {
     schema: {
         hide: true,
         body: z.object({
-            token: z.string(),
+            token: z.string().max(512),
             client_id: z.string().optional(),
             client_secret: z.string().optional(),
             token_type_hint: z.string().optional(),
