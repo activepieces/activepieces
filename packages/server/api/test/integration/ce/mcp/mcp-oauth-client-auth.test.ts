@@ -200,6 +200,31 @@ describe('MCP OAuth client authentication', () => {
             expect(res.json().error).toBe('invalid_client')
         })
 
+        it('does not let a correct body secret rescue a wrong one in the Authorization header', async () => {
+            const client = await registerClient('client_secret_basic')
+
+            const res = await exchange({
+                client,
+                headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
+                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
+        })
+
+        it('does not let an empty Basic username adopt the client_id from the body', async () => {
+            const client = await registerClient('none')
+
+            const res = await exchange({
+                client,
+                headers: { authorization: 'Basic ' + Buffer.from(':password').toString('base64') },
+                body: { client_id: client.client_id },
+            })
+
+            expect(res.statusCode).toBe(400)
+        })
+
         it('rejects a client_id in the Authorization header that disagrees with the body (RFC 6749 section 2.3.1)', async () => {
             const client = await registerClient('client_secret_post')
             const other = await registerClient('none')
