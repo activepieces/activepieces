@@ -23,13 +23,15 @@ Two differences are worth knowing before you upgrade:
 
 Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
 
-#### Official piece bundles are served from npm again by default
+#### Table record filters compare date columns chronologically
 
-`AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles that are not already cached in your own S3 bucket are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN now serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`.
+The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
+
+This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
 
 #### What you need to do
 
-Nothing. Set `AP_USE_CDN_FOR_BUNDLES=true` if you want official bundles to keep coming from the CDN, and allow outbound traffic to `cdn.activepieces.com` if your network policy restricts it.
+Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
 
 ## 0.87.0
