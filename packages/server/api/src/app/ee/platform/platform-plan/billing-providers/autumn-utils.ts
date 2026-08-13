@@ -254,7 +254,7 @@ export const autumnUtils = {
             usage: balance.usage,
             remaining: balance.remaining,
             unlimited: balance.unlimited,
-            nextResetAt: balance.nextResetAt,
+            nextResetAt: largestGrantResetAt(balance) ?? balance.nextResetAt,
             syncedAt: Date.now(),
         }
     },
@@ -397,6 +397,14 @@ function balanceCacheKey({ platformId, featureId }: BalanceCacheRef): string {
     return featureId === ConsumableFeatureId.AP_CREDITS
         ? getCreditsBalanceKey(platformId)
         : getAppSumoAiCreditsBalanceKey(platformId)
+}
+
+function largestGrantResetAt(balance: Balance): number | null {
+    const resets = (balance.breakdown ?? []).filter((entry) => !isNil(entry.reset?.resetsAt))
+    if (resets.length < 2) {
+        return null
+    }
+    return resets.reduce((largest, entry) => entry.includedGrant > largest.includedGrant ? entry : largest).reset?.resetsAt ?? null
 }
 
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
