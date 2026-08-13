@@ -43,7 +43,12 @@ docker update --memory 1g --memory-swap 1g <container>
 docker inspect <container> --format '{{.HostConfig.Memory}}'   # confirm restored
 ```
 
-Node 24 has a global `WebSocket`, so a snapshot needs no dependencies. Send `SIGUSR1` to open the inspector, then drive CDP over `127.0.0.1:9229`:
+Two mechanics cost an hour each if you learn them the hard way:
+
+- **The engine process is renamed `sandbox-<nanoid>`.** Matching on `/usr/local/bin/node` finds the *code-step* child (~45 MB, its own module registry, `require.cache` of size 1) and tells you nothing about the pieces. Match `sandbox-*` in `/proc/<pid>/cmdline`. `ps` is not in the image; walk `/proc` directly.
+- **Node's global `WebSocket` cannot talk to the V8 inspector** — the handshake is accepted, then the socket dies with a bare error. Use the `ws` the image already ships: `find /usr/src/app/node_modules -type d -name ws -path "*node_modules/ws"`, and pass `{ perMessageDeflate: false, maxPayload: 0 }`.
+
+Send `SIGUSR1` to open the inspector, then drive CDP over `127.0.0.1:9229`:
 
 ```js
 process.kill(pid, 'SIGUSR1')                       // opens inspector
@@ -55,6 +60,20 @@ process.kill(pid, 'SIGUSR1')                       // opens inspector
 ```
 
 `collectGarbage` first is load-bearing: without it the histogram is full of collectable junk and the real retainers are buried.
+
+### When you only need *identity*, don't snapshot at all
+
+A full snapshot of a ~950 MB heap kills the process mid-serialization (the cgroup can be raised; `--max-old-space-size` cannot — see the Gotchas on [[workers]]). If the question is "which modules are resident" rather than "who retains this", one `Runtime.evaluate` answers it for a few KB and cannot OOM anything:
+
+```js
+// returnByValue: true, includeCommandLineAPI: true
+const cache = process.mainModule.constructor._cache
+const keys = Object.keys(cache)
+// → totalModules, count matching @activepieces/shared, pieces-framework,
+//   distinct @activepieces/piece-* packages, and process.memoryUsage()
+```
+
+Run it against the `sandbox-<id>` pid while a flow holds the sandbox open. To *get* that window, end the probe flow with a CODE step that sleeps — a `delay` piece step over 10 s creates a waitpoint and **pauses the run**, releasing the sandbox, so the process you wanted is gone before you arrive.
 
 ## 4. Parse it off the worker process
 
