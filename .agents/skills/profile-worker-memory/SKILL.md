@@ -113,6 +113,24 @@ A module-level object keyed by cache path, holding whole flow-bundle manifests, 
 
 And a trap in your own instrumentation: a shell probe matching `case "$cl" in *bootstrap.js*)` also matches **the probe's own command line**, silently overwriting the worker's RSS with the shell's 1 MB. Same family as grepping heap strings and finding your own source. Prefer `/proc/1` for the worker (node is PID 1 since pm2 was removed) and match engines on `comm` = `sandbox-*`.
 
+## Reproduce it locally before you fix it — a container is the only honest harness
+
+An OOM is a *cgroup* event, so a bare `node --max-old-space-size=768` on your laptop will not reproduce it: the process just grows and V8 never hits the wall the kernel does. Run the suspect path in a container sized like production and let the kernel do the killing.
+
+```bash
+docker run --rm --memory 1g --memory-swap 1g -v "$PWD":/repo:ro \
+  --entrypoint node node:22-bookworm-slim --max-old-space-size=768 /repo/sim.js
+# exit 137 == SIGKILL == the cgroup OOM-killed it, exactly as prod does
+```
+
+Size the inputs from production, never from imagination — `find <cache>/bundles -name cache.json -printf '%s\n'` gave median 0.01 MB, p99 0.5 MB, **max 47 MB** over 14,403 bundles, and only the max matters. Simulate the worker's steady state too (a few hundred MB of ballast), because the spike is only fatal on top of the baseline.
+
+Three traps, all of which produced a wrong answer first:
+
+- **`exit != 137` is not "survived".** A script that dies on `MODULE_NOT_FOUND` also exits non-137, and a loop checking only the exit code reports it as a pass. Assert on a success marker the script prints, and treat everything else as an error state distinct from a kill.
+- **Near the cliff the result is a coin flip.** At the boundary the same config OOM-killed 3 of 5 runs and survived 2, and a *lower* baseline sometimes died where a higher one lived — GC timing, not signal. Never A/B a fix by moving the threshold. Pick a baseline well below the cliff and compare **post-GC `heapUsed`**, which is deterministic: it read 380 MB before a fix and 240 MB after, identical across every run.
+- **Synchronous work cannot be sampled.** `setInterval` never fires during a `JSON.parse`, so a "peak sampler" reports the calm before and after and misses the spike entirely. Instrument phase by phase with `global.gc()` between steps and read the delta.
+
 ## Redact before you publish the findings
 
 The snapshot never leaves the box — but **its output carries the same data in miniature**. Constructor histograms and retainer paths are full of real `flowVersionId`s, and a retained string's preview can expose flow names, step config, and timestamps. Replace them with placeholders (`<flow-version-a>`) before they go into a PR description, an issue, a Slack message, or a doc. This repo's PRs are public. Getting this right at the snapshot step and then pasting the raw histogram into a public PR undoes the whole point.
