@@ -111,20 +111,31 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
     ),
   },
   {
-    accessorKey: 'creditsUsed',
-    header: () => <span className="text-sm">{t('Credits Used')}</span>,
+    accessorKey: 'aiCreditsUsed',
+    header: () => <span className="text-sm">{t('Credits Used on AI')}</span>,
     cell: ({ row }) => (
       <span className="text-sm">
-        {Math.round(row.original.creditsUsed).toLocaleString()}
+        {Math.round(row.original.aiCreditsUsed).toLocaleString()}
       </span>
     ),
   },
   {
-    accessorKey: 'aiCreditsUsed',
-    header: () => <span className="text-sm">{t('AI Credits Used')}</span>,
+    id: 'runsCreditsUsed',
+    header: () => <span className="text-sm">{t('Credits Used on Runs')}</span>,
     cell: ({ row }) => (
       <span className="text-sm">
-        {Math.round(row.original.aiCreditsUsed).toLocaleString()}
+        {Math.round(
+          Math.max(0, row.original.creditsUsed - row.original.aiCreditsUsed),
+        ).toLocaleString()}
+      </span>
+    ),
+  },
+  {
+    accessorKey: 'creditsUsed',
+    header: () => <span className="text-sm">{t('Total Credits Used')}</span>,
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {Math.round(row.original.creditsUsed).toLocaleString()}
       </span>
     ),
   },
