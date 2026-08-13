@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { apId } from '@activepieces/core-utils'
+import { apId, isNil } from '@activepieces/core-utils'
 import { McpOAuthAuthorizationCode } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code.entity'
@@ -36,18 +36,26 @@ export const mcpOAuthCodeService = {
         return code
     },
 
-    async consume(code: string, clientId: string, redirectUri: string): Promise<McpOAuthAuthorizationCode | null> {
+    async consume({ code, clientId, redirectUri }: ConsumeCodeParams): Promise<McpOAuthAuthorizationCode | null> {
         const updateResult = await repo().createQueryBuilder()
             .update()
             .set({ used: true })
             .where('"code" = :code AND "used" = false AND "expiresAt" > NOW() AND "clientId" = :clientId AND "redirectUri" = :redirectUri', { code, clientId, redirectUri })
+            .returning('*')
             .execute()
 
-        if (updateResult.affected === 0) {
+        const [consumed] = updateResult.raw ?? []
+        if (isNil(consumed)) {
             return null
         }
         return repo().findOneByOrFail({ code })
     },
+}
+
+type ConsumeCodeParams = {
+    code: string
+    clientId: string
+    redirectUri: string
 }
 
 type CreateCodeParams = {
