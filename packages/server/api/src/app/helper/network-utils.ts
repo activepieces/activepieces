@@ -6,6 +6,7 @@ import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
 
 const GOOGLE_DNS = '216.239.32.10'
+const FORWARDED_HOST_PATTERN = /^[A-Za-z0-9._-]+(:\d{1,5})?$/
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 
 type IpMetadata = {
@@ -72,12 +73,16 @@ const getRequestHost = (req: FastifyRequest): string => {
     // in Cloud edition custom hostnames x-forwareded-host will be the original custom hostname while req.hostname will be our main cloud hostname
     const xfh = req.headers['x-forwarded-host']
     const forwardedHost = (Array.isArray(xfh) ? xfh[0] : xfh)?.split(',')[0]?.trim()
-    return forwardedHost ?? req.hostname
+    if (isNil(forwardedHost) || !FORWARDED_HOST_PATTERN.test(forwardedHost)) {
+        return req.hostname
+    }
+    return forwardedHost
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
     const forwardedProto = req.headers['x-forwarded-proto'] as string | undefined
-    const protocol = forwardedProto?.split(',')[0]?.trim() ?? req.protocol
+    const candidate = forwardedProto?.split(',')[0]?.trim()
+    const protocol = candidate === 'http' || candidate === 'https' ? candidate : req.protocol
     return `${protocol}://${getRequestHost(req)}`
 }
 
