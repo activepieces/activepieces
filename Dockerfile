@@ -3,7 +3,8 @@ FROM node:20.19-bullseye-slim AS base
 # Set environment variables early for better layer caching
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+    LC_ALL=en_US.UTF-8 \
+    REDISMS_VERSION=7.4.2
 
 # Install all system dependencies in a single layer with cache mounts
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
