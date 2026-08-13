@@ -29,7 +29,7 @@ export const newEmailTriggerOutputSchema: OutputSchema = {
       key: 'attachments',
       label: 'Attachments',
       description:
-        'Stored attachment references, one opaque string per attachment, produced by writing each attachment to file storage. Pass an entry straight to an action that accepts a file; the original filename and content type are not carried here.',
+        'Stored attachment references, one per attachment — each a signed download URL produced by writing the attachment to file storage. Pass an entry straight to an action that accepts a file or a URL; the original filename and content type are not carried here.',
     },
     {
       key: 'headerLines',
