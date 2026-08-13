@@ -7,7 +7,11 @@ function decodeCredentialPart(value: string): string {
     return result.error ? value : result.data
 }
 
-function parseBasicPayload(encoded: string): BasicCredentials | null {
+function parseBasicHeader(authorizationHeader: string | undefined): BasicCredentials | null {
+    const [scheme, encoded] = authorizationHeader?.split(' ') ?? []
+    if (scheme?.toLowerCase() !== 'basic' || isNil(encoded)) {
+        return null
+    }
     const decoded = Buffer.from(encoded, 'base64').toString('utf8')
     const separatorIndex = decoded.indexOf(':')
     if (separatorIndex === -1) {
@@ -21,14 +25,12 @@ function parseBasicPayload(encoded: string): BasicCredentials | null {
 
 export const mcpOAuthClientAuth = {
     async authenticate({ authorizationHeader, clientId: bodyClientId, clientSecret: bodyClientSecret }: AuthenticateParams): Promise<AuthenticateResult> {
-        const [scheme, encoded] = authorizationHeader?.split(' ') ?? []
-        const basicHeaderPresent = scheme?.toLowerCase() === 'basic'
+        const basic = parseBasicHeader(authorizationHeader)
 
-        if (basicHeaderPresent && !isNil(bodyClientSecret)) {
-            return { status: 'error', error: 'invalid_request', errorDescription: 'Multiple client authentication mechanisms' }
+        if (basic && bodyClientId && basic.clientId !== bodyClientId) {
+            return { status: 'error', error: 'invalid_request', errorDescription: 'client_id mismatch between Authorization header and request body' }
         }
 
-        const basic = basicHeaderPresent && encoded ? parseBasicPayload(encoded) : null
         const clientId = basic?.clientId ?? bodyClientId
         if (!clientId) {
             return { status: 'anonymous' }
@@ -39,18 +41,18 @@ export const mcpOAuthClientAuth = {
             return { status: 'error', error: 'invalid_client' }
         }
 
-        if (client.tokenEndpointAuthMethod === 'client_secret_post') {
-            if (!bodyClientSecret || !mcpOAuthClientService.validateClientSecret(client, bodyClientSecret)) {
-                return { status: 'error', error: 'invalid_client', errorDescription: 'Invalid client secret' }
-            }
-        }
-        else if (client.tokenEndpointAuthMethod === 'client_secret_basic') {
-            if (!basic?.clientSecret || !mcpOAuthClientService.validateClientSecret(client, basic.clientSecret)) {
+        if (client.tokenEndpointAuthMethod !== 'none') {
+            const presentedSecret = basic?.clientSecret || bodyClientSecret
+            if (!presentedSecret || !mcpOAuthClientService.validateClientSecret(client, presentedSecret)) {
                 return { status: 'error', error: 'invalid_client', errorDescription: 'Invalid client secret' }
             }
         }
 
         return { status: 'authenticated', client }
+    },
+
+    toErrorPayload({ error, errorDescription }: AuthenticateError): Record<string, string> {
+        return errorDescription ? { error, error_description: errorDescription } : { error }
     },
 }
 
@@ -65,7 +67,13 @@ type BasicCredentials = {
     clientSecret: string
 }
 
+type AuthenticateError = {
+    status: 'error'
+    error: string
+    errorDescription?: string
+}
+
 type AuthenticateResult =
     | { status: 'authenticated', client: McpOAuthClient }
     | { status: 'anonymous' }
-    | { status: 'error', error: string, errorDescription?: string }
+    | AuthenticateError

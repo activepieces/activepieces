@@ -2,6 +2,8 @@ import { createHash, randomBytes } from 'node:crypto'
 import { apId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
 import { mcpOAuthCodeService } from '../../../../src/app/mcp/oauth/code/mcp-oauth-code.service'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -37,288 +39,359 @@ function generatePkce(): { verifier: string, challenge: string } {
     return { verifier, challenge }
 }
 
-describe('MCP OAuth token endpoint', () => {
+function basicHeader(clientId: string, clientSecret: string): string {
+    return 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+}
+
+async function exchange({ client, headers, body }: {
+    client: RegisteredClient
+    headers?: Record<string, string>
+    body?: Record<string, string>
+}): Promise<ReturnType<FastifyInstance['inject']>> {
+    const { verifier, challenge } = generatePkce()
+    const code = await seedAuthorizationCode(client.client_id, challenge)
+    return app.inject({
+        method: 'POST',
+        url: '/token',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
+        payload: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            code_verifier: verifier,
+            redirect_uri: REDIRECT_URI,
+            ...body,
+        }).toString(),
+    })
+}
+
+describe('MCP OAuth client authentication', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
     })
 
-    it('does not issue a client secret when token_endpoint_auth_method is omitted', async () => {
-        const client = await registerClient()
+    describe('dynamic client registration', () => {
+        it('defaults an omitted token_endpoint_auth_method to client_secret_basic and issues a secret (RFC 7591 section 2)', async () => {
+            const client = await registerClient()
 
-        expect(client.token_endpoint_auth_method).toBe('none')
-        expect(client.client_secret).toBeUndefined()
-    })
-
-    it('issues a client secret for a client_secret_basic registration', async () => {
-        const client = await registerClient('client_secret_basic')
-
-        expect(client.token_endpoint_auth_method).toBe('client_secret_basic')
-        expect(typeof client.client_secret).toBe('string')
-    })
-
-    it('advertises client_secret_basic in the authorization server metadata', async () => {
-        const res = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server' })
-
-        expect(res.json().token_endpoint_auth_methods_supported).toContain('client_secret_basic')
-    })
-
-    it('exchanges an authorization code and sets no-store cache headers', async () => {
-        const client = await registerClient('client_secret_post')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                client_secret: client.client_secret ?? '',
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(client.token_endpoint_auth_method).toBe('client_secret_basic')
+            expect(typeof client.client_secret).toBe('string')
         })
 
-        expect(res.statusCode).toBe(200)
-        expect(res.json().access_token).toBeDefined()
-        expect(res.headers['cache-control']).toBe('no-store')
-        expect(res.headers['pragma']).toBe('no-cache')
-    })
+        it('issues no secret when the client explicitly registers as public', async () => {
+            const client = await registerClient('none')
 
-    it('authenticates a client_secret_basic client via the Authorization header', async () => {
-        const client = await registerClient('client_secret_basic')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64')
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(client.token_endpoint_auth_method).toBe('none')
+            expect(client.client_secret).toBeUndefined()
         })
 
-        expect(res.statusCode).toBe(200)
-        expect(res.json().access_token).toBeDefined()
-    })
+        it('issues a secret for an explicit client_secret_basic registration', async () => {
+            const client = await registerClient('client_secret_basic')
 
-    it('rejects a confidential client that presents no credentials', async () => {
-        const client = await registerClient('client_secret_post')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(client.token_endpoint_auth_method).toBe('client_secret_basic')
+            expect(typeof client.client_secret).toBe('string')
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_client')
-    })
+        it('rejects an auth method outside the supported set', async () => {
+            const res = await app.inject({
+                method: 'POST',
+                url: '/register',
+                payload: { redirect_uris: [REDIRECT_URI], token_endpoint_auth_method: 'private_key_jwt' },
+            })
 
-    it('rejects a malformed Basic header presented alongside a body secret as mixed auth', async () => {
-        const client = await registerClient('client_secret_post')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const malformedHeader = 'Basic ' + Buffer.from('no-colon-here').toString('base64')
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: malformedHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                client_secret: client.client_secret ?? '',
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(res.statusCode).toBe(400)
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_request')
+        it('advertises every supported method in the authorization server metadata', async () => {
+            const res = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server' })
+
+            expect(res.json().token_endpoint_auth_methods_supported).toEqual(
+                expect.arrayContaining(['client_secret_post', 'client_secret_basic', 'none']),
+            )
+        })
     })
 
-    it('ignores a malformed Basic header for a public client with no body secret', async () => {
-        const client = await registerClient('none')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const malformedHeader = 'Basic ' + Buffer.from('no-colon-here').toString('base64')
+    describe('token endpoint', () => {
+        it('accepts a confidential client secret from the Authorization header', async () => {
+            const client = await registerClient('client_secret_basic')
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: malformedHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            const res = await exchange({
+                client,
+                headers: { authorization: basicHeader(client.client_id, client.client_secret ?? '') },
+            })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.json().access_token).toBeDefined()
         })
 
-        expect(res.statusCode).toBe(200)
-        expect(res.json().access_token).toBeDefined()
+        it('accepts a confidential client secret from the request body', async () => {
+            const client = await registerClient('client_secret_post')
+
+            const res = await exchange({
+                client,
+                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.json().access_token).toBeDefined()
+        })
+
+        it('accepts a confidential client secret over either transport regardless of the registered method', async () => {
+            const basicClient = await registerClient('client_secret_basic')
+            const postClient = await registerClient('client_secret_post')
+
+            const basicClientViaBody = await exchange({
+                client: basicClient,
+                body: { client_id: basicClient.client_id, client_secret: basicClient.client_secret ?? '' },
+            })
+            const postClientViaHeader = await exchange({
+                client: postClient,
+                headers: { authorization: basicHeader(postClient.client_id, postClient.client_secret ?? '') },
+            })
+
+            expect(basicClientViaBody.statusCode).toBe(200)
+            expect(postClientViaHeader.statusCode).toBe(200)
+        })
+
+        it('exchanges an authorization code for a public client with no secret', async () => {
+            const client = await registerClient('none')
+
+            const res = await exchange({ client, body: { client_id: client.client_id } })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.json().access_token).toBeDefined()
+        })
+
+        it('rejects a confidential client that presents no credentials', async () => {
+            const client = await registerClient('client_secret_post')
+
+            const res = await exchange({ client, body: { client_id: client.client_id } })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
+        })
+
+        it('rejects a wrong secret in the Authorization header', async () => {
+            const client = await registerClient('client_secret_basic')
+
+            const res = await exchange({ client, headers: { authorization: basicHeader(client.client_id, 'wrong-secret') } })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
+        })
+
+        it('rejects a wrong secret in the request body', async () => {
+            const client = await registerClient('client_secret_post')
+
+            const res = await exchange({ client, body: { client_id: client.client_id, client_secret: 'wrong-secret' } })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
+        })
+
+        it('rejects a client_id in the Authorization header that disagrees with the body (RFC 6749 section 2.3.1)', async () => {
+            const client = await registerClient('client_secret_post')
+            const other = await registerClient('none')
+
+            const res = await exchange({
+                client,
+                headers: { authorization: basicHeader(other.client_id, '') },
+                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_request')
+        })
+
+        it('ignores a Basic header that is not client authentication and falls back to the body', async () => {
+            const client = await registerClient('client_secret_post')
+
+            const res = await exchange({
+                client,
+                headers: { authorization: 'Basic ' + Buffer.from('proxy-user-with-no-colon').toString('base64') },
+                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(200)
+        })
+
+        it.each([
+            ['empty scheme payload', 'Basic'],
+            ['scheme with trailing space', 'Basic '],
+            ['non-base64 payload', 'Basic !!!not-base64!!!'],
+            ['colon-only payload', 'Basic ' + Buffer.from(':').toString('base64')],
+            ['lowercase scheme', 'basic ' + Buffer.from('a:b').toString('base64')],
+            ['bearer scheme', 'Bearer ' + Buffer.from('a:b').toString('base64')],
+        ])('never returns 5xx for a malformed Authorization header (%s)', async (_name, authorization) => {
+            const client = await registerClient('none')
+
+            const res = await exchange({ client, headers: { authorization }, body: { client_id: client.client_id } })
+
+            expect(res.statusCode).toBeLessThan(500)
+        })
+
+        it('sets cache-prevention headers on a successful token response (RFC 6749 section 5.1)', async () => {
+            const client = await registerClient('none')
+
+            const res = await exchange({ client, body: { client_id: client.client_id } })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.headers['cache-control']).toBe('no-store')
+            expect(res.headers['pragma']).toBe('no-cache')
+        })
+
+        it('sets cache-prevention headers on an error token response (RFC 6749 section 5.2)', async () => {
+            const res = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ grant_type: 'authorization_code' }).toString(),
+            })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.headers['cache-control']).toBe('no-store')
+            expect(res.headers['pragma']).toBe('no-cache')
+        })
     })
 
-    it('rejects a client_secret_basic client presenting a wrong secret', async () => {
-        const client = await registerClient('client_secret_basic')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:wrong-secret`).toString('base64')
+    describe('clients registered before the auth-method fix', () => {
+        async function registerLegacyClient(): Promise<RegisteredClient> {
+            const client = await mcpOAuthClientService.register({
+                redirectUris: [REDIRECT_URI],
+                tokenEndpointAuthMethod: 'client_secret_post',
+            })
+            await databaseConnection().query(
+                'UPDATE mcp_oauth_client SET "tokenEndpointAuthMethod" = \'none\' WHERE "clientId" = $1',
+                [client.client_id],
+            )
+            return { client_id: client.client_id, client_secret: client.client_secret, token_endpoint_auth_method: 'none' }
+        }
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+        it('keeps working when it still sends the secret it was issued', async () => {
+            const legacy = await registerLegacyClient()
+
+            const res = await exchange({
+                client: legacy,
+                body: { client_id: legacy.client_id, client_secret: legacy.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(200)
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_client')
+        it('keeps working when it stops sending a secret', async () => {
+            const legacy = await registerLegacyClient()
+
+            const res = await exchange({ client: legacy, body: { client_id: legacy.client_id } })
+
+            expect(res.statusCode).toBe(200)
+        })
     })
 
-    it('exchanges an authorization code for a public (none) client without a secret', async () => {
-        const client = await registerClient('none')
-        expect(client.client_secret).toBeUndefined()
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
+    describe('revocation endpoint', () => {
+        it('accepts a confidential client authenticating with the Authorization header', async () => {
+            const client = await registerClient('client_secret_basic')
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            const res = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader(client.client_id, client.client_secret ?? '') },
+                payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
+            })
+
+            expect(res.statusCode).toBe(200)
         })
 
-        expect(res.statusCode).toBe(200)
-        expect(res.json().access_token).toBeDefined()
-    })
+        it('rejects a confidential client presenting a wrong secret', async () => {
+            const client = await registerClient('client_secret_basic')
 
-    it('authenticates a client_secret_basic client on the revoke endpoint via the Authorization header', async () => {
-        const client = await registerClient('client_secret_basic')
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64')
+            const res = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader(client.client_id, 'wrong-secret') },
+                payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
+            })
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/revoke',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
         })
 
-        expect(res.statusCode).toBe(200)
-    })
+        it('lets a public client revoke by naming itself', async () => {
+            const client = await registerClient('none')
 
-    it('rejects a revoke from a client_secret_basic client presenting a wrong secret', async () => {
-        const client = await registerClient('client_secret_basic')
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:wrong-secret`).toString('base64')
+            const res = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ token: 'some-refresh-token', client_id: client.client_id }).toString(),
+            })
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/revoke',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
+            expect(res.statusCode).toBe(200)
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_client')
-    })
+        it('refuses to revoke for a caller that presents no client identity (RFC 7009 section 2.1)', async () => {
+            const res = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
+            })
 
-    it('rejects a client_secret_post client that presents its secret via the Basic header', async () => {
-        const client = await registerClient('client_secret_post')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64')
-
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_client')
-    })
+        it('does not revoke another client\'s refresh token', async () => {
+            const owner = await registerClient('none')
+            const attacker = await registerClient('none')
+            const { verifier, challenge } = generatePkce()
+            const code = await seedAuthorizationCode(owner.client_id, challenge)
+            const issued = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code,
+                    client_id: owner.client_id,
+                    code_verifier: verifier,
+                    redirect_uri: REDIRECT_URI,
+                }).toString(),
+            })
+            const refreshToken = issued.json().refresh_token
 
-    it('rejects a client_secret_basic client that presents its secret in the body', async () => {
-        const client = await registerClient('client_secret_basic')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
+            const revoke = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ token: refreshToken, client_id: attacker.client_id }).toString(),
+            })
+            const refreshed = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    client_id: owner.client_id,
+                    refresh_token: refreshToken,
+                }).toString(),
+            })
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                client_secret: client.client_secret ?? '',
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(revoke.statusCode).toBe(200)
+            expect(refreshed.statusCode).toBe(200)
         })
 
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_client')
-    })
+        it('rejects a confidential client naming itself in the body without a secret', async () => {
+            const client = await registerClient('client_secret_basic')
 
-    it('rejects a request that presents both Basic-header and body credentials', async () => {
-        const client = await registerClient('client_secret_post')
-        const { verifier, challenge } = generatePkce()
-        const code = await seedAuthorizationCode(client.client_id, challenge)
-        const basicHeader = 'Basic ' + Buffer.from(`${client.client_id}:${client.client_secret}`).toString('base64')
+            const res = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ token: 'some-refresh-token', client_id: client.client_id }).toString(),
+            })
 
-        const res = await app.inject({
-            method: 'POST',
-            url: '/token',
-            headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader },
-            payload: new URLSearchParams({
-                grant_type: 'authorization_code',
-                code,
-                client_id: client.client_id,
-                client_secret: client.client_secret ?? '',
-                code_verifier: verifier,
-                redirect_uri: REDIRECT_URI,
-            }).toString(),
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
         })
-
-        expect(res.statusCode).toBe(400)
-        expect(res.json().error).toBe('invalid_request')
     })
 })
 

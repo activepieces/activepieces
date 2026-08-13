@@ -13,6 +13,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
     app.post('/token', TokenRequest, async (req, reply) => {
         const { grant_type, client_id } = req.body
         const authorizationHeader = req.headers.authorization
+        void reply.header('Cache-Control', 'no-store').header('Pragma', 'no-cache')
 
         try {
             if (grant_type === 'authorization_code') {
@@ -47,14 +48,10 @@ async function authenticateClient(authorizationHeader: string | undefined, body:
         return null
     }
     if (result.status === 'error') {
-        await reply.status(400).send(buildClientError(result.error, result.errorDescription))
+        await reply.status(400).send(mcpOAuthClientAuth.toErrorPayload(result))
         return null
     }
     return result.client
-}
-
-function buildClientError(error: string, errorDescription?: string): Record<string, string> {
-    return errorDescription ? { error, error_description: errorDescription } : { error }
 }
 
 async function handleAuthorizationCode(authorizationHeader: string | undefined, body: TokenRequestBody, reply: FastifyReply): Promise<void> {
@@ -67,7 +64,7 @@ async function handleAuthorizationCode(authorizationHeader: string | undefined, 
     const client = await authenticateClient(authorizationHeader, body, reply)
     if (isNil(client)) return
 
-    const authCode = await mcpOAuthCodeService.consume(code, client.clientId, redirect_uri)
+    const authCode = await mcpOAuthCodeService.consume({ code, clientId: client.clientId, redirectUri: redirect_uri })
     if (isNil(authCode)) {
         await reply.status(400).send({ error: 'invalid_grant', error_description: 'Invalid or expired authorization code' })
         return
@@ -84,7 +81,7 @@ async function handleAuthorizationCode(authorizationHeader: string | undefined, 
         scopes: authCode.scopes ?? ['mcp'],
     })
 
-    await sendTokenResponse(reply, tokens)
+    await reply.status(200).send(tokens)
 }
 
 async function handleRefreshToken(authorizationHeader: string | undefined, body: TokenRequestBody, reply: FastifyReply): Promise<void> {
@@ -102,15 +99,7 @@ async function handleRefreshToken(authorizationHeader: string | undefined, body:
         clientId: client.clientId,
     })
 
-    await sendTokenResponse(reply, tokens)
-}
-
-async function sendTokenResponse(reply: FastifyReply, tokens: unknown): Promise<void> {
-    await reply
-        .status(200)
-        .header('Cache-Control', 'no-store')
-        .header('Pragma', 'no-cache')
-        .send(tokens)
+    await reply.status(200).send(tokens)
 }
 
 const tokenRequestSchema = z.object({
