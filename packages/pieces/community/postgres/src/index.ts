@@ -5,6 +5,11 @@ import {
 } from '@activepieces/pieces-framework';
 import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { runQuery } from './lib/actions/run-query';
+import { findRows } from './lib/actions/find-rows';
+import { insertRow } from './lib/actions/insert-row';
+import { updateRow } from './lib/actions/update-row';
+import { deleteRow } from './lib/actions/delete-row';
+import { getTables } from './lib/actions/get-tables';
 import { newRow } from './lib/triggers/new-row';
 import { pgClient } from './lib/common';
 
@@ -91,6 +96,6 @@ export const postgres = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
   authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],
   auth: postgresAuth,
-  actions: [runQuery],
+  actions: [findRows, insertRow, updateRow, deleteRow, getTables, runQuery],
   triggers: [newRow],
 });

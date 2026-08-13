@@ -25,6 +25,7 @@ export const redditAuth = PieceAuth.OAuth2({
   authorizationMethod: OAuth2AuthorizationMethod.HEADER,
   extra: {
     grantType: OAuth2GrantType.AUTHORIZATION_CODE,
-    responseType: 'code'
+    responseType: 'code',
+    duration: 'permanent'
   }
 });

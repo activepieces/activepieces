@@ -838,6 +838,9 @@
       "@activepieces/piece-microsoft-power-bi": [
         "packages/pieces/community/microsoft-power-bi/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-sql-server": [
+        "packages/pieces/community/microsoft-sql-server/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],

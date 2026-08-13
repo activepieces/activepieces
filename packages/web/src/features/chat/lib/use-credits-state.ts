@@ -4,8 +4,6 @@ import { useCallback, useState } from 'react';
 
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { CreditsWarning } from './chat-types';
-
 const CREDITS_WARNING_THRESHOLD = 70;
 
 export function useCreditsState() {
@@ -21,17 +19,21 @@ export function useCreditsState() {
       billingEnforced: platform?.billingEnforced,
     });
 
-  const creditsWarning =
-    warningDismissed || creditsExhausted
-      ? null
-      : computeCreditsWarning(platform?.usage);
+  const creditsPercentUsed = computeCreditsPercentUsed(platform?.usage);
+  const showLowCreditsWarning =
+    platform?.billingEnforced === true &&
+    !warningDismissed &&
+    !creditsExhausted &&
+    !isNil(creditsPercentUsed) &&
+    creditsPercentUsed >= CREDITS_WARNING_THRESHOLD;
 
   const dismissCreditsWarning = useCallback(() => {
     setWarningDismissed(true);
   }, []);
 
   return {
-    creditsWarning,
+    creditsPercentUsed,
+    showLowCreditsWarning,
     creditsExhausted,
     setCreditsExhausted: setStreamCreditsExhausted,
     warningDismissed,
@@ -59,9 +61,9 @@ function hasExhaustedCredits({
   return appSumoExhausted || creditsExhausted;
 }
 
-function computeCreditsWarning(
+function computeCreditsPercentUsed(
   usage: PlatformUsage | undefined,
-): CreditsWarning | null {
+): number | null {
   if (isNil(usage) || isNil(usage.creditsRemaining)) {
     return null;
   }
@@ -70,9 +72,5 @@ function computeCreditsWarning(
   if (total <= 0) {
     return null;
   }
-  const percentage = Math.round((creditsUsed / total) * 100);
-  if (percentage < CREDITS_WARNING_THRESHOLD) {
-    return null;
-  }
-  return { percentage };
+  return Math.round((creditsUsed / total) * 100);
 }

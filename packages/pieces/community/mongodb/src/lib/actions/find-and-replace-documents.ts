@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../..';
+import { findAndReplaceDocumentsOutputSchema } from '../output-schemas';
 import { mongodbCommon, mongodbConnect } from '../common';
 
 export default createAction({
@@ -8,6 +9,7 @@ export default createAction({
   displayName: 'Find and Replace Documents',
   description: 'Replace documents that match a filter with a new document',
   audience: 'both',
+  outputSchema: findAndReplaceDocumentsOutputSchema,
   aiMetadata: { description: 'Replaces the first document matching a filter with an entirely new document via replaceOne (the whole document is overwritten, not patched), and can return either the before or after version. Choose this over Update Documents when swapping a full document rather than applying field-level operators. Filter and replacement are required; supports upsert. Mutating and not idempotent.', idempotent: false },
   props: {
     database: mongodbCommon.database,

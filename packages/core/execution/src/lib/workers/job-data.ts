@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -331,6 +331,8 @@ export const ExecuteAgentRunJobData = z.object({
     tools: z.array(AgentTool).optional(),
     flowTools: z.array(ResolvedAgentFlowTool).optional(),
     structuredOutput: z.array(AgentOutputField).optional(),
+    maxSteps: z.number().int().positive().optional(),
+    provider: z.enum(AIProviderName).optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),

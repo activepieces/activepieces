@@ -1,3 +1,4 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -94,6 +95,7 @@ export type WorkerToApiContract = {
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
+    executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
     executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
 }
@@ -106,6 +108,7 @@ export type SendAgentEventRequest = {
 }
 
 export type GetAgentConfigRequest = {
+    provider?: AIProviderName
     conversationId: string
     runId?: string
     platformId: string
@@ -205,10 +208,23 @@ export type ExecutePieceToolRequest = {
     conversationId: string
     toolName: string
     instruction: string
+    provider?: AIProviderName
     piece: AgentPieceToolMetadata
 }
 
 export type ExecutePieceToolResponse = {
+    result: unknown
+}
+
+export type ExecuteKnowledgeBaseToolRequest = {
+    conversationId: string
+    toolName: string
+    provider?: AIProviderName
+    knowledgeBaseFileId: string
+    query: string
+}
+
+export type ExecuteKnowledgeBaseToolResponse = {
     result: unknown
 }
 

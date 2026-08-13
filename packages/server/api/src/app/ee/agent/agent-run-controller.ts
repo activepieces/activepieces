@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -16,7 +16,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, flowRunId, waitpointId, tools, structuredOutput } = request.body
+        const { instruction, modelName, provider, flowRunId, waitpointId, tools, structuredOutput, maxSteps } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -28,13 +28,12 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
-        const pieceTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.PIECE)
-        const mcpTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.MCP)
-        const flowToolRequests = (tools ?? []).filter((tool) => tool.type === AgentToolType.FLOW)
-        const supportedTools = [...pieceTools, ...mcpTools]
-        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => type !== AgentToolType.PIECE && type !== AgentToolType.MCP && type !== AgentToolType.FLOW)
+        const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
+        const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
+        const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+        const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet, only piece actions, flows and MCP servers` } })
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `An agent step cannot use ${unsupported.join(' or ')} tools yet` } })
         }
         const usesCompletionTool = (structuredOutput?.length ?? 0) > 0
         const reserved = (tools ?? []).filter((tool) => tool.toolName.startsWith(BUILT_IN_TOOL_PREFIX) || (usesCompletionTool && tool.toolName === TASK_COMPLETION_TOOL_NAME)).map((tool) => tool.toolName)
@@ -47,9 +46,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 code: ErrorCode.VALIDATION,
                 params: { message: `Two tools are both named ${duplicated.join(', ')}: each tool on a step needs its own name, or one silently replaces the other` },
             })
-        }
-        if (pieceTools.some((tool) => tool.pieceMetadata.actionName === CUSTOM_API_CALL)) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent step cannot use a custom API call: it would let the agent send this project\'s credentials to any address it chooses' } })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
@@ -78,6 +74,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 tools: supportedTools,
                 flowTools,
                 structuredOutput,
+                maxSteps,
+                provider,
             },
         })
 
@@ -133,9 +131,9 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
 const RUNS_PER_MINUTE = 60
 const MAX_INSTRUCTION_LENGTH = 51_200
 const MAX_TOOLS = 100
-const CUSTOM_API_CALL = 'custom_api_call'
 const BUILT_IN_TOOL_PREFIX = 'ap_'
 const MAX_OUTPUT_FIELDS = 50
+const MAX_STEP_BUDGET = 1_000
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
@@ -143,7 +141,9 @@ const StartAgentRunRequest = z.object({
     waitpointId: ApId,
     tools: z.array(AgentTool).max(MAX_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_OUTPUT_FIELDS).optional(),
+    maxSteps: z.number().int().positive().max(MAX_STEP_BUDGET).optional(),
     modelName: z.string().optional(),
+    provider: z.enum(AIProviderName).optional(),
 })
 
 const StartAgentRunResponse = z.object({

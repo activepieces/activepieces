@@ -70,8 +70,8 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
                 }
 
-                const [project, flow] = await Promise.all([
-                    projectService(log).getOneOrThrow(projectId),
+                const [platformId, flow] = await Promise.all([
+                    projectService(log).getPlatformId(projectId),
                     flowService(log).create({
                         projectId,
                         ownerId: userId,
@@ -79,12 +79,11 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                         request: { displayName: flowName, projectId },
                     }),
                 ])
-                const platformId = project.platformId
                 flowId = flow.id
 
                 const triggerVersionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName: trigger.pieceName, projectId, platformId, log })
                 if (triggerVersionResult.error) {
-                    await flowService(log).delete({ id: flowId, projectId }).catch((deleteErr) => {
+                    await flowService(log).delete({ id: flowId, projectId, userId }).catch((deleteErr) => {
                         log.warn({ error: deleteErr, flow: { id: flowId } }, 'Failed to clean up orphaned flow after trigger version resolution error')
                     })
                     return triggerVersionResult.error
@@ -109,7 +108,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     },
                 })
                 let currentFlow = await flowService(log).update({
-                    id: flowId, projectId, userId: null, platformId,
+                    id: flowId, projectId, userId: userId ?? null, platformId,
                     operation: { type: FlowOperationType.UPDATE_TRIGGER, request: triggerPayload },
                 })
                 const unknownPropFindings: string[] = []
@@ -162,7 +161,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
                     }
 
                     currentFlow = await flowService(log).update({
-                        id: flowId, projectId, userId: null, platformId,
+                        id: flowId, projectId, userId: userId ?? null, platformId,
                         operation: {
                             type: FlowOperationType.ADD_ACTION,
                             request: {
@@ -212,7 +211,7 @@ export const apBuildFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             }
             catch (err) {
                 if (flowId) {
-                    await flowService(log).delete({ id: flowId, projectId }).catch(() => undefined)
+                    await flowService(log).delete({ id: flowId, projectId, userId }).catch(() => undefined)
                 }
                 return mcpUtils.mcpToolError('Failed to build flow', err)
             }
