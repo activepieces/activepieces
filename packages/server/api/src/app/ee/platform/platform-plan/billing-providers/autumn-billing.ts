@@ -208,6 +208,7 @@ function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthE
     return {
         planName: plan?.name ?? null,
         creditsResetInterval: toCreditsResetInterval(plan?.items ?? []),
+        planInterval: plan?.price?.interval ?? null,
         startDate: msToIso(subscription?.currentPeriodStart) ?? monthStart,
         endDate: msToIso(subscription?.currentPeriodEnd) ?? monthEnd,
         nextBillingAmount: subscription?.plan?.price?.amount ?? 0,

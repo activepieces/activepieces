@@ -287,6 +287,7 @@ export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
     creditsResetInterval: Nullable(z.string()),
+    planInterval: Nullable(z.string()),
     autumnPlanName: Nullable(z.string()),
     scheduledPlanName: Nullable(z.string()),
     nextBillingDate: z.string(),
