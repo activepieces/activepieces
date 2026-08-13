@@ -20,7 +20,7 @@ async function registerClient(tokenEndpointAuthMethod?: string): Promise<Registe
     return res.json()
 }
 
-async function seedAuthorizationCode(clientId: string, codeChallenge: string): Promise<string> {
+async function seedAuthorizationCode({ clientId, codeChallenge }: { clientId: string, codeChallenge: string }): Promise<string> {
     return mcpOAuthCodeService.create({
         clientId,
         userId: apId(),
@@ -39,7 +39,7 @@ function generatePkce(): { verifier: string, challenge: string } {
     return { verifier, challenge }
 }
 
-function basicHeader(clientId: string, clientSecret: string): string {
+function basicHeader({ clientId, clientSecret }: { clientId: string, clientSecret: string }): string {
     return 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 }
 
@@ -49,7 +49,7 @@ async function exchange({ client, headers, body }: {
     body?: Record<string, string>
 }): Promise<ReturnType<FastifyInstance['inject']>> {
     const { verifier, challenge } = generatePkce()
-    const code = await seedAuthorizationCode(client.client_id, challenge)
+    const code = await seedAuthorizationCode({ clientId: client.client_id, codeChallenge: challenge })
     return app.inject({
         method: 'POST',
         url: '/token',
@@ -128,7 +128,7 @@ describe('MCP OAuth client authentication', () => {
 
             const res = await exchange({
                 client,
-                headers: { authorization: basicHeader(client.client_id, client.client_secret ?? '') },
+                headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
             })
 
             expect(res.statusCode).toBe(200)
@@ -157,7 +157,7 @@ describe('MCP OAuth client authentication', () => {
             })
             const postClientViaHeader = await exchange({
                 client: postClient,
-                headers: { authorization: basicHeader(postClient.client_id, postClient.client_secret ?? '') },
+                headers: { authorization: basicHeader({ clientId: postClient.client_id, clientSecret: postClient.client_secret ?? '' }) },
             })
 
             expect(basicClientViaBody.statusCode).toBe(200)
@@ -185,7 +185,7 @@ describe('MCP OAuth client authentication', () => {
         it('rejects a wrong secret in the Authorization header', async () => {
             const client = await registerClient('client_secret_basic')
 
-            const res = await exchange({ client, headers: { authorization: basicHeader(client.client_id, 'wrong-secret') } })
+            const res = await exchange({ client, headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) } })
 
             expect(res.statusCode).toBe(400)
             expect(res.json().error).toBe('invalid_client')
@@ -206,7 +206,7 @@ describe('MCP OAuth client authentication', () => {
 
             const res = await exchange({
                 client,
-                headers: { authorization: basicHeader(other.client_id, '') },
+                headers: { authorization: basicHeader({ clientId: other.client_id, clientSecret: '' }) },
                 body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
             })
 
@@ -233,12 +233,44 @@ describe('MCP OAuth client authentication', () => {
             ['colon-only payload', 'Basic ' + Buffer.from(':').toString('base64')],
             ['lowercase scheme', 'basic ' + Buffer.from('a:b').toString('base64')],
             ['bearer scheme', 'Bearer ' + Buffer.from('a:b').toString('base64')],
+            ['malformed percent escape', 'Basic ' + Buffer.from('a%zz:b').toString('base64')],
         ])('never returns 5xx for a malformed Authorization header (%s)', async (_name, authorization) => {
             const client = await registerClient('none')
 
             const res = await exchange({ client, headers: { authorization }, body: { client_id: client.client_id } })
 
             expect(res.statusCode).toBeLessThan(500)
+        })
+
+        it.each([
+            ['raw NUL', '%00abc'],
+            ['encoded NUL', '%2500abc'],
+            ['over-long identifier', 'a'.repeat(300)],
+        ])('never reaches the database with an unusable client_id (%s)', async (_name, clientId) => {
+            const viaBody = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: `grant_type=authorization_code&code=x&code_verifier=y&redirect_uri=${REDIRECT_URI}&client_id=${clientId}`,
+            })
+            const viaHeader = await app.inject({
+                method: 'POST',
+                url: '/revoke',
+                headers: {
+                    'content-type': 'application/x-www-form-urlencoded',
+                    authorization: 'Basic ' + Buffer.from(`${clientId}:secret`).toString('base64'),
+                },
+                payload: new URLSearchParams({ token: 'x' }).toString(),
+            })
+            const viaQuery = await app.inject({
+                method: 'GET',
+                url: `/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&code_challenge=abc&code_challenge_method=S256`,
+            })
+
+            expect(viaBody.statusCode).toBe(400)
+            expect(viaHeader.statusCode).toBe(400)
+            expect(viaQuery.statusCode).toBe(400)
+            expect(viaHeader.body).not.toContain('22021')
         })
 
         it('sets cache-prevention headers on a successful token response (RFC 6749 section 5.1)', async () => {
@@ -305,7 +337,7 @@ describe('MCP OAuth client authentication', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/revoke',
-                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader(client.client_id, client.client_secret ?? '') },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
                 payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
             })
 
@@ -318,7 +350,7 @@ describe('MCP OAuth client authentication', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/revoke',
-                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader(client.client_id, 'wrong-secret') },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
                 payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
             })
 
@@ -355,7 +387,7 @@ describe('MCP OAuth client authentication', () => {
             const owner = await registerClient('none')
             const attacker = await registerClient('none')
             const { verifier, challenge } = generatePkce()
-            const code = await seedAuthorizationCode(owner.client_id, challenge)
+            const code = await seedAuthorizationCode({ clientId: owner.client_id, codeChallenge: challenge })
             const issued = await app.inject({
                 method: 'POST',
                 url: '/token',

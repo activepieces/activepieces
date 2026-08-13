@@ -7,6 +7,8 @@ import { McpOAuthClientEntity } from './mcp-oauth-client.entity'
 
 const repo = repoFactory(McpOAuthClientEntity)
 
+const CLIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
+
 function hashSecret(secret: string): string {
     return cryptoUtils.hashSHA256(secret)
 }
@@ -21,6 +23,9 @@ function generateClientSecret(): string {
 
 export const mcpOAuthClientService = {
     async getByClientId(clientId: string): Promise<McpOAuthClient | null> {
+        if (!CLIENT_ID_PATTERN.test(clientId)) {
+            return null
+        }
         return repo().findOneBy({ clientId })
     },
 

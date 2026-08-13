@@ -25,7 +25,7 @@ function generatePkce(): { verifier: string, challenge: string } {
     return { verifier, challenge: createHash('sha256').update(verifier).digest('base64url') }
 }
 
-async function issueCode(clientId: string, codeChallenge: string, redirectUri = REDIRECT_URI): Promise<string> {
+async function issueCode({ clientId, codeChallenge, redirectUri = REDIRECT_URI }: { clientId: string, codeChallenge: string, redirectUri?: string }): Promise<string> {
     return mcpOAuthCodeService.create({
         clientId,
         userId: apId(),
@@ -66,7 +66,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('redeems a code exactly once', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = generatePkce()
-        const code = await issueCode(clientId, challenge)
+        const code = await issueCode({ clientId, codeChallenge: challenge })
 
         const first = await redeem({ clientId, code, verifier })
         const second = await redeem({ clientId, code, verifier })
@@ -79,7 +79,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('redeems a code exactly once under concurrent redemption', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = generatePkce()
-        const code = await issueCode(clientId, challenge)
+        const code = await issueCode({ clientId, codeChallenge: challenge })
 
         const results = await Promise.all(
             Array.from({ length: 4 }, () => redeem({ clientId, code, verifier })),
@@ -92,7 +92,7 @@ describe('MCP OAuth authorization code redemption', () => {
         const owner = await registerPublicClient()
         const attacker = await registerPublicClient()
         const { verifier, challenge } = generatePkce()
-        const code = await issueCode(owner, challenge)
+        const code = await issueCode({ clientId: owner, codeChallenge: challenge })
 
         const res = await redeem({ clientId: attacker, code, verifier })
 
@@ -103,7 +103,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses a code presented with a different redirect_uri', async () => {
         const clientId = await registerPublicClient([REDIRECT_URI, OTHER_REDIRECT_URI])
         const { verifier, challenge } = generatePkce()
-        const code = await issueCode(clientId, challenge)
+        const code = await issueCode({ clientId, codeChallenge: challenge })
 
         const res = await redeem({ clientId, code, verifier, redirectUri: OTHER_REDIRECT_URI })
 
@@ -114,7 +114,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses an expired code', async () => {
         const clientId = await registerPublicClient()
         const { verifier, challenge } = generatePkce()
-        const code = await issueCode(clientId, challenge)
+        const code = await issueCode({ clientId, codeChallenge: challenge })
         await databaseConnection().query(
             'UPDATE mcp_oauth_authorization_code SET "expiresAt" = NOW() - INTERVAL \'1 hour\' WHERE "code" = $1',
             [code],
@@ -129,7 +129,7 @@ describe('MCP OAuth authorization code redemption', () => {
     it('refuses a code presented with the wrong PKCE verifier', async () => {
         const clientId = await registerPublicClient()
         const { challenge } = generatePkce()
-        const code = await issueCode(clientId, challenge)
+        const code = await issueCode({ clientId, codeChallenge: challenge })
 
         const res = await redeem({ clientId, code, verifier: randomBytes(32).toString('base64url') })
 

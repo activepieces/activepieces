@@ -8,22 +8,28 @@ export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/revoke', RevokeRequest, async (req, reply) => {
         const { token, token_type_hint } = req.body
-        const result = await mcpOAuthClientAuth.authenticate({
-            authorizationHeader: req.headers.authorization,
-            clientId: req.body.client_id,
-            clientSecret: req.body.client_secret,
-        })
-        if (result.status === 'error') {
-            return reply.status(400).send(mcpOAuthClientAuth.toErrorPayload(result))
-        }
-        if (result.status === 'anonymous') {
-            return reply.status(400).send({ error: 'invalid_client', error_description: 'Missing client_id' })
-        }
+        try {
+            const result = await mcpOAuthClientAuth.authenticate({
+                authorizationHeader: req.headers.authorization,
+                clientId: req.body.client_id,
+                clientSecret: req.body.client_secret,
+            })
+            if (result.status === 'error') {
+                return await reply.status(400).send(result.payload)
+            }
+            if (result.status === 'anonymous') {
+                return await reply.status(400).send({ error: 'invalid_client', error_description: 'Missing client_id' })
+            }
 
-        if (token_type_hint === 'refresh_token' || !token_type_hint) {
-            await mcpOAuthTokenService.revokeRefreshToken({ refreshToken: token, clientId: result.client.clientId })
+            if (token_type_hint === 'refresh_token' || !token_type_hint) {
+                await mcpOAuthTokenService.revokeRefreshToken({ refreshToken: token, clientId: result.client.clientId })
+            }
+            return await reply.status(200).send()
         }
-        return reply.status(200).send()
+        catch (e) {
+            req.log.error({ error: e }, 'OAuth revoke error')
+            return reply.status(500).send({ error: 'server_error' })
+        }
     })
 }
 

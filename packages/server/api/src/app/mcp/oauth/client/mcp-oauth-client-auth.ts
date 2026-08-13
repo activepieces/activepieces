@@ -23,12 +23,24 @@ function parseBasicHeader(authorizationHeader: string | undefined): BasicCredent
     }
 }
 
+function invalidClient(errorDescription?: string): AuthenticateResult {
+    return {
+        status: 'error',
+        payload: isNil(errorDescription)
+            ? { error: 'invalid_client' }
+            : { error: 'invalid_client', error_description: errorDescription },
+    }
+}
+
 export const mcpOAuthClientAuth = {
     async authenticate({ authorizationHeader, clientId: bodyClientId, clientSecret: bodyClientSecret }: AuthenticateParams): Promise<AuthenticateResult> {
         const basic = parseBasicHeader(authorizationHeader)
 
-        if (basic && bodyClientId && basic.clientId !== bodyClientId) {
-            return { status: 'error', error: 'invalid_request', errorDescription: 'client_id mismatch between Authorization header and request body' }
+        if (!isNil(basic) && bodyClientId && basic.clientId !== bodyClientId) {
+            return {
+                status: 'error',
+                payload: { error: 'invalid_request', error_description: 'client_id mismatch between Authorization header and request body' },
+            }
         }
 
         const clientId = basic?.clientId ?? bodyClientId
@@ -38,21 +50,17 @@ export const mcpOAuthClientAuth = {
 
         const client = await mcpOAuthClientService.getByClientId(clientId)
         if (isNil(client)) {
-            return { status: 'error', error: 'invalid_client' }
+            return invalidClient()
         }
 
         if (client.tokenEndpointAuthMethod !== 'none') {
             const presentedSecret = basic?.clientSecret || bodyClientSecret
             if (!presentedSecret || !mcpOAuthClientService.validateClientSecret(client, presentedSecret)) {
-                return { status: 'error', error: 'invalid_client', errorDescription: 'Invalid client secret' }
+                return invalidClient('Invalid client secret')
             }
         }
 
         return { status: 'authenticated', client }
-    },
-
-    toErrorPayload({ error, errorDescription }: AuthenticateError): Record<string, string> {
-        return errorDescription ? { error, error_description: errorDescription } : { error }
     },
 }
 
@@ -67,13 +75,7 @@ type BasicCredentials = {
     clientSecret: string
 }
 
-type AuthenticateError = {
-    status: 'error'
-    error: string
-    errorDescription?: string
-}
-
 type AuthenticateResult =
     | { status: 'authenticated', client: McpOAuthClient }
     | { status: 'anonymous' }
-    | AuthenticateError
+    | { status: 'error', payload: Record<string, string> }

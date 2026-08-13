@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId } from '@activepieces/core-utils'
 import { McpOAuthAuthorizationCode } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code.entity'
@@ -44,11 +44,11 @@ export const mcpOAuthCodeService = {
             .returning('*')
             .execute()
 
-        const [consumed] = updateResult.raw ?? []
-        if (isNil(consumed)) {
+        const consumedRows: unknown[] = updateResult.raw ?? []
+        if (consumedRows.length === 0) {
             return null
         }
-        return repo().findOneByOrFail({ code })
+        return repo().findOneBy({ code })
     },
 }
 
