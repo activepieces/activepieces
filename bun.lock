@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.130.0",
+      "version": "0.131.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -5837,7 +5837,7 @@
     },
     "packages/pieces/community/microsoft-sql-server": {
       "name": "@activepieces/piece-microsoft-sql-server",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5848,6 +5848,7 @@
       "devDependencies": {
         "@types/mssql": "9.1.9",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/microsoft-teams": {
@@ -7346,7 +7347,7 @@
     },
     "packages/pieces/community/quickbooks": {
       "name": "@activepieces/piece-quickbooks",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
