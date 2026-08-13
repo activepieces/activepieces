@@ -1,9 +1,10 @@
 import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
-import { resumeDelayJobId, waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
+import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -204,8 +205,8 @@ describe('Waitpoint service', () => {
                 waitpointId: params.job.data.waitpointId,
             }))
             expect(scheduled).toEqual([
-                { jobId: resumeDelayJobId(approval.waitpoint.id), waitpointId: approval.waitpoint.id },
-                { jobId: resumeDelayJobId(delay.waitpoint.id), waitpointId: delay.waitpoint.id },
+                { jobId: systemJobIds.resumeDelay({ waitpointId: approval.waitpoint.id }), waitpointId: approval.waitpoint.id },
+                { jobId: systemJobIds.resumeDelay({ waitpointId: delay.waitpoint.id }), waitpointId: delay.waitpoint.id },
             ])
             expect(scheduled[0].jobId).not.toBe(scheduled[1].jobId)
         })

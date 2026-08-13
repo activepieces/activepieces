@@ -1,17 +1,19 @@
 import { ApId, isNil } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, FlowRunStatus } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, BarrierSignalStatus, FlowRun, FlowRunStatus, MAX_SIGNAL_REASON_LENGTH, PauseType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import Mustache from 'mustache'
 import { z } from 'zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { findFlowRunOrThrow } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { projectService } from '../project/project-service'
+import { barrierService } from './barrier-service'
 import { resumePageHooks, ResumePageTheme } from './resume-page-hooks'
 import { resumeService } from './resume-service'
 import { waitpointService } from './waitpoint-service'
-import { WaitpointStatus } from './waitpoint-types'
+import { Waitpoint, WaitpointSignal, WaitpointStatus } from './waitpoint-types'
 
 export const resumeController: FastifyPluginAsyncZod = async (app) => {
     /**
@@ -44,6 +46,15 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
             return
         }
         await handleConfirmResume({ flowRunId: req.params.id, waitpointId: req.params.waitpointId, action: queryParams.action, body: req.body, headers, queryParams, log: req.log, reply })
+    })
+
+    app.all('/:id/signals/:signalId/confirm', ConfirmSignalRequest, async (req, reply) => {
+        const queryParams = req.query as Record<string, string>
+        if (req.method === 'GET' || req.method === 'HEAD') {
+            await serveSignalConfirmationPage({ flowRunId: req.params.id, signalId: req.params.signalId, url: req.url, queryParams, log: req.log, reply })
+            return
+        }
+        await handleSignalDecision({ flowRunId: req.params.id, signalId: req.params.signalId, action: queryParams.action, body: req.body, headers: req.headers as Record<string, string>, log: req.log, reply })
     })
 
     /**
@@ -81,21 +92,35 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
-    const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
-    const isOpen = !isNil(waitpoint) && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
+    const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
     if (!isOpen) {
-        await replyWithHtml({ reply, html: Mustache.render(STATUS_HTML_TEMPLATE, buildThemeView({ theme, extra: { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false } })) })
+        await replyWithAlreadyResponded({ projectId: flowRun.projectId, log, reply })
         return
     }
+    await replyWithConfirmationPage({ flowRun, url, queryParams, log, reply })
+}
+
+async function replyWithConfirmationPage({ flowRun, url, queryParams, log, reply, reasonField }: ReplyWithConfirmationPageParams): Promise<void> {
+    const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
     const flowName = await resolveFlowName({ flowVersionId: flowRun.flowVersionId, log })
     const path = url.split('?')[0]
     const extra = {
+        title: CONFIRM_TITLE,
+        message: CONFIRM_MESSAGE,
         flowName,
-        approveUrl: buildActionUrl({ path, queryParams, action: 'approve' }),
-        disapproveUrl: buildActionUrl({ path, queryParams, action: 'disapprove' }),
+        actions: {
+            ...reasonField,
+            approveUrl: buildActionUrl({ path, queryParams, action: 'approve' }),
+            disapproveUrl: buildActionUrl({ path, queryParams, action: 'disapprove' }),
+        },
     }
-    await replyWithHtml({ reply, html: Mustache.render(CONFIRM_HTML_TEMPLATE, buildThemeView({ theme, extra })) })
+    await replyWithHtml({ reply, html: renderPage({ theme, extra }) })
+}
+
+async function replyWithAlreadyResponded({ projectId, log, reply }: ReplyWithAlreadyRespondedParams): Promise<void> {
+    const theme = await resolveResumePageTheme({ projectId, log })
+    await replyWithHtml({ reply, html: renderPage({ theme, extra: ALREADY_RESPONDED }) })
 }
 
 function buildActionUrl({ path, queryParams, action }: { path: string, queryParams: Record<string, string>, action: string }): string {
@@ -116,9 +141,93 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
     const extra = stale
-        ? { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false }
+        ? ALREADY_RESPONDED
         : { title: RECORDED_TITLE, message: recordedMessageForAction(action), success: true }
-    await replyWithHtml({ reply, html: Mustache.render(STATUS_HTML_TEMPLATE, buildThemeView({ theme, extra })) })
+    await replyWithHtml({ reply, html: renderPage({ theme, extra }) })
+}
+
+async function serveSignalConfirmationPage({ flowRunId, signalId, url, queryParams, log, reply }: SignalConfirmationPageParams): Promise<void> {
+    const flowRun = await findFlowRunOrThrow(flowRunId)
+    const open = await resolveOpenSignal({ flowRunId, signalId, projectId: flowRun.projectId, flowRunStatus: flowRun.status, log })
+    if (isNil(open)) {
+        await replyWithAlreadyResponded({ projectId: flowRun.projectId, log, reply })
+        return
+    }
+    await replyWithConfirmationPage({ flowRun, url, queryParams, log, reply, reasonField: { maxReasonLength: MAX_SIGNAL_REASON_LENGTH } })
+}
+
+async function handleSignalDecision({ flowRunId, signalId, action, body, headers, log, reply }: SignalDecisionParams): Promise<void> {
+    const flowRun = await findFlowRunOrThrow(flowRunId)
+    const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
+    const open = await resolveOpenSignal({ flowRunId, signalId, projectId: flowRun.projectId, flowRunStatus: flowRun.status, log })
+    if (isNil(open)) {
+        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
+        return
+    }
+    const approved = action !== 'disapprove'
+    const reason = readReason(body)
+    if (!isNil(reason) && reason.length > MAX_SIGNAL_REASON_LENGTH) {
+        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
+        return
+    }
+    if (isReasonMissing({ reasonRequiredOn: open.barrier.policy?.reasonRequiredOn, approved, reason })) {
+        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_REQUIRED_TITLE, message: REASON_REQUIRED_MESSAGE, success: false } })
+        return
+    }
+
+    await barrierService(log).receive({
+        signalId,
+        projectId: flowRun.projectId,
+        status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,
+        result: { outcome: approved ? 'approved' : 'rejected', reason: reason ?? null, decidedBy: open.signal.label },
+    })
+    await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: { title: RECORDED_TITLE, message: recordedMessageForAction(approved ? 'approve' : 'disapprove'), success: true } })
+}
+
+async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus, log }: ResolveOpenSignalParams): Promise<OpenSignal | null> {
+    if (flowRunStatus !== FlowRunStatus.PAUSED) {
+        return null
+    }
+    const signal = await barrierService(log).findSignalById({ signalId, projectId })
+    if (isNil(signal) || signal.status !== BarrierSignalStatus.PENDING) {
+        return null
+    }
+    const barrier = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: signal.waitpointId, flowRunId })
+    if (isNil(barrier) || barrier.type !== PauseType.BARRIER || barrier.status !== WaitpointStatus.PENDING) {
+        return null
+    }
+    return { signal, barrier }
+}
+
+function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissingParams): boolean {
+    const required = reasonRequiredOn ?? 'reject'
+    if (required === 'none') {
+        return false
+    }
+    if (required === 'reject' && approved) {
+        return false
+    }
+    return isNil(reason) || reason.trim().length === 0
+}
+
+function readReason(body: unknown): string | undefined {
+    if (isNil(body) || typeof body !== 'object') {
+        return undefined
+    }
+    const reason = (body as Record<string, unknown>).reason
+    return typeof reason === 'string' ? reason : undefined
+}
+
+function reasonTooLongMessage(): string {
+    return `Your reason is longer than the ${MAX_SIGNAL_REASON_LENGTH} characters this form accepts. Shorten it and submit again — nothing was recorded.`
+}
+
+async function respondToSignalDecision({ reply, headers, theme, status, extra }: RespondToSignalDecisionParams): Promise<void> {
+    if (!acceptsHtml(headers)) {
+        await reply.status(status).send({ message: extra.message })
+        return
+    }
+    await replyWithHtml({ reply, status, html: renderPage({ theme, extra }) })
 }
 
 async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: AsyncResumeHandlerParams): Promise<void> {
@@ -177,21 +286,22 @@ function recordedMessageForAction(action: string | undefined): string {
     return RECORDED_MESSAGE
 }
 
-function buildThemeView({ theme, extra }: { theme: ResumePageTheme, extra: Record<string, unknown> }): Record<string, unknown> {
-    return {
+function renderPage({ theme, extra }: { theme: ResumePageTheme, extra: Record<string, unknown> }): string {
+    return Mustache.render(PAGE_HTML_TEMPLATE, {
         websiteName: theme.websiteName,
         fullLogoUrl: theme.logos.fullLogoUrl,
         primaryColor: theme.colors.primary.default,
         ...extra,
-    }
+    })
 }
 
 function acceptsHtml(headers: Record<string, string>): boolean {
     return (headers['accept'] ?? '').includes('text/html')
 }
 
-async function replyWithHtml({ reply, html }: { reply: FastifyReply, html: string }): Promise<void> {
+async function replyWithHtml({ reply, html, status }: { reply: FastifyReply, html: string, status?: number }): Promise<void> {
     await reply
+        .status(status ?? StatusCodes.OK)
         .type('text/html')
         .header('Content-Security-Policy', RESUME_PAGE_CSP)
         .header('X-Content-Type-Options', 'nosniff')
@@ -211,6 +321,18 @@ const ResumeByWaitpointRequest = {
     },
 }
 
+const ConfirmSignalRequest = {
+    config: {
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
+    },
+    schema: {
+        params: z.object({
+            id: ApId,
+            signalId: ApId,
+        }),
+    },
+}
+
 const V0ResumeFlowRunRequest = {
     config: {
         security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
@@ -223,11 +345,20 @@ const V0ResumeFlowRunRequest = {
     },
 }
 
+const CONFIRM_TITLE = 'Confirm your response'
+const CONFIRM_MESSAGE = 'A flow is paused and waiting for your response. Please confirm to continue.'
+
+const REASON_REQUIRED_TITLE = 'A reason is required'
+const REASON_REQUIRED_MESSAGE = 'This request needs a reason before it can be recorded. Go back, write one, and submit again.'
+const REASON_TOO_LONG_TITLE = 'Your reason is too long'
+
 const RECORDED_MESSAGE = 'Your response has been recorded. You can close this page now.'
 const EXPIRED_MESSAGE = 'This link has expired. The action may have already been processed.'
 const RECORDED_TITLE = 'Response recorded'
 const ALREADY_TITLE = 'Already responded'
 const ALREADY_MESSAGE = 'This request has already been responded to. There is nothing left to do here.'
+
+const ALREADY_RESPONDED = { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false }
 
 const RESUME_PAGE_CSP = 'default-src \'none\'; style-src \'unsafe-inline\'; form-action \'self\'; img-src \'self\' https: http: data:'
 
@@ -254,6 +385,10 @@ const RESUME_PAGE_STYLE = `
     .btn { flex: 1; height: 36px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .btn svg { width: 14px; height: 14px; }
     .btn-destructive { background: #ef4444; }
+    .reason { padding: 20px 32px 0; display: flex; flex-direction: column; gap: 6px; }
+    .reason label { font-size: 12.5px; font-weight: 500; color: #404040; }
+    .reason textarea { width: 100%; min-height: 76px; resize: vertical; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 8px;
+        font-family: inherit; font-size: 13px; line-height: 1.5; color: #0a0a0a; background: #fff; }
 `
 
 const CLOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
@@ -262,34 +397,7 @@ const ACTIVITY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 const X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
 const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 
-const CONFIRM_HTML_TEMPLATE = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{websiteName}}</title>
-<style>${RESUME_PAGE_STYLE}</style>
-</head>
-<body>
-<div class="card">
-<div class="head">
-{{#fullLogoUrl}}<img class="logo" src="{{fullLogoUrl}}" alt="{{websiteName}}">{{/fullLogoUrl}}
-<div class="badge badge-amber">${CLOCK_SVG}</div>
-<h1>Confirm your response</h1>
-<p>A flow is paused and waiting for your response. Please confirm to continue.</p>
-</div>
-{{#flowName}}
-<div class="chip">${ACTIVITY_SVG}<span class="name">{{flowName}}</span><span class="state">Paused</span></div>
-{{/flowName}}
-<form method="POST" class="actions">
-<button type="submit" class="btn btn-destructive" formaction="{{disapproveUrl}}">${X_SVG}Disapprove</button>
-<button type="submit" class="btn" style="background:{{primaryColor}}" formaction="{{approveUrl}}">${CHECK_SVG}Approve</button>
-</form>
-</div>
-</body>
-</html>`
-
-const STATUS_HTML_TEMPLATE = `<!DOCTYPE html>
+const PAGE_HTML_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -306,9 +414,31 @@ const STATUS_HTML_TEMPLATE = `<!DOCTYPE html>
 <h1>{{title}}</h1>
 <p>{{message}}</p>
 </div>
+{{#flowName}}
+<div class="chip">${ACTIVITY_SVG}<span class="name">{{flowName}}</span><span class="state">Paused</span></div>
+{{/flowName}}
+{{#actions}}
+<form method="POST">
+{{#maxReasonLength}}
+<div class="reason">
+<label for="reason">Reason</label>
+<textarea id="reason" name="reason" maxlength="{{maxReasonLength}}" placeholder="Why?"></textarea>
+</div>
+{{/maxReasonLength}}
+<div class="actions">
+<button type="submit" class="btn btn-destructive" formaction="{{disapproveUrl}}">${X_SVG}Disapprove</button>
+<button type="submit" class="btn" style="background:{{primaryColor}}" formaction="{{approveUrl}}">${CHECK_SVG}Approve</button>
+</div>
+</form>
+{{/actions}}
 </div>
 </body>
 </html>`
+
+type OpenSignal = {
+    signal: WaitpointSignal
+    barrier: Waitpoint
+}
 
 type ConfirmationPageParams = {
     flowRunId: string
@@ -319,13 +449,17 @@ type ConfirmationPageParams = {
     reply: FastifyReply
 }
 
-type ConfirmResumeParams = {
-    flowRunId: string
-    waitpointId: string
-    action: string | undefined
-    body: unknown
-    headers: Record<string, string>
-    queryParams: Record<string, string>
+type SignalConfirmationPageParams = Omit<ConfirmationPageParams, 'waitpointId'> & {
+    signalId: string
+}
+
+type ReplyWithConfirmationPageParams = Omit<ConfirmationPageParams, 'flowRunId' | 'waitpointId'> & {
+    flowRun: FlowRun
+    reasonField?: { maxReasonLength: number }
+}
+
+type ReplyWithAlreadyRespondedParams = {
+    projectId: string
     log: FastifyBaseLogger
     reply: FastifyReply
 }
@@ -340,11 +474,34 @@ type AsyncResumeHandlerParams = {
     reply: FastifyReply
 }
 
-type LegacyResumeHandlerParams = {
+type ConfirmResumeParams = AsyncResumeHandlerParams & {
+    action: string | undefined
+}
+
+type LegacyResumeHandlerParams = Omit<AsyncResumeHandlerParams, 'waitpointId'>
+
+type SignalDecisionParams = Omit<ConfirmResumeParams, 'waitpointId' | 'queryParams'> & {
+    signalId: string
+}
+
+type ResolveOpenSignalParams = {
     flowRunId: string
-    body: unknown
-    headers: Record<string, string>
-    queryParams: Record<string, string>
+    signalId: string
+    projectId: string
+    flowRunStatus: FlowRunStatus
     log: FastifyBaseLogger
+}
+
+type IsReasonMissingParams = {
+    reasonRequiredOn: 'none' | 'reject' | 'both' | undefined
+    approved: boolean
+    reason: string | undefined
+}
+
+type RespondToSignalDecisionParams = {
     reply: FastifyReply
+    headers: Record<string, string>
+    theme: ResumePageTheme
+    status: number
+    extra: { title: string, message: string, success: boolean }
 }

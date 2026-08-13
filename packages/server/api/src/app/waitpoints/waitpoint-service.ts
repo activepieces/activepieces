@@ -8,9 +8,8 @@ import { transaction } from '../core/db/transaction'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { SystemJobName } from '../helper/system-jobs/common'
-import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -56,23 +55,19 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
         const inserted = waitpoint.id === id
-        if (inserted) {
-            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-        }
-        else {
+        if (!inserted) {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+            return { inserted, waitpoint }
         }
+
+        log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
         if (!isNil(resumeDateTime)) {
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
-                    jobId: resumeDelayJobId(waitpoint.id),
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(resumeDateTime),
-                },
+            await waitpointTimeoutJob.schedule({
+                flowRunId: params.flowRunId,
+                projectId: params.projectId,
+                waitpointId: id,
+                resumeDateTime,
+                log,
             })
         }
         return { inserted, waitpoint }
@@ -127,6 +122,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
                 return false
             }
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
@@ -200,19 +196,23 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async delete({ id, projectId }: DeleteWaitpointParams): Promise<void> {
+        const waitpoint = await waitpointRepo().findOneBy({ id, projectId })
         await waitpointRepo().delete({ id, projectId })
+        if (!isNil(waitpoint)) {
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId: waitpoint.flowRunId, log })
+        }
         log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
     },
 
     async deleteByFlowRunId(flowRunId: string): Promise<void> {
+        const waitpoints = await waitpointRepo().findBy({ flowRunId })
         await waitpointRepo().delete({ flowRunId })
+        for (const waitpoint of waitpoints) {
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
+        }
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
-
-export function resumeDelayJobId(waitpointId: string): string {
-    return `resume-delay-${waitpointId}`
-}
 
 function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
