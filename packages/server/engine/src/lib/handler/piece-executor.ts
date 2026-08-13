@@ -131,7 +131,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 canPause: !constants.actionRunMode,
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
+                createWaitpoint: createWaitpointHook({ constants, stepName: executionState.currentPath.toWaitpointKey(action.name), hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ constants, hookParams: params }),
             },
             project: {

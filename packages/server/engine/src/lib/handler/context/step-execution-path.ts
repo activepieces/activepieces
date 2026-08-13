@@ -13,6 +13,10 @@ export class StepExecutionPath {
         return new StepExecutionPath([])
     }
 
+    toWaitpointKey(stepName: string): string {
+        return [...this.path.map(([loopName, iteration]) => `${loopName}:${iteration}`), stepName].join('/')
+    }
+
     removeLast(): StepExecutionPath {
         const newPath = this.path.slice(0, -1)
         return new StepExecutionPath(newPath)
