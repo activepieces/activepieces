@@ -3887,7 +3887,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.16.7",
+      "version": "0.16.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5807,12 +5807,13 @@
     },
     "packages/pieces/community/microsoft-power-bi": {
       "name": "@activepieces/piece-microsoft-power-bi",
-      "version": "0.2.7",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
