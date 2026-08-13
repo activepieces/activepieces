@@ -5,6 +5,7 @@ export enum FieldType {
     TEXT = 'TEXT',
     NUMBER = 'NUMBER',
     DATE = 'DATE',
+    DATETIME = 'DATETIME',
     STATIC_DROPDOWN = 'STATIC_DROPDOWN',
 }
 
@@ -25,7 +26,7 @@ export const Field = z.union([z.object({
     ...BaseModelSchema,
     name: z.string(),
     externalId: z.string(),
-    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
+    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE), z.literal(FieldType.DATETIME)]),
     tableId: z.string(),
     projectId: z.string(),
     position: z.number(),

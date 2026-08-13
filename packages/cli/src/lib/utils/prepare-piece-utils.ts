@@ -62,6 +62,9 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
 
     const externalDeps: Record<string, string> = {}
     for (const dep of external) {
+        if (bundlePieceUtils.OPTIONAL_EXTERNALS.has(dep)) {
+            continue
+        }
         const version = resolvedDeps[dep] ?? resolveInstalledVersion({ dep, repoRoot })
         if (version === undefined) {
             throw new Error(`[preparePiece] external dependency "${dep}" has no resolvable version (not a direct dependency and not found under node_modules); publishing it would crash at runtime with a missing module`)
@@ -174,7 +177,7 @@ function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
     removeUnpublished(distPath)
 }
 
-export { preparePieceDistForPublish, resolveInstalledVersion, findInstalledVersion }
+export { preparePieceDistForPublish, resolveInstalledVersion, findInstalledVersion, rewriteManifestForBundle }
 
 type PieceDistPaths = {
     piecePath: string

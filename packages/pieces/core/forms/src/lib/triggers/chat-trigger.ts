@@ -8,6 +8,7 @@ import {
   USE_DRAFT_QUERY_PARAM_NAME,
   ChatFormResponse,
 } from '@activepieces/pieces-framework';
+import { chatSubmissionTriggerOutputSchema } from '../output-schemas';
 
 const responseMarkdown = `
 This trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow`;
@@ -46,6 +47,7 @@ export const onChatSubmission = createTrigger({
     }),
   },
   sampleData: undefined,
+  outputSchema: chatSubmissionTriggerOutputSchema,
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
     return;

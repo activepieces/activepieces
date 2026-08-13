@@ -37,13 +37,13 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
-        isStepCount(MAX_AGENT_STEPS),
+        isStepCount(stepCeiling ?? MAX_AGENT_STEPS),
     ]
     const guardedTools = wrapToolsWithFailureGuard({ tools, log })
     const maxTurnTokens = runawayTokenCeiling(provider)
@@ -414,6 +414,7 @@ export type RunAgentTurnParams = {
     log: AgentTurnLogger
     sinks?: AgentTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
+    stepCeiling?: number
 }
 
 export type AgentTurnResult = {

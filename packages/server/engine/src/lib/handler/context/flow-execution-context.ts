@@ -171,42 +171,34 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-    public async currentState(referencedStepNames?: string[]): Promise<Record<string, unknown>> {
-        const referencedSteps = referencedStepNames
-            ? referencedStepNames.reduce((acc, stepName) => {
-                if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
-                return acc
-            }, {} as Record<string, StepOutput>)
-            : this.steps
+    public async getStepView(stepName: string): Promise<StepView | undefined> {
+        const stepMaps = this.stepMapsAlongPath()
+        for (let level = stepMaps.length - 1; level >= 0; level--) {
+            const step = stepMaps[level][stepName]
+            if (!isNil(step)) {
+                const output = await resolveStepOutput(step, this.engineApi, this.resolvedStepOutputCache)
+                const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
+                    ? { message: step.errorMessage }
+                    : undefined
+                return { output, error }
+            }
+        }
+        return undefined
+    }
 
-        let flattened: Record<string, unknown> = await extractStepView(referencedSteps, this.engineApi, this.resolvedStepOutputCache )
-        let targetMap = this.steps
-
-        for (const [stepName, iteration] of this.currentPath.path) {
-            const stepOutput = targetMap[stepName]
-            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+    private stepMapsAlongPath(): Array<Readonly<Record<string, StepOutput>>> {
+        const stepMaps: Array<Readonly<Record<string, StepOutput>>> = [this.steps]
+        let targetMap: Readonly<Record<string, StepOutput>> = this.steps
+        for (const [loopStepName, iteration] of this.currentPath.path) {
+            const stepOutput = targetMap[loopStepName]
+            if (!stepOutput?.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
             }
             targetMap = stepOutput.output.iterations[iteration]
-            flattened = {
-                ...flattened,
-                ...await extractStepView(targetMap, this.engineApi, this.resolvedStepOutputCache ),
-            }
+            stepMaps.push(targetMap)
         }
-        return flattened
+        return stepMaps
     }
-}
-
-async function extractStepView(steps: Record<string, StepOutput>, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<Record<string, unknown>> {
-    const result: Record<string, unknown> = {}
-    for (const [stepName, step] of Object.entries(steps)) {
-        const output = await resolveStepOutput(step, engineApi, cache)
-        const error = step.status === StepOutputStatus.FAILED && step.errorMessage !== undefined
-            ? { message: step.errorMessage }
-            : undefined
-        result[stepName] = { output, error }
-    }
-    return result
 }
 
 async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
@@ -282,6 +274,11 @@ export type EngineApiConfig = {
 export type FlowExecutorContextInit = {
     engineApi?: EngineApiConfig
     slicingEnabled?: boolean
+}
+
+export type StepView = {
+    output: unknown
+    error: { message: string } | undefined
 }
 
 type MaybeSliceOutputParams = {

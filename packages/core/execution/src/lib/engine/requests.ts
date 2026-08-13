@@ -36,6 +36,7 @@ export const UpdateStepProgressRequest = z.object({
     projectId: z.string(),
     runId: z.string(),
     output: z.unknown(),
+    sequence: z.number().optional(),
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 

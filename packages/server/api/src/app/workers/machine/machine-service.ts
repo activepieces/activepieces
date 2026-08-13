@@ -53,6 +53,7 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         EVENT_DESTINATION_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS),
         EDITION: system.getOrThrow(AppSystemProp.EDITION),
         SSRF_ALLOW_LIST: system.get(AppSystemProp.SSRF_ALLOW_LIST)?.split(',').map(f => f.trim()) ?? [],
+        ENFORCE_CONNECTION_PIECE_BINDING: system.getBoolean(AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING) ?? false,
         NETWORK_MODE: system.getOrThrow<NetworkMode>(AppSystemProp.NETWORK_MODE),
         PAGE_ONCALL_WEBHOOK: system.get(AppSystemProp.PAGE_ONCALL_WEBHOOK),
         APP_VERSION: apVersionUtil.getCurrentRelease(),

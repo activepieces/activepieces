@@ -209,6 +209,34 @@ describe('failsafe surfaces the real error, never TypeError', () => {
     });
     expect(result).toMatchObject({ response: { status: 422 } });
   });
+
+  test('Send HTTP Request retry_all resends a full multipart body on every attempt', async () => {
+    status = 500;
+    await runSendHttpRequest({
+      method: HttpMethod.POST,
+      url: baseUrl,
+      headers: {},
+      queryParams: {},
+      body_type: 'form_data',
+      body: {
+        data: [
+          { fieldName: 'note', fieldType: 'text', textFieldValue: 'hello-multipart' },
+          {
+            fieldName: 'upload',
+            fieldType: 'file',
+            fileFieldValue: { filename: 'a.txt', data: Buffer.from('file-payload') },
+          },
+        ],
+      },
+      failureMode: 'retry_all',
+    }).catch(() => undefined);
+
+    expect(seen).toHaveLength(3);
+    for (const request of seen) {
+      expect(request.body).toContain('hello-multipart');
+      expect(request.body).toContain('file-payload');
+    }
+  });
 });
 
 describe('binary responses are unaffected by the bodyless-method guard', () => {

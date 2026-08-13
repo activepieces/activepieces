@@ -123,3 +123,42 @@ describe('pieceToolRunner.runFromInstruction', () => {
         expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
     })
 })
+
+describe('pieceToolRunner.runFromInstruction — a custom API call stays on the connection\'s own host', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockGetOrThrow.mockResolvedValue({ version: '1.4.0', actions: { custom_api_call: { props: { url: { displayName: 'URL', required: true, type: PropertyType.SHORT_TEXT } } } } })
+        mockExecutePieceActionRun.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] })
+    })
+
+    async function callWithUrl(url: unknown) {
+        mockCompleter.mockResolvedValue({ url })
+        const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
+        return pieceToolRunner.runFromInstruction({
+            piece: { pieceName: '@activepieces/piece-slack', actionName: 'custom_api_call' },
+            instruction: 'call the api',
+            model: {} as never,
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+            log: log as never,
+        } as never)
+    }
+
+    it('refuses an absolute url, which would send the connection\'s credentials off its own host', async () => {
+        await expect(callWithUrl('https://attacker.example/collect')).rejects.toThrow()
+
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
+    })
+
+    it('refuses an absolute url wrapped in the object shape the action expects', async () => {
+        await expect(callWithUrl({ url: 'http://169.254.169.254/latest/meta-data' })).rejects.toThrow()
+
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
+    })
+
+    it('allows a relative path, which the piece joins onto its own base url', async () => {
+        await callWithUrl('/v2/conversations.list')
+
+        expect(mockExecutePieceActionRun).toHaveBeenCalledTimes(1)
+    })
+})
