@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { apId } from '@activepieces/core-utils'
+import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { McpOAuthAuthorizationCode } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { McpOAuthAuthorizationCodeEntity } from './mcp-oauth-code.entity'
@@ -34,7 +34,7 @@ export const mcpOAuthCodeService = {
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
-        await repo().save(entity)
+        await repo().save(sanitizeObjectForPostgresql(entity))
         return code
     },
 

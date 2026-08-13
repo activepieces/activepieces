@@ -110,14 +110,14 @@ type HandlerParams = {
 }
 
 const tokenRequestSchema = z.object({
-    grant_type: z.string(),
+    grant_type: z.string().max(64),
     code: z.string().max(128).optional(),
     client_id: z.string().max(64).optional(),
     client_secret: z.string().max(512).optional(),
     code_verifier: z.string().max(256).optional(),
     redirect_uri: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
-    refresh_token: z.string().optional(),
-    resource: z.string().optional(),
+    refresh_token: z.string().max(512).optional(),
+    resource: z.string().max(2048).optional(),
 })
 
 const TokenRequest = {

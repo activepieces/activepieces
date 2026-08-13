@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { apId } from '@activepieces/core-utils'
+import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthClient } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -53,7 +53,7 @@ export const mcpOAuthClientService = {
             updated: new Date().toISOString(),
         }
 
-        await repo().save(client)
+        await repo().save(sanitizeObjectForPostgresql(client))
 
         return {
             client_id: clientId,

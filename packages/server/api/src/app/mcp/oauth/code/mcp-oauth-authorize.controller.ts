@@ -67,8 +67,8 @@ const AuthorizeRequest = {
             code_challenge: z.string().min(43).max(256).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }),
             code_challenge_method: z.string().max(8).default('S256'),
             state: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
-            scope: z.string().optional(),
-            resource: z.string().optional(),
+            scope: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
+            resource: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
         }),
     },
 }
