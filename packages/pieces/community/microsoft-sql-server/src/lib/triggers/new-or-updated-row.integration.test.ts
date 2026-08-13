@@ -2,6 +2,7 @@ import { AppConnectionType } from '@activepieces/pieces-framework';
 import sql from 'mssql';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MssqlAuth, mssqlCommon } from '../common';
+import { CURSOR_LAYOUT } from '../common/cursor';
 import { newOrUpdatedRowTrigger } from './new-or-updated-row';
 
 
@@ -1133,7 +1134,7 @@ describe.skipIf(!enabled)('new or updated row, against a live server', () => {
       );
 
       expect(await modeOf(table, 'updated_at')).toEqual({
-        v: 1,
+        v: CURSOR_LAYOUT,
         m: 'group',
         c: ['updated_at:datetime2(3)'],
         k: null,

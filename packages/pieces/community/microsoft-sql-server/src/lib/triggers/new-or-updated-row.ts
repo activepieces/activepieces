@@ -21,7 +21,7 @@ const EMPTY: Page = { payloads: [], next: null };
 const pollingDescription = `Polls the table in the order of the column you choose and hands over every row it has not delivered yet, oldest first.
 
 - Order by a **created** timestamp or **id** for new rows only; a **last-modified** timestamp or a **rowversion** column also catches edits.
-- Best with an **identity column, primary key, or unique constraint**. Without one, all rows sharing an ordering value are delivered together as a single group.
+- Best with an **identity column, primary key, or unique constraint**. Without one, all rows sharing an ordering value are delivered together as a single group, and a row that arrives later carrying a value that group already delivered is **not** picked up — so prefer a keyed table when a bulk load or same-second writes can put several rows on one value.
 - Rows where the order column is **empty** are skipped, and a row written **behind** the last value already delivered goes unnoticed — including one whose transaction commits after a later row's.`;
 
 async function buildPlan({

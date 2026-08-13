@@ -14,6 +14,7 @@ const host = process.env['AP_MSSQL_TEST_HOST'];
 const enabled = Boolean(connectionString ?? host);
 
 const TABLE_PREFIX = 'ap_action_test_';
+const DATABASE = process.env['AP_MSSQL_TEST_DATABASE'] ?? 'ap_action_test';
 
 const auth = {
   type: AppConnectionType.CUSTOM_AUTH as const,
@@ -21,7 +22,7 @@ const auth = {
     connection_string: connectionString,
     host,
     port: Number(process.env['AP_MSSQL_TEST_PORT'] ?? 1433),
-    database: process.env['AP_MSSQL_TEST_DATABASE'] ?? 'ap_trigger_test',
+    database: DATABASE,
     user: process.env['AP_MSSQL_TEST_USER'] ?? 'sa',
     password: process.env['AP_MSSQL_TEST_PASSWORD'],
     encrypt: true,
@@ -84,6 +85,25 @@ async function seeded(): Promise<Table> {
 
 describe.skipIf(!enabled)('actions, against a live server', () => {
   beforeAll(async () => {
+    if (!connectionString) {
+      const bootstrap = await mssqlCommon.connect({
+        auth: { ...auth, props: { ...auth.props, database: 'master' } },
+      });
+      try {
+        await bootstrap
+          .request()
+          .input('name', DATABASE)
+          .query(
+            `IF DB_ID(@name) IS NULL
+             BEGIN
+               DECLARE @create nvarchar(max) = N'CREATE DATABASE ' + QUOTENAME(@name);
+               EXEC sp_executesql @create;
+             END;`
+          );
+      } finally {
+        await bootstrap.close();
+      }
+    }
     pool = await mssqlCommon.connect({ auth });
   }, 180_000);
 
