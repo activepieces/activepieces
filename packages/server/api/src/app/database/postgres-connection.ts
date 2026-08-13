@@ -406,6 +406,14 @@ import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postg
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
+import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
+import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
+import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
+import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
+import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
+import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -827,6 +835,14 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
+        AddAutumnBillingColumnsToPlatformPlan1818000000000,
+        AddFieldPosition1818000000000,
+        DropPieceTags1819000000000,
+        AddAgentConversationSource1819000000000,
+        AddAuditEventPlatformIdCreatedIdIndex1820000000000,
+        AddAgentConversationFlowStepRetentionIndex1821000000000,
+        RenameChatTablesToAgent1822000000000,
+        AddRenamedChatTableCompatViews1823000000000,
     ]
     return migrations
 }

@@ -1,4 +1,4 @@
-import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
+import { ActionBase, PieceAuth, TriggerBase } from '@activepieces/pieces-framework'
 import { apId, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -34,6 +34,8 @@ const fakeEmbedder: ToolSearchEmbedder = {
     embed: (texts) => Promise.resolve(texts.map(bagOfWords)),
 }
 
+const pieceAuth = PieceAuth.SecretText({ displayName: 'API Key', required: true })
+
 function action(over: Pick<ActionBase, 'name' | 'displayName' | 'description'> & { requireAuth?: boolean, audience?: ActionBase['audience'] }): ActionBase {
     return { name: over.name, displayName: over.displayName, description: over.description, props: {}, requireAuth: over.requireAuth ?? true, audience: over.audience }
 }
@@ -56,6 +58,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-slack',
         displayName: 'Slack',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
@@ -65,6 +68,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-google-calendar',
         displayName: 'Google Calendar',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { create_event: action({ name: 'create_event', displayName: 'Create Event', description: 'Create a new event in a Google Calendar' }) },
@@ -74,6 +78,7 @@ async function seedCatalog(): Promise<void> {
         name: '@activepieces/piece-gmail',
         displayName: 'Gmail',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_email: action({ name: 'send_email', displayName: 'Send Email', description: 'Send an email via Gmail' }) },
@@ -92,11 +97,11 @@ async function nullEmbeddingCount(): Promise<number> {
     return count
 }
 
-type IndexRowProbe = { pieceVersion: string, embeddingInputHash: string, embedding: string | null, modelVersion: string }
+type IndexRowProbe = { pieceVersion: string, embeddingInputHash: string, embedding: string | null, modelVersion: string, retrievalDoc: string }
 
 async function getIndexRow(pieceName: string, objectName: string): Promise<IndexRowProbe | undefined> {
     const rows = await databaseConnection().query(
-        `SELECT "pieceVersion", "embeddingInputHash", "embedding"::text AS embedding, "modelVersion"
+        `SELECT "pieceVersion", "embeddingInputHash", "embedding"::text AS embedding, "modelVersion", "retrievalDoc"
          FROM "tool_search_index" WHERE "pieceName" = $1 AND "objectName" = $2`,
         [pieceName, objectName],
     )
@@ -140,6 +145,7 @@ describe('Tool Search Engine (Phase 1)', () => {
             name: '@activepieces/piece-legacy',
             displayName: 'Legacy',
             version: '1.0.0',
+            auth: pieceAuth,
             pieceType: PieceType.OFFICIAL,
             packageType: PackageType.REGISTRY,
             actions: { legacy_action: legacyAction },
@@ -155,6 +161,29 @@ describe('Tool Search Engine (Phase 1)', () => {
             ['@activepieces/piece-legacy', 'legacy_action'],
         )
         expect(row.requiresConnection).toBe(true)
+    })
+
+    it('indexes an auth-less piece as requiresConnection false even though requireAuth is true', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-math-helper',
+            displayName: 'Math Helper',
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { addition: action({ name: 'addition', displayName: 'Addition', description: 'Add two numbers together', requireAuth: true }) },
+            triggers: { new_number: trigger({ name: 'new_number', displayName: 'New Number', description: 'Triggers when a new number is produced' }) },
+        }))
+
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+
+        const rows = await databaseConnection().query(
+            'SELECT "objectName", "requiresConnection" FROM "tool_search_index" WHERE "pieceName" = $1 ORDER BY "objectName"',
+            ['@activepieces/piece-math-helper'],
+        )
+        expect(rows).toEqual([
+            { objectName: 'addition', requiresConnection: false },
+            { objectName: 'new_number', requiresConnection: false },
+        ])
     })
 
     it('searchActions ranks the semantically closest action first and returns the tiered envelope', async () => {
@@ -416,7 +445,95 @@ describe('Tool Search Engine (Phase 3 — incremental catalog sync)', () => {
         expect(second.objectsIndexed).toBe(4)
         expect(second.objectsEmbedded).toBe(0)
         expect(second.objectsDeleted).toBe(0)
+        expect(second.passes).toBe(1)
         expect(await indexRowCount()).toBe(4)
+    })
+})
+
+describe('Tool Search Engine (Phase 3 — trailing edge: catalog changes landing mid-reconcile)', () => {
+    function embedderPublishingMidRun(publish: (call: number) => Promise<unknown>, calls = 1): ToolSearchEmbedder {
+        let call = 0
+        return {
+            ...fakeEmbedder,
+            embed: async (texts) => {
+                if (call < calls) {
+                    call++
+                    await publish(call)
+                }
+                return texts.map(bagOfWords)
+            },
+        }
+    }
+
+    function trelloPiece(version: string): ReturnType<typeof createMockPieceMetadata> {
+        return createMockPieceMetadata({
+            name: '@activepieces/piece-trello',
+            displayName: 'Trello',
+            version,
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { create_card: action({ name: 'create_card', displayName: 'Create Card', description: 'Create a new card on a Trello board' }) },
+            triggers: {},
+        })
+    }
+
+    it('indexes a piece published after the snapshot was taken instead of dropping it', async () => {
+        await seedCatalog()
+        const embedder = embedderPublishingMidRun(() => db.save('piece_metadata', trelloPiece('1.0.0')))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(2)
+        expect(result.objectsIndexed).toBe(5)
+        expect(result.objectsEmbedded).toBe(5)
+        expect(await indexRowCount()).toBe(5)
+        expect((await getIndexRow('@activepieces/piece-trello', 'create_card'))?.embedding).not.toBeNull()
+    })
+
+    it('refreshes a description republished mid-reconcile — the stale text is gone from the index', async () => {
+        await seedCatalog()
+        await toolSearchReindexService(log).reindex({ embedder: fakeEmbedder })
+        expect((await getIndexRow('@activepieces/piece-gmail', 'send_email'))?.retrievalDoc).toContain('Send an email via Gmail')
+
+        await db.save('piece_metadata', trelloPiece('1.0.0'))
+        const embedder = embedderPublishingMidRun(() => db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-gmail',
+            displayName: 'Gmail',
+            version: '1.0.1',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_email: action({ name: 'send_email', displayName: 'Send Email', description: 'Create and send a new email message via Gmail' }) },
+            triggers: {},
+        })))
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(2)
+        const gmail = await getIndexRow('@activepieces/piece-gmail', 'send_email')
+        expect(gmail?.retrievalDoc).not.toContain('Send an email via Gmail')
+        expect(gmail?.retrievalDoc).toContain('Create and send a new email message via Gmail')
+        expect(gmail?.pieceVersion).toBe('1.0.1')
+        expect(gmail?.embedding).not.toBeNull()
+    })
+
+    it('stops at the trailing-pass cap when the catalog keeps changing, rather than looping', async () => {
+        await seedCatalog()
+        const embedder = embedderPublishingMidRun((call) => db.save('piece_metadata', createMockPieceMetadata({
+            name: `@activepieces/piece-churn-${call}`,
+            displayName: `Churn ${call}`,
+            version: '1.0.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            actions: { send_message: action({ name: 'send_message', displayName: 'Send Message', description: `Send message number ${call}` }) },
+            triggers: {},
+        })), Number.MAX_SAFE_INTEGER)
+
+        const result = await toolSearchReindexService(log).reindex({ embedder })
+
+        expect(result.passes).toBe(3)
+        expect(result.objectsIndexed).toBe(6)
+        expect(await indexRowCount()).toBe(6)
+        expect(await nullEmbeddingCount()).toBe(0)
     })
 })
 
@@ -760,6 +877,7 @@ async function seedTriggerCatalog(): Promise<void> {
         name: '@activepieces/piece-slack',
         displayName: 'Slack',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { send_channel_message: action({ name: 'send_channel_message', displayName: 'Send Channel Message', description: 'Send a message to a Slack channel' }) },
@@ -769,6 +887,7 @@ async function seedTriggerCatalog(): Promise<void> {
         name: '@activepieces/piece-google-calendar',
         displayName: 'Google Calendar',
         version: '1.0.0',
+        auth: pieceAuth,
         pieceType: PieceType.OFFICIAL,
         packageType: PackageType.REGISTRY,
         actions: { create_event: action({ name: 'create_event', displayName: 'Create Event', description: 'Create a new event in a Google Calendar' }) },

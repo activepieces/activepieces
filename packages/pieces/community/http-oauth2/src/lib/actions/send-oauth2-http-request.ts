@@ -1,13 +1,13 @@
 import {
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   HttpResponse,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
@@ -15,17 +15,18 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
 import { ProxyAgent } from 'undici';
 
 export const httpOauth2RequestAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
+  aiMetadata: { description: 'Calls any HTTP endpoint with an OAuth 2.0 bearer token injected from the connection, choosing the method (GET/POST/PUT/PATCH/DELETE) and body mode (none, JSON, raw, or form-data), optionally routing through an HTTP proxy or returning the error text instead of throwing when the failsafe option is on. Prefer it over the core HTTP piece Send HTTP Request action only when the target API needs a managed OAuth2 token that Activepieces refreshes; it requires an OAuth2 connection set up with the authorize URL, token URL, and scopes, plus a full request URL. Not idempotent in general: the effect depends on the chosen method, and non-GET calls can create or change data on each call.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -246,7 +247,11 @@ export const httpOauth2RequestAction = createAction({
         }
 
         let proxyBody: BodyInit | undefined;
-        if (request.body !== undefined && request.body !== null) {
+        if (
+          request.method !== HttpMethod.GET &&
+          request.method !== HttpMethod.HEAD &&
+          !isNil(request.body)
+        ) {
           if (request.body instanceof FormData) {
             proxyBody = request.body.getBuffer();
           } else if (typeof request.body === 'string') {
@@ -276,7 +281,7 @@ export const httpOauth2RequestAction = createAction({
       return handleResponse(response);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;

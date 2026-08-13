@@ -8,6 +8,8 @@ export const listRoadmaps = createAction({
   name: 'list_roadmaps',
   displayName: 'List Roadmaps',
   description: 'List all public roadmaps in your Produktly account.',
+  audience: 'both',
+  aiMetadata: { description: 'List every public roadmap in the Produktly account with its internal and public name, active state, custom domain, and section and item counts, paginated with limit and offset. Pick this to discover roadmap IDs or compare roadmaps at a glance; use Get Roadmap when you need the actual sections, items, tags, and vote counts. Read-only and idempotent.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

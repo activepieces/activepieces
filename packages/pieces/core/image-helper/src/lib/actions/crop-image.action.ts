@@ -2,9 +2,10 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import jimp from 'jimp';
 
 export const cropImage = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'crop_image',
   description: 'Crops an image',
+  aiMetadata: { description: 'Cuts a rectangular region out of an image file, given the left and top offset plus the width and height of the region in source pixels, and writes it as a new file in the original format. Choose this to trim or extract part of an image; use resize_image to scale the whole image instead, or rotate_image to reorient it. All four numeric bounds are required and must fall within the source dimensions - pure pixel computation and idempotent, so the same image and box always yield the same crop.', idempotent: true },
   displayName: 'Crop an image',
   props: {
     image: Property.File({

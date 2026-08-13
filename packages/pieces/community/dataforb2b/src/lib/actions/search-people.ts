@@ -16,6 +16,11 @@ export const searchPeople = createAction({
   name: 'search_people',
   displayName: 'Search People',
   description: 'Find professionals using 50+ filters (title, company, LinkedIn URL, skills, location, education, funding...).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search the DataForB2B people database with structured filter conditions across 50+ profile fields (current and past title, company, skills, location, education, languages, certifications, experience), combined by AND or OR and optionally merged with a raw advanced-filter JSON group. Use to build prospect or candidate lists by criteria, then pass a returned identifier to Enrich Profile for email and phone; prefer Reasoning Search when the criteria are only expressible in plain language. Requires at least one filter or an advanced filter group; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     match: filterLogicProp,
     filters: buildFiltersProp(peopleFilterFields, 'current_title'),

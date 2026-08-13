@@ -6,11 +6,12 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const generateImage = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
   description: 'Generate an image using text-to-image models',
+  aiMetadata: { description: 'Creates a brand new image from a text prompt using an image model available to the account (gpt-image or dall-e), saving each returned image as a file and reporting its URL. Resolution and quality both default to auto. Pick edit_image instead when an existing image is the starting point, and vision_prompt when the task is reading an image rather than producing one. Requires the prompt and a model id; not idempotent: each call renders a fresh image.', idempotent: false },
   props: {
     model: Property.Dropdown({
       auth: openaiAuth,

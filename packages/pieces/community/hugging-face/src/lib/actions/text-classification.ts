@@ -8,12 +8,17 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 
 export const textClassification = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'text_classification',
   auth: huggingFaceAuth,
   displayName: 'Text Classification',
   description:
     'Classify text into categories using Hugging Face models - includes zero-shot classification for custom categories',
+  aiMetadata: {
+    description:
+      'Scores a block of text against a set of labels and returns the ranked predictions, in one of three modes: zero-shot classifies into custom comma-separated categories you supply, pre-trained uses a curated sentiment, emotion, or topic model with its own fixed label set, and search runs any classification model looked up on the Hugging Face hub. Choose it to sort text into a known label set - use chat_completion for open-ended reasoning about the text, text_summarization to condense it, and image_classification when the input is an image rather than text. Zero-shot mode fails without at least one category; read-only and idempotent, as classifying stores nothing.',
+    idempotent: true,
+  },
   props: {
     classificationMode: Property.StaticDropdown({
       displayName: 'Classification Type',

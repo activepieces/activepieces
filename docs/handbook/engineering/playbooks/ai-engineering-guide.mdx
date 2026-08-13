@@ -17,9 +17,11 @@ Our repo has a layered AI assistance system:
 |---|---|---|---|
 | `CLAUDE.md` (root) | ~55 lines | Every session | Non-obvious architecture rules |
 | `packages/*/CLAUDE.md` | ~30-55 lines each | When working in that package | Package-specific patterns |
-| `.agents/features/*.md` | ~60 lines each | When Claude explores the feature | Entity schemas, services, data flows |
+| `brain/wiki/<area>/index.md` | 9 areas | First stop for an unfamiliar subsystem | Area glossary + list of its pages |
+| `brain/wiki/<area>/*.md` | one page per subsystem | When Claude explores that subsystem | Entity schemas, services, data flows, gotchas |
+| `brain/decisions/*.md` | numbered, flat | When Claude needs the *why* behind a design | One hard-to-reverse call each |
 | `.claude/rules/` | 3-5 lines each | Every session | Critical safety checks (entity registration, data isolation, edition safety) |
-| `.agents/skills/` | 30-65 lines each | When invoked | Step-by-step workflows (`/add-feature`, `/add-entity`, `/add-endpoint`) |
+| `.agents/skills/` | one folder each | When invoked | Investigations, not conventions — `/debug-failed-run`, `/triage-*`, `/piece-builder`. Code shapes and conventions live in the wiki, not here. |
 
 Total context per session: ~150 lines. Claude has ~150 instruction slots — we use them all, nothing wasted.
 
@@ -44,7 +46,7 @@ Press `Shift+Tab` twice to enter Plan Mode, then paste your brief.
 
 Claude will:
 
-- Read relevant feature files in `.agents/features/` for the modules you'll touch
+- Read the relevant subsystem pages in `brain/wiki/<area>/` (and that area's `index.md`) for the modules you'll touch
 - Explore existing patterns in the codebase
 - Ask you clarifying questions
 - Propose which files to create/modify
@@ -55,11 +57,7 @@ You review and refine. This is where 80% of the value comes from — getting the
 
 Exit Plan Mode. Claude executes the plan.
 
-For full-stack features, tell Claude: "Use `/add-feature`" — this triggers our custom skill with the full cross-cutting checklist (shared types, entity + migration, service, controller, frontend, tests, verify).
-
-For just a database entity: `/add-entity "my_feature"`
-
-For just an API endpoint: `/add-endpoint "description"`
+For full-stack features, point Claude at the anatomy pages — `brain/wiki/engineering/server-module-anatomy.md` for shared types, entity, migration, service, controller, and module registration, and `web-feature-anatomy.md` for the frontend half. These are conventions, so Claude should *read* them, not run them as a workflow.
 
 Claude will:
 
@@ -156,9 +154,9 @@ Planning on Day N, implementing on Day N+1 produces better code than doing both 
 
 2. **Let Plan Mode run.** Don't skip it. The 15 minutes of exploration prevents 2 hours of wrong-direction coding.
 
-3. **Use the skills.** `/add-feature` exists for a reason — it encodes every step we've learned from past mistakes.
+3. **Use the skills for investigations.** `/debug-failed-run` and the `/triage-*` skills encode routes through live systems that are painful to rediscover. For code shapes, read the wiki anatomy pages instead.
 
-4. **Read the feature docs yourself.** Before starting a feature in a module, spend 2 minutes reading its `.agents/features/*.md`. You'll ask better questions.
+4. **Read the wiki page yourself.** Before starting a feature in a module, spend 2 minutes reading its page under `brain/wiki/`. You'll ask better questions.
 
 5. **Don't babysit.** Start Claude on a task, switch to another tab, come back when it's done. Check notifications.
 
@@ -181,9 +179,9 @@ claude                        # Opens Claude Code in current directory
 ```
 
 ```bash Custom skills
-/add-feature "description"    # Full-stack feature workflow
-/add-entity "name"            # Database entity + migration
-/add-endpoint "description"   # API endpoint + controller
+/debug-failed-run <runId>     # Trace a failed run across BullMQ, Postgres, ClickHouse
+/piece-builder "app name"     # Build or extend a piece
+/triage-dependabot-alerts     # Work the dependency-vulnerability backlog
 ```
 
 ```bash Session management
@@ -213,7 +211,7 @@ git push -u origin HEAD
     Pick a small feature (5-10 files). Follow the full workflow: brief, Plan Mode, implement, test, PR. Expect 4-6 hours.
   </Step>
   <Step title="Day 4">
-    Pick a medium feature (15-25 files). Practice `/clear` when stuck. Use the `/add-feature` skill.
+    Pick a medium feature (15-25 files). Practice `/clear` when stuck. Read the wiki anatomy pages before you start.
   </Step>
   <Step title="Day 5">
     Try 2 parallel sessions on different features. Practice tab-switching.

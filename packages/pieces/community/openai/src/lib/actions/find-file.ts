@@ -3,12 +3,13 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const findFile = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'find_file',
   displayName: 'Find File',
   description:
     'Check whether a file with the given name already exists in the connected OpenAI account.',
+  aiMetadata: { description: 'Checks whether a file with an exact filename, matched case-insensitively, already exists in the connected OpenAI account and returns a found flag, a match count, and the matching file records including their ids. Use it before upload_file to avoid duplicates, or to resolve a filename into the file id that delete_file needs; list_files is the one for browsing everything on the account. An optional purpose filter narrows the search to assistants, vision, batch, or fine-tune files. Read-only and idempotent.', idempotent: true },
   props: {
     fileName: Property.ShortText({
       displayName: 'File Name',

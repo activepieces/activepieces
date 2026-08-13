@@ -35,7 +35,10 @@ import {
   ActiveFunctionInfo,
   FunctionEditorTooltip,
 } from './components/function-hover-popover';
-import { FunctionSearchPopover } from './components/function-search-popover';
+import {
+  DEFAULT_FORMULAS_DOCS_URL,
+  FunctionSearchPopover,
+} from './components/function-search-popover';
 import {
   FunctionStartNode,
   FunctionEndNode,
@@ -44,6 +47,7 @@ import {
   FUNCTION_END_NODE_TYPE,
   FUNCTION_SEP_NODE_TYPE,
 } from './extensions/bracket-nodes';
+import { getFormulaBackspaceTransaction } from './extensions/formula-backspace';
 import {
   FunctionSlashExtension,
   SlashCommandState,
@@ -211,30 +215,12 @@ export const TiptapEditor = ({
     editorProps: {
       handleKeyDown: (view, event) => {
         if (event.key === 'Backspace') {
-          const { state } = view;
-          const { from, to } = state.selection;
-          if (from === to) {
-            const $from = state.doc.resolve(from);
-            const nodeBefore = $from.nodeBefore;
-            if (
-              nodeBefore &&
-              nodeBefore.type.name === FUNCTION_START_NODE_TYPE
-            ) {
-              const fnId = nodeBefore.attrs.id as string;
-              const fnStartPos = from - nodeBefore.nodeSize;
-              let fnEndPos = -1;
-              state.doc.descendants((node, pos) => {
-                if (
-                  node.type.name === FUNCTION_END_NODE_TYPE &&
-                  node.attrs.openId === fnId
-                ) {
-                  fnEndPos = pos;
-                }
-              });
-              const deleteTo = fnEndPos >= 0 ? fnEndPos + 1 : from;
-              view.dispatch(state.tr.delete(fnStartPos, deleteTo));
-              return true;
-            }
+          const formulaTr = getFormulaBackspaceTransaction({
+            state: view.state,
+          });
+          if (formulaTr) {
+            view.dispatch(formulaTr);
+            return true;
           }
         }
 
@@ -516,7 +502,11 @@ export const TiptapEditor = ({
           editorRef={editorWrapperRef}
           onSelect={handleFunctionSelect}
           onClose={closeSlash}
-          hideDocsLink={embedState.isEmbedded}
+          docsUrl={
+            embedState.isEmbedded
+              ? embedState.formulasDocsUrl
+              : DEFAULT_FORMULAS_DOCS_URL
+          }
         />
       )}
     </div>

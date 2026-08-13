@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blueskyAuth, BlueSkyAuthType } from '../common/auth';
+import { repostOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import { parseBlueskyUrl } from '../common/props';
 
@@ -11,6 +12,7 @@ export const repostPost = createAction({
   displayName: 'Repost Post',
   description: 'Share someone else\'s post to your timeline',
   audience: 'both',
+  outputSchema: repostOutputSchema,
   aiMetadata: {
     description: 'Reposts an existing Bluesky post to the authenticated account\'s timeline, identified by an AT-URI / bsky.app post URL or selected from the recent timeline. Use to amplify another user\'s post. Not idempotent — each call creates a separate repost record.',
     idempotent: false,

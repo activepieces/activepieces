@@ -48,7 +48,27 @@ export class HttpError extends Error {
   }
 }
 
+export function toFailsafeOutput({ error, requestBody }: FailsafeOutputParams) {
+  if (error instanceof HttpError) {
+    return error.errorMessage();
+  }
+  return {
+    response: {
+      status: 0,
+      body: error instanceof Error ? error.message : String(error),
+    },
+    request: {
+      body: requestBody,
+    },
+  };
+}
+
 export type HttpErrorParams = {
   status: number;
   responseBody: unknown;
+};
+
+export type FailsafeOutputParams = {
+  error: unknown;
+  requestBody: unknown;
 };

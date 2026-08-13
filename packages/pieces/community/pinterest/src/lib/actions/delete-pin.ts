@@ -7,10 +7,12 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown, pinIdDropdown } from '../common/props';
+import { deletePinActionOutputSchema } from '../output-schemas';
 
 export const deletePin = createAction({
   auth: pinterestAuth,
   name: 'deletePin',
+  outputSchema: deletePinActionOutputSchema,
   displayName: 'Delete Pin',
   description: 'Permanently delete a specific Pin.',
   audience: 'both',
@@ -31,11 +33,7 @@ export const deletePin = createAction({
       path = `/pins/${pin_id}?ad_account_id=${ad_account_id}`;
     }
 
-    const response = await makeRequest(
-      getAccessTokenOrThrow(auth),
-      HttpMethod.DELETE,
-      path
-    );
+    await makeRequest(getAccessTokenOrThrow(auth), HttpMethod.DELETE, path);
 
     return {
       success: true,

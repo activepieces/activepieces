@@ -4,7 +4,7 @@ import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { getLocationForFile } from './file.service'
+import { getDownloadName, getLocationForFile } from './file.service'
 import { s3Helper } from './s3-helper'
 
 const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS) ?? false
@@ -37,7 +37,7 @@ export const signedFileTransport = {
             return false
         }
         assertNotNullOrUndefined(file.s3Key, 's3Key')
-        const url = await s3Helper(log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
+        const url = await s3Helper(log).getS3SignedUrl(file.s3Key, getDownloadName(file))
         log.info({ s3Key: file.s3Key, fileId: file.id }, 'Redirecting GET to S3 signed URL')
         await reply
             .status(StatusCodes.TEMPORARY_REDIRECT)
@@ -59,5 +59,5 @@ type PutRedirectParams = {
 type GetRedirectParams = {
     reply: FastifyReply
     log: FastifyBaseLogger
-    file: Pick<File, 'id' | 'location' | 's3Key' | 'fileName'>
+    file: Pick<File, 'id' | 'location' | 's3Key' | 'fileName' | 'type'>
 }

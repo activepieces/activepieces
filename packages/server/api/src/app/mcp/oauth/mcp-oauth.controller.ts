@@ -5,9 +5,9 @@ import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { repoFactory } from '../../core/db/repo-factory'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { ChatConversationEntity } from '../../ee/chat/chat-conversation-entity'
-import { chatHelpers } from '../../ee/chat/chat-helpers'
-import { CONVERSATION_ID_HEADER } from '../../ee/chat/mcp/chat-mcp'
+import { AgentConversationEntity } from '../../ee/agent/agent-conversation-entity'
+import { agentHelpers } from '../../ee/agent/agent-helpers'
+import { CONVERSATION_ID_HEADER } from '../../ee/agent/mcp/agent-mcp'
 import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
@@ -164,7 +164,7 @@ type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, userId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string }
 
-const chatConversationRepo = repoFactory(ChatConversationEntity)
+const chatConversationRepo = repoFactory(AgentConversationEntity)
 
 async function resolveConversationProjectId({ conversationId, identity, log }: {
     conversationId: string
@@ -192,7 +192,7 @@ async function resolveConversationProjectId({ conversationId, identity, log }: {
         log.warn({ conversation: { id: conversationId } }, 'Conversation platform does not match token platform')
         return null
     }
-    const userProjects = await chatHelpers.getUserProjects({ platformId: identity.platformId, userId: identity.userId, log })
+    const userProjects = await agentHelpers.getUserProjects({ platformId: identity.platformId, userId: identity.userId, log })
     if (!userProjects.some((project) => project.id === conversationProjectId)) {
         log.warn({ conversation: { id: conversationId }, project: { id: conversationProjectId } }, 'User no longer has access to conversation project')
         return null

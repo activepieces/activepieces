@@ -3,12 +3,13 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
 
 export const listFiles = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'list_files',
   displayName: 'List Files',
   description:
     'Return the list of files uploaded to the connected OpenAI account, optionally filtered by purpose.',
+  aiMetadata: { description: 'Returns the files stored in the connected OpenAI account together with their ids, names, sizes, and purposes, either the whole account or, when a purpose filter is supplied, only assistants, vision, batch, or fine-tune files, capped by an optional limit. Use it to browse or audit what has been uploaded and to collect file ids; find_file is the better choice when checking for one exact filename. Read-only and idempotent.', idempotent: true },
   props: {
     purpose: Property.StaticDropdown({
       displayName: 'Purpose Filter',

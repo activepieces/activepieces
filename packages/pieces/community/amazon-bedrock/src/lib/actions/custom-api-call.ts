@@ -73,6 +73,7 @@ export const customApiCall = createAction({
   displayName: 'Custom API Call',
   description:
     'Make a custom API call to any AWS Bedrock endpoint. Requests are automatically signed with AWS Signature V4.',
+  aiMetadata: { description: 'Makes an arbitrary AWS SigV4-signed HTTP request to a chosen Bedrock endpoint - the Bedrock control plane, Bedrock Runtime, Bedrock Agent control plane, or Bedrock Agent Runtime - with your own method, path, query parameters, headers, and JSON body, optionally returning errors as output instead of failing the step. Use as an escape hatch for Bedrock operations this piece does not wrap, such as knowledge bases, guardrails, or agent invocation. Requires the service and path to match the AWS Bedrock API reference for the connected region. Idempotency depends on the call made: GET reads are safe to repeat, while model invocations and mutating writes are not.', idempotent: false },
   auth: awsBedrockCombinedAuth,
   requireAuth: true,
   props: {

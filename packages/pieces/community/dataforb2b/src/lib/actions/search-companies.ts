@@ -16,6 +16,11 @@ export const searchCompanies = createAction({
   name: 'search_companies',
   displayName: 'Search Companies',
   description: 'Find companies with advanced filters (industry, LinkedIn URL, size, location, growth, funding, investor...).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Search the DataForB2B company database with structured filter conditions over firmographic fields (name, domain, industry, employee count, location, growth, funding stage, investor), combined by AND or OR and optionally merged with a raw advanced-filter JSON group. Use to discover companies by criteria or to resolve a company to an identifier for Enrich Company; prefer Reasoning Search when the criteria are only expressible in plain language. Requires at least one filter or an advanced filter group; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     match: filterLogicProp,
     filters: buildFiltersProp(companyFilterFields, 'name'),

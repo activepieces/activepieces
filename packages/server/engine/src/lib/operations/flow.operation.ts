@@ -26,7 +26,7 @@ export const flowOperation = {
             throw resolveError
         }
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const { data: output, error: executionError } = await tryCatch(() => executieSingleStepOrFlowOperation(input, constants))
+        const { data: output, error: executionError } = await tryCatch(() => executeSingleStepOrFlow(input, constants))
         if (executionError) {
             // Trigger run()/onStart() hooks and single-step test resolution can throw a plain Error/TypeError
             // or a non-ExecutionError (e.g. ENTITY_NOT_FOUND when testing a deleted step). Like an action step
@@ -86,7 +86,7 @@ async function reportFailedRun({ input, constants, error }: ReportFailedRunParam
     }
 }
 
-const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
+const executeSingleStepOrFlow = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({

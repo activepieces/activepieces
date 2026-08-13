@@ -167,12 +167,13 @@ async function keywordSearch({ objectKind, query, opts, log, degradeReason }: Ke
 
     const results = scopedPieces.flatMap((piece) => {
         const suggestions = objectKind === 'action' ? (piece.suggestedActions ?? []) : (piece.suggestedTriggers ?? [])
+        const pieceHasAuth = !isNil(piece.auth)
         return suggestions.map((object): ToolSearchObjectResult => ({
             pieceName: piece.name,
             objectName: object.name,
             displayName: object.displayName,
             oneLineDescription: object.description,
-            requiresConnection: object.requireAuth,
+            requiresConnection: pieceHasAuth && (object.requireAuth ?? true),
         }))
     }).slice(0, limit)
     return { results, mode: 'keyword', degradeReason }

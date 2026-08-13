@@ -1,6 +1,6 @@
 ---
 name: piece-builder
-description: Builds Activepieces pieces (integrations) with actions and triggers. Use when the user asks to create a new piece, add actions to a piece, add triggers to a piece, or build an integration for a third-party app. Also use when the user mentions Activepieces pieces, connectors, or integration development.
+description: Build and edit Activepieces pieces (integrations) — creating new pieces, adding actions or triggers, or fixing bugs in existing ones. Use when the user asks to work on an Activepieces piece, connector, or integration.
 ---
 
 # Activepieces Piece Builder
@@ -14,6 +14,8 @@ description: Builds Activepieces pieces (integrations) with actions and triggers
 | **Fix a bug** | An existing action/trigger misbehaves | Reproduce → read the offending file *and its `common/` helpers* → smallest fix that matches surrounding style → Step 5 VERIFY. Bump the piece version. |
 
 **Golden rule for existing-piece modes:** the piece you're editing is the source of truth, not these templates. If the piece already has a helper, a particular auth access pattern, or a way of shaping output, follow *that*. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
+
+**The one carve-out — framework calls that drop data.** Matching the piece is right for style, wrong for a call that silently loses information. If the piece calls `pollingHelper` with a hand-picked subset (`{ store, auth, propsValue }`) instead of the whole `context`, fix every trigger in that piece to pass `context` while you're in there — see `trigger-patterns.md`. The version bump and rebuild are already happening; fix-on-touch reaches the pieces people actually use without a ~300-piece codemod PR that touches dead ones too.
 
 ## Workflow (new piece)
 
@@ -29,7 +31,7 @@ description: Builds Activepieces pieces (integrations) with actions and triggers
 - **Location:** `packages/pieces/community/` by default; `packages/pieces/custom/` only if the user says "custom piece". See Piece Types below.
 - Choose the correct auth type — see Quick Auth Reference below
 - Select the most useful actions (CRUD, search, list) and triggers (webhook if supported, polling otherwise)
-- **Ask the user** if OAuth2 config is unclear, there are >10 possible actions, or API behavior is ambiguous
+- **Ask the user** before starting when: OAuth2 authUrl/tokenUrl/scopes are missing from the docs; auth method is unclear or undocumented; more than 10 possible actions exist (which to prioritize); API uses webhook signature verification; test credentials or sandbox access are needed.
 
 ### Step 3: SCAFFOLD
 
@@ -49,90 +51,18 @@ tsconfig.json
 tsconfig.lib.json
 ```
 
-**`package.json`**
-
-```json
-{
-    "name": "@activepieces/piece-<name>",
-    "version": "0.0.1",
-    "main": "./dist/src/index.js",
-    "types": "./dist/src/index.d.ts",
-    "scripts": {
-        "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
-        "lint": "eslint 'src/**/*.ts'"
-    },
-    "dependencies": {
-        "@activepieces/pieces-common": "workspace:*",
-        "@activepieces/pieces-framework": "workspace:*",
-        "@activepieces/shared": "workspace:*",
-        "tslib": "2.6.2"
-    }
-}
-```
-
-Add third-party SDKs to `dependencies` with a pinned version (e.g. `"stripe": "18.2.1"`).
-
-**`.eslintrc.json`**
-
-```json
-{
-    "extends": ["../../../../.eslintrc.json"],
-    "ignorePatterns": ["!**/*"],
-    "overrides": [
-        { "files": ["*.ts", "*.tsx", "*.js", "*.jsx"], "rules": {} },
-        { "files": ["*.ts", "*.tsx"], "rules": {} },
-        { "files": ["*.js", "*.jsx"], "rules": {} }
-    ]
-}
-```
-
-**`tsconfig.json`**
-
-```json
-{
-    "extends": "../../../../tsconfig.base.json",
-    "compilerOptions": {
-        "module": "commonjs",
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "noImplicitOverride": true,
-        "noPropertyAccessFromIndexSignature": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true
-    },
-    "files": [],
-    "include": [],
-    "references": [{ "path": "./tsconfig.lib.json" }]
-}
-```
-
-**`tsconfig.lib.json`**
-
-```json
-{
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "rootDir": ".",
-        "baseUrl": ".",
-        "paths": {},
-        "outDir": "./dist",
-        "declaration": true,
-        "types": ["node"]
-    },
-    "include": ["src/**/*.ts"],
-    "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"]
-}
-```
+Copy the four config files (`package.json`, `.eslintrc.json`, `tsconfig.json`, `tsconfig.lib.json`) from [`new-piece-scaffold.md`](./new-piece-scaffold.md).
 
 ### Step 4: IMPLEMENT
 
 The condensed rules in this file (Quick Auth Reference, Quick Piece Definition Template, UX Quality, Output Quality) cover the common case. Open a reference file when you need a concrete copy-ready example for the specific pattern you're building.
 
-**When you need a pattern, read the relevant reference file — do not grep other pieces in the codebase.** The reference files contain copy-ready examples for every common case. Searching `packages/pieces/community/` surfaces inconsistent older code and wastes context.
+**Reach for the reference file, not the codebase.** The reference files carry vetted patterns for every common case; older pieces in `packages/pieces/community/` are inconsistent and eat context.
 
 | When you reach for it | Open this file |
 |---|---|
 | Wiring auth beyond the Quick Auth Reference table | `auth-patterns.md` |
+| A connection needs a human-readable label in the UI (account email, workspace name) | `auth-patterns.md` (Connection Identifier) |
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
 | A prop type you haven't used (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
@@ -163,7 +93,7 @@ npx turbo run lint --filter=@activepieces/piece-<name>
 
 Both must pass. Lint failures (unused imports, `any` types, unused vars) block CI even when the build is green.
 
-Common TS errors: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, reading `context.auth` as a plain string for SecretText (use `context.auth.secret_text`), missing `sampleData` on a trigger.
+Common TS errors: missing import in `src/index.ts`, missing `tsconfig.base.json` entry, missing `sampleData` on a trigger. Auth-shape errors are covered in the Quick Auth Reference below.
 
 **Test locally:** Add `AP_DEV_PIECES=<name>` to `packages/server/api/.env`, start with `npm start`, open `localhost:4200`.
 
@@ -296,24 +226,9 @@ The catalog is fully curated; a new action or trigger without these is a regress
 
 ---
 
-## Critical Reminders
+## Gotchas that survive the workflow
 
-1. **Register in `tsconfig.base.json`** — alphabetically in `compilerOptions.paths`. Build fails silently without this.
-2. **Action/trigger `name` fields are permanent** — never change them after publishing; flows store them.
-3. **Auth lives in `src/lib/auth.ts`** — define there, import in actions/triggers via `import { myAppAuth } from '../auth'`. Do NOT re-export from `index.ts`.
-4. **Always provide `sampleData`** on triggers — even `{}`.
-5. **Build AND lint must both pass** — lint failures (unused imports, `any`, unused vars) block CI even when build is green.
-6. **Bump version on every existing-piece change** — see Versioning above. Skipping means flows never get your fix.
-7. **AI metadata on every new action & trigger** — explicit `audience` + `aiMetadata { description, idempotent }` on actions, `aiMetadata { description }` on triggers. See `ai-metadata.md`.
+Two things the step-by-step won't catch:
 
----
-
-## When to Ask the User
-
-Pause and ask if:
-
-- OAuth2 authUrl/tokenUrl/scopes are missing from the API docs
-- Auth method is unclear or undocumented
-- More than 10 possible actions exist — ask which to prioritize
-- API uses webhook signature verification
-- You need test credentials or sandbox access
+1. **Action/trigger `name` fields are permanent** — never change them after publishing; flows store them by name.
+2. **Auth stays imported, never re-exported** — actions/triggers do `import { myAppAuth } from '../auth'`; the auth object itself never appears in `index.ts` exports.

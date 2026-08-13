@@ -4,30 +4,30 @@ import { FederatedAuthnProviderConfig, FederatedAuthnProviderConfigWithoutSensit
 import { SsoDomainVerification } from './sso-domain-verification'
 
 export const PlatformUsage = z.object({
-    totalAiCreditsUsed: z.number(),
-    totalAiCreditsUsedThisMonth: z.number(),
-    aiCreditsRemaining: z.number(),
-    aiCreditsLimit: z.number(),
+    creditsUsed: z.number(),
+    creditsRemaining: Nullable(z.number()),
+    creditsNextResetAt: Nullable(z.string()),
+    appSumoAiCreditsUsed: Nullable(z.number()),
+    appSumoAiCreditsRemaining: Nullable(z.number()),
     activeFlows: z.number(),
+    teamProjects: z.number(),
+    users: z.number(),
+    activeUsers: z.number(),
+    invitedSeats: z.number(),
 })
 
 export type PlatformUsage = z.infer<typeof PlatformUsage>
 
 export enum PlanName {
-    STANDARD = 'standard',
+    FREE = 'free',
+    PLUS = 'plus',
+    PLUS_ANNUAL = 'plus_annual',
+    PLUS_CHAT = 'plus_chat',
+    TEAM = 'team',
+    TEAM_ANNUAL = 'team_annual',
     ENTERPRISE = 'enterprise',
-    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
-    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
-    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
-    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
-    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
-    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
-}
-
-export enum TeamProjectsLimit {
-    NONE = 'NONE',
-    ONE = 'ONE',
-    UNLIMITED = 'UNLIMITED',
+    APPSUMO = 'appsumo',
+    FREE_LEGACY = 'free_legacy',
 }
 
 export enum AiCreditsAutoTopUpState {
@@ -35,34 +35,71 @@ export enum AiCreditsAutoTopUpState {
     DISABLED = 'disabled',
 }
 
+export enum ConsumableFeatureId {
+    AP_CREDITS = 'apCredits',
+    APP_SUMO_AI_CREDITS = 'appSumoAiCredits',
+}
+
+export enum UnconsumableFeatureId {
+    TEAM_PROJECTS_LIMIT = 'teamProjectsLimit',
+    USERS_LIMIT = 'usersLimit',
+    ACTIVE_FLOWS_LIMIT = 'activeFlowsLimit',
+}
+
+export enum FeatureFlagId {
+    BILLING_ENFORCED = 'billingEnforced',
+    TABLES_ENABLED = 'tablesEnabled',
+    EVENT_STREAMING_ENABLED = 'eventStreamingEnabled',
+    ENVIRONMENTS_ENABLED = 'environmentsEnabled',
+    ANALYTICS_ENABLED = 'analyticsEnabled',
+    SHOW_POWERED_BY = 'showPoweredBy',
+    AUDIT_LOG_ENABLED = 'auditLogEnabled',
+    EMBEDDING_ENABLED = 'embeddingEnabled',
+    AI_PROVIDERS_ENABLED = 'aiProvidersEnabled',
+    CHAT_ENABLED = 'chatEnabled',
+    WORKER_GROUPS_ENABLED = 'workerGroupsEnabled',
+    MANAGE_PIECES_ENABLED = 'managePiecesEnabled',
+    MANAGE_TEMPLATES_ENABLED = 'manageTemplatesEnabled',
+    CUSTOM_APPEARANCE_ENABLED = 'customAppearanceEnabled',
+    PROJECT_ROLES_ENABLED = 'projectRolesEnabled',
+    GLOBAL_CONNECTIONS_ENABLED = 'globalConnectionsEnabled',
+    CUSTOM_ROLES_ENABLED = 'customRolesEnabled',
+    API_KEYS_ENABLED = 'apiKeysEnabled',
+    SSO_ENABLED = 'ssoEnabled',
+    SECRET_MANAGERS_ENABLED = 'secretManagersEnabled',
+    SCIM_ENABLED = 'scimEnabled',
+}
+
+export type FeatureId = ConsumableFeatureId | UnconsumableFeatureId | FeatureFlagId
+
+export function isConsumableFeatureId(value: string): value is ConsumableFeatureId {
+    return Object.values<string>(ConsumableFeatureId).includes(value)
+}
+
+
 export const PlatformPlan = z.object({
     ...BaseModelSchema,
-    // TODO: We have to use the enum when we finalize the plan names
     plan: Nullable(z.string()),
     platformId: z.string(),
-    includedAiCredits: z.number(),
-    lastFreeAiCreditsRenewalDate: Nullable(DateOrString),
+    includedCredits: z.number(),
 
     tablesEnabled: z.boolean(),
     eventStreamingEnabled: z.boolean(),
-    aiCreditsAutoTopUpState: z.nativeEnum(AiCreditsAutoTopUpState),
-    aiCreditsAutoTopUpThreshold: Nullable(z.number()),
-    aiCreditsAutoTopUpCreditsToAdd: Nullable(z.number()),
-    maxAutoTopUpCreditsMonthly: Nullable(z.number()),
 
     environmentsEnabled: z.boolean(),
     analyticsEnabled: z.boolean(),
     showPoweredBy: z.boolean(),
     auditLogEnabled: z.boolean(),
     embeddingEnabled: z.boolean(),
-    agentsEnabled: z.boolean(),
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
     workerGroupsEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
     customAppearanceEnabled: z.boolean(),
-    teamProjectsLimit: z.nativeEnum(TeamProjectsLimit),
+    billedTeamProjectsLimit: Nullable(z.number()),
+    usersLimit: Nullable(z.number()),
+    scheduledUsersLimit: Nullable(z.number()),
     projectRolesEnabled: z.boolean(),
     globalConnectionsEnabled: z.boolean(),
     customRolesEnabled: z.boolean(),
@@ -72,12 +109,6 @@ export const PlatformPlan = z.object({
     scimEnabled: z.boolean(),
     licenseKey: Nullable(z.string()),
     licenseExpiresAt: Nullable(DateOrString),
-    stripeCustomerId: Nullable(z.string()),
-    stripeSubscriptionId: Nullable(z.string()),
-    stripeSubscriptionStatus: Nullable(z.string()),
-    stripeSubscriptionStartDate: Nullable(z.number()),
-    stripeSubscriptionEndDate: Nullable(z.number()),
-    stripeSubscriptionCancelDate: Nullable(z.number()),
 
     projectsLimit: Nullable(z.number()),
     activeFlowsLimit: Nullable(z.number()),
@@ -96,7 +127,7 @@ export type PlatformPlan = z.infer<typeof PlatformPlan>
 
 export const PlatformPlanLimits = PlatformPlan.omit({ id: true, platformId: true, created: true, updated: true })
 export type PlatformPlanLimits = z.infer<typeof PlatformPlanLimits>
-export type PlatformPlanWithOnlyLimits = Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate' | 'stripeBillingCycle'>
+export type PlatformPlanWithOnlyLimits = PlatformPlanLimits
 
 export const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/
 
@@ -181,6 +212,7 @@ export const PlatformWithoutSensitiveData = z.object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     plan: PlatformPlanLimits,
     usage: PlatformUsage.optional(),
+    billingEnforced: z.boolean().optional(),
     id: z.string(),
     created: DateOrString,
     updated: DateOrString,
@@ -204,11 +236,70 @@ export const PlatformWithoutSensitiveData = z.object({
 })
 export type PlatformWithoutSensitiveData = z.infer<typeof PlatformWithoutSensitiveData>
 
+export const AutoTopUpConfig = z.object({
+    featureId: z.enum(ConsumableFeatureId),
+    enabled: z.boolean(),
+    threshold: z.number(),
+    quantity: z.number(),
+    maxMonthlyTopUps: Nullable(z.number()),
+})
+export type AutoTopUpConfig = z.infer<typeof AutoTopUpConfig>
+
+const BillableFeatureShape = {
+    pricePerUnit: z.number(),
+    billingUnits: z.number(),
+    interval: Nullable(z.string()),
+}
+
+const ConsumableBillableFeatureShape = {
+    ...BillableFeatureShape,
+    autoTopUp: Nullable(AutoTopUpConfig),
+}
+
+export const CreditsBillableFeature = z.object({
+    featureId: z.literal(ConsumableFeatureId.AP_CREDITS),
+    ...ConsumableBillableFeatureShape,
+})
+export type CreditsBillableFeature = z.infer<typeof CreditsBillableFeature>
+
+export const AppSumoCreditsBillableFeature = z.object({
+    featureId: z.literal(ConsumableFeatureId.APP_SUMO_AI_CREDITS),
+    ...ConsumableBillableFeatureShape,
+})
+export type AppSumoCreditsBillableFeature = z.infer<typeof AppSumoCreditsBillableFeature>
+
+export const SeatsBillableFeature = z.object({
+    featureId: z.literal(UnconsumableFeatureId.USERS_LIMIT),
+    ...BillableFeatureShape,
+})
+export type SeatsBillableFeature = z.infer<typeof SeatsBillableFeature>
+
+export type ConsumableBillableFeature = CreditsBillableFeature | AppSumoCreditsBillableFeature
+
+export const ProjectCreditUsage = z.object({
+    projectId: z.string(),
+    projectName: z.string(),
+    creditsUsed: z.number(),
+})
+export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
+
 export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
-    nextBillingDate: z.number(),
+    creditsResetInterval: Nullable(z.string()),
+    autumnPlanName: Nullable(z.string()),
+    scheduledPlanName: Nullable(z.string()),
+    nextBillingDate: z.string(),
     nextBillingAmount: z.number(),
-    cancelAt: Nullable(z.number()),
+    cancelAt: Nullable(z.string()),
+    trialEndsAt: Nullable(z.string()),
+    creditsFeature: Nullable(CreditsBillableFeature),
+    appSumoCreditsFeature: Nullable(AppSumoCreditsBillableFeature),
+    seatsFeature: Nullable(SeatsBillableFeature),
+    billingPortalAvailable: z.boolean(),
+    billingEnforced: z.boolean(),
+    billingUnavailable: z.boolean(),
+    includedSeats: Nullable(z.number()),
+    additionalSeats: Nullable(z.number()),
 })
 export type PlatformBillingInformation = z.infer<typeof PlatformBillingInformation>
