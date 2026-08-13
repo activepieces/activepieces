@@ -48,7 +48,9 @@ export function ProjectsUsageTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold">{t('Usage by Projects')}</h2>
+        <h2 className="text-base font-semibold">
+          {t('Credits Usage by Project')}
+        </h2>
         <DateTimePickerWithRange
           presetType="past"
           from={range.from.toISOString()}
@@ -112,7 +114,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
   },
   {
     accessorKey: 'aiCreditsUsed',
-    header: () => <span className="text-sm">{t('Credits Used on AI')}</span>,
+    header: () => <span className="text-sm">{t('AI Usage')}</span>,
     cell: ({ row }) => (
       <span className="text-sm">
         {Math.round(row.original.aiCreditsUsed).toLocaleString()}
@@ -121,7 +123,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
   },
   {
     id: 'runsCreditsUsed',
-    header: () => <span className="text-sm">{t('Credits Used on Runs')}</span>,
+    header: () => <span className="text-sm">{t('Runs Usage')}</span>,
     cell: ({ row }) => (
       <span className="text-sm">
         {Math.round(
@@ -132,7 +134,7 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
   },
   {
     accessorKey: 'creditsUsed',
-    header: () => <span className="text-sm">{t('Total Credits Used')}</span>,
+    header: () => <span className="text-sm">{t('Total')}</span>,
     cell: ({ row }) => (
       <span className="text-sm">
         {Math.round(row.original.creditsUsed).toLocaleString()}
