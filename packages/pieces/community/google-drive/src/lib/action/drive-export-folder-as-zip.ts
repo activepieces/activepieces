@@ -1,4 +1,9 @@
-import { createAction, Property, PieceAuth, chunk } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  Property,
+  PieceAuth,
+  chunk,
+} from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   ZipWriter,
@@ -92,7 +97,9 @@ async function listFolderChildren({
       nextPageToken?: string;
     }>({
       method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
+      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(
+        params
+      )}`,
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -119,20 +126,36 @@ async function walk({
   includeTeamDrives: boolean;
   out: ZipFolderEntry[];
 }): Promise<void> {
-  const children = await listFolderChildren({ auth, folderId, includeTeamDrives });
+  const children = await listFolderChildren({
+    auth,
+    folderId,
+    includeTeamDrives,
+  });
 
   if (children.length === 0) {
     if (relativePrefix.length > 0) {
-      out.push({ relativePath: relativePrefix, fileId: folderId, isEmptyFolder: true });
+      out.push({
+        relativePath: relativePrefix,
+        fileId: folderId,
+        isEmptyFolder: true,
+      });
     }
     return;
   }
 
   for (const item of children) {
-    const itemPath = relativePrefix.length > 0 ? `${relativePrefix}/${item.name}` : item.name;
+    const itemPath =
+      relativePrefix.length > 0 ? `${relativePrefix}/${item.name}` : item.name;
 
     if (item.mimeType === GOOGLE_FOLDER_MIME_TYPE) {
-      await walk({ auth, folderId: item.id, relativePrefix: itemPath, nativeFormats, includeTeamDrives, out });
+      await walk({
+        auth,
+        folderId: item.id,
+        relativePrefix: itemPath,
+        nativeFormats,
+        includeTeamDrives,
+        out,
+      });
       continue;
     }
 
@@ -148,7 +171,11 @@ async function walk({
         relativePath: fileExtension ? `${itemPath}.${fileExtension}` : itemPath,
         fileId: item.id,
         isEmptyFolder: false,
-        downloadUrl: `https://www.googleapis.com/drive/v3/files/${item.id}/export?mimeType=${encodeURIComponent(exportMimeType)}&supportsAllDrives=true`,
+        downloadUrl: `https://www.googleapis.com/drive/v3/files/${
+          item.id
+        }/export?mimeType=${encodeURIComponent(
+          exportMimeType
+        )}&supportsAllDrives=true`,
       });
       continue;
     }
@@ -178,7 +205,14 @@ async function collectZipEntries({
   includeTeamDrives: boolean;
 }): Promise<ZipFolderEntry[]> {
   const out: ZipFolderEntry[] = [];
-  await walk({ auth, folderId: rootFolderId, relativePrefix: '', nativeFormats, includeTeamDrives, out });
+  await walk({
+    auth,
+    folderId: rootFolderId,
+    relativePrefix: '',
+    nativeFormats,
+    includeTeamDrives,
+    out,
+  });
   return out;
 }
 
@@ -214,7 +248,8 @@ export const driveExportFolderAsZip = createAction({
   auth: googleDriveAuth,
   name: 'drive_export_folder_as_zip',
   displayName: 'Export Folder as Zip',
-  description: 'Recursively export a Google Drive folder (with all subfolders) as a single zip file.',
+  description:
+    'Recursively export a Google Drive folder (with all subfolders) as a single zip file.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -246,12 +281,12 @@ export const driveExportFolderAsZip = createAction({
       displayName: 'Google Docs',
       description: 'How to include native Google Docs found in the folder.',
       required: true,
-      defaultValue: 'pdf',
+      defaultValue: 'docx',
       options: {
         options: [
-          { label: 'Skip', value: 'skip' },
-          { label: 'PDF', value: 'pdf' },
           { label: 'Word (DOCX)', value: 'docx' },
+          { label: 'PDF', value: 'pdf' },
+          { label: 'Skip', value: 'skip' },
         ],
       },
     }),
@@ -259,12 +294,12 @@ export const driveExportFolderAsZip = createAction({
       displayName: 'Google Sheets',
       description: 'How to include native Google Sheets found in the folder.',
       required: true,
-      defaultValue: 'pdf',
+      defaultValue: 'xlsx',
       options: {
         options: [
-          { label: 'Skip', value: 'skip' },
-          { label: 'PDF', value: 'pdf' },
           { label: 'Excel (XLSX)', value: 'xlsx' },
+          { label: 'PDF', value: 'pdf' },
+          { label: 'Skip', value: 'skip' },
         ],
       },
     }),
@@ -272,12 +307,12 @@ export const driveExportFolderAsZip = createAction({
       displayName: 'Google Slides',
       description: 'How to include native Google Slides found in the folder.',
       required: true,
-      defaultValue: 'pdf',
+      defaultValue: 'pptx',
       options: {
         options: [
-          { label: 'Skip', value: 'skip' },
-          { label: 'PDF', value: 'pdf' },
           { label: 'PowerPoint (PPTX)', value: 'pptx' },
+          { label: 'PDF', value: 'pdf' },
+          { label: 'Skip', value: 'skip' },
         ],
       },
     }),
@@ -329,8 +364,10 @@ export const driveExportFolderAsZip = createAction({
   async run(context) {
     const nativeFormats: NativeFormatChoice = {
       docs: context.propsValue.googleDocsFormat as NativeFormatChoice['docs'],
-      sheets: context.propsValue.googleSheetsFormat as NativeFormatChoice['sheets'],
-      slides: context.propsValue.googleSlidesFormat as NativeFormatChoice['slides'],
+      sheets: context.propsValue
+        .googleSheetsFormat as NativeFormatChoice['sheets'],
+      slides: context.propsValue
+        .googleSlidesFormat as NativeFormatChoice['slides'],
     };
 
     const entries = await collectZipEntries({
@@ -345,8 +382,12 @@ export const driveExportFolderAsZip = createAction({
 
     const fileAddOptions: ZipWriterAddDataOptions = {};
     if (context.propsValue.usePassword) {
-      const password = context.propsValue.passwordOptions?.['password'] as string;
-      const encryptionMethod = context.propsValue.passwordOptions?.['encryptionMethod'] as string;
+      const password = context.propsValue.passwordOptions?.[
+        'password'
+      ] as string;
+      const encryptionMethod = context.propsValue.passwordOptions?.[
+        'encryptionMethod'
+      ] as string;
 
       fileAddOptions.password = password;
 
@@ -364,15 +405,23 @@ export const driveExportFolderAsZip = createAction({
     const fileEntries = entries.filter((entry) => !entry.isEmptyFolder);
     for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
       const blobs = await Promise.all(
-        batch.map((entry) => downloadZipEntryContent({ auth: context.auth, entry }))
+        batch.map((entry) =>
+          downloadZipEntryContent({ auth: context.auth, entry })
+        )
       );
       for (let i = 0; i < batch.length; i++) {
-        await zipWriter.add(batch[i].relativePath, new BlobReader(blobs[i]), fileAddOptions);
+        await zipWriter.add(
+          batch[i].relativePath,
+          new BlobReader(blobs[i]),
+          fileAddOptions
+        );
       }
     }
 
     for (const folder of entries.filter((entry) => entry.isEmptyFolder)) {
-      await zipWriter.add(`${folder.relativePath}/`, undefined, { directory: true });
+      await zipWriter.add(`${folder.relativePath}/`, undefined, {
+        directory: true,
+      });
     }
 
     await zipWriter.close();
