@@ -280,6 +280,7 @@ export const ProjectCreditUsage = z.object({
     projectId: z.string(),
     projectName: z.string(),
     creditsUsed: z.number(),
+    aiCreditsUsed: z.number(),
 })
 export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
 

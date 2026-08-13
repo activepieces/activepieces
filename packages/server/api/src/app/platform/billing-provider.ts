@@ -231,6 +231,7 @@ export type CreditUsageByProjectParams = {
 export type ProjectCreditsAggregate = {
     projectId: string
     creditsUsed: number
+    aiCreditsUsed: number
 }
 
 export type CreditUsage = {
