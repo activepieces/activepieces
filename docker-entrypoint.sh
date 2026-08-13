@@ -45,9 +45,6 @@ case "$AP_CONTAINER_TYPE" in
 
         trap 'kill "$app_pid" "$worker_pid" 2>/dev/null' TERM INT
 
-        # ponytail: 1s poll instead of `wait -n` (dash has no -n). If either
-        # process dies, tear down the other and exit non-zero so the orchestrator
-        # restarts the container — replaces pm2's in-container crash-restart.
         while kill -0 "$app_pid" 2>/dev/null && kill -0 "$worker_pid" 2>/dev/null; do
             sleep 1
         done
