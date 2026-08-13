@@ -1,51 +1,57 @@
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { type ApLogger } from '@activepieces/server-utils'
+import { type ApLogger, fileSystemUtils } from '@activepieces/server-utils'
 import { FlowVersion, GetFlowBundleResponse, LATEST_FLOW_SCHEMA_VERSION, PiecePackage, WorkerToApiContract } from '@activepieces/shared'
+import writeFileAtomic from 'write-file-atomic'
 import { bundleHttp } from '../../utils/bundle-http'
 import { cacheUtils } from '../cache-paths'
-import { cacheState } from '../cache-state'
 import { codeCache } from './code/code-cache'
 import { flowSteps } from './flow-steps'
 
-const MISS = ''
+const MANIFEST_FILE = 'manifest.json'
 
 export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string) => ({
+    // The manifest is the largest single value a worker handles — 47 MB for the biggest
+    // production bundle — so this path is written to hold ONE copy of it, not four.
+    // It deliberately does not go through `cacheState`: that stores values inside a
+    // `cache.json` map, so a manifest was JSON-encoded *inside* another JSON document.
+    // Reading it back cost a full read of the wrapper, a parse of the wrapper to extract
+    // the manifest string, and then a parse of the manifest — and writing it cost a
+    // re-serialization of the whole wrapper around the 47 MB string. A bundle directory
+    // is keyed by flowVersionId and holds exactly one entry, so the map bought nothing.
     async tryFetch({ flowVersionId, projectId }: TryFetchParams): Promise<MaterializedFlowBundle | null> {
-        const cache = cacheState(path.join(cacheUtils(basePath).getGlobalCacheBundlesPath(), flowVersionId))
-        const { state } = await cache.getOrSetCache({
-            key: flowVersionId,
-            // Local-first: a cached, current-schema manifest is a hit — no RPC, no disk writes.
-            cacheMiss: (value) => isNil(parseManifest(value)),
-            // Cold path only: fetch over RPC and materialize compiled code to disk.
-            // Any failure (RPC, signed-URL download, disk write) degrades to a MISS so
-            // the caller falls back to the legacy resolve path — a bundle is an
-            // optimization and must never fail the run.
-            installFn: async () => {
-                const { data: state, error } = await tryCatch(async () => {
-                    const response = await apiClient.getFlowBundle({ flowVersionId, projectId })
-                    const data = await resolveBundleData(response)
-                    if (isNil(data)) {
-                        return MISS
-                    }
-                    const manifest = parseManifest(data.toString('utf8'))
-                    if (isNil(manifest)) {
-                        log.info({ flowVersion: { id: flowVersionId } }, 'Ignoring stale-schema flow bundle, rebuilding')
-                        return MISS
-                    }
-                    await materializeCode({ manifest, basePath })
-                    return JSON.stringify(manifest)
-                })
-                if (error) {
-                    log.warn({ error: String(error), flowVersion: { id: flowVersionId } }, 'Failed to fetch flow bundle, falling back to resolve')
-                    return MISS
-                }
-                return state
-            },
-            // Never persist a miss, so a later-published bundle is picked up on the next run.
-            skipSave: (value) => value === MISS,
+        const manifestPath = path.join(cacheUtils(basePath).getGlobalCacheBundlesPath(), flowVersionId, MANIFEST_FILE)
+        const cached = await readManifest(manifestPath)
+        if (!isNil(cached)) {
+            return { flowVersion: cached.flowVersion, pieces: cached.pieces }
+        }
+        // Cold path: fetch over RPC and materialize compiled code to disk. Any failure
+        // (RPC, signed-URL download, disk write) degrades to a miss so the caller falls back
+        // to the legacy resolve path — a bundle is an optimization and must never fail the run.
+        const { data: manifest, error } = await tryCatch(async () => {
+            const response = await apiClient.getFlowBundle({ flowVersionId, projectId })
+            const data = await resolveBundleData(response)
+            if (isNil(data)) {
+                return null
+            }
+            // `raw` is already exactly what we would get by re-serializing the parsed
+            // manifest, so it is what gets written — re-stringifying would put a second
+            // full-size copy alongside the first for the whole of materializeCode.
+            const raw = data.toString('utf8')
+            const parsed = parseManifest(raw)
+            if (isNil(parsed)) {
+                log.info({ flowVersion: { id: flowVersionId } }, 'Ignoring stale-schema flow bundle, rebuilding')
+                return null
+            }
+            await materializeCode({ manifest: parsed, basePath })
+            await writeManifest({ manifestPath, raw })
+            return parsed
         })
-        const manifest = parseManifest(state)
+        if (error) {
+            log.warn({ error: String(error), flowVersion: { id: flowVersionId } }, 'Failed to fetch flow bundle, falling back to resolve')
+            return null
+        }
         return isNil(manifest) ? null : { flowVersion: manifest.flowVersion, pieces: manifest.pieces }
     },
 
@@ -79,6 +85,16 @@ export const flowBundleStore = (log: ApLogger, apiClient: WorkerToApiContract, b
     },
 })
 
+async function readManifest(manifestPath: string): Promise<FlowBundleManifest | null> {
+    const { data } = await tryCatch(() => readFile(manifestPath, 'utf8'))
+    return isNil(data) ? null : parseManifest(data)
+}
+
+async function writeManifest({ manifestPath, raw }: WriteManifestParams): Promise<void> {
+    await fileSystemUtils.threadSafeMkdir(path.dirname(manifestPath))
+    await writeFileAtomic(manifestPath, raw, 'utf8')
+}
+
 async function resolveBundleData(response: GetFlowBundleResponse | null): Promise<Buffer | null> {
     if (isNil(response)) {
         return null
@@ -94,7 +110,7 @@ async function materializeCode({ manifest, basePath }: MaterializeCodeParams): P
 }
 
 function parseManifest(value: string | null): FlowBundleManifest | null {
-    if (isNil(value) || value === MISS) {
+    if (isNil(value) || value === '') {
         return null
     }
     const { data: manifest } = tryCatchSync(() => JSON.parse(value) as FlowBundleManifest)
@@ -119,6 +135,11 @@ type PublishParams = {
 type MaterializeCodeParams = {
     manifest: FlowBundleManifest
     basePath: string
+}
+
+type WriteManifestParams = {
+    manifestPath: string
+    raw: string
 }
 
 type MaterializedFlowBundle = {
