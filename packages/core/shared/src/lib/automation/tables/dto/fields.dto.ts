@@ -17,7 +17,7 @@ export const CreateFieldRequest = z.union([z.object({
     position: z.number().int().nonnegative().optional(),
 }), z.object({
     name: z.string(),
-    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE)]),
+    type: z.union([z.literal(FieldType.TEXT), z.literal(FieldType.NUMBER), z.literal(FieldType.DATE), z.literal(FieldType.DATETIME)]),
     tableId: z.string(),
     externalId: z.string().optional(),
     position: z.number().int().nonnegative().optional(),
