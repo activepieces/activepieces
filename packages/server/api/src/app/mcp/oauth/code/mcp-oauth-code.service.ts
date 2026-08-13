@@ -8,6 +8,8 @@ const repo = repoFactory(McpOAuthAuthorizationCodeEntity)
 
 const CODE_TTL_10_MINUTES_MS = 10 * 60 * 1000
 
+const CODE_PATTERN = /^[A-Za-z0-9_-]{1,128}$/
+
 function generateCode(): string {
     return randomBytes(48).toString('base64url')
 }
@@ -37,6 +39,9 @@ export const mcpOAuthCodeService = {
     },
 
     async consume({ code, clientId, redirectUri }: ConsumeCodeParams): Promise<McpOAuthAuthorizationCode | null> {
+        if (!CODE_PATTERN.test(code)) {
+            return null
+        }
         const updateResult = await repo().createQueryBuilder()
             .update()
             .set({ used: true })

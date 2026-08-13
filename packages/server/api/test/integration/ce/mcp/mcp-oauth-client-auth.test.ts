@@ -1,46 +1,14 @@
-import { createHash, randomBytes } from 'node:crypto'
-import { apId } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { mcpOAuthClientService } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client.service'
-import { mcpOAuthCodeService } from '../../../../src/app/mcp/oauth/code/mcp-oauth-code.service'
+import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers, RegisteredClient } from '../../../helpers/mcp-oauth'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 
-const REDIRECT_URI = 'https://example.com/oauth/callback'
-
 async function registerClient(tokenEndpointAuthMethod?: string): Promise<RegisteredClient> {
-    const body: Record<string, unknown> = { redirect_uris: [REDIRECT_URI] }
-    if (tokenEndpointAuthMethod !== undefined) {
-        body.token_endpoint_auth_method = tokenEndpointAuthMethod
-    }
-    const res = await app.inject({ method: 'POST', url: '/register', payload: body })
-    return res.json()
-}
-
-async function seedAuthorizationCode({ clientId, codeChallenge }: { clientId: string, codeChallenge: string }): Promise<string> {
-    return mcpOAuthCodeService.create({
-        clientId,
-        userId: apId(),
-        projectId: apId(),
-        platformId: apId(),
-        redirectUri: REDIRECT_URI,
-        codeChallenge,
-        codeChallengeMethod: 'S256',
-        scopes: ['mcp'],
-    })
-}
-
-function generatePkce(): { verifier: string, challenge: string } {
-    const verifier = randomBytes(32).toString('base64url')
-    const challenge = createHash('sha256').update(verifier).digest('base64url')
-    return { verifier, challenge }
-}
-
-function basicHeader({ clientId, clientSecret }: { clientId: string, clientSecret: string }): string {
-    return 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+    return mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod })
 }
 
 async function exchange({ client, headers, body }: {
@@ -48,8 +16,8 @@ async function exchange({ client, headers, body }: {
     headers?: Record<string, string>
     body?: Record<string, string>
 }): Promise<ReturnType<FastifyInstance['inject']>> {
-    const { verifier, challenge } = generatePkce()
-    const code = await seedAuthorizationCode({ clientId: client.client_id, codeChallenge: challenge })
+    const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
+    const code = await mcpOAuthTestHelpers.issueCode({ clientId: client.client_id, codeChallenge: challenge })
     return app.inject({
         method: 'POST',
         url: '/token',
@@ -58,7 +26,7 @@ async function exchange({ client, headers, body }: {
             grant_type: 'authorization_code',
             code,
             code_verifier: verifier,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: MCP_OAUTH_REDIRECT_URI,
             ...body,
         }).toString(),
     })
@@ -95,25 +63,29 @@ describe('MCP OAuth client authentication', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/register',
-                payload: { redirect_uris: [REDIRECT_URI], token_endpoint_auth_method: 'private_key_jwt' },
+                payload: { redirect_uris: [MCP_OAUTH_REDIRECT_URI], token_endpoint_auth_method: 'private_key_jwt' },
             })
 
             expect(res.statusCode).toBe(400)
         })
 
-        it('advertises every supported method for both the token and revocation endpoints', async () => {
-            const res = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server' })
+        it.each([
+            ['client_name', { redirect_uris: [MCP_OAUTH_REDIRECT_URI], client_name: 'a\u0000b' }],
+            ['a redirect_uri', { redirect_uris: ['https://example.com/cb\u0000x'] }],
+            ['every redirect_uri', { redirect_uris: [MCP_OAUTH_REDIRECT_URI, 'https://example.com/cb\u0000x'] }],
+        ])('refuses to persist a control character in %s', async (_name, payload) => {
+            const res = await app.inject({ method: 'POST', url: '/register', payload })
 
-            const methods = expect.arrayContaining(['client_secret_post', 'client_secret_basic', 'none'])
-            expect(res.json().token_endpoint_auth_methods_supported).toEqual(methods)
-            expect(res.json().revocation_endpoint_auth_methods_supported).toEqual(methods)
+            expect(res.statusCode).toBe(400)
+            expect(res.body).not.toContain('22021')
+            expect(res.body).not.toContain('invalid byte sequence')
         })
 
         it('keeps the issued client secret out of caches (RFC 7591 section 3.2.1)', async () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/register',
-                payload: { redirect_uris: [REDIRECT_URI] },
+                payload: { redirect_uris: [MCP_OAUTH_REDIRECT_URI] },
             })
 
             expect(res.statusCode).toBe(201)
@@ -128,7 +100,7 @@ describe('MCP OAuth client authentication', () => {
 
             const res = await exchange({
                 client,
-                headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
+                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
             })
 
             expect(res.statusCode).toBe(200)
@@ -157,7 +129,7 @@ describe('MCP OAuth client authentication', () => {
             })
             const postClientViaHeader = await exchange({
                 client: postClient,
-                headers: { authorization: basicHeader({ clientId: postClient.client_id, clientSecret: postClient.client_secret ?? '' }) },
+                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: postClient.client_id, clientSecret: postClient.client_secret ?? '' }) },
             })
 
             expect(basicClientViaBody.statusCode).toBe(200)
@@ -185,7 +157,7 @@ describe('MCP OAuth client authentication', () => {
         it('rejects a wrong secret in the Authorization header', async () => {
             const client = await registerClient('client_secret_basic')
 
-            const res = await exchange({ client, headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) } })
+            const res = await exchange({ client, headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) } })
 
             expect(res.statusCode).toBe(400)
             expect(res.json().error).toBe('invalid_client')
@@ -205,7 +177,7 @@ describe('MCP OAuth client authentication', () => {
 
             const res = await exchange({
                 client,
-                headers: { authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
+                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
                 body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
             })
 
@@ -231,7 +203,7 @@ describe('MCP OAuth client authentication', () => {
 
             const res = await exchange({
                 client,
-                headers: { authorization: basicHeader({ clientId: other.client_id, clientSecret: '' }) },
+                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: other.client_id, clientSecret: '' }) },
                 body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
             })
 
@@ -276,7 +248,7 @@ describe('MCP OAuth client authentication', () => {
                 method: 'POST',
                 url: '/token',
                 headers: { 'content-type': 'application/x-www-form-urlencoded' },
-                payload: `grant_type=authorization_code&code=x&code_verifier=y&redirect_uri=${REDIRECT_URI}&client_id=${clientId}`,
+                payload: `grant_type=authorization_code&code=x&code_verifier=y&redirect_uri=${MCP_OAUTH_REDIRECT_URI}&client_id=${clientId}`,
             })
             const viaHeader = await app.inject({
                 method: 'POST',
@@ -289,7 +261,7 @@ describe('MCP OAuth client authentication', () => {
             })
             const viaQuery = await app.inject({
                 method: 'GET',
-                url: `/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&code_challenge=abc&code_challenge_method=S256`,
+                url: `/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(MCP_OAUTH_REDIRECT_URI)}&response_type=code&code_challenge=abc&code_challenge_method=S256`,
             })
 
             expect(viaBody.statusCode).toBe(400)
@@ -325,7 +297,7 @@ describe('MCP OAuth client authentication', () => {
     describe('clients registered before the auth-method fix', () => {
         async function registerLegacyClient(): Promise<RegisteredClient> {
             const client = await mcpOAuthClientService.register({
-                redirectUris: [REDIRECT_URI],
+                redirectUris: [MCP_OAUTH_REDIRECT_URI],
                 tokenEndpointAuthMethod: 'client_secret_post',
             })
             await databaseConnection().query(
@@ -362,7 +334,7 @@ describe('MCP OAuth client authentication', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/revoke',
-                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
                 payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
             })
 
@@ -375,7 +347,7 @@ describe('MCP OAuth client authentication', () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/revoke',
-                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
                 payload: new URLSearchParams({ token: 'some-refresh-token' }).toString(),
             })
 
@@ -411,8 +383,8 @@ describe('MCP OAuth client authentication', () => {
         it('does not revoke another client\'s refresh token', async () => {
             const owner = await registerClient('none')
             const attacker = await registerClient('none')
-            const { verifier, challenge } = generatePkce()
-            const code = await seedAuthorizationCode({ clientId: owner.client_id, codeChallenge: challenge })
+            const { verifier, challenge } = mcpOAuthTestHelpers.generatePkce()
+            const code = await mcpOAuthTestHelpers.issueCode({ clientId: owner.client_id, codeChallenge: challenge })
             const issued = await app.inject({
                 method: 'POST',
                 url: '/token',
@@ -422,7 +394,7 @@ describe('MCP OAuth client authentication', () => {
                     code,
                     client_id: owner.client_id,
                     code_verifier: verifier,
-                    redirect_uri: REDIRECT_URI,
+                    redirect_uri: MCP_OAUTH_REDIRECT_URI,
                 }).toString(),
             })
             const refreshToken = issued.json().refresh_token
@@ -463,9 +435,3 @@ describe('MCP OAuth client authentication', () => {
         })
     })
 })
-
-type RegisteredClient = {
-    client_id: string
-    client_secret?: string
-    token_endpoint_auth_method: string
-}

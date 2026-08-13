@@ -1,5 +1,5 @@
-import { isNil } from '@activepieces/core-utils'
-import { McpOAuthClient, tryCatchSync } from '@activepieces/shared'
+import { isNil, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
+import { McpOAuthClient } from '@activepieces/shared'
 import { mcpOAuthClientService } from './mcp-oauth-client.service'
 
 function decodeCredentialPart(value: string): string {
@@ -26,9 +26,7 @@ function parseBasicHeader(authorizationHeader: string | undefined): BasicCredent
 function invalidClient(errorDescription?: string): AuthenticateResult {
     return {
         status: 'error',
-        payload: isNil(errorDescription)
-            ? { error: 'invalid_client' }
-            : { error: 'invalid_client', error_description: errorDescription },
+        payload: { error: 'invalid_client', ...spreadIfDefined('error_description', errorDescription) },
     }
 }
 

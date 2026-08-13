@@ -1,6 +1,7 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { mcpOAuthValidation, STORABLE_TEXT_MESSAGE } from '../mcp-oauth-validation'
 import { mcpOAuthClientService } from './mcp-oauth-client.service'
 
 export const mcpOAuthRegisterController: FastifyPluginAsyncZod = async (app) => {
@@ -34,11 +35,11 @@ const RegisterRequest = {
     schema: {
         hide: true,
         body: z.object({
-            redirect_uris: z.array(z.string().url().refine((uri) => {
+            redirect_uris: z.array(z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).url().refine((uri) => {
                 const scheme = new URL(uri).protocol
                 return scheme === 'http:' || scheme === 'https:' || isPrivateUseScheme(scheme)
-            }, { message: 'Only http, https, or private-use URI schemes (RFC 8252) are allowed' })).min(1),
-            client_name: z.string().max(255).optional(),
+            }, { message: 'Only http, https, or private-use URI schemes (RFC 8252) are allowed' })).min(1).max(32),
+            client_name: z.string().max(255).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
             grant_types: z.array(z.string()).optional(),
             response_types: z.array(z.string()).optional(),
             token_endpoint_auth_method: z.enum(['none', 'client_secret_post', 'client_secret_basic']).optional(),
