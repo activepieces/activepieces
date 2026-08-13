@@ -119,6 +119,15 @@ const COLUMNS: ColumnDef<RowDataWithActions<ProjectUsageRow>, unknown>[] = [
       </span>
     ),
   },
+  {
+    accessorKey: 'aiCreditsUsed',
+    header: () => <span className="text-sm">{t('AI Credits Used')}</span>,
+    cell: ({ row }) => (
+      <span className="text-sm">
+        {Math.round(row.original.aiCreditsUsed).toLocaleString()}
+      </span>
+    ),
+  },
 ];
 
 type ProjectUsageRow = ProjectCreditUsage & { id: string };
