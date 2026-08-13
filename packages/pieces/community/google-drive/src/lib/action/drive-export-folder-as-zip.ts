@@ -6,12 +6,8 @@ import {
   chunk,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import {
-  ZipWriter,
-  BlobWriter,
-  BlobReader,
-  ZipWriterAddDataOptions,
-} from '@zip.js/zip.js';
+import { Readable } from 'node:stream';
+import { ZipWriter, ZipWriterAddDataOptions } from '@zip.js/zip.js';
 import { extension } from 'mime-types';
 import querystring from 'querystring';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
@@ -239,13 +235,17 @@ async function collectZipEntries({
   return out;
 }
 
-async function downloadZipEntryContent({
+async function downloadAndAddZipEntry({
   auth,
   entry,
+  zipWriter,
+  fileAddOptions,
 }: {
   auth: GoogleDriveAuthValue;
   entry: ZipFolderEntry;
-}): Promise<Blob> {
+  zipWriter: ZipWriter<unknown>;
+  fileAddOptions: ZipWriterAddDataOptions;
+}): Promise<void> {
   if (!entry.downloadUrl) {
     throw new Error(`No download URL for entry "${entry.relativePath}"`);
   }
@@ -253,7 +253,7 @@ async function downloadZipEntryContent({
   const response = await fetch(entry.downloadUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     const body = await response.text().catch(() => '');
     if (response.status === 403 && body.includes('exportSizeLimitExceeded')) {
       throw new Error(
@@ -264,7 +264,8 @@ async function downloadZipEntryContent({
       `Failed to download "${entry.relativePath}" (HTTP ${response.status}): ${body}`
     );
   }
-  return response.blob();
+  // stream the response body straight into the zip entry rather than buffering it into a Blob first
+  await zipWriter.add(entry.relativePath, response.body, fileAddOptions);
 }
 
 export const driveExportFolderAsZip = createAction({
@@ -405,8 +406,16 @@ export const driveExportFolderAsZip = createAction({
       includeTeamDrives: context.propsValue.includeTeamDrives ?? false,
     });
 
-    const blobWriter = new BlobWriter('application/zip');
-    const zipWriter = new ZipWriter(blobWriter);
+    const zipStream = new TransformStream();
+    const zipWriter = new ZipWriter(zipStream.writable);
+
+    // start consuming the zip output as it's produced, rather than waiting for the whole
+    // archive to be built in memory before writing it out
+    const writeFilePromise = context.files.write({
+      // @ts-expect-error -- undici streams a Node web ReadableStream; the DOM fetch types omit the fromWeb overload
+      data: Readable.fromWeb(zipStream.readable),
+      fileName: context.propsValue.outputFileName,
+    });
 
     const fileAddOptions: ZipWriterAddDataOptions = {};
     if (context.propsValue.usePassword) {
@@ -432,18 +441,14 @@ export const driveExportFolderAsZip = createAction({
 
     const fileEntries = entries.filter((entry) => !entry.isEmptyFolder);
     for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
-      const blobs = await Promise.all(
+      // zip.js supports adding multiple entries concurrently (see its own "Adding concurrently
+      // multiple entries" example) -- each entry streams straight from the network into the
+      // archive, so neither the individual files nor the growing zip are buffered in memory
+      await Promise.all(
         batch.map((entry) =>
-          downloadZipEntryContent({ auth: context.auth, entry })
+          downloadAndAddZipEntry({ auth: context.auth, entry, zipWriter, fileAddOptions })
         )
       );
-      for (let i = 0; i < batch.length; i++) {
-        await zipWriter.add(
-          batch[i].relativePath,
-          new BlobReader(blobs[i]),
-          fileAddOptions
-        );
-      }
     }
 
     for (const folder of entries.filter((entry) => entry.isEmptyFolder)) {
@@ -453,12 +458,7 @@ export const driveExportFolderAsZip = createAction({
     }
 
     await zipWriter.close();
-    const zipBlob = await blobWriter.getData();
-    const zipBuffer = Buffer.from(await zipBlob.arrayBuffer());
 
-    return context.files.write({
-      data: zipBuffer,
-      fileName: context.propsValue.outputFileName,
-    });
+    return writeFilePromise;
   },
 });
