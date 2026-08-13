@@ -1,13 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, isNil } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import {
-  MssqlTable,
-  mssqlConnect,
-  mssqlGetTableMeta,
-  quoteId,
-  quoteTable,
-} from '../common';
-import { exactColumn } from '../common/cursor';
+import { mssqlCommon } from '../common';
+import { cursorUtils } from '../common/cursor';
 import { mssqlProps, warningMarkdown } from '../common/props';
 import { findRowsActionOutputSchema } from '../output-schemas';
 
@@ -19,8 +13,8 @@ export const findRowsAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Reads rows from one SQL Server table, optionally filtered by a WHERE condition, restricted to chosen columns, sorted, and capped to a maximum number of rows. Use to look up or list records without writing a full query. The condition is inserted into the statement as written, so pass dynamic values through the Parameters map as named @placeholders instead of embedding them. Read-only and idempotent.',
-    idempotent: true,
+      'Reads rows from one SQL Server table, optionally filtered by a WHERE condition, restricted to chosen columns, sorted, and capped to a maximum number of rows. Use to look up or list records without writing a full query. The condition is inserted into the statement as written, so pass dynamic values through the Parameters map as named @placeholders instead of embedding them. Not idempotent in general: the condition is raw T-SQL, so a statement that writes can be smuggled through it and repeating the call would repeat the write.',
+    idempotent: false,
   },
   props: {
     markdown: warningMarkdown,
@@ -42,12 +36,12 @@ export const findRowsAction = createAction({
         'Values for the @placeholders used in the condition. Enter the name without the @ prefix.',
       required: false,
     }),
-    order_by: mssqlProps.column(
-      'Order By',
-      'Column to sort the rows by.',
-      false,
-      true
-    ),
+    order_by: mssqlProps.column({
+      displayName: 'Order By',
+      description: 'Column to sort the rows by.',
+      required: false,
+      sortableOnly: true,
+    }),
     order_direction: Property.StaticDropdown({
       displayName: 'Order Direction',
       required: false,
@@ -78,10 +72,10 @@ export const findRowsAction = createAction({
       limit,
     } = context.propsValue;
 
-    const selected = (columns as string[] | undefined) ?? [];
+    const selected = (columns ?? []).map(String);
 
     let top = '';
-    if (limit !== undefined && limit !== null && `${limit}`.trim() !== '') {
+    if (!isNil(limit) && `${limit}`.trim() !== '') {
       const n = Number(limit);
       if (!Number.isInteger(n) || n < 1) {
         throw new Error(`Limit must be a whole number of 1 or more, got: ${limit}`);
@@ -89,41 +83,39 @@ export const findRowsAction = createAction({
       top = `TOP (${n}) `;
     }
 
-    const pool = await mssqlConnect(context.auth);
+    const pool = await mssqlCommon.connect({ auth: context.auth });
     try {
-      // The column types decide the SELECT list: decimal and the date family
-      // have to be rendered to text by the server, because the driver rounds
-      // them on the way back. See projection() in common/cursor.
-      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
+      const meta = await mssqlCommon.getTableMeta({ pool, table });
       const byName = new Map(meta.columns.map((c) => [c.name, c]));
       const projected =
         selected.length > 0
           ? selected.map((name) => {
               const column = byName.get(name);
-              return column ? exactColumn(column) : quoteId(name);
+              return column
+                ? cursorUtils.exactColumn({ column })
+                : mssqlCommon.quoteId(name);
             })
-          : meta.columns.map((column) => exactColumn(column));
+          : meta.columns.map((column) => cursorUtils.exactColumn({ column }));
       const columnList = projected.length > 0 ? projected.join(', ') : '*';
 
-      let query = `SELECT ${top}${columnList} FROM ${quoteTable(
-        table as MssqlTable
+      let query = `SELECT ${top}${columnList} FROM ${mssqlCommon.quoteTable(
+        table
       )}`;
       if (condition && condition.trim().length > 0) {
         query += ` WHERE ${condition}`;
       }
       if (order_by) {
-        // Qualified with the table: a decimal or date column is projected as
-        // text under an alias of the same name, and a bare identifier in ORDER
-        // BY binds to that alias, sorting '10.0000' before '9.0000'.
-        query += ` ORDER BY ${quoteTable(table as MssqlTable)}.${quoteId(
-          order_by
-        )} ${order_direction === 'DESC' ? 'DESC' : 'ASC'}`;
+        query += ` ORDER BY ${mssqlCommon.quoteTable(
+          table
+        )}.${mssqlCommon.quoteId(order_by)} ${
+          order_direction === 'DESC' ? 'DESC' : 'ASC'
+        }`;
       }
 
-      const request = pool.request();
-      for (const [name, value] of Object.entries(parameters ?? {})) {
-        request.input(name.replace(/^@/, ''), value ?? null);
-      }
+      const request = mssqlCommon.bindParameters({
+        request: pool.request(),
+        parameters,
+      });
       const result = await request.query<Record<string, unknown>>(query);
       return result.recordset ?? [];
     } finally {

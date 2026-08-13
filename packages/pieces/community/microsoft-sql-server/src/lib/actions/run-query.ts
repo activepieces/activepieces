@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import { mssqlConnect } from '../common';
+import { mssqlCommon } from '../common';
 import { warningMarkdown } from '../common/props';
 import { runQueryActionOutputSchema } from '../output-schemas';
 
@@ -39,16 +39,21 @@ export const runQueryAction = createAction({
   outputSchema: runQueryActionOutputSchema,
   async run(context) {
     const { query, parameters, query_timeout } = context.propsValue;
-    const pool = await mssqlConnect(context.auth, query_timeout);
+    const pool = await mssqlCommon.connect({
+      auth: context.auth,
+      requestTimeoutMs: query_timeout,
+    });
     try {
-      const request = pool.request();
-      for (const [name, value] of Object.entries(parameters ?? {})) {
-        request.input(name.replace(/^@/, ''), value ?? null);
-      }
+      const request = mssqlCommon.bindParameters({
+        request: pool.request(),
+        parameters,
+      });
       const result = await request.query<Record<string, unknown>>(query);
-      const rows = result.recordset ?? [];
+      const sets = (result.recordsets ?? []).map((set) => [...set]);
+      const rows = sets[0] ?? [];
       return {
         rows,
+        result_sets: sets,
         row_count: rows.length,
         rows_affected: (result.rowsAffected ?? []).reduce((a, b) => a + b, 0),
       };
