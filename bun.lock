@@ -187,7 +187,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "ipaddr.js": "2.3.0",
@@ -3887,7 +3887,7 @@
     },
     "packages/pieces/community/google-sheets": {
       "name": "@activepieces/piece-google-sheets",
-      "version": "0.16.7",
+      "version": "0.16.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
