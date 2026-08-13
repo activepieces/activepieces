@@ -408,12 +408,13 @@ export const driveExportFolderAsZip = createAction({
 
     const zipStream = new TransformStream();
     const zipWriter = new ZipWriter(zipStream.writable);
+    // @ts-expect-error -- undici streams a Node web ReadableStream; the DOM fetch types omit the fromWeb overload
+    const zipReadable: Readable = Readable.fromWeb(zipStream.readable);
 
     // start consuming the zip output as it's produced, rather than waiting for the whole
     // archive to be built in memory before writing it out
     const writeFilePromise = context.files.write({
-      // @ts-expect-error -- undici streams a Node web ReadableStream; the DOM fetch types omit the fromWeb overload
-      data: Readable.fromWeb(zipStream.readable),
+      data: zipReadable,
       fileName: context.propsValue.outputFileName,
     });
     // if the produce side below throws, the stream gets aborted and this promise settles on its
@@ -466,8 +467,11 @@ export const driveExportFolderAsZip = createAction({
       await zipWriter.close();
     } catch (error) {
       // a download/add failure leaves the file upload waiting on a stream that will never
-      // produce more data or end -- abort it so the upload stops rather than hanging
-      await zipStream.writable.abort(error).catch(() => undefined);
+      // produce more data or end. zipStream.writable.abort() is not reliable here -- zip.js
+      // can still hold the native lock on it while other concurrent add() calls in the same
+      // batch are mid-write, which makes abort() throw and leaves the upload hanging anyway.
+      // Destroying the readable side works regardless of that lock state.
+      zipReadable.destroy(error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
 
