@@ -16,6 +16,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
             grant_types_supported: ['authorization_code', 'refresh_token'],
             code_challenge_methods_supported: ['S256'],
             token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
+            revocation_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
             scopes_supported: ['mcp'],
         })
     })

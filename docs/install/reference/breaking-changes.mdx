@@ -13,7 +13,7 @@ icon: "hammer"
 Two changes to the MCP OAuth endpoints:
 
 - `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
-- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
 
 #### What you need to do
 

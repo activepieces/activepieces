@@ -101,12 +101,24 @@ describe('MCP OAuth client authentication', () => {
             expect(res.statusCode).toBe(400)
         })
 
-        it('advertises every supported method in the authorization server metadata', async () => {
+        it('advertises every supported method for both the token and revocation endpoints', async () => {
             const res = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server' })
 
-            expect(res.json().token_endpoint_auth_methods_supported).toEqual(
-                expect.arrayContaining(['client_secret_post', 'client_secret_basic', 'none']),
-            )
+            const methods = expect.arrayContaining(['client_secret_post', 'client_secret_basic', 'none'])
+            expect(res.json().token_endpoint_auth_methods_supported).toEqual(methods)
+            expect(res.json().revocation_endpoint_auth_methods_supported).toEqual(methods)
+        })
+
+        it('keeps the issued client secret out of caches (RFC 7591 section 3.2.1)', async () => {
+            const res = await app.inject({
+                method: 'POST',
+                url: '/register',
+                payload: { redirect_uris: [REDIRECT_URI] },
+            })
+
+            expect(res.statusCode).toBe(201)
+            expect(res.headers['cache-control']).toBe('no-store')
+            expect(res.headers['pragma']).toBe('no-cache')
         })
     })
 

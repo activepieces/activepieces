@@ -15,7 +15,11 @@ export const mcpOAuthRegisterController: FastifyPluginAsyncZod = async (app) => 
             tokenEndpointAuthMethod: token_endpoint_auth_method,
         })
 
-        return reply.status(201).send(result)
+        return reply
+            .status(201)
+            .header('Cache-Control', 'no-store')
+            .header('Pragma', 'no-cache')
+            .send(result)
     })
 }
 
