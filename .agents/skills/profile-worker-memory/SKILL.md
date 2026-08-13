@@ -21,6 +21,8 @@ dmesg -T | grep -aiE "Memory cgroup out of memory|Killed process"
 
 `OOMKilled=true` on a *running* container means the cgroup OOM-killed a child while PID 1 survived. In `dmesg`, the process name is truncated to **15 characters**: `node /usr/src/a` is the **worker** (`…/worker/dist/src/bootstrap.js`), not the engine — the engine runs as `/usr/local/bin/node`. Getting this backwards sends you profiling the wrong process.
 
+**Don't wait for `oom_kill` to confirm a fix failed — read `max` in `/sys/fs/cgroup/memory.events`.** It counts how many times the cgroup hit `memory.max`, and it climbs long before anything dies: a container parked at the ceiling shows `max` rising by ~80/min while `oom_kill` stays 0, because the kernel is buying time by evicting page cache. Measured Aug 2026 on a reuse worker holding 791 MB of engine in a 1 GiB cgroup — `max` went 207 → 367 in two minutes with zero kills, and container `anon` even *fell* as file pages were reclaimed. So on a freshly-deployed fleet, `oom_kill=0` plus a climbing `max` means "about to die", not "fixed". Ignore `max` on a container in its first minutes, though — pulling a fresh piece cache pegs it for reasons that have nothing to do with a leak.
+
 ## 2. JS heap or native? Decide before you snapshot
 
 ```bash
