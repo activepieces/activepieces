@@ -133,7 +133,10 @@ const cdnVerifiedUrls = new Set<string>()
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
 const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/bundled/'
-const S3_PIECES_PREFIX = 'pieces/'
+// Bumped when what we cache changes meaning. `pieces/` holds tarballs written before the CDN
+// became the preferred source, and a rolling deploy keeps writing to it from the old code — so
+// the new prefix is the only one that can be reached by a writer that prefers the CDN.
+const S3_PIECES_PREFIX = 'pieces/v2/'
 
 type PieceRef = {
     name: string

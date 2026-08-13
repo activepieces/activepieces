@@ -1,7 +1,7 @@
 import { Readable } from 'stream'
 import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, ListObjectsV2CommandOutput, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
@@ -128,32 +128,13 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
     },
-    async listKeys(prefix: string): Promise<string[]> {
-        const keys: string[] = []
-        let continuationToken: string | undefined = undefined
-        do {
-            const page: ListObjectsV2CommandOutput = await getS3Client().send(new ListObjectsV2Command({
-                Bucket: getS3BucketName(),
-                Prefix: prefix,
-                ContinuationToken: continuationToken,
-            }))
-            keys.push(...(page.Contents ?? []).map((object) => object.Key).filter((key): key is string => !isNil(key)))
-            continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined
-        } while (!isNil(continuationToken))
-        return keys
-    },
-    // Returns the keys S3 refused to delete. Quiet mode omits successes but still reports
-    // per-object errors, and those never throw — a caller that needs the prefix to be empty
-    // afterwards has to inspect this rather than assume the request succeeding means every
-    // object went away.
-    async deleteFiles(s3Keys: string[]): Promise<string[]> {
+    async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {
-            return []
+            return
         }
         // Cloudflare R2 has a limit of 100 keys per request
         const MAX_KEYS_PER_REQUEST = 100
         const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
-        const failedKeys: string[] = []
 
         try {
             for (const chunk of chunks) {
@@ -169,7 +150,6 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                 const errors = response.Errors ?? []
                 if (errors.length > 0) {
                     log.warn({ count: errors.length, codes: errors.map((entry) => entry.Code) }, 'some files could not be deleted from s3')
-                    failedKeys.push(...errors.map((entry) => entry.Key).filter((key): key is string => !isNil(key)))
                 }
                 log.info({ count: chunk.length - errors.length }, 'files deleted from s3')
             }
@@ -179,7 +159,6 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(error, log)
             throw error
         }
-        return failedKeys
     },
     async validateS3Configuration(): Promise<void> {
         const client = getS3Client()

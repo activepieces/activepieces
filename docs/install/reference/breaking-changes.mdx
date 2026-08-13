@@ -27,11 +27,11 @@ Nothing on upgrade. Check any agent step that relied on the per-step web search 
 
 Workers keep pieces, the engine and compiled code steps in a versioned cache directory on disk, and that directory survives deploys. Piece versions published before piece repackaging still carry their own copy of `@activepieces/shared`, so a worker that had installed them kept those dependency trees indefinitely — on cloud that reached twelve resident copies in a single engine process.
 
-The cache version moves to `v14`, so each worker builds a fresh cache the first time it runs on the new release and picks up the self-contained piece bundles.
+The cache version moves to `v14`, so each worker builds a fresh cache the first time it runs on the new release and picks up the self-contained piece bundles. If you run with object storage, cached piece tarballs also move to a new `pieces/v2/` prefix for the same reason.
 
 #### What you need to do
 
-Nothing. The first run on each worker after upgrading is slower while the cache refills, and the disk briefly holds both the old and new cache directories until the stale one is removed automatically.
+Nothing. The first run on each worker after upgrading is slower while the cache refills, and the disk holds both the old and new cache directories until the old one is removed automatically — that happens a couple of hours after the upgrade, so the deletion cannot catch a worker still finishing a run on the old release. If you use object storage you can delete the old `pieces/` prefix from your bucket once every server is on the new release; nothing reads it after the upgrade.
 
 #### Official piece bundles are served from npm again by default
 
