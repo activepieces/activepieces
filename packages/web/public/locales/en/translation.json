@@ -52,7 +52,6 @@
   "Seat changes are unavailable while a plan change is scheduled.": "Seat changes are unavailable while a plan change is scheduled.",
   "All seats on your plan are in use. Contact a platform admin to add seats or free up seats by deactivating users.": "All seats on your plan are in use. Contact a platform admin to add seats or free up seats by deactivating users.",
   "Your {count, plural, =1 {1 additional seat} other {# additional seats}} will be removed and the unused time credited back.": "Your {count, plural, =1 {1 additional seat} other {# additional seats}} will be removed and the unused time credited back.",
-  "You've reached your credits limit. Contact a platform admin to get more credits.": "You've reached your credits limit. Contact a platform admin to get more credits.",
   "{amount} credits": "{amount} credits",
   "{amount} credits/day": "{amount} credits/day",
   "{amount} credits/mo": "{amount} credits/mo",
@@ -770,9 +769,7 @@
   "New response": "New response",
   "Failed to copy to clipboard": "Failed to copy to clipboard",
   "You've reached your credits limit. Resets in {days} days.": "You've reached your credits limit. Resets in {days} days.",
-  "You've reached your credits limit.": "You've reached your credits limit.",
   "You've used {percentage}% of your credits. Resets in {days} days.": "You've used {percentage}% of your credits. Resets in {days} days.",
-  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits.",
   "You're on the {plan} plan": "You're on the {plan} plan",
   "You now have access to {benefits}.": "You now have access to {benefits}.",
   "Custom amount": "Custom amount",
@@ -789,7 +786,6 @@
   "Billing information refreshed": "Billing information refreshed",
   "Trial ends": "Trial ends",
   "Trial ends {date}": "Trial ends {date}",
-  "Show Usage": "Show Usage",
   "Good response": "Good response",
   "Bad response": "Bad response",
   "Share feedback": "Share feedback",
@@ -2483,5 +2479,11 @@
   "Remove selected image": "Remove selected image",
   "{name} will be deleted for everyone. This cannot be undone.": "{name} will be deleted for everyone. This cannot be undone.",
   "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.": "Access ends the moment you confirm: everyone is signed out, every flow stops running, and all API keys stop working.",
-  "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}."
+  "Your projects, flows, connections, agents and tables are erased on {date}.": "Your projects, flows, connections, agents and tables are erased on {date}.",
+  "You've used {percent}% of your credits — {remaining} left.": "You've used {percent}% of your credits — {remaining} left.",
+  "You've used all of your credits.": "You've used all of your credits.",
+  "Contact a platform admin to get more credits.": "Contact a platform admin to get more credits.",
+  "You've reached your credits limit.": "You've reached your credits limit.",
+  "You've reached your credits limit. Contact a platform admin to get more credits.": "You've reached your credits limit. Contact a platform admin to get more credits.",
+  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits."
 }

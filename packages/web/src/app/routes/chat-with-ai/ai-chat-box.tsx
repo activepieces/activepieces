@@ -13,6 +13,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -30,7 +31,6 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
-import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
@@ -153,7 +153,7 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
-  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+  const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
 
@@ -299,9 +299,9 @@ function ChatBoxContent({
             }
             banner={
               showBanner && !hasBlockingCard ? (
-                <CreditsBanner
+                <ChatCreditsAlert
                   creditsExhausted={credits.creditsExhausted}
-                  creditsWarning={credits.creditsWarning}
+                  creditsPercentUsed={credits.creditsPercentUsed}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null
