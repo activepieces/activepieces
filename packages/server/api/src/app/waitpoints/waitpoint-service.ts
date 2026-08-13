@@ -1,7 +1,8 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { SystemJobName } from '../helper/system-jobs/common'
@@ -41,6 +42,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
                 resumePayload: null,
+                sealed: false,
+                policy: null,
             })
             .orIgnore()
             .execute()
@@ -148,13 +151,37 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
     },
 
-    async getByFlowRunId(flowRunId: string): Promise<Waitpoint | null> {
-        const completed = await waitpointRepo().findOneBy({ flowRunId, status: WaitpointStatus.COMPLETED })
-        return completed ?? waitpointRepo().findOneBy({ flowRunId })
+    async findPreCompletedByFlowRunId({ flowRunId }: FindPreCompletedByFlowRunIdParams): Promise<Waitpoint | null> {
+        const stillOpen = await waitpointRepo().existsBy({ flowRunId, status: WaitpointStatus.PENDING })
+        if (stillOpen) {
+            return null
+        }
+        return waitpointRepo().findOne({
+            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+            order: { created: 'DESC' },
+        })
     },
 
-    async delete({ id }: { id: string }): Promise<void> {
-        await waitpointRepo().delete({ id })
+    async hasPendingBarrier({ flowRunId, projectId }: HasPendingBarrierParams): Promise<boolean> {
+        return waitpointRepo().existsBy({ flowRunId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+    },
+
+    async findNonBarrierByFlowRunId({ flowRunId, projectId }: FindNonBarrierByFlowRunIdParams): Promise<Waitpoint | null> {
+        const pending = await waitpointRepo().findOne({
+            where: { flowRunId, projectId, status: WaitpointStatus.PENDING, type: Not(PauseType.BARRIER) },
+            order: { created: 'DESC' },
+        })
+        if (!isNil(pending)) {
+            return pending
+        }
+        return waitpointRepo().findOne({
+            where: { flowRunId, projectId, type: Not(PauseType.BARRIER) },
+            order: { created: 'DESC' },
+        })
+    },
+
+    async delete({ id, projectId }: DeleteWaitpointParams): Promise<void> {
+        await waitpointRepo().delete({ id, projectId })
         log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
     },
 
@@ -163,3 +190,22 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
+
+type HasPendingBarrierParams = {
+    flowRunId: string
+    projectId: string
+}
+
+type FindPreCompletedByFlowRunIdParams = {
+    flowRunId: string
+}
+
+type FindNonBarrierByFlowRunIdParams = {
+    flowRunId: string
+    projectId: string
+}
+
+type DeleteWaitpointParams = {
+    id: string
+    projectId: string
+}

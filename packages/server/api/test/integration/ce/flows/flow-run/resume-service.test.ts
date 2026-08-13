@@ -62,7 +62,7 @@ async function createFlowRunAndWaitpoint(params: {
     return { flow, flowVersion, flowRun, waitpointId }
 }
 
-describe('resumeService resumeFromWaitpointWithoutLock', () => {
+describe('resumeService releaseBarrierWithoutLock', () => {
     it('consumes a PENDING waitpoint and enqueues resume when flow is PAUSED (worker-before-callback ordering)', async () => {
         const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
             projectId: ctx.project.id,
@@ -70,7 +70,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
             waitpointStatus: WaitpointStatus.PENDING,
         })
 
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -98,7 +98,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'early' } },
@@ -126,7 +126,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'quick' } },
@@ -154,7 +154,7 @@ describe('resumeService resumeFromWaitpointWithoutLock', () => {
         })
 
         const bogusWaitpointId = apId()
-        const result = await resumeService(app.log).resumeFromWaitpointWithoutLock({
+        const result = await resumeService(app.log).releaseBarrierWithoutLock({
             flowRunId: flowRun.id,
             waitpointId: bogusWaitpointId,
             resumePayload: { body: { status: 'stale' } },

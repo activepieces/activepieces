@@ -351,25 +351,56 @@ describe('Waitpoint service', () => {
         })
     })
 
-    describe('getByFlowRunId', () => {
+    describe('findPreCompletedByFlowRunId', () => {
         it('should return null when no waitpoint exists', async () => {
-            const result = await waitpointService(app.log).getByFlowRunId(apId())
+            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: apId() })
             expect(result).toBeNull()
         })
 
-        it('should return the waitpoint when it exists', async () => {
-            const { flowRun } = await createFlowRun()
+        it('should return the COMPLETED waitpoint when it is the only one left', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
 
-            await waitpointService(app.log).createForPause({
+            const pause = await waitpointService(app.log).createForPause({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
                 type: PauseType.WEBHOOK,
             })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { ok: true } },
+            })
 
-            const result = await waitpointService(app.log).getByFlowRunId(flowRun.id)
-            expect(result).not.toBeNull()
-            expect(result!.flowRunId).toBe(flowRun.id)
+            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            expect(result?.id).toBe(pause.waitpoint.id)
+        })
+
+        it('should return null when the run still holds a PENDING waitpoint from another iteration', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const first = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'loop_1:0/approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: first.waitpoint.id,
+                resumePayload: { body: { iteration: 1 } },
+            })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'loop_1:1/approval',
+                type: PauseType.WEBHOOK,
+            })
+
+            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            expect(result).toBeNull()
         })
     })
 
