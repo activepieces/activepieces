@@ -416,6 +416,10 @@ export const driveExportFolderAsZip = createAction({
       data: Readable.fromWeb(zipStream.readable),
       fileName: context.propsValue.outputFileName,
     });
+    // if the produce side below throws, the stream gets aborted and this promise settles on its
+    // own -- observe it here so that doesn't surface as an unhandled rejection; the real outcome
+    // is still surfaced via `return writeFilePromise` on the success path below
+    writeFilePromise.catch(() => undefined);
 
     const fileAddOptions: ZipWriterAddDataOptions = {};
     if (context.propsValue.usePassword) {
@@ -440,24 +444,32 @@ export const driveExportFolderAsZip = createAction({
     }
 
     const fileEntries = entries.filter((entry) => !entry.isEmptyFolder);
-    for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
-      // zip.js supports adding multiple entries concurrently (see its own "Adding concurrently
-      // multiple entries" example) -- each entry streams straight from the network into the
-      // archive, so neither the individual files nor the growing zip are buffered in memory
-      await Promise.all(
-        batch.map((entry) =>
-          downloadAndAddZipEntry({ auth: context.auth, entry, zipWriter, fileAddOptions })
-        )
-      );
-    }
 
-    for (const folder of entries.filter((entry) => entry.isEmptyFolder)) {
-      await zipWriter.add(`${folder.relativePath}/`, undefined, {
-        directory: true,
-      });
-    }
+    try {
+      for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
+        // zip.js supports adding multiple entries concurrently (see its own "Adding concurrently
+        // multiple entries" example) -- each entry streams straight from the network into the
+        // archive, so neither the individual files nor the growing zip are buffered in memory
+        await Promise.all(
+          batch.map((entry) =>
+            downloadAndAddZipEntry({ auth: context.auth, entry, zipWriter, fileAddOptions })
+          )
+        );
+      }
 
-    await zipWriter.close();
+      for (const folder of entries.filter((entry) => entry.isEmptyFolder)) {
+        await zipWriter.add(`${folder.relativePath}/`, undefined, {
+          directory: true,
+        });
+      }
+
+      await zipWriter.close();
+    } catch (error) {
+      // a download/add failure leaves the file upload waiting on a stream that will never
+      // produce more data or end -- abort it so the upload stops rather than hanging
+      await zipStream.writable.abort(error).catch(() => undefined);
+      throw error;
+    }
 
     return writeFilePromise;
   },
