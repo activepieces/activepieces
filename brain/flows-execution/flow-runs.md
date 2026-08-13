@@ -41,7 +41,7 @@ CE has full run tracking. Cloud may enforce retention windows; bulk-retry admin 
 Entry point: `flowRunService`, defined in `flow-run-service.ts` and wired through `flow-run-module.ts`.
 
 - `packages/server/api/src/app/flows/flow-run/` — controller, service, entity, hooks, side effects, runs queue, AI usage extractor/tracker
-- `packages/server/api/src/app/flows/flow-run/waitpoint/` — resume routes, the `/confirm` page, and its theme hooks
+- `packages/server/api/src/app/waitpoints/` — the waitpoint module: entity, service, resume routes, the `/confirm` page, its theme hooks, and the `RESUME_DELAY_WAITPOINT` handler
 - `packages/core/execution/src/lib/flow-run/` — `FlowRun` type, request dtos, execution types (`StepOutput`, `FlowExecution`), zstd log serializer
 - `packages/server/engine/src/lib/helper/logging-utils.ts` — produces the truncated-input placeholder the web run-details tab detects
 - `packages/server/api/src/app/ee/billing-usage-report/` — daily EE job emitting per-platform run counts to PostHog (`TOTAL_RUNS_PER_DAY`, captured and flushed in platform batches)
