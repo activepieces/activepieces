@@ -7358,6 +7358,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/quickbooks-sandbox": {
+      "name": "@activepieces/piece-quickbooks-sandbox",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "dayjs": "1.11.9",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/quickzu": {
       "name": "@activepieces/piece-quickzu",
       "version": "0.1.6",
@@ -12107,6 +12121,8 @@
     "@activepieces/piece-quickbase": ["@activepieces/piece-quickbase@workspace:packages/pieces/community/quickbase"],
 
     "@activepieces/piece-quickbooks": ["@activepieces/piece-quickbooks@workspace:packages/pieces/community/quickbooks"],
+
+    "@activepieces/piece-quickbooks-sandbox": ["@activepieces/piece-quickbooks-sandbox@workspace:packages/pieces/community/quickbooks-sandbox"],
 
     "@activepieces/piece-quickzu": ["@activepieces/piece-quickzu@workspace:packages/pieces/community/quickzu"],
 
