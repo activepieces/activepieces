@@ -24,24 +24,32 @@ interface NativeFormatChoice {
   slides: 'skip' | 'pdf' | 'pptx';
 }
 
-const NATIVE_TYPE_BY_MIME_TYPE: Record<string, keyof NativeFormatChoice> = {
-  'application/vnd.google-apps.document': 'docs',
-  'application/vnd.google-apps.spreadsheet': 'sheets',
-  'application/vnd.google-apps.presentation': 'slides',
-};
+interface NativeTypeConfig {
+  key: keyof NativeFormatChoice;
+  exportMimeTypes: Record<string, string>;
+}
 
-const NATIVE_EXPORT_MIME_TYPE: Record<string, Record<string, string>> = {
+const NATIVE_TYPES: Record<string, NativeTypeConfig> = {
   'application/vnd.google-apps.document': {
-    pdf: 'application/pdf',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    key: 'docs',
+    exportMimeTypes: {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    },
   },
   'application/vnd.google-apps.spreadsheet': {
-    pdf: 'application/pdf',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    key: 'sheets',
+    exportMimeTypes: {
+      pdf: 'application/pdf',
+      xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
   },
   'application/vnd.google-apps.presentation': {
-    pdf: 'application/pdf',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    key: 'slides',
+    exportMimeTypes: {
+      pdf: 'application/pdf',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    },
   },
 };
 
@@ -108,6 +116,53 @@ async function listFolderChildren({
   return items;
 }
 
+interface ResolvedItem {
+  item: DriveListItem;
+  name: string;
+  downloadUrl?: string;
+}
+
+// The name and download URL this item would occupy in the zip, or undefined if it produces no
+// entry at all (a skipped native file, or an unsupported Google Workspace type). Folders have
+// no downloadUrl -- walk() recurses into them instead of adding an entry directly.
+function resolveItem(
+  item: DriveListItem,
+  nativeFormats: NativeFormatChoice
+): ResolvedItem | undefined {
+  if (item.mimeType === GOOGLE_FOLDER_MIME_TYPE) {
+    return { item, name: item.name };
+  }
+
+  const nativeType = NATIVE_TYPES[item.mimeType];
+  if (nativeType) {
+    const format = nativeFormats[nativeType.key];
+    if (format === 'skip') {
+      return undefined;
+    }
+    const exportMimeType = nativeType.exportMimeTypes[format];
+    const fileExtension = extension(exportMimeType);
+    return {
+      item,
+      name: fileExtension ? `${item.name}.${fileExtension}` : item.name,
+      downloadUrl: `https://www.googleapis.com/drive/v3/files/${
+        item.id
+      }/export?mimeType=${encodeURIComponent(
+        exportMimeType
+      )}&supportsAllDrives=true`,
+    };
+  }
+
+  if (item.mimeType.startsWith('application/vnd.google-apps.')) {
+    return undefined;
+  }
+
+  return {
+    item,
+    name: item.name,
+    downloadUrl: `https://www.googleapis.com/drive/v3/files/${item.id}?alt=media&supportsAllDrives=true`,
+  };
+}
+
 async function walk({
   auth,
   folderId,
@@ -140,14 +195,40 @@ async function walk({
     return;
   }
 
-  for (const item of children) {
-    const itemPath =
-      relativePrefix.length > 0 ? `${relativePrefix}/${item.name}` : item.name;
+  // A Drive folder and a file (or two folders, or two files) can share a name in the same
+  // parent -- Drive only guarantees uniqueness by ID. Any such collision would force one zip
+  // path to be both a file and a directory, so it's checked once per level, up front, before
+  // any of these children are processed.
+  const resolvedChildren = children
+    .map((item) => resolveItem(item, nativeFormats))
+    .filter((resolved): resolved is ResolvedItem => resolved !== undefined);
 
-    if (item.mimeType === GOOGLE_FOLDER_MIME_TYPE) {
+  const nameCounts = new Map<string, number>();
+  for (const { name } of resolvedChildren) {
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+  }
+  const collidingNames = [...nameCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([name]) => name);
+  if (collidingNames.length > 0) {
+    const prefix = relativePrefix.length > 0 ? `${relativePrefix}/` : '';
+    throw new Error(
+      `Cannot export: multiple items in the same Drive folder would map to the same zip path: ${collidingNames
+        .map((name) => `"${prefix}${name}"`)
+        .join(', ')}. This can happen when a file and a folder share a name, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists. Rename the conflicting items in Drive and try again.`
+    );
+  }
+
+  for (const resolved of resolvedChildren) {
+    const itemPath =
+      relativePrefix.length > 0
+        ? `${relativePrefix}/${resolved.name}`
+        : resolved.name;
+
+    if (resolved.item.mimeType === GOOGLE_FOLDER_MIME_TYPE) {
       await walk({
         auth,
-        folderId: item.id,
+        folderId: resolved.item.id,
         relativePrefix: itemPath,
         nativeFormats,
         includeTeamDrives,
@@ -156,36 +237,11 @@ async function walk({
       continue;
     }
 
-    const nativeType = NATIVE_TYPE_BY_MIME_TYPE[item.mimeType];
-    if (nativeType) {
-      const format = nativeFormats[nativeType];
-      if (format === 'skip') {
-        continue;
-      }
-      const exportMimeType = NATIVE_EXPORT_MIME_TYPE[item.mimeType][format];
-      const fileExtension = extension(exportMimeType);
-      out.push({
-        relativePath: fileExtension ? `${itemPath}.${fileExtension}` : itemPath,
-        fileId: item.id,
-        isEmptyFolder: false,
-        downloadUrl: `https://www.googleapis.com/drive/v3/files/${
-          item.id
-        }/export?mimeType=${encodeURIComponent(
-          exportMimeType
-        )}&supportsAllDrives=true`,
-      });
-      continue;
-    }
-
-    if (item.mimeType.startsWith('application/vnd.google-apps.')) {
-      continue;
-    }
-
     out.push({
       relativePath: itemPath,
-      fileId: item.id,
+      fileId: resolved.item.id,
       isEmptyFolder: false,
-      downloadUrl: `https://www.googleapis.com/drive/v3/files/${item.id}?alt=media&supportsAllDrives=true`,
+      downloadUrl: resolved.downloadUrl,
     });
   }
 }
@@ -210,28 +266,6 @@ async function collectZipEntries({
     includeTeamDrives,
     out,
   });
-
-  const pathCounts = new Map<string, number>();
-  for (const entry of out) {
-    if (entry.isEmptyFolder) {
-      continue;
-    }
-    pathCounts.set(
-      entry.relativePath,
-      (pathCounts.get(entry.relativePath) ?? 0) + 1
-    );
-  }
-  const duplicatePaths = [...pathCounts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([path]) => path);
-  if (duplicatePaths.length > 0) {
-    throw new Error(
-      `Cannot export: multiple files would map to the same path in the zip: ${duplicatePaths.join(
-        ', '
-      )}. This can happen when a Google Doc/Sheet/Slides file is exported to a format that matches an existing file's name (e.g. "Report" exported as PDF alongside an existing "Report.pdf"), or when Drive has two files with identical names in the same folder. Rename the conflicting files in Drive and try again.`
-    );
-  }
-
   return out;
 }
 
@@ -284,7 +318,7 @@ export const driveExportFolderAsZip = createAction({
   props: {
     duplicatePathWarning: Property.MarkDown({
       value:
-        'Zip paths mirror the Drive folder exactly, with no renaming. If Drive has two files with the same name in the same folder, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"), the action fails before downloading anything so you can rename the conflicting file in Drive and re-run.',
+        'Zip paths mirror the Drive folder exactly, with no renaming. If a file and a folder share a name in the same Drive folder, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"), the action fails before downloading anything so you can rename the conflicting item in Drive and re-run.',
       variant: MarkdownVariant.WARNING,
     }),
     folderId: Property.Dropdown({
@@ -444,7 +478,11 @@ export const driveExportFolderAsZip = createAction({
       }
     }
 
-    const fileEntries = entries.filter((entry) => !entry.isEmptyFolder);
+    const fileEntries: ZipFolderEntry[] = [];
+    const emptyFolderEntries: ZipFolderEntry[] = [];
+    for (const entry of entries) {
+      (entry.isEmptyFolder ? emptyFolderEntries : fileEntries).push(entry);
+    }
 
     try {
       for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
@@ -458,7 +496,7 @@ export const driveExportFolderAsZip = createAction({
         );
       }
 
-      for (const folder of entries.filter((entry) => entry.isEmptyFolder)) {
+      for (const folder of emptyFolderEntries) {
         await zipWriter.add(`${folder.relativePath}/`, undefined, {
           directory: true,
         });
