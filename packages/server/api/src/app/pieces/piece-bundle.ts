@@ -60,12 +60,29 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
             if (await s3.objectExists(key)) {
                 return
             }
-            const response = await safeHttp.retryingAxios.get<ArrayBuffer>(npmTarballUrl(data), { responseType: 'arraybuffer' })
+            // The CDN copy is the repackaged, self-contained build; npm may still carry the
+            // unbundled one. Caching npm here would make S3 — which resolve() checks first —
+            // permanently shadow the CDN for this piece.
+            const source = await preferredTarballSource({ name: data.name, version: data.version, log })
+            const response = await safeHttp.retryingAxios.get<ArrayBuffer>(source.url, { responseType: 'arraybuffer' })
             await s3.uploadFile(key, Buffer.from(response.data))
-            log.info({ piece: { name: data.name, version: data.version } }, '[pieceBundle] Cached piece tarball to S3')
+            log.info({
+                piece: { name: data.name, version: data.version },
+                source: source.kind,
+            }, '[pieceBundle] Cached piece tarball to S3')
         })
     },
 })
+
+async function preferredTarballSource({ name, version, log }: PreferredTarballSourceParams): Promise<TarballSource> {
+    if (system.getBoolean(AppSystemProp.USE_CDN_FOR_BUNDLES)) {
+        const url = cdnTarballUrl({ name, version })
+        if (await cdnBundleExists({ url, log })) {
+            return { kind: 'cdn', url }
+        }
+    }
+    return { kind: 'npm', url: npmTarballUrl({ name, version }) }
+}
 
 async function enqueueBundleJob({ name, version, log }: EnqueueBundleJobParams): Promise<void> {
     await systemJobsSchedule(log).upsertJob({
@@ -97,8 +114,10 @@ async function cdnBundleExists({ url, log }: CdnBundleExistsParams): Promise<boo
     const exists = response.status >= 200 && response.status < 300
     if (exists) {
         cdnVerifiedUrls.add(url)
+        return true
     }
-    return exists
+    log.warn({ url, status: response.status }, '[pieceBundle] CDN bundle not served, falling back to npm')
+    return false
 }
 
 function npmTarballUrl({ name, version }: PieceRef): string {
@@ -113,8 +132,11 @@ function pieceBundleS3Key({ name, version }: PieceRef): string {
 const cdnVerifiedUrls = new Set<string>()
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
-const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/retro/'
-const S3_PIECES_PREFIX = 'pieces/'
+const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/bundled/'
+// Bumped when what we cache changes meaning. `pieces/` holds tarballs written before the CDN
+// became the preferred source, and a rolling deploy keeps writing to it from the old code — so
+// the new prefix is the only one that can be reached by a writer that prefers the CDN.
+const S3_PIECES_PREFIX = 'pieces/v2/'
 
 type PieceRef = {
     name: string
@@ -123,6 +145,15 @@ type PieceRef = {
 
 type EnqueueBundleJobParams = PieceRef & {
     log: FastifyBaseLogger
+}
+
+type PreferredTarballSourceParams = PieceRef & {
+    log: FastifyBaseLogger
+}
+
+type TarballSource = {
+    kind: 'cdn' | 'npm'
+    url: string
 }
 
 type CdnBundleExistsParams = {
