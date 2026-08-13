@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   PieceAuth,
+  MarkdownVariant,
   chunk,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -213,6 +214,28 @@ async function collectZipEntries({
     includeTeamDrives,
     out,
   });
+
+  const pathCounts = new Map<string, number>();
+  for (const entry of out) {
+    if (entry.isEmptyFolder) {
+      continue;
+    }
+    pathCounts.set(
+      entry.relativePath,
+      (pathCounts.get(entry.relativePath) ?? 0) + 1
+    );
+  }
+  const duplicatePaths = [...pathCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([path]) => path);
+  if (duplicatePaths.length > 0) {
+    throw new Error(
+      `Cannot export: multiple files would map to the same path in the zip: ${duplicatePaths.join(
+        ', '
+      )}. This can happen when a Google Doc/Sheet/Slides file is exported to a format that matches an existing file's name (e.g. "Report" exported as PDF alongside an existing "Report.pdf"), or when Drive has two files with identical names in the same folder. Rename the conflicting files in Drive and try again.`
+    );
+  }
+
   return out;
 }
 
@@ -258,6 +281,11 @@ export const driveExportFolderAsZip = createAction({
   },
   outputSchema: driveExportFolderAsZipOutputSchema,
   props: {
+    duplicatePathWarning: Property.MarkDown({
+      value:
+        'Zip paths mirror the Drive folder exactly, with no renaming. If Drive has two files with the same name in the same folder, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"), the action fails before downloading anything so you can rename the conflicting file in Drive and re-run.',
+      variant: MarkdownVariant.WARNING,
+    }),
     folderId: Property.Dropdown({
       displayName: 'Folder',
       description: 'The Drive folder to export (including all subfolders).',
