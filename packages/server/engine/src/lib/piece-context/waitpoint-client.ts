@@ -1,4 +1,5 @@
-import { CreateWaitpointRequest, CreateWaitpointResponse, EngineGenericError } from '@activepieces/shared'
+import { CreateWaitpointRequest, CreateWaitpointResponse } from '@activepieces/shared'
+import { throwForRejectedRequest } from './rejected-request'
 
 export const waitpointClient = {
     create: async ({ apiUrl, engineToken, ...body }: CreateWaitpointClientRequest): Promise<CreateWaitpointResponse> => {
@@ -11,7 +12,7 @@ export const waitpointClient = {
             body: JSON.stringify(body),
         })
         if (!response.ok) {
-            throw new EngineGenericError('WaitpointCreationError', `Failed to create waitpoint: ${response.status} ${response.statusText}`)
+            await throwForRejectedRequest({ response, name: 'WaitpointCreationError', summary: 'Failed to create waitpoint' })
         }
         return response.json() as Promise<CreateWaitpointResponse>
     },
