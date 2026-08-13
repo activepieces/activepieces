@@ -118,12 +118,8 @@ export const mcpOAuthTokenService = {
         return payload
     },
 
-    async revokeRefreshToken(refreshToken: string, clientId: string | undefined): Promise<void> {
-        const hashed = hashRefreshToken(refreshToken)
-        const criteria = clientId
-            ? { refreshToken: hashed, clientId }
-            : { refreshToken: hashed }
-        await repo().update(criteria, { revoked: true })
+    async revokeRefreshToken({ refreshToken, clientId }: RevokeRefreshTokenParams): Promise<void> {
+        await repo().update({ refreshToken: hashRefreshToken(refreshToken), clientId }, { revoked: true })
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
@@ -157,6 +153,11 @@ type ExchangeCodeParams = {
     projectId: string | null
     platformId: string
     scopes: string[]
+}
+
+type RevokeRefreshTokenParams = {
+    refreshToken: string
+    clientId: string
 }
 
 type RefreshParams = {

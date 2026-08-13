@@ -14,17 +14,15 @@ export const mcpOAuthRevokeController: FastifyPluginAsyncZod = async (app) => {
             clientSecret: req.body.client_secret,
         })
         if (result.status === 'error') {
-            const payload = result.errorDescription
-                ? { error: result.error, error_description: result.errorDescription }
-                : { error: result.error }
-            return reply.status(400).send(payload)
+            return reply.status(400).send(mcpOAuthClientAuth.toErrorPayload(result))
+        }
+        if (result.status === 'anonymous') {
+            return reply.status(400).send({ error: 'invalid_client', error_description: 'Missing client_id' })
         }
 
-        const clientId = result.status === 'authenticated' ? result.client.clientId : undefined
         if (token_type_hint === 'refresh_token' || !token_type_hint) {
-            await mcpOAuthTokenService.revokeRefreshToken(token, clientId)
+            await mcpOAuthTokenService.revokeRefreshToken({ refreshToken: token, clientId: result.client.clientId })
         }
-        // Per RFC 7009, return 200 even if token is invalid or unrecognized
         return reply.status(200).send()
     })
 }
