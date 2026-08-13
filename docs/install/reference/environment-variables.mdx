@@ -150,6 +150,11 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
 | `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
 | `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+| `PM2_KILL_TIMEOUT` | Milliseconds PM2 (the process manager inside the official Docker image) waits after the stop signal before force-killing the app and worker processes. Overrides the derived defaults for both. | Derived, see below |
+
+<Note>
+On shutdown, the image gives each process time to finish gracefully: the worker gets 35 seconds (it drains in-flight runs for up to 25 seconds and force-exits at 30), and the app gets `AP_WEBHOOK_TIMEOUT_SECONDS` + 5 seconds (at least 35), so synchronous webhook requests it is still holding can complete. If you raise `AP_WEBHOOK_TIMEOUT_SECONDS`, also raise your orchestrator's stop grace period above the app's window — `terminationGracePeriodSeconds` on Kubernetes, `stop_grace_period` in Compose, `stopTimeout` on ECS, `--stop-timeout` for plain `docker run` — otherwise the container is killed before the processes finish shutting down.
+</Note>
 
 ---
 
