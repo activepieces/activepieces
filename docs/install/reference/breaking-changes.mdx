@@ -8,6 +8,17 @@ icon: "hammer"
 
 ### What has changed?
 
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
+
+Two changes to the MCP OAuth endpoints:
+
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`.
+
+#### What you need to do
+
+Nothing for already-connected clients: existing registrations keep the authentication method they were recorded with and continue to work unchanged. If you maintain your own MCP OAuth client, send `client_id` when revoking, and store and present the `client_secret` that `/register` returns.
+
 #### Agent steps move from the flow engine to the server
 
 An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
