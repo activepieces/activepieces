@@ -33,6 +33,14 @@ The cache version moves to `v14`, so each worker builds a fresh cache the first 
 
 Nothing. The first run on each worker after upgrading is slower while the cache refills, and the disk briefly holds both the old and new cache directories until the stale one is removed automatically.
 
+#### Official piece bundles are served from npm again by default
+
+`AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles that are not already cached in your own S3 bucket are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN now serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`.
+
+#### What you need to do
+
+Nothing. Set `AP_USE_CDN_FOR_BUNDLES=true` if you want official bundles to keep coming from the CDN, and allow outbound traffic to `cdn.activepieces.com` if your network policy restricts it.
+
 
 ## 0.87.0
 
