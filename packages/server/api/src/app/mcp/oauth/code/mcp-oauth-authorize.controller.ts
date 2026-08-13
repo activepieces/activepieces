@@ -5,7 +5,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
-import { mcpOAuthValidation, STORABLE_TEXT_MESSAGE } from '../mcp-oauth-validation'
+import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 
@@ -64,11 +64,11 @@ const AuthorizeRequest = {
             client_id: z.string().max(64),
             redirect_uri: z.string().max(2048),
             response_type: z.string().max(64),
-            code_challenge: z.string().min(43).max(256).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }),
+            code_challenge: z.string().min(43).max(256).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }),
             code_challenge_method: z.string().max(8).default('S256'),
-            state: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
-            scope: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
-            resource: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
+            state: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
+            scope: z.string().max(512).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
+            resource: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
         }),
     },
 }

@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { mcpOAuthClientAuth } from '../client/mcp-oauth-client-auth'
 import { mcpOAuthCodeService } from '../code/mcp-oauth-code.service'
-import { mcpOAuthValidation, STORABLE_TEXT_MESSAGE } from '../mcp-oauth-validation'
+import { mcpOAuthValidation } from '../mcp-oauth-validation'
 import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token.service'
 
 export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
@@ -115,7 +115,7 @@ const tokenRequestSchema = z.object({
     client_id: z.string().max(64).optional(),
     client_secret: z.string().max(512).optional(),
     code_verifier: z.string().max(256).optional(),
-    redirect_uri: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: STORABLE_TEXT_MESSAGE }).optional(),
+    redirect_uri: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
     refresh_token: z.string().max(512).optional(),
     resource: z.string().max(2048).optional(),
 })

@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { apId } from '@activepieces/core-utils'
+import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthToken } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -61,7 +61,7 @@ export const mcpOAuthTokenService = {
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
-        await repo().save(tokenRecord)
+        await repo().save(sanitizeObjectForPostgresql(tokenRecord))
 
         const accessToken = await issueAccessToken({
             userId: params.userId,
