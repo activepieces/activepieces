@@ -155,4 +155,37 @@ describe('MCP OAuth input hardening', () => {
             throw new Error(`expected issuer https://${host}, got ${issuer}`)
         }
     })
+
+    it.each([
+        ['space in Host', 'a b.com'],
+        ['percent in Host', 'ex%ample.com'],
+        ['pipe in Host', 'a|b.com'],
+        ['angle bracket in Host', 'a<b.com'],
+        ['quote in Host', 'ev"il.com'],
+        ['backslash in Host', 'a\\b.com'],
+        ['truncated IPv6 Host', '[foo'],
+        ['empty Host', ''],
+    ])('never lets a malformed Host header reach URL construction or a header value (%s)', async (_name, host) => {
+        const client = await newClient()
+
+        const authorize = await app.inject({
+            method: 'GET',
+            url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(R)}&response_type=code&code_challenge=${'a'.repeat(43)}&code_challenge_method=S256`,
+            headers: { host },
+        })
+        assertClean('authorize Host header', authorize)
+
+        const metadata = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server', headers: { host } })
+        assertClean('metadata Host header', metadata)
+        const issuer: string = metadata.json().issuer
+        if (!/^https?:\/\/[A-Za-z0-9._\-:[\]]+$/.test(issuer)) {
+            throw new Error(`metadata advertised a malformed issuer: ${issuer}`)
+        }
+
+        const unauthorized = await app.inject({ method: 'POST', url: '/mcp', headers: { host } })
+        const challenge = String(unauthorized.headers['www-authenticate'] ?? '')
+        if ((challenge.match(/"/g) ?? []).length % 2 !== 0) {
+            throw new Error(`WWW-Authenticate has unbalanced quotes: ${challenge}`)
+        }
+    })
 })

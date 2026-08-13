@@ -73,23 +73,30 @@ const firstForwardedValue = (header: string | string[] | undefined): string | un
     return (Array.isArray(header) ? header[0] : header)?.split(',')[0]?.trim()
 }
 
-const getRequestHost = (req: FastifyRequest): string => {
+const configuredOrigin = (): string => {
+    return new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL)).origin
+}
+
+const isUsableHost = (host: string | undefined): host is string => {
+    return !isNil(host) && host !== '' && !HOST_RESTRUCTURING_CHARACTERS.test(host)
+}
+
+const candidateHosts = (req: FastifyRequest): string[] => {
     // in Cloud edition custom hostnames x-forwareded-host will be the original custom hostname while req.hostname will be our main cloud hostname
-    const forwardedHost = firstForwardedValue(req.headers['x-forwarded-host'])
-    if (isNil(forwardedHost) || forwardedHost === '' || HOST_RESTRUCTURING_CHARACTERS.test(forwardedHost)) {
-        return req.hostname
-    }
-    return forwardedHost
+    return [firstForwardedValue(req.headers['x-forwarded-host']), req.hostname].filter(isUsableHost)
+}
+
+const getRequestHost = (req: FastifyRequest): string => {
+    return candidateHosts(req)[0] ?? new URL(configuredOrigin()).host
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
     const forwardedProto = firstForwardedValue(req.headers['x-forwarded-proto'])
     const protocol = forwardedProto === 'http' || forwardedProto === 'https' ? forwardedProto : req.protocol
-    const baseUrl = `${protocol}://${getRequestHost(req)}`
-    if (tryCatchSync(() => new URL(baseUrl)).error) {
-        return `${req.protocol}://${req.hostname}`
-    }
-    return baseUrl
+    const parseable = candidateHosts(req)
+        .map((host) => `${protocol}://${host}`)
+        .find((baseUrl) => !tryCatchSync(() => new URL(baseUrl)).error)
+    return parseable ?? configuredOrigin()
 }
 
 export const networkUtils = {
