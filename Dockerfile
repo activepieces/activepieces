@@ -49,7 +49,6 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
     npm@11.11.0 \
-    pm2@6.0.10 \
     esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
