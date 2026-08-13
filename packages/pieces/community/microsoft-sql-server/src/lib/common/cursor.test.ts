@@ -619,6 +619,31 @@ describe('reconcile', () => {
     ).toBeNull();
   });
 
+  it('keeps an empty baseline from the layout that rendered datetimeoffset in UTC', () => {
+    const offsetAt = column('offset_at', 'datetimeoffset', { scale: 7 });
+    const offsetPlan = cursorUtils.planCursor({
+      meta: meta({ columns: [offsetAt, id, email] }),
+      propsValue: { ...descending, order_by: 'offset_at' },
+    });
+    const stale = {
+      ...cursorUtils.newCursor({ plan: offsetPlan, position: null }),
+      v: CURSOR_LAYOUT - 1,
+    };
+    expect(cursorUtils.reconcile({ stored: stale, plan: offsetPlan })).toBe(
+      stale
+    );
+  });
+
+  it('discards an empty baseline from a layout it knows nothing about', () => {
+    for (const v of [0, CURSOR_LAYOUT + 1]) {
+      const alien = {
+        ...cursorUtils.newCursor({ plan, position: null }),
+        v,
+      };
+      expect(cursorUtils.reconcile({ stored: alien, plan })).toBeNull();
+    }
+  });
+
   it('discards a position from a layout it knows nothing about', () => {
     for (const v of [0, CURSOR_LAYOUT + 1]) {
       const alien = {

@@ -484,14 +484,17 @@ function newCursor({
 function isCompatibleLayout({
   layout,
   columns,
+  position,
 }: {
   layout: number;
   columns: MssqlColumn[];
+  position: string[] | null;
 }): boolean {
   if (layout === CURSOR_LAYOUT) return true;
   if (!Number.isInteger(layout) || layout < 1 || layout > CURSOR_LAYOUT) {
     return false;
   }
+  if (isNil(position)) return true;
   for (let step = layout + 1; step <= CURSOR_LAYOUT; step++) {
     const rerendered = RERENDERED_AT_LAYOUT[step];
     if (isNil(rerendered)) return false;
@@ -510,7 +513,11 @@ function reconcile({
   if (isNil(stored)) return null;
   const shape = plan.columns.map(cursorShape);
   const matches =
-    isCompatibleLayout({ layout: stored.v, columns: plan.columns }) &&
+    isCompatibleLayout({
+      layout: stored.v,
+      columns: plan.columns,
+      position: stored.k,
+    }) &&
     stored.m === plan.mode &&
     Array.isArray(stored.c) &&
     stored.c.length === shape.length &&
