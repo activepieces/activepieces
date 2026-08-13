@@ -585,4 +585,61 @@ describe('Piece Component Filtering (EE)', () => {
             expect(result).toBeUndefined()
         })
     })
+
+    describe('GET /v1/engine/pieces/bundle (with piece sets)', () => {
+        it('resolves the bundle for a piece the project piece set hides, while the builder still 404s', async () => {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Execution Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.EXCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            await db.save('piece_metadata', createMockPieceMetadata({
+                name: '@activepieces/piece-crypto',
+                version: '0.0.21',
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+                platformId: undefined,
+                actions: {},
+                triggers: {},
+            }))
+            await pieceCache(mockLog).setup()
+
+            const engineToken = await generateMockToken({
+                id: apId(),
+                type: PrincipalType.ENGINE,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const bundleResponse = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/engine/pieces/bundle?name=${encodeURIComponent('@activepieces/piece-crypto')}&version=0.0.21`,
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+
+            expect(bundleResponse.statusCode).toBe(307)
+            expect(bundleResponse.headers.location).toContain('piece-crypto-0.0.21.tgz')
+
+            const userToken = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
+            const builderResponse = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-crypto')}?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${userToken}` },
+            })
+
+            expect(builderResponse.statusCode).toBe(404)
+        })
+    })
 })
