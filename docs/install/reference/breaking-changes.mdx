@@ -23,16 +23,6 @@ Two differences are worth knowing before you upgrade:
 
 Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
 
-#### Workers rebuild their local cache once
-
-Workers keep pieces, the engine and compiled code steps in a versioned cache directory on disk, and that directory survives deploys. Piece versions published before piece repackaging still carry their own copy of `@activepieces/shared`, so a worker that had installed them kept those dependency trees indefinitely — on cloud that reached twelve resident copies in a single engine process.
-
-The cache version moves to `v14`, so each worker builds a fresh cache the first time it runs on the new release and picks up the self-contained piece bundles. If you run with object storage, cached piece tarballs also move to a new `pieces/v2/` prefix for the same reason.
-
-#### What you need to do
-
-Nothing. The first run on each worker after upgrading is slower while the cache refills, and the disk holds both the old and new cache directories until the old one is removed automatically — that happens a couple of hours after the upgrade, so the deletion cannot catch a worker still finishing a run on the old release. If you use object storage you can delete the old `pieces/` prefix from your bucket once every server is on the new release; nothing reads it after the upgrade.
-
 #### Official piece bundles are served from npm again by default
 
 `AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles that are not already cached in your own S3 bucket are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN now serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`.
