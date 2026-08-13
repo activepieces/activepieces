@@ -1,8 +1,5 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-// row fields are named but left undescribed on purpose: describing a container
-// curates it, which would hide whichever columns the user's table actually has
-
 export const getTablesActionOutputSchema: OutputSchema = {
   itemLabel: '{full_name}',
   fields: [
@@ -28,10 +25,16 @@ export const runQueryActionOutputSchema: OutputSchema = {
         'The rows the statement returned, with whatever columns it selected. Empty for a statement that returns none, such as an INSERT or UPDATE.',
     },
     {
+      key: 'result_sets',
+      label: 'Result Sets',
+      description:
+        'Every result set the statement produced, in order, for a batch or a stored procedure that returns more than one. The first is the same as Rows.',
+    },
+    {
       key: 'row_count',
       label: 'Row Count',
       format: 'number',
-      description: 'How many rows were returned.',
+      description: 'How many rows the first result set returned.',
     },
     {
       key: 'rows_affected',
@@ -46,6 +49,19 @@ export const runQueryActionOutputSchema: OutputSchema = {
 export const insertRowActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'row', label: 'Inserted Row', value: '', dynamicKey: true },
+  ],
+};
+
+export const newOrUpdatedRowTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'row',
+      label: 'Row',
+      value: '',
+      dynamicKey: true,
+      description:
+        'One row of the table you selected, carrying every column it has. Each poll hands over one event per row. Columns SQL Server would round on the way out — decimal, money and the date and time family — arrive as exact strings rather than numbers or dates.',
+    },
   ],
 };
 

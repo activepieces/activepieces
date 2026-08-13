@@ -1,5 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/pieces-framework';
+import { PieceCategory, createPiece } from '@activepieces/pieces-framework';
 import { mssqlAuth } from './lib/auth';
 import { findRowsAction } from './lib/actions/find-rows';
 import { insertRowAction } from './lib/actions/insert-row';

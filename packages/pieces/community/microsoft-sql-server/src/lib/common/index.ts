@@ -1,36 +1,35 @@
 import { AppConnectionValueForAuthProperty, isNil } from '@activepieces/pieces-framework';
 import sql from 'mssql';
-// type-only: importing the value would close an auth -> common -> auth cycle
 import type { mssqlAuth } from '../auth';
-
-export type MssqlAuth = AppConnectionValueForAuthProperty<typeof mssqlAuth>;
 
 const DEFAULT_PORT = 1433;
 const TIMEOUT_MS = 30000;
+const OUTPUT_BLOCKED_BY_TRIGGER = 334;
 
-export type MssqlTable = {
-  table_schema: string;
-  table_name: string;
-};
-
-// 334 fires at compile time, so nothing was written and a retry is safe
-export function isOutputBlockedByTrigger(e: unknown): boolean {
-  return (e as { number?: number }).number === 334;
+function isOutputBlockedByTrigger(e: unknown): boolean {
+  if (typeof e !== 'object' || isNil(e) || !('number' in e)) return false;
+  const { number } = e;
+  return number === OUTPUT_BLOCKED_BY_TRIGGER;
 }
 
-// hand-rolled because no maintained T-SQL identifier escaper exists on npm
-export function quoteId(identifier: string): string {
+function quoteId(identifier: string): string {
   if (identifier.includes('\0')) {
     throw new Error(`Invalid identifier: ${JSON.stringify(identifier)}`);
   }
   return `[${identifier.replace(/]/g, ']]')}]`;
 }
 
-export function quoteTable(table: MssqlTable): string {
+function quoteTable(table: MssqlTable): string {
   return `${quoteId(table.table_schema)}.${quoteId(table.table_name)}`;
 }
 
-export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.config {
+function buildConfig({
+  auth,
+  requestTimeoutMs,
+}: {
+  auth: MssqlAuth;
+  requestTimeoutMs?: number;
+}): sql.config {
   const {
     connection_string,
     host,
@@ -44,7 +43,9 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
     min_tls_version,
   } = auth.props;
 
-  const requestTimeout = requestTimeoutMs ? Number(requestTimeoutMs) : TIMEOUT_MS;
+  const requestTimeout = isNil(requestTimeoutMs)
+    ? TIMEOUT_MS
+    : Number(requestTimeoutMs);
   const cryptoCredentialsDetails: Record<string, string> = {};
   if (certificate && certificate.trim().length > 0) {
     cryptoCredentialsDetails['ca'] = certificate.trim();
@@ -55,13 +56,11 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
 
   if (connection_string && connection_string.trim().length > 0) {
     const trimmed = connection_string.trim();
-    // left in place this parses fine and fails later as a bare "Login failed"
     if (/Password\s*=\s*\{?your_password\}?/i.test(trimmed)) {
       throw new Error(
         'The connection string still contains the {your_password} placeholder from the Azure portal. Replace it with your actual password.'
       );
     }
-    // the parser drops Authentication= and falls back to SQL auth silently
     const entra = trimmed.match(/Authentication\s*=\s*(Active Directory[^;]*)/i);
     if (entra) {
       throw new Error(
@@ -69,10 +68,7 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
       );
     }
     const parsed = sql.ConnectionPool.parseConnectionString(trimmed);
-    if (requestTimeoutMs) {
-      parsed.requestTimeout = requestTimeout;
-    }
-    // a connection string cannot express a CA bundle or a TLS floor
+    parsed.requestTimeout = requestTimeout;
     if (Object.keys(cryptoCredentialsDetails).length > 0) {
       parsed.options = {
         ...parsed.options,
@@ -107,23 +103,23 @@ export function buildConfig(auth: MssqlAuth, requestTimeoutMs?: number): sql.con
   };
 }
 
-// one pool per execution, closed by the caller — a shared singleton would leak across flows
-export async function mssqlConnect(
-  auth: MssqlAuth,
-  requestTimeoutMs?: number
-): Promise<sql.ConnectionPool> {
-  const config = buildConfig(auth, requestTimeoutMs);
+async function connect({
+  auth,
+  requestTimeoutMs,
+}: {
+  auth: MssqlAuth;
+  requestTimeoutMs?: number;
+}): Promise<sql.ConnectionPool> {
+  const config = buildConfig({ auth, requestTimeoutMs });
   const pool = new sql.ConnectionPool(config);
   try {
     await pool.connect();
   } catch (e) {
     await pool.close().catch(() => undefined);
-    // instance lookup is a UDP 1434 call that just times out where blocked
     if (config.options?.instanceName) {
+      const reason = e instanceof Error ? e.message : String(e);
       throw new Error(
-        `${
-          (e as Error).message
-        } Connecting by instance name ("${config.options.instanceName}") requires the SQL Server Browser service on UDP port 1434, which many networks block. Address the server by host and port instead, for example myhost,1433.`
+        `${reason} Connecting by instance name ("${config.options.instanceName}") requires the SQL Server Browser service on UDP port 1434, which many networks block. Address the server by host and port instead, for example myhost,1433.`
       );
     }
     throw e;
@@ -131,9 +127,7 @@ export async function mssqlConnect(
   return pool;
 }
 
-export async function mssqlGetTables(
-  pool: sql.ConnectionPool
-): Promise<MssqlTable[]> {
+async function getTables(pool: sql.ConnectionPool): Promise<MssqlTable[]> {
   const result = await pool.request().query(
     `SELECT TABLE_SCHEMA, TABLE_NAME
      FROM INFORMATION_SCHEMA.TABLES
@@ -146,57 +140,24 @@ export async function mssqlGetTables(
   }));
 }
 
-export type MssqlColumn = {
-  name: string;
-  /** base system type name, e.g. 'datetime2' -- never an alias type */
-  type: string;
-  precision: number;
-  scale: number;
-  /** in bytes, and -1 for a max type */
-  maxLength: number;
-  nullable: boolean;
-  /** set for the character types only; undefined for everything else */
-  collation?: string;
-};
-
-export type MssqlTableMeta = {
-  columns: MssqlColumn[];
-  /**
-   * An ascending IDENTITY that is also the sole key of a unique index: a row
-   * added later always carries a higher value, so it cannot be stranded behind
-   * a cursor, and it is immutable as well as unique. Both conditions matter.
-   * IDENTITY(n, -1) is legal and counts downward, and IDENTITY alone is not
-   * unique -- a reseed or an IDENTITY_INSERT load can repeat values unless a
-   * unique index enforces otherwise.
-   */
-  identity?: string;
-  /**
-   * Columns that uniquely identify a row, in key order. Prefers the primary
-   * key, then the narrowest non-nullable unique index -- a unique constraint
-   * identifies a row just as well as a declared key, and plenty of tables have
-   * only one. Empty when the table has neither.
-   */
-  keyColumns: string[];
-};
-
-/**
- * Everything the trigger needs to know about a table's shape, in one round
- * trip. It used to be three separate queries issued on every single poll.
- */
-export async function mssqlGetTableMeta(
-  pool: sql.ConnectionPool,
-  table: MssqlTable
-): Promise<MssqlTableMeta> {
+async function getTableMeta({
+  pool,
+  table,
+}: {
+  pool: sql.ConnectionPool;
+  table: MssqlTable;
+}): Promise<MssqlTableMeta> {
   const result = await pool
     .request()
-    .input('qualified', `${table.table_schema}.${table.table_name}`)
-    .query(
-      // TYPE_NAME(system_type_id) rather than a join on user_type_id: an alias
-      // type reports its own name, and only base types can be CONVERT targets.
-      `SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.precision,
+    .input('schema', table.table_schema)
+    .input('name', table.table_name)
+    .query<Record<string, unknown>>(
+      `DECLARE @object int = OBJECT_ID(QUOTENAME(@schema) + '.' + QUOTENAME(@name));
+
+       SELECT c.name, TYPE_NAME(c.system_type_id) AS type_name, c.precision,
               c.scale, c.max_length, c.is_nullable, c.collation_name
        FROM sys.columns c
-       WHERE c.object_id = OBJECT_ID(@qualified)
+       WHERE c.object_id = @object
        ORDER BY c.column_id;
 
        SELECT i.index_id, i.is_primary_key, c.name AS column_name, c.is_nullable
@@ -206,27 +167,24 @@ export async function mssqlGetTableMeta(
         AND ic.is_included_column = 0
        JOIN sys.columns c
          ON c.object_id = i.object_id AND c.column_id = ic.column_id
-       WHERE i.object_id = OBJECT_ID(@qualified)
+       WHERE i.object_id = @object
          AND i.is_unique = 1
          AND i.has_filter = 0
-         -- A disabled index still reports is_unique, and stops enforcing it.
-         -- Duplicates then land behind a strict keyset comparison and are
-         -- stepped over. Disabling every index for a bulk load and rebuilding
-         -- afterwards is ordinary ETL, and the metadata is byte-identical
-         -- either side of it, so nothing downstream can notice.
          AND i.is_disabled = 0
          AND i.is_hypothetical = 0
        ORDER BY i.index_id, ic.key_ordinal;
 
        SELECT name
        FROM sys.identity_columns
-       WHERE object_id = OBJECT_ID(@qualified) AND increment_value > 0;`
+       WHERE object_id = @object AND increment_value > 0;`
     );
 
-  const [columnRows, indexRows, identityRows] = result.recordsets as Record<
-    string,
-    unknown
-  >[][];
+  const recordsets: Record<string, unknown>[][] = Array.isArray(
+    result.recordsets
+  )
+    ? result.recordsets
+    : [];
+  const [columnRows, indexRows, identityRows] = recordsets;
 
   const columns: MssqlColumn[] = (columnRows ?? []).map((row) => ({
     name: String(row['name']),
@@ -256,9 +214,6 @@ export async function mssqlGetTableMeta(
     indexes.set(id, entry);
   }
 
-  // Nullable candidates are dropped rather than merely deprioritised: a NULL key
-  // value makes every comparison against it UNKNOWN, which would silently drop
-  // the row from the cursor window instead of ordering it.
   const candidates = [...indexes.values()]
     .filter((index) => !index.nullable)
     .sort((a, b) => {
@@ -285,19 +240,73 @@ export async function mssqlGetTableMeta(
   };
 }
 
-export async function mssqlGetColumns(
-  pool: sql.ConnectionPool,
-  table: MssqlTable
-): Promise<string[]> {
-  const result = await pool
-    .request()
-    .input('table_schema', table.table_schema)
-    .input('table_name', table.table_name)
-    .query(
-      `SELECT COLUMN_NAME
-       FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = @table_schema AND TABLE_NAME = @table_name
-       ORDER BY ORDINAL_POSITION`
-    );
-  return result.recordset.map((row) => row['COLUMN_NAME']);
+function bindParameters({
+  request,
+  parameters,
+}: {
+  request: sql.Request;
+  parameters: Record<string, unknown> | undefined;
+}): sql.Request {
+  for (const [name, value] of Object.entries(parameters ?? {})) {
+    request.input(name.replace(/^@/, ''), value ?? null);
+  }
+  return request;
 }
+
+async function writeReturningRows({
+  bind,
+  withOutput,
+  withoutOutput,
+}: {
+  bind: () => sql.Request;
+  withOutput: string;
+  withoutOutput: string;
+}): Promise<{ rows: Record<string, unknown>[]; rows_affected: number }> {
+  const total = (counts: number[]) => counts.reduce((a, b) => a + b, 0);
+  try {
+    const result = await bind().query<Record<string, unknown>>(withOutput);
+    return {
+      rows: result.recordset ?? [],
+      rows_affected: total(result.rowsAffected ?? []),
+    };
+  } catch (e) {
+    if (!isOutputBlockedByTrigger(e)) throw e;
+    const result = await bind().query<Record<string, unknown>>(withoutOutput);
+    return { rows: [], rows_affected: total(result.rowsAffected ?? []) };
+  }
+}
+
+export const mssqlCommon = {
+  isOutputBlockedByTrigger,
+  quoteId,
+  quoteTable,
+  buildConfig,
+  connect,
+  getTables,
+  getTableMeta,
+  bindParameters,
+  writeReturningRows,
+};
+
+export type MssqlAuth = AppConnectionValueForAuthProperty<typeof mssqlAuth>;
+
+export type MssqlTable = {
+  table_schema: string;
+  table_name: string;
+};
+
+export type MssqlColumn = {
+  name: string;
+  type: string;
+  precision: number;
+  scale: number;
+  maxLength: number;
+  nullable: boolean;
+  collation?: string;
+};
+
+export type MssqlTableMeta = {
+  columns: MssqlColumn[];
+  identity?: string;
+  keyColumns: string[];
+};

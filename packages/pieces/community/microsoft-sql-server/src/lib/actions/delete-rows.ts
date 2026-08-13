@@ -1,14 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mssqlAuth } from '../auth';
-import {
-  MssqlTable,
-  isOutputBlockedByTrigger,
-  mssqlConnect,
-  mssqlGetTableMeta,
-  quoteId,
-  quoteTable,
-} from '../common';
-import { exactProjection } from '../common/cursor';
+import { mssqlCommon } from '../common';
+import { cursorUtils } from '../common/cursor';
 import { mssqlProps } from '../common/props';
 import { writeRowsActionOutputSchema } from '../output-schemas';
 
@@ -25,10 +18,11 @@ export const deleteRowsAction = createAction({
   },
   props: {
     table: mssqlProps.table(),
-    search_column: mssqlProps.column(
-      'Search Column',
-      'Rows are deleted where this column equals the value below.'
-    ),
+    search_column: mssqlProps.column({
+      displayName: 'Search Column',
+      description: 'Rows are deleted where this column equals the value below.',
+      required: true,
+    }),
     search_value: Property.ShortText({
       displayName: 'Search Value',
       description: 'The value the search column must equal.',
@@ -38,38 +32,24 @@ export const deleteRowsAction = createAction({
   outputSchema: writeRowsActionOutputSchema,
   async run(context) {
     const { table, search_column, search_value } = context.propsValue;
-    const target = quoteTable(table as MssqlTable);
-    const where = `WHERE ${quoteId(search_column)} = @search`;
+    const target = mssqlCommon.quoteTable(table);
+    const where = `WHERE ${mssqlCommon.quoteId(search_column)} = @search`;
 
-    const pool = await mssqlConnect(context.auth);
+    const pool = await mssqlCommon.connect({ auth: context.auth });
     try {
       const bind = () => pool.request().input('search', search_value);
 
-      // The driver rounds decimal and truncates the date family, so the row is
-      // rendered to text by the server. See exactProjection in common/cursor.
-      const meta = await mssqlGetTableMeta(pool, table as MssqlTable);
-      const output = exactProjection(meta.columns, 'DELETED');
+      const meta = await mssqlCommon.getTableMeta({ pool, table });
+      const output = cursorUtils.exactProjection({
+        columns: meta.columns,
+        prefix: 'DELETED',
+      });
 
-      let rows: Record<string, unknown>[] = [];
-      let affected: number[] = [];
-      try {
-        const result = await bind().query<Record<string, unknown>>(
-          `DELETE FROM ${target} OUTPUT ${output} ${where}`
-        );
-        rows = result.recordset ?? [];
-        affected = result.rowsAffected ?? [];
-      } catch (e) {
-        if (!isOutputBlockedByTrigger(e)) throw e;
-        const result = await bind().query<Record<string, unknown>>(
-          `DELETE FROM ${target} ${where}`
-        );
-        affected = result.rowsAffected ?? [];
-      }
-
-      return {
-        rows,
-        rows_affected: affected.reduce((a, b) => a + b, 0),
-      };
+      return await mssqlCommon.writeReturningRows({
+        bind,
+        withOutput: `DELETE FROM ${target} OUTPUT ${output} ${where}`,
+        withoutOutput: `DELETE FROM ${target} ${where}`,
+      });
     } finally {
       await pool.close();
     }
