@@ -1,7 +1,7 @@
 import { Readable } from 'stream'
 import { apId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { FileType } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, HeadObjectCommand, ListObjectsV2Command, ListObjectsV2CommandOutput, PutObjectCommand, S3, S3ClientConfig } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
@@ -127,6 +127,20 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         return getSignedUrl(client, command, {
             expiresIn: dayjs.duration(7, 'days').asSeconds(),
         })
+    },
+    async listKeys(prefix: string): Promise<string[]> {
+        const keys: string[] = []
+        let continuationToken: string | undefined = undefined
+        do {
+            const page: ListObjectsV2CommandOutput = await getS3Client().send(new ListObjectsV2Command({
+                Bucket: getS3BucketName(),
+                Prefix: prefix,
+                ContinuationToken: continuationToken,
+            }))
+            keys.push(...(page.Contents ?? []).map((object) => object.Key).filter((key): key is string => !isNil(key)))
+            continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined
+        } while (!isNil(continuationToken))
+        return keys
     },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {
