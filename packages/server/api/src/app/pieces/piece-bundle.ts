@@ -132,7 +132,7 @@ function pieceBundleS3Key({ name, version }: PieceRef): string {
 const cdnVerifiedUrls = new Set<string>()
 
 const NPM_REGISTRY_URL = 'https://registry.npmjs.org'
-const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/retro/'
+const CDN_PIECES_URL = 'https://cdn.activepieces.com/pieces/bundled-pieces-versions/'
 const S3_PIECES_PREFIX = 'pieces/'
 
 type PieceRef = {
