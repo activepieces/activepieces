@@ -22,7 +22,7 @@ export const microsoftPowerBi = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-power-bi.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   auth: microsoftPowerBiAuth,
-  authors: ['calladodan'],
+  authors: ['calladodan','kishanprmr'],
   actions: [
     createDatasetAction,
     pushRowsToDatasetTableAction,

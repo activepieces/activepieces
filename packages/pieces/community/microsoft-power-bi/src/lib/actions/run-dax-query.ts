@@ -4,30 +4,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-type DaxQueryError = {
-  code: string;
-  message?: string;
-};
-
-type DaxQueryTableResult = {
-  rows: Record<string, unknown>[];
-  error?: DaxQueryError;
-};
-
-type DaxQueryResult = {
-  tables?: DaxQueryTableResult[];
-  error?: DaxQueryError;
-};
-
-type ExecuteQueriesResponse = {
-  results: DaxQueryResult[];
-  error?: DaxQueryError;
-};
-
-function isHttpErrorWithBody(error: unknown): error is { response: { body?: { error?: DaxQueryError } } } {
-  return typeof error === 'object' && error !== null && 'response' in error;
-}
-
 export const runDaxQueryAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'run_dax_query',
@@ -105,3 +81,27 @@ export const runDaxQueryAction = createAction({
     }
   },
 });
+
+function isHttpErrorWithBody(error: unknown): error is { response: { body?: { error?: DaxQueryError } } } {
+  return typeof error === 'object' && error !== null && 'response' in error;
+}
+
+type DaxQueryError = {
+  code: string;
+  message?: string;
+};
+
+type DaxQueryTableResult = {
+  rows: Record<string, unknown>[];
+  error?: DaxQueryError;
+};
+
+type DaxQueryResult = {
+  tables?: DaxQueryTableResult[];
+  error?: DaxQueryError;
+};
+
+type ExecuteQueriesResponse = {
+  results: DaxQueryResult[];
+  error?: DaxQueryError;
+};

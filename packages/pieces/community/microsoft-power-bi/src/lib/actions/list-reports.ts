@@ -4,16 +4,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-type PowerBiReport = {
-  id: string;
-  name: string;
-  description?: string;
-  reportType?: string;
-  datasetId?: string;
-  webUrl?: string;
-  embedUrl?: string;
-};
-
 export const listReportsAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'list_reports',
@@ -53,3 +43,13 @@ export const listReportsAction = createAction({
     }));
   },
 });
+
+type PowerBiReport = {
+  id: string;
+  name: string;
+  description?: string;
+  reportType?: string;
+  datasetId?: string;
+  webUrl?: string;
+  embedUrl?: string;
+};

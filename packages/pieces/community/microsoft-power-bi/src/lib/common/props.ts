@@ -3,26 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getMicrosoftCloudFromAuth, getPowerBiBaseUrl } from './microsoft-cloud';
 import { microsoftPowerBiAuth } from '../auth';
 
-type PowerBiGroup = {
-  id: string;
-  name: string;
-};
-
-type PowerBiDataset = {
-  id: string;
-  name: string;
-};
-
-type PowerBiReport = {
-  id: string;
-  name: string;
-};
-
 const MY_WORKSPACE_VALUE = '';
-
-function firstHeaderValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 function asOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
@@ -171,9 +152,23 @@ function buildReportIdDropdown({ workspacePropName }: { workspacePropName: strin
 export const powerBiProps = {
   MY_WORKSPACE_VALUE,
   getWorkspaceScopedUrl,
-  firstHeaderValue,
   asOptionalString,
   workspaceIdDropdown,
   buildDatasetIdDropdown,
   buildReportIdDropdown,
+};
+
+type PowerBiGroup = {
+  id: string;
+  name: string;
+};
+
+type PowerBiDataset = {
+  id: string;
+  name: string;
+};
+
+type PowerBiReport = {
+  id: string;
+  name: string;
 };

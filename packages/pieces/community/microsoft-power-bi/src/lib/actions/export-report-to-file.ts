@@ -4,54 +4,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-type FileFormat = 'PDF' | 'PPTX' | 'PNG';
-
-type ExportStatus = 'NotStarted' | 'Running' | 'Succeeded' | 'Failed' | 'Undefined';
-
-type ExportJob = {
-  id: string;
-  status: ExportStatus;
-  percentComplete?: number;
-  reportName?: string;
-  resourceFileExtension?: string;
-};
-
-const PREMIUM_REQUIRED_HINTS = ['premium', 'capacity', 'embedded', 'fabric', 'license', 'ppu'];
-
-function isLikelyPremiumCapacityError(message: string): boolean {
-  const normalized = message.toLowerCase();
-  return PREMIUM_REQUIRED_HINTS.some((hint) => normalized.includes(hint));
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-type HttpErrorLike = {
-  response?: {
-    body?: {
-      error?: {
-        message?: string;
-        code?: string;
-      };
-    };
-  };
-};
-
-function isHttpErrorLike(error: unknown): error is HttpErrorLike {
-  return typeof error === 'object' && error !== null && 'response' in error;
-}
-
-function extractErrorMessage(error: unknown): string {
-  if (isHttpErrorLike(error)) {
-    const apiError = error.response?.body?.error;
-    if (apiError) {
-      return apiError.message ?? apiError.code ?? 'Unknown error';
-    }
-  }
-  return error instanceof Error ? error.message : String(error);
-}
-
 export const exportReportToFileAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'export_report_to_file',
@@ -161,3 +113,51 @@ export const exportReportToFileAction = createAction({
     };
   },
 });
+
+const PREMIUM_REQUIRED_HINTS = ['premium', 'capacity', 'embedded', 'fabric', 'license', 'ppu'];
+
+function isLikelyPremiumCapacityError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return PREMIUM_REQUIRED_HINTS.some((hint) => normalized.includes(hint));
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isHttpErrorLike(error: unknown): error is HttpErrorLike {
+  return typeof error === 'object' && error !== null && 'response' in error;
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (isHttpErrorLike(error)) {
+    const apiError = error.response?.body?.error;
+    if (apiError) {
+      return apiError.message ?? apiError.code ?? 'Unknown error';
+    }
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
+type FileFormat = 'PDF' | 'PPTX' | 'PNG';
+
+type ExportStatus = 'NotStarted' | 'Running' | 'Succeeded' | 'Failed' | 'Undefined';
+
+type ExportJob = {
+  id: string;
+  status: ExportStatus;
+  percentComplete?: number;
+  reportName?: string;
+  resourceFileExtension?: string;
+};
+
+type HttpErrorLike = {
+  response?: {
+    body?: {
+      error?: {
+        message?: string;
+        code?: string;
+      };
+    };
+  };
+};

@@ -4,60 +4,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-const SAME_AS_SOURCE_WORKSPACE = '__same_as_source__';
-const MY_WORKSPACE_TARGET_ID = '00000000-0000-0000-0000-000000000000';
-
-type ClonedReport = {
-  id: string;
-  name: string;
-  datasetId?: string;
-  webUrl?: string;
-  embedUrl?: string;
-};
-
-const targetWorkspaceIdDropdown = Property.Dropdown({
-  displayName: 'Target Workspace',
-  description: 'Where to place the cloned report. Defaults to the same workspace as the source report.',
-  auth: microsoftPowerBiAuth,
-  required: false,
-  refreshers: [],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Please authenticate first.',
-      };
-    }
-
-    try {
-      const cloud = getMicrosoftCloudFromAuth(auth);
-      const response = await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
-        method: HttpMethod.GET,
-        url: `${getPowerBiBaseUrl(cloud)}/groups`,
-        headers: {
-          Authorization: `Bearer ${auth.access_token}`,
-        },
-      });
-
-      return {
-        disabled: false,
-        options: [
-          { label: 'Same as source workspace', value: SAME_AS_SOURCE_WORKSPACE },
-          { label: 'My workspace', value: MY_WORKSPACE_TARGET_ID },
-          ...response.body.value.map((group) => ({ label: group.name, value: group.id })),
-        ],
-      };
-    } catch (error) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Error loading workspaces',
-      };
-    }
-  },
-});
-
 export const cloneReportAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'clone_report',
@@ -76,7 +22,7 @@ export const cloneReportAction = createAction({
       description: 'The name to give the cloned report.',
       required: true,
     }),
-    target_workspace_id: targetWorkspaceIdDropdown,
+    target_workspace_id: buildTargetWorkspaceIdDropdown(),
     target_dataset_id: Property.ShortText({
       displayName: 'Target Dataset ID',
       description: 'Optional. The ID of the dataset the cloned report should bind to (found in the dataset\'s Power BI portal URL, e.g. ".../datasets/{this-id}/details"). Leave blank to keep the source report\'s dataset.',
@@ -110,3 +56,59 @@ export const cloneReportAction = createAction({
     return response.body;
   },
 });
+
+function buildTargetWorkspaceIdDropdown() {
+  return Property.Dropdown({
+    displayName: 'Target Workspace',
+    description: 'Where to place the cloned report. Defaults to the same workspace as the source report.',
+    auth: microsoftPowerBiAuth,
+    required: false,
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please authenticate first.',
+        };
+      }
+
+      try {
+        const cloud = getMicrosoftCloudFromAuth(auth);
+        const response = await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
+          method: HttpMethod.GET,
+          url: `${getPowerBiBaseUrl(cloud)}/groups`,
+          headers: {
+            Authorization: `Bearer ${auth.access_token}`,
+          },
+        });
+
+        return {
+          disabled: false,
+          options: [
+            { label: 'Same as source workspace', value: SAME_AS_SOURCE_WORKSPACE },
+            { label: 'My workspace', value: MY_WORKSPACE_TARGET_ID },
+            ...response.body.value.map((group) => ({ label: group.name, value: group.id })),
+          ],
+        };
+      } catch (error) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading workspaces',
+        };
+      }
+    },
+  });
+}
+
+const SAME_AS_SOURCE_WORKSPACE = '__same_as_source__';
+const MY_WORKSPACE_TARGET_ID = '00000000-0000-0000-0000-000000000000';
+
+type ClonedReport = {
+  id: string;
+  name: string;
+  datasetId?: string;
+  webUrl?: string;
+  embedUrl?: string;
+};

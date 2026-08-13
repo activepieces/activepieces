@@ -5,21 +5,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-type NameConflictMode = 'Ignore' | 'Abort' | 'Overwrite' | 'CreateOrOverwrite' | 'GenerateUniqueName';
-
-type ImportState = 'Publishing' | 'Succeeded' | 'Failed';
-
-type ImportJob = {
-  id: string;
-  importState: ImportState;
-  datasets?: { id: string; name: string }[];
-  reports?: { id: string; name: string }[];
-};
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export const importFileAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'import_pbix',
@@ -92,6 +77,7 @@ export const importFileAction = createAction({
       headers: {
         ...authHeaders,
         ...formData.getHeaders(),
+        'Content-Length': formData.getLengthSync().toString(),
       },
       queryParams: {
         datasetDisplayName,
@@ -103,7 +89,7 @@ export const importFileAction = createAction({
 
     let importJob = importResponse.body;
     const deadline = Date.now() + maxWaitSeconds * 1000;
-    while (importJob.importState === 'Publishing' && Date.now() < deadline) {
+    while (importJob.importState !== 'Succeeded' && importJob.importState !== 'Failed' && Date.now() < deadline) {
       await sleep(3000);
       const statusResponse = await httpClient.sendRequest<ImportJob>({
         method: HttpMethod.GET,
@@ -111,6 +97,14 @@ export const importFileAction = createAction({
         headers: authHeaders,
       });
       importJob = statusResponse.body;
+    }
+
+    if (importJob.importState === 'Failed') {
+      throw new Error(`Power BI import ${importJob.id} failed.`);
+    }
+
+    if (importJob.importState !== 'Succeeded') {
+      throw new Error(`Import did not finish within ${maxWaitSeconds} seconds (last status: ${importJob.importState ?? 'unknown'}).`);
     }
 
     return {
@@ -121,3 +115,18 @@ export const importFileAction = createAction({
     };
   },
 });
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type NameConflictMode = 'Ignore' | 'Abort' | 'Overwrite' | 'CreateOrOverwrite' | 'GenerateUniqueName';
+
+type ImportState = 'Publishing' | 'Succeeded' | 'Failed';
+
+type ImportJob = {
+  id: string;
+  importState: ImportState;
+  datasets?: { id: string; name: string }[];
+  reports?: { id: string; name: string }[];
+};

@@ -4,8 +4,6 @@ import { getPowerBiBaseUrl, getMicrosoftCloudFromAuth } from '../common/microsof
 import { powerBiProps } from '../common/props';
 import { microsoftPowerBiAuth } from '../auth';
 
-type NotifyOption = 'NoNotification' | 'MailOnFailure' | 'MailOnCompletion';
-
 export const refreshDatasetAction = createAction({
   auth: microsoftPowerBiAuth,
   name: 'refresh_dataset',
@@ -21,9 +19,9 @@ export const refreshDatasetAction = createAction({
     dataset_id: powerBiProps.buildDatasetIdDropdown({ workspacePropName: 'workspace_id' }),
     notify_option: Property.StaticDropdown<NotifyOption>({
       displayName: 'Notification Option',
-      description: 'When to send a mail notification about the refresh outcome. Ignored if Advanced Options is set.',
+      description: 'When to send a mail notification about the refresh outcome.',
       required: false,
-      defaultValue: 'MailOnFailure',
+      defaultValue: 'NoNotification',
       options: {
         options: [
           { label: 'No Notification', value: 'NoNotification' },
@@ -32,44 +30,40 @@ export const refreshDatasetAction = createAction({
         ],
       },
     }),
-    advanced_options: Property.Json({
-      displayName: 'Advanced Options',
-      description: 'Optional enhanced refresh settings (e.g. { "type": "Full", "commitMode": "transactional", "objects": [{ "table": "Customer" }] }). Leave empty for a standard refresh. When set, this replaces the Notification Option above. See the [Enhanced refresh docs](https://learn.microsoft.com/en-us/power-bi/connect-data/asynchronous-refresh).',
-      required: false,
-    }),
   },
   async run(context) {
     const auth = context.auth;
     const workspaceId = context.propsValue.workspace_id;
     const datasetId = context.propsValue.dataset_id;
     const notifyOption = context.propsValue.notify_option;
-    const advancedOptions = context.propsValue.advanced_options;
 
     const cloud = getMicrosoftCloudFromAuth(auth);
     const scopedUrl = powerBiProps.getWorkspaceScopedUrl({ baseUrl: getPowerBiBaseUrl(cloud), workspaceId });
 
-    const hasAdvancedOptions = !!advancedOptions && Object.keys(advancedOptions).length > 0;
-    const body = hasAdvancedOptions ? advancedOptions : { notifyOption: notifyOption ?? 'MailOnFailure' };
-
-    const response = await httpClient.sendRequest({
+    await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${scopedUrl}/datasets/${datasetId}/refreshes`,
       headers: {
         Authorization: `Bearer ${auth.access_token}`,
       },
-      body,
+      body: { notifyOption: notifyOption ?? 'NoNotification' },
     });
 
-    const location = powerBiProps.firstHeaderValue(response.headers?.['location']);
-    const requestId = powerBiProps.firstHeaderValue(response.headers?.['x-ms-request-id']);
+    const refreshHistory = await httpClient.sendRequest<{ value: { requestId: string }[] }>({
+      method: HttpMethod.GET,
+      url: `${scopedUrl}/datasets/${datasetId}/refreshes?$top=1`,
+      headers: {
+        Authorization: `Bearer ${auth.access_token}`,
+      },
+    });
 
     return {
       success: true,
-      statusCode: response.status,
-      requestId,
-      refreshId: location ? location.split('/').pop() : undefined,
+      refreshId: refreshHistory.body.value[0]?.requestId,
       workspaceId,
       datasetId,
     };
   },
 });
+
+type NotifyOption = 'NoNotification' | 'MailOnFailure' | 'MailOnCompletion';
