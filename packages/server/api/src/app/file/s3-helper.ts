@@ -142,18 +142,23 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         } while (!isNil(continuationToken))
         return keys
     },
-    async deleteFiles(s3Keys: string[]): Promise<void> {
+    // Returns the keys S3 refused to delete. Quiet mode omits successes but still reports
+    // per-object errors, and those never throw — a caller that needs the prefix to be empty
+    // afterwards has to inspect this rather than assume the request succeeding means every
+    // object went away.
+    async deleteFiles(s3Keys: string[]): Promise<string[]> {
         if (s3Keys.length === 0) {
-            return
+            return []
         }
         // Cloudflare R2 has a limit of 100 keys per request
         const MAX_KEYS_PER_REQUEST = 100
         const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
+        const failedKeys: string[] = []
 
         try {
             for (const chunk of chunks) {
                 const deleteObjects = chunk.map(Key => ({ Key }))
-                await getS3Client().send(new DeleteObjectsCommand({
+                const response = await getS3Client().send(new DeleteObjectsCommand({
                     Bucket: getS3BucketName(),
                     Delete: {
                         Objects: deleteObjects,
@@ -161,7 +166,12 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                     },
                     ChecksumAlgorithm: 'CRC32C',
                 }))
-                log.info({ count: chunk.length }, 'files deleted from s3')
+                const errors = response.Errors ?? []
+                if (errors.length > 0) {
+                    log.warn({ count: errors.length, codes: errors.map((entry) => entry.Code) }, 'some files could not be deleted from s3')
+                    failedKeys.push(...errors.map((entry) => entry.Key).filter((key): key is string => !isNil(key)))
+                }
+                log.info({ count: chunk.length - errors.length }, 'files deleted from s3')
             }
         }
         catch (error) {
@@ -169,6 +179,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             exceptionHandler.handle(error, log)
             throw error
         }
+        return failedKeys
     },
     async validateS3Configuration(): Promise<void> {
         const client = getS3Client()

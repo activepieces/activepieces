@@ -26,9 +26,15 @@ export const purgePieceBundleCache = (log: FastifyBaseLogger) => ({
             return
         }
         log.info({ count: keys.length }, '[purgePieceBundleCache] Purging cached piece tarballs so repackaged bundles are re-fetched')
-        const { error: deleteError } = await tryCatch(() => s3.deleteFiles(keys))
+        const { data: failedKeys, error: deleteError } = await tryCatch(() => s3.deleteFiles(keys))
         if (deleteError) {
             log.warn({ error: deleteError }, '[purgePieceBundleCache] Failed to purge cached piece tarballs, will retry on next boot')
+            return
+        }
+        // Only a fully empty prefix may be marked done — a partial purge that recorded success
+        // would leave unbundled tarballs shadowing the CDN with no way to retry.
+        if (failedKeys.length > 0) {
+            log.warn({ failedCount: failedKeys.length, total: keys.length }, '[purgePieceBundleCache] Purge incomplete, will retry on next boot')
             return
         }
         await redisConnection.set(PURGE_PIECE_BUNDLE_CACHE_KEY, 'true')
