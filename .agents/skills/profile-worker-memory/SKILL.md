@@ -21,6 +21,19 @@ dmesg -T | grep -aiE "Memory cgroup out of memory|Killed process"
 
 `OOMKilled=true` on a *running* container means the cgroup OOM-killed a child while PID 1 survived. In `dmesg`, the process name is truncated to **15 characters**: `node /usr/src/a` is the **worker** (`…/worker/dist/src/bootstrap.js`), not the engine — the engine runs as `/usr/local/bin/node`. Getting this backwards sends you profiling the wrong process.
 
+## 1b. Decide WHICH process — worker or engine
+
+The container holds two Node processes and they fail for different reasons. Get this wrong and you can profile the wrong one for hours.
+
+- **worker** — `node /usr/src/app/packages/server/worker/…`, one per container, lives as long as the container.
+- **engine** — runs under isolate, appears as `sandbox-<id>`, and is the one that grows when `AP_REUSE_SANDBOX=true`.
+
+```bash
+ps -eo rss,etime,comm --sort=-rss | grep sandbox-     # sweep every host, sort by AGE
+```
+
+Age is the tell. Engines a few **seconds** old mean the sandbox is invalidated per job (nothing can accumulate). Engines **minutes-to-hours** old on a reuse host are where a leak lives. If a reporter's screenshot shows the sandbox at N GB, believe it over your own assumption that the worker is the culprit.
+
 ## 2. JS heap or native? Decide before you snapshot
 
 ```bash
@@ -66,6 +79,8 @@ docker run --rm --memory 10g -v /tmp:/data --entrypoint node <image> \
 ```
 
 The format is flat typed arrays described by `snapshot.meta`: read `node_fields` for the stride, then walk `nodes` summing `self_size` grouped by `strings[name]`. That histogram alone usually names the leak.
+
+Two limits bite on big snapshots. Anything over ~512 MB cannot be `readFileSync(..., 'utf8')` at all — V8 caps string length, so you get `ERR_STRING_TOO_LONG`. Read it as a **Buffer** and scan integers out of the `nodes`/`edges` spans directly, resolving only the handful of `strings` entries you actually print. And raising the container's cgroup does **not** raise the target's `--max-old-space-size`, which is fixed at launch: serializing a heap too close to that ceiling kills the process mid-snapshot (observed at 701 MB against a 768 MB ceiling). Catch the process with a few hundred MB of headroom.
 
 ## 5. Walk the retainer path — this is the answer
 
