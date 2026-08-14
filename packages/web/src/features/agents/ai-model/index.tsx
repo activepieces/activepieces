@@ -21,16 +21,6 @@ import { cn } from '@/lib/utils';
 
 import { aiModelHooks } from './hooks';
 
-export const PROVIDER_EMBEDDING_MODELS: Partial<
-  Record<AIProviderName, string>
-> = {
-  [AIProviderName.OPENAI]: 'text-embedding-3-small',
-  [AIProviderName.GOOGLE]: 'text-embedding-004',
-  [AIProviderName.AZURE]: 'text-embedding-3-small',
-  [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
-  [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
-};
-
 type AIModelSelectorProps = {
   defaultProvider?: AIProviderName;
   defaultModel?: string;
@@ -66,6 +56,7 @@ export function AIModelSelector({
     aiModelHooks.useListProviders();
   const { data: models = [], isLoading: modelsLoading } =
     aiModelHooks.useGetModelsForProvider(selectedProvider);
+  const { embeddingModel } = aiModelHooks.useEmbeddingModel(selectedProvider);
 
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
@@ -298,9 +289,9 @@ export function AIModelSelector({
 
       {selectedProvider && (
         <p className="text-xs text-muted-foreground">
-          {PROVIDER_EMBEDDING_MODELS[selectedProvider]
+          {embeddingModel
             ? t('Embedding model for knowledge base: {model}', {
-                model: PROVIDER_EMBEDDING_MODELS[selectedProvider],
+                model: embeddingModel,
               })
             : t('This provider does not support knowledge base embeddings.')}
         </p>

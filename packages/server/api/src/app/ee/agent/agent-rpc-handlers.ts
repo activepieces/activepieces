@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
-import { embed, ModelMessage } from 'ai'
+import { embed, embedMany, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -552,6 +552,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
         const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        await knowledgeBaseService(log).embedPendingChunks({
+            projectId,
+            knowledgeBaseFileId: input.knowledgeBaseFileId,
+            embedFn: async (texts) => {
+                const { embeddings } = await embedMany({ model, values: texts, providerOptions })
+                return embeddings.map(agentAiUtils.toStorageEmbedding)
+            },
+        })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,

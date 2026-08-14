@@ -1,6 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER } from './ai-providers'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, AIProviderModelType, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER } from './ai-providers'
 
 describe('AI_PROVIDER_CAPABILITIES', () => {
     it('has an entry for every provider', () => {
@@ -16,10 +16,73 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         expect(noImage.sort()).toEqual([AIProviderName.ANTHROPIC, AIProviderName.MISTRAL].sort())
     })
 
-    it('marks embedding support iff a default embedding model exists', () => {
+    it('declares a default embedding model only for providers that own one', () => {
+        const embedding = Object.values(AIProviderName).filter(
+            (provider) => AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel !== undefined,
+        )
+        expect(embedding.sort()).toEqual([
+            AIProviderName.ACTIVEPIECES,
+            AIProviderName.AZURE,
+            AIProviderName.GOOGLE,
+            AIProviderName.OPENAI,
+            AIProviderName.OPENROUTER,
+        ].sort())
+    })
+})
+
+describe('resolveEmbeddingModelId', () => {
+    const gatewayConfig = (modelIds: string[]) => ({
+        accountId: 'acct',
+        gatewayId: 'gw',
+        models: modelIds.map((modelId) => ({ modelId, modelName: modelId, modelType: AIProviderModelType.TEXT })),
+    })
+
+    it('returns the provider default for providers that own an embedding model', () => {
         for (const provider of Object.values(AIProviderName)) {
-            const caps = AI_PROVIDER_CAPABILITIES[provider]
-            expect(caps.supportsEmbedding).toBe(caps.defaultEmbeddingModel !== undefined)
+            if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+                continue
+            }
+            expect(aiProviderUtils.resolveEmbeddingModelId({ provider, config: {} }))
+                .toBe(AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel)
+        }
+    })
+
+    it('embeds through a gateway that routes to OpenAI', () => {
+        const modelId = aiProviderUtils.resolveEmbeddingModelId({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            config: gatewayConfig(['anthropic/claude-sonnet-4-6', 'openai/gpt-4.1']),
+        })
+        expect(modelId).toBe(AI_PROVIDER_CAPABILITIES[AIProviderName.OPENAI].defaultEmbeddingModel)
+    })
+
+    it('matches the OpenAI prefix regardless of case or padding', () => {
+        expect(aiProviderUtils.resolveEmbeddingModelId({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            config: gatewayConfig([' OpenAI/GPT-4.1 ']),
+        })).toBe(AI_PROVIDER_CAPABILITIES[AIProviderName.OPENAI].defaultEmbeddingModel)
+    })
+
+    it('refuses a gateway with no OpenAI upstream, so the UI never offers what would fail', () => {
+        expect(aiProviderUtils.resolveEmbeddingModelId({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            config: gatewayConfig(['anthropic/claude-sonnet-4-6', 'google-ai-studio/gemini-2.5-pro']),
+        })).toBeUndefined()
+        expect(aiProviderUtils.resolveEmbeddingModelId({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            config: gatewayConfig([]),
+        })).toBeUndefined()
+    })
+
+    it('never matches a provider name that merely contains openai', () => {
+        expect(aiProviderUtils.resolveEmbeddingModelId({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            config: gatewayConfig(['azure-openai/gpt-4.1', 'openai-compatible-thing']),
+        })).toBeUndefined()
+    })
+
+    it('refuses a config that is not a gateway config', () => {
+        for (const config of [undefined, null, {}, { models: 'nope' }, { accountId: 'a', gatewayId: 'g' }]) {
+            expect(aiProviderUtils.resolveEmbeddingModelId({ provider: AIProviderName.CLOUDFLARE_GATEWAY, config })).toBeUndefined()
         }
     })
 })

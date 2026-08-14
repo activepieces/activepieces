@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, aiProviderUtils, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -21,6 +21,12 @@ const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
 const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
     openrouter: { dimensions: EMBEDDING_DIMENSIONS },
     openai: { dimensions: EMBEDDING_DIMENSIONS },
+}
+
+const CLOUDFLARE_GATEWAY_PROVIDER_NAME = 'cloudflare'
+
+const CLOUDFLARE_GATEWAY_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
+    [CLOUDFLARE_GATEWAY_PROVIDER_NAME]: { dimensions: EMBEDDING_DIMENSIONS },
 }
 
 const KEEP_RECENT_TOOL_RESULTS = 6
@@ -66,11 +72,10 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         const { apiKey } = auth as BaseAIProviderAuthConfig
-        const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
         const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
         return createOpenAICompatible({
-            name: 'cloudflare',
-            baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+            name: CLOUDFLARE_GATEWAY_PROVIDER_NAME,
+            baseURL: cloudflareGatewayBaseUrl({ config, upstream: 'compat' }),
             headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
         }).chatModel(actualModelId)
     }
@@ -92,6 +97,20 @@ function readStringField(source: Record<string, unknown>, key: string): string {
     return typeof value === 'string' ? value : ''
 }
 
+/**
+ * `compat` is Cloudflare's unified chat endpoint; `openai` is its OpenAI passthrough, which mirrors
+ * OpenAI's own paths and is the only documented way to reach an endpoint the unified API omits
+ * (embeddings). Both share the gateway prefix, so they are built from one place to stay in step.
+ */
+function cloudflareGatewayBaseUrl({ config, upstream }: {
+    config: Record<string, unknown>
+    upstream: 'compat' | 'openai'
+}): string {
+    const accountId = readStringField(config, 'accountId')
+    const gatewayId = readStringField(config, 'gatewayId')
+    return `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/${upstream}`
+}
+
 function toStorageEmbedding(embedding: number[]): number[] {
     if (embedding.length < EMBEDDING_DIMENSIONS) {
         throw new Error(`This embedding model returns ${embedding.length} dimensions, fewer than the ${EMBEDDING_DIMENSIONS} a knowledge base stores`)
@@ -106,7 +125,7 @@ function createEmbeddingModel({ provider, auth, config }: {
     auth: Record<string, unknown>
     config: Record<string, unknown>
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
+    const embeddingModelId = aiProviderUtils.resolveEmbeddingModelId({ provider, config })
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
@@ -114,6 +133,14 @@ function createEmbeddingModel({ provider, auth, config }: {
     switch (provider) {
         case AIProviderName.OPENAI:
             return { model: createOpenAI({ apiKey }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+        case AIProviderName.CLOUDFLARE_GATEWAY: {
+            const client = createOpenAICompatible({
+                name: CLOUDFLARE_GATEWAY_PROVIDER_NAME,
+                baseURL: cloudflareGatewayBaseUrl({ config, upstream: 'openai' }),
+                headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+            })
+            return { model: client.embeddingModel(embeddingModelId), providerOptions: CLOUDFLARE_GATEWAY_EMBEDDING_PROVIDER_OPTIONS }
+        }
         case AIProviderName.GOOGLE:
             return { model: createGoogleGenerativeAI({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
         case AIProviderName.AZURE: {

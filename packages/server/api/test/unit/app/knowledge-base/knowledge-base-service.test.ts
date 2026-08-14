@@ -1,3 +1,4 @@
+import { IsNull } from 'typeorm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockFindOneBy = vi.fn()
@@ -237,6 +238,118 @@ describe('knowledgeBaseService', () => {
 
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('embedPendingChunks', () => {
+        it('embeds every chunk stored without a vector and writes it back by id', async () => {
+            mockFind.mockResolvedValue([
+                { id: 'chunk-1', content: 'first', chunkIndex: 0 },
+                { id: 'chunk-2', content: 'second', chunkIndex: 1 },
+            ])
+            const embedFn = vi.fn().mockResolvedValue([[0.1], [0.2]])
+
+            const embedded = await knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn,
+            })
+
+            expect(embedded).toBe(2)
+            expect(embedFn).toHaveBeenCalledWith(['first', 'second'])
+            expect(mockInsert).not.toHaveBeenCalled()
+            expect(mockUpdate).toHaveBeenCalledTimes(2)
+            expect(mockUpdate).toHaveBeenNthCalledWith(
+                1,
+                { id: 'chunk-1', projectId: 'proj-1' },
+                expect.objectContaining({ embedding: '[0.1]' }),
+            )
+            expect(mockUpdate).toHaveBeenNthCalledWith(
+                2,
+                { id: 'chunk-2', projectId: 'proj-1' },
+                expect.objectContaining({ embedding: '[0.2]' }),
+            )
+        })
+
+        it('asks only for chunks that have no embedding yet', async () => {
+            mockFind.mockResolvedValue([])
+
+            await knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn: vi.fn(),
+            })
+
+            expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({
+                where: expect.objectContaining({
+                    projectId: 'proj-1',
+                    knowledgeBaseFileId: 'kb-file-1',
+                    embedding: IsNull(),
+                }),
+            }))
+        })
+
+        it('is a no-op when every chunk is already embedded', async () => {
+            mockFind.mockResolvedValue([])
+            const embedFn = vi.fn()
+
+            const embedded = await knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn,
+            })
+
+            expect(embedded).toBe(0)
+            expect(embedFn).not.toHaveBeenCalled()
+            expect(mockUpdate).not.toHaveBeenCalled()
+        })
+
+        it('refuses to write vectors it cannot line up with their chunks', async () => {
+            mockFind.mockResolvedValue([
+                { id: 'chunk-1', content: 'first', chunkIndex: 0 },
+                { id: 'chunk-2', content: 'second', chunkIndex: 1 },
+            ])
+
+            await expect(knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn: vi.fn().mockResolvedValue([[0.1]]),
+            })).rejects.toThrow(/Embedding count mismatch/)
+
+            expect(mockUpdate).not.toHaveBeenCalled()
+        })
+
+        it('skips blank chunks, which no embedding provider accepts, instead of failing the whole file', async () => {
+            mockFind.mockResolvedValue([
+                { id: 'chunk-1', content: '   ', chunkIndex: 0 },
+                { id: 'chunk-2', content: 'real content', chunkIndex: 1 },
+            ])
+            const embedFn = vi.fn().mockResolvedValue([[0.3]])
+
+            const embedded = await knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn,
+            })
+
+            expect(embedded).toBe(1)
+            expect(embedFn).toHaveBeenCalledWith(['real content'])
+        })
+
+        it('embeds in batches so a large file never goes out as one request', async () => {
+            const pending = Array.from({ length: 120 }, (_, index) => ({ id: `chunk-${index}`, content: `c${index}`, chunkIndex: index }))
+            mockFind.mockResolvedValue(pending)
+            const embedFn = vi.fn().mockImplementation((texts: string[]) => Promise.resolve(texts.map(() => [0.5])))
+
+            const embedded = await knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn,
+            })
+
+            expect(embedded).toBe(120)
+            expect(embedFn).toHaveBeenCalledTimes(3)
+            expect(embedFn.mock.calls.map(([texts]) => texts.length)).toEqual([50, 50, 20])
         })
     })
 })

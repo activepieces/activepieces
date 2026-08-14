@@ -25,22 +25,25 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
-const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
+const { mockGetFileOrThrow, mockKbSearch, mockEmbedPendingChunks } = vi.hoisted(() => ({
     mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
     mockKbSearch: vi.fn().mockResolvedValue([]),
+    mockEmbedPendingChunks: vi.fn().mockResolvedValue(0),
 }))
 
 vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
-    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, embedPendingChunks: mockEmbedPendingChunks }),
 }))
 
-const { mockEmbed } = vi.hoisted(() => ({
+const { mockEmbed, mockEmbedMany } = vi.hoisted(() => ({
     mockEmbed: vi.fn().mockResolvedValue({ embedding: new Array(768).fill(0.1) }),
+    mockEmbedMany: vi.fn().mockResolvedValue({ embeddings: [new Array(768).fill(0.1)] }),
 }))
 
 vi.mock('ai', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
     embed: () => mockEmbed(),
+    embedMany: () => mockEmbedMany(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
@@ -540,6 +543,7 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
     async function search(conversation: unknown) {
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])
+        mockEmbedPendingChunks.mockClear().mockResolvedValue(0)
         mockFindOneBy.mockResolvedValue(conversation)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
@@ -566,6 +570,40 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
 
         expect(mockGetFileOrThrow).toHaveBeenCalledWith({ projectId: 'proj-own', id: 'kb-1' })
         expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'proj-own' }))
+    })
+
+    it('embeds chunks that were uploaded without a vector before searching, scoped to the same project and file', async () => {
+        await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        expect(mockEmbedPendingChunks).toHaveBeenCalledWith(expect.objectContaining({
+            projectId: 'proj-own',
+            knowledgeBaseFileId: 'kb-1',
+        }))
+        expect(mockEmbedPendingChunks.mock.invocationCallOrder[0]).toBeLessThan(mockKbSearch.mock.invocationCallOrder[0])
+    })
+
+    it('cuts stored chunk vectors to the size the knowledge base column holds', async () => {
+        mockEmbedMany.mockResolvedValueOnce({ embeddings: [new Array(1536).fill(0.1)] })
+        await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        const { embedFn } = mockEmbedPendingChunks.mock.calls[0][0]
+        const stored = await embedFn(['some chunk'])
+
+        expect(stored[0]).toHaveLength(768)
+    })
+
+    it('never searches a knowledge base whose chunks could not be embedded', async () => {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockEmbedPendingChunks.mockClear().mockRejectedValueOnce(new Error('embedding provider is down'))
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })).rejects.toThrow(/embedding provider is down/)
+
+        expect(mockKbSearch).not.toHaveBeenCalled()
     })
 })
 

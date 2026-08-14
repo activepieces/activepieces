@@ -1,6 +1,7 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
-import { agentAiUtils } from '../src/agent-ai-utils'
+import { agentAiUtils, EMBEDDING_DIMENSIONS } from '../src/agent-ai-utils'
 
 const { sanitizeTruncatedAssistantTail } = agentAiUtils
 
@@ -361,5 +362,79 @@ describe('buildLargeResultPreview', () => {
         const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000 })
         expect(text.toLowerCase()).toMatch(/paginate|filter|narrow/)
         expect(text).not.toContain('undefined')
+    })
+})
+
+describe('createEmbeddingModel', () => {
+    type ResolvedConfig = {
+        url: (opts: { path: string, modelId: string }) => string
+        headers: (() => Record<string, string>) | Record<string, string>
+    }
+
+    const configOf = (model: unknown): ResolvedConfig => (model as { config: ResolvedConfig }).config
+    const headersOf = (cfg: ResolvedConfig): Record<string, string> => (typeof cfg.headers === 'function' ? cfg.headers() : cfg.headers)
+
+    const gatewayConfig = (modelIds: string[]) => ({
+        accountId: 'acct-1',
+        gatewayId: 'gw-1',
+        models: modelIds.map((modelId) => ({ modelId, modelName: modelId, modelType: 'text' })),
+    })
+
+    it('sends gateway embeddings to the OpenAI passthrough with only the gateway credential', () => {
+        const { model, providerOptions } = agentAiUtils.createEmbeddingModel({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            auth: { apiKey: 'CF-TOKEN' },
+            config: gatewayConfig(['openai/gpt-4.1']),
+        })
+
+        const cfg = configOf(model)
+        expect(cfg.url({ path: '/embeddings', modelId: 'text-embedding-3-small' }))
+            .toBe('https://gateway.ai.cloudflare.com/v1/acct-1/gw-1/openai/embeddings')
+
+        const headers = headersOf(cfg)
+        expect(headers['cf-aig-authorization']).toBe('Bearer CF-TOKEN')
+        expect(headers['Authorization']).toBeUndefined()
+        expect(headers['authorization']).toBeUndefined()
+        expect(providerOptions).toEqual({ cloudflare: { dimensions: EMBEDDING_DIMENSIONS } })
+
+        const [providerOptionsNamespace] = (model as { provider: string }).provider.split('.')
+        expect(providerOptionsNamespace).toBe(Object.keys(providerOptions)[0])
+    })
+
+    it('names the OpenAI embedding model behind the gateway', () => {
+        const { model } = agentAiUtils.createEmbeddingModel({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            auth: { apiKey: 'CF-TOKEN' },
+            config: gatewayConfig(['anthropic/claude-sonnet-4-6', 'openai/gpt-4.1']),
+        })
+        expect((model as { modelId: string }).modelId).toBe('text-embedding-3-small')
+    })
+
+    it('refuses a gateway with no OpenAI upstream instead of calling one that would fail', () => {
+        expect(() => agentAiUtils.createEmbeddingModel({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            auth: { apiKey: 'CF-TOKEN' },
+            config: gatewayConfig(['anthropic/claude-sonnet-4-6']),
+        })).toThrow(/does not support knowledge base search/)
+    })
+
+    it('still refuses providers that have no embedding model at all', () => {
+        for (const provider of [AIProviderName.ANTHROPIC, AIProviderName.BEDROCK, AIProviderName.MISTRAL, AIProviderName.CUSTOM]) {
+            expect(() => agentAiUtils.createEmbeddingModel({
+                provider,
+                auth: { apiKey: 'k' },
+                config: {},
+            })).toThrow(/does not support knowledge base search/)
+        }
+    })
+
+    it('leaves the direct OpenAI path on OpenAI itself', () => {
+        const { model, providerOptions } = agentAiUtils.createEmbeddingModel({
+            provider: AIProviderName.OPENAI,
+            auth: { apiKey: 'SECRET' },
+            config: {},
+        })
+        expect((model as { modelId: string }).modelId).toBe('text-embedding-3-small')
+        expect(providerOptions).toEqual({ openai: { dimensions: EMBEDDING_DIMENSIONS } })
     })
 })

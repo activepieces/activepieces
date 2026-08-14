@@ -2,6 +2,7 @@ import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   ACTIVEPIECES_CHAT_TIERS,
   AIProviderModel,
+  aiProviderUtils,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
@@ -69,5 +70,23 @@ export const aiModelHooks = {
         return getAllowedModelsForProvider(provider, allModels, 'text');
       },
     });
+  },
+
+  useEmbeddingModel: (provider?: AIProviderName) => {
+    const { data: providers, isPending } = aiModelHooks.useListProviders();
+    if (isNil(provider)) {
+      return { embeddingModel: undefined, isPending: false };
+    }
+    if (isPending) {
+      return { embeddingModel: undefined, isPending: true };
+    }
+    const config = providers?.find((p) => p.provider === provider)?.config;
+    return {
+      embeddingModel: aiProviderUtils.resolveEmbeddingModelId({
+        provider,
+        config,
+      }),
+      isPending: false,
+    };
   },
 };

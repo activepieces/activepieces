@@ -9,12 +9,13 @@ import { t } from 'i18next';
 import { BookOpen, FileText, Table2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROVIDER_EMBEDDING_MODELS } from '@/features/agents';
+import { aiModelHooks } from '@/features/agents/ai-model/hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -91,10 +92,17 @@ export const KnowledgeBaseSection = ({
   onToolsUpdate,
   selectedProvider,
 }: KnowledgeBaseSectionProps) => {
-  const embeddingModel = selectedProvider
-    ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
-    : undefined;
+  const { embeddingModel, isPending } =
+    aiModelHooks.useEmbeddingModel(selectedProvider);
   const supportsEmbeddings = !!embeddingModel;
+  const unsupportedReason =
+    selectedProvider === AIProviderName.CLOUDFLARE_GATEWAY
+      ? t(
+          'Add a model whose id starts with openai/ to this Cloudflare AI Gateway to use a knowledge base.',
+        )
+      : t(
+          'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
+        );
   const { data: pgvectorAvailable } = flagsHooks.useFlag<boolean>(
     ApFlagId.PGVECTOR_AVAILABLE,
   );
@@ -121,11 +129,15 @@ export const KnowledgeBaseSection = ({
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground mt-3">
-                {t(
-                  'The selected provider does not support embeddings. Switch to a provider like OpenAI or Google for knowledge base to work.',
+              <div className="mt-3">
+                {isPending ? (
+                  <Skeleton className="h-4 w-64" />
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {unsupportedReason}
+                  </p>
                 )}
-              </p>
+              </div>
             )}
           </div>
         ) : (
@@ -142,11 +154,11 @@ export const KnowledgeBaseSection = ({
                 </p>
                 <AddKnowledgeBaseDropdown disabled={disabled} />
               </>
+            ) : isPending ? (
+              <Skeleton className="h-5 w-72" />
             ) : (
               <p className="text-sm text-muted-foreground">
-                {t(
-                  'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
-                )}
+                {unsupportedReason}
               </p>
             )}
           </div>

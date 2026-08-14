@@ -2488,5 +2488,6 @@
   "Contact a platform admin to get more credits.": "Contact a platform admin to get more credits.",
   "You've reached your credits limit.": "You've reached your credits limit.",
   "You've reached your credits limit. Contact a platform admin to get more credits.": "You've reached your credits limit. Contact a platform admin to get more credits.",
-  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits."
+  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits.",
+  "Add a model whose id starts with openai/ to this Cloudflare AI Gateway to use a knowledge base.": "Add a model whose id starts with openai/ to this Cloudflare AI Gateway to use a knowledge base."
 }

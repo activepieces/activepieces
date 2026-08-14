@@ -267,6 +267,8 @@ function getMaxContextTokens({ provider }: { provider: AIProviderName | undefine
     return PROVIDER_MAX_CONTEXT_TOKENS[provider] ?? DEFAULT_MAX_CONTEXT_TOKENS
 }
 
+const CLOUDFLARE_GATEWAY_OPENAI_PREFIX = 'openai/'
+
 const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.OPENAI]: 'text-embedding-3-small',
     [AIProviderName.GOOGLE]: 'text-embedding-004',
@@ -292,10 +294,30 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
         chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
         maxContextTokens: getMaxContextTokens({ provider }),
         defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
-        supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
+}
+
+/**
+ * A Cloudflare gateway has no embedding model of its own: it proxies whichever upstream the admin
+ * wired into it. An `openai/`-prefixed model in its config is the only zero-setup proof that an
+ * OpenAI upstream credential is stored in the gateway, so embeddings are offered on that evidence
+ * and withheld otherwise — an Anthropic-only gateway must not advertise a knowledge base it would
+ * fail to embed for.
+ */
+function resolveEmbeddingModelId({ provider, config }: { provider: AIProviderName, config: unknown }): string | undefined {
+    if (provider !== AIProviderName.CLOUDFLARE_GATEWAY) {
+        return DEFAULT_EMBEDDING_MODELS[provider]
+    }
+    const parsedConfig = CloudflareGatewayProviderConfig.safeParse(config)
+    if (!parsedConfig.success) {
+        return undefined
+    }
+    const routesToOpenAi = parsedConfig.data.models.some(
+        (model) => model.modelId.trim().toLowerCase().startsWith(CLOUDFLARE_GATEWAY_OPENAI_PREFIX),
+    )
+    return routesToOpenAi ? DEFAULT_EMBEDDING_MODELS[AIProviderName.OPENAI] : undefined
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
@@ -325,6 +347,7 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    resolveEmbeddingModelId,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'
@@ -333,7 +356,6 @@ export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined
     maxContextTokens: number
     defaultEmbeddingModel: string | undefined
-    supportsEmbedding: boolean
     supportsImageGeneration: boolean
     webSearch: AIWebSearchMode | undefined
 }
