@@ -6,6 +6,7 @@ import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
 
 const GOOGLE_DNS = '216.239.32.10'
+const LAST_RESORT_ORIGIN = 'http://localhost'
 const HOST_RESTRUCTURING_CHARACTERS = /[^A-Za-z0-9._\-:[\]]/
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 
@@ -74,7 +75,11 @@ const firstForwardedValue = (header: string | string[] | undefined): string | un
 }
 
 const configuredOrigin = (): string => {
-    return new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL)).origin
+    const parsed = tryCatchSync(() => new URL(system.get(AppSystemProp.FRONTEND_URL) ?? ''))
+    if (parsed.error || (parsed.data.protocol !== 'http:' && parsed.data.protocol !== 'https:')) {
+        return LAST_RESORT_ORIGIN
+    }
+    return parsed.data.origin
 }
 
 const isUsableHost = (host: string | undefined): host is string => {
@@ -87,7 +92,7 @@ const candidateHosts = (req: FastifyRequest): string[] => {
 }
 
 const getRequestHost = (req: FastifyRequest): string => {
-    return candidateHosts(req)[0] ?? new URL(configuredOrigin()).host
+    return candidateHosts(req)[0] ?? req.hostname
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
