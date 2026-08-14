@@ -138,4 +138,48 @@ describe('Microsoft Copilot Studio DCR prerequisites', () => {
         expect(res.status).toBe(400)
         expect((await res.json() as Record<string, string>).error).toBe('invalid_client')
     })
+
+    it.each([
+        ['Power Platform connector consent', 'https://global.consent.azure-apim.net/redirect'],
+        ['regional connector consent', 'https://europe-002.consent.azure-apim.net/redirect'],
+        ['Bot Framework token store', 'https://token.botframework.com/.auth/web/redirect'],
+        ['Microsoft native client', 'https://login.microsoftonline.com/common/oauth2/nativeclient'],
+    ])('accepts the %s callback as a redirect URI', async (_name, redirectUri) => {
+        const res = await fetch(`${base}/register`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ redirect_uris: [redirectUri] }),
+        })
+
+        expect(res.status).toBe(201)
+        expect((await res.json() as Record<string, string>).client_secret).toEqual(expect.any(String))
+    })
+
+    it('ignores the optional RFC 7591 metadata a strict client sends rather than rejecting the registration', async () => {
+        const res = await fetch(`${base}/register`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+                redirect_uris: [REDIRECT_URI],
+                client_name: 'Copilot Studio Agent',
+                grant_types: ['authorization_code', 'refresh_token'],
+                response_types: ['code'],
+                scope: 'mcp offline_access',
+                client_uri: 'https://copilotstudio.microsoft.com',
+                logo_uri: 'https://copilotstudio.microsoft.com/logo.png',
+                tos_uri: 'https://microsoft.com/tos',
+                policy_uri: 'https://microsoft.com/privacy',
+                contacts: ['admin@contoso.com'],
+                software_id: 'copilot-studio',
+                software_version: '1.0.0',
+                application_type: 'web',
+                jwks_uri: 'https://example.com/jwks',
+            }),
+        })
+        const client = await res.json() as Record<string, string>
+
+        expect(res.status).toBe(201)
+        expect(client.client_secret).toEqual(expect.any(String))
+        expect(client.token_endpoint_auth_method).toBe('client_secret_basic')
+    })
 })
