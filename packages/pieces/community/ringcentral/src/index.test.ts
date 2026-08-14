@@ -44,6 +44,13 @@ describe('piece metadata', () => {
     expect(meta().auth.authorizationMethod).toBe(OAuth2AuthorizationMethod.HEADER);
   });
 
+  it('opts out of the platform-appended consent prompt', () => {
+    // oauth2-util appends prompt=consent to every authorize URL unless the piece opts out.
+    // RingCentral's login dispatcher reads it as a request for SSO-only sign-in and dead-ends with
+    // API_ERROR_208 on accounts without SAML, so no connection can be completed at all.
+    expect(meta().auth.prompt).toBe('omit');
+  });
+
   it('lists its authors', () => {
     expect(meta().authors).toEqual(['alexandronic']);
   });
