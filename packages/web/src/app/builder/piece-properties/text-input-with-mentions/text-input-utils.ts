@@ -67,21 +67,27 @@ type ExprToken =
   | { kind: 'newline' }
   | { kind: 'text'; value: string };
 
-function stringClosesWithin({
+function stringStateAfter({
   expr,
   from,
   to,
-  quote,
+  state,
 }: {
   expr: string;
   from: number;
   to: number;
-  quote: '"' | "'";
-}): boolean {
+  state: '"' | "'";
+}): '"' | "'" | null {
+  let current: '"' | "'" | null = state;
   for (let j = from; j < to; j++) {
-    if (expr[j] === quote && expr[j - 1] !== '\\') return true;
+    const c = expr[j];
+    if (current) {
+      if (c === current && expr[j - 1] !== '\\') current = null;
+    } else if (c === '"' || c === "'") {
+      current = c;
+    }
   }
-  return false;
+  return current;
 }
 
 function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
@@ -138,17 +144,17 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
           i += 2;
           continue;
         }
-        if (
-          inString &&
-          stringClosesWithin({ expr, from: i + 2, to: end, quote: inString })
-        ) {
-          text += ch;
-          i++;
-          continue;
-        }
         if (text) tokens.push({ kind: 'text', value: text });
         text = '';
         tokens.push({ kind: 'variable', value: expr.slice(i, end + 2) });
+        if (inString) {
+          inString = stringStateAfter({
+            expr,
+            from: i + 2,
+            to: end,
+            state: inString,
+          });
+        }
         i = end + 2;
         continue;
       }

@@ -59,6 +59,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
   describe('references inside quotes keep their mention node', () => {
     it.each([
       '"{{step_4[\'output\'][\'result\']}}"',
+      '"{{step_4["output"]["result"]}}"',
       "'{{step_4.result}}'",
       'fullText contains "{{step_4.result}}',
       'ap-formula-v1::{upper("{{step_1.name}}")}::ap-formula-v1',
@@ -72,12 +73,14 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
 
     it.each([
       '"{{step_4[\'output\'][\'result\']}}"',
+      '"{{step_4["output"]["result"]}}"',
       '"{{step_1.name}} upper(x)"',
       'ap-formula-v1::{upper("(CEO); still inside")}::ap-formula-v1',
       'ap-formula-v1::{upper("pre {{step_1.name}} post")}::ap-formula-v1',
       'ap-formula-v1::{upper("(a) {{step_1.name}} (b); x")}::ap-formula-v1',
       'ap-formula-v1::{concat("{{a"}}; lower(x))}::ap-formula-v1',
       'ap-formula-v1::{upper("literal {{ braces }} here")}::ap-formula-v1',
+      'ap-formula-v1::{upper({{step_1["a\'b"]}}; x)}::ap-formula-v1',
     ])('round-trips %j losslessly', (input) => {
       const back = textMentionUtils.convertTiptapJsonToText({
         type: 'doc',
