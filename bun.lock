@@ -6212,15 +6212,17 @@
     },
     "packages/pieces/community/netsuite": {
       "name": "@activepieces/piece-netsuite",
-      "version": "0.1.10",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "jsonwebtoken": "9.0.1",
         "sql-formatter": "15.6.10",
       },
       "devDependencies": {
+        "@types/jsonwebtoken": "9.0.10",
         "tslib": "2.6.2",
       },
     },

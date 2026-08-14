@@ -22,7 +22,7 @@ export const getCustomer = createAction({
     }),
   },
   async run(context) {
-    const client = new NetSuiteClient(context.auth.props);
+    const client = new NetSuiteClient(context.auth);
     const { customerId } = context.propsValue;
 
     return client.makeRequest({

@@ -4,16 +4,9 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { createOAuthHeader } from './oauth';
+import { isM2MAuth, NetSuiteAuthValue } from '../auth';
 
 const PAGE_SIZE = 1000;
-
-interface NetSuiteAuth {
-  accountId: string;
-  consumerKey: string;
-  consumerSecret: string;
-  tokenId: string;
-  tokenSecret: string;
-}
 
 interface MakeRequestParams {
   method: HttpMethod;
@@ -27,15 +20,47 @@ interface PaginatedResponse<T> {
   hasMore?: boolean;
 }
 
-export class NetSuiteClient {
-  private auth: NetSuiteAuth;
+export function buildNetSuiteAuthorizationHeader({
+  auth,
+  url,
+  method,
+  queryParams,
+}: {
+  auth: NetSuiteAuthValue;
+  url: string;
+  method: string;
+  queryParams?: Record<string, string | number | boolean>;
+}): string {
+  if (isM2MAuth(auth)) {
+    if (!auth.access_token) {
+      throw new Error(
+        "NetSuite OAuth 2.0 Client Credentials (M2M) access token is missing. Reconnect the connection so it can be refreshed."
+      );
+    }
+    return `Bearer ${auth.access_token}`;
+  }
 
-  constructor(auth: NetSuiteAuth) {
+  return createOAuthHeader(
+    auth.props.accountId,
+    auth.props.consumerKey,
+    auth.props.consumerSecret,
+    auth.props.tokenId,
+    auth.props.tokenSecret,
+    url,
+    method,
+    queryParams
+  );
+}
+
+export class NetSuiteClient {
+  private auth: NetSuiteAuthValue;
+
+  constructor(auth: NetSuiteAuthValue) {
     this.auth = auth;
   }
 
   get baseUrl(): string {
-    return `https://${this.auth.accountId}.suitetalk.api.netsuite.com`;
+    return `https://${this.auth.props.accountId}.suitetalk.api.netsuite.com`;
   }
 
   async makeRequest<T>({
@@ -44,16 +69,12 @@ export class NetSuiteClient {
     queryParams,
     body,
   }: MakeRequestParams): Promise<T> {
-    const authHeader = createOAuthHeader(
-      this.auth.accountId,
-      this.auth.consumerKey,
-      this.auth.consumerSecret,
-      this.auth.tokenId,
-      this.auth.tokenSecret,
+    const authHeader = buildNetSuiteAuthorizationHeader({
+      auth: this.auth,
       url,
       method,
-      queryParams
-    );
+      queryParams,
+    });
 
     const response = await httpClient.sendRequest({
       method,

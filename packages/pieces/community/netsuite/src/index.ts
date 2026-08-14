@@ -1,47 +1,14 @@
-import {
-  PieceAuth,
-  createPiece,
-  Property,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { getVendor } from './lib/actions/get-vendor';
 import { getCustomer } from './lib/actions/get-customer';
 import { runSuiteQL } from './lib/actions/run-suiteql';
 import { executeDataset } from './lib/actions/execute-dataset';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createOAuthHeader } from './lib/common/oauth';
+import { buildNetSuiteAuthorizationHeader } from './lib/common/client';
+import { netsuiteAuth } from './lib/auth';
 
-export const netsuiteAuth = PieceAuth.CustomAuth({
-  required: true,
-  props: {
-    accountId: Property.ShortText({
-      displayName: 'Account ID',
-      required: true,
-      description: 'Your NetSuite account ID',
-    }),
-    consumerKey: Property.ShortText({
-      displayName: 'Consumer Key',
-      required: true,
-      description: 'Your NetSuite consumer key',
-    }),
-    consumerSecret: PieceAuth.SecretText({
-      displayName: 'Consumer Secret',
-      required: true,
-      description: 'Your NetSuite consumer secret',
-    }),
-    tokenId: Property.ShortText({
-      displayName: 'Token ID',
-      required: true,
-      description: 'Your NetSuite token ID',
-    }),
-    tokenSecret: PieceAuth.SecretText({
-      displayName: 'Token Secret',
-      required: true,
-      description: 'Your NetSuite token secret',
-    }),
-  },
-});
+export { netsuiteAuth };
 
 export const netsuite = createPiece({
   displayName: 'NetSuite',
@@ -59,23 +26,16 @@ export const netsuite = createPiece({
         if (!auth) {
           return '';
         }
-        const authValue = auth.props;
-        return `https://${authValue.accountId}.suitetalk.api.netsuite.com`;
+        return `https://${auth.props.accountId}.suitetalk.api.netsuite.com`;
       },
       auth: netsuiteAuth,
       authMapping: async (auth, propsValue) => {
-        const authValue = auth.props;
-
-        const authHeader = createOAuthHeader(
-          authValue.accountId,
-          authValue.consumerKey,
-          authValue.consumerSecret,
-          authValue.tokenId,
-          authValue.tokenSecret,
-          propsValue['url']['url'],
-          propsValue['method'],
-          propsValue['queryParams']
-        );
+        const authHeader = buildNetSuiteAuthorizationHeader({
+          auth,
+          url: propsValue['url']['url'],
+          method: propsValue['method'],
+          queryParams: propsValue['queryParams'],
+        });
 
         return {
           Authorization: authHeader,

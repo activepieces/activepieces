@@ -38,7 +38,7 @@ export const runSuiteQL = createAction({
     }),
   },
   async run(context) {
-    const client = new NetSuiteClient(context.auth.props);
+    const client = new NetSuiteClient(context.auth);
 
     const query = context.propsValue.query;
     const args: string[] = (context.propsValue.args as string[]) || [];

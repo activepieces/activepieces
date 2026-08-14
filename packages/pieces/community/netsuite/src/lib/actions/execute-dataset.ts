@@ -29,7 +29,7 @@ export const executeDataset = createAction({
           };
         }
 
-        const client = new NetSuiteClient(auth.props);
+        const client = new NetSuiteClient(auth);
 
         const items = await client.makePaginatedRequest<{
           id: string;
@@ -50,7 +50,7 @@ export const executeDataset = createAction({
     }),
   },
   async run(context) {
-    const client = new NetSuiteClient(context.auth.props);
+    const client = new NetSuiteClient(context.auth);
     const { datasetId } = context.propsValue;
 
     return client.makePaginatedRequest({
