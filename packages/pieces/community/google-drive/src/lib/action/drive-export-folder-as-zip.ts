@@ -257,7 +257,9 @@ async function walk({
     throw new Error(
       `Cannot export: multiple items in the same Drive folder would map to the same zip path: ${collidingNames
         .map((name) => `"${prefix}${name}"`)
-        .join(', ')}. This can happen when a file and a folder share a name, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists. Rename the conflicting items in Drive and try again.`
+        .join(
+          ', '
+        )}. This can happen when a file and a folder share a name, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists. Rename the conflicting items in Drive and try again.`
     );
   }
 
@@ -533,7 +535,12 @@ export const driveExportFolderAsZip = createAction({
         // archive, so neither the individual files nor the growing zip are buffered in memory
         await Promise.all(
           batch.map((entry) =>
-            downloadAndAddZipEntry({ auth: context.auth, entry, zipWriter, fileAddOptions })
+            downloadAndAddZipEntry({
+              auth: context.auth,
+              entry,
+              zipWriter,
+              fileAddOptions,
+            })
           )
         );
       }
@@ -551,7 +558,9 @@ export const driveExportFolderAsZip = createAction({
       // can still hold the native lock on it while other concurrent add() calls in the same
       // batch are mid-write, which makes abort() throw and leaves the upload hanging anyway.
       // Destroying the readable side works regardless of that lock state.
-      zipReadable.destroy(error instanceof Error ? error : new Error(String(error)));
+      zipReadable.destroy(
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
 
