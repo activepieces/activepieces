@@ -328,6 +328,84 @@ describe('MCP OAuth client authentication', () => {
         })
     })
 
+    describe('refresh grant', () => {
+        async function issueRefreshToken({ client, headers, body }: {
+            client: RegisteredClient
+            headers?: Record<string, string>
+            body?: Record<string, string>
+        }): Promise<string> {
+            const res = await exchange({ client, headers, body })
+            expect(res.statusCode).toBe(200)
+            return res.json().refresh_token
+        }
+
+        it('renews a confidential client over the Authorization header, the path a default registration takes', async () => {
+            const client = await registerClient()
+            const authorization = mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' })
+            const refreshToken = await issueRefreshToken({ client, headers: { authorization } })
+
+            const res = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded', authorization },
+                payload: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }).toString(),
+            })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.json().access_token).toBeDefined()
+            expect(res.json().refresh_token).toBe(refreshToken)
+        })
+
+        it('renews a confidential client over the request body', async () => {
+            const client = await registerClient('client_secret_post')
+            const credentials = { client_id: client.client_id, client_secret: client.client_secret ?? '' }
+            const refreshToken = await issueRefreshToken({ client, body: credentials })
+
+            const res = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken, ...credentials }).toString(),
+            })
+
+            expect(res.statusCode).toBe(200)
+            expect(res.json().refresh_token).toBe(refreshToken)
+        })
+
+        it('keeps renewing indefinitely, so a session does not die when the access token expires', async () => {
+            const client = await registerClient()
+            const authorization = mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' })
+            let refreshToken = await issueRefreshToken({ client, headers: { authorization } })
+
+            for (let renewal = 0; renewal < 3; renewal++) {
+                const res = await app.inject({
+                    method: 'POST',
+                    url: '/token',
+                    headers: { 'content-type': 'application/x-www-form-urlencoded', authorization },
+                    payload: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }).toString(),
+                })
+                expect(res.statusCode, `renewal ${renewal}`).toBe(200)
+                refreshToken = res.json().refresh_token
+            }
+        })
+
+        it('refuses to renew a confidential client that presents no secret', async () => {
+            const client = await registerClient()
+            const authorization = mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' })
+            const refreshToken = await issueRefreshToken({ client, headers: { authorization } })
+
+            const res = await app.inject({
+                method: 'POST',
+                url: '/token',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                payload: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: client.client_id }).toString(),
+            })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_client')
+        })
+    })
+
     describe('revocation endpoint', () => {
         it('accepts a confidential client authenticating with the Authorization header', async () => {
             const client = await registerClient('client_secret_basic')
