@@ -16,6 +16,7 @@ const CUSTOMER_STATE_MISS_DEBOUNCE_SECONDS = 60
 const CUSTOMER_STATE_FETCH_LOCK_TIMEOUT_SECONDS = 15
 const CREDITS_CACHE_READ_TIMEOUT_MS = 25
 const BILLING_OVERVIEW_TTL_SECONDS = 5 * 60
+const TRIAL_DURATION_UNITS: Partial<Record<string, 'day' | 'month' | 'year'>> = { day: 'day', month: 'month', year: 'year' }
 
 export const autumnBillingProvider = (log: FastifyBaseLogger): BillingProvider => ({
     listPlans: async (platformId: string) => {
@@ -185,20 +186,34 @@ function selectCurrentPlan(customer: GetCustomerResponse): CurrentPlanSelection 
     const subscription = autumnUtils.selectCurrentBaseSubscription(baseSubscriptions)
     const purchase = (customer.purchases ?? []).find((entry) =>
         !isNil(entry.plan) && !entry.plan.addOn && entry.planId !== PlanName.FREE)
-    return { baseSubscriptions, subscription, plan: purchase?.plan ?? subscription?.plan ?? null }
+    return { baseSubscriptions, subscription, purchase, plan: purchase?.plan ?? subscription?.plan ?? null }
+}
+
+function purchaseTrialEndsAt(purchase: GetCustomerResponse['purchases'][number] | undefined): string | null {
+    const freeTrial = purchase?.plan?.freeTrial
+    if (isNil(purchase) || isNil(freeTrial)) {
+        return null
+    }
+    const unit = TRIAL_DURATION_UNITS[freeTrial.durationType]
+    if (isNil(unit)) {
+        return null
+    }
+    const endsAt = apDayjs(purchase.startedAt).add(freeTrial.durationLength, unit)
+    return endsAt.isAfter(apDayjs()) ? endsAt.toISOString() : null
 }
 
 function toBillingInfo(customer: GetCustomerResponse, monthStart: string, monthEnd: string): BillingInfo {
-    const { baseSubscriptions, subscription, plan } = selectCurrentPlan(customer)
+    const { baseSubscriptions, subscription, purchase, plan } = selectCurrentPlan(customer)
     const scheduledPlan = baseSubscriptions.find((entry) => entry.status === 'scheduled')
     return {
         planName: plan?.name ?? null,
         creditsResetInterval: toCreditsResetInterval(plan?.items ?? []),
+        planInterval: plan?.price?.interval ?? null,
         startDate: msToIso(subscription?.currentPeriodStart) ?? monthStart,
         endDate: msToIso(subscription?.currentPeriodEnd) ?? monthEnd,
         nextBillingAmount: subscription?.plan?.price?.amount ?? 0,
         cancelAt: msToIso(subscription?.expiresAt) ?? null,
-        trialEndsAt: msToIso(subscription?.trialEndsAt) ?? null,
+        trialEndsAt: msToIso(subscription?.trialEndsAt) ?? purchaseTrialEndsAt(purchase),
         scheduledPlanName: scheduledPlan?.plan?.name ?? null,
         billingPortalAvailable: !isNil(customer.paymentMethod),
     }
@@ -467,6 +482,7 @@ type AutumnPlanItems = AutumnPlan['items']
 type CurrentPlanSelection = {
     baseSubscriptions: GetCustomerResponse['subscriptions']
     subscription: GetCustomerResponse['subscriptions'][number] | undefined
+    purchase: GetCustomerResponse['purchases'][number] | undefined
     plan: AutumnPlan | null
 }
 
