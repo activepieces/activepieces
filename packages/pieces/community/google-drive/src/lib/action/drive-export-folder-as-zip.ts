@@ -152,6 +152,16 @@ function assertSafeItemName(name: string, relativePrefix: string): void {
       `Cannot export: the Drive item named ".." ${location} can't be used as a zip path segment. Rename this item in Drive and try again.`
     );
   }
+
+  // A "current directory" segment is normalized away by most unzip tools, so a folder named "."
+  // containing "x.pdf" extracts to the same path as a real sibling "x.pdf" -- same collision
+  // this check exists to prevent for '/', just camouflaged by a name that looks like a no-op
+  // instead of an extra path segment.
+  if (name === '.') {
+    throw new Error(
+      `Cannot export: the Drive item named "." ${location} can't be used as a zip path segment. Rename this item in Drive and try again.`
+    );
+  }
 }
 
 interface ResolvedItem {
@@ -233,10 +243,6 @@ async function walk({
     return;
   }
 
-  for (const item of children) {
-    assertSafeItemName(item.name, relativePrefix);
-  }
-
   // A Drive folder and a file (or two folders, or two files) can share a name in the same
   // parent -- Drive only guarantees uniqueness by ID. Any such collision would force one zip
   // path to be both a file and a directory, so it's checked once per level, up front, before
@@ -244,6 +250,13 @@ async function walk({
   const resolvedChildren = children
     .map((item) => resolveItem(item, nativeFormats))
     .filter((resolved): resolved is ResolvedItem => resolved !== undefined);
+
+  // Only validated for items that actually survive into the export -- a skipped native file or
+  // an unsupported type (e.g. a Google Form, which is always excluded) never produces a zip
+  // entry, so an unsafe character in its name should never fail the export.
+  for (const { item } of resolvedChildren) {
+    assertSafeItemName(item.name, relativePrefix);
+  }
 
   const nameCounts = new Map<string, number>();
   for (const { name } of resolvedChildren) {
@@ -362,7 +375,7 @@ export const driveExportFolderAsZip = createAction({
   props: {
     duplicatePathWarning: Property.MarkDown({
       value:
-        'Zip paths mirror the Drive folder exactly, with no renaming. If a file and a folder share a name in the same Drive folder, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"), the action fails before downloading anything so you can rename the conflicting item in Drive and re-run.',
+        'Zip paths mirror the Drive folder exactly, with no renaming. The action fails before downloading anything if: a file and a folder share a name in the same Drive folder, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"); or an included item\'s name contains "/" or "\\", or is exactly "." or ".." (not usable as a zip path segment). Rename the conflicting or unsafe item in Drive and re-run.',
       variant: MarkdownVariant.WARNING,
     }),
     folderId: Property.Dropdown({
