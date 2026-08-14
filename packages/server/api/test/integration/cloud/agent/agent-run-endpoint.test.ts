@@ -113,10 +113,10 @@ describe('POST /v1/agents/runs', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 
-    it('refuses a tool kind it cannot run yet instead of dropping it silently', async () => {
+    it('refuses two tools sharing a name, so neither silently replaces the other', async () => {
         const ctx = await createTestContext(app)
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: 'job-5',
+            jobId: 'job-dup',
             projectId: ctx.project.id,
             platformId: ctx.platform.id,
         })
@@ -129,12 +129,15 @@ describe('POST /v1/agents/runs', () => {
                 instruction: 'do a thing',
                 flowRunId: apId(),
                 waitpointId: apId(),
-                tools: [{ type: 'FLOW', toolName: 'call_sub_flow', externalFlowId: 'flow-1' }],
+                tools: [
+                    { type: 'PIECE', toolName: 'shared_name', pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' } },
+                    { type: 'FLOW', toolName: 'shared_name', externalFlowId: 'flow-1' },
+                ],
             },
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('FLOW')
+        expect(JSON.stringify(response.json())).toContain('shared_name')
     })
 
     it('accepts the piece tools configured on the step', async () => {
@@ -156,6 +159,61 @@ describe('POST /v1/agents/runs', () => {
                 tools: [{
                     type: 'PIECE',
                     toolName: 'send_email',
+                    pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+                }],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses a tool named after one of the agent\'s own, so it cannot be shadowed', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-7',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'do a thing',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                structuredOutput: [{ displayName: 'summary', type: 'text' }],
+                tools: [{
+                    type: 'PIECE',
+                    toolName: 'updateTaskStatus',
+                    pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+                }],
+            },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('allows that name when the step has no output fields, since no completion tool is installed', async () => {
+        const ctx = await createTestContext(app)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: 'job-8',
+            projectId: ctx.project.id,
+            platformId: ctx.platform.id,
+        })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: {
+                instruction: 'do a thing',
+                flowRunId: apId(),
+                waitpointId: apId(),
+                tools: [{
+                    type: 'PIECE',
+                    toolName: 'updateTaskStatus',
                     pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
                 }],
             },

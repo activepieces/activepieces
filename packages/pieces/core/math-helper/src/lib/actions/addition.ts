@@ -3,10 +3,12 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { additionActionOutputSchema } from '../output-schemas';
 
 export const addition = createAction({
   audience: 'both',
   name: 'addition_math',
+  outputSchema: additionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Addition',
   description: 'Add the first number and the second number',

@@ -16,28 +16,38 @@ export const linearNewComment = createTrigger({
     author_ids: props.author_ids(false),
   },
   sampleData: {
-    id: 'c1a2b3c4-d5e6-7890-abcd-ef1234567890',
-    body: 'This is a test comment',
-    issueId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    parentId: null,
-    userId: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
-    reactionData: [],
-    createdAt: '2023-09-05T12:00:00.000Z',
-    updatedAt: '2023-09-05T12:00:00.000Z',
-    user: {
-      id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
-      name: 'Test user',
-    },
-    issue: {
-      id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-      title: 'Test issue',
-      identifier: 'TEST-1',
-      team: {
-        id: 't1a2b3c4-d5e6-7890-abcd-ef1234567890',
-        key: 'TEST',
-        name: 'Test team',
+    action: 'create',
+    data: {
+      id: 'c1a2b3c4-d5e6-7890-abcd-ef1234567890',
+      body: 'This is a test comment',
+      issueId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+      parentId: null,
+      userId: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
+      reactionData: [],
+      createdAt: '2023-09-05T12:00:00.000Z',
+      updatedAt: '2023-09-05T12:00:00.000Z',
+      user: {
+        id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890',
+        name: 'Test user',
+      },
+      issue: {
+        id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        title: 'Test issue',
+        identifier: 'TEST-1',
+        team: {
+          id: 't1a2b3c4-d5e6-7890-abcd-ef1234567890',
+          key: 'TEST',
+          name: 'Test team',
+        },
       },
     },
+    type: 'Comment',
+    actor: { id: 'u1a2b3c4-d5e6-7890-abcd-ef1234567890', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-05T12:00:00.000Z',
+    url: 'https://linear.app/test-team/issue/TEST-1#comment-c1a2b3c4',
+    organizationId: 'org_1',
+    webhookTimestamp: 1693915200000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -96,7 +106,7 @@ export const linearNewComment = createTrigger({
       }
     }
 
-    return [body.data];
+    return [body];
   },
 });
 

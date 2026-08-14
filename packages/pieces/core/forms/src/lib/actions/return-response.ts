@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/pieces-framework';
 import { StatusCodes } from 'http-status-codes';
 import mime from 'mime-types';
+import { returnResponseActionOutputSchema } from '../output-schemas';
 
 export const returnResponse = createAction({
   audience: 'both',
@@ -19,6 +20,7 @@ export const returnResponse = createAction({
       required: false,
     }),
   },
+  outputSchema: returnResponseActionOutputSchema,
   errorHandlingOptions: {
     retryOnFailure: {
       hide: true,

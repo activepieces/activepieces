@@ -7,6 +7,7 @@ import {
   timeZoneOptions,
   getCorrectedFormat,
 } from '../common';
+import { formatDateActionOutputSchema } from '../output-schemas';
 
 export const formatDateAction = createAction({
   audience: 'both',
@@ -63,8 +64,9 @@ export const formatDateAction = createAction({
       defaultValue: 'UTC',
     }),
   },
+  outputSchema: formatDateActionOutputSchema,
   async run(context) {
-    
+
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const inputTimeZone = context.propsValue.inputTimeZone as string;

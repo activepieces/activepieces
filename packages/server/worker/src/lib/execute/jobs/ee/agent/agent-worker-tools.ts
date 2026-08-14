@@ -1,7 +1,7 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
-import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -1476,11 +1476,107 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     ]))
 }
 
+function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+    tools: AgentKnowledgeBaseTool[]
+    runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools
+        .filter((configured) => configured.sourceType === KnowledgeBaseSourceType.FILE)
+        .map((configured) => [
+            configured.toolName,
+            tool({
+                description: `Search the "${configured.sourceName}" knowledge base file for relevant information. Use this when you need facts, policies, or content from this document.`,
+                inputSchema: z.object({
+                    query: z.string().describe('The search query to find relevant information'),
+                }),
+                execute: async ({ query }) => {
+                    callsMade += 1
+                    if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                        log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredKnowledgeBaseTool] Refused, this run has already searched enough')
+                        return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
+                    }
+                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    if (error) {
+                        log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
+                        return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
+                    }
+                    return truncateLargeResult(data.result)
+                },
+            }),
+        ]))
+}
+
+const jsonSchema7Shape = z.custom<JSONSchema7>()
+
+function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+    tools: ResolvedAgentFlowTool[]
+    runFlowTool: (input: { toolName: string, flowId: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: configured.description,
+            inputSchema: jsonSchema(jsonSchema7Shape.parse(configured.inputSchema)),
+            execute: async (toolInput) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, returnsResponse: configured.returnsResponse, toolInput }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That flow failed: ${String(error)}`
+                        : `That flow was called but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
+                    return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
 export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
+
+function createStructuredOutputTool({ fields, capture }: {
+    fields: AgentOutputField[]
+    capture: (output: Record<string, unknown>) => void
+}): ToolSet {
+    return {
+        [TASK_COMPLETION_TOOL_NAME]: tool({
+            description: 'Call this as your final action, once the task is done or you cannot continue, to report the result in the shape the flow expects. Nothing you write outside this tool reaches the rest of the flow.',
+            inputSchema: z.object({ output: z.object(Object.fromEntries(fields.map((field) => [field.displayName, schemaForOutputField(field)]))) }),
+            execute: async ({ output }) => {
+                capture(output)
+                return { content: [{ type: 'text', text: 'Result recorded.' }] }
+            },
+        }),
+    }
+}
+
+function schemaForOutputField(field: AgentOutputField): z.ZodType {
+    switch (field.type) {
+        case AgentOutputFieldType.NUMBER:
+            return z.number().describe(field.description ?? field.displayName)
+        case AgentOutputFieldType.BOOLEAN:
+            return z.boolean().describe(field.description ?? field.displayName)
+        default:
+            return z.string().describe(field.description ?? field.displayName)
+    }
+}
 
 export const agentWorkerTools = {
     createEventEmitter,
@@ -1497,6 +1593,9 @@ export const agentWorkerTools = {
     createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
+    createConfiguredFlowTools,
+    createConfiguredKnowledgeBaseTools,
+    createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,

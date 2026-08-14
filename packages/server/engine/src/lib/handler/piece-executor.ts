@@ -1,7 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { engineRunApi } from '../api/engine-run-api'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -11,7 +10,6 @@ import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
 import { waitpointClient } from '../piece-context/waitpoint-client'
-import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor, failStep } from './base-executor'
@@ -53,7 +51,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             devPieces: constants.devPieces,
         })
 
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion: piece.getContextInfo?.().version, pieceName: action.settings.pieceName }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -117,13 +115,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
-            agent: {
-                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
-                    engineConstants: constants,
-                    tools: params.tools,
-                    model: params.model,
-                }),
-            },
             propsValue: processedInput,
             tags: createTagsManager(params),
             connections: utils.createConnectionManager({
@@ -133,6 +124,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 target: 'actions',
                 hookResponse: params.hookResponse,
                 contextVersion: piece.getContextInfo?.().version,
+                pieceName: action.settings.pieceName,
             }),
             run: {
                 id: constants.flowRunId,

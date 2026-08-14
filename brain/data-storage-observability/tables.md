@@ -8,7 +8,7 @@ A built-in relational database inside Activepieces: users store structured data 
 
 ### Entities & services
 - **Table** → **Field** (column) → **Record** (row) → **Cell** (value at record×field, stored as VARCHAR). All scoped to a project.
-- **FieldType**: `TEXT`, `NUMBER`, `DATE`, `STATIC_DROPDOWN`. Field limit `AP_MAX_FIELDS_PER_TABLE` (default 100), enforced by `field.validateCount({ insertCount })`.
+- **FieldType**: `TEXT`, `NUMBER`, `DATE`, `DATETIME`, `STATIC_DROPDOWN`. Field limit `AP_MAX_FIELDS_PER_TABLE` (default 100), enforced by `field.validateCount({ insertCount })`.
 - **position** (canonical term; avoid: order, displayOrder, index) — 0-based column order within a table. Fields list `position ASC, created ASC`, and `table.exportTable()` follows the same order.
 - **TableWebhook**: links a table event to a flow. Events: `RECORD_CREATED`, `RECORD_UPDATED`, `RECORD_DELETED`.
 - Services: `table.service.ts`, `field.service.ts`, `record.service.ts`, `record-side-effects.ts`.
@@ -21,6 +21,9 @@ A built-in relational database inside Activepieces: users store structured data 
 
 ### Gotchas
 - Record filtering (EQ/NEQ/GT/CO/EXISTS/…) is **in-memory**, and a missing cell is treated as empty string `''`, so `NEQ`/`NOT_EXISTS` match unset columns.
+- `DATE` and `DATETIME` cells hold the **same** value — an ISO-8601 UTC instant from `toISOString()`. They differ only in the web editor (`DATETIME` adds a `TimePicker` beside the `Calendar`) and the display format. There is no per-type value coercion on write for any field type, so a date column can legitimately contain arbitrary text.
+- Only `GT/GTE/LT/LTE` are date-aware, and only because `doesCellValueMatchFilters` is passed the field's type; every other operator compares the raw string. So `EQ` on a date column will not match two different spellings of the same instant (`…T14:30:00Z` vs `…T14:30:00.000Z`). Filters on a field type the evaluator can't resolve fall back to `parseFloat`.
+- Adding a `FieldType` member means editing the enum **and** the non-dropdown `z.union([...])` branch in three places (`core/shared/.../field.ts`, `.../dto/fields.dto.ts`, `core/piece-types/.../tables.ts`) — miss the union and `POST /v1/fields` rejects the type. Also add a `case` to `field.service.createFromState`, whose `default:` throws `Unsupported field type` and which every template / project-release / MCP table-create path routes through. No migration is needed: `field.type` is a plain varchar with no Postgres enum or CHECK constraint.
 - `record.create()` bulk insert caps at 50 per batch, transactional.
 - When adding any new table/field/record route, the `permission` arg to `securityAccess.project(...)` is required — passing `undefined` silently allows any project member.
 - The per-create `field.validateCount()` check alone races on bulk paths: all concurrent creates read the same pre-save count and pass. Bulk/import paths (`table.create` with fields, project-state/project-replace apply) MUST call it once up front with the batch size **before** their `Promise.all`.

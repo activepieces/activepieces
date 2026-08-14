@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as XLSX from 'xlsx';
+import { excelToCsvActionOutputSchema } from '../output-schemas';
 
 export const excelToCsvAction = createAction({
   audience: 'both',
@@ -36,6 +37,7 @@ export const excelToCsvAction = createAction({
       },
     }),
   },
+  outputSchema: excelToCsvActionOutputSchema,
   async run(context) {
     const { file, sheet_name, delimiter_type } = context.propsValue;
 

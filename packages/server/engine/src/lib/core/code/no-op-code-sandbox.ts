@@ -118,12 +118,10 @@ export const noOpCodeSandbox: CodeSandbox = {
     },
 
     async createScriptSession({ scriptContext, functions }) {
-        const newContext = {
+        const newContext: Record<string, unknown> = {
             ...scriptContext,
             ...functions,
         }
-        const params = Object.keys(newContext)
-        const args = Object.values(newContext)
         let disposed = false
         return {
             run: async (script: string) => {
@@ -131,8 +129,14 @@ export const noOpCodeSandbox: CodeSandbox = {
                     throw new Error('Script session has been disposed')
                 }
                 const body = `return (${script})`
-                const fn = Function(...params, body)
-                return fn(...args)
+                const fn = Function(...Object.keys(newContext), body)
+                return fn(...Object.values(newContext))
+            },
+            setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
+                if (noOverwrite && key in newContext) {
+                    return
+                }
+                newContext[key] = value
             },
             dispose: () => {
                 disposed = true

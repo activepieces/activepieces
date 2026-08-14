@@ -234,6 +234,37 @@ async run(context) {
 
 ---
 
+## Connection Identifier
+
+`getConnectionIdentifier` is an optional callback available on every auth type (`SecretText`, `BasicAuth`, `OAuth2`, `CustomAuth`). It resolves a human-readable label for a connection (e.g. the account email, or Slack's "display-name (workspace)"), shown in the connections UI so users can tell accounts apart.
+
+```typescript
+export const myAppAuth = PieceAuth.OAuth2({
+  required: true,
+  authUrl: 'https://app.example.com/oauth/authorize',
+  tokenUrl: 'https://app.example.com/oauth/token',
+  scope: ['read', 'write'],
+  getConnectionIdentifier: async ({ auth }) => {
+    const response = await httpClient.sendRequest<{ email: string }>({
+      method: HttpMethod.GET,
+      url: 'https://api.example.com/v1/me',
+      headers: { Authorization: `Bearer ${auth.access_token}` },
+    });
+    return response.body.email;
+  },
+});
+```
+
+**Rules:**
+- Wrap risky calls in `try/catch` and resolve to `undefined` when nothing can be determined. This must stay best-effort: a thrown error blocks the connection save.
+- For `OAuth2`, Activepieces already derives an identifier from the token response's OIDC claims when present. Add this hook only when the provider needs handling the generic path can't cover (e.g. Slack has no per-user OIDC claim, so it needs a workspace name plus a follow-up `users.info` call).
+- Add it only when the provider exposes an account/workspace label worth surfacing (a bare API key with no "who am I" endpoint has nothing to resolve).
+- `auth` in the callback matches the same shape as `validate` (flat string for SecretText, flat props object for CustomAuth), not the full connection object.
+
+**Real example:** `packages/pieces/community/slack/src/lib/auth.ts`
+
+---
+
 ## No Auth
 
 For public APIs or utility pieces that don't need credentials.
@@ -244,8 +275,8 @@ auth: PieceAuth.None(),
 ```
 
 When auth is `None`:
-- Do NOT add `auth:` to `createAction()` / `createTrigger()`
-- Do NOT reference `context.auth` in the `run` function
-- Dropdowns do NOT receive an `auth` parameter
+- Omit `auth:` from `createAction()` / `createTrigger()`
+- `context.auth` is unavailable in `run`
+- Dropdowns receive no `auth` parameter
 
 **Real example:** `packages/pieces/core/qrcode/src/index.ts`

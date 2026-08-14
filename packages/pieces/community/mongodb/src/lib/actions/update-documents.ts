@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../..';
+import { updateDocumentsOutputSchema } from '../output-schemas';
 import { mongodbCommon, mongodbConnect } from '../common';
 
 export default createAction({
@@ -8,6 +9,7 @@ export default createAction({
   displayName: 'Update Documents',
   description: 'Update multiple documents in a collection',
   audience: 'both',
+  outputSchema: updateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators (e.g. $set, $inc) to every document matching a filter via updateMany; optionally upserts a new document when nothing matches. Use to modify existing records in bulk. Both filter and update are required. Not idempotent in general: operators like $inc change state on each call and upsert can insert, though a pure $set repeated on the same matches yields the same end state.', idempotent: false },
   props: {
     database: mongodbCommon.database,
