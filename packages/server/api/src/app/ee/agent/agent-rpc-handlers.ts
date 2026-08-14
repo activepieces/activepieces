@@ -555,8 +555,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         await knowledgeBaseService(log).embedPendingChunks({
             projectId,
             knowledgeBaseFileId: input.knowledgeBaseFileId,
-            embedFn: async (texts) => {
-                const { embeddings } = await embedMany({ model, values: texts, providerOptions })
+            embedFn: async (texts, { abortSignal }) => {
+                const { embeddings } = await embedMany({ model, values: texts, providerOptions, abortSignal })
                 return embeddings.map(agentAiUtils.toStorageEmbedding)
             },
         })

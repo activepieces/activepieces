@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { KnowledgeBaseFile } from '@activepieces/shared'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
@@ -82,12 +82,14 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
      */
     async embedPendingChunks(params: EmbedPendingChunksParams): Promise<number> {
         const { projectId, knowledgeBaseFileId, embedFn } = params
-        const startedAt = Date.now()
 
         return distributedLock(log).runExclusive({
             key: `kb-embed-${knowledgeBaseFileId}`,
             timeoutInSeconds: EMBED_LOCK_TIMEOUT_SECONDS,
             fn: async () => {
+                // Budget starts here, not before the lock: a caller that queued behind another
+                // embedder must still get its own full slice of work rather than a spent clock.
+                const startedAt = Date.now()
                 const pending = (await this.listChunks({ projectId, knowledgeBaseFileId, embedded: false }))
                     .filter((pendingChunk) => pendingChunk.content.trim().length > 0)
                 if (pending.length === 0) {
@@ -96,11 +98,22 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
                 let embeddedCount = 0
                 for (let i = 0; i < pending.length; i += EMBED_BATCH_SIZE) {
-                    if (Date.now() - startedAt > EMBED_TIME_BUDGET_MS) {
+                    const remainingMs = EMBED_TIME_BUDGET_MS - (Date.now() - startedAt)
+                    if (remainingMs <= 0) {
                         break
                     }
                     const batch = pending.slice(i, i + EMBED_BATCH_SIZE)
-                    const embeddings = await embedFn(batch.map((pendingChunk) => pendingChunk.content))
+                    // The signal is what actually enforces the budget: without it one slow provider
+                    // call started just inside the deadline could still outlive the worker's RPC.
+                    const abortSignal = AbortSignal.timeout(remainingMs)
+                    const { data: embeddings, error } = await tryCatch(() => embedFn(batch.map((pendingChunk) => pendingChunk.content), { abortSignal }))
+                    if (isNil(embeddings)) {
+                        if (!abortSignal.aborted) {
+                            throw error
+                        }
+                        log.warn({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount }, '[knowledgeBaseService#embedPendingChunks] Ran out of embedding budget mid-batch, leaving the rest to the next search')
+                        break
+                    }
                     if (embeddings.length !== batch.length) {
                         throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
                     }
@@ -316,7 +329,7 @@ type SetChunkEmbeddingsParams = {
 type EmbedPendingChunksParams = {
     projectId: string
     knowledgeBaseFileId: string
-    embedFn: (texts: string[]) => Promise<number[][]>
+    embedFn: (texts: string[], options: { abortSignal: AbortSignal }) => Promise<number[][]>
 }
 
 type SearchParams = {

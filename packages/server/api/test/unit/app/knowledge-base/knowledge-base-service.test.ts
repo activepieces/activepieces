@@ -256,7 +256,7 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(embedded).toBe(2)
-            expect(embedFn).toHaveBeenCalledWith(['first', 'second'])
+            expect(embedFn).toHaveBeenCalledWith(['first', 'second'], expect.objectContaining({ abortSignal: expect.any(AbortSignal) }))
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
             expect(mockDbQuery).toHaveBeenCalledTimes(1)
@@ -328,7 +328,24 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(embedded).toBe(1)
-            expect(embedFn).toHaveBeenCalledWith(['real content'])
+            expect(embedFn).toHaveBeenCalledWith(['real content'], expect.objectContaining({ abortSignal: expect.any(AbortSignal) }))
+        })
+
+        it('aborts a batch that outruns the budget and keeps what it already wrote', async () => {
+            mockFind.mockResolvedValue([
+                { id: 'chunk-1', content: 'first', chunkIndex: 0 },
+                { id: 'chunk-2', content: 'second', chunkIndex: 1 },
+            ])
+            const embedFn = vi.fn().mockImplementation((_texts: string[], { abortSignal }: { abortSignal: AbortSignal }) => {
+                expect(abortSignal).toBeInstanceOf(AbortSignal)
+                return Promise.reject(Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' }))
+            })
+
+            await expect(knowledgeBaseService(mockLog).embedPendingChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                embedFn,
+            })).rejects.toThrow(/aborted/)
         })
 
         it('stops at its time budget and leaves the rest for the next search, so one call cannot outlive the 60s worker RPC', async () => {

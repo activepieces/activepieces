@@ -587,7 +587,7 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
         await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
 
         const { embedFn } = mockEmbedPendingChunks.mock.calls[0][0]
-        const stored = await embedFn(['some chunk'])
+        const stored = await embedFn(['some chunk'], { abortSignal: AbortSignal.timeout(1_000) })
 
         expect(stored[0]).toHaveLength(768)
     })
