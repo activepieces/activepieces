@@ -97,6 +97,7 @@ function buildContext(app: FastifyInstance, data: ContextData): TestContext {
                 url: `/api${url}`,
                 headers: {
                     authorization: `Bearer ${data.token}`,
+                    ...opts?.headers,
                 },
             }
             if (method === 'GET' || method === 'DELETE') {
@@ -148,6 +149,7 @@ type MemberContextParams = {
 
 type RequestOptions = {
     query?: Record<string, string>
+    headers?: Record<string, string>
 }
 
 type ContextData = {

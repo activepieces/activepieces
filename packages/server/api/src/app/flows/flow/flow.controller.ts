@@ -44,7 +44,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         },
         schema: {
             tags: ['flows'],
-            description: 'Apply an operation to a flow',
+            description: 'Apply an operation to a flow. Optimistic concurrency: send the x-expected-version-updated header with the flow version `updated` stamp from a previous read to get 409 FLOW_VERSION_CONFLICT instead of overwriting a newer draft version. The check guards flow-version content (steps, trigger, notes, name); operations that only touch the flow row (status, folder, metadata, owner) do not bump the stamp.',
             security: [SERVICE_KEY_SECURITY_OPENAPI],
             body: FlowOperationRequest,
             params: z.object({
@@ -86,12 +86,14 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
                 projectId: request.projectId,
             })
         }
+        const expectedVersionUpdated = request.headers['x-expected-version-updated']
         return flowService(request.log).update({
             id: request.params.id,
             userId: actorUserId(request),
             platformId: request.principal.platform.id,
             projectId: request.projectId,
             operation: cleanOperation(request.body),
+            expectedVersionUpdated: typeof expectedVersionUpdated === 'string' ? expectedVersionUpdated : undefined,
             previousFlow: flow,
             ip: networkUtils.clientIp(request),
         })

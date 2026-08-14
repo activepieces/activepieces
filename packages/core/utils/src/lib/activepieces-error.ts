@@ -25,6 +25,7 @@ export type ApErrorParams =
     | ExistingUserErrorParams
     | FlowOperationErrorParams
     | FlowOperationInProgressErrorParams
+    | FlowVersionConflictErrorParams
     | FlowRunRetryOutsideRetentionErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -262,6 +263,11 @@ ErrorCode.FLOW_OPERATION_INVALID,
 export type FlowOperationInProgressErrorParams = BaseErrorParams<
 ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
     message: string
+}>
+
+export type FlowVersionConflictErrorParams = BaseErrorParams<
+ErrorCode.FLOW_VERSION_CONFLICT, {
+    actualVersionUpdated: string
 }>
 
 export type InvalidJwtTokenErrorParams = BaseErrorParams<
@@ -525,6 +531,7 @@ export enum ErrorCode {
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
+    FLOW_VERSION_CONFLICT = 'FLOW_VERSION_CONFLICT',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
