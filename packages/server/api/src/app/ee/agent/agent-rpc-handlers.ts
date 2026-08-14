@@ -552,7 +552,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
         const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
-        await knowledgeBaseService(log).embedPendingChunks({
+        const { remainingCount } = await knowledgeBaseService(log).embedPendingChunks({
             projectId,
             knowledgeBaseFileId: input.knowledgeBaseFileId,
             embedFn: async (texts, { abortSignal }) => {
@@ -570,7 +570,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, project: { id: projectId }, resultCount: results.length }, '[agentRpc#executeKnowledgeBaseTool] Ran a knowledge base search')
         if (results.length === 0) {
-            return { result: 'No relevant information found.' }
+            // Saying "nothing found" while part of the file is still unindexed would be a lie the
+            // agent then repeats to the user as fact.
+            return {
+                result: remainingCount > 0
+                    ? `No match in the part of this file indexed so far. ${remainingCount} chunk(s) are still being indexed — searching again shortly will cover more of the file.`
+                    : 'No relevant information found.',
+            }
         }
         return {
             result: results.map((result, index) => ({

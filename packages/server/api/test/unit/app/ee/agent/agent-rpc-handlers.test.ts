@@ -28,7 +28,7 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
 const { mockGetFileOrThrow, mockKbSearch, mockEmbedPendingChunks } = vi.hoisted(() => ({
     mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
     mockKbSearch: vi.fn().mockResolvedValue([]),
-    mockEmbedPendingChunks: vi.fn().mockResolvedValue(0),
+    mockEmbedPendingChunks: vi.fn().mockResolvedValue({ embeddedCount: 0, remainingCount: 0 }),
 }))
 
 vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
@@ -543,7 +543,7 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
     async function search(conversation: unknown) {
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])
-        mockEmbedPendingChunks.mockClear().mockResolvedValue(0)
+        mockEmbedPendingChunks.mockClear().mockResolvedValue({ embeddedCount: 0, remainingCount: 0 })
         mockFindOneBy.mockResolvedValue(conversation)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
@@ -590,6 +590,21 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
         const stored = await embedFn(['some chunk'], { abortSignal: AbortSignal.timeout(1_000) })
 
         expect(stored[0]).toHaveLength(768)
+    })
+
+    it('says the file is still indexing rather than claiming nothing was found', async () => {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockEmbedPendingChunks.mockClear().mockResolvedValue({ embeddedCount: 100, remainingCount: 250 })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        const response = await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+
+        expect(response.result).toContain('250')
+        expect(response.result).not.toBe('No relevant information found.')
     })
 
     it('never searches a knowledge base whose chunks could not be embedded', async () => {

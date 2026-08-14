@@ -255,7 +255,7 @@ describe('knowledgeBaseService', () => {
                 embedFn,
             })
 
-            expect(embedded).toBe(2)
+            expect(embedded).toEqual({ embeddedCount: 2, remainingCount: 0 })
             expect(embedFn).toHaveBeenCalledWith(['first', 'second'], expect.objectContaining({ abortSignal: expect.any(AbortSignal) }))
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
@@ -294,7 +294,7 @@ describe('knowledgeBaseService', () => {
                 embedFn,
             })
 
-            expect(embedded).toBe(0)
+            expect(embedded).toEqual({ embeddedCount: 0, remainingCount: 0 })
             expect(embedFn).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
         })
@@ -327,7 +327,7 @@ describe('knowledgeBaseService', () => {
                 embedFn,
             })
 
-            expect(embedded).toBe(1)
+            expect(embedded).toEqual({ embeddedCount: 1, remainingCount: 0 })
             expect(embedFn).toHaveBeenCalledWith(['real content'], expect.objectContaining({ abortSignal: expect.any(AbortSignal) }))
         })
 
@@ -364,7 +364,7 @@ describe('knowledgeBaseService', () => {
                     embedFn,
                 })
 
-                expect(embedded).toBe(100)
+                expect(embedded).toEqual({ embeddedCount: 100, remainingCount: 200 })
                 expect(embedFn).toHaveBeenCalledTimes(2)
             }
             finally {
@@ -383,7 +383,7 @@ describe('knowledgeBaseService', () => {
                 embedFn,
             })
 
-            expect(embedded).toBe(120)
+            expect(embedded).toEqual({ embeddedCount: 120, remainingCount: 0 })
             expect(embedFn).toHaveBeenCalledTimes(3)
             expect(embedFn.mock.calls.map(([texts]) => texts.length)).toEqual([50, 50, 20])
         })

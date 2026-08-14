@@ -80,7 +80,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
      * big backlog is embedded across successive searches instead of all at once: each call spends at
      * most EMBED_TIME_BUDGET_MS, writes what it finished, and leaves the rest for the next search.
      */
-    async embedPendingChunks(params: EmbedPendingChunksParams): Promise<number> {
+    async embedPendingChunks(params: EmbedPendingChunksParams): Promise<EmbedPendingChunksResult> {
         const { projectId, knowledgeBaseFileId, embedFn } = params
 
         return distributedLock(log).runExclusive({
@@ -93,7 +93,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 const pending = (await this.listChunks({ projectId, knowledgeBaseFileId, embedded: false }))
                     .filter((pendingChunk) => pendingChunk.content.trim().length > 0)
                 if (pending.length === 0) {
-                    return 0
+                    return { embeddedCount: 0, remainingCount: 0 }
                 }
 
                 let embeddedCount = 0
@@ -124,8 +124,9 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     embeddedCount += batch.length
                 }
 
-                log.info({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount, remainingCount: pending.length - embeddedCount, durationMs: Date.now() - startedAt }, '[knowledgeBaseService#embedPendingChunks] Embedded chunks that were stored without a vector')
-                return embeddedCount
+                const remainingCount = pending.length - embeddedCount
+                log.info({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount, remainingCount, durationMs: Date.now() - startedAt }, '[knowledgeBaseService#embedPendingChunks] Embedded chunks that were stored without a vector')
+                return { embeddedCount, remainingCount }
             },
         })
     },
@@ -320,6 +321,11 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+type EmbedPendingChunksResult = {
+    embeddedCount: number
+    remainingCount: number
+}
 
 type SetChunkEmbeddingsParams = {
     projectId: string
