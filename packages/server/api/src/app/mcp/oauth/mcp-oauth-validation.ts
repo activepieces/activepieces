@@ -8,7 +8,6 @@ function isStorableText(value: string): boolean {
 }
 
 export const mcpOAuthValidation = {
-    isStorableText,
     storableText(maxLength: number) {
         return z.string().max(maxLength).refine(isStorableText, {
             message: 'Control characters and unpaired surrogates are not allowed',

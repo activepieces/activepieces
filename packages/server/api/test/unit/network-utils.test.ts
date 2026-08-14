@@ -19,7 +19,7 @@ function request({ host, forwardedHost, forwardedProto, protocol = 'http' }: {
     return { headers, hostname: host, protocol } as unknown as FastifyRequest
 }
 
-describe('networkUtils.getRequestBaseUrl', () => {
+describe('networkUtils request URL derivation', () => {
     afterEach(() => {
         vi.restoreAllMocks()
     })

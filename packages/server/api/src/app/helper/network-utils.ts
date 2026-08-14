@@ -7,7 +7,7 @@ import { AppSystemProp } from './system/system-props'
 
 const GOOGLE_DNS = '216.239.32.10'
 const LAST_RESORT_ORIGIN = 'http://localhost'
-const HOST_RESTRUCTURING_CHARACTERS = /[^A-Za-z0-9._\-:[\]]/
+const HOST_FORBIDDEN_CHARACTERS = /[^A-Za-z0-9._\-:[\]]/
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
 
 type IpMetadata = {
@@ -83,7 +83,7 @@ const configuredUrl = (): URL => {
 }
 
 const isUsableHost = (host: string | undefined): host is string => {
-    if (isNil(host) || host === '' || HOST_RESTRUCTURING_CHARACTERS.test(host)) {
+    if (isNil(host) || host === '' || HOST_FORBIDDEN_CHARACTERS.test(host)) {
         return false
     }
     return !tryCatchSync(() => new URL(`https://${host}`)).error
