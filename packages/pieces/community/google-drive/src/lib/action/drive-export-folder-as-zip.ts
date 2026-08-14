@@ -116,30 +116,35 @@ async function listFolderChildren({
   return items;
 }
 
+interface ExportError {
+  name: string;
+  location: string;
+  message: string;
+}
+
 // Drive allows '/', '\' and '..' in item names (confirmed in the web UI). None of that can be
 // normalized away without changing the directory structure or the file's actual name, so an
-// unsafe name is rejected outright instead.
-function assertSafeItemName(name: string, relativePrefix: string): void {
-  const location =
-    relativePrefix.length > 0
-      ? `inside "${relativePrefix}"`
-      : 'at the root of the selected folder';
+// unsafe name is rejected outright instead. Returns a description of the problem rather than
+// throwing, so callers can collect every error across the whole tree into one final error
+// instead of failing on the first one found.
+function checkSafeItemName(
+  name: string,
+  relativePrefix: string
+): ExportError | undefined {
+  const location = relativePrefix.length > 0 ? relativePrefix : '/';
+  const quotedName = `"${name}"`;
 
   // '/' is the zip path separator itself, so a name containing one spans levels it has no
   // business spanning -- it bypasses the sibling collision check above (which only compares
   // names within one level) and fabricates directories that don't exist in Drive.
   if (name.includes('/')) {
-    throw new Error(
-      `Cannot export: the Drive item named "${name}" ${location} contains "/", which can't be used as a zip path segment. Rename this item in Drive and try again.`
-    );
+    return { name: quotedName, location, message: 'contains "/"' };
   }
 
   // Not the zip separator, but some extraction tools (Windows-based ones especially) treat it
   // as one -- same class of ambiguity as '/', rejected for the same reason.
   if (name.includes('\\')) {
-    throw new Error(
-      `Cannot export: the Drive item named "${name}" ${location} contains "\\", which can't be used as a zip path segment. Rename this item in Drive and try again.`
-    );
+    return { name: quotedName, location, message: 'contains "\\"' };
   }
 
   // Escapes the archive root entirely on extraction (zip-slip). Only reachable once '/' and '\'
@@ -148,9 +153,7 @@ function assertSafeItemName(name: string, relativePrefix: string): void {
   // substring search would also reject a legitimate name like "my..file.pdf", which contains
   // ".." but isn't the traversal segment ".." itself).
   if (name === '..') {
-    throw new Error(
-      `Cannot export: the Drive item named ".." ${location} can't be used as a zip path segment. Rename this item in Drive and try again.`
-    );
+    return { name: quotedName, location, message: 'escapes the archive root on extraction' };
   }
 
   // A "current directory" segment is normalized away by most unzip tools, so a folder named "."
@@ -158,10 +161,10 @@ function assertSafeItemName(name: string, relativePrefix: string): void {
   // this check exists to prevent for '/', just camouflaged by a name that looks like a no-op
   // instead of an extra path segment.
   if (name === '.') {
-    throw new Error(
-      `Cannot export: the Drive item named "." ${location} can't be used as a zip path segment. Rename this item in Drive and try again.`
-    );
+    return { name: quotedName, location, message: 'collides with other paths once normalized on extraction' };
   }
+
+  return undefined;
 }
 
 interface ResolvedItem {
@@ -211,6 +214,37 @@ function resolveItem(
   };
 }
 
+// A Drive folder and a file (or two folders, or two files) can share a name in the same parent
+// -- Drive only guarantees uniqueness by ID. Any such collision would force one zip path to be
+// both a file and a directory, so it's checked once per level, up front, before any of these
+// children are processed. Each colliding name is its own independent cluster -- a folder full of
+// duplicates can have several unrelated ones at the same level (e.g. "Report" appears twice AND,
+// separately, "readme.txt" also appears twice), so each gets its own error rather than being
+// bundled into one combined line.
+function checkUniqueNames(
+  resolvedChildren: ResolvedItem[],
+  relativePrefix: string
+): ExportError[] {
+  const nameCounts = new Map<string, number>();
+  for (const { name } of resolvedChildren) {
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+  }
+
+  const location = relativePrefix.length > 0 ? relativePrefix : '/';
+  const errors: ExportError[] = [];
+  for (const [name, count] of nameCounts) {
+    if (count <= 1) {
+      continue;
+    }
+    errors.push({
+      name: `"${name}"`,
+      location,
+      message: `${count} items would map to the same zip path`,
+    });
+  }
+  return errors;
+}
+
 async function walk({
   auth,
   folderId,
@@ -218,6 +252,7 @@ async function walk({
   nativeFormats,
   includeTeamDrives,
   out,
+  errors,
 }: {
   auth: GoogleDriveAuthValue;
   folderId: string;
@@ -225,6 +260,7 @@ async function walk({
   nativeFormats: NativeFormatChoice;
   includeTeamDrives: boolean;
   out: ZipFolderEntry[];
+  errors: ExportError[];
 }): Promise<void> {
   const children = await listFolderChildren({
     auth,
@@ -243,38 +279,22 @@ async function walk({
     return;
   }
 
-  // A Drive folder and a file (or two folders, or two files) can share a name in the same
-  // parent -- Drive only guarantees uniqueness by ID. Any such collision would force one zip
-  // path to be both a file and a directory, so it's checked once per level, up front, before
-  // any of these children are processed.
   const resolvedChildren = children
     .map((item) => resolveItem(item, nativeFormats))
     .filter((resolved): resolved is ResolvedItem => resolved !== undefined);
 
   // Only validated for items that actually survive into the export -- a skipped native file or
   // an unsupported type (e.g. a Google Form, which is always excluded) never produces a zip
-  // entry, so an unsafe character in its name should never fail the export.
+  // entry, so an unsafe character in its name should never fail the export. Errors are collected
+  // rather than thrown immediately, so the whole tree is still walked and every error -- not just
+  // the first one found -- ends up in the final error.
   for (const { item } of resolvedChildren) {
-    assertSafeItemName(item.name, relativePrefix);
+    const error = checkSafeItemName(item.name, relativePrefix);
+    if (error) {
+      errors.push(error);
+    }
   }
-
-  const nameCounts = new Map<string, number>();
-  for (const { name } of resolvedChildren) {
-    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
-  }
-  const collidingNames = [...nameCounts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([name]) => name);
-  if (collidingNames.length > 0) {
-    const prefix = relativePrefix.length > 0 ? `${relativePrefix}/` : '';
-    throw new Error(
-      `Cannot export: multiple items in the same Drive folder would map to the same zip path: ${collidingNames
-        .map((name) => `"${prefix}${name}"`)
-        .join(
-          ', '
-        )}. This can happen when a file and a folder share a name, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists. Rename the conflicting items in Drive and try again.`
-    );
-  }
+  errors.push(...checkUniqueNames(resolvedChildren, relativePrefix));
 
   for (const resolved of resolvedChildren) {
     const itemPath =
@@ -290,6 +310,7 @@ async function walk({
         nativeFormats,
         includeTeamDrives,
         out,
+        errors,
       });
       continue;
     }
@@ -315,6 +336,7 @@ async function collectZipEntries({
   includeTeamDrives: boolean;
 }): Promise<ZipFolderEntry[]> {
   const out: ZipFolderEntry[] = [];
+  const errors: ExportError[] = [];
   await walk({
     auth,
     folderId: rootFolderId,
@@ -322,7 +344,26 @@ async function collectZipEntries({
     nativeFormats,
     includeTeamDrives,
     out,
+    errors,
   });
+
+  // The whole tree is walked before failing, so a folder with several unrelated problems (unsafe
+  // names, path collisions) surfaces all of them in one error instead of one fix-and-rerun cycle
+  // per error. Sorted by location then name so errors in the same folder read together.
+  if (errors.length > 0) {
+    const sorted = [...errors].sort(
+      (a, b) => a.location.localeCompare(b.location) || a.name.localeCompare(b.name)
+    );
+    const lines = sorted.map(
+      (error) => `- [${error.location}] ${error.name} ${error.message}`
+    );
+    throw new Error(
+      `Cannot export (${errors.length} problem${
+        errors.length > 1 ? 's' : ''
+      }) - Rename the conflicting or unsafe items in Drive and try again.\n${lines.join('\n')}`
+    );
+  }
+
   return out;
 }
 
