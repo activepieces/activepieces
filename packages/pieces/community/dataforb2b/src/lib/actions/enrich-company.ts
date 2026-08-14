@@ -6,6 +6,11 @@ export const enrichCompany = createAction({
   name: 'enrich_company',
   displayName: 'Enrich Company',
   description: 'Retrieve comprehensive information about a company.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up one company in the DataForB2B database by slug, LinkedIn company URL, or encoded company ID, returning its full firmographic record. Use when you already hold a company identifier; use Search Companies to find companies by criteria, or Typeahead to resolve a company name to its stored identifier first. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     companyIdentifier: Property.ShortText({
       displayName: 'Company Identifier',

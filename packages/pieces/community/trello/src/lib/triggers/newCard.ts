@@ -4,12 +4,14 @@ import { getCardDetail, getCardsInBoard, getCardsInList, trelloCommon } from '..
 import { TrelloNewCard } from '../common/props/card';
 import { isNil } from '@activepieces/pieces-framework';
 import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { newCardTriggerOutputSchema } from '../output-schemas';
 
 export const newCardTrigger = createTrigger({
 	auth: trelloAuth,
 	name: 'new_card',
 	displayName: 'New Card',
 	description: 'Trigger when a new card is created',
+	outputSchema: newCardTriggerOutputSchema,
 	aiMetadata: {
 		description: 'Fires when a new card is created on the selected board, or within a specific list if one is provided. Represents a newly added task or item; emits the created card with its full details.',
 	},

@@ -3,6 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecutePropertyJobData, Work
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 
 export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_PROPERTY,
@@ -46,12 +47,6 @@ export const executePropertyJob: JobHandler<ExecutePropertyJobData, SynchronousJ
             throw error
         }
 
-        return {
-            kind: JobResultKind.SYNCHRONOUS,
-            status: result.status,
-            response: result.response,
-            errorMessage: result.error,
-            logs: result.logs,
-        }
+        return buildSynchronousResult(result)
     },
 }

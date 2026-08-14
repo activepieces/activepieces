@@ -11,6 +11,9 @@ export const mcpTool = createTrigger({
   name: 'mcp_tool',
   displayName: 'MCP Tool',
   description: 'Creates a tool that MCP clients can call to execute this flow',
+  aiMetadata: {
+    description: 'Fires when an MCP client such as Claude Desktop, Cursor, or Windsurf calls the tool that this flow publishes on the hosted MCP server, carrying the arguments the client supplied for the parameters declared on the trigger. The configured name and description are what the client sees when it picks the tool, any parameter marked required must be present or the call errors, and turning on Wait for Response holds the client until a Reply to MCP Client action returns a result.',
+  },
   props: {
     toolName: Property.ShortText({
       displayName: 'Name',

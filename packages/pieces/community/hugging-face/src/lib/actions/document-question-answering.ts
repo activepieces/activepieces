@@ -6,12 +6,17 @@ import {
 import { huggingFaceAuth } from '../auth';
 
 export const documentQuestionAnswering = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'document_question_answering',
   auth: huggingFaceAuth,
   displayName: 'Document Question Answering',
   description:
     'Answer questions from document images using Hugging Face models',
+  aiMetadata: {
+    description:
+      'Answers a natural-language question about an uploaded document image (invoice, contract, form) with a layout-aware extractive model such as LayoutLM, returning the matching text span and its confidence score. Choose it to pull one specific value out of a scanned document - use image_classification or object_detection for general-purpose vision, and chat_completion when the source text is already plain. Requires both a document image file and a question; read-only and idempotent, since it only analyses the supplied file.',
+    idempotent: true,
+  },
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',

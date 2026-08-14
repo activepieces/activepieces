@@ -12,6 +12,10 @@ export const everyWeekTrigger = createTrigger({
   name: 'every_week',
   displayName: 'Every Week',
   description: 'Triggers the current flow every week',
+  aiMetadata: {
+    description:
+      'Fires once a week on one chosen day of the week, at a chosen hour in a chosen timezone; each event represents the weekly tick, not an external change. Pick this for weekly routines such as a Monday digest; use Every Day for a daily run, Every Month for a monthly one, or Cron Expression when more than one weekday or a non-zero minute is needed. Requires a day of the week and an hour, fires at minute 0 of that hour, and supports only a single weekday per trigger.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {

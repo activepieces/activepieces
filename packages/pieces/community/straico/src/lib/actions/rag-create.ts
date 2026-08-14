@@ -9,11 +9,12 @@ import { baseUrlv0 } from '../common/common';
 import FormData from 'form-data';
 
 export const createRag = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: straicoAuth,
   name: 'create_rag',
   displayName: 'Create RAG',
   description: 'Create a new RAG (Retrieval-Augmented Generation) base in the database.',
+  aiMetadata: { description: 'Ingests one uploaded document into a brand new RAG knowledge base that can then be queried with RAG Prompt Completion or attached to an agent, chunking it by fixed size, recursive, markdown, python or semantic strategy. Use it to stand up a new searchable corpus; prefer Update RAG to add another file to a base that already exists, and Upload File when the document only needs a URL to pass into Ask AI rather than being indexed. Requires a name, a description and a file (pdf, docx, csv, txt, xlsx or py); the chunking options apply only to the matching method. Not idempotent: each call creates another RAG base and consumes credits for the ingest.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

@@ -85,6 +85,10 @@ export const newOrUpdatedBusinessObject = createTrigger({
 	displayName: 'New/Updated Business Object',
 	description:
 		'Triggers when a business object is created or updated in Recruiting, Onboarding, or HR Services & Time Tracking.',
+	aiMetadata: {
+		description:
+			'Fires once per Workday business object created or changed since the last poll, for the module (Recruiting, Onboarding, or HR Services & Time Tracking) and object type selected, or for a custom REST path. Recency is judged by a configurable date field, defaulting to lastFunctionallyUpdated, and optional JSON filters narrow the polled set. Use when downstream work should run per record; use the batch variant to handle all changed records in one run.',
+	},
 	props,
 	sampleData: {
 		job_requisition_id: '3aa5550b7fe348b98d7b5741afc65534',

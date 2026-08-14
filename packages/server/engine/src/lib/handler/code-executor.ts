@@ -1,12 +1,12 @@
 import path from 'path'
 import { isNil, STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { CodeAction, EngineGenericError, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { CodeAction, EngineGenericError, ExecutionError, ExecutionErrorType, FlowActionType, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { utils } from '../utils'
-import { ActionHandler, BaseExecutor } from './base-executor'
+import { ActionHandler, BaseExecutor, failStep } from './base-executor'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
@@ -31,7 +31,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<Record<string, unknown>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -43,7 +43,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             stepNameToUpdate: action.name,
         })
 
-        if (isNil(constants.runEnvironment)) {
+        if (!constants.actionRunMode && isNil(constants.runEnvironment)) {
             throw new EngineGenericError('RunEnvironmentNotSetError', 'Run environment is not set')
         }
 
@@ -66,18 +66,13 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     }))
 
     if (executionStateError) {
-        const failedStepOutput = stepOutput
-            .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(utils.formatError(executionStateError))
-            .setDuration(performance.now() - stepStartTime)
-
-        return (await executionState
-            .upsertStep(action.name, failedStepOutput))
-            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: utils.formatError(executionStateError),
-            } })
+        return failStep({
+            action,
+            executionState,
+            stepOutput,
+            error: executionStateError,
+            durationMs: performance.now() - stepStartTime,
+        })
     }
 
     return executionStateResult

@@ -11,8 +11,10 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {
         const secondsSinceEpoch = Math.round(Date.now() / 1000)
+        const expiresIn = Number(response.expires_in)
         const formattedResponse: BaseOAuth2ConnectionValue = {
             ...response,
+            expires_in: Number.isFinite(expiresIn) && expiresIn > 0 ? expiresIn : undefined,
             data: response,
             claimed_at: secondsSinceEpoch,
         }
@@ -35,10 +37,13 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         ) {
             return false
         }
-        const expiresIn = connection.expires_in ?? 60 * 60
+        const parsedExpiresIn = Number(connection.expires_in)
+        const expiresIn = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 60 * 60
+        const parsedClaimedAt = Number(connection.claimed_at)
+        const claimedAt = Number.isFinite(parsedClaimedAt) && parsedClaimedAt > 0 ? parsedClaimedAt : 0
         const refreshThreshold = 15 * 60
         return (
-            secondsSinceEpoch + refreshThreshold >= connection.claimed_at + expiresIn
+            secondsSinceEpoch + refreshThreshold >= claimedAt + expiresIn
         )
     },
     isUserError: (e: unknown): boolean => {

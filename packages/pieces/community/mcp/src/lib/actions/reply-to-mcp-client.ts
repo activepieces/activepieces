@@ -9,10 +9,11 @@ import { StatusCodes } from 'http-status-codes';
 
 
 export const replyToMcpClient = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'reply_to_mcp_client',
   displayName: 'Reply to MCP Client',
   description: 'Return a response to the MCP client that called the tool.',
+  aiMetadata: { description: 'Send a result payload back to the MCP client that invoked this flow through the MCP Tool trigger, supplied either as key-value pairs (Simple mode) or as raw JSON (Advanced mode), and either stop the run there or respond and let the remaining steps continue. Only meaningful in a flow started by the MCP Tool trigger with Wait for Response enabled; without that the client receives nothing. Not idempotent: each call emits a response to the waiting client and changes the run execution state.', idempotent: false },
   props: {
     note: Property.MarkDown({
       value: '**Important**: Make sure your MCP trigger has (Wait for Response) turned on.'

@@ -3,11 +3,12 @@ import { isString } from '@activepieces/pieces-framework';
 import {parse} from 'csv-parse/sync';
 
 export const csvToJsonAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'convert_csv_to_json',
   displayName: 'Convert CSV to JSON',
   description:
     'This function reads a CSV string and converts it into JSON array format.',
+  aiMetadata: { description: 'Parses a CSV or tab-separated text string into a JSON array, treating the first row either as column headers or as plain data depending on the header option. Use this to make CSV text queryable before looping or filtering rows; use Convert JSON to CSV for the reverse direction, and run Convert Excel to CSV first when the source is an .xlsx/.xls file. The chosen delimiter (comma or tab) must match the actual data or columns will not split; read-only and idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

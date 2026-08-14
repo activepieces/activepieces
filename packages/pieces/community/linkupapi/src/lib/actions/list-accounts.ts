@@ -6,6 +6,8 @@ export const listAccounts = createAction({
   name: 'list_accounts',
   displayName: 'List Accounts',
   description: 'List all connected LinkedIn accounts linked to your API key. Free (0 credits). Use the returned account_id in other actions.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the LinkedIn accounts connected to this LinkupAPI key, paged by limit and offset. Call this first to obtain the account ID that every other LinkupAPI action and trigger requires; prefer Get Account Details when the ID is already known. Read-only and idempotent.', idempotent: true },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

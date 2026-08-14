@@ -1,5 +1,5 @@
 import { Permission } from '@activepieces/core-utils'
-import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, ReorderFieldsRequest, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -37,6 +37,15 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
         return fieldService.delete({
             id: request.params.id,
             projectId: request.projectId,
+        })
+    },
+    )
+
+    fastify.post('/reorder', ReorderRequest, async (request) => {
+        return fieldService.reorder({
+            projectId: request.projectId,
+            tableId: request.body.tableId,
+            fieldIds: request.body.fieldIds,
         })
     },
     )
@@ -127,5 +136,22 @@ const UpdateRequest = {
             id: z.string(),
         }),
         body: UpdateFieldRequest,
+    },
+}
+
+const ReorderRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
+    },
+    schema: {
+        body: ReorderFieldsRequest,
     },
 }

@@ -10,11 +10,12 @@ import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askAssistant = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'ask_assistant',
   displayName: 'Ask Assistant',
   description: 'Ask a GPT assistant anything you want!',
+  aiMetadata: { description: 'Sends a question to a GPT Assistant that already exists in the connected OpenAI account, selected from the assistant dropdown, and waits for the Assistants run to finish before returning the assistant messages produced after that question. Two modes: with a memory key it reuses one stored thread across runs and flows so the assistant remembers earlier turns, without one it opens a throwaway thread each time. Prefer ask_chatgpt when there is no saved Assistant or when the model and sampling parameters must be chosen per call. Requires an assistant already configured on the OpenAI side; not idempotent: each call creates a thread message and a new run.', idempotent: false },
   props: {
     assistant: Property.Dropdown({
   auth: openaiAuth,

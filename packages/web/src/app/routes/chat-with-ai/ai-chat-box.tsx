@@ -1,5 +1,5 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -13,6 +13,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -30,7 +31,6 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
-import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
@@ -41,13 +41,10 @@ export function AIChatBox({
   onTitleUpdate,
   onConversationCreated,
 }: AIChatBoxProps) {
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviders();
+  const { data: chatProvider, isLoading: isLoadingProviders } =
+    aiProviderQueries.useChatProvider();
 
-  const chatProvider = providers?.find((p) => p.enabledForChat);
-  const hasChatProvider = Boolean(chatProvider);
-
-  if (!isLoadingProviders && !hasChatProvider) {
+  if (!isLoadingProviders && !chatProvider) {
     return <SetupRequiredState />;
   }
 
@@ -156,7 +153,7 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
-  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+  const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
 
@@ -170,7 +167,7 @@ function ChatBoxContent({
     !hasSentMessage;
 
   const cachedConversations = queryClient.getQueryData<
-    SeekPage<ChatConversation>
+    SeekPage<AgentConversation>
   >(['chat-conversations']);
   const hasConversations = (cachedConversations?.data?.length ?? 0) > 0;
 
@@ -301,11 +298,10 @@ function ChatBoxContent({
               isEmpty ? t('Ask, build, or run a task...') : undefined
             }
             banner={
-              showBanner ? (
-                <CreditsBanner
+              showBanner && !hasBlockingCard ? (
+                <ChatCreditsAlert
                   creditsExhausted={credits.creditsExhausted}
-                  creditsWarning={credits.creditsWarning}
-                  daysUntilReset={credits.daysUntilReset}
+                  creditsPercentUsed={credits.creditsPercentUsed}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null

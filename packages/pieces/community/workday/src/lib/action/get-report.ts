@@ -10,6 +10,12 @@ export const getReport = createAction({
 	name: 'get_report',
 	displayName: 'Get Report',
 	description: 'Fetches a Workday report by ID or web service alias.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Runs a published Workday custom report, addressed by its report ID or web service alias, and returns its rows, optionally passing report prompt values as JSON. Use when the data is already shaped by a report definition in the tenant; prefer Find Records (WQL) or Get Report using WQL (Batch) when the query can be expressed in WQL instead. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		reportId: reportIdProperty,
 		reportParameters: Property.Json({

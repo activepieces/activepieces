@@ -10,6 +10,7 @@ import {
   PieceSelectorOperation,
   stepUtils,
 } from '@/features/pieces';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIPieceActionsList } from './ai-actions-list';
 
@@ -18,6 +19,7 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   const { selectedTab } = usePieceSelectorTabs();
   const { pieceModel, isLoading, isError } = piecesHooks.usePiece({
     name: '@activepieces/piece-ai',
+    projectId: authenticationSession.getProjectId() ?? undefined,
   });
 
   if (
@@ -37,7 +39,11 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
     );
   }
 
-  if (isError || isNil(pieceModel)) {
+  if (
+    isError ||
+    isNil(pieceModel) ||
+    Object.keys(pieceModel.actions).length === 0
+  ) {
     return (
       <div className="flex items-center justify-center h-full w-full">
         <p className="text-sm text-muted-foreground">

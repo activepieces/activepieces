@@ -1,12 +1,14 @@
 // Action: List Tags
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { youtrackApiCall } from '../common';
+import { listTagsActionOutputSchema } from '../output-schemas';
 
 export const listTagsAction = createAction({
   auth: youtrackAuth,
   name: 'list_tags',
+  outputSchema: listTagsActionOutputSchema,
   displayName: 'List Tags',
   description: 'Lists all tags visible to the current user.',
   audience: 'both',

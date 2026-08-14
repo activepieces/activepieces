@@ -6,6 +6,8 @@ export const searchPeople = createAction({
   name: 'search_people',
   displayName: 'Search People',
   description: 'Search LinkedIn profiles by keyword, company, title, location, school, industry and more. Returns the LinkedIn URL of each match.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches LinkedIn people by any combination of keyword, name, title, company, location, school, industry, or connection degree; alternatively it can enumerate the connections or followers of one given profile instead of running an attribute search. Use it to discover prospects when no profile URL is known, then switch to Get Profile Info once one is. Requires the account ID from List Accounts, and the result count is capped by Total Results. Read-only and idempotent.', idempotent: true },
   props: {
     accountId: accountIdProp,
     keyword: Property.ShortText({ displayName: 'Keyword', required: false }),

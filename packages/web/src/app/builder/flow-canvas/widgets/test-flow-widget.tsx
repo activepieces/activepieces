@@ -5,10 +5,12 @@ import {
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useRef } from 'react';
 
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import {
+  useBuilderStateContext,
+  useBuilderStore,
+} from '@/app/builder/builder-hooks';
 import { ChatDrawerSource } from '@/app/builder/types';
 import { flowRunUtils } from '@/features/flow-runs';
 import { flowHooks } from '@/features/flows';
@@ -23,7 +25,6 @@ const TestFlowWidget = () => {
     flowVersion,
     readonly,
     hideTestWidget,
-    run,
     setRun,
     publishedVersionId,
   ] = useBuilderStateContext((state) => [
@@ -31,12 +32,10 @@ const TestFlowWidget = () => {
     state.flowVersion,
     state.readonly,
     state.hideTestWidget,
-    state.run,
     state.setRun,
     state.flow.publishedVersionId,
   ]);
-  const runRef = useRef(run);
-  runRef.current = run;
+  const builderStore = useBuilderStore();
 
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRun = checkAccess(Permission.WRITE_RUN);
@@ -60,21 +59,17 @@ const TestFlowWidget = () => {
       isForManualTrigger: isManualTrigger,
       onUpdateRun: (response: UpdateRunProgressRequest) => {
         assertNotNullOrUndefined(response.flowRun, 'flowRun');
-        const steps = runRef.current?.steps ?? {};
-        const startTime =
-          response.flowRun.startTime ?? runRef.current?.startTime;
-        if (!isNil(response.step)) {
-          const updatedSteps = flowRunUtils.updateRunSteps(
-            steps,
-            response.step?.name,
-            response.step?.path,
-            response.step?.output,
-          );
-          setRun(
-            { ...response.flowRun, startTime, steps: updatedSteps },
-            flowVersion,
-          );
-        }
+        const currentRun = builderStore.getState().run;
+        const previousSteps = currentRun?.steps ?? {};
+        const startTime = response.flowRun.startTime ?? currentRun?.startTime;
+        const steps = isNil(response.step)
+          ? previousSteps
+          : flowRunUtils.updateRunSteps(
+              previousSteps,
+              response.step.name,
+              response.step.path,
+              response.step.output,
+            );
         setRun({ ...response.flowRun, startTime, steps }, flowVersion);
       },
     });

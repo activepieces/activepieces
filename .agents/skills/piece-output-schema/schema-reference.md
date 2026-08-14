@@ -32,7 +32,7 @@ Every field has a required `key` and an optional `value` (the path). **When `val
 
 - **Plain field:** set `key` to the real JSON property name and **omit `value`** — the dominant shipped style (e.g. google-calendar's `eventOutputSchema` fields are all `{ key, label }`, no `value`).
 - **Set `value`** only when the path must differ from the `key` you want to show: to **unwrap** (`value: 'body'`, `value: 'data.documentId'`) or to give a field a cleaner `key`/label than its raw property name.
-- **Caveat for AI/MCP consumers:** the builder resolves `value ?? key`, but the AI/MCP path map (`flattenOutputSchemaFields` in `packages/server/api/src/app/mcp/tools/mcp-utils.ts`) is built from **`key` only** — it ignores `value`. A field like `{ key: 'startDateTime', value: 'start.dateTime' }` inserts the correct path in the builder yet exports the wrong one to agents. Keep `key` equal to the real leaf property name wherever that matters, and reserve `key != value` for genuine unwrapping.
+- The AI/MCP path map (`flattenOutputSchemaFields` in `packages/server/api/src/app/mcp/tools/mcp-utils.ts`) resolves `value ?? key` exactly like the builder — `key` is the field's identity/label; the path is always `value ?? key`.
 
 ## The relative-path rule (most important)
 
@@ -87,19 +87,18 @@ export const findRowsActionOutputSchema: OutputSchema = {
 };
 ```
 
-> **AI/MCP caveat — root-array wrappers export a phantom path.** The builder resolves the `value: ''` wrapper correctly (whole array), but the AI/MCP path map (`flattenOutputSchemaFields` in `mcp/tools/mcp-utils.ts`) builds paths from **`key`** and ignores `value: ''`, so it emits paths under the wrapper key — e.g. `rows[].row` — while the real output is the array itself (there is no `rows` property). Those exported paths resolve to `undefined` for AI/MCP consumers. This is a limitation of the flattener, not something the schema can express around (the builder only accepts this one shape for root arrays). Until the flattener learns to drop the wrapper key when `value === ''`, treat the AI/MCP paths for **root-array actions** as unreliable; the builder/data-selector view is unaffected. (Give the wrapper a descriptive `key` anyway — it becomes the human label.)
+> The `value: ''` wrapper contributes **no path segment** anywhere: the builder resolves it as the whole array, and the AI/MCP path map exports the item fields as `[].row`, `[].values`, … (no wrapper key in the path). Give the wrapper a descriptive `key` anyway — it becomes the human label.
 
 ## Maps with opaque / variable keys → `dynamicKey`
 
-When an object's keys are *data* (calendar ids, column letters, user ids) rather than a fixed schema, mark the field `dynamicKey: true`. In the builder, each entry is **drilled generically** from the sample and labelled by `labelKey`; the entry's own `children`/`listItems` are **not rendered** in the data selector or output viewer. (They *are* still walked by the AI/MCP path map, so include them only when that path map matters — otherwise `labelKey` plus the field's `label`/`format` is all that has an effect.) The inserted expression path always uses the opaque key; `labelKey` only changes the displayed label.
+When an object's keys are *data* (calendar ids, column letters, user ids) rather than a fixed schema, mark the field `dynamicKey: true`. Each entry is drilled generically in the builder and labelled by `labelKey`; the inserted expression path uses the opaque key regardless.
+
+Under `dynamicKey`, nested `children` / `listItems` are **not** rendered in the data selector — the AI/MCP path map still walks them, so include them only when that path map matters. Otherwise `labelKey` + `label` + `format` is all that has an effect.
 
 ```ts
 // freeBusy: { calendars: { "<calendarId>": { busy: [{ start, end }] } } }
 {
   key: 'calendars', label: 'Calendars', dynamicKey: true,
-  // children below do NOT render in the builder (each calendar entry drills
-  // generically); they only enrich the AI/MCP path map. Drop them if you don't
-  // need that. labelKey on `busy` labels each period by its start time.
   children: [
     {
       key: 'busy', label: 'Busy Periods', labelKey: 'start',
@@ -156,8 +155,6 @@ export const findDocumentActionOutputSchema: OutputSchema = {
 export const newDocumentTriggerOutputSchema: OutputSchema = { fields: driveFileFields };
 ```
 
-(Some shipped files set `value` explicitly on every field, e.g. `value: 'id'`; that's equivalent — `value` defaults to `key` — just more verbose. Match the file you're editing.)
-
 ## Wiring
 
 ### Actions — inline `outputSchema:` on the `createAction` object
@@ -198,5 +195,4 @@ outputSchema: clickupTriggerOutputSchemas[name],
 - File location: `packages/pieces/community/<piece>/src/lib/output-schemas.ts`.
 - Import path from a step file: match the file's depth. Actions/triggers one level under `lib/` (`lib/actions/x.ts`) import `../output-schemas`; deeper folders (`lib/actions/tasks/x.ts`) use `../../output-schemas`. Watch **multi-line import blocks** — insert the new import after the `} from '...';` that closes the block, never inside it.
 - Write clean TypeScript object literals (unquoted keys, single quotes), consistent with `google-docs`'s file. Some shipped files are generator-emitted JSON style (quoted keys) — when editing one of those, match its existing style rather than mixing.
-- Order within `output-schemas.ts`: imports, then the **non-exported shared field-set `const`s**, then the **exported schema `const`s** that reference them. The exports must come *after* the field-sets they consume (JS declaration order — a schema const referencing a field-set declared below it throws at module load), which is exactly how the shipped files are laid out (e.g. `google-docs`'s `driveFileFields` precedes the exported schemas). Type shared field-sets as `OutputSchema['fields']`.
-- **Version bump:** bump the **patch** version in each touched piece's `package.json`. This is also what forces cloud/self-hosted registries to re-ingest fresh metadata.
+- Order within `output-schemas.ts`: imports → non-exported shared field-set `const`s → exported schema `const`s that reference them. JS declaration order matters — a schema referencing a field-set declared below it throws at module load. Type shared field-sets as `OutputSchema['fields']`. See `google-docs` for the canonical layout.

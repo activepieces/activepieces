@@ -7,10 +7,11 @@ import { aiProps } from '../../common/props';
 import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
-  audience: 'human',
+  audience: 'both',
 	name: 'extractStructuredData',
 	displayName: 'Extract Structured Data',
 	description: 'Accurately Pull names, amounts, and other structured data from emails, invoices, and scanned documents.',
+	aiMetadata: { description: 'Pulls typed fields out of unstructured input (text, images or PDFs) against a schema supplied either in simple mode, a list of field definitions, or advanced mode, a raw JSON Schema. Pick it when you need specific named values from documents such as invoices, receipts or emails; use classifyText for a single label, summarizeText for prose condensation, or askAi for open-ended analysis. At least one of Text or Files is required or the step throws; read-only and idempotent.', idempotent: true },
 	props: {
 		provider: aiProps({ modelType: 'text' }).provider,
 		model: aiProps({ modelType: 'text' }).model,

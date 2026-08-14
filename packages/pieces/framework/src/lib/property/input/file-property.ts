@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream";
 import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
@@ -16,8 +17,17 @@ export class ApFile {
 
 export const FileProperty = z.object({
     ...BasePropertySchema.shape,
+    streaming: z.optional(z.boolean()),
     ...TPropertyValue(z.unknown(), PropertyType.FILE).shape,
 })
 
-export type FileProperty<R extends boolean> = BasePropertySchema &
-    TPropertyValue<ApFile, PropertyType.FILE, R>;
+export type ApStreamingFile = {
+    filename: string;
+    extension?: string;
+    size?: number;
+    body: Readable;
+};
+
+export type FileProperty<R extends boolean, S extends boolean = false> = BasePropertySchema & {
+    streaming?: S;
+} & TPropertyValue<S extends true ? ApStreamingFile : ApFile, PropertyType.FILE, R>;

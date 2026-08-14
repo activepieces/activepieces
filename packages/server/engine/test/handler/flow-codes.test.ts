@@ -19,6 +19,21 @@ describe('codeExecutor', () => {
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })
 
+    it('should execute code from a nested action-run namespace, which is how fork mode reads it off the host filesystem', async () => {
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'echo_action_run',
+                input: {
+                    'key': '{{ 1 + 2 }}',
+                },
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ flowVersionId: 'action-runs/plat-xyz_deadbeef' }),
+        })
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(result.steps.echo_action_run.output).toEqual({ 'key': 3 })
+    })
+
     it('should execute code a code that throws an error', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
