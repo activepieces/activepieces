@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { quickbooksAuth } from '../lib/auth'; // Correct path relative to actions/find-payment.ts
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 
 interface QuickbooksPayment {
 	Id: string;
@@ -72,25 +71,22 @@ export const findPaymentAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const query = `SELECT * FROM Payment WHERE CustomerRef = '${customerId}'`;
 
-		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksPayment>>({
-			method: HttpMethod.GET,
-			url: `${apiUrl}/query?query=${encodeURIComponent(query)}&minorversion=70`,
-			headers: {
-				Authorization: `Bearer ${context.auth.access_token}`,
-				Accept: 'application/json',
-			},
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/payment#query-a-payment
+		const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksPayment>>({
+			accessToken: context.auth.access_token,
+			companyId: companyId as string,
+			query,
 		});
 
 		if (
-			response.body.QueryResponse?.['Payment'] &&
-			response.body.QueryResponse?.['Payment'].length > 0
+			response.QueryResponse?.['Payment'] &&
+			response.QueryResponse?.['Payment'].length > 0
 		) {
 			return {
 				found: true,
-				result: response.body.QueryResponse?.['Payment'],
+				result: response.QueryResponse?.['Payment'],
 			};
 		}
 

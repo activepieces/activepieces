@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import { QuickbooksAccount } from '../lib/types';
 
 export const findAccountAction = createAction({
@@ -53,8 +52,6 @@ export const findAccountAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
-
 		const conditions = ['Active = true'];
 		if (search_term) {
 			conditions.push(`Name LIKE '%${search_term.replace(/'/g, "\\'")}%'`);
@@ -64,23 +61,14 @@ export const findAccountAction = createAction({
 		}
 		const query = `SELECT * FROM Account WHERE ${conditions.join(' AND ')} MAXRESULTS 1000`;
 
-		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksAccount>>({
-			method: HttpMethod.GET,
-			url: `${apiUrl}/query`,
-			queryParams: {
-				query: query,
-				minorversion: '70',
-			},
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			headers: {
-				Accept: 'application/json',
-			},
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/account#query-an-account
+		const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksAccount>>({
+			accessToken: context.auth.access_token,
+			companyId: companyId as string,
+			query,
 		});
 
-		const accounts = response.body?.QueryResponse?.['Account'] ?? [];
+		const accounts = response?.QueryResponse?.['Account'] ?? [];
 		return {
 			found: accounts.length > 0,
 			result: accounts,

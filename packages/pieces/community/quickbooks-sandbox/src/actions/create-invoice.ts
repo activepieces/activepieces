@@ -3,9 +3,9 @@ import {
 	Property,
 	OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { QuickbooksEntityResponse, quickbooksCommon } from '../lib/common';
+import { QuickbooksEntityResponse, quickbooksApiCall, quickbooksQuery } from '../lib/common';
 import { QuickbooksCustomer, QuickbooksInvoice, QuickbooksRef } from '../lib/types';
 
 export const createInvoiceAction = createAction({
@@ -36,31 +36,25 @@ export const createInvoiceAction = createAction({
 				const { access_token, props } = auth as OAuth2PropertyValue;
 
 				const companyId = props?.['companyId'];
-				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 
 				const query = `SELECT Id, DisplayName FROM Customer STARTPOSITION 1 MAXRESULTS 1000`;
 
-				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksCustomer>>(
-					{
-						method: HttpMethod.GET,
-						url: `${apiUrl}/query`,
-						queryParams: { query: query, minorversion: '70' },
-						headers: {
-							Authorization: `Bearer ${access_token}`,
-							Accept: 'application/json',
-						},
-					},
-				);
+				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
+				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksCustomer>>({
+					accessToken: access_token,
+					companyId,
+					query,
+				});
 
-				if (response.body.Fault) {
+				if (response.Fault) {
 					throw new Error(
-						`QuickBooks API Error: ${response.body.Fault.Error.map(
+						`QuickBooks API Error: ${response.Fault.Error.map(
 							(e: { Message: string }) => e.Message,
 						).join(', ')}`,
 					);
 				}
 
-				const customers = response.body.QueryResponse?.['Customer'] ?? [];
+				const customers = response.QueryResponse?.['Customer'] ?? [];
 				return {
 					disabled: false,
 					options: customers.map((customer) => ({
@@ -160,9 +154,8 @@ export const createInvoiceAction = createAction({
 	},
 	async run(context) {
 		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'];
+		const companyId = context.auth.props?.['companyId'] as string;
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		if (props['emailStatus'] === 'NeedToSend' && !props['billEmail']) {
@@ -209,30 +202,27 @@ export const createInvoiceAction = createAction({
 			...(props['customerMemo'] && { CustomerMemo: { value: props['customerMemo'] } }),
 		};
 
-		const response = await httpClient.sendRequest<{
+		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice#create-an-invoice
+		const response = await quickbooksApiCall<{
 			Invoice: QuickbooksInvoice;
 			time: string;
 			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
 		}>({
+			accessToken: access_token,
+			companyId,
 			method: HttpMethod.POST,
-			url: `${apiUrl}/invoice`,
-			queryParams: { minorversion: '70' },
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
+			resourceUri: '/invoice',
 			body: invoicePayload,
 		});
 
-		if (response.body.Fault) {
+		if (response.Fault) {
 			throw new Error(
-				`QuickBooks API Error: ${response.body.Fault.Error.map((e: any) => e.Message).join(
+				`QuickBooks API Error: ${response.Fault.Error.map((e: any) => e.Message).join(
 					', ',
-				)} - ${response.body.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+				)} - ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
 			);
 		}
 
-		return response.body.Invoice;
+		return response.Invoice;
 	},
 });

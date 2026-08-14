@@ -7347,7 +7347,7 @@
     },
     "packages/pieces/community/quickbooks": {
       "name": "@activepieces/piece-quickbooks",
-      "version": "0.1.9",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7361,7 +7361,7 @@
     },
     "packages/pieces/community/quickbooks-sandbox": {
       "name": "@activepieces/piece-quickbooks-sandbox",
-      "version": "0.0.1",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
