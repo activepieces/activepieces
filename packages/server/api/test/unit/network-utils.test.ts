@@ -68,6 +68,15 @@ describe('networkUtils.getRequestBaseUrl', () => {
         expect(baseUrl).toBe(`https://${forwardedHost}`)
     })
 
+    it.each([
+        ['uppercase', 'HTTPS'],
+        ['mixed case', 'HttpS'],
+    ])('honours a forwarded protocol regardless of case (%s), so a TLS-terminating proxy is not downgraded', (_name, forwardedProto) => {
+        const baseUrl = networkUtils.getRequestBaseUrl(request({ host: 'example.com', forwardedProto, protocol: 'http' }))
+
+        expect(baseUrl).toBe('https://example.com')
+    })
+
     it('ignores a forwarded protocol that is not http or https', () => {
         const baseUrl = networkUtils.getRequestBaseUrl(request({ host: 'example.com', forwardedProto: 'javascript', protocol: 'https' }))
 

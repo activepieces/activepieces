@@ -96,7 +96,7 @@ const getRequestHost = (req: FastifyRequest): string => {
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
-    const forwardedProto = firstForwardedValue(req.headers['x-forwarded-proto'])
+    const forwardedProto = firstForwardedValue(req.headers['x-forwarded-proto'])?.toLowerCase()
     const protocol = forwardedProto === 'http' || forwardedProto === 'https' ? forwardedProto : req.protocol
     const parseable = candidateHosts(req)
         .map((host) => `${protocol}://${host}`)
