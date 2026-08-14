@@ -35,7 +35,11 @@ export const bunRunner = (log: ApLogger) => ({
             entryFile,
             '--bundle',
             '--platform=node',
+            '--target=node20',
             '--format=cjs',
+            '--minify',
+            '--keep-names',
+            '--tree-shaking=true',
             `--outfile=${outputFile}`,
         ]
         log.debug({ path, entryFile, outputFile, args }, '[bunRunner#build]')

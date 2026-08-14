@@ -21,6 +21,8 @@ dmesg -T | grep -aiE "Memory cgroup out of memory|Killed process"
 
 `OOMKilled=true` on a *running* container means the cgroup OOM-killed a child while PID 1 survived. In `dmesg`, the process name is truncated to **15 characters**: `node /usr/src/a` is the **worker** (`…/worker/dist/src/bootstrap.js`), not the engine — the engine runs as `/usr/local/bin/node`. Getting this backwards sends you profiling the wrong process.
 
+**Don't wait for `oom_kill` to confirm a fix failed — read `max` in `/sys/fs/cgroup/memory.events`.** It counts how many times the cgroup hit `memory.max`, and it climbs long before anything dies: a container parked at the ceiling shows `max` rising by ~80/min while `oom_kill` stays 0, because the kernel is buying time by evicting page cache. Measured Aug 2026 on a reuse worker holding 791 MB of engine in a 1 GiB cgroup — `max` went 207 → 367 in two minutes with zero kills, and container `anon` even *fell* as file pages were reclaimed. So on a freshly-deployed fleet, `oom_kill=0` plus a climbing `max` means "about to die", not "fixed". Ignore `max` on a container in its first minutes, though — pulling a fresh piece cache pegs it for reasons that have nothing to do with a leak.
+
 ## 2. JS heap or native? Decide before you snapshot
 
 ```bash
@@ -99,6 +101,35 @@ Object
 ```
 
 A module-level object keyed by cache path, holding whole flow-bundle manifests, never evicted (`cache-state.ts`). See the Gotchas on [[workers]].
+
+## Four ways this investigation goes wrong — all four cost a full round in Aug 2026
+
+- **Reachability is not attribution. Report the *dominated* size.** "N% of the heap is reachable from X" is near-vacuous for any X near the module graph — `Module._cache` sits one hop from every module scope, so it, `global`, and most single modules' exports all score 99%+ on a *healthy* process. The number that answers "what do I free by dropping this" is the exclusively-dominated size, and the two can disagree wildly: the same snapshot read 99.8% reachable and **0.1 MB dominated**. Quote the second. Anyone who has run the first measurement will discount your whole memo when they see it.
+- **A cross-section of different tenants cannot separate module data from run data — only the same pid over time can.** Module *count* predicted heap at r=+0.06 across 15 engines while source *bytes* managed +0.64, and heap-per-module spanned 22–184 KB. Worse, those 15 were four tenant clusters, so the effective n is ~5 and no correlation there is interpretable. If the question is "is it accumulating", take two snapshots of one pid N runs apart and diff by dominator. Also force a GC (`HeapProfiler.collectGarbage`) before *every* `heapUsed` read, not just before snapshots — otherwise the number is retained memory plus whatever garbage recent traffic left.
+- **Verify effective config from the live process, never from container env.** `SANDBOX_MEMORY_LIMIT` is not a `WorkerSystemProp`; the worker's own `AP_SANDBOX_MEMORY_LIMIT` is dead config, and the real value arrives from the app over the settings socket. `docker inspect` on a worker "proves" nothing. Read `process.execArgv` and `v8.getHeapStatistics().heap_size_limit` over the CDP session you already have — and not `/proc/<pid>/cmdline`, which `process.title` has overwritten.
+- **Read the kernel's `Tasks state` table, not just the `Killed process` line.** When a cgroup is blown by the *sum* of several processes, the kill line names whichever single task had the highest RSS — so a 285 MB victim can hide a 984 MB total and the container looks like it died under its limit. The table lists every task with `rss_anon` in pages; sum it. The tell for a sum rather than a leak is that no process is near its own ceiling.
+
+- **Neither `oom_kill` nor a raw `dmesg` count is a kill total — one resets, the other rotates.** The cgroup `memory.events` counter lives with the container and **resets on recreation**, so anything that recycles containers zeroes your evidence: measured Aug 2026, a fleet whose containers were being bulk-restarted read `oom_kill=0..2` per host while `dmesg` showed ~48 kills in 40 minutes on the same host. And `dmesg` under-counts in the opposite way, because every OOM prints a full `Tasks state` table, so a host that is OOMing hard rotates its ring buffer in **tens of minutes** — four hosts all reporting exactly `48` is the buffer cap, not a coincidence. Always compute the buffer's own window (`dmesg -T | head -1` vs `tail -1`) and quote a **rate over that window**, flagged as a floor. Cross-check with `RestartCount`, and check the *exit code* before calling a restart an OOM: `exit=0` is the SIGTERM path (`main.ts`), i.e. somebody ran `docker restart`, not the kernel.
+
+And a trap in your own instrumentation: a shell probe matching `case "$cl" in *bootstrap.js*)` also matches **the probe's own command line**, silently overwriting the worker's RSS with the shell's 1 MB. Same family as grepping heap strings and finding your own source. Prefer `/proc/1` for the worker (node is PID 1 since pm2 was removed) and match engines on `comm` = `sandbox-*`.
+
+## Reproduce it locally before you fix it — a container is the only honest harness
+
+An OOM is a *cgroup* event, so a bare `node --max-old-space-size=768` on your laptop will not reproduce it: the process just grows and V8 never hits the wall the kernel does. Run the suspect path in a container sized like production and let the kernel do the killing.
+
+```bash
+docker run --rm --memory 1g --memory-swap 1g -v "$PWD":/repo:ro \
+  --entrypoint node node:22-bookworm-slim --max-old-space-size=768 /repo/sim.js
+# exit 137 == SIGKILL == the cgroup OOM-killed it, exactly as prod does
+```
+
+Size the inputs from production, never from imagination — `find <cache>/bundles -name cache.json -printf '%s\n'` gave median 0.01 MB, p99 0.5 MB, **max 47 MB** over 14,403 bundles, and only the max matters. Simulate the worker's steady state too (a few hundred MB of ballast), because the spike is only fatal on top of the baseline.
+
+Three traps, all of which produced a wrong answer first:
+
+- **`exit != 137` is not "survived".** A script that dies on `MODULE_NOT_FOUND` also exits non-137, and a loop checking only the exit code reports it as a pass. Assert on a success marker the script prints, and treat everything else as an error state distinct from a kill.
+- **Near the cliff the result is a coin flip.** At the boundary the same config OOM-killed 3 of 5 runs and survived 2, and a *lower* baseline sometimes died where a higher one lived — GC timing, not signal. Never A/B a fix by moving the threshold. Pick a baseline well below the cliff and compare **post-GC `heapUsed`**, which is deterministic: it read 380 MB before a fix and 240 MB after, identical across every run.
+- **Synchronous work cannot be sampled.** `setInterval` never fires during a `JSON.parse`, so a "peak sampler" reports the calm before and after and misses the spike entirely. Instrument phase by phase with `global.gc()` between steps and read the delta.
 
 ## Redact before you publish the findings
 

@@ -199,4 +199,38 @@ describe('flowBundleStore', () => {
         expect(second).toBeNull()
         expect(getFlowBundle).toHaveBeenCalledTimes(2)
     })
+
+    it('parses the manifest exactly once per fetch, warm and cold', async () => {
+        const basePath = uniqueBasePath()
+        const { apiClient } = inMemoryApiClient()
+        const flowVersion = buildFlowVersion()
+        const codes = codeCache(cacheUtils(basePath).getGlobalCodeCachePath())
+        await codes.writeCompiledStep({ flowVersionId: flowVersion.id, stepName: 'step_1', compiledJs: 'exports.code = () => 1' })
+        await flowBundleStore(fakeLog, apiClient, basePath).publish({ flowVersion, pieces: [piece], projectId: 'p1', platformId: 'plat1' })
+
+        const realParse = JSON.parse
+        const countManifestParses = async (fn: () => Promise<unknown>): Promise<number> => {
+            let parses = 0
+            const spy = vi.spyOn(JSON, 'parse').mockImplementation((text: string, reviver?: Parameters<typeof JSON.parse>[1]) => {
+                if (typeof text === 'string' && text.startsWith('{"flowVersion"')) {
+                    parses++
+                }
+                return realParse(text, reviver)
+            })
+            await fn()
+            spy.mockRestore()
+            return parses
+        }
+
+        const coldBasePath = uniqueBasePath()
+        const coldParses = await countManifestParses(() =>
+            flowBundleStore(fakeLog, apiClient, coldBasePath).tryFetch({ flowVersionId: flowVersion.id, projectId: 'p1' }),
+        )
+        const warmParses = await countManifestParses(() =>
+            flowBundleStore(fakeLog, apiClient, coldBasePath).tryFetch({ flowVersionId: flowVersion.id, projectId: 'p1' }),
+        )
+
+        expect(coldParses).toBe(1)
+        expect(warmParses).toBe(1)
+    })
 })
