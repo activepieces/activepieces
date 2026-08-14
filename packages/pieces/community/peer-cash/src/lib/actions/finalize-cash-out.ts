@@ -19,11 +19,6 @@ export const finalizeCashOut = createAction({
       displayName: 'Create Deposit Transaction Hash',
       required: true,
     }),
-    rpcUrl: Property.ShortText({
-      displayName: 'Base RPC URL',
-      description: 'Optional Base RPC override.',
-      required: false,
-    }),
   },
   async run(context) {
     const transactionHash = context.propsValue.transactionHash;
@@ -32,7 +27,7 @@ export const finalizeCashOut = createAction({
     }
     const publicClient = createPublicClient({
       chain: base,
-      transport: http(context.propsValue.rpcUrl),
+      transport: http(),
     });
     const receipt = await publicClient.getTransactionReceipt({
       hash: transactionHash,
