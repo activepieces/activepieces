@@ -8,7 +8,7 @@ How Activepieces stores data, secrets, files, and how it surfaces platform activ
 
 ### Tables
 
-Built-in relational store (no external DB needed) — typed fields, cell-level values, spreadsheet UI. Entities: `Table`, `Field` (TEXT/NUMBER/DATE/STATIC_DROPDOWN), `Record`, `Cell`, `TableWebhook`. `table.service.ts` + `record-side-effects.ts`. All CE/EE/Cloud. Gotchas: record filtering is in-memory, missing cell = `''` (so NEQ/NOT_EXISTS match unset columns); routes need `securityAccess.project(..., permission)` — passing `undefined` skips RBAC. Integrates with flows via the Tables piece (triggers register/delete a TableWebhook).
+Built-in relational store (no external DB needed) — typed fields, cell-level values, spreadsheet UI. Entities: `Table`, `Field` (TEXT/NUMBER/DATE/DATETIME/STATIC_DROPDOWN), `Record`, `Cell`, `TableWebhook`. `table.service.ts` + `record-side-effects.ts`. All CE/EE/Cloud. Gotchas: record filtering is in-memory, missing cell = `''` (so NEQ/NOT_EXISTS match unset columns); only GT/GTE/LT/LTE are date-aware, EQ compares raw strings; DATE and DATETIME store the identical ISO instant and differ only in editor and display; routes need `securityAccess.project(..., permission)` — passing `undefined` skips RBAC. Integrates with flows via the Tables piece (triggers register/delete a TableWebhook).
 
 ### Store Entry (key-value)
 

@@ -1,5 +1,3 @@
-// https://developer.intuit.com/app/developer/qbo/docs/develop/troubleshooting/data-migration-and-versioning
-const QUICKBOOKS_API_URL_SANDBOX = 'https://sandbox-quickbooks.api.intuit.com/v3/company';
 const QUICKBOOKS_API_URL_PRODUCTION = 'https://quickbooks.api.intuit.com/v3/company';
 
 export const quickbooksCommon = {

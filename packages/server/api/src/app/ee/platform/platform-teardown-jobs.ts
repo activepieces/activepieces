@@ -95,6 +95,7 @@ async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessPa
             userId: null,
             projectId: flow.projectId,
             platformId,
+            emitEvents: false,
             operation: {
                 type: FlowOperationType.CHANGE_STATUS,
                 request: { status: FlowStatus.DISABLED },

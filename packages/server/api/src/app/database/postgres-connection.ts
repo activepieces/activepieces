@@ -411,6 +411,9 @@ import { AddFieldPosition1818000000000 } from './migration/postgres/181800000000
 import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
 import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
+import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
+import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -837,6 +840,9 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropPieceTags1819000000000,
         AddAgentConversationSource1819000000000,
         AddAuditEventPlatformIdCreatedIdIndex1820000000000,
+        AddAgentConversationFlowStepRetentionIndex1821000000000,
+        RenameChatTablesToAgent1822000000000,
+        AddRenamedChatTableCompatViews1823000000000,
     ]
     return migrations
 }
