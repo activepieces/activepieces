@@ -116,6 +116,44 @@ async function listFolderChildren({
   return items;
 }
 
+// Drive allows '/', '\' and '..' in item names (confirmed in the web UI). None of that can be
+// normalized away without changing the directory structure or the file's actual name, so an
+// unsafe name is rejected outright instead.
+function assertSafeItemName(name: string, relativePrefix: string): void {
+  const location =
+    relativePrefix.length > 0
+      ? `inside "${relativePrefix}"`
+      : 'at the root of the selected folder';
+
+  // '/' is the zip path separator itself, so a name containing one spans levels it has no
+  // business spanning -- it bypasses the sibling collision check above (which only compares
+  // names within one level) and fabricates directories that don't exist in Drive.
+  if (name.includes('/')) {
+    throw new Error(
+      `Cannot export: the Drive item named "${name}" ${location} contains "/", which can't be used as a zip path segment. Rename this item in Drive and try again.`
+    );
+  }
+
+  // Not the zip separator, but some extraction tools (Windows-based ones especially) treat it
+  // as one -- same class of ambiguity as '/', rejected for the same reason.
+  if (name.includes('\\')) {
+    throw new Error(
+      `Cannot export: the Drive item named "${name}" ${location} contains "\\", which can't be used as a zip path segment. Rename this item in Drive and try again.`
+    );
+  }
+
+  // Escapes the archive root entirely on extraction (zip-slip). Only reachable once '/' and '\'
+  // are ruled out above -- with those banned, a single Drive item name can never represent more
+  // than one path segment, so this must be an exact match rather than a substring search (a
+  // substring search would also reject a legitimate name like "my..file.pdf", which contains
+  // ".." but isn't the traversal segment ".." itself).
+  if (name === '..') {
+    throw new Error(
+      `Cannot export: the Drive item named ".." ${location} can't be used as a zip path segment. Rename this item in Drive and try again.`
+    );
+  }
+}
+
 interface ResolvedItem {
   item: DriveListItem;
   name: string;
@@ -193,6 +231,10 @@ async function walk({
       });
     }
     return;
+  }
+
+  for (const item of children) {
+    assertSafeItemName(item.name, relativePrefix);
   }
 
   // A Drive folder and a file (or two folders, or two files) can share a name in the same
