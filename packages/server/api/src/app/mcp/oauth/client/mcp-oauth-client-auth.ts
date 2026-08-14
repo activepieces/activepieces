@@ -7,9 +7,14 @@ function decodeCredentialPart(value: string): string {
     return result.error ? value : result.data
 }
 
+function usesBasicScheme(authorizationHeader: string | undefined): boolean {
+    const [scheme] = authorizationHeader?.split(' ') ?? []
+    return scheme?.toLowerCase() === 'basic'
+}
+
 function parseBasicHeader(authorizationHeader: string | undefined): BasicCredentials | null {
-    const [scheme, encoded] = authorizationHeader?.split(' ') ?? []
-    if (scheme?.toLowerCase() !== 'basic' || isNil(encoded)) {
+    const [, encoded] = authorizationHeader?.split(' ') ?? []
+    if (!usesBasicScheme(authorizationHeader) || isNil(encoded)) {
         return null
     }
     const decoded = Buffer.from(encoded, 'base64').toString('utf8')
@@ -32,6 +37,13 @@ function invalidClient(errorDescription?: string): AuthenticateResult {
 
 export const mcpOAuthClientAuth = {
     async authenticate({ authorizationHeader, clientId: bodyClientId, clientSecret: bodyClientSecret }: AuthenticateParams): Promise<AuthenticateResult> {
+        if (usesBasicScheme(authorizationHeader) && !isNil(bodyClientSecret)) {
+            return {
+                status: 'error',
+                payload: { error: 'invalid_request', error_description: 'Multiple client authentication mechanisms' },
+            }
+        }
+
         const basic = parseBasicHeader(authorizationHeader)
 
         if (!isNil(basic) && bodyClientId && basic.clientId !== bodyClientId) {

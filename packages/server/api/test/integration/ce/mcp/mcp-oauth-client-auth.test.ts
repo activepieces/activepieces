@@ -172,17 +172,30 @@ describe('MCP OAuth client authentication', () => {
             expect(res.json().error).toBe('invalid_client')
         })
 
-        it('does not let a correct body secret rescue a wrong one in the Authorization header', async () => {
+        it('refuses a request that presents credentials over both transports (RFC 6749 section 2.3)', async () => {
             const client = await registerClient('client_secret_basic')
 
             const res = await exchange({
                 client,
-                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: 'wrong-secret' }) },
+                headers: { authorization: mcpOAuthTestHelpers.basicHeader({ clientId: client.client_id, clientSecret: client.client_secret ?? '' }) },
                 body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
             })
 
             expect(res.statusCode).toBe(400)
-            expect(res.json().error).toBe('invalid_client')
+            expect(res.json().error).toBe('invalid_request')
+        })
+
+        it('refuses a body secret alongside a malformed Basic header rather than silently ignoring the header', async () => {
+            const client = await registerClient('client_secret_post')
+
+            const res = await exchange({
+                client,
+                headers: { authorization: 'Basic ' + Buffer.from('proxy-user-with-no-colon').toString('base64') },
+                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
+            })
+
+            expect(res.statusCode).toBe(400)
+            expect(res.json().error).toBe('invalid_request')
         })
 
         it('does not let an empty Basic username adopt the client_id from the body', async () => {
@@ -209,18 +222,6 @@ describe('MCP OAuth client authentication', () => {
 
             expect(res.statusCode).toBe(400)
             expect(res.json().error).toBe('invalid_request')
-        })
-
-        it('ignores a Basic header that is not client authentication and falls back to the body', async () => {
-            const client = await registerClient('client_secret_post')
-
-            const res = await exchange({
-                client,
-                headers: { authorization: 'Basic ' + Buffer.from('proxy-user-with-no-colon').toString('base64') },
-                body: { client_id: client.client_id, client_secret: client.client_secret ?? '' },
-            })
-
-            expect(res.statusCode).toBe(200)
         })
 
         it.each([
