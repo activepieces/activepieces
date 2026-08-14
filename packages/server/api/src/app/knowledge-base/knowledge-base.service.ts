@@ -16,7 +16,7 @@ const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 const EMBED_BATCH_SIZE = 50
-const EMBED_LOCK_TIMEOUT_SECONDS = 60
+const EMBED_LOCK_TIMEOUT_SECONDS = 20
 const EMBED_TIME_BUDGET_MS = 20_000
 
 function chunkText(text: string): string[] {
@@ -76,29 +76,30 @@ async function extractTextFromFile(fileBuffer: Buffer, fileName: string): Promis
 
 export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
     /**
-     * Called on the search path, which the worker reaches over an RPC that gives up after 60s, so a
-     * big backlog is embedded across successive searches instead of all at once: each call spends at
-     * most EMBED_TIME_BUDGET_MS, writes what it finished, and leaves the rest for the next search.
+     * Called on the search path, which the worker reaches over an RPC that gives up after 60s, so
+     * everything here is bounded: waiting for the lock and embedding share one budget, and whatever
+     * is not finished is left for the next search rather than held onto until the RPC dies.
      */
     async embedPendingChunks(params: EmbedPendingChunksParams): Promise<EmbedPendingChunksResult> {
         const { projectId, knowledgeBaseFileId, embedFn } = params
+        const enteredAt = Date.now()
 
-        return distributedLock(log).runExclusive({
+        const { data: outcome, error: lockError } = await tryCatch(() => distributedLock(log).runExclusive({
             key: `kb-embed-${knowledgeBaseFileId}`,
             timeoutInSeconds: EMBED_LOCK_TIMEOUT_SECONDS,
-            fn: async () => {
-                // Budget starts here, not before the lock: a caller that queued behind another
-                // embedder must still get its own full slice of work rather than a spent clock.
+            fn: async (): Promise<EmbedPendingChunksOutcome> => {
+                // The lock wait counts against the budget, so a caller that queued behind another
+                // embedder cannot start a fresh slice late enough to outlive the worker's RPC.
                 const startedAt = Date.now()
                 const pending = (await this.listChunks({ projectId, knowledgeBaseFileId, embedded: false }))
                     .filter((pendingChunk) => pendingChunk.content.trim().length > 0)
                 if (pending.length === 0) {
-                    return { embeddedCount: 0, remainingCount: 0 }
+                    return { result: { embeddedCount: 0, remainingCount: 0 } }
                 }
 
                 let embeddedCount = 0
                 for (let i = 0; i < pending.length; i += EMBED_BATCH_SIZE) {
-                    const remainingMs = EMBED_TIME_BUDGET_MS - (Date.now() - startedAt)
+                    const remainingMs = EMBED_TIME_BUDGET_MS - (Date.now() - enteredAt)
                     if (remainingMs <= 0) {
                         break
                     }
@@ -109,13 +110,13 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     const { data: embeddings, error } = await tryCatch(() => embedFn(batch.map((pendingChunk) => pendingChunk.content), { abortSignal }))
                     if (isNil(embeddings)) {
                         if (!abortSignal.aborted) {
-                            throw error
+                            return { embedError: error ?? new Error('Embedding failed') }
                         }
                         log.warn({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount }, '[knowledgeBaseService#embedPendingChunks] Ran out of embedding budget mid-batch, leaving the rest to the next search')
                         break
                     }
                     if (embeddings.length !== batch.length) {
-                        throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
+                        return { embedError: new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`) }
                     }
                     await this.setChunkEmbeddings({
                         projectId,
@@ -126,8 +127,25 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
                 const remainingCount = pending.length - embeddedCount
                 log.info({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount, remainingCount, durationMs: Date.now() - startedAt }, '[knowledgeBaseService#embedPendingChunks] Embedded chunks that were stored without a vector')
-                return { embeddedCount, remainingCount }
+                return { result: { embeddedCount, remainingCount } }
             },
+        }))
+
+        // Losing the race is not a failure: another call is embedding this file, so search what is
+        // already indexed rather than failing the tool or waiting past the RPC deadline.
+        if (isNil(outcome)) {
+            log.warn({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, error: lockError, waitedMs: Date.now() - enteredAt }, '[knowledgeBaseService#embedPendingChunks] Could not take the embedding lock, searching what is already indexed')
+            return { embeddedCount: 0, remainingCount: await this.countPendingChunks({ projectId, knowledgeBaseFileId }) }
+        }
+        if (isNil(outcome.result)) {
+            throw outcome.embedError
+        }
+        return outcome.result
+    },
+
+    async countPendingChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<number> {
+        return kbChunkRepo().count({
+            where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId, embedding: IsNull() },
         })
     },
 
@@ -326,6 +344,10 @@ type EmbedPendingChunksResult = {
     embeddedCount: number
     remainingCount: number
 }
+
+type EmbedPendingChunksOutcome =
+    | { result: EmbedPendingChunksResult, embedError?: undefined }
+    | { result?: undefined, embedError: Error }
 
 type SetChunkEmbeddingsParams = {
     projectId: string

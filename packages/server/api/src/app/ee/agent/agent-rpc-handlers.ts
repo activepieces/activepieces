@@ -578,12 +578,19 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
                     : 'No relevant information found.',
             }
         }
+        const matches = results.map((result, index) => ({
+            rank: index + 1,
+            content: result.content,
+            relevanceScore: result.score,
+        }))
+        if (remainingCount === 0) {
+            return { result: matches }
+        }
         return {
-            result: results.map((result, index) => ({
-                rank: index + 1,
-                content: result.content,
-                relevanceScore: result.score,
-            })),
+            result: {
+                matches,
+                note: `${remainingCount} chunk(s) of this file are still being indexed, so these matches cover only the indexed part.`,
+            },
         }
     },
 

@@ -607,6 +607,36 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
         expect(response.result).not.toBe('No relevant information found.')
     })
 
+    it('flags matches as partial while the rest of the file is still indexing', async () => {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([{ id: 'c1', content: 'a hit', metadata: {}, chunkIndex: 0, score: 0.9 }])
+        mockEmbedPendingChunks.mockClear().mockResolvedValue({ embeddedCount: 50, remainingCount: 120 })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        const response = await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+
+        const result = response.result as { matches: unknown[], note: string }
+        expect(result.matches).toHaveLength(1)
+        expect(result.note).toContain('120')
+    })
+
+    it('returns bare matches once the whole file is indexed', async () => {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([{ id: 'c1', content: 'a hit', metadata: {}, chunkIndex: 0, score: 0.9 }])
+        mockEmbedPendingChunks.mockClear().mockResolvedValue({ embeddedCount: 0, remainingCount: 0 })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        const response = await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+
+        expect(Array.isArray(response.result)).toBe(true)
+    })
+
     it('never searches a knowledge base whose chunks could not be embedded', async () => {
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])

@@ -8,6 +8,7 @@ const mockSave = vi.fn()
 const mockFind = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockCountPending = vi.fn()
 
 vi.mock('../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
