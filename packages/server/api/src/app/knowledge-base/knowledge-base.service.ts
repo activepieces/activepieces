@@ -16,8 +16,8 @@ const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 const EMBED_BATCH_SIZE = 50
-const EMBED_LOCK_TIMEOUT_SECONDS = 300
-const BATCH_SIZE = 100
+const EMBED_LOCK_TIMEOUT_SECONDS = 60
+const EMBED_TIME_BUDGET_MS = 20_000
 
 function chunkText(text: string): string[] {
     const chunks: string[] = []
@@ -75,8 +75,14 @@ async function extractTextFromFile(fileBuffer: Buffer, fileName: string): Promis
 }
 
 export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
+    /**
+     * Called on the search path, which the worker reaches over an RPC that gives up after 60s, so a
+     * big backlog is embedded across successive searches instead of all at once: each call spends at
+     * most EMBED_TIME_BUDGET_MS, writes what it finished, and leaves the rest for the next search.
+     */
     async embedPendingChunks(params: EmbedPendingChunksParams): Promise<number> {
         const { projectId, knowledgeBaseFileId, embedFn } = params
+        const startedAt = Date.now()
 
         return distributedLock(log).runExclusive({
             key: `kb-embed-${knowledgeBaseFileId}`,
@@ -88,23 +94,45 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     return 0
                 }
 
+                let embeddedCount = 0
                 for (let i = 0; i < pending.length; i += EMBED_BATCH_SIZE) {
+                    if (Date.now() - startedAt > EMBED_TIME_BUDGET_MS) {
+                        break
+                    }
                     const batch = pending.slice(i, i + EMBED_BATCH_SIZE)
                     const embeddings = await embedFn(batch.map((pendingChunk) => pendingChunk.content))
                     if (embeddings.length !== batch.length) {
                         throw new Error(`Embedding count mismatch: expected ${batch.length}, got ${embeddings.length}`)
                     }
-                    await this.storeChunks({
+                    await this.setChunkEmbeddings({
                         projectId,
-                        knowledgeBaseFileId,
                         chunks: batch.map((pendingChunk, index) => ({ id: pendingChunk.id, embedding: embeddings[index] })),
                     })
+                    embeddedCount += batch.length
                 }
 
-                log.info({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, chunkCount: pending.length }, '[knowledgeBaseService#embedPendingChunks] Embedded chunks that were stored without a vector')
-                return pending.length
+                log.info({ project: { id: projectId }, knowledgeBaseFile: { id: knowledgeBaseFileId }, embeddedCount, remainingCount: pending.length - embeddedCount, durationMs: Date.now() - startedAt }, '[knowledgeBaseService#embedPendingChunks] Embedded chunks that were stored without a vector')
+                return embeddedCount
             },
         })
+    },
+
+    async setChunkEmbeddings(params: SetChunkEmbeddingsParams): Promise<void> {
+        const { projectId, chunks } = params
+        if (chunks.length === 0) return
+
+        await databaseConnection().query(
+            `UPDATE knowledge_base_chunk AS kbc
+                SET embedding = incoming.embedding::vector
+               FROM unnest($1::text[], $2::text[]) AS incoming(id, embedding)
+              WHERE kbc.id = incoming.id
+                AND kbc."projectId" = $3`,
+            [
+                chunks.map((chunk) => chunk.id),
+                chunks.map((chunk) => `[${chunk.embedding.join(',')}]`),
+                projectId,
+            ],
+        )
     },
 
     async search(params: SearchParams): Promise<SearchResult[]> {
@@ -237,13 +265,14 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 metadata: chunk.metadata ?? {},
             }))
 
+            const BATCH_SIZE = 100
             for (let i = 0; i < entities.length; i += BATCH_SIZE) {
                 await kbChunkRepo().insert(entities.slice(i, i + BATCH_SIZE))
             }
         }
 
-        for (let i = 0; i < existingChunks.length; i += BATCH_SIZE) {
-            await Promise.all(existingChunks.slice(i, i + BATCH_SIZE).map((chunk) => kbChunkRepo().update(
+        for (const chunk of existingChunks) {
+            await kbChunkRepo().update(
                 { id: chunk.id, projectId },
                 {
                     ...spreadIfDefined('content', chunk.content),
@@ -251,7 +280,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
                     ...spreadIfDefined('metadata', chunk.metadata),
                 },
-            )))
+            )
         }
     },
 
@@ -278,6 +307,11 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+type SetChunkEmbeddingsParams = {
+    projectId: string
+    chunks: { id: string, embedding: number[] }[]
+}
 
 type EmbedPendingChunksParams = {
     projectId: string

@@ -258,17 +258,12 @@ describe('knowledgeBaseService', () => {
             expect(embedded).toBe(2)
             expect(embedFn).toHaveBeenCalledWith(['first', 'second'])
             expect(mockInsert).not.toHaveBeenCalled()
-            expect(mockUpdate).toHaveBeenCalledTimes(2)
-            expect(mockUpdate).toHaveBeenNthCalledWith(
-                1,
-                { id: 'chunk-1', projectId: 'proj-1' },
-                expect.objectContaining({ embedding: '[0.1]' }),
-            )
-            expect(mockUpdate).toHaveBeenNthCalledWith(
-                2,
-                { id: 'chunk-2', projectId: 'proj-1' },
-                expect.objectContaining({ embedding: '[0.2]' }),
-            )
+            expect(mockUpdate).not.toHaveBeenCalled()
+            expect(mockDbQuery).toHaveBeenCalledTimes(1)
+            const [sql, sqlParams] = mockDbQuery.mock.calls[0]
+            expect(sql).toContain('UPDATE knowledge_base_chunk')
+            expect(sql).toContain('"projectId" = $3')
+            expect(sqlParams).toEqual([['chunk-1', 'chunk-2'], ['[0.1]', '[0.2]'], 'proj-1'])
         })
 
         it('asks only for chunks that have no embedding yet', async () => {
@@ -334,6 +329,30 @@ describe('knowledgeBaseService', () => {
 
             expect(embedded).toBe(1)
             expect(embedFn).toHaveBeenCalledWith(['real content'])
+        })
+
+        it('stops at its time budget and leaves the rest for the next search, so one call cannot outlive the 60s worker RPC', async () => {
+            const pending = Array.from({ length: 300 }, (_, index) => ({ id: `chunk-${index}`, content: `c${index}`, chunkIndex: index }))
+            mockFind.mockResolvedValue(pending)
+            const embedFn = vi.fn().mockImplementation(async (texts: string[]) => {
+                vi.advanceTimersByTime(11_000)
+                return texts.map(() => [0.5])
+            })
+
+            vi.useFakeTimers()
+            try {
+                const embedded = await knowledgeBaseService(mockLog).embedPendingChunks({
+                    projectId: 'proj-1',
+                    knowledgeBaseFileId: 'kb-file-1',
+                    embedFn,
+                })
+
+                expect(embedded).toBe(100)
+                expect(embedFn).toHaveBeenCalledTimes(2)
+            }
+            finally {
+                vi.useRealTimers()
+            }
         })
 
         it('embeds in batches so a large file never goes out as one request', async () => {
