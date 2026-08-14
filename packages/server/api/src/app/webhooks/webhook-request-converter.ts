@@ -1,5 +1,5 @@
 import { PassThrough, Readable, Transform } from 'node:stream'
-import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER, tryCatchSync } from '@activepieces/shared'
 import { MultipartFile } from '@fastify/multipart'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
@@ -21,6 +21,7 @@ const BINARY_CONTENT_TYPE_PATTERNS = [
 ]
 
 const RAW_BODY_CAPTURE_LIMIT_BYTES = system.getNumberOrThrow(AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB) * 1024
+const STRICT_UTF8_DECODER = new TextDecoder('utf-8', { fatal: true })
 
 export function isBinaryContentType(contentType: string | undefined): boolean {
     if (!contentType) return false
@@ -150,9 +151,11 @@ function failIfTruncated(file: MultipartFile['file'], maxBytes: number): Readabl
     }))
 }
 
-// A truncated rawBody would produce a wrong-but-plausible signature, so once the body outgrows the
-// limit the retained copy is dropped and rawBody stays unset. A declared content-length over the
-// limit skips accumulation entirely, so a large upload never allocates a copy it cannot keep.
+// rawBody crosses to the engine as a string, and a lossy utf8 decode would silently change the
+// bytes a signature was computed over — and collapse distinct payloads onto one representation,
+// since every invalid sequence becomes the same replacement char. So a body that is not valid utf8
+// yields no rawBody at all rather than a corrupted one. Same reasoning for the size limit: a
+// truncated copy would hash to a plausible-looking digest over partial content.
 function createBoundedRawBodyCapture(request: FastifyRequest): BoundedRawBodyCapture {
     const declaredLength = Number.parseInt(request.headers['content-length'] ?? '', 10)
     const chunks: Buffer[] = []
@@ -171,7 +174,13 @@ function createBoundedRawBodyCapture(request: FastifyRequest): BoundedRawBodyCap
             }
             chunks.push(chunk)
         },
-        result: () => withinLimit ? Buffer.concat(chunks).toString('utf8') : undefined,
+        result: (): string | undefined => {
+            if (!withinLimit) {
+                return undefined
+            }
+            const { data } = tryCatchSync(() => STRICT_UTF8_DECODER.decode(Buffer.concat(chunks)))
+            return data ?? undefined
+        },
     }
 }
 

@@ -38,7 +38,7 @@ describe('Webhook rawBody capture for signature verification', () => {
         expect(sign(Buffer.from(queued.rawBody!, 'utf8'))).toBe(sign(body))
     })
 
-    it('captures rawBody for a binary body', async () => {
+    it('captures rawBody for a binary content type whose bytes are valid utf8', async () => {
         const { mockFlow, mockProject } = await createEnabledFlow()
         const body = Buffer.from('a raw pdf body that is also signed')
 
@@ -52,6 +52,49 @@ describe('Webhook rawBody capture for signature verification', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
         const queued = await readQueuedPayload(mockProject.id)
         expect(queued.rawBody).toBe(body.toString('utf8'))
+    })
+
+    // A lossy utf8 decode would both reject correctly signed uploads and map distinct wire payloads
+    // onto one authenticated string, so no rawBody is preferred over a corrupted one.
+    it('leaves rawBody unset for a binary body that is not valid utf8', async () => {
+        const { mockFlow, mockProject } = await createEnabledFlow()
+        const body = Buffer.from([0x25, 0x50, 0x44, 0x46, 0xC0, 0x80, 0xFF, 0xFE, 0x89, 0x50])
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: { 'content-type': 'application/pdf' },
+            payload: body,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const queued = await readQueuedPayload(mockProject.id)
+        expect(queued.rawBody).toBeUndefined()
+    })
+
+    it('leaves rawBody unset for a multipart body carrying a non-utf8 file part', async () => {
+        const { mockFlow, mockProject } = await createEnabledFlow()
+        const body = Buffer.concat([
+            Buffer.from(
+                `--${BOUNDARY}\r\n`
+                + 'Content-Disposition: form-data; name="upload"; filename="doc.pdf"\r\n'
+                + 'Content-Type: application/pdf\r\n\r\n',
+                'utf8',
+            ),
+            Buffer.from([0x25, 0x50, 0x44, 0x46, 0xC0, 0x80, 0xFF, 0xFE]),
+            Buffer.from(`\r\n--${BOUNDARY}--\r\n`, 'utf8'),
+        ])
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${mockFlow.id}`,
+            headers: { 'content-type': `multipart/form-data; boundary=${BOUNDARY}` },
+            payload: body,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const queued = await readQueuedPayload(mockProject.id)
+        expect(queued.rawBody).toBeUndefined()
     })
 
     it('still captures rawBody for JSON', async () => {
