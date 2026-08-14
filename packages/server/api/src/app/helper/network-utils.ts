@@ -74,16 +74,19 @@ const firstForwardedValue = (header: string | string[] | undefined): string | un
     return (Array.isArray(header) ? header[0] : header)?.split(',')[0]?.trim()
 }
 
-const configuredOrigin = (): string => {
+const configuredUrl = (): URL => {
     const parsed = tryCatchSync(() => new URL(system.get(AppSystemProp.FRONTEND_URL) ?? ''))
     if (parsed.error || (parsed.data.protocol !== 'http:' && parsed.data.protocol !== 'https:')) {
-        return LAST_RESORT_ORIGIN
+        return new URL(LAST_RESORT_ORIGIN)
     }
-    return parsed.data.origin
+    return parsed.data
 }
 
 const isUsableHost = (host: string | undefined): host is string => {
-    return !isNil(host) && host !== '' && !HOST_RESTRUCTURING_CHARACTERS.test(host)
+    if (isNil(host) || host === '' || HOST_RESTRUCTURING_CHARACTERS.test(host)) {
+        return false
+    }
+    return !tryCatchSync(() => new URL(`https://${host}`)).error
 }
 
 const candidateHosts = (req: FastifyRequest): string[] => {
@@ -92,16 +95,14 @@ const candidateHosts = (req: FastifyRequest): string[] => {
 }
 
 const getRequestHost = (req: FastifyRequest): string => {
-    return candidateHosts(req)[0] ?? req.hostname
+    return candidateHosts(req)[0] ?? configuredUrl().host
 }
 
 const getRequestBaseUrl = (req: FastifyRequest): string => {
     const forwardedProto = firstForwardedValue(req.headers['x-forwarded-proto'])?.toLowerCase()
     const protocol = forwardedProto === 'http' || forwardedProto === 'https' ? forwardedProto : req.protocol
-    const parseable = candidateHosts(req)
-        .map((host) => `${protocol}://${host}`)
-        .find((baseUrl) => !tryCatchSync(() => new URL(baseUrl)).error)
-    return parseable ?? configuredOrigin()
+    const host = candidateHosts(req)[0]
+    return isNil(host) ? configuredUrl().origin : `${protocol}://${host}`
 }
 
 export const networkUtils = {

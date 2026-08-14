@@ -38,11 +38,22 @@ describe('networkUtils.getRequestBaseUrl', () => {
         expect(new URL(baseUrl).protocol).toMatch(/^https?:$/)
     })
 
-    it('never throws from getRequestHost, which runs on every response', () => {
+    it('prefers a well-formed Host over a malformed forwarded host', () => {
+        const host = networkUtils.getRequestHost(request({ host: 'real.example.com', forwardedHost: 'a b.com' }))
+
+        expect(host).toBe('real.example.com')
+    })
+
+    it('falls back to the configured host when neither candidate is usable, and never throws', () => {
+        vi.spyOn(system, 'get').mockReturnValue('https://configured.example.com')
+
+        expect(networkUtils.getRequestHost(request({ host: 'a b.com', forwardedHost: '[foo' }))).toBe('configured.example.com')
+    })
+
+    it('never throws from getRequestHost even when AP_FRONTEND_URL is unusable, since it runs on every response', () => {
         vi.spyOn(system, 'get').mockReturnValue('localhost:8080')
 
-        expect(() => networkUtils.getRequestHost(request({ host: 'a b.com' }))).not.toThrow()
-        expect(() => networkUtils.getRequestHost(request({ host: '[foo' }))).not.toThrow()
+        expect(networkUtils.getRequestHost(request({ host: 'a b.com' }))).toBe('localhost')
     })
 
     it.each([

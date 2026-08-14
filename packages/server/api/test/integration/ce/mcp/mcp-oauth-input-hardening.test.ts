@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import { beforeAll, describe, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -15,13 +15,11 @@ async function newClient(): Promise<{ client_id: string }> {
     return mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
 }
 
-function assertClean(label: string, res: { statusCode: number, body: string }): void {
-    if (res.statusCode >= 500) {
-        throw new Error(`${label} → ${res.statusCode} ${res.body.slice(0, 200)}`)
-    }
-    if (res.body.includes('22021') || res.body.includes('invalid byte sequence') || res.body.includes('ERR_INVALID_URL')) {
-        throw new Error(`${label} leaked driver detail: ${res.body.slice(0, 200)}`)
-    }
+function assertClean({ label, res }: { label: string, res: { statusCode: number, body: string } }): void {
+    expect(res.statusCode, label).toBeLessThan(500)
+    expect(res.body, label).not.toContain('22021')
+    expect(res.body, label).not.toContain('invalid byte sequence')
+    expect(res.body, label).not.toContain('ERR_INVALID_URL')
 }
 
 describe('MCP OAuth input hardening', () => {
@@ -40,7 +38,7 @@ describe('MCP OAuth input hardening', () => {
                 { redirect_uris: [R], token_endpoint_auth_method: v },
             ]) {
                 const res = await app.inject({ method: 'POST', url: '/register', payload })
-                assertClean(`register ${JSON.stringify(payload).slice(0, 80)}`, res)
+                assertClean({ label: `register ${JSON.stringify(payload).slice(0, 80)}`, res })
             }
         }
     })
@@ -60,7 +58,7 @@ describe('MCP OAuth input hardening', () => {
                         headers: { 'content-type': 'application/x-www-form-urlencoded' },
                         payload: new URLSearchParams(body).toString(),
                     })
-                    assertClean(`token ${field}`, res)
+                    assertClean({ label: `token ${field}`, res })
                 }
             }
         }
@@ -76,7 +74,7 @@ describe('MCP OAuth input hardening', () => {
                     headers: { 'content-type': 'application/x-www-form-urlencoded' },
                     payload: new URLSearchParams(body).toString(),
                 })
-                assertClean(`revoke ${field}`, res)
+                assertClean({ label: `revoke ${field}`, res })
             }
             const viaHeader = await app.inject({
                 method: 'POST', url: '/revoke',
@@ -86,7 +84,7 @@ describe('MCP OAuth input hardening', () => {
                 },
                 payload: 'token=abc',
             })
-            assertClean('revoke basic', viaHeader)
+            assertClean({ label: 'revoke basic', res: viaHeader })
         }
     })
 
@@ -100,7 +98,7 @@ describe('MCP OAuth input hardening', () => {
                 }
                 params[field] = v
                 const res = await app.inject({ method: 'GET', url: `/authorize?${new URLSearchParams(params).toString()}` })
-                assertClean(`authorize ${field}`, res)
+                assertClean({ label: `authorize ${field}`, res })
             }
         }
     })
@@ -127,14 +125,11 @@ describe('MCP OAuth input hardening', () => {
             url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(R)}&response_type=code&code_challenge=${'a'.repeat(43)}&code_challenge_method=S256`,
             headers,
         })
-        assertClean('authorize forwarded header', authorize)
+        assertClean({ label: 'authorize forwarded header', res: authorize })
 
         const metadata = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server', headers })
-        assertClean('metadata forwarded header', metadata)
-        const issuer: string = metadata.json().issuer
-        if (!issuer.startsWith('http://') && !issuer.startsWith('https://')) {
-            throw new Error(`metadata advertised a non-http issuer: ${issuer}`)
-        }
+        assertClean({ label: 'metadata forwarded header', res: metadata })
+        expect(metadata.json().issuer).toMatch(/^https?:\/\//)
     })
 
     it.each([
@@ -150,10 +145,7 @@ describe('MCP OAuth input hardening', () => {
             headers: { 'x-forwarded-host': host, 'x-forwarded-proto': 'https' },
         })
 
-        const issuer: string = res.json().issuer
-        if (issuer !== `https://${host}`) {
-            throw new Error(`expected issuer https://${host}, got ${issuer}`)
-        }
+        expect(res.json().issuer).toBe(`https://${host}`)
     })
 
     it.each([
@@ -173,19 +165,14 @@ describe('MCP OAuth input hardening', () => {
             url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(R)}&response_type=code&code_challenge=${'a'.repeat(43)}&code_challenge_method=S256`,
             headers: { host },
         })
-        assertClean('authorize Host header', authorize)
+        assertClean({ label: 'authorize Host header', res: authorize })
 
         const metadata = await app.inject({ method: 'GET', url: '/.well-known/oauth-authorization-server', headers: { host } })
-        assertClean('metadata Host header', metadata)
-        const issuer: string = metadata.json().issuer
-        if (!/^https?:\/\/[A-Za-z0-9._\-:[\]]+$/.test(issuer)) {
-            throw new Error(`metadata advertised a malformed issuer: ${issuer}`)
-        }
+        assertClean({ label: 'metadata Host header', res: metadata })
+        expect(metadata.json().issuer).toMatch(/^https?:\/\/[A-Za-z0-9._\-:[\]]+$/)
 
         const unauthorized = await app.inject({ method: 'POST', url: '/mcp', headers: { host } })
         const challenge = String(unauthorized.headers['www-authenticate'] ?? '')
-        if ((challenge.match(/"/g) ?? []).length % 2 !== 0) {
-            throw new Error(`WWW-Authenticate has unbalanced quotes: ${challenge}`)
-        }
+        expect((challenge.match(/"/g) ?? []).length % 2, challenge).toBe(0)
     })
 })

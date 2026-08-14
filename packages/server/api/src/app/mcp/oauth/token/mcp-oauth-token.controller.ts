@@ -115,7 +115,7 @@ const tokenRequestSchema = z.object({
     client_id: z.string().max(64).optional(),
     client_secret: z.string().max(512).optional(),
     code_verifier: z.string().max(256).optional(),
-    redirect_uri: z.string().max(2048).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
+    redirect_uri: mcpOAuthValidation.storableText(2048).optional(),
     refresh_token: z.string().max(512).optional(),
     resource: z.string().max(2048).optional(),
 })

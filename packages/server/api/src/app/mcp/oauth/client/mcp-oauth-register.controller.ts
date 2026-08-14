@@ -40,7 +40,7 @@ function isAllowedRedirectUri(uri: string): boolean {
     return scheme === 'http:' || scheme === 'https:' || isPrivateUseScheme(scheme)
 }
 
-const metadataToken = z.string().max(64).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage })
+const metadataToken = mcpOAuthValidation.storableText(64)
 
 const RegisterRequest = {
     config: { security: securityAccess.public() },
@@ -48,11 +48,10 @@ const RegisterRequest = {
         hide: true,
         body: z.object({
             redirect_uris: z.array(
-                z.string().max(2048)
-                    .refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage })
+                mcpOAuthValidation.storableText(2048)
                     .refine(isAllowedRedirectUri, { message: 'Only http, https, or private-use URI schemes (RFC 8252) are allowed' }),
             ).min(1).max(32),
-            client_name: z.string().max(255).refine(mcpOAuthValidation.isStorableText, { message: mcpOAuthValidation.storableTextMessage }).optional(),
+            client_name: mcpOAuthValidation.storableText(255).optional(),
             grant_types: z.array(metadataToken).max(16).optional(),
             response_types: z.array(metadataToken).max(16).optional(),
             token_endpoint_auth_method: z.enum(['none', 'client_secret_post', 'client_secret_basic']).optional(),
