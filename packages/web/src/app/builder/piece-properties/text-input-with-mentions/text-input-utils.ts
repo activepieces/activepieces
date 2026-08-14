@@ -83,7 +83,7 @@ function stringStateAfter({
     const c = expr[j];
     if (current) {
       if (c === current && expr[j - 1] !== '\\') current = null;
-    } else if (c === '"' || c === "'") {
+    } else if ((c === '"' || c === "'") && expr[j - 1] !== '\\') {
       current = c;
     }
   }

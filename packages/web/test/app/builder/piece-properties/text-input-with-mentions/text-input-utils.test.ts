@@ -81,6 +81,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
       'ap-formula-v1::{concat("{{a"}}; lower(x))}::ap-formula-v1',
       'ap-formula-v1::{upper("literal {{ braces }} here")}::ap-formula-v1',
       'ap-formula-v1::{upper({{step_1["a\'b"]}}; x)}::ap-formula-v1',
+      "ap-formula-v1::{upper('pre {{step_1['output']['a\\'b']}} and lower(x)')}::ap-formula-v1",
     ])('round-trips %j losslessly', (input) => {
       const back = textMentionUtils.convertTiptapJsonToText({
         type: 'doc',
