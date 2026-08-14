@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from 'node:stream'
+import { PassThrough, Readable, Transform } from 'node:stream'
 import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
 import { MultipartFile } from '@fastify/multipart'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
@@ -20,6 +20,8 @@ const BINARY_CONTENT_TYPE_PATTERNS = [
     /^text\/csv$/,
 ]
 
+const RAW_BODY_CAPTURE_LIMIT_BYTES = system.getNumberOrThrow(AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB) * 1024
+
 export function isBinaryContentType(contentType: string | undefined): boolean {
     if (!contentType) return false
     const baseContentType = contentType.split(';')[0].trim().toLowerCase()
@@ -30,21 +32,32 @@ export function isMultipartContentType(contentType: string | undefined): boolean
     return contentType?.trim().toLowerCase().startsWith('multipart/') ?? false
 }
 
+export function captureRawBodyWhileStreaming({ request, payload }: CaptureRawBodyParams): Readable {
+    const capture = createBoundedRawBodyCapture(request)
+    return payload.pipe(new Transform({
+        transform(chunk: Buffer, _encoding, callback): void {
+            capture.record(chunk)
+            callback(null, chunk)
+        },
+        flush(callback): void {
+            request.rawBody = capture.result()
+            callback()
+        },
+    }))
+}
+
 export async function convertRequest(
     request: FastifyRequest,
     projectId: string,
     flowId: string,
 ): Promise<EventPayload> {
-    const contentType = request.headers['content-type']
-    const isBinary = isBinaryContentType(contentType)
+    const body = await convertBody(request, projectId, flowId)
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
-        body: await convertBody(request, projectId, flowId),
+        body,
         queryParams: request.query as Record<string, string>,
-        // Streamed bodies (binary/multipart) are consumed straight to storage, so there is no
-        // raw payload to forward; rawBody is captured only for the string-parsed signed types.
-        rawBody: isBinary ? undefined : request.rawBody,
+        rawBody: request.rawBody,
     }
 }
 
@@ -64,6 +77,11 @@ async function convertBody(
         const platformId = await projectService(request.log).getPlatformId(projectId)
         const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
         const jsonResult: Record<string, unknown> = {}
+        // @fastify/multipart pipes request.raw itself, so the raw bytes are mirrored off the same
+        // stream rather than intercepted. Attached with no await before request.parts(), so no
+        // chunk can be emitted until busboy is listening too.
+        const capture = createBoundedRawBodyCapture(request)
+        request.raw.on('data', capture.record)
         for await (const part of request.parts()) {
             if (part.type === 'file') {
                 const url = await saveStepFileAndConstructUrl({
@@ -80,6 +98,7 @@ async function convertBody(
                 jsonResult[part.fieldname] = appendMultiValue(jsonResult[part.fieldname], part.value)
             }
         }
+        request.rawBody = capture.result()
         return jsonResult
     }
 
@@ -131,12 +150,47 @@ function failIfTruncated(file: MultipartFile['file'], maxBytes: number): Readabl
     }))
 }
 
+// A truncated rawBody would produce a wrong-but-plausible signature, so once the body outgrows the
+// limit the retained copy is dropped and rawBody stays unset. A declared content-length over the
+// limit skips accumulation entirely, so a large upload never allocates a copy it cannot keep.
+function createBoundedRawBodyCapture(request: FastifyRequest): BoundedRawBodyCapture {
+    const declaredLength = Number.parseInt(request.headers['content-length'] ?? '', 10)
+    const chunks: Buffer[] = []
+    let capturedBytes = 0
+    let withinLimit = Number.isNaN(declaredLength) || declaredLength <= RAW_BODY_CAPTURE_LIMIT_BYTES
+    return {
+        record: (chunk: Buffer): void => {
+            if (!withinLimit) {
+                return
+            }
+            capturedBytes += chunk.length
+            if (capturedBytes > RAW_BODY_CAPTURE_LIMIT_BYTES) {
+                withinLimit = false
+                chunks.length = 0
+                return
+            }
+            chunks.push(chunk)
+        },
+        result: () => withinLimit ? Buffer.concat(chunks).toString('utf8') : undefined,
+    }
+}
+
 // A repeated multipart field name collects into an array, matching the previous body shape.
 function appendMultiValue(existing: unknown, value: unknown): unknown {
     if (existing === undefined) {
         return value
     }
     return Array.isArray(existing) ? [...existing, value] : [existing, value]
+}
+
+type BoundedRawBodyCapture = {
+    record: (chunk: Buffer) => void
+    result: () => string | undefined
+}
+
+type CaptureRawBodyParams = {
+    request: FastifyRequest
+    payload: Readable
 }
 
 type SaveStepFileParams = {
