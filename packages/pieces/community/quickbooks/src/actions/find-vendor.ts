@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import { QuickbooksVendor } from '../lib/types';
 
 export const findVendorAction = createAction({
@@ -41,15 +40,14 @@ export const findVendorAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const accessToken = context.auth.access_token;
 
 		const vendor =
 			searchBy === 'Email'
-				? await findVendorByEmail({ accessToken, apiUrl, email: search_term })
+				? await findVendorByEmail({ accessToken, companyId: companyId as string, email: search_term })
 				: await findVendorByField({
 						accessToken,
-						apiUrl,
+						companyId: companyId as string,
 						field: searchBy === 'AcctNum' ? 'AcctNum' : 'DisplayName',
 						value: search_term,
 				  });
@@ -64,67 +62,47 @@ export const findVendorAction = createAction({
 
 async function findVendorByField({
 	accessToken,
-	apiUrl,
+	companyId,
 	field,
 	value,
 }: {
 	accessToken: string;
-	apiUrl: string;
+	companyId: string;
 	field: 'DisplayName' | 'AcctNum';
 	value: string;
 }): Promise<QuickbooksVendor | undefined> {
 	const query = `SELECT * FROM Vendor WHERE ${field} = '${value.replace(/'/g, "\\'")}' MAXRESULTS 1`;
 
 	// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-	const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
-		method: HttpMethod.GET,
-		url: `${apiUrl}/query`,
-		queryParams: {
-			query: query,
-			minorversion: quickbooksCommon.minorVersion,
-		},
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
-		},
-		headers: {
-			Accept: 'application/json',
-		},
+	const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
+		accessToken,
+		companyId,
+		query,
 	});
 
-	return response.body.QueryResponse?.['Vendor']?.[0];
+	return response.QueryResponse?.['Vendor']?.[0];
 }
 
 async function findVendorByEmail({
 	accessToken,
-	apiUrl,
+	companyId,
 	email,
 }: {
 	accessToken: string;
-	apiUrl: string;
+	companyId: string;
 	email: string;
 }): Promise<QuickbooksVendor | undefined> {
 	try {
 		const escapedEmail = email.replace(/'/g, "\\'");
 		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
-			method: HttpMethod.GET,
-			url: `${apiUrl}/query`,
-			queryParams: {
-				query: `SELECT * FROM Vendor WHERE PrimaryEmailAddr = '${escapedEmail}' MAXRESULTS 1`,
-				minorversion: quickbooksCommon.minorVersion,
-			},
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: accessToken,
-			},
-			headers: {
-				Accept: 'application/json',
-			},
+		const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
+			accessToken,
+			companyId,
+			query: `SELECT * FROM Vendor WHERE PrimaryEmailAddr = '${escapedEmail}' MAXRESULTS 1`,
 		});
 
-		if (!response.body.Fault) {
-			const vendor = response.body.QueryResponse?.['Vendor']?.[0];
+		if (!response.Fault) {
+			const vendor = response.QueryResponse?.['Vendor']?.[0];
 			if (vendor) {
 				return vendor;
 			}
@@ -135,22 +113,12 @@ async function findVendorByEmail({
 	}
 
 	// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-	const listResponse = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
-		method: HttpMethod.GET,
-		url: `${apiUrl}/query`,
-		queryParams: {
-			query: `SELECT * FROM Vendor WHERE Active = true MAXRESULTS 1000`,
-			minorversion: quickbooksCommon.minorVersion,
-		},
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
-		},
-		headers: {
-			Accept: 'application/json',
-		},
+	const listResponse = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
+		accessToken,
+		companyId,
+		query: `SELECT * FROM Vendor WHERE Active = true MAXRESULTS 1000`,
 	});
 
-	const vendors = listResponse.body.QueryResponse?.['Vendor'] ?? [];
+	const vendors = listResponse.QueryResponse?.['Vendor'] ?? [];
 	return vendors.find((vendor) => vendor.PrimaryEmailAddr?.Address?.toLowerCase() === email.toLowerCase());
 }

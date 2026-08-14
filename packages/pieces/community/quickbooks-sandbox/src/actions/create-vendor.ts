@@ -74,7 +74,7 @@ export const createVendorAction = createAction({
 				if (!auth) {
 					return { disabled: true, placeholder: 'Connect your account first', options: [] };
 				}
-				const { access_token, props } = auth as OAuth2PropertyValue;
+				const { access_token, props } = auth;
 				const companyId = props?.['companyId'] as string;
 				const query = `SELECT Id, Name FROM Term MAXRESULTS 1000`;
 				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/term#query-a-term

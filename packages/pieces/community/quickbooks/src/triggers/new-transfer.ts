@@ -8,12 +8,10 @@ import { quickbooksAuth } from '../lib/auth';
 import dayjs from 'dayjs';
 import {
   DedupeStrategy,
-  httpClient,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import { QuickbooksInvoice } from '../lib/types';
 
 const polling: Polling<
@@ -25,8 +23,6 @@ const polling: Polling<
     const { access_token } = auth;
     const companyId = auth.props?.['companyId'] as string;
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
-
     const query =
       lastFetchEpochMS === 0
         ? `SELECT * FROM Transfer ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
@@ -35,19 +31,15 @@ const polling: Polling<
           ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
     // https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/transfer#query-a-transfer
-    const response = await httpClient.sendRequest<
+    const response = await quickbooksQuery<
       QuickbooksEntityResponse<QuickbooksInvoice>
     >({
-      method: HttpMethod.GET,
-      url: `${apiUrl}/query`,
-      queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        Accept: 'application/json',
-      },
+      accessToken: access_token,
+      companyId,
+      query,
     });
 
-    const transers = response.body.QueryResponse?.['Transfer'] ?? [];
+    const transers = response.QueryResponse?.['Transfer'] ?? [];
 
     return transers.map((transfer) => ({
       epochMilliSeconds: dayjs(transfer.MetaData?.CreateTime).valueOf(),

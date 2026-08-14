@@ -7,12 +7,10 @@ import {
 import { quickbooksAuth } from '../lib/auth';
 import {
   DedupeStrategy,
-  httpClient,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import { QuickbooksPurchase } from '../lib/types';
 import dayjs from 'dayjs';
 
@@ -25,8 +23,6 @@ const polling: Polling<
     const { access_token } = auth;
     const companyId = auth.props?.['companyId'] as string;
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
-
     const query =
       lastFetchEpochMS === 0
         ? `SELECT * FROM Purchase ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
@@ -35,19 +31,15 @@ const polling: Polling<
           ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
     // https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/purchase#query-a-purchase
-    const response = await httpClient.sendRequest<
+    const response = await quickbooksQuery<
       QuickbooksEntityResponse<QuickbooksPurchase>
     >({
-      method: HttpMethod.GET,
-      url: `${apiUrl}/query`,
-      queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        Accept: 'application/json',
-      },
+      accessToken: access_token,
+      companyId,
+      query,
     });
 
-    const purchases = response.body.QueryResponse?.['Purchase'] ?? [];
+    const purchases = response.QueryResponse?.['Purchase'] ?? [];
 
     return purchases.map((purchase) => ({
       epochMilliSeconds: dayjs(purchase.MetaData?.CreateTime).valueOf(),

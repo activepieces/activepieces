@@ -1,7 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksApiCall, quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import { QuickbooksBill, QuickbooksVendor, QuickbooksRef, QuickbooksPreferences } from '../lib/types';
 
 export const createBillAction = createAction({
@@ -26,28 +26,23 @@ export const createBillAction = createAction({
 				}
 				const { access_token, props } = auth as OAuth2PropertyValue;
 				const companyId = props?.['companyId'];
-				const apiUrl = quickbooksCommon.getApiUrl(companyId);
 				const query = `SELECT Id, DisplayName FROM Vendor STARTPOSITION 1 MAXRESULTS 1000`;
 				// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/vendor#query-a-vendor
-				const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickbooksVendor>>({
-					method: HttpMethod.GET,
-					url: `${apiUrl}/query`,
-					queryParams: { query: query, minorversion: quickbooksCommon.minorVersion },
-					headers: {
-						Authorization: `Bearer ${access_token}`,
-						Accept: 'application/json',
-					},
+				const response = await quickbooksQuery<QuickbooksEntityResponse<QuickbooksVendor>>({
+					accessToken: access_token,
+					companyId,
+					query,
 				});
 
-				if (response.body.Fault) {
+				if (response.Fault) {
 					throw new Error(
-						`QuickBooks API Error fetching vendors: ${response.body.Fault.Error.map(
+						`QuickBooks API Error fetching vendors: ${response.Fault.Error.map(
 							(e: { Message: string }) => e.Message,
 						).join(', ')}`,
 					);
 				}
 
-				const vendors = response.body.QueryResponse?.['Vendor'] ?? [];
+				const vendors = response.QueryResponse?.['Vendor'] ?? [];
 				return {
 					disabled: false,
 					options: vendors.map((vendor) => ({
@@ -120,14 +115,13 @@ export const createBillAction = createAction({
 	},
 	async run(context) {
 		const { access_token } = context.auth;
-		const companyId = context.auth.props?.['companyId'];
+		const companyId = context.auth.props?.['companyId'] as string;
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const props = context.propsValue;
 
 		const classTrackingPerLineEnabled = await isClassTrackingPerLineEnabled({
 			accessToken: access_token,
-			apiUrl,
+			companyId,
 		});
 
 		const lines = (props['lineItems'] as any[]).map((line) => {
@@ -160,53 +154,46 @@ export const createBillAction = createAction({
 		};
 
 		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/bill#create-a-bill
-		const response = await httpClient.sendRequest<{
+		const response = await quickbooksApiCall<{
 			Bill: QuickbooksBill;
 			time: string;
 			Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
 		}>({
+			accessToken: access_token,
+			companyId,
 			method: HttpMethod.POST,
-			url: `${apiUrl}/bill`,
-			queryParams: { minorversion: quickbooksCommon.minorVersion },
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-				Accept: 'application/json',
-				'Content-Type': 'application/json',
-			},
+			resourceUri: '/bill',
 			body: billPayload,
 		});
 
-		if (response.body.Fault) {
+		if (response.Fault) {
 			throw new Error(
-				`QuickBooks API Error creating bill: ${response.body.Fault.Error.map(
+				`QuickBooks API Error creating bill: ${response.Fault.Error.map(
 					(e: any) => e.Message,
-				).join(', ')} - Detail: ${response.body.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
+				).join(', ')} - Detail: ${response.Fault.Error.map((e: any) => e.Detail).join(', ')}`,
 			);
 		}
 
-		return response.body.Bill;
+		return response.Bill;
 	},
 });
 
 async function isClassTrackingPerLineEnabled({
 	accessToken,
-	apiUrl,
+	companyId,
 }: {
 	accessToken: string;
-	apiUrl: string;
+	companyId: string;
 }): Promise<boolean> {
 	try {
 		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/preferences
-		const response = await httpClient.sendRequest<{ Preferences?: QuickbooksPreferences }>({
+		const response = await quickbooksApiCall<{ Preferences?: QuickbooksPreferences }>({
+			accessToken,
+			companyId,
 			method: HttpMethod.GET,
-			url: `${apiUrl}/preferences`,
-			queryParams: { minorversion: quickbooksCommon.minorVersion },
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				Accept: 'application/json',
-			},
+			resourceUri: '/preferences',
 		});
-		return Boolean(response.body.Preferences?.AccountingInfoPrefs?.ClassTrackingPerTxnLine);
+		return Boolean(response.Preferences?.AccountingInfoPrefs?.ClassTrackingPerTxnLine);
 	} catch {
 		return false;
 	}

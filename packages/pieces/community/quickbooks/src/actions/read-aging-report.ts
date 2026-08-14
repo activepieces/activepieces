@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon } from '../lib/common';
+import { quickbooksApiCall } from '../lib/common';
 import { QuickbooksReport } from '../lib/types';
 
 export const readAgingReportAction = createAction({
@@ -68,44 +68,36 @@ export const readAgingReportAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
-
 		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/reports/agedreceivables
-		const response = await httpClient.sendRequest<
+		const response = await quickbooksApiCall<
 			QuickbooksReport & {
 				Fault?: { Error: { Message: string; Detail?: string; code: string }[]; type: string };
 			}
 		>({
+			accessToken: context.auth.access_token,
+			companyId: companyId as string,
 			method: HttpMethod.GET,
-			url: `${apiUrl}/reports/${reportType}`,
-			queryParams: {
-				minorversion: quickbooksCommon.minorVersion,
+			resourceUri: `/reports/${reportType}`,
+			query: {
 				...(reportDate && { report_date: reportDate.split('T')[0] }),
 				...(agingPeriod != null && { aging_period: String(agingPeriod) }),
 				...(numPeriods != null && { num_periods: String(numPeriods) }),
 				...(agingMethod && { aging_method: agingMethod }),
 				...(pastDue != null && { past_due: String(pastDue) }),
 			},
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			headers: {
-				Accept: 'application/json',
-			},
 		});
 
-		if (response.body.Fault) {
+		if (response.Fault) {
 			throw new Error(
-				`QuickBooks API Error fetching report: ${response.body.Fault.Error.map(
+				`QuickBooks API Error fetching report: ${response.Fault.Error.map(
 					(e: { Message: string }) => e.Message,
 				).join(', ')}`,
 			);
 		}
 
 		return {
-			...response.body,
-			rows: flattenAgingReportRows(response.body),
+			...response,
+			rows: flattenAgingReportRows(response),
 		};
 	},
 });

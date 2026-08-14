@@ -7,12 +7,10 @@ import {
 import { quickbooksAuth } from '../lib/auth';
 import {
   DedupeStrategy,
-  httpClient,
-  HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 import dayjs from 'dayjs';
 import { QuickbooksCustomer } from '../lib/types';
 
@@ -25,8 +23,6 @@ const polling: Polling<
     const { access_token } = auth;
     const companyId = auth.props?.['companyId'] as string;
 
-    const apiUrl = quickbooksCommon.getApiUrl(companyId!);
-
     const query =
       lastFetchEpochMS === 0
         ? `SELECT * FROM Customer ORDERBY Metadata.CreateTime DESC MAXRESULTS 10`
@@ -34,19 +30,16 @@ const polling: Polling<
             lastFetchEpochMS
           ).toISOString()}' ORDERBY Metadata.CreateTime DESC`;
 
-    const response = await httpClient.sendRequest<
+    // https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/customer#query-a-customer
+    const response = await quickbooksQuery<
       QuickbooksEntityResponse<QuickbooksCustomer>
     >({
-      method: HttpMethod.GET,
-      url: `${apiUrl}/query`,
-      queryParams: { query: query, minorversion: '70' },
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        Accept: 'application/json',
-      },
+      accessToken: access_token,
+      companyId,
+      query,
     });
 
-    const customers = response.body.QueryResponse?.['Customer'] ?? [];
+    const customers = response.QueryResponse?.['Customer'] ?? [];
 
     return customers.map((customer) => ({
       epochMilliSeconds: dayjs(customer.MetaData?.CreateTime).valueOf(),
@@ -66,18 +59,10 @@ export const newCustomer = createTrigger({
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
     return await pollingHelper.test(polling, context);

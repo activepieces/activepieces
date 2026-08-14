@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { quickbooksAuth } from '../lib/auth';
-import { quickbooksCommon, QuickbooksEntityResponse } from '../lib/common';
+import { quickbooksQuery, QuickbooksEntityResponse } from '../lib/common';
 
 interface QuickBooksRef {
 	value: string;
@@ -130,36 +129,25 @@ export const findInvoiceAction = createAction({
 			throw new Error('Realm ID not found in authentication data. Please reconnect your account.');
 		}
 
-		const apiUrl = quickbooksCommon.getApiUrl(companyId as string);
 		const query = `SELECT * FROM Invoice WHERE DocNumber = '${invoice_number.replace(
 			/'/g,
 			"\\'",
 		)}' MAXRESULTS 1`;
 
 		// https://developer.intuit.com/app/developer/qbo/docs/api/accounting/all-entities/invoice#query-an-invoice
-		const response = await httpClient.sendRequest<QuickbooksEntityResponse<QuickBooksInvoice>>({
-			method: HttpMethod.GET,
-			url: `${apiUrl}/query`,
-			queryParams: {
-				query: query,
-				minorversion: quickbooksCommon.minorVersion,
-			},
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			headers: {
-				Accept: 'application/json',
-			},
+		const response = await quickbooksQuery<QuickbooksEntityResponse<QuickBooksInvoice>>({
+			accessToken: context.auth.access_token,
+			companyId: companyId as string,
+			query,
 		});
 
 		if (
-			response.body?.QueryResponse?.['Invoice'] &&
-			response.body.QueryResponse['Invoice'].length > 0
+			response?.QueryResponse?.['Invoice'] &&
+			response.QueryResponse['Invoice'].length > 0
 		) {
 			return {
 				found: true,
-				result: response.body.QueryResponse['Invoice'][0],
+				result: response.QueryResponse['Invoice'][0],
 			};
 		}
 
