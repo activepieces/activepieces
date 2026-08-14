@@ -30,6 +30,10 @@ describe('netsuiteRecords', () => {
     ).toThrow('Line 2 is missing Item ID.');
   });
 
+  it('buildLineItems returns undefined instead of a truthy empty wrapper when every entry is malformed', () => {
+    expect(netsuiteRecords.buildLineItems([null, undefined, 42])).toBeUndefined();
+  });
+
   it('buildLineItems maps department/class/location per line', () => {
     expect(
       netsuiteRecords.buildLineItems([
@@ -53,6 +57,10 @@ describe('netsuiteRecords', () => {
     ).toThrow('Line 1 is missing Account ID.');
   });
 
+  it('buildExpenseLines returns undefined instead of a truthy empty wrapper when every entry is malformed', () => {
+    expect(netsuiteRecords.buildExpenseLines([null, 'x'])).toBeUndefined();
+  });
+
   it('buildPaymentApplications sets apply flag, doc ref, and defaults line to 0', () => {
     expect(
       netsuiteRecords.buildPaymentApplications([{ invoiceId: '9', amount: 100 }])
@@ -69,6 +77,10 @@ describe('netsuiteRecords', () => {
     expect(() =>
       netsuiteRecords.buildPaymentApplications([{ amount: 100 }])
     ).toThrow('Application 1 is missing Invoice ID.');
+  });
+
+  it('buildPaymentApplications returns undefined instead of a truthy empty wrapper when every entry is malformed', () => {
+    expect(netsuiteRecords.buildPaymentApplications([null])).toBeUndefined();
   });
 
   it('buildClassificationRefs compacts department/class/location', () => {

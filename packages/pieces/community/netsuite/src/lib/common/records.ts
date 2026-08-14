@@ -35,62 +35,62 @@ function buildLineItems(lines: unknown[] | undefined) {
   if (!lines?.length) {
     return undefined;
   }
-  return {
-    items: lines.filter(isRecord).map((line, index) => {
-      const item = toRef(line['itemId']);
-      if (!item) {
-        throw new Error(`Line ${index + 1} is missing Item ID.`);
-      }
-      return compact({
-        item,
-        quantity: line['quantity'],
-        rate: line['rate'],
-        amount: line['amount'],
-        description: line['description'],
-        ...buildClassificationRefs(line),
-      });
-    }),
-  };
+  const items = lines.filter(isRecord).map((line, index) => {
+    const item = toRef(line['itemId']);
+    if (!item) {
+      throw new Error(`Line ${index + 1} is missing Item ID.`);
+    }
+    return compact({
+      item,
+      quantity: line['quantity'],
+      rate: line['rate'],
+      amount: line['amount'],
+      description: line['description'],
+      ...buildClassificationRefs(line),
+    });
+  });
+  // A non-empty input array of malformed (non-object) entries filters down to
+  // zero items — don't let that produce a truthy-but-empty `{ items: [] }`
+  // wrapper that slips past the caller's "at least one line" guard.
+  return items.length ? { items } : undefined;
 }
 
 function buildExpenseLines(lines: unknown[] | undefined) {
   if (!lines?.length) {
     return undefined;
   }
-  return {
-    items: lines.filter(isRecord).map((line, index) => {
-      const account = toRef(line['accountId']);
-      if (!account) {
-        throw new Error(`Line ${index + 1} is missing Account ID.`);
-      }
-      return compact({
-        account,
-        amount: line['amount'],
-        memo: line['memo'],
-        ...buildClassificationRefs(line),
-      });
-    }),
-  };
+  const items = lines.filter(isRecord).map((line, index) => {
+    const account = toRef(line['accountId']);
+    if (!account) {
+      throw new Error(`Line ${index + 1} is missing Account ID.`);
+    }
+    return compact({
+      account,
+      amount: line['amount'],
+      memo: line['memo'],
+      ...buildClassificationRefs(line),
+    });
+  });
+  return items.length ? { items } : undefined;
 }
 
 function buildPaymentApplications(applications: unknown[] | undefined) {
   if (!applications?.length) {
     return undefined;
   }
-  return {
-    items: applications.filter(isRecord).map((application, index) => {
-      const doc = toRef(application['invoiceId']);
-      if (!doc) {
-        throw new Error(`Application ${index + 1} is missing Invoice ID.`);
-      }
-      return compact({
-        apply: true,
-        doc,
-        amount: application['amount'],
-        line: application['line'] ?? 0,
-      });
-    }),
-  };
+  const items = applications.filter(isRecord).map((application, index) => {
+    const doc = toRef(application['invoiceId']);
+    if (!doc) {
+      throw new Error(`Application ${index + 1} is missing Invoice ID.`);
+    }
+    return compact({
+      apply: true,
+      doc,
+      amount: application['amount'],
+      line: application['line'] ?? 0,
+    });
+  });
+  return items.length ? { items } : undefined;
 }
 
 function escapeLiteral(value: string): string {
