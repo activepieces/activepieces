@@ -30,11 +30,6 @@ export const ringcentralAuth = PieceAuth.OAuth2({
   authUrl: 'https://{environment}/restapi/oauth/authorize',
   tokenUrl: 'https://{environment}/restapi/oauth/token',
   scope: [],
-  // Without this the platform appends prompt=consent, which RingCentral's login dispatcher reads as
-  // "skip the password form, go to SSO": it lands on login.ringcentral.com#/ssoLogin and dead-ends
-  // with API_ERROR_208 ("This redirect failed because URL blocked") on any account without SAML
-  // configured, so no connection can ever be created. Omitting it costs nothing, because
-  // prompt/access_type are Google conventions and RingCentral issues a refresh token on the
-  // authorization-code flow either way.
+  // The platform's default prompt=consent sends RingCentral's login to SSO-only (API_ERROR_208).
   prompt: 'omit',
 });

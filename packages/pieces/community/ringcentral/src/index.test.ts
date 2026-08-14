@@ -45,9 +45,7 @@ describe('piece metadata', () => {
   });
 
   it('opts out of the platform-appended consent prompt', () => {
-    // oauth2-util appends prompt=consent to every authorize URL unless the piece opts out.
-    // RingCentral's login dispatcher reads it as a request for SSO-only sign-in and dead-ends with
-    // API_ERROR_208 on accounts without SAML, so no connection can be completed at all.
+    // With prompt=consent no connection can be created at all: RingCentral's login goes SSO-only.
     expect(meta().auth.prompt).toBe('omit');
   });
 
