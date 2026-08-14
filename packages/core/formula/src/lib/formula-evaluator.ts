@@ -210,8 +210,13 @@ function wrapStringArgs(expr: string): string {
             const inner = wrapStringArgs(arg)
             if (!fn) return inner
             const expectedSpec = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
-            const shouldQuote = expectedSpec === 'string' ||
-                (Array.isArray(expectedSpec) && (expectedSpec as string[]).includes('string'))
+            const shouldQuote =
+                expectedSpec === 'string' ||
+                expectedSpec === 'date' ||
+                (Array.isArray(expectedSpec) && (
+                    (expectedSpec as string[]).includes('string') ||
+                    (expectedSpec as string[]).includes('date')
+                ))
             return shouldQuote ? quoteIfBare(inner) : inner
         })
 
