@@ -983,6 +983,9 @@
       "@activepieces/piece-peekshot": [
         "packages/pieces/community/peekshot/src/index.ts"
       ],
+      "@activepieces/piece-peer-cash": [
+        "packages/pieces/community/peer-cash/src/index.ts"
+      ],
       "@activepieces/piece-pendo": [
         "packages/pieces/community/pendo/src/index.ts"
       ],
