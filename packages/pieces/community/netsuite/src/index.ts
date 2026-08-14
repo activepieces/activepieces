@@ -10,6 +10,7 @@ import { executeDataset } from './lib/actions/execute-dataset';
 import { createInvoice } from './lib/actions/create-invoice';
 import { createBill } from './lib/actions/create-bill';
 import { recordPayment } from './lib/actions/record-payment';
+import { recordVendorPayment } from './lib/actions/record-vendor-payment';
 import { createCustomer } from './lib/actions/create-customer';
 import { findCustomer } from './lib/actions/find-customer';
 import { createVendor } from './lib/actions/create-vendor';
@@ -65,6 +66,7 @@ export const netsuite = createPiece({
     createInvoice,
     createBill,
     recordPayment,
+    recordVendorPayment,
     runSuiteQL,
     executeDataset,
     createCustomApiCallAction({

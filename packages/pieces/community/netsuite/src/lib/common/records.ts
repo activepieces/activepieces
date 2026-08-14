@@ -19,20 +19,37 @@ function compact(obj: Record<string, unknown>): Record<string, unknown> {
   );
 }
 
+function buildClassificationRefs(props: {
+  departmentId?: unknown;
+  classId?: unknown;
+  locationId?: unknown;
+}): Record<string, unknown> {
+  return compact({
+    department: toRef(props['departmentId']),
+    class: toRef(props['classId']),
+    location: toRef(props['locationId']),
+  });
+}
+
 function buildLineItems(lines: unknown[] | undefined) {
   if (!lines?.length) {
     return undefined;
   }
   return {
-    items: lines.filter(isRecord).map((line) =>
-      compact({
-        item: toRef(line['itemId']),
+    items: lines.filter(isRecord).map((line, index) => {
+      const item = toRef(line['itemId']);
+      if (!item) {
+        throw new Error(`Line ${index + 1} is missing Item ID.`);
+      }
+      return compact({
+        item,
         quantity: line['quantity'],
         rate: line['rate'],
         amount: line['amount'],
         description: line['description'],
-      })
-    ),
+        ...buildClassificationRefs(line),
+      });
+    }),
   };
 }
 
@@ -41,13 +58,18 @@ function buildExpenseLines(lines: unknown[] | undefined) {
     return undefined;
   }
   return {
-    items: lines.filter(isRecord).map((line) =>
-      compact({
-        account: toRef(line['accountId']),
+    items: lines.filter(isRecord).map((line, index) => {
+      const account = toRef(line['accountId']);
+      if (!account) {
+        throw new Error(`Line ${index + 1} is missing Account ID.`);
+      }
+      return compact({
+        account,
         amount: line['amount'],
         memo: line['memo'],
-      })
-    ),
+        ...buildClassificationRefs(line),
+      });
+    }),
   };
 }
 
@@ -56,13 +78,18 @@ function buildPaymentApplications(applications: unknown[] | undefined) {
     return undefined;
   }
   return {
-    items: applications.filter(isRecord).map((application) =>
-      compact({
+    items: applications.filter(isRecord).map((application, index) => {
+      const doc = toRef(application['invoiceId']);
+      if (!doc) {
+        throw new Error(`Application ${index + 1} is missing Invoice ID.`);
+      }
+      return compact({
         apply: true,
-        doc: toRef(application['invoiceId']),
+        doc,
         amount: application['amount'],
-      })
-    ),
+        line: application['line'] ?? 0,
+      });
+    }),
   };
 }
 
@@ -80,10 +107,12 @@ function buildEntitySearchQuery({
   table,
   email,
   name,
+  externalId,
 }: {
   table: 'customer' | 'vendor';
   email?: string;
   name?: string;
+  externalId?: string;
 }): string | null {
   const filters: string[] = [];
   if (email) {
@@ -95,10 +124,13 @@ function buildEntitySearchQuery({
       `(companyName LIKE '%${pattern}%' ESCAPE '\\' OR entityId LIKE '%${pattern}%' ESCAPE '\\')`
     );
   }
+  if (externalId) {
+    filters.push(`externalId = '${escapeLiteral(externalId)}'`);
+  }
   if (!filters.length) {
     return null;
   }
-  return `SELECT id, entityId, companyName, email, phone FROM ${table} WHERE ${filters.join(
+  return `SELECT id, entityId, companyName, email, phone, externalId FROM ${table} WHERE ${filters.join(
     ' AND '
   )}`;
 }
@@ -111,6 +143,9 @@ function buildTransactionScalars(props: {
   currencyId?: string;
   termsId?: string;
   externalId?: string;
+  departmentId?: unknown;
+  classId?: unknown;
+  locationId?: unknown;
 }): Record<string, unknown> {
   return compact({
     tranDate: props.tranDate,
@@ -120,8 +155,31 @@ function buildTransactionScalars(props: {
     currency: toRef(props.currencyId),
     terms: toRef(props.termsId),
     externalId: props.externalId,
+    ...buildClassificationRefs(props),
   });
 }
+
+const classificationFields = {
+  departmentId: Property.ShortText({
+    displayName: 'Department ID',
+    description: 'Internal id of the department.',
+    required: false,
+  }),
+  classId: Property.ShortText({
+    displayName: 'Class ID',
+    description: 'Internal id of the class.',
+    required: false,
+  }),
+  locationId: Property.ShortText({
+    displayName: 'Location ID',
+    description:
+      'Internal id of the location. Whether department/class/location apply at the ' +
+      "transaction header or per line depends on this NetSuite account's own accounting " +
+      'preference (Setup > Accounting > Preferences > "Per-Line" classification) — set the ' +
+      'field at whichever level your account actually uses; the other level is ignored.',
+    required: false,
+  }),
+};
 
 const lineItemsProp = Property.Array({
   displayName: 'Line Items',
@@ -137,6 +195,7 @@ const lineItemsProp = Property.Array({
     rate: Property.Number({ displayName: 'Rate', required: false }),
     amount: Property.Number({ displayName: 'Amount', required: false }),
     description: Property.LongText({ displayName: 'Description', required: false }),
+    ...classificationFields,
   },
 });
 
@@ -152,6 +211,7 @@ const expenseLinesProp = Property.Array({
     }),
     amount: Property.Number({ displayName: 'Amount', required: true }),
     memo: Property.LongText({ displayName: 'Memo', required: false }),
+    ...classificationFields,
   },
 });
 
@@ -170,6 +230,13 @@ const paymentApplicationsProp = Property.Array({
       description: 'Amount to apply to this invoice.',
       required: true,
     }),
+    line: Property.Number({
+      displayName: 'Apply Sublist Line',
+      description:
+        "Line index on the invoice's own apply sublist. Leave as 0 unless NetSuite reports " +
+        'duplicate matches for this invoice.',
+      required: false,
+    }),
   },
 });
 
@@ -177,6 +244,12 @@ const additionalFieldsProp = Property.Object({
   displayName: 'Additional Fields',
   description:
     'Any other NetSuite record fields, e.g. {"postingPeriod": {"id": "21"}, "location": {"id": "1"}}. Merged into the request body and overrides the fields above.',
+  required: false,
+});
+
+const termsProp = Property.ShortText({
+  displayName: 'Terms ID',
+  description: 'Internal id of the default payment terms for this record.',
   required: false,
 });
 
@@ -207,6 +280,7 @@ const transactionProps = {
     description: 'Your own unique id for this record; useful for idempotency.',
     required: false,
   }),
+  ...classificationFields,
 };
 
 export const netsuiteRecords = {
@@ -217,9 +291,12 @@ export const netsuiteRecords = {
   buildPaymentApplications,
   buildTransactionScalars,
   buildEntitySearchQuery,
+  buildClassificationRefs,
   lineItemsProp,
   expenseLinesProp,
   paymentApplicationsProp,
   additionalFieldsProp,
   transactionProps,
+  classificationFields,
+  termsProp,
 };

@@ -33,6 +33,7 @@ export const createVendor = createAction({
       description: 'Internal id of the subsidiary. Required on OneWorld accounts.',
       required: false,
     }),
+    termsId: netsuiteRecords.termsProp,
     externalId: Property.ShortText({
       displayName: 'External ID',
       description: 'Your own unique id for this vendor; useful for idempotency.',
@@ -50,6 +51,7 @@ export const createVendor = createAction({
       email,
       phone,
       subsidiaryId,
+      termsId,
       externalId,
       additionalFields,
     } = context.propsValue;
@@ -62,6 +64,7 @@ export const createVendor = createAction({
       email,
       phone,
       subsidiary: netsuiteRecords.toRef(subsidiaryId),
+      terms: netsuiteRecords.toRef(termsId),
       externalId,
       ...(additionalFields ?? {}),
     });

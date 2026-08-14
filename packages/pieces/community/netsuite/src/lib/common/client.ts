@@ -1,5 +1,6 @@
 import {
   httpClient,
+  HttpError,
   HttpMethod,
   HttpResponse,
   QueryParams,
@@ -7,6 +8,24 @@ import {
 import { createOAuthHeader } from './oauth';
 
 const PAGE_SIZE = 1000;
+// NetSuite enforces a per-account concurrency limit (roughly 5-20 concurrent
+// requests depending on subscription tier, shared across REST/SOAP/RESTlets);
+// exceeding it returns 429. Retry with backoff instead of failing the action.
+const MAX_RETRY_ATTEMPTS = 5;
+const BASE_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 16000;
+
+function retryDelayMs(attempt: number): number {
+  return Math.min(BASE_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS) + Math.random() * 250;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRateLimited(error: unknown): error is HttpError {
+  return error instanceof HttpError && error.response.status === 429;
+}
 
 interface NetSuiteAuth {
   accountId: string;
@@ -106,27 +125,38 @@ export class NetSuiteClient {
     queryParams,
     body,
   }: MakeRequestParams): Promise<HttpResponse<T>> {
-    const authHeader = createOAuthHeader(
-      this.auth.accountId,
-      this.auth.consumerKey,
-      this.auth.consumerSecret,
-      this.auth.tokenId,
-      this.auth.tokenSecret,
-      url,
-      method,
-      queryParams
-    );
+    for (let attempt = 0; ; attempt++) {
+      // OAuth 1.0 signatures are single-use (nonce/timestamp bound to one
+      // request), so a retry needs a freshly generated header, not a reused one.
+      const authHeader = createOAuthHeader(
+        this.auth.accountId,
+        this.auth.consumerKey,
+        this.auth.consumerSecret,
+        this.auth.tokenId,
+        this.auth.tokenSecret,
+        url,
+        method,
+        queryParams
+      );
 
-    return httpClient.sendRequest<T>({
-      method,
-      url,
-      headers: {
-        Authorization: authHeader,
-        prefer: 'transient',
-        Cookie: 'NS_ROUTING_VERSION=LAGGING',
-      },
-      queryParams,
-      body,
-    });
+      try {
+        return await httpClient.sendRequest<T>({
+          method,
+          url,
+          headers: {
+            Authorization: authHeader,
+            prefer: 'transient',
+            Cookie: 'NS_ROUTING_VERSION=LAGGING',
+          },
+          queryParams,
+          body,
+        });
+      } catch (error) {
+        if (!isRateLimited(error) || attempt >= MAX_RETRY_ATTEMPTS) {
+          throw error;
+        }
+        await sleep(retryDelayMs(attempt));
+      }
+    }
   }
 }

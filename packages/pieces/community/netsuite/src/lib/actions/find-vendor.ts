@@ -8,11 +8,11 @@ export const findVendor = createAction({
   name: 'findVendor',
   auth: netsuiteAuth,
   displayName: 'Find Vendor',
-  description: 'Finds vendors in NetSuite by email or name.',
+  description: 'Finds vendors in NetSuite by email, name, or external id.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Searches NetSuite vendors by exact email and/or partial name (company name or entity id), returning all matching records. Provide at least one of email or name. Read-only and safe to repeat.',
+      'Searches NetSuite vendors by exact email, partial name (company name or entity id), and/or exact external id, returning all matching records. Provide at least one filter. Read-only and safe to repeat.',
     idempotent: true,
   },
   props: {
@@ -26,18 +26,24 @@ export const findVendor = createAction({
       description: 'Partial company name or entity id to match.',
       required: false,
     }),
+    externalId: Property.ShortText({
+      displayName: 'External ID',
+      description: 'Exact external id to match.',
+      required: false,
+    }),
   },
   async run(context) {
     const client = new NetSuiteClient(context.auth.props);
-    const { email, name } = context.propsValue;
+    const { email, name, externalId } = context.propsValue;
 
     const query = netsuiteRecords.buildEntitySearchQuery({
       table: 'vendor',
       email,
       name,
+      externalId,
     });
     if (!query) {
-      throw new Error('Provide at least one of Email or Name to search.');
+      throw new Error('Provide at least one of Email, Name, or External ID to search.');
     }
 
     return client.makePaginatedRequest({
