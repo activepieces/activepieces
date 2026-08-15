@@ -6,7 +6,7 @@ import {
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
+import { callableFlowKey, CallableFlowRequest, fetchSubflowSigningSecret, MOCK_CALLBACK_IN_TEST_FLOW_URL, SUBFLOW_SIGNATURE_HEADER, verifySubflowSignature } from '../common';
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
@@ -75,6 +75,18 @@ export const callableFlow = createTrigger({
     return [request];
   },
   async run(context) {
+    const signingSecret = await fetchSubflowSigningSecret({
+      apiUrl: context.server.apiUrl,
+      token: context.server.token,
+    });
+    const verified = verifySubflowSignature({
+      secret: signingSecret,
+      payload: context.payload.body,
+      signature: context.payload.headers?.[SUBFLOW_SIGNATURE_HEADER],
+    });
+    if (!verified) {
+      return [];
+    }
     return [context.payload.body];
   },
   async onStart(context) {

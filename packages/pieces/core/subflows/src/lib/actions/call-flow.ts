@@ -5,7 +5,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { ExecutionType, isNil } from '@activepieces/pieces-framework';
-import { CallableFlowResponse, dispatchToSubflow, findEnabledSubflowOrThrow, findFlowByExternalIdOrThrow, subflowDropdown } from '../common';
+import { CallableFlowResponse, dispatchToSubflow, fetchSubflowSigningSecret, findEnabledSubflowOrThrow, findFlowByExternalIdOrThrow, subflowDropdown } from '../common';
 
 export const callFlow = createAction({
   audience: 'both',
@@ -110,6 +110,11 @@ export const callFlow = createAction({
       context.run.waitForWaitpoint(waitpoint.id);
     }
 
+    const signingSecret = await fetchSubflowSigningSecret({
+      apiUrl: context.server.apiUrl,
+      token: context.server.token,
+    });
+
     return await dispatchToSubflow({
       apiUrl: context.server.apiUrl,
       flowId: flow.id,
@@ -117,6 +122,7 @@ export const callFlow = createAction({
       failParentOnFailure: context.propsValue.waitForResponse ?? false,
       data: payload,
       callbackUrl,
+      signingSecret,
     });
   },
   errorHandlingOptions: {

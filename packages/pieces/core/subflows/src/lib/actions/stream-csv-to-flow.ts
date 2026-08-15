@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { createCsvParser, CsvRow } from '../csv';
-import { dispatchToSubflow, findEnabledSubflowOrThrow, subflowDropdown } from '../common';
+import { dispatchToSubflow, fetchSubflowSigningSecret, findEnabledSubflowOrThrow, subflowDropdown } from '../common';
 import { fanOutBatches } from '../fan-out';
 
 const MAX_IN_FLIGHT = 5;
@@ -73,6 +73,14 @@ export const streamCsvToSubflows = createAction({
       throw error;
     });
 
+    const signingSecret = await fetchSubflowSigningSecret({
+      apiUrl: context.server.apiUrl,
+      token: context.server.token,
+    }).catch((error) => {
+      file.body.destroy();
+      throw error;
+    });
+
     let firstRow: CsvRow | undefined;
     const { parser, getHeaders } = createCsvParser({ delimiter });
     file.body.pipe(parser);
@@ -98,6 +106,7 @@ export const streamCsvToSubflows = createAction({
         parentRunId: context.run.id,
         failParentOnFailure: false,
         data: { batchIndex, headers: getHeaders(), rows, extraData },
+        signingSecret,
         retries: 2,
       });
     };

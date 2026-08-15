@@ -1,9 +1,12 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PieceAuth, PopulatedFlow, Property } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 
 export const callableFlowKey = (runId: string) => `callableFlow_${runId}`;
+
+export const SUBFLOW_SIGNATURE_HEADER = 'ap-subflow-signature';
 
 export type CallableFlowRequest = {
     data: unknown;
@@ -108,6 +111,54 @@ export function subflowDropdown({
     });
 }
 
+export async function fetchSubflowSigningSecret({
+    apiUrl,
+    token,
+}: {
+    apiUrl: string;
+    token: string;
+}): Promise<string> {
+    const response = await httpClient.sendRequest<{ secret: string }>({
+        method: HttpMethod.GET,
+        url: `${apiUrl.replace(/\/$/, '')}/v1/engine/subflow-signing-secret`,
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.body.secret;
+}
+
+export function signSubflowPayload({
+    secret,
+    payload,
+}: {
+    secret: string;
+    payload: unknown;
+}): string {
+    return createHmac('sha256', secret).update(canonicalize(payload)).digest('hex');
+}
+
+export function verifySubflowSignature({
+    secret,
+    payload,
+    signature,
+}: {
+    secret: string;
+    payload: unknown;
+    signature: string | undefined;
+}): boolean {
+    if (isNil(signature)) {
+        return false;
+    }
+    const expected = signSubflowPayload({ secret, payload });
+    const expectedBuffer = Buffer.from(expected, 'hex');
+    const actualBuffer = Buffer.from(signature, 'hex');
+    if (expectedBuffer.length !== actualBuffer.length) {
+        return false;
+    }
+    return timingSafeEqual(expectedBuffer, actualBuffer);
+}
+
 export async function dispatchToSubflow({
     apiUrl,
     flowId,
@@ -115,8 +166,10 @@ export async function dispatchToSubflow({
     failParentOnFailure,
     data,
     callbackUrl,
+    signingSecret,
     retries,
 }: DispatchToSubflowParams): Promise<unknown> {
+    const body = { data, callbackUrl };
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${apiUrl.replace(/\/$/, '')}/v1/webhooks/${flowId}`,
@@ -124,14 +177,27 @@ export async function dispatchToSubflow({
             'Content-Type': 'application/json',
             [PARENT_RUN_ID_HEADER]: parentRunId,
             [FAIL_PARENT_ON_FAILURE_HEADER]: failParentOnFailure ? 'true' : 'false',
+            [SUBFLOW_SIGNATURE_HEADER]: signSubflowPayload({ secret: signingSecret, payload: body }),
         },
-        body: {
-            data,
-            callbackUrl,
-        },
+        body,
         retries,
     });
     return response.body;
+}
+
+function canonicalize(value: unknown): string {
+    if (isNil(value) || typeof value !== 'object') {
+        return JSON.stringify(value) ?? 'null';
+    }
+    if (Array.isArray(value)) {
+        return `[${value.map(canonicalize).join(',')}]`;
+    }
+    const record = value as Record<string, unknown>;
+    const entries = Object.keys(record)
+        .sort()
+        .filter((key) => record[key] !== undefined)
+        .map((key) => `${JSON.stringify(key)}:${canonicalize(record[key])}`);
+    return `{${entries.join(',')}}`;
 }
 
 type ListParams = {
@@ -146,5 +212,6 @@ type DispatchToSubflowParams = {
     failParentOnFailure: boolean;
     data: unknown;
     callbackUrl?: string;
+    signingSecret: string;
     retries?: number;
 }

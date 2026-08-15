@@ -1,4 +1,4 @@
-
+import { createHmac } from 'node:crypto'
 import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,6 +9,7 @@ import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineRunCallbackService } from '../flows/flow-run/engine-run-callback-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+import { jwtUtils } from '../helper/jwt-utils'
 import { pieceBundle } from '../pieces/piece-bundle'
 
 export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
@@ -100,6 +101,14 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
+    app.get('/subflow-signing-secret', SubflowSigningSecretRequest, async (request) => {
+        const jwtSecret = await jwtUtils.getJwtSecret()
+        const secret = createHmac('sha256', jwtSecret)
+            .update(`subflow-signing:${request.principal.projectId}`)
+            .digest('hex')
+        return { secret }
+    })
+
 }
 
 
@@ -170,5 +179,16 @@ const FlowResponseRequest = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const SubflowSigningSecretRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.object({ secret: z.string() }),
+        },
     },
 }
