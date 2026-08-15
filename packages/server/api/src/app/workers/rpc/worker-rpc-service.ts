@@ -8,6 +8,7 @@ import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -277,16 +278,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return
             }
             const platformId = await projectService(log).getPlatformId(projectId)
-            await flowService(log).update({
+            const disabledFlow = await flowService(log).update({
                 id: flowId,
                 userId: null,
                 projectId,
                 platformId,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: { status: FlowStatus.DISABLED },
                 },
             })
+            flowSideEffects(log).onDisabledByWorker({ flow: disabledFlow, projectId, platformId })
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 

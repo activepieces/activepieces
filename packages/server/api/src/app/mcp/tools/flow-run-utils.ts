@@ -1,4 +1,4 @@
-import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFriendlyPieceError } from '@activepieces/core-utils'
+import { FlowId, formatPieceError, isNil, isObject, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -24,9 +24,10 @@ type PieceActionRunResult = {
     errorSummary?: string
 }
 
-export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
-    flowId: string
-    projectId: string
+export async function executeFlowTest({ flowId, projectId, userId, stepName, triggerTestData, log }: {
+    flowId: FlowId
+    projectId: ProjectId
+    userId?: UserId
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
@@ -70,7 +71,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         const updatedFlow = await flowService(log).update({
             id: flow.id,
             projectId,
-            userId: null,
+            userId,
+            previousFlow: flow,
             platformId: project.platformId,
             operation: {
                 type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
