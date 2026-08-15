@@ -87,6 +87,11 @@ function groups(): PermissionGroup[] {
           edit: Permission.WRITE_APP_CONNECTION,
         },
         {
+          key: 'replace-flow-connections',
+          label: t('Replace flow connections'),
+          edit: Permission.UPDATE_FLOW_CONNECTION,
+        },
+        {
           key: 'project-releases',
           label: t('Project releases'),
           view: Permission.READ_PROJECT_RELEASE,
