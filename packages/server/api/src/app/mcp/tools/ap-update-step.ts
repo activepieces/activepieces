@@ -137,7 +137,7 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                     catch {
                         return { content: [{ type: 'text', text: `❌ Version "${cleanVersion}" of piece "${pieceName}" not found. Use ap_research_pieces to see available versions, or pass "latest".` }] }
                     }
-                    updatedSettings.pieceVersion = `~${cleanVersion}`
+                    updatedSettings.pieceVersion = cleanVersion
                 }
             }
 
