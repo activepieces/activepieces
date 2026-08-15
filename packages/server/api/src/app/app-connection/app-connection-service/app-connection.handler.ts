@@ -369,7 +369,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         userId,
         operation: {
             type: FlowOperationType.LOCK_AND_PUBLISH,
-            request: {},
+            request: { status: flow.status },
         },
     })
 }

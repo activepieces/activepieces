@@ -341,7 +341,8 @@ export const AutomationsTableRow = ({
 
             {isFlowItem(item) &&
               item.data.version.connectionIds.length > 0 &&
-              checkAccess(Permission.UPDATE_FLOW_CONNECTION) && (
+              checkAccess(Permission.UPDATE_FLOW_CONNECTION) &&
+              checkAccess(Permission.READ_APP_CONNECTION) && (
                 <ReplaceFlowConnectionDialog
                   flow={item.data}
                   onReplaced={() => {
