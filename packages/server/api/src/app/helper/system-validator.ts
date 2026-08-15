@@ -35,7 +35,10 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {

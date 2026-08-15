@@ -86,6 +86,9 @@ export const propsProcessor = {
                     }
                 }
             }
+            if (!property.required && isNil(processedInput[key])) {
+                processedInput[key] = undefined
+            }
             const processor = processors[property.type]
             if (processor) {
                 processedInput[key] = await processor(property, processedInput[key])

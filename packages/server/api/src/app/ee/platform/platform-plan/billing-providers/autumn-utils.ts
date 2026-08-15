@@ -20,7 +20,7 @@ import { distributedLock, distributedStore } from '../../../../database/redis-co
 import { rejectedPromiseHandler } from '../../../../helper/promise-handler'
 import { system } from '../../../../helper/system/system'
 import { AppSystemProp } from '../../../../helper/system/system-props'
-import { AppSumoAction, CancellationFeedback, CreditUsage } from '../../../../platform/billing-provider'
+import { AppSumoAction, CancellationFeedback, CreditUsage, CreditUsageSource } from '../../../../platform/billing-provider'
 import { platformService } from '../../../../platform/platform.service'
 import { userService } from '../../../../user/user-service'
 import { platformPlanService } from '../platform-plan.service'
@@ -34,6 +34,7 @@ const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 
 const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
+const AI_CREDIT_USAGE_SOURCES = [CreditUsageSource.AI, CreditUsageSource.CHAT]
 const PLATFORM_PLAN_FLAG_FEATURE_IDS = [
     'tablesEnabled',
     'eventStreamingEnabled',
@@ -114,13 +115,17 @@ export const autumnUtils = {
         const timeRange = !isNil(startDate) && !isNil(endDate)
             ? { customRange: { start: new Date(startDate).getTime(), end: new Date(endDate).getTime() } }
             : { range: Range.Thirtyd }
-        const result = await client.aggregateEvents({
+        const baseParams = {
             featureId: ConsumableFeatureId.AP_CREDITS,
             groupBy: `properties.${PROJECT_ID_PROPERTY}`,
             maxGroups: CREDIT_USAGE_MAX_GROUPS,
             ...timeRange,
-        })
-        return toCreditUsage(result)
+        }
+        const [total, ...aiResults] = await Promise.all([
+            client.aggregateEvents(baseParams),
+            ...AI_CREDIT_USAGE_SOURCES.map((source) => client.aggregateEvents({ ...baseParams, filterBy: { source } })),
+        ])
+        return toCreditUsage({ total, aiResults })
     },
     async ensureEnrolled(log: FastifyBaseLogger, platformId: string): Promise<void> {
         const credentials = await platformPlanService(log).getAutumnCredentials(platformId)
@@ -254,7 +259,7 @@ export const autumnUtils = {
             usage: balance.usage,
             remaining: balance.remaining,
             unlimited: balance.unlimited,
-            nextResetAt: balance.nextResetAt,
+            nextResetAt: largestGrantResetAt(balance) ?? balance.nextResetAt,
             syncedAt: Date.now(),
         }
     },
@@ -399,6 +404,14 @@ function balanceCacheKey({ platformId, featureId }: BalanceCacheRef): string {
         : getAppSumoAiCreditsBalanceKey(platformId)
 }
 
+function largestGrantResetAt(balance: Balance): number | null {
+    const resets = (balance.breakdown ?? []).filter((entry) => !isNil(entry.reset?.resetsAt))
+    if (resets.length < 2) {
+        return null
+    }
+    return resets.reduce((largest, entry) => entry.includedGrant > largest.includedGrant ? entry : largest).reset?.resetsAt ?? null
+}
+
 function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
     const creditsItem = (plan.items ?? []).find((item) => item.featureId === ConsumableFeatureId.AP_CREDITS && isNil(item.price))
     return {
@@ -415,7 +428,7 @@ function toPurchasablePlan(plan: ConsoleAutumnPlan): PurchasablePlan {
     }
 }
 
-function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
+function sumCreditsByProject(response: AggregateEventsResponse): Map<string, number> {
     const featureId = ConsumableFeatureId.AP_CREDITS
     const byProjectMap = new Map<string, number>()
     for (const bin of response.list ?? []) {
@@ -424,9 +437,24 @@ function toCreditUsage(response: AggregateEventsResponse): CreditUsage {
             byProjectMap.set(projectId, (byProjectMap.get(projectId) ?? 0) + value)
         }
     }
+    return byProjectMap
+}
+
+function toCreditUsage({ total, aiResults }: { total: AggregateEventsResponse, aiResults: AggregateEventsResponse[] }): CreditUsage {
+    const creditsByProject = sumCreditsByProject(total)
+    const aiCreditsByProject = new Map<string, number>()
+    for (const result of aiResults) {
+        for (const [projectId, value] of sumCreditsByProject(result)) {
+            aiCreditsByProject.set(projectId, (aiCreditsByProject.get(projectId) ?? 0) + value)
+        }
+    }
     return {
-        total: response.total?.[featureId]?.sum ?? 0,
-        byProject: [...byProjectMap].map(([projectId, creditsUsed]) => ({ projectId, creditsUsed })),
+        total: total.total?.[ConsumableFeatureId.AP_CREDITS]?.sum ?? 0,
+        byProject: [...creditsByProject].map(([projectId, creditsUsed]) => ({
+            projectId,
+            creditsUsed,
+            aiCreditsUsed: aiCreditsByProject.get(projectId) ?? 0,
+        })),
     }
 }
 

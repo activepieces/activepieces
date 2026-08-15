@@ -1,7 +1,7 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -617,6 +617,10 @@ async function sweepActionRunCache(): Promise<void> {
     if (error) {
         logger.warn({ error }, 'Action-run code cache sweep failed')
     }
+    // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
+    // sweep rather than startup because it can only run once the rollout grace period has passed,
+    // which is long after a worker boots.
+    await cacheUtils(sandboxConfig.getCacheBasePath()).deleteStaleCache(logger)
 }
 
 function startPollWatchdog(): void {
