@@ -4,6 +4,7 @@ import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -95,6 +96,20 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             previousFlow: flow,
             ip: networkUtils.clientIp(request),
         })
+    })
+
+    app.post('/:id/replace-connection', ReplaceFlowConnectionRequestOptions, async (request, reply) => {
+        await appConnectionService(request.log).replace({
+            flowId: request.params.id,
+            sourceAppConnectionId: request.body.sourceAppConnectionId,
+            targetAppConnectionId: request.body.targetAppConnectionId,
+            projectId: request.projectId,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+            deleteSourceConnection: false,
+            applyToPublishedVersions: request.body.applyToPublishedVersions ?? false,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
@@ -307,6 +322,33 @@ const DeleteFlowRequestOptions = {
         description: 'Delete a flow',
         params: z.object({
             id: ApId,
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
+    },
+}
+
+const ReplaceFlowConnectionRequestOptions = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.UPDATE_FLOW_CONNECTION, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
+    },
+    schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Replace a connection used by a flow with another connection of the same app',
+        params: z.object({
+            id: ApId,
+        }),
+        body: z.object({
+            sourceAppConnectionId: ApId,
+            targetAppConnectionId: ApId,
+            applyToPublishedVersions: z.boolean().optional(),
         }),
         response: {
             [StatusCodes.NO_CONTENT]: z.never(),

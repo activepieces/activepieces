@@ -250,7 +250,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId, deleteSourceConnection, applyToPublishedVersions, flowId } = params
         if (sourceAppConnectionId === targetAppConnectionId) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -278,6 +278,21 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                     message: 'Connections must be from the same app',
                 },
             })
+        }
+
+        // Scoped replace: rewrite the source connection to the target on a single
+        // flow only. Deleting the source is a project-wide concern (other flows may
+        // still use it), so it is never attempted here.
+        if (!isNil(flowId)) {
+            const flow = await flowService(log).getOnePopulatedOrThrow({ id: flowId, projectId })
+            await appConnectionHandler(log).updateFlowsWithAppConnection([flow], {
+                appConnection: sourceAppConnection,
+                newAppConnection: targetAppConnection,
+                userId,
+                applyToPublishedVersions,
+            })
+            log.info({ flow: { id: flowId }, oldConnectionId: sourceAppConnectionId, newConnectionId: targetAppConnectionId, applyToPublishedVersions }, 'App connection replaced in flow')
+            return
         }
 
         // Mirrors the project-route DELETE guard: platform connections are managed
@@ -1067,5 +1082,6 @@ type ReplaceParams = {
     userId: UserId
     deleteSourceConnection: boolean
     applyToPublishedVersions: boolean
+    flowId?: string
 }
 

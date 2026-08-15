@@ -1,7 +1,10 @@
+import { Permission } from '@activepieces/core-utils';
 import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowDown,
+  Cable,
   ChevronDown,
   ChevronRight,
   Copy,
@@ -44,8 +47,10 @@ import {
 import { MoveToFolderDialog } from '@/features/automations/components/move-to-folder-dialog';
 import { FlowCreatedByBadge } from '@/features/flows/components/flow-created-by-badge';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
+import { ReplaceFlowConnectionDialog } from '@/features/flows/components/replace-flow-connection-dialog';
 import { ShareTemplateDialog } from '@/features/flows/components/share-template-dialog';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 
 import { TreeItem } from '../lib/types';
@@ -102,6 +107,8 @@ export const AutomationsTableRow = ({
   onLoadMore,
 }: AutomationsTableRowProps) => {
   const { embedState } = useEmbedding();
+  const { checkAccess } = useAuthorization();
+  const queryClient = useQueryClient();
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [moveFolderId, setMoveFolderId] = useState('');
   const [isCreateTooltipOpen, setIsCreateTooltipOpen] = useState(false);
@@ -331,6 +338,25 @@ export const AutomationsTableRow = ({
                 </DropdownMenuItem>
               </ShareTemplateDialog>
             )}
+
+            {isFlowItem(item) &&
+              item.data.version.connectionIds.length > 0 &&
+              checkAccess(Permission.UPDATE_FLOW_CONNECTION) && (
+                <ReplaceFlowConnectionDialog
+                  flow={item.data}
+                  onReplaced={() => {
+                    queryClient.invalidateQueries({ queryKey: ['root-flows'] });
+                    queryClient.invalidateQueries({
+                      queryKey: ['all-folder-contents'],
+                    });
+                  }}
+                >
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Cable className="h-4 w-4 mr-2" />
+                    {t('Replace Connection')}
+                  </DropdownMenuItem>
+                </ReplaceFlowConnectionDialog>
+              )}
 
             <DropdownMenuSeparator />
             <ConfirmationDeleteDialog

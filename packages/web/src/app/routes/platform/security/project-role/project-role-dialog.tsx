@@ -38,6 +38,14 @@ const initialPermissions = [
     write: [Permission.UPDATE_FLOW_STATUS],
   },
   {
+    name: 'Replace Flow Connections',
+    description:
+      'Replace a connection used by a flow with another, without editing any other flow settings',
+    disableRead: true,
+    read: [],
+    write: [Permission.UPDATE_FLOW_CONNECTION],
+  },
+  {
     name: 'App Connections',
     description: 'Read and write app connections',
     read: [Permission.READ_APP_CONNECTION],
