@@ -2,6 +2,7 @@ import { AIProviderName } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Bot,
   MessageSquare,
   MoreHorizontal,
   Plus,
@@ -254,24 +255,36 @@ function ProviderGroup({
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border/60">
-      <div className="flex items-center gap-3 border-b border-border/60 bg-muted/30 px-4 py-3">
+    <section className="rounded-xl border border-border/60 bg-card">
+      <div className="flex items-center gap-3 px-5 py-4">
         <ProviderLogo info={info} />
-        <p className="flex-1 text-sm font-medium">{info.name}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium leading-none">{info.name}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t('configurationsCount', { count: configs.length })}
+          </p>
+        </div>
         <Button variant="ghost" size="sm" onClick={onAdd}>
           <Plus className="size-4" />
           {t('Add configuration')}
         </Button>
       </div>
-      {configs.map((config) => (
-        <ConfigRow
-          key={config.id}
-          config={config}
-          projects={projects}
-          onOpen={() => onOpen(config.id)}
-          onDelete={() => onDelete(config.id)}
-        />
-      ))}
+      <div className="border-t border-border/60 px-5 pb-1 pt-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {t('Configurations')}
+        </p>
+      </div>
+      <div className="pb-1">
+        {configs.map((config) => (
+          <ConfigRow
+            key={config.id}
+            config={config}
+            projects={projects}
+            onOpen={() => onOpen(config.id)}
+            onDelete={() => onDelete(config.id)}
+          />
+        ))}
+      </div>
     </section>
   );
 }
@@ -295,6 +308,16 @@ function ConfigRow({
     config.projectScope === 'except'
       ? projects.length - namedProjects.length
       : namedProjects.length;
+  const modelsLabel =
+    config.modelScope === 'all'
+      ? t('All models')
+      : t('modelsCount', { count: config.modelIds.length });
+  const projectsLabel =
+    config.projectScope === 'all'
+      ? t('All projects')
+      : config.projectScope === 'except'
+      ? t('exceptProjectsCount', { count: namedProjects.length })
+      : t('projectsCount', { count: allowedProjectCount });
 
   return (
     <div
@@ -307,36 +330,44 @@ function ConfigRow({
           onOpen();
         }
       }}
-      className="flex cursor-pointer items-center gap-4 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-muted/20"
+      className="flex cursor-pointer items-center gap-4 rounded-lg px-5 py-3 transition-colors hover:bg-muted/40"
     >
-      <div className="flex min-w-0 flex-[2] flex-col gap-1">
-        <p className="truncate text-sm font-medium leading-none">
-          {config.name}
-        </p>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium leading-none">
+            {config.name}
+          </p>
+          {config.enabledForChat && (
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
+              {t('Chat')}
+            </span>
+          )}
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="w-fit truncate text-xs text-muted-foreground">
+              {modelsLabel}
+              <span aria-hidden> · </span>
+              {projectsLabel}
+            </p>
+          </TooltipTrigger>
+          {config.modelIds.length > 0 && (
+            <TooltipContent className="max-w-64">
+              {config.modelIds.join(', ')}
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
-      <SummaryCell
-        label={
-          config.modelScope === 'all'
-            ? t('All models')
-            : t('{count} models', { count: config.modelIds.length })
-        }
-        items={config.modelIds}
-      />
-
-      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        {config.projectScope === 'all' ? (
-          <span className="truncate text-sm text-muted-foreground">
-            {t('All projects')}
-          </span>
-        ) : (
+      {config.projectScope !== 'all' && (
+        <div className="flex min-w-0 items-center gap-1.5">
           <ProjectChips
             projects={namedProjects}
             excluded={config.projectScope === 'except'}
             allowedCount={allowedProjectCount}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div onClick={(event) => event.stopPropagation()}>
         <DropdownMenu>
@@ -373,21 +404,6 @@ function ConfigRow({
         />
       </div>
     </div>
-  );
-}
-
-function SummaryCell({ label, items }: { label: string; items: string[] }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-          {label}
-        </span>
-      </TooltipTrigger>
-      {items.length > 0 && (
-        <TooltipContent className="max-w-64">{items.join(', ')}</TooltipContent>
-      )}
-    </Tooltip>
   );
 }
 
@@ -481,7 +497,7 @@ function ChatProviderRow({
 function EmptyProviders({
   onConnect,
 }: {
-  onConnect: (provider: AIProviderName) => void;
+  onConnect: (provider?: AIProviderName) => void;
 }) {
   const recommended = RECOMMENDED_PROVIDERS.map((provider) =>
     SUPPORTED_AI_PROVIDERS.find((info) => info.provider === provider),
@@ -492,6 +508,25 @@ function EmptyProviders({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
+          <Bot className="size-5 text-primary" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="text-base font-semibold tracking-tight">
+            {t('Connect your first provider')}
+          </p>
+          <p className="max-w-md text-sm text-muted-foreground">
+            {t(
+              'Bring an API key, then pick which models and projects can use it. Chat, agents, and AI steps run through it.',
+            )}
+          </p>
+        </div>
+        <Button onClick={() => onConnect()}>
+          <Plus className="size-4" />
+          {t('Connect a provider')}
+        </Button>
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {recommended.map((info) => (
           <AvailableProviderCard
@@ -504,7 +539,7 @@ function EmptyProviders({
         ))}
       </div>
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {t('Or choose another provider')}
         </p>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
