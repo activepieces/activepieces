@@ -8,8 +8,6 @@ import {
 } from '@activepieces/shared';
 import { z } from 'zod';
 
-import { RailDotStatus } from './iteration-rail-utils';
-
 function parseStepOutput(output: unknown): BatchStepRunOutput | null {
   const parsed = BatchStepRunOutput.safeParse(output);
   return parsed.success ? parsed.data : null;
@@ -30,41 +28,6 @@ function isSkippedOnEmptyItems({
     stepType === FlowActionType.PROCESS_IN_BATCHES &&
     parseStepOutput(stepOutput)?.totalItems === 0
   );
-}
-
-function itemRange({
-  output,
-  batchIndex,
-}: {
-  output: BatchStepRunOutput;
-  batchIndex: number;
-}): { from: number; to: number } {
-  const from = batchIndex * output.batchSize;
-  return {
-    from: from + 1,
-    to: Math.min(from + output.batchSize, output.totalItems),
-  };
-}
-
-function dotStatuses({
-  output,
-  children,
-}: {
-  output: BatchStepRunOutput;
-  children: BatchChild[];
-}): RailDotStatus[] {
-  const childByIndex = new Map(
-    children.map((child) => [child.dispatchIndex, child.status]),
-  );
-  return Array.from({ length: batchCount(output) }, (_, batchIndex) => {
-    const childStatus = childByIndex.get(batchIndex);
-    if (!isNil(childStatus)) {
-      return fromRunStatus(childStatus);
-    }
-    return failedToDispatchAt({ output, batchIndex })
-      ? 'failedToDispatch'
-      : 'neverStarted';
-  });
 }
 
 function childState({
@@ -103,15 +66,6 @@ function failedToDispatchAt({
   );
 }
 
-function fromRunStatus(status: FlowRunStatus): RailDotStatus {
-  if (status === FlowRunStatus.SUCCEEDED || status === FlowRunStatus.CANCELED) {
-    return 'succeeded';
-  }
-  return isFlowRunStateTerminal({ status, ignoreInternalError: false })
-    ? 'failed'
-    : 'running';
-}
-
 const BatchStepRunOutput = z.object({
   barrierId: z.string().nullable(),
   totalItems: z.number().int().nonnegative(),
@@ -132,8 +86,6 @@ export const batchRailUtils = {
   parseStepOutput,
   batchCount,
   isSkippedOnEmptyItems,
-  itemRange,
-  dotStatuses,
   childState,
 };
 

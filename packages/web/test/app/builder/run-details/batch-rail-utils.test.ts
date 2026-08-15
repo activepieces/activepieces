@@ -86,59 +86,6 @@ describe('batchRailUtils.isSkippedOnEmptyItems', () => {
   });
 });
 
-describe('batchRailUtils.itemRange', () => {
-  it('names a 1-based range for a whole batch', () => {
-    expect(
-      batchRailUtils.itemRange({ output: pausedOutput, batchIndex: 1 }),
-    ).toEqual({ from: 3, to: 4 });
-  });
-
-  it('stops the last range at the last item', () => {
-    expect(
-      batchRailUtils.itemRange({ output: pausedOutput, batchIndex: 2 }),
-    ).toEqual({ from: 5, to: 5 });
-  });
-});
-
-describe('batchRailUtils.dotStatuses', () => {
-  it('distinguishes the states a batch can be in', () => {
-    const statuses = batchRailUtils.dotStatuses({
-      output: releasedOutput,
-      children: [
-        { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
-        { id: 'b', status: FlowRunStatus.FAILED, dispatchIndex: 1 },
-      ],
-    });
-    expect(statuses).toEqual(['succeeded', 'failed', 'failedToDispatch']);
-  });
-
-  it('marks a batch with neither a child nor a dispatch failure as never started', () => {
-    const statuses = batchRailUtils.dotStatuses({
-      output: pausedOutput,
-      children: [{ id: 'a', status: FlowRunStatus.RUNNING, dispatchIndex: 0 }],
-    });
-    expect(statuses).toEqual(['running', 'neverStarted', 'neverStarted']);
-  });
-
-  it('does not treat a signal that merely failed as a dispatch failure', () => {
-    const statuses = batchRailUtils.dotStatuses({
-      output: {
-        barrierId: 'barrier-id',
-        totalItems: 2,
-        batchSize: 1,
-        total: 2,
-        signals: [
-          { sequence: 1, outcome: BarrierSignalStatus.FAILED, runId: 'child-1' },
-        ],
-      },
-      children: [
-        { id: 'a', status: FlowRunStatus.SUCCEEDED, dispatchIndex: 0 },
-      ],
-    });
-    expect(statuses).toEqual(['succeeded', 'neverStarted']);
-  });
-});
-
 describe('batchRailUtils.childState', () => {
   it('separates a batch that never started from one that failed to dispatch', () => {
     expect(

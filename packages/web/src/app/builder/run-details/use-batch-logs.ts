@@ -13,7 +13,6 @@ import { flowRunQueries, flowRunUtils } from '@/features/flow-runs';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { BatchChild, batchRailUtils } from './batch-rail-utils';
-import { iterationRailUtils } from './iteration-rail-utils';
 
 export const useBatchStepRun = (batchStepName: string | null) => {
   const [run, loopsIndexes, batchIndex] = useBuilderStateContext((state) => [
@@ -38,8 +37,8 @@ export const useBatchStepRun = (batchStepName: string | null) => {
 
   const { data: childrenPage } = flowRunQueries.useBatchChildren({
     barrierId,
-    limit: iterationRailUtils.MAX_RENDERED_DOTS,
-    enabled: total > 0 && total <= iterationRailUtils.MAX_RENDERED_DOTS,
+    limit: MAX_ENUMERATED_CHILDREN,
+    enabled: total > 0 && total <= MAX_ENUMERATED_CHILDREN,
   });
   const { data: selectedPage, isLoading: isSelectedChildLoading } =
     flowRunQueries.useBatchChild({
@@ -141,6 +140,8 @@ function toBatchChildren(
 }
 
 const NOT_IN_A_BATCH = { kind: 'notInABatch', childRunId: null } as const;
+
+const MAX_ENUMERATED_CHILDREN = 100;
 
 export type BatchLogs =
   | { kind: 'notInABatch'; childRunId: null }
