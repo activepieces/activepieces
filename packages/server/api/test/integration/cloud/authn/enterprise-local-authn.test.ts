@@ -108,7 +108,7 @@ describe('Enterprise Local Authn API', () => {
             const mockOtp = createMockOtp({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
-                updated: dayjs().subtract(31, 'minutes').toISOString(),
+                updated: dayjs().subtract(25, 'hours').toISOString(),
                 state: OtpState.PENDING,
             })
             await db.save('otp', mockOtp)
