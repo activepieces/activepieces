@@ -84,7 +84,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return restrictToAllowList ? models.filter((model) => aiProvider.modelIds.includes(model.id)) : models
     },
 
-    async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+    async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<AIProviderWithoutSensitiveData> {
         if (request.provider === AIProviderName.ACTIVEPIECES) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -92,7 +92,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
-        await aiProviderRepo().save({
+        const saved = await aiProviderRepo().save({
             id: apId(),
             auth: await encryptUtils.encryptObject(request.auth),
             config: request.config,
@@ -104,6 +104,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             projectScope: 'all',
             projectIds: [],
         })
+        return {
+            id: saved.id,
+            name: saved.displayName,
+            provider: saved.provider,
+            config: saved.config,
+            enabledForChat: saved.enabledForChat ?? false,
+            modelScope: saved.modelScope,
+            modelIds: saved.modelIds,
+            projectScope: saved.projectScope,
+            projectIds: saved.projectIds,
+        }
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({

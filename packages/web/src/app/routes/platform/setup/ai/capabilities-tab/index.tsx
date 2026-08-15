@@ -1,12 +1,10 @@
 import {
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
-  PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Globe, Image, LucideIcon, Pencil, Search, Trash } from 'lucide-react';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,22 +13,16 @@ import {
   aiToolConfigQueries,
 } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 
-import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
+import {
+  AI_TOOL_CATALOG,
+  AiToolCapabilityInfo,
+} from '../../ai-capabilities/catalog';
+import { SectionHeader } from '../components/section-header';
 
-import { AiCapabilityDialog } from './ai-capability-dialog';
-import { AI_TOOL_CATALOG, AiToolCapabilityInfo } from './catalog';
-
-const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
-  [AiToolCapability.WEB_SEARCH]: Search,
-  [AiToolCapability.WEB_SCRAPING]: Globe,
-  [AiToolCapability.IMAGE_GENERATION]: Image,
-};
-
-export default function AiCapabilitiesPage() {
+export function CapabilitiesTab() {
   const { data: configs, refetch } = aiToolConfigQueries.useAiToolConfigs();
-  const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
 
@@ -42,44 +34,37 @@ export default function AiCapabilitiesPage() {
   });
 
   return (
-    <LockedFeatureGuard
-      featureKey="UNIVERSAL_AI"
-      locked={currentUser?.platformRole !== PlatformRole.ADMIN}
-      lockTitle={t('Unlock AI Capabilities')}
-      lockDescription={t(
-        'Give the AI assistant web search, scraping, and image generation by connecting the services you choose.',
-      )}
-    >
-      <CenteredPage
-        title={t('AI Capabilities')}
+    <div className="flex flex-col gap-4">
+      <SectionHeader
+        title={t('Assistant capabilities')}
+        count={AI_TOOL_CATALOG.length}
         description={t(
           'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
         )}
-      >
-        <div className="flex flex-col gap-4">
-          {AI_TOOL_CATALOG.map((capabilityInfo) => {
-            const config = configs?.find(
-              (c) => c.capability === capabilityInfo.capability,
-            );
-            return (
-              <CapabilityCard
-                key={capabilityInfo.capability}
-                capabilityInfo={capabilityInfo}
-                Icon={CAPABILITY_ICON[capabilityInfo.capability]}
-                config={config}
-                allowWrite={allowWrite}
-                onToggle={(checked) =>
-                  config &&
-                  toggle({ id: config.id, request: { enabled: checked } })
-                }
-                onDelete={() => config && remove(config.id)}
-                onSaved={() => refetch()}
-              />
-            );
-          })}
-        </div>
-      </CenteredPage>
-    </LockedFeatureGuard>
+      />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {AI_TOOL_CATALOG.map((capabilityInfo) => {
+          const config = configs?.find(
+            (c) => c.capability === capabilityInfo.capability,
+          );
+          return (
+            <CapabilityCard
+              key={capabilityInfo.capability}
+              capabilityInfo={capabilityInfo}
+              Icon={CAPABILITY_ICON[capabilityInfo.capability]}
+              config={config}
+              allowWrite={allowWrite}
+              onToggle={(checked) =>
+                config &&
+                toggle({ id: config.id, request: { enabled: checked } })
+              }
+              onDelete={() => config && remove(config.id)}
+              onSaved={() => refetch()}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -160,3 +145,9 @@ function CapabilityCard({
     </div>
   );
 }
+
+const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
+  [AiToolCapability.WEB_SEARCH]: Search,
+  [AiToolCapability.WEB_SCRAPING]: Globe,
+  [AiToolCapability.IMAGE_GENERATION]: Image,
+};
