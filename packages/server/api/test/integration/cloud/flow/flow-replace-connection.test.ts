@@ -4,6 +4,7 @@ import {
     FlowActionType,
     FlowStatus,
     FlowTriggerType,
+    FlowVersionState,
     PackageType,
     PieceType,
     TriggerStrategy,
@@ -38,8 +39,8 @@ function authFor(externalId: string): string {
     return `{{connections['${externalId}']}}`
 }
 
-async function seedFlowWithConnection(ctx: TestContext, sourceExternalId: string) {
-    const pieceMetadata = createMockPieceMetadata({
+async function savePiece() {
+    await db.save('piece_metadata', createMockPieceMetadata({
         name: PIECE_NAME,
         version: '0.1.0',
         pieceType: PieceType.OFFICIAL,
@@ -56,8 +57,41 @@ async function seedFlowWithConnection(ctx: TestContext, sourceExternalId: string
                 testStrategy: TriggerTestStrategy.TEST_FUNCTION,
             },
         },
-    })
-    await db.save('piece_metadata', pieceMetadata)
+    }))
+}
+
+function flowTrigger(sourceExternalId: string) {
+    return {
+        type: FlowTriggerType.PIECE,
+        name: 'trigger',
+        displayName: 'Trigger',
+        valid: true,
+        settings: {
+            pieceName: PIECE_NAME,
+            pieceVersion: '0.1.0',
+            triggerName: 'every_hour',
+            input: {},
+            propertySettings: {},
+        },
+        nextAction: {
+            type: FlowActionType.PIECE,
+            name: 'step_1',
+            displayName: 'Piece Step',
+            valid: true,
+            skip: false,
+            settings: {
+                pieceName: PIECE_NAME,
+                pieceVersion: '0.1.0',
+                actionName: 'test_action',
+                input: { auth: authFor(sourceExternalId), message: 'hello' },
+                propertySettings: {},
+            },
+        },
+    }
+}
+
+async function seedFlowWithConnection(ctx: TestContext, sourceExternalId: string) {
+    await savePiece()
 
     const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
     await db.save('flow', flow)
@@ -66,35 +100,30 @@ async function seedFlowWithConnection(ctx: TestContext, sourceExternalId: string
         flowId: flow.id,
         updatedBy: ctx.user.id,
         connectionIds: [sourceExternalId],
-        trigger: {
-            type: FlowTriggerType.PIECE,
-            name: 'trigger',
-            displayName: 'Trigger',
-            valid: true,
-            settings: {
-                pieceName: PIECE_NAME,
-                pieceVersion: '0.1.0',
-                triggerName: 'every_hour',
-                input: {},
-                propertySettings: {},
-            },
-            nextAction: {
-                type: FlowActionType.PIECE,
-                name: 'step_1',
-                displayName: 'Piece Step',
-                valid: true,
-                skip: false,
-                settings: {
-                    pieceName: PIECE_NAME,
-                    pieceVersion: '0.1.0',
-                    actionName: 'test_action',
-                    input: { auth: authFor(sourceExternalId), message: 'hello' },
-                    propertySettings: {},
-                },
-            },
-        },
+        trigger: flowTrigger(sourceExternalId),
     })
     await db.save('flow_version', flowVersion)
+
+    return { flow }
+}
+
+async function seedPublishedDisabledFlow(ctx: TestContext, sourceExternalId: string) {
+    await savePiece()
+
+    const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+    await db.save('flow', flow)
+
+    const publishedVersion = createMockFlowVersion({
+        flowId: flow.id,
+        updatedBy: ctx.user.id,
+        state: FlowVersionState.LOCKED,
+        valid: true,
+        connectionIds: [sourceExternalId],
+        trigger: flowTrigger(sourceExternalId),
+    })
+    await db.save('flow_version', publishedVersion)
+    flow.publishedVersionId = publishedVersion.id
+    await db.save('flow', flow)
 
     return { flow }
 }
@@ -135,6 +164,24 @@ describe('Replace flow connection endpoint', () => {
         const populated = await ctx.get(`/v1/flows/${flow.id}`)
         const auth = populated.json().version.trigger.nextAction.settings.input.auth
         expect(auth).toBe(authFor(target.externalId))
+    })
+
+    it('keeps a disabled flow disabled when replacing on the published version', async () => {
+        const ctx = await createTestContext(app!)
+        const { source, target } = await seedConnections(ctx)
+        const { flow } = await seedPublishedDisabledFlow(ctx, source.externalId)
+        const memberCtx = await connectionOnlyMemberContext(ctx)
+
+        const response = await memberCtx.post(`/v1/flows/${flow.id}/replace-connection`, {
+            sourceAppConnectionId: source.id,
+            targetAppConnectionId: target.id,
+            applyToPublishedVersions: true,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.NO_CONTENT)
+
+        const updated = await db.findOneBy<{ status: FlowStatus }>('flow', { id: flow.id })
+        expect(updated?.status).toBe(FlowStatus.DISABLED)
     })
 
     it('rejects replacing with a connection from a different app', async () => {
