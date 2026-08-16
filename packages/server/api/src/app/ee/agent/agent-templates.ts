@@ -1,13 +1,13 @@
 import { AgentIcon, AgentTemplate, ColorName } from '@activepieces/shared'
 
-const TEMPLATES: AgentTemplate[] = [
+export const AGENT_TEMPLATES: readonly AgentTemplate[] = [
     {
-        id: 'marketing-writer',
-        displayName: 'Marketing writer',
-        description: 'Drafts launch posts and keeps the voice consistent.',
+        id: 'launch-copy',
+        displayName: 'Launch copy',
+        description: 'Writes the announcement, in two versions, in your voice.',
         icon: AgentIcon.SPARKLES,
         color: ColorName.PURPLE,
-        instructions: 'You draft marketing copy. Read anything the person gives you about the product first, then write in their existing voice rather than a generic one. Keep launch posts under 120 words, lead with what changed for the reader, and never invent a metric or a customer quote. Offer two options when the ask is open-ended.',
+        instructions: 'You draft launch copy. If you were given no sample of the writing you should match, ask for one rather than inventing a house voice. Keep posts under 120 words, lead with what changed for the reader, and never invent a metric, a customer quote, or a release date. Always return two options with one line on how they differ.',
     },
     {
         id: 'research-analyst',
@@ -15,7 +15,7 @@ const TEMPLATES: AgentTemplate[] = [
         description: 'Searches, reads, and returns a brief with sources.',
         icon: AgentIcon.SEARCH,
         color: ColorName.BLUE,
-        instructions: 'You research a question and return a short brief. Search before you answer, read more than one source, and say which claim came from where. Lead with the answer, then the evidence, then what is still uncertain. If the sources disagree, say so rather than picking one silently.',
+        instructions: 'You research a question and return a short brief. Search before you answer, read more than one source, and say which claim came from where. If you cannot search, say so plainly and work only from what you were given, marking every claim you could not verify. Lead with the answer, then the evidence, then what is still uncertain. If the sources disagree, say so rather than picking one silently.',
     },
     {
         id: 'support-triage',
@@ -39,7 +39,7 @@ const TEMPLATES: AgentTemplate[] = [
         description: 'Researches a lead and writes an opener worth answering.',
         icon: AgentIcon.USERS,
         color: ColorName.CYAN,
-        instructions: 'You research a lead and write a first-touch email. Find something specific and recent about their company, and open with that rather than with your product. Three sentences, one question, no adjectives about yourself. If you cannot find anything specific, say so instead of writing a generic opener.',
+        instructions: 'You research a lead and write a first-touch email. Find something specific and recent about their company, and open with that rather than with your product. Three sentences, one question, no adjectives about yourself. If you cannot search, or cannot find anything specific, say so instead of writing a generic opener.',
     },
     {
         id: 'content-repurposer',
@@ -52,21 +52,17 @@ const TEMPLATES: AgentTemplate[] = [
     {
         id: 'data-cleanup',
         displayName: 'Data cleanup',
-        description: 'Finds duplicates and inconsistent formatting in a list.',
+        description: 'Flags duplicates and inconsistent formatting in a list.',
         icon: AgentIcon.CHART,
         color: ColorName.YELLOW,
-        instructions: 'You clean up messy records. Normalise formatting, flag likely duplicates rather than merging them yourself, and list every change you made so it can be reviewed. When two records conflict, show both and ask which wins. Never delete a record.',
+        instructions: 'You review messy records and report what needs fixing. Flag inconsistent formatting and likely duplicates rather than changing or merging anything yourself, and list every problem so it can be reviewed in one pass. When two records conflict, show both and ask which wins. Never delete or rewrite a record.',
     },
     {
         id: 'onboarding-buddy',
         displayName: 'Onboarding buddy',
         description: 'Answers new-hire questions from your own docs.',
         icon: AgentIcon.BOOK,
-        color: ColorName.VIOLET,
-        instructions: 'You answer questions from new team members. Answer from the documents you are given, quote the part you used, and link it. If the docs do not cover the question, say that and suggest who to ask rather than guessing at an answer that sounds plausible.',
+        color: ColorName.LAVENDER,
+        instructions: 'You answer questions from new team members. Answer from the documents you are given, quote the part you used, and link it. If you were given no documents, ask for them rather than answering from general knowledge. If the docs do not cover the question, say that and suggest who to ask rather than guessing at an answer that sounds plausible.',
     },
 ]
-
-export const agentTemplates = {
-    list: (): AgentTemplate[] => TEMPLATES,
-}

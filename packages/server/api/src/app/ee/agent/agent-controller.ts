@@ -1,4 +1,4 @@
-import { ApId, assertNotNullOrUndefined, Permission, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
 import { Agent, AgentTemplate, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -9,9 +9,14 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { applicationEvents } from '../../helper/application-events'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { securityHelper } from '../../helper/security-helper'
+import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
+import { agentDraftAi } from './agent-draft-ai'
 import { AgentEntity } from './agent-entity'
+import { agentHelpers } from './agent-helpers'
 import { agentService } from './agent-service'
-import { agentTemplates } from './agent-templates'
+import { AGENT_TEMPLATES } from './agent-templates'
+
+const DRAFTS_PER_MINUTE = 20
 
 export const agentController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAgentRoute, async (request, reply) => {
@@ -39,14 +44,24 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/templates', ListTemplatesRoute, async (): Promise<SeekPage<AgentTemplate>> => {
-        return paginationHelper.createPage(agentTemplates.list(), null)
+        return paginationHelper.createPage([...AGENT_TEMPLATES], null)
     })
 
     app.post('/draft', DraftAgentRoute, async (request): Promise<DraftAgentResponse> => {
-        return agentService(request.log).draft({
-            platformId: request.principal.platform.id,
-            prompt: request.body.prompt,
+        const platformId = request.principal.platform.id
+        await assertCreditsAndAppSumoNotExceeded({ platformId, log: request.log })
+        const { allowed, count } = await agentHelpers.incrementAndCheckLimit({
+            key: `agent-draft:${platformId}:${await resolveUserId(request)}`,
+            limit: DRAFTS_PER_MINUTE,
+            ttlSeconds: 60,
         })
+        if (!allowed) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `You drafted ${count} agents in the last minute, above the limit of ${DRAFTS_PER_MINUTE}` },
+            })
+        }
+        return agentDraftAi(request.log).draft({ platformId, prompt: request.body.prompt })
     })
 
     app.get('/:id', GetAgentRoute, async (request): Promise<Agent> => {
@@ -145,7 +160,7 @@ const ListTemplatesRoute = {
     schema: {
         tags: ['agents'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List the starter agents, none of which need a connection or an AI provider',
+        description: 'List the starter agents, none of which need a connection',
         response: {
             [StatusCodes.OK]: SeekPage(AgentTemplate),
         },

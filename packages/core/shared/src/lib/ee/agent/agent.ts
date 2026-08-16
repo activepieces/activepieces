@@ -10,6 +10,8 @@ const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
 const MAX_AGENT_SHARED_MEMBERS = 200
 const MAX_AGENT_PAGE_SIZE = 100
+const MAX_AGENT_NAME_LENGTH = 200
+const MAX_DRAFT_PROMPT_LENGTH = 2_000
 const DEFAULT_AGENT_MAX_STEPS = 20
 
 enum AgentVisibility {
@@ -69,26 +71,19 @@ const CreateAgentRequest = z.object({
 
 const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial()
 
-const AgentTemplate = z.object({
-    id: z.string(),
-    displayName: z.string(),
-    description: z.string(),
-    icon: z.enum(AgentIcon),
-    color: z.enum(ColorName),
-    instructions: z.string(),
+const DraftAgentResponse = z.object({
+    displayName: z.string().min(1, formErrors.required).max(MAX_AGENT_NAME_LENGTH),
+    description: z.string().max(MAX_AGENT_NAME_LENGTH),
+    icon: z.enum(AgentIcon).catch(AgentIcon.BOT),
+    color: z.enum(ColorName).catch(ColorName.PURPLE),
+    instructions: z.string().min(1, formErrors.required).max(MAX_AGENT_TEXT_LENGTH),
 })
+
+const AgentTemplate = DraftAgentResponse.extend({ id: z.string() })
 
 const DraftAgentRequest = z.object({
     projectId: ApId,
-    prompt: z.string().min(1, formErrors.required).max(MAX_AGENT_TEXT_LENGTH),
-})
-
-const DraftAgentResponse = z.object({
-    displayName: z.string(),
-    description: z.string(),
-    icon: z.enum(AgentIcon),
-    color: z.enum(ColorName),
-    instructions: z.string(),
+    prompt: z.string().min(1, formErrors.required).max(MAX_DRAFT_PROMPT_LENGTH),
 })
 
 const ListAgentsRequest = z.object({
@@ -114,7 +109,9 @@ export {
     DraftAgentResponse,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
+    MAX_AGENT_NAME_LENGTH,
     MAX_AGENT_PAGE_SIZE,
+    MAX_DRAFT_PROMPT_LENGTH,
     MAX_AGENT_SHARED_MEMBERS,
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
