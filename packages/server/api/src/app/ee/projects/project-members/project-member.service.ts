@@ -216,6 +216,19 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             .getCount()
         return count > 0
     },
+    async listProjectIdsWithPermission({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<ProjectId[]> {
+        const rows = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
+            .innerJoin('project_member.projectRole', 'project_role')
+            .innerJoin('project_member.project', 'project')
+            .where('project_member.userId = :userId', { userId })
+            .andWhere('project_member.platformId = :platformId', { platformId })
+            .andWhere(':permission = ANY(project_role.permissions)', { permission })
+            .andWhere('project.deleted IS NULL')
+            .getRawMany<{ projectId: ProjectId }>()
+        return rows.map((row) => row.projectId)
+    },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()
         
