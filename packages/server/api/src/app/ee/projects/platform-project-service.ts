@@ -226,7 +226,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder()
             .softDelete()
             .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
-            .returning('*')
+            .returning('id')
             .execute()
         const deletedRows: unknown[] = result.raw ?? []
         if (deletedRows.length === 0) {

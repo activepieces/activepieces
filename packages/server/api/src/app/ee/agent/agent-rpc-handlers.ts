@@ -63,7 +63,7 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
     if (!isNil(runId)) {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
-    const result = await builder.returning('*').execute()
+    const result = await builder.returning('id').execute()
     const updatedRows: unknown[] = result.raw ?? []
     return updatedRows.length > 0
 }
@@ -210,7 +210,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             .update()
             .set({ status: AgentConversationStatus.STREAMING })
             .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
-            .returning('*')
+            .returning('id')
             .execute()
         const lockedRows: unknown[] = lockResult.raw ?? []
         if (lockedRows.length === 0) {
