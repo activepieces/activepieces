@@ -280,7 +280,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function assertChatProviderConfigured({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const provider = await aiProviderService(log).getChatProviderName({ platformId })
+    const provider = await aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'platform' } })
     if (isNil(provider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,

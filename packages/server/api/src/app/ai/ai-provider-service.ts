@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -25,65 +25,32 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
-        const aiCreditsEnabled = flagService(log).aiCreditsEnabled()
-        const activepiecesExists = await aiProviderRepo().existsBy({
-            platformId,
-            provider: AIProviderName.ACTIVEPIECES,
-        })
-
-        if (aiCreditsEnabled && !activepiecesExists) {
-            const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
-            await aiProviderRepo().save({
-                id: apId(),
-                auth: await encryptUtils.encryptObject({}),
-                config: {},
-                provider: AIProviderName.ACTIVEPIECES,
-                displayName: 'Activepieces',
-                platformId,
-                enabledForChat: !hasChatProvider,
-            })
-        }
-        const configuredProviders = await aiProviderRepo().findBy({ platformId })
-
-        const hasActivepiecesProvider = configuredProviders.some((p) => p.provider === AIProviderName.ACTIVEPIECES)
-        const hideActivepiecesProvider = hasActivepiecesProvider && await isActivepiecesAiProviderHidden({ platformId, log })
-
-        return configuredProviders
-            .filter((p) => !(hideActivepiecesProvider && p.provider === AIProviderName.ACTIVEPIECES))
-            .map((p): AIProviderWithoutSensitiveData => ({
-                id: p.id,
-                name: p.displayName,
-                provider: p.provider,
-                config: p.config,
-                enabledForChat: p.enabledForChat ?? false,
-                modelScope: p.modelScope,
-                modelIds: p.modelIds,
-                projectScope: p.projectScope,
-                projectIds: p.projectIds,
-            }))
+    async listConfigs(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        return rows.map(toConfigResponse)
     },
 
-    async listModels({ platformId, provider, projectId, configId }: { platformId: PlatformId, provider: AIProviderName, projectId?: string, configId?: string }): Promise<AIProviderModel[]> {
-        const aiProvider = isNil(configId)
-            ? await resolveEligibleRow({ platformId, provider, projectId })
-            : await getRowByIdOrThrow({ platformId, provider, configId })
-        const { config } = aiProvider
-        const auth = await decryptRowAuth({ aiProvider, platformId })
+    async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
+        const rows = await listVisibleRows({ platformId, log })
+        const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
+        return rankRows(eligible).reduce<ProjectAIProvider[]>((acc, row) => (
+            acc.some((entry) => entry.provider === row.provider)
+                ? acc
+                : [...acc, { provider: row.provider, name: row.displayName, enabledForChat: row.enabledForChat ?? false }]
+        ), [])
+    },
 
-        const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
-        if (!modelsCache.has(cacheKey) || 'models' in config) {
-            const data = await aiProviders[provider].listModels(auth, config)
-            modelsCache.set(cacheKey, data.map(model => ({
-                id: model.id,
-                name: model.name,
-                type: model.type,
-            })))
-        }
+    async listModels({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderModel[]> {
+        const aiProvider = await resolveEligibleRow({ platformId, provider, scope })
+        const models = await fetchModels({ aiProvider, platformId })
+        return aiProvider.modelScope === 'selected'
+            ? models.filter((model) => aiProvider.modelIds.includes(model.id))
+            : models
+    },
 
-        const models = modelsCache.get(cacheKey)!
-        const restrictToAllowList = !isNil(projectId) && aiProvider.modelScope === 'selected'
-        return restrictToAllowList ? models.filter((model) => aiProvider.modelIds.includes(model.id)) : models
+    async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
+        const aiProvider = await getRowByIdOrThrow({ platformId, configId })
+        return fetchModels({ aiProvider, platformId })
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<AIProviderWithoutSensitiveData> {
@@ -106,17 +73,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             projectScope: 'all',
             projectIds: [],
         })
-        return {
-            id: saved.id,
-            name: saved.displayName,
-            provider: saved.provider,
-            config: saved.config,
-            enabledForChat: saved.enabledForChat ?? false,
-            modelScope: saved.modelScope,
-            modelIds: saved.modelIds,
-            projectScope: saved.projectScope,
-            projectIds: saved.projectIds,
-        }
+        return toConfigResponse(saved)
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -172,24 +129,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getChatProviderName({ platformId }: { platformId: PlatformId }): Promise<AIProviderName | null> {
-        const chatProvider = await findAvailableChatProviderRow({ platformId, log })
+    async getChatProviderName({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<AIProviderName | null> {
+        const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
         return chatProvider?.provider ?? null
     },
 
-    async getChatProvider({ platformId, projectId }: { platformId: PlatformId, projectId?: string }): Promise<GetProviderConfigResponse | null> {
-        const chatProvider = await findAvailableChatProviderRow({ platformId, projectId, log })
+    async getChatProvider({ platformId, scope }: { platformId: PlatformId, scope: ProviderScope }): Promise<GetProviderConfigResponse | null> {
+        const chatProvider = await findAvailableChatProviderRow({ platformId, scope, log })
         if (isNil(chatProvider)) {
             return null
         }
-        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(chatProvider.auth)
-        if (chatProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
-            if (!doesHaveKeys) {
-                const enriched = await enrichWithKeysIfNeeded(chatProvider, platformId)
-                auth = enriched.auth
-            }
-        }
+        const auth = await decryptRowAuth({ aiProvider: chatProvider, platformId })
         return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
@@ -220,30 +170,14 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
     },
-    async getConfigOrThrow({ platformId, provider, projectId }: { platformId: PlatformId, provider: AIProviderName, projectId?: string }): Promise<GetProviderConfigResponse> {
-        const aiProvider = await resolveEligibleRow({ platformId, provider, projectId })
+    async getConfigOrThrow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<GetProviderConfigResponse> {
+        const aiProvider = await resolveEligibleRow({ platformId, provider, scope })
         const auth = await decryptRowAuth({ aiProvider, platformId })
         return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
-        const aiProvider = await aiProviderRepo().findOneBy({
-            platformId,
-            provider: AIProviderName.ACTIVEPIECES,
-        })
-        if (isNil(aiProvider)) {
-            const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
-            await aiProviderRepo().save({
-                id: apId(),
-                auth: await encryptUtils.encryptObject({}),
-                config: {},
-                provider: AIProviderName.ACTIVEPIECES,
-                displayName: 'Activepieces',
-                platformId,
-                enabledForChat: !hasChatProvider,
-            })
-        }
-
-        const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
+        await ensureManagedProviderRow({ platformId })
+        const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES, scope: { type: 'platform' } })
         return auth as ActivePiecesProviderAuthConfig
     },
 })
@@ -259,28 +193,79 @@ const PROJECT_SCOPE_SPECIFICITY: Record<AiProviderProjectScope, number> = {
     all: 2,
 }
 
-function rowAllowsProject({ row, projectId }: { row: AIProviderSchema, projectId: string }): boolean {
+function rowAllowsScope({ row, scope }: { row: AIProviderSchema, scope: ProviderScope }): boolean {
+    if (scope.type === 'platform') {
+        return true
+    }
     switch (row.projectScope) {
         case 'selected':
-            return row.projectIds.includes(projectId)
+            return row.projectIds.includes(scope.projectId)
         case 'except':
-            return !row.projectIds.includes(projectId)
+            return !row.projectIds.includes(scope.projectId)
         default:
             return true
     }
 }
 
-async function resolveEligibleRow({ platformId, provider, projectId }: { platformId: PlatformId, provider: AIProviderName, projectId?: string }): Promise<AIProviderSchema> {
-    const rows = await aiProviderRepo().findBy({ platformId, provider })
-    const eligible = isNil(projectId) ? rows : rows.filter((row) => rowAllowsProject({ row, projectId }))
-    const ranked = [...eligible].sort((a, b) => {
+function rankRows(rows: AIProviderSchema[]): AIProviderSchema[] {
+    return [...rows].sort((a, b) => {
         const specificityDelta = PROJECT_SCOPE_SPECIFICITY[a.projectScope] - PROJECT_SCOPE_SPECIFICITY[b.projectScope]
         if (specificityDelta !== 0) {
             return specificityDelta
         }
         return new Date(b.created).getTime() - new Date(a.created).getTime()
     })
-    const winner = ranked[0]
+}
+
+function toConfigResponse(row: AIProviderSchema): AIProviderWithoutSensitiveData {
+    return {
+        id: row.id,
+        name: row.displayName,
+        provider: row.provider,
+        config: row.config,
+        enabledForChat: row.enabledForChat ?? false,
+        modelScope: row.modelScope,
+        modelIds: row.modelIds,
+        projectScope: row.projectScope,
+        projectIds: row.projectIds,
+    }
+}
+
+async function ensureManagedProviderRow({ platformId }: { platformId: PlatformId }): Promise<void> {
+    const exists = await aiProviderRepo().existsBy({ platformId, provider: AIProviderName.ACTIVEPIECES })
+    if (exists) {
+        return
+    }
+    const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
+    await aiProviderRepo().save({
+        id: apId(),
+        auth: await encryptUtils.encryptObject({}),
+        config: {},
+        provider: AIProviderName.ACTIVEPIECES,
+        displayName: 'Activepieces',
+        platformId,
+        enabledForChat: !hasChatProvider,
+        modelScope: 'all',
+        modelIds: [],
+        projectScope: 'all',
+        projectIds: [],
+    })
+}
+
+async function listVisibleRows({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema[]> {
+    if (flagService(log).aiCreditsEnabled()) {
+        await ensureManagedProviderRow({ platformId })
+    }
+    const rows = await aiProviderRepo().findBy({ platformId })
+    const hasActivepiecesRow = rows.some((row) => row.provider === AIProviderName.ACTIVEPIECES)
+    const hideActivepieces = hasActivepiecesRow && await isActivepiecesAiProviderHidden({ platformId, log })
+    return rows.filter((row) => !(hideActivepieces && row.provider === AIProviderName.ACTIVEPIECES))
+}
+
+async function resolveEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema> {
+    const rows = await aiProviderRepo().findBy({ platformId, provider })
+    const eligible = rows.filter((row) => rowAllowsScope({ row, scope }))
+    const winner = rankRows(eligible)[0]
     if (isNil(winner)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -293,8 +278,8 @@ async function resolveEligibleRow({ platformId, provider, projectId }: { platfor
     return winner
 }
 
-async function getRowByIdOrThrow({ platformId, provider, configId }: { platformId: PlatformId, provider: AIProviderName, configId: string }): Promise<AIProviderSchema> {
-    const aiProvider = await aiProviderRepo().findOneBy({ id: configId, platformId, provider })
+async function getRowByIdOrThrow({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderSchema> {
+    const aiProvider = await aiProviderRepo().findOneBy({ id: configId, platformId })
     if (isNil(aiProvider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -305,6 +290,21 @@ async function getRowByIdOrThrow({ platformId, provider, configId }: { platformI
         })
     }
     return aiProvider
+}
+
+async function fetchModels({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderModel[]> {
+    const { provider, config } = aiProvider
+    const auth = await decryptRowAuth({ aiProvider, platformId })
+    const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
+    if (!modelsCache.has(cacheKey) || 'models' in config) {
+        const data = await aiProviders[provider].listModels(auth, config)
+        modelsCache.set(cacheKey, data.map(model => ({
+            id: model.id,
+            name: model.name,
+            type: model.type,
+        })))
+    }
+    return modelsCache.get(cacheKey)!
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {
@@ -319,9 +319,9 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
     return auth
 }
 
-async function findAvailableChatProviderRow({ platformId, projectId, log }: { platformId: PlatformId, projectId?: string, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
     const allChatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
-    const chatProviders = isNil(projectId) ? allChatProviders : allChatProviders.filter((row) => rowAllowsProject({ row, projectId }))
+    const chatProviders = allChatProviders.filter((row) => rowAllowsScope({ row, scope }))
     if (!chatProviders.some((chatProvider) => chatProvider.provider === AIProviderName.ACTIVEPIECES)) {
         return chatProviders[0] ?? null
     }
@@ -368,3 +368,7 @@ function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProvi
         }
     }
 }
+
+export type ProviderScope =
+    | { type: 'project', projectId: string }
+    | { type: 'platform' }

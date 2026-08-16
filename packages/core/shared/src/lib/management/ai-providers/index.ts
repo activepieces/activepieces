@@ -221,6 +221,13 @@ export const AIProviderWithoutSensitiveData = z.object({
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
+export const ProjectAIProvider = z.object({
+    provider: z.nativeEnum(AIProviderName),
+    name: z.string(),
+    enabledForChat: z.boolean(),
+})
+export type ProjectAIProvider = z.infer<typeof ProjectAIProvider>
+
 export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),

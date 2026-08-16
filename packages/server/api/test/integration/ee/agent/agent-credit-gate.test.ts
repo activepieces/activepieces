@@ -57,7 +57,7 @@ describe('Chat credit gate on self-hosted (managed AI unavailable)', () => {
             provider: AIProviderName.ACTIVEPIECES,
         })
 
-        const response = await ctx.get('/v1/ai-providers')
+        const response = await ctx.get('/v1/ai-providers', { projectId: ctx.project.id })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         const providers: { provider: string }[] = response.json()

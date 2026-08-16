@@ -1,6 +1,7 @@
 import { AIProviderName, chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { AgentConversation, AgentRunSource, ApEdition, PersistedAgentMessage, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { ProviderScope } from '../../ai/ai-provider-service'
 import { isNotOneOfTheseEditions } from '../../database/database-common'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
@@ -127,17 +128,29 @@ async function resolveLicenseKeysByPlatform({ platformIds }: {
     return map
 }
 
+function chatProviderScope(conversation: AgentConversation): ProviderScope {
+    return isNil(conversation.projectId) ? { type: 'platform' } : { type: 'project', projectId: conversation.projectId }
+}
+
+function chatProviderCacheKey(conversation: AgentConversation): string {
+    return `${conversation.platformId}:${conversation.projectId ?? ''}`
+}
+
 async function resolveLookups({ conversations, log }: {
     conversations: AgentConversation[]
     log: FastifyBaseLogger
 }): Promise<ConversationLookups> {
     const uniqueUserIds = [...new Set(conversations.map((c) => c.userId))]
     const uniquePlatformIds = [...new Set(conversations.map((c) => c.platformId))]
+    const uniqueScopes = [...new Map(conversations.map((c) => [chatProviderCacheKey(c), c])).values()]
 
     const [userEntries, platformNameEntries, providerEntries] = await Promise.all([
         Promise.all(uniqueUserIds.map(async (userId): Promise<[string, string | null]> => [userId, await resolveUserEmail({ userId, log })])),
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
-        Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, AIProviderName | null]> => [platformId, await agentHelpers.resolveChatProviderName({ platformId, log })])),
+        Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
+            chatProviderCacheKey(conversation),
+            await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, scope: chatProviderScope(conversation), log }),
+        ])),
     ])
 
     return {
@@ -209,7 +222,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const provider = providerCache?.get(conversation.platformId) ?? await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
+    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, scope: chatProviderScope(conversation), log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })
 

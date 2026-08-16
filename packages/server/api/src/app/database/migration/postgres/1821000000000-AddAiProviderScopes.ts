@@ -41,15 +41,19 @@ export class AddAiProviderScopes1821000000000 implements Migration {
         }
         else {
             // CONCURRENTLY avoids a ShareLock that would block writes on the
-            // existing "ai_provider" table for the duration of each build.
-            await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_platform_id_provider"
-                ON "ai_provider" ("platformId", "provider")
-            `)
-            await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_project_ids_gin"
-                ON "ai_provider" USING GIN ("projectIds")
-            `)
+            // existing "ai_provider" table for the duration of each build. A build
+            // that dies part-way leaves an INVALID index behind, which IF NOT EXISTS
+            // would happily skip on the next attempt, so drop that first.
+            await createIndexConcurrently(queryRunner, {
+                name: 'idx_ai_provider_platform_id_provider',
+                ddl: `CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_platform_id_provider"
+                      ON "ai_provider" ("platformId", "provider")`,
+            })
+            await createIndexConcurrently(queryRunner, {
+                name: 'idx_ai_provider_project_ids_gin',
+                ddl: `CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_project_ids_gin"
+                      ON "ai_provider" USING GIN ("projectIds")`,
+            })
         }
     }
 
@@ -74,6 +78,19 @@ export class AddAiProviderScopes1821000000000 implements Migration {
             ON "ai_provider" ("platformId", "provider")
         `)
     }
+}
+
+async function createIndexConcurrently(queryRunner: QueryRunner, { name, ddl }: { name: string, ddl: string }): Promise<void> {
+    const invalid = await queryRunner.query(
+        `SELECT 1 FROM pg_class c
+         JOIN pg_index i ON i.indexrelid = c.oid
+         WHERE c.relname = $1 AND NOT i.indisvalid`,
+        [name],
+    )
+    if (invalid.length > 0) {
+        await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "${name}"`)
+    }
+    await queryRunner.query(ddl)
 }
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE
