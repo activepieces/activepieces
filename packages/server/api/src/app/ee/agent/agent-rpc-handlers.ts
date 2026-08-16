@@ -54,7 +54,7 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
     conversationId: string
     runId?: string
     updates: Record<string, unknown>
-}) {
+}): Promise<boolean> {
     const builder = agentHelpers.conversationRepo()
         .createQueryBuilder()
         .update()
@@ -63,7 +63,9 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
     if (!isNil(runId)) {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
-    return builder.execute()
+    const result = await builder.returning('*').execute()
+    const updatedRows: unknown[] = result.raw ?? []
+    return updatedRows.length > 0
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -208,8 +210,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             .update()
             .set({ status: AgentConversationStatus.STREAMING })
             .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+            .returning('*')
             .execute()
-        if (lockResult.affected === 0) {
+        const lockedRows: unknown[] = lockResult.raw ?? []
+        if (lockedRows.length === 0) {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -425,8 +429,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             }, '[agentRpc#saveAgentMessages] Refused shrinking save — kept incrementally-persisted history')
         }
 
-        const saveResult = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        const saveLanded = saveResult.affected !== 0
+        const saveLanded = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
         if (!saveLanded) {
             log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
