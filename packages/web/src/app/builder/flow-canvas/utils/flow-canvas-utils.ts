@@ -23,7 +23,6 @@ import { flowCanvasLayoutConsts } from './layout-consts';
 import {
   ApBigAddButtonNode,
   ApButtonData,
-  ApCanvasHoverTarget,
   ApEdge,
   ApEdgeType,
   ApGraph,
@@ -711,12 +710,6 @@ const createAddOperationFromAddButtonData = (data: ApButtonData) => {
   } as const;
 };
 
-const toCanvasHoverTarget = (data: ApButtonData): ApCanvasHoverTarget => ({
-  stepName: data.parentStepName,
-  isInsideStep:
-    data.stepLocationRelativeToParent !== StepLocationRelativeToParent.AFTER,
-});
-
 const isSkipped = (stepName: string, trigger: FlowTrigger) => {
   const step = flowStructureUtil.getStep(stepName, trigger);
   if (
@@ -823,7 +816,6 @@ export const flowCanvasUtils = {
   createFocusStepInGraphParams,
   calculateGraphBoundingBox,
   createAddOperationFromAddButtonData,
-  toCanvasHoverTarget,
   isSkipped,
   determineInitiallySelectedStep,
   doesSelectionRectangleExist,

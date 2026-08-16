@@ -21,16 +21,13 @@ const ApBigAddButtonCanvasNode = React.memo(
       activeDraggingStep,
       isPieceSelectorOpened,
       canvasOrientation,
-      setHoveredCanvasTarget,
     ] = useBuilderStateContext((state) => [
       state.readonly,
       state.activeDraggingStep,
       state.openedPieceSelectorStepNameOrAddButtonId === id,
       state.canvasOrientation,
-      state.setHoveredCanvasTarget,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
-    const hoverTarget = flowCanvasUtils.toCanvasHoverTarget(data);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,
@@ -45,14 +42,10 @@ const ApBigAddButtonCanvasNode = React.memo(
         const isOver = event.over?.id === draggableId;
         if (isOver !== isIsStepInsideDropzone) {
           setIsStepInsideDropzone(isOver);
-          if (isOver) {
-            setHoveredCanvasTarget(hoverTarget);
-          }
         }
       },
       onDragEnd() {
         setIsStepInsideDropzone(false);
-        setHoveredCanvasTarget(null);
       },
     });
     const stepNodeSize = flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation];
@@ -82,8 +75,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                       width: `${flowCanvasConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                     }}
                     id={id}
-                    onPointerEnter={() => setHoveredCanvasTarget(hoverTarget)}
-                    onPointerLeave={() => setHoveredCanvasTarget(null)}
                     className={cn('rounded-lg bg-background relative', {
                       'bg-primary/80':
                         isShowingDropIndicator || isPieceSelectorOpened,

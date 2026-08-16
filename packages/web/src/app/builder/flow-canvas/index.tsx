@@ -19,6 +19,7 @@ import {
   BackgroundVariant,
   getNodesBounds,
   CoordinateExtent,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -33,8 +34,10 @@ import {
 } from './context-menu/canvas-context-menu';
 import { FlowDragLayer } from './flow-drag-layer';
 import { flowCanvasHooks } from './hooks';
+import { batchRegionUtils } from './utils/batch-region';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { ApBatchRegionNode, ApNodeType } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
@@ -55,6 +58,7 @@ export const FlowCanvas = React.memo(
       rightSidebar,
       notes,
       canvasOrientation,
+      setHoveredBatchRegion,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -66,6 +70,7 @@ export const FlowCanvas = React.memo(
         state.rightSidebar,
         state.flowVersion.notes,
         state.canvasOrientation,
+        state.setHoveredBatchRegion,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -182,6 +187,25 @@ export const FlowCanvas = React.memo(
     }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
+    const { screenToFlowPosition } = useReactFlow();
+    const hoveredBatchRegionRef = useRef<string | null>(null);
+    const batchRegions = useMemo(
+      () =>
+        graph.nodes.filter(
+          (node): node is ApBatchRegionNode =>
+            node.type === ApNodeType.BATCH_REGION,
+        ),
+      [graphKey],
+    );
+    const updateHoveredBatchRegion = useCallback(
+      (stepName: string | null) => {
+        if (hoveredBatchRegionRef.current !== stepName) {
+          hoveredBatchRegionRef.current = stepName;
+          setHoveredBatchRegion(stepName);
+        }
+      },
+      [setHoveredBatchRegion],
+    );
     const translateExtent = useMemo(() => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight + 100;
@@ -209,7 +233,16 @@ export const FlowCanvas = React.memo(
         onMouseMove={(event) => {
           const cursorPosition = { x: event.clientX, y: event.clientY };
           setCursorPosition(cursorPosition);
+          if (batchRegions.length > 0) {
+            updateHoveredBatchRegion(
+              batchRegionUtils.findRegionAtPoint({
+                regions: batchRegions,
+                point: screenToFlowPosition(cursorPosition),
+              }),
+            );
+          }
         }}
+        onMouseLeave={() => updateHoveredBatchRegion(null)}
       >
         <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>

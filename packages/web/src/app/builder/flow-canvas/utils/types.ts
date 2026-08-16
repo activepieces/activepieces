@@ -104,18 +104,6 @@ export type ApGraphEndNode = {
   selectable?: boolean;
 };
 
-export type ApCanvasHoverTarget = {
-  stepName: string;
-  isInsideStep: boolean;
-};
-
-export type ApBatchRegionBand = {
-  start: number;
-  end: number;
-  crossStart: number;
-  crossEnd: number;
-};
-
 export type ApBatchRegionNode = {
   id: string;
   type: ApNodeType.BATCH_REGION;
@@ -125,10 +113,6 @@ export type ApBatchRegionNode = {
   };
   data: {
     stepName: string;
-    childNames: string[];
-    bands: ApBatchRegionBand[];
-    path: string;
-    notch: { x: number; y: number };
     size: { width: number; height: number };
   };
   selectable: false;

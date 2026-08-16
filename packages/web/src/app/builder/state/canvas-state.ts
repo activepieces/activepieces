@@ -7,10 +7,7 @@ import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
-import {
-  ApCanvasHoverTarget,
-  CanvasOrientation,
-} from '../flow-canvas/utils/types';
+import { CanvasOrientation } from '../flow-canvas/utils/types';
 
 export type StepDataPanelView = 'drawer' | 'split';
 
@@ -22,8 +19,8 @@ export type CanvasState = {
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
-  hoveredCanvasTarget: ApCanvasHoverTarget | null;
-  setHoveredCanvasTarget: (target: ApCanvasHoverTarget | null) => void;
+  hoveredBatchRegion: string | null;
+  setHoveredBatchRegion: (stepName: string | null) => void;
   selectedBranchIndex: number | null;
   userManuallySelectedStepDuringRun: boolean;
   showMinimap: boolean;
@@ -94,9 +91,8 @@ export const createCanvasState = (
     hideTestWidget: initialState.hideTestWidget ?? false,
     selectedStep: initiallySelectedStep,
     activeDraggingStep: null,
-    hoveredCanvasTarget: null,
-    setHoveredCanvasTarget: (hoveredCanvasTarget) =>
-      set({ hoveredCanvasTarget }),
+    hoveredBatchRegion: null,
+    setHoveredBatchRegion: (hoveredBatchRegion) => set({ hoveredBatchRegion }),
     rightSidebar:
       initiallySelectedStep && !isEmptyTriggerInitiallySelected
         ? RightSideBarType.PIECE_SETTINGS

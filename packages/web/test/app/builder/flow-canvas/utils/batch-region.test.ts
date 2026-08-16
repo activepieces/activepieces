@@ -19,7 +19,6 @@ import { batchRegionUtils } from '@/app/builder/flow-canvas/utils/batch-region';
 import { flowCanvasUtils } from '@/app/builder/flow-canvas/utils/flow-canvas-utils';
 import {
   ApBatchRegionNode,
-  ApCanvasHoverTarget,
   ApGraph,
   ApNodeType,
   CanvasOrientation,
@@ -164,19 +163,36 @@ const getRegion = (graph: ApGraph, batchName: string): ApBatchRegionNode => {
   return region!;
 };
 
+const spanOf = (
+  region: ApBatchRegionNode,
+  orientation: CanvasOrientation = 'vertical',
+) => {
+  const x = {
+    start: region.position.x,
+    end: region.position.x + region.data.size.width,
+  };
+  const y = {
+    start: region.position.y,
+    end: region.position.y + region.data.size.height,
+  };
+  return orientation === 'vertical'
+    ? { along: y, cross: x }
+    : { along: x, cross: y };
+};
+
 const containsPoint = (
   region: ApBatchRegionNode,
   point: { x: number; y: number },
   orientation: CanvasOrientation = 'vertical',
 ) => {
-  const along = orientation === 'vertical' ? point.y : point.x;
-  const cross = orientation === 'vertical' ? point.x : point.y;
-  return region.data.bands.some(
-    (band) =>
-      along >= band.start &&
-      along <= band.end &&
-      cross >= band.crossStart &&
-      cross <= band.crossEnd,
+  const { along, cross } = spanOf(region, orientation);
+  const alongValue = orientation === 'vertical' ? point.y : point.x;
+  const crossValue = orientation === 'vertical' ? point.x : point.y;
+  return (
+    alongValue >= along.start &&
+    alongValue <= along.end &&
+    crossValue >= cross.start &&
+    crossValue <= cross.end
   );
 };
 
@@ -200,7 +216,8 @@ const addButtonCentre = (graph: ApGraph, edgeId: string) => {
 const HORIZONTAL_STEP_SIZE = 80;
 const STEP_WIDTH = 232;
 const STEP_HEIGHT = 60;
-const CROSS_PADDING = 16;
+const CROSS_PADDING = 24;
+const RAIL_PADDING = 64;
 const ROUTER_BRANCH_GAP = 80;
 
 describe('batch region silhouette', () => {
@@ -226,7 +243,7 @@ describe('batch region silhouette', () => {
     expect(containsPoint(region, outsideSeam)).toBe(false);
   });
 
-  it('keeps the batch entry seam inside and the batch step outside', () => {
+  it('starts at the middle of the batch step and keeps the entry seam inside', () => {
     const graph = buildGraph({
       firstAction: createBatchAction({
         name: 'batch_1',
@@ -236,16 +253,19 @@ describe('batch region silhouette', () => {
     const region = getRegion(graph, 'batch_1');
     const entrySeam = addButtonCentre(graph, 'batch_1-batch-start-edge');
     const batchStep = graph.nodes.find((node) => node.id === 'batch_1')!;
+    expect(spanOf(region).along.start).toEqual(
+      batchStep.position.y + STEP_HEIGHT / 2,
+    );
     expect(containsPoint(region, entrySeam)).toBe(true);
     expect(
       containsPoint(region, {
         x: batchStep.position.x + STEP_WIDTH / 2,
-        y: batchStep.position.y + STEP_HEIGHT / 2,
+        y: batchStep.position.y + STEP_HEIGHT / 2 - 1,
       }),
     ).toBe(false);
   });
 
-  it('follows uneven router branches instead of boxing them', () => {
+  it('boxes uneven router branches at the widest branch', () => {
     const graph = buildGraph({
       firstAction: createBatchAction({
         name: 'batch_1',
@@ -260,15 +280,22 @@ describe('batch region silhouette', () => {
       }),
     });
     const region = getRegion(graph, 'batch_1');
-    const [branchesBand, deepBranchBand] = region.data.bands.slice(-2);
-    expect(deepBranchBand.crossStart).toBeGreaterThan(branchesBand.crossStart);
-    expect(deepBranchBand.crossEnd).toEqual(branchesBand.crossEnd);
+    const { cross } = spanOf(region);
+    const branchSteps = ['short', 'long_a', 'long_b'].map((name) =>
+      graph.nodes.find((node) => node.id === name)!,
+    );
+    branchSteps.forEach((step) => {
+      expect(cross.start).toBeLessThanOrEqual(step.position.x - CROSS_PADDING);
+      expect(cross.end).toBeGreaterThanOrEqual(
+        step.position.x + STEP_WIDTH + CROSS_PADDING,
+      );
+    });
     expect(
       containsPoint(region, {
-        x: branchesBand.crossStart + 1,
-        y: deepBranchBand.end - 1,
+        x: cross.start + 1,
+        y: branchSteps[2].position.y + STEP_HEIGHT / 2,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('closes around the lone add button of an empty batch', () => {
@@ -291,8 +318,8 @@ describe('batch region silhouette', () => {
   });
 
   it.each<[CanvasOrientation, number]>([
-    ['vertical', 48],
-    ['horizontal', 68],
+    ['vertical', 32],
+    ['horizontal', 52],
   ])('clears its sibling branch in %s', (orientation, clearance) => {
     const graph = buildGraph({
       firstAction: createRouterAction({
@@ -310,13 +337,8 @@ describe('batch region silhouette', () => {
       }),
       orientation,
     });
-    const crossSpan = (batchName: string) => {
-      const bands = getRegion(graph, batchName).data.bands;
-      return {
-        start: Math.min(...bands.map((band) => band.crossStart)),
-        end: Math.max(...bands.map((band) => band.crossEnd)),
-      };
-    };
+    const crossSpan = (batchName: string) =>
+      spanOf(getRegion(graph, batchName), orientation).cross;
     const left = crossSpan('batch_a');
     const right = crossSpan('batch_b');
     expect(right.start - left.end).toBe(clearance);
@@ -339,48 +361,72 @@ describe('batch region silhouette', () => {
         y: node.position.y + HORIZONTAL_STEP_SIZE / 2,
       };
     };
+    const batchStep = graph.nodes.find((node) => node.id === 'batch_1')!;
     expect(region.data.size.width).toBeGreaterThan(region.data.size.height);
-    expect(containsPoint(region, centreOf('child_1'), 'horizontal')).toBe(true);
-    expect(containsPoint(region, centreOf('batch_1'), 'horizontal')).toBe(
-      false,
+    expect(spanOf(region, 'horizontal').along.start).toEqual(
+      batchStep.position.x + HORIZONTAL_STEP_SIZE / 2,
     );
+    expect(containsPoint(region, centreOf('child_1'), 'horizontal')).toBe(true);
+    expect(
+      containsPoint(
+        region,
+        { x: batchStep.position.x, y: centreOf('batch_1').y },
+        'horizontal',
+      ),
+    ).toBe(false);
     expect(containsPoint(region, centreOf('after'), 'horizontal')).toBe(false);
   });
 
-  describe('highlight', () => {
-    const region = { stepName: 'batch_1', childNames: ['child_1'] };
-    const highlight = (
-      selectedNodes: string[],
-      hoveredTarget: ApCanvasHoverTarget | null,
-    ) =>
-      batchRegionUtils.isRegionHighlighted({
-        ...region,
-        selectedNodes,
-        hoveredTarget,
-      });
+  describe('hover hit-test', () => {
+    const graph = buildGraph({
+      firstAction: createBatchAction({
+        name: 'outer',
+        firstLoopAction: createBatchAction({
+          name: 'inner',
+          firstLoopAction: createCodeAction('child_1'),
+        }),
+        nextAction: createCodeAction('after'),
+      }),
+    });
+    const regions = graph.nodes.filter(
+      (node): node is ApBatchRegionNode => node.type === ApNodeType.BATCH_REGION,
+    );
+    const at = (point: { x: number; y: number }) =>
+      batchRegionUtils.findRegionAtPoint({ regions, point });
+    const centreOf = (nodeId: string) => {
+      const node = graph.nodes.find((candidate) => candidate.id === nodeId)!;
+      return {
+        x: node.position.x + STEP_WIDTH / 2,
+        y: node.position.y + STEP_HEIGHT / 2,
+      };
+    };
 
-    it('follows selection of the batch step, not of its children', () => {
-      expect(highlight(['batch_1'], null)).toBe(true);
-      expect(highlight(['child_1'], null)).toBe(false);
-      expect(highlight([], null)).toBe(false);
+    it('picks the innermost region containing the point', () => {
+      expect(at(centreOf('child_1'))).toBe('inner');
     });
 
-    it('tells the two bottom seams apart', () => {
-      expect(highlight([], { stepName: 'child_1', isInsideStep: false })).toBe(
-        true,
-      );
-      expect(highlight([], { stepName: 'batch_1', isInsideStep: false })).toBe(
-        false,
+    it('picks the outer region above where the inner one starts', () => {
+      const outer = getRegion(graph, 'outer');
+      const inner = getRegion(graph, 'inner');
+      expect(at({ x: outer.position.x + 1, y: inner.position.y - 1 })).toBe(
+        'outer',
       );
     });
 
-    it('follows a target that lands inside the batch', () => {
-      expect(highlight([], { stepName: 'batch_1', isInsideStep: true })).toBe(
-        true,
-      );
-      expect(highlight([], { stepName: 'after', isInsideStep: false })).toBe(
-        false,
-      );
+    it('reads the empty canvas between the steps as inside', () => {
+      const inner = getRegion(graph, 'inner');
+      expect(
+        at({
+          x: inner.position.x + inner.data.size.width - 1,
+          y: inner.position.y + inner.data.size.height / 2,
+        }),
+      ).toBe('inner');
+    });
+
+    it('is null outside every region', () => {
+      const outer = getRegion(graph, 'outer');
+      expect(at(centreOf('after'))).toBeNull();
+      expect(at({ x: centreOf('outer').x, y: outer.position.y - 1 })).toBeNull();
     });
   });
 
@@ -400,10 +446,9 @@ describe('batch region silhouette', () => {
     const loopReturn = graph.nodes.find(
       (node) => node.type === ApNodeType.LOOP_RETURN_NODE,
     )!;
-    region.data.bands.forEach((band) => {
-      expect(band.crossStart).toEqual(batchStep.position.x - CROSS_PADDING);
-      expect(band.crossStart).toBeGreaterThan(loopReturn.position.x);
-    });
+    const { cross } = spanOf(region);
+    expect(cross.start).toEqual(batchStep.position.x - CROSS_PADDING);
+    expect(cross.start).toBeGreaterThan(loopReturn.position.x);
   });
 
   it('wraps the loop return rail when a loop sits in the batch', () => {
@@ -424,35 +469,11 @@ describe('batch region silhouette', () => {
     const loopReturn = graph.nodes.find(
       (node) => node.type === ApNodeType.LOOP_RETURN_NODE,
     )!;
-    const railStart = loopReturn.position.x + STEP_WIDTH / 2 - CROSS_PADDING;
-    const loopChild = graph.nodes.find((node) => node.id === 'child_1')!;
-    region.data.bands.forEach((band) => {
-      expect(band.crossStart).toBeLessThanOrEqual(spineStart);
-    });
-    expect(
-      region.data.bands
-        .filter(
-          (band) =>
-            band.start <= loopChild.position.y &&
-            band.end >= loopChild.position.y,
-        )
-        .every((band) => band.crossStart === railStart),
-    ).toBe(true);
-    expect(
-      Math.min(...region.data.bands.map((band) => band.crossStart)),
-    ).toEqual(railStart);
-    expect(
-      region.data.bands.some((band) => band.crossEnd > spineStart + STEP_WIDTH),
-    ).toBe(true);
-    const railBottom = 2 * loopReturn.position.y - loopChild.position.y;
-    const widest = Math.max(...region.data.bands.map((band) => band.crossEnd));
-    region.data.bands
-      .filter(
-        (band) => band.start < railBottom && band.end > loopChild.position.y,
-      )
-      .forEach((band) => {
-        expect(band.crossEnd).toEqual(widest);
-      });
+    const railStart = loopReturn.position.x + STEP_WIDTH / 2 - RAIL_PADDING;
+    const { cross } = spanOf(region);
+    expect(cross.start).toEqual(railStart);
+    expect(cross.start).toBeLessThanOrEqual(spineStart);
+    expect(cross.end).toBeGreaterThan(spineStart + STEP_WIDTH);
   });
 
   it('clears the sibling step when the batch sits in a router branch', () => {
@@ -470,9 +491,7 @@ describe('batch region silhouette', () => {
     });
     const region = getRegion(graph, 'batch_1');
     const sibling = graph.nodes.find((node) => node.id === 'plain')!;
-    const leftmost = Math.min(
-      ...region.data.bands.map((band) => band.crossStart),
-    );
+    const leftmost = spanOf(region).cross.start;
     expect(leftmost - (sibling.position.x + STEP_WIDTH)).toEqual(
       ROUTER_BRANCH_GAP - CROSS_PADDING,
     );

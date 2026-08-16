@@ -1,5 +1,4 @@
 import {
-  FlowActionType,
   FlowOperationType,
   FlowTriggerType,
   Step,
@@ -41,7 +40,6 @@ const ApStepCanvasNode = React.memo(
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isRightSidebarOpen,
       canvasOrientation,
-      setHoveredCanvasTarget,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -53,10 +51,8 @@ const ApStepCanvasNode = React.memo(
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
       state.rightSidebar !== RightSideBarType.NONE,
       state.canvasOrientation,
-      state.setHoveredCanvasTarget,
     ]);
     const isHorizontal = canvasOrientation === 'horizontal';
-    const isBatchStep = step.type === FlowActionType.PROCESS_IN_BATCHES;
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
@@ -136,18 +132,6 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width}px`,
         }}
         onContextMenu={(e) => handleContextMenu(e)}
-        onPointerEnter={
-          isBatchStep
-            ? () =>
-                setHoveredCanvasTarget({
-                  stepName: step.name,
-                  isInsideStep: true,
-                })
-            : undefined
-        }
-        onPointerLeave={
-          isBatchStep ? () => setHoveredCanvasTarget(null) : undefined
-        }
         className={cn(
           'transition-all border-box rounded-md border border-solid border-border relative overflow-visible  group',
           {

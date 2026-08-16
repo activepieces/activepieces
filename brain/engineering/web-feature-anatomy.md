@@ -62,6 +62,16 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
 
 ## Gotchas
 
+- **Paper design files are readable from an agent session, but the tools are *deferred*.** `app.paper.design`
+  is auth-gated, so `WebFetch` returns only the SPA shell — and the `plugin:paper-desktop:paper` tools do not
+  appear in the tool list until a session loads them by name (`ToolSearch` on
+  `select:mcp__plugin_paper-desktop_paper__open_file,…`), which is why searching for `paper` looks like the MCP
+  is missing. Then: `get_guide({ topic: "paper-mcp-instructions" })` once, `open_file` with the file **URL**
+  (it accepts the full URL, and the file stays sticky for the session), and read with `get_tree_summary` /
+  `get_jsx` / `get_computed_styles`. Build code from those, never from a screenshot — `get_screenshot` also
+  times out on large files. Paper files carry no design tokens unless the designer defined them, so expect to
+  map literal hexes onto our Tailwind/Shadcn scale by hand (the Process in Batches redesign's status purple
+  `#6D45E0` is *not* brand `#8142E3`).
 - **Exported types and constants belong at the *end* of the file**, after the components and logic. Reading a file should start with what it does, not its type declarations.
 - **`showErrorDialog` on the wrong query is worse than missing it.** On an auxiliary query it throws a modal over a page that was working fine; on the primary query, omitting it leaves the user staring at an empty table with no explanation.
 - **A ref assigned during render (`const ref = useRef(x); ref.current = x`) is stale inside socket/event callbacks.** The value only advances when React commits a render, so two events handled before that commit both read the same base — a read-modify-write (merging a step into `run.steps`) silently drops the earlier event. Read the zustand store directly instead: `useBuilderStore().getState()` (`app/builder/builder-hooks.ts`) always returns current state. Bit the test-flow widget's progress merge, PR #14453.
@@ -82,19 +92,21 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
   everything react-flow injects from `NodeProps`.
 - **Keeping the batch region out of `doesNodeAffectBoundingBox` is also what guarantees two batches in
   sibling router branches never collide.** The region's cross extent is exactly its branch's bounding box
-  ±`CROSS_PADDING` (16), and `computeRouterChildOffsets` spaces branch bounding boxes by `routerBranchGap`
+  ±`CROSS_PADDING` (24), and `computeRouterChildOffsets` spaces branch bounding boxes by `routerBranchGap`
   — 80 vertical, 100 horizontal. So the clearance between two side-by-side regions is a constant
-  `gap − 32`: **48px vertical, 68px horizontal**, invariant rather than incidental, because both numbers
-  are derived from the same node set. Nothing widens a branch to make room for a region, and nothing needs
-  to. The lever if it ever has to change is `CROSS_PADDING` in `flow-canvas/utils/batch-region.ts`, and it
-  cannot exceed half the router branch gap. Pinned by `clears its sibling branch` in
-  `test/app/builder/flow-canvas/utils/batch-region.test.ts`. **Do not reuse that 48 for a region facing an
-  ordinary step** — only one side pads there, so the clearance is `gap − 16` = **64px vertical, 84px
+  `gap − 2 × CROSS_PADDING`: **32px vertical, 52px horizontal**, invariant rather than incidental, because
+  both numbers are derived from the same node set. Nothing widens a branch to make room for a region, and
+  nothing needs to. The lever if it ever has to change is `CROSS_PADDING` in
+  `flow-canvas/utils/batch-region.ts`, and it cannot exceed half the router branch gap — **40 vertical**,
+  which is the real ceiling on "make the region breathe more". Pinned by `clears its sibling branch` in
+  `test/app/builder/flow-canvas/utils/batch-region.test.ts` (the expectations there are hardcoded numbers,
+  so any `CROSS_PADDING` change lands in two files). **Do not reuse that 32 for a region facing an ordinary
+  step** — only one side pads there, so the clearance is `gap − CROSS_PADDING` = **56px vertical, 76px
   horizontal**. Two different invariants that look like one.
 - **The clearance invariant has no along-axis counterpart: sibling regions are ragged, not aligned.** Router
   branches are never padded to a common length — the shorter branch's end edge just draws a longer
   `verticalSpaceBetweenLastNodeInBranchAndEndLine` down to the merge. So two batches in sibling branches
-  share a top (both regions start one `HEADER_GAP` below their own batch step, which the router puts on one
+  share a top (both regions start at the middle of their own batch step, which the router puts on one
   row) but bottom out wherever their own bodies end: one extra child step in one branch is **120px** of
   bottom mismatch, and the shorter region's lower edge lands mid-way down the taller one with the branch's
   own wire running past it. Anything that wants two sibling containers to look like a matched pair has to
@@ -113,13 +125,48 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
   the spacer's *drawn* geometry, not its box: the return rail is a zero-width line at the handle centre
   (`x + STEP_WIDTH/2`), and it spans the loop's child height, which the spacer sits at the *centre* of
   (`position.along = loop.along + stepAlongSize + loopOffsetAlong + childHeight/2`) — so the rail's along
-  span is symmetric around it, `alongEnd = 2 * along - railTop`. Feeding that zero-width box in is what
-  makes the batch hairline enclose a nested loop's left rail instead of cutting through it. Second half of
-  the trick: a hairline box must push the *near* edge out without defining the *far* edge, so `buildBands`
-  computes `crossEnd` from `solid` boxes only (`crossEnd > crossStart`) and fills each side from its own
-  nearest non-null neighbour. Skip that and the slices below the loop's last child stop being "empty",
-  lose the inherited wide right edge, and the region snaps back to spine width straight through the loop's
-  own return wire.
+  span is symmetric around it. Since the region became a plain box (see below) only the *cross* half of
+  that still matters — `toCrossExtent` returns `{ start: railCross - RAIL_PADDING, end: railCross }` for a
+  `LOOP_RETURN_NODE`, i.e. the rail pushes the near edge out and never defines the far one. Hand it the
+  spacer's full 232px box instead and the region bulges 156px left around nothing.
+- **A hairline rail needs more padding than a step card to *look* like the same gap, hence `RAIL_PADDING`
+  (64) alongside `CROSS_PADDING` (24).** The two sides of a region are measured against different things:
+  the right edge lands off a step *card*, the left edge off a nested loop's *return rail*. Padding both by
+  the same 24 is measurably symmetric and reads lopsided, so `toCrossExtent` in `batch-region.ts` gives a
+  node its own padding — `CROSS_PADDING` for step cards and the spine, `RAIL_PADDING` for the zero-width
+  return rail. Only the near side needs it; a return rail is always on the crossStart side because the
+  loop's `deltaLeftX` is negative. **Do not fix this by mirroring the region about the batch spine**
+  (`half = max(centre − crossStart, crossEnd − centre)`) — tried and rejected on sight: the left border
+  inherits the whole right-side offset (~116px of empty canvas for a router nested in a loop).
+  `RAIL_PADDING` does not threaten the sibling clearance above: the phantom return-node box already reserves
+  `STEP_WIDTH/2` (116) left of the rail, so anything up to `116 + CROSS_PADDING` stays inside the branch's
+  own bounding box.
+- **The batch region is a plain rounded rect now, not a silhouette — the band machinery was deleted, and
+  bringing it back costs ~200 lines.** It used to slice the along-axis at every member node's start/end,
+  compute a per-slice cross span, merge equal neighbours and stitch the result into a rounded SVG path
+  (`buildBands`, `nearest`, `bandsToPolygon`, `dropCollinear`, `toRoundedPath`, `ApBatchRegionBand`, the
+  `notch` for a label that was never shipped — `SHOW_LABEL` sat at `false`). All of it went in favour of
+  one box: `along.start = batch step's along + stepAlongSize/2` (the region hangs off the *middle* of the
+  process-in-batches card, so the card's own bottom half sits inside it), `along.end` = the
+  `-batch-subgraph-end` node minus one `spaceAlongBetweenSteps`, and cross = min/max of every member's
+  `toCrossExtent`. `data` is just `{ stepName, childNames, size }`; the node component draws a single
+  `<rect rx={16}>`. What that trades away: an uneven router split no longer narrows the outline under the
+  deep branch, so the region swallows the shallow branch's empty canvas. Everything the bullets above pin —
+  the 32/52 sibling clearance, the rail padding, `LOOP_RETURN_NODE` being traced as a zero-width line — is
+  unchanged, because they were always about *cross extents*, never about the band slicing.
+- **The region highlights on hover-anywhere-inside via a geometry hit-test, not `pointer-events` on the
+  region node.** The canvas runs `selectionOnDrag` with `panOnDrag={[1]}`, so a region rect that accepts
+  pointer events would swallow left-drag box-selection, pane clicks and the context menu across its whole
+  area — never make it hoverable. Instead the `onMouseMove` already on the canvas container
+  (`flow-canvas/index.tsx`) feeds `screenToFlowPosition` into `batchRegionUtils.findRegionAtPoint`, a
+  point-in-rect test over the BATCH_REGION nodes (N = process-in-batches steps, 0–3), and writes
+  `hoveredBatchRegion` through a ref guard so the store only changes on a boundary crossing — same
+  re-render count as the `onPointerEnter` it replaced. That hit-test is the **single source of truth**:
+  step-node's batch `onPointerEnter/Leave`, both add-buttons' hover writes and `toCanvasHoverTarget` were
+  all deleted, because the region hangs off the *middle* of the batch card (the card's top half is
+  geometrically outside), so a second source fights it — enter sets, the next mousemove nulls. Nested
+  batches resolve to the smallest containing rect; `onMouseLeave` clears so the highlight can't stick when
+  the cursor exits onto the sidebar.
 - **The builder's dark theme moves `--primary` from purple to blue, and no canvas edge ever carries run
   colour.** `--primary` is `257 74% 57%` (#6E40E3) in `:root` but `210 90% 50%` (#0D7FF2) in `.dark`
   (`styles.css`), so anything styled `stroke-primary` / `fill-primary` / `bg-primary` changes *hue*, not
