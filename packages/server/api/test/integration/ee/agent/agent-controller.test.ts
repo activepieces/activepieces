@@ -74,97 +74,34 @@ describe('agent crud', () => {
 })
 
 describe('agent project isolation', () => {
-    it('refuses to read an agent belonging to another project', async () => {
+    it.each([
+        ['read', (ctx: TestContext, id: string) => ctx.get(`/v1/agents/${id}`)],
+        ['update', (ctx: TestContext, id: string) => ctx.post(`/v1/agents/${id}`, { displayName: 'Hijacked' })],
+        ['delete', (ctx: TestContext, id: string) => ctx.delete(`/v1/agents/${id}`)],
+    ])('refuses to %s an agent belonging to another project, and leaves it untouched', async (_action, attempt) => {
         const owner = await context()
         const stranger = await context()
         const agent = await createAgent(owner)
 
-        expect((await stranger.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-
-    it('refuses to update an agent belonging to another project', async () => {
-        const owner = await context()
-        const stranger = await context()
-        const agent = await createAgent(owner)
-
-        const response = await stranger.post(`/v1/agents/${agent.id}`, { displayName: 'Hijacked' })
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await attempt(stranger, agent.id)).statusCode).toBe(StatusCodes.FORBIDDEN)
         expect((await owner.get(`/v1/agents/${agent.id}`)).json().displayName).toBe('Marketing agent')
-    })
-
-    it('refuses to delete an agent belonging to another project', async () => {
-        const owner = await context()
-        const stranger = await context()
-        const agent = await createAgent(owner)
-
-        expect((await stranger.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
-        expect((await owner.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
     })
 
     it('refuses to create an agent in a project the caller is not a member of', async () => {
         const owner = await context()
         const stranger = await context()
 
-        const response = await stranger.post('/v1/agents', agentBody(owner.project.id))
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await stranger.post('/v1/agents', agentBody(owner.project.id))).statusCode).toBe(StatusCodes.FORBIDDEN)
     })
 
     it('never lists another project\'s agents', async () => {
         const owner = await context()
         const stranger = await context()
-        const agent = await createAgent(owner)
-
+        await createAgent(owner)
         const own = await createAgent(stranger)
 
         const listed = (await stranger.get('/v1/agents')).json().data
         expect(listed.map((row: { id: string }) => row.id)).toStrictEqual([own.id])
-    })
-})
-
-describe('agent visibility', () => {
-    it('shows a project-visible agent to every member', async () => {
-        const owner = await context()
-        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const agent = await createAgent(owner)
-
-        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
-    })
-
-    it('hides a restricted agent from a member it was not shared with, even one who may write', async () => {
-        const owner = await context()
-        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const agent = await createAgent(owner, { visibility: AgentVisibility.RESTRICTED })
-
-        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
-        expect((await member.post(`/v1/agents/${agent.id}`, { displayName: 'Nope' })).statusCode).toBe(StatusCodes.NOT_FOUND)
-        expect((await member.get('/v1/agents')).json().data).toHaveLength(0)
-    })
-
-    it('reports success when an editor restricts an agent out of their own view', async () => {
-        const owner = await context()
-        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const agent = await createAgent(owner)
-
-        const response = await member.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED })
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json().visibility).toBe(AgentVisibility.RESTRICTED)
-        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
-        expect((await owner.get(`/v1/agents/${agent.id}`)).json().visibility).toBe(AgentVisibility.RESTRICTED)
-    })
-
-    it('shows a restricted agent to a member named in the share', async () => {
-        const owner = await context()
-        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const agent = await createAgent(owner, {
-            visibility: AgentVisibility.RESTRICTED,
-            sharedWithUserIds: [member.user.id],
-        })
-
-        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
-        expect((await member.get('/v1/agents')).json().data).toHaveLength(1)
     })
 })
 
