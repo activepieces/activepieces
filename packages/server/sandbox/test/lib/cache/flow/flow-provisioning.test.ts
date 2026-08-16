@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { type ApLogger } from '@activepieces/server-utils'
-import { FlowActionType, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PackageType, PieceType, WorkerToApiContract } from '@activepieces/shared'
+import { AgentToolType, FlowActionType, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, PackageType, PieceType, WorkerToApiContract } from '@activepieces/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flowProvisioning } from '../../../../src/lib/cache/flow/flow-provisioning'
 
@@ -46,6 +46,27 @@ function flowWithPiece(overrides: Partial<FlowVersion> = {}): FlowVersion {
         },
         ...overrides,
     } as unknown as FlowVersion
+}
+
+function flowWithAgentTools(): FlowVersion {
+    return flowWithPiece({
+        trigger: {
+            name: 'trigger', type: FlowTriggerType.EMPTY, displayName: 'Trigger', valid: true, settings: {},
+            nextAction: {
+                name: 'step_1', type: FlowActionType.PIECE, displayName: 'Agent', valid: true,
+                settings: {
+                    pieceName: '@activepieces/piece-http', pieceVersion: '^1.0.0', actionName: 'send', inputUiInfo: {},
+                    input: {
+                        agentTools: [
+                            { type: AgentToolType.PIECE, toolName: 'Slack - Send', pieceMetadata: { pieceName: '@activepieces/piece-slack', pieceVersion: '^0.1.0', actionName: 'send' } },
+                            { type: AgentToolType.PIECE, toolName: 'HubSpot - Get Contact', pieceMetadata: { pieceName: '@activepieces/piece-hubspot', actionName: 'get-contact' } },
+                            { type: AgentToolType.MCP, toolName: 'Some MCP', serverUrl: 'https://example.com', protocol: 'SSE', auth: { type: 'NONE' } },
+                        ],
+                    },
+                },
+            },
+        },
+    } as unknown as Partial<FlowVersion>)
 }
 
 const httpPiece = { packageType: PackageType.REGISTRY, name: '@activepieces/piece-http', version: '1.0.5', pieceType: PieceType.OFFICIAL }
@@ -154,5 +175,28 @@ describe('flowProvisioning.resolve', () => {
             expect(resolved.failedStep?.message).toContain('@activepieces/piece-http@^1.0.0')
             expect(resolved.failedStep?.message).toContain('turned off')
         }
+    })
+
+    it('agent tools → resolves well-formed piece tools, warns on malformed ones, stays quiet on non-piece tools', async () => {
+        const getPiece = vi.fn(async () => httpPiece)
+        const apiClient = {
+            async getFlowBundle() { return null },
+            async getFlowVersion() { return flowWithAgentTools() },
+            getPiece,
+        } as unknown as WorkerToApiContract
+
+        const resolved = await flowProvisioning(fakeLog, apiClient, uniqueBasePath(), getSettings).resolve({ flow, platformId: 'plat1' })
+
+        expect(resolved.kind).toBe('ready')
+        expect(getPiece.mock.calls.map(([args]) => args.name)).toEqual(['@activepieces/piece-http', '@activepieces/piece-slack'])
+
+        const warnings = vi.mocked(fakeLog.warn).mock.calls.filter(([, message]) => String(message).includes('malformed agent piece tool'))
+        expect(warnings).toHaveLength(1)
+        expect(warnings[0][0]).toMatchObject({
+            flowVersion: { id: 'fv1' },
+            step: { name: 'step_1' },
+            tool: { name: 'HubSpot - Get Contact' },
+        })
+        expect(String(warnings[0][0].error)).toContain('pieceVersion')
     })
 })
