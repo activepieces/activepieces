@@ -30,7 +30,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             published: null,
         })
         log.info({ agent: { id }, project: { id: projectId } }, 'Agent created')
-        return this.getOneOrThrow({ id, projectId, userId: ownerId })
+        return reloadOrThrow({ id, projectId })
     },
 
     async list({ platformId, userId, isPrivileged, projectId, cursor, limit }: ListParams): Promise<SeekPage<Agent>> {
@@ -87,7 +87,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             ...spreadIfNotUndefined('draft', request.draft),
         })
         log.info({ agent: { id }, project: { id: projectId } }, 'Agent updated')
-        return this.getOneOrThrow({ id, projectId, userId })
+        return reloadOrThrow({ id, projectId })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -104,6 +104,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agent
     },
 })
+
+async function reloadOrThrow({ id, projectId }: { id: ApId, projectId: ProjectId }): Promise<Agent> {
+    const agent = await agentRepo().findOneBy({ id, projectId })
+    if (isNil(agent)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: id, entityType: 'agent' },
+        })
+    }
+    return agent
+}
 
 async function resolveReadableProjectIds({ platformId, userId, isPrivileged, projectId, log }: ResolveProjectsParams): Promise<ProjectId[]> {
     const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })

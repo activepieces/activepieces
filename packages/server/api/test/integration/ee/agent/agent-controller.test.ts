@@ -142,6 +142,19 @@ describe('agent visibility', () => {
         expect((await member.get('/v1/agents')).json().data).toHaveLength(0)
     })
 
+    it('reports success when an editor restricts an agent out of their own view', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+
+        const response = await member.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().visibility).toBe(AgentVisibility.RESTRICTED)
+        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).json().visibility).toBe(AgentVisibility.RESTRICTED)
+    })
+
     it('shows a restricted agent to a member named in the share', async () => {
         const owner = await context()
         const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
