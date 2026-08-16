@@ -19,6 +19,7 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
@@ -31,6 +32,8 @@ import { SectionHeader } from '../components/section-header';
 
 export function CapabilitiesTab() {
   const { data: configs, refetch } = aiToolConfigQueries.useAiToolConfigs();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const allowWrite = platform.plan.aiProvidersEnabled;
 
   const { mutate: toggle } = aiToolConfigMutations.useUpdateAiToolConfig({
     onSuccess: () => refetch(),
@@ -58,6 +61,7 @@ export function CapabilitiesTab() {
               key={capabilityInfo.capability}
               capabilityInfo={capabilityInfo}
               config={config}
+              allowWrite={allowWrite}
               onToggle={(enabled) =>
                 config && toggle({ id: config.id, request: { enabled } })
               }
@@ -74,12 +78,14 @@ export function CapabilitiesTab() {
 function CapabilityCard({
   capabilityInfo,
   config,
+  allowWrite,
   onToggle,
   onDelete,
   onSaved,
 }: {
   capabilityInfo: AiToolCapabilityInfo;
   config?: AiToolConfigWithoutSensitiveData;
+  allowWrite: boolean;
   onToggle: (enabled: boolean) => void;
   onDelete: () => void;
   onSaved: () => void;
@@ -122,7 +128,7 @@ function CapabilityCard({
             )}
           </div>
         </div>
-        {config && (
+        {config && allowWrite && (
           <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
             <AiCapabilityDialog
               capabilityInfo={capabilityInfo}
@@ -167,7 +173,9 @@ function CapabilityCard({
                 ? t('Available to the assistant')
                 : t('Hidden from the assistant')}
             </span>
-            <Switch checked={config.enabled} onCheckedChange={onToggle} />
+            {allowWrite && (
+              <Switch checked={config.enabled} onCheckedChange={onToggle} />
+            )}
           </>
         ) : (
           <>
@@ -179,14 +187,16 @@ function CapabilityCard({
                 </span>
               ))}
             </span>
-            <AiCapabilityDialog
-              capabilityInfo={capabilityInfo}
-              onSaved={onSaved}
-            >
-              <Button variant="outline" size="sm">
-                {t('Connect')}
-              </Button>
-            </AiCapabilityDialog>
+            {allowWrite && (
+              <AiCapabilityDialog
+                capabilityInfo={capabilityInfo}
+                onSaved={onSaved}
+              >
+                <Button variant="outline" size="sm">
+                  {t('Connect')}
+                </Button>
+              </AiCapabilityDialog>
+            )}
           </>
         )}
       </div>
