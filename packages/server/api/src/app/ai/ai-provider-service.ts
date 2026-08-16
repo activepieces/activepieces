@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -295,7 +295,7 @@ async function getRowByIdOrThrow({ platformId, configId }: { platformId: Platfor
 async function fetchModels({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderModel[]> {
     const { provider, config } = aiProvider
     const auth = await decryptRowAuth({ aiProvider, platformId })
-    const cacheKey = `${provider}-${getAuthCacheFingerprint({ provider, auth, config })}`
+    const cacheKey = getModelsCacheKey({ provider, auth, config })
     if (!modelsCache.has(cacheKey) || 'models' in config) {
         const data = await aiProviders[provider].listModels(auth, config)
         modelsCache.set(cacheKey, data.map(model => ({
@@ -355,18 +355,8 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
 }
 
 
-function getAuthCacheFingerprint({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
-    switch (provider) {
-        case AIProviderName.BEDROCK: {
-            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
-            const { region } = config as BedrockProviderConfig
-            return `${accessKeyId}-${secretAccessKey}-${region}`
-        }
-        default: {
-            const { apiKey } = auth as BaseAIProviderAuthConfig
-            return apiKey
-        }
-    }
+function getModelsCacheKey({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
+    return `${provider}-${JSON.stringify(auth)}-${JSON.stringify(config)}`
 }
 
 export type ProviderScope =
