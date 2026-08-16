@@ -230,25 +230,39 @@ function resolveItem(
 // duplicates can have several unrelated ones at the same level (e.g. "Report" appears twice AND,
 // separately, "readme.txt" also appears twice), so each gets its own error rather than being
 // bundled into one combined line.
+// Names are grouped case-insensitively: Drive is case-sensitive, but Windows and the default
+// macOS filesystem are not, so "Report.pdf" beside "report.pdf" extracts as one file there and
+// the other's content is silently lost. Grouping by the folded name catches that too, and the
+// distinct spellings are listed so the user can see which items actually clash.
 function checkUniqueNames(
   resolvedChildren: ResolvedItem[],
   relativePrefix: string
 ): ExportError[] {
-  const nameCounts = new Map<string, number>();
+  const groups = new Map<string, string[]>();
   for (const { name } of resolvedChildren) {
-    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    const key = name.toLowerCase();
+    const group = groups.get(key);
+    if (group) {
+      group.push(name);
+    } else {
+      groups.set(key, [name]);
+    }
   }
 
   const location = relativePrefix.length > 0 ? relativePrefix : '/';
   const errors: ExportError[] = [];
-  for (const [name, count] of nameCounts) {
-    if (count <= 1) {
+  for (const names of groups.values()) {
+    if (names.length <= 1) {
       continue;
     }
+    const spellings = [...new Set(names)];
     errors.push({
-      name: `"${name}"`,
+      name: spellings.map((name) => `"${name}"`).join(', '),
       location,
-      message: `${count} items would map to the same zip path`,
+      message:
+        spellings.length > 1
+          ? `${names.length} items would map to the same zip path (names differing only by case collide on Windows and macOS)`
+          : `${names.length} items would map to the same zip path`,
     });
   }
   return errors;
@@ -552,22 +566,8 @@ export const driveExportFolderAsZip = createAction({
       includeTeamDrives: context.propsValue.includeTeamDrives ?? false,
     });
 
-    const zipStream = new TransformStream();
-    const zipWriter = new ZipWriter(zipStream.writable);
-    // @ts-expect-error -- undici streams a Node web ReadableStream; the DOM fetch types omit the fromWeb overload
-    const zipReadable: Readable = Readable.fromWeb(zipStream.readable);
-
-    // start consuming the zip output as it's produced, rather than waiting for the whole
-    // archive to be built in memory before writing it out
-    const writeFilePromise = context.files.write({
-      data: zipReadable,
-      fileName: context.propsValue.outputFileName,
-    });
-    // if the produce side below throws, the stream gets aborted and this promise settles on its
-    // own -- observe it here so that doesn't surface as an unhandled rejection; the real outcome
-    // is still surfaced via `return writeFilePromise` on the success path below
-    writeFilePromise.catch(() => undefined);
-
+    // Resolved before the archive stream exists: anything that throws past this point has to
+    // tear the upload down by hand, so every input check belongs above it.
     const fileAddOptions: ZipWriterAddDataOptions = {};
     if (context.propsValue.usePassword) {
       const password = context.propsValue.passwordOptions?.[
@@ -598,6 +598,22 @@ export const driveExportFolderAsZip = createAction({
           break;
       }
     }
+
+    const zipStream = new TransformStream();
+    const zipWriter = new ZipWriter(zipStream.writable);
+    // @ts-expect-error -- undici streams a Node web ReadableStream; the DOM fetch types omit the fromWeb overload
+    const zipReadable: Readable = Readable.fromWeb(zipStream.readable);
+
+    // start consuming the zip output as it's produced, rather than waiting for the whole
+    // archive to be built in memory before writing it out
+    const writeFilePromise = context.files.write({
+      data: zipReadable,
+      fileName: context.propsValue.outputFileName,
+    });
+    // if the produce side below throws, the stream gets aborted and this promise settles on its
+    // own -- observe it here so that doesn't surface as an unhandled rejection; the real outcome
+    // is still surfaced via `return writeFilePromise` on the success path below
+    writeFilePromise.catch(() => undefined);
 
     const fileEntries: ZipFolderEntry[] = [];
     const emptyFolderEntries: ZipFolderEntry[] = [];
