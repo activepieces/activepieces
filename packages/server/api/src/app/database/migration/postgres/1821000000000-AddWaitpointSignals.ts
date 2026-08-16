@@ -72,7 +72,7 @@ export class AddWaitpointSignals1821000000000 implements Migration {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('DROP TABLE IF EXISTS "waitpoint_signal"')
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_waitpoint_pending_resume_date_time"`)
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_waitpoint_pending_resume_date_time"')
         await queryRunner.query('ALTER TABLE "waitpoint" DROP COLUMN IF EXISTS "policy"')
         await queryRunner.query('ALTER TABLE "waitpoint" DROP COLUMN IF EXISTS "sealed"')
     }
