@@ -135,6 +135,49 @@ describe('agent publish', () => {
         expect(third.published.instructions).toBe('Second version.')
     })
 
+    it('keeps the published config when the agent is edited afterwards', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.displayName).toBe('Renamed')
+        expect(after.published).not.toBeNull()
+    })
+
+    it('publishes a piece tool with its predefined input intact', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'File the ticket.',
+            provider: null,
+            modelName: null,
+            maxSteps: 3,
+            tools: [{
+                type: 'PIECE',
+                toolName: 'create_issue',
+                pieceMetadata: {
+                    pieceName: '@activepieces/piece-github',
+                    pieceVersion: '0.1.0',
+                    actionName: 'create_issue',
+                    predefinedInput: { fields: { title: { mode: 'choose-yourself', value: 'Bug' } } },
+                },
+            }],
+            structuredOutput: [],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).json().published).toStrictEqual(draft)
+    })
+
+    it('refuses instructions that are only a non-breaking space', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '\u00a0' } })
+
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
     it('refuses to publish a restricted agent the caller cannot see', async () => {
         const owner = await context()
         const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })

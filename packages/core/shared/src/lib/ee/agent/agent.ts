@@ -76,7 +76,7 @@ const ListAgentsRequest = z.object({
 })
 
 const agentUtils = {
-    isPublishable: (config: AgentConfig): boolean => config.instructions.trim().length > 0,
+    isPublishable: (config: AgentConfig): boolean => (config.instructions ?? '').trim().length > 0,
 }
 
 export {

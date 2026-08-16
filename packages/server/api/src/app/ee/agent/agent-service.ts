@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
 import { Agent, agentUtils, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
@@ -28,7 +28,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             color: request.color,
             visibility,
             sharedWithUserIds: await resolveShare({ visibility, sharedWithUserIds: request.sharedWithUserIds, projectId, log }),
-            draft: request.draft,
+            draft: sanitizeObjectForPostgresql(request.draft),
             published: null,
         })
     },
@@ -73,7 +73,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
             projectId,
             log,
         })
-        return agentRepo().save({ ...agent, ...request, visibility, sharedWithUserIds })
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
+        return agentRepo().save({ ...omit(agent, ['published']), ...request, draft, visibility, sharedWithUserIds })
     },
 
     async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -89,6 +90,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .update()
             .set({ published: () => '"draft"' })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere('"draft" ->> \'instructions\' ~ \'[^[:space:]]\'')
             .returning('id')
             .execute()
 
