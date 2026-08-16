@@ -49,24 +49,22 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-            // Any waitpoint may carry a deadline, not only a delay. A webhook waitpoint whose caller
-            // never comes back would otherwise hold the run forever.
-            if (!isNil(params.resumeDateTime)) {
-                await systemJobsSchedule(log).upsertJob({
-                    job: {
-                        name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                        data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: id },
-                        jobId: `resume-delay-${params.flowRunId}`,
-                    },
-                    schedule: {
-                        type: 'one-time',
-                        date: dayjs(params.resumeDateTime),
-                    },
-                })
-            }
         }
         else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        }
+        if (!isNil(params.resumeDateTime)) {
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
+                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
+                    jobId: `resume-delay-${params.flowRunId}`,
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(params.resumeDateTime),
+                },
+            })
         }
         return { inserted, waitpoint }
     },
