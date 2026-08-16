@@ -43,6 +43,12 @@ type EmailCodeVerified = {
     needsNameStep: boolean
 }
 
+type EmailCodeRejected = {
+    errorCode: string
+}
+
+type EmailCodeResendRequested = Record<string, never>
+
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -198,6 +204,8 @@ export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     EMAIL_CODE_REQUESTED = 'email.code.requested',
     EMAIL_CODE_VERIFIED = 'email.code.verified',
+    EMAIL_CODE_REJECTED = 'email.code.rejected',
+    EMAIL_CODE_RESEND_REQUESTED = 'email.code.resend.requested',
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
@@ -256,6 +264,14 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<
   TelemetryEventName.EMAIL_CODE_VERIFIED,
   EmailCodeVerified
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_REJECTED,
+  EmailCodeRejected
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
+  EmailCodeResendRequested
   >
   | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
   | BaseTelemetryEvent<
