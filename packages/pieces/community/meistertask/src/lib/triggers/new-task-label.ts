@@ -1,8 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
-  Property,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -12,12 +10,8 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newTaskLabelPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
@@ -25,23 +19,22 @@ const newTaskLabelPolling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
 
     try {
       const tasksResponse = await makeRequest(
         HttpMethod.GET,
-        `/task/${propsValue.section}/task_labels`,
+        `/tasks/${propsValue.section}/task_labels`,
         token
       );
 
-      const taskLabels = tasksResponse.body || [];
+      const taskLabels = Array.isArray(tasksResponse.body) ? tasksResponse.body : [];
 
       return taskLabels.map((label: any) => ({
         epochMilliSeconds: dayjs(label.created_at || label.updated_at || new Date()).valueOf(),
         data: label,
       }));
-    } catch (error) {
-      console.error('Error fetching task labels:', error);
+    } catch {
       return [];
     }
   },
@@ -51,18 +44,16 @@ export const newTaskLabel = createTrigger({
   auth: meistertaskAuth,
   name: 'new_task_label',
   displayName: 'New Task Label',
-  description: 'Triggers when a task label is created.',
-  aiMetadata: {
-    description: 'Fires when a label is attached to a task within the selected MeisterTask project section. Represents a new task-label association (a task being tagged).',
-  },
+  description: 'Triggers when a new label is attached to a task.',
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,
   },
   sampleData: {
-    "id": 364,
-    "label_id": 25,
-    "task_id": 123
+    "id": 1,
+    "task_id": 15,
+    "label_id": 2,
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

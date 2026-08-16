@@ -1,10 +1,20 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, HttpResponse } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { AuthenticationType } from '@activepieces/pieces-common';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 
 export const MEISTERTASK_API_URL = 'https://www.meistertask.com/api';
+
+export interface MeisterTaskItem {
+  id: number | string;
+  name?: string;
+  status?: number;
+  status_updated_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  firstname?: string;
+  lastname?: string;
+}
 
 export const meisterTaskCommon = {
   baseUrl: MEISTERTASK_API_URL,
@@ -24,9 +34,9 @@ export const meisterTaskCommon = {
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth).access_token;
+        const token = getAccessToken(auth);
 
-        const response = await httpClient.sendRequest({
+        const response = await httpClient.sendRequest<MeisterTaskItem[]>({
           method: HttpMethod.GET,
           url: `${MEISTERTASK_API_URL}/projects`,
           authentication: {
@@ -35,10 +45,11 @@ export const meisterTaskCommon = {
           },
         });
 
+        const projects = Array.isArray(response.body) ? response.body : [];
         return {
           disabled: false,
-          options: response.body.map((project: any) => ({
-            label: project.name,
+          options: projects.map((project) => ({
+            label: project.name || String(project.id),
             value: project.id,
           })),
         };
@@ -68,8 +79,8 @@ export const meisterTaskCommon = {
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
-        const response = await httpClient.sendRequest({
+        const token = getAccessToken(auth);
+        const response = await httpClient.sendRequest<MeisterTaskItem[]>({
           method: HttpMethod.GET,
           url: `${MEISTERTASK_API_URL}/projects/${project}/sections`,
           authentication: {
@@ -78,10 +89,11 @@ export const meisterTaskCommon = {
           },
         });
 
+        const sections = Array.isArray(response.body) ? response.body : [];
         return {
           disabled: false,
-          options: response.body.map((section: any) => ({
-            label: section.name,
+          options: sections.map((section) => ({
+            label: section.name || String(section.id),
             value: section.id,
           })),
         };
@@ -95,7 +107,8 @@ export const meisterTaskCommon = {
       }
     },
   }),
-  task_id: Property.Dropdown<{ name: string; id: string },true,typeof meistertaskAuth>({
+
+  task_id: Property.Dropdown({
     auth: meistertaskAuth,
     displayName: 'Task',
     required: true,
@@ -105,14 +118,14 @@ export const meisterTaskCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a  first',
+          placeholder: 'Please select a task first',
         };
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
+        const token = getAccessToken(auth);
 
-        const response = await httpClient.sendRequest({
+        const response = await httpClient.sendRequest<MeisterTaskItem[]>({
           method: HttpMethod.GET,
           url: `${MEISTERTASK_API_URL}/tasks`,
           authentication: {
@@ -121,10 +134,11 @@ export const meisterTaskCommon = {
           },
         });
 
+        const tasks = Array.isArray(response.body) ? response.body : [];
         return {
           disabled: false,
-          options: response.body.map((task: any) => ({
-            label: task.name,
+          options: tasks.map((task) => ({
+            label: task.name || String(task.id),
             value: task.id,
           })),
         };
@@ -139,7 +153,7 @@ export const meisterTaskCommon = {
     },
   }),
 
-  label: Property.Dropdown<{ name: string; id: string },true,typeof meistertaskAuth>({
+  label: Property.Dropdown({
     auth: meistertaskAuth,
     displayName: 'Label',
     required: true,
@@ -154,9 +168,9 @@ export const meisterTaskCommon = {
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
+        const token = getAccessToken(auth);
 
-        const response = await httpClient.sendRequest({
+        const response = await httpClient.sendRequest<MeisterTaskItem[]>({
           method: HttpMethod.GET,
           url: `${MEISTERTASK_API_URL}/projects/${project}/labels`,
           authentication: {
@@ -165,10 +179,11 @@ export const meisterTaskCommon = {
           },
         });
 
+        const labels = Array.isArray(response.body) ? response.body : [];
         return {
           disabled: false,
-          options: response.body.map((label: any) => ({
-            label: label.name,
+          options: labels.map((label) => ({
+            label: label.name || String(label.id),
             value: label.id,
           })),
         };
@@ -198,9 +213,9 @@ export const meisterTaskCommon = {
       }
 
       try {
-        const token = typeof auth === 'string' ? auth : (auth as any).access_token;
+        const token = getAccessToken(auth);
 
-        const response = await httpClient.sendRequest({
+        const response = await httpClient.sendRequest<MeisterTaskItem[]>({
           method: HttpMethod.GET,
           url: `${MEISTERTASK_API_URL}/projects/${project}/persons`,
           authentication: {
@@ -209,10 +224,11 @@ export const meisterTaskCommon = {
           },
         });
 
+        const persons = Array.isArray(response.body) ? response.body : [];
         return {
           disabled: false,
-          options: response.body.map((person: any) => ({
-            label: `${person.firstname} ${person.lastname}`,
+          options: persons.map((person) => ({
+            label: `${person.firstname || ''} ${person.lastname || ''}`.trim() || String(person.id),
             value: person.id,
           })),
         };
@@ -228,13 +244,13 @@ export const meisterTaskCommon = {
   }),
 };
 
-export async function makeRequest(
+export async function makeRequest<T = unknown>(
   method: HttpMethod,
   url: string,
   token: string,
-  body?: any
-) {
-  return await httpClient.sendRequest({
+  body?: unknown
+): Promise<HttpResponse<T>> {
+  return await httpClient.sendRequest<T>({
     method,
     url: `${MEISTERTASK_API_URL}${url}`,
     authentication: {
@@ -245,3 +261,4 @@ export async function makeRequest(
   });
 }
 
+export { getAccessToken };

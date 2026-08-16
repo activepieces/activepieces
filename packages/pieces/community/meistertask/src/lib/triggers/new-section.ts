@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,27 +10,23 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
-import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
+import { meistertaskAuth, getAccessToken } from '../auth';
+import { makeRequest } from '../common/common';
 
 const newSectionPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+  items: async ({ auth }) => {
+    const token = getAccessToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
       `/sections`,
       token
     );
 
-    const sections = response.body || [];
+    const sections = Array.isArray(response.body) ? response.body : [];
     return sections.map((section: any) => ({
       epochMilliSeconds: dayjs(section.created_at).valueOf(),
       data: section,
@@ -44,22 +39,12 @@ export const newSection = createTrigger({
   name: 'new_section',
   displayName: 'New Section',
   description: 'Triggers when a new section is created.',
-  aiMetadata: {
-    description: 'Fires when a new section (board column) is created in MeisterTask. Represents a newly added grouping that tasks can belong to.',
-  },
-  props: {
-  },
+  props: {},
   sampleData: {
-    "id": 119,
-    "name": "Intermediate",
-    "description": null,
-    "color": "30bfbf",
-    "indicator": 7,
-    "status": 1,
-    "project_id": 66,
-    "sequence": -1,
-    "created_at": "2017-01-25T13:22:34.559759Z",
-    "updated_at": "2017-02-01T09:24:48.453184Z"
+    "id": 1,
+    "name": "Backlog",
+    "project_id": 15,
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

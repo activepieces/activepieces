@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,44 +10,25 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newAttachmentPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
-  { project: unknown; section: unknown }
+  { task_id: unknown }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
     const tasksResponse = await makeRequest(
       HttpMethod.GET,
-      `/sections/${propsValue.section}/tasks`,
+      `/tasks/${propsValue.task_id}/attachments`,
       token
     );
 
-    const tasks = tasksResponse.body || [];
-    const attachments: any[] = [];
+    const taskAttachments = Array.isArray(tasksResponse.body) ? tasksResponse.body : [];
 
-    for (const task of tasks) {
-      try {
-        const attachmentsResponse = await makeRequest(
-          HttpMethod.GET,
-          `/tasks/${task.id}/attachments`,
-          token
-        );
-        const taskAttachments = attachmentsResponse.body || [];
-        attachments.push(...taskAttachments);
-      } catch (error) {
-        console.error(`Error fetching attachments for task ${task.id}:`, error);
-      }
-    }
-
-    return attachments.map((attachment: any) => ({
+    return taskAttachments.map((attachment: any) => ({
       epochMilliSeconds: dayjs(attachment.created_at).valueOf(),
       data: attachment,
     }));
@@ -59,20 +39,18 @@ export const newAttachment = createTrigger({
   auth: meistertaskAuth,
   name: 'new_attachment',
   displayName: 'New Attachment',
-  description: 'Triggers when an attachment is created.',
-  aiMetadata: {
-    description: 'Fires when a new attachment is added to any task within the selected MeisterTask project section. Represents a file newly uploaded to one of that section\'s tasks.',
-  },
+  description: 'Triggers when a new attachment is added to a task.',
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,
+    task_id: meisterTaskCommon.task_id,
   },
   sampleData: {
-    id: 55555555,
-    task_id: 12345678,
-    filename: 'document.pdf',
-    url: 'https://example.com/file.pdf',
-    created_at: '2024-01-15T12:00:00Z',
+    "id": 1,
+    "task_id": 15,
+    "name": "sample.pdf",
+    "attachment_url": "https://www.meistertask.com/attachments/1",
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

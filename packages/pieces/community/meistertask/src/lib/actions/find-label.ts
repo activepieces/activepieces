@@ -1,4 +1,4 @@
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -7,9 +7,7 @@ export const findLabel = createAction({
   auth: meistertaskAuth,
   name: 'find_label',
   displayName: 'Find Label',
-  description: 'Finds a label by searching',
-  audience: 'both',
-  aiMetadata: { description: 'Search a MeisterTask project\'s labels by name and return the first one whose name contains the given text (case-insensitive). Use to resolve a label name to its record/ID before tagging tasks. Read-only and idempotent. Requires the project and a name; returns null if no label matches.', idempotent: true },
+  description: 'Finds a label in a project',
   props: {
     project: meisterTaskCommon.project,
     name: Property.ShortText({
@@ -18,7 +16,7 @@ export const findLabel = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { project, name } = context.propsValue;
 
     const response = await makeRequest(
@@ -27,10 +25,11 @@ export const findLabel = createAction({
       token
     );
 
-    const labels = response.body.filter((label: any) =>
-      label.name.toLowerCase().includes(name.toLowerCase())
+    const labels = Array.isArray(response.body) ? response.body : [];
+    const label = labels.find((l: any) =>
+      l.name && l.name.toLowerCase() === name.toLowerCase()
     );
 
-    return labels.length > 0 ? labels[0] : null;
+    return label || null;
   },
 });

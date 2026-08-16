@@ -1,4 +1,4 @@
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -30,18 +30,18 @@ export const findOrCreateTask = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { section, name, notes, assigned_to, due_date } = context.propsValue;
 
-    // Try to find existing task
     const findResponse = await makeRequest(
       HttpMethod.GET,
       `/sections/${section}/tasks`,
       token
     );
 
-    const existingTask = findResponse.body.find((task: any) =>
-      task.name.toLowerCase() === name.toLowerCase()
+    const tasks = Array.isArray(findResponse.body) ? findResponse.body : [];
+    const existingTask = tasks.find((task: any) =>
+      task.name && task.name.toLowerCase() === name.toLowerCase()
     );
 
     if (existingTask) {
@@ -52,14 +52,13 @@ export const findOrCreateTask = createAction({
       };
     }
 
-    // Create new task
-    const body: any = {
+    const body: { name: string; section_id: string; notes?: string; assigned_to_id?: string; due?: string } = {
       name,
-      section_id: section,
+      section_id: section as string,
     };
 
     if (notes) body.notes = notes;
-    if (assigned_to) body.assigned_to_id = assigned_to;
+    if (assigned_to) body.assigned_to_id = assigned_to as string;
     if (due_date) body.due = due_date;
 
     const createResponse = await makeRequest(

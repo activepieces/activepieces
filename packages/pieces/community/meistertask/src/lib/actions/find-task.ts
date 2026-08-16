@@ -1,5 +1,5 @@
-import { meistertaskAuth } from '../auth';
-import { makeRequest, meisterTaskCommon } from '../common/common';
+import { meistertaskAuth, getAccessToken } from '../auth';
+import { makeRequest, meisterTaskCommon, MeisterTaskItem } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
@@ -19,20 +19,20 @@ export const findTask = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { section, name } = context.propsValue;
 
-    const response = await makeRequest(
+    const response = await makeRequest<MeisterTaskItem[]>(
       HttpMethod.GET,
       `/sections/${section}/tasks`,
       token
     );
 
-    let tasks = response.body;
+    let tasks = Array.isArray(response.body) ? response.body : [];
 
     if (name) {
-      tasks = tasks.filter((task: any) =>
-        task.name.toLowerCase().includes(name.toLowerCase())
+      tasks = tasks.filter((task) =>
+        task.name && task.name.toLowerCase().includes(name.toLowerCase())
       );
     }
 

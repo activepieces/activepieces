@@ -1,9 +1,8 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
-  } from '@activepieces/pieces-framework';
+} from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
@@ -11,27 +10,23 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newPersonPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   { project: unknown }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) =>   {
-    const token = getToken(auth);
+  items: async ({ auth, propsValue }) => {
+    const token = getAccessToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
       `/projects/${propsValue.project}/persons`,
       token
     );
 
-    const persons = response.body || [];
+    const persons = Array.isArray(response.body) ? response.body : [];
     return persons.map((person: any) => ({
       epochMilliSeconds: dayjs(person.created_at).valueOf(),
       data: person,
@@ -44,21 +39,15 @@ export const newPerson = createTrigger({
   name: 'new_person',
   displayName: 'New Person',
   description: 'Triggers when a new person is added to a project.',
-  aiMetadata: {
-    description: 'Fires when a new person (member) is added to the selected MeisterTask project. Represents a user gaining access to that project.',
-  },
   props: {
     project: meisterTaskCommon.project,
   },
   sampleData: {
-    "id": 8,
+    "id": 1,
     "firstname": "Jane",
-    "lastname": "Demo",
+    "lastname": "Doe",
     "email": "jane@example.com",
-    "avatar": "https://www.example.com/files/avatars/jane.jpg",
-    "avatar_thumb": "https://www.example.com/files/avatars/jane.jpg",
-    "created_at": "2017-04-02T03:14:15.926535Z",
-    "updated_at": "2017-04-02T03:14:15.926535Z"
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,27 +10,23 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
-import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
+import { meistertaskAuth, getAccessToken } from '../auth';
+import { makeRequest } from '../common/common';
 
 const newTaskPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+  items: async ({ auth }) => {
+    const token = getAccessToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
       `/tasks`,
       token
     );
 
-    const tasks = response.body || [];
+    const tasks = Array.isArray(response.body) ? response.body : [];
     return tasks.map((task: any) => ({
       epochMilliSeconds: dayjs(task.updated_at).valueOf(),
       data: task,
@@ -47,8 +42,7 @@ export const newTask = createTrigger({
   aiMetadata: {
     description: 'Fires when a task is created or updated in the connected MeisterTask account; deduplication is keyed on the task\'s last-updated time, so it re-fires whenever a task changes, not only on creation. Represents the latest create-or-edit event across the account\'s tasks.',
   },
-  props: {
-  },
+  props: {},
   sampleData: {
     "id": 15,
     "token": "gvuUs17f",

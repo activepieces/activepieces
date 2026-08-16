@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,12 +10,8 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newCommentPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
@@ -24,14 +19,14 @@ const newCommentPolling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
     const tasksResponse = await makeRequest(
       HttpMethod.GET,
-      `/task/${propsValue.task_id}/comments`,
+      `/tasks/${propsValue.task_id}/comments`,
       token
     );
 
-    const taskComments = tasksResponse.body || [];
+    const taskComments = Array.isArray(tasksResponse.body) ? tasksResponse.body : [];
     
     return taskComments.map((comment: any) => ({
       epochMilliSeconds: dayjs(comment.created_at).valueOf(),
@@ -44,21 +39,17 @@ export const newComment = createTrigger({
   auth: meistertaskAuth,
   name: 'new_comment',
   displayName: 'New Comment',
-  description: 'Triggers when a new comment is created on a task.',
-  aiMetadata: {
-    description: 'Fires when a new comment is posted on the selected MeisterTask task. Represents a discussion message added to that specific task.',
-  },
+  description: 'Triggers when a new comment is added to a task.',
   props: {
+    project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
     task_id: meisterTaskCommon.task_id,
   },
   sampleData: {
-    "id": 2,
-    "task_id": 123,
-    "text": "Looks awesome!",
-    "text_html": "<p>Looks awesome!</p>\n",
-    "person_id": 7,
-    "created_at": "2017-04-02T03:14:15.926535Z",
-    "updated_at": "2017-04-02T03:14:15.926535Z"
+    "id": 1,
+    "task_id": 15,
+    "text": "This is a comment",
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

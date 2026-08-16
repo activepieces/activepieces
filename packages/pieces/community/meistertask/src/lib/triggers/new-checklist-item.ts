@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -10,43 +9,29 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { meistertaskAuth } from '../auth';
+import dayjs from 'dayjs';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newChecklistItemPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   { task_id: unknown }
 > = {
-  strategy: DedupeStrategy.LAST_ITEM,
+  strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
+    const tasksResponse = await makeRequest(
+      HttpMethod.GET,
+      `/tasks/${propsValue.task_id}/checklist_items`,
+      token
+    );
 
-    try {
-      const tasksResponse = await makeRequest(
-        HttpMethod.GET,
-        `/task/${propsValue.task_id}/checklist_items`,
-        token
-      );
+    const checklistItems = Array.isArray(tasksResponse.body) ? tasksResponse.body : [];
 
-      const tasks = tasksResponse.body || [];
-      const checklistItems: any[] = [];
-
-      if (tasks.length === 0) {
-        return [];
-      }
-
-      return tasks.map((item: any) => ({
-        id: item.id,
-        data: item,
-      }));
-    } catch (error) {
-      console.error('Error fetching checklist items:', error);
-      return [];
-    }
+    return checklistItems.map((item: any) => ({
+      epochMilliSeconds: dayjs(item.created_at).valueOf(),
+      data: item,
+    }));
   },
 };
 
@@ -54,19 +39,17 @@ export const newChecklistItem = createTrigger({
   auth: meistertaskAuth,
   name: 'new_checklist_item',
   displayName: 'New Checklist Item',
-  description: 'Triggers when a new checklist item is added to a task.',
-  aiMetadata: {
-    description: 'Fires when a new checklist item is added to the selected MeisterTask task. Represents a sub-item appended to that task\'s checklist.',
-  },
+  description: 'Triggers when a new checklist item is created.',
   props: {
+    project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
     task_id: meisterTaskCommon.task_id,
   },
   sampleData: {
-    "id": 26,
-    "name": "Checklist A",
-    "sequence": 100000,
-    "task_id": 12,
-    "project_id": 6
+    "id": 1,
+    "task_id": 15,
+    "name": "Checklist Item",
+    "created_at": "2023-01-01T00:00:00.000Z"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

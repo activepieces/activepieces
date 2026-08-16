@@ -1,29 +1,30 @@
-import { meistertaskAuth } from '../auth';
-import {  makeRequest, meisterTaskCommon} from '../common/common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { meistertaskAuth, getAccessToken } from '../auth';
+import { makeRequest, meisterTaskCommon } from '../common/common';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createTaskLabel = createAction({
   auth: meistertaskAuth,
   name: 'create_task_label',
-  displayName: 'Create Task Label',
-  description: 'Creates a new task label',
-  audience: 'both',
-  aiMetadata: { description: 'Attach an existing project label to a specific task in MeisterTask, creating the task-label association. Use to tag a task with an already-defined label; requires the task ID and the label ID. Not idempotent — each call adds another label association.', idempotent: false },
+  displayName: 'Add Label to Task',
+  description: 'Adds a label to a task',
   props: {
     project: meisterTaskCommon.project,
+    section: meisterTaskCommon.section,
     task_id: meisterTaskCommon.task_id,
     label: meisterTaskCommon.label,
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { task_id, label } = context.propsValue;
 
     const response = await makeRequest(
       HttpMethod.POST,
-      `/tasks/${task_id}/task_labels`,
+      `/tasks/${task_id}/labels`,
       token,
-      { label_id: label }
+      {
+        label_id: label,
+      }
     );
 
     return response.body;

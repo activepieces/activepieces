@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,12 +10,8 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
-import { makeRequest, meisterTaskCommon } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
+import { meistertaskAuth, getAccessToken } from '../auth';
+import { makeRequest } from '../common/common';
 
 const newProjectPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
@@ -24,14 +19,14 @@ const newProjectPolling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
       `/projects`,
       token
     );
 
-    const projects = response.body || [];
+    const projects = Array.isArray(response.body) ? response.body : [];
     return projects.map((project: any) => ({
       epochMilliSeconds: dayjs(project.created_at).valueOf(),
       data: project,
@@ -48,7 +43,7 @@ export const newProject = createTrigger({
     description: 'Fires when a new project is created in the connected MeisterTask account. Represents a newly added project board accessible to the connection.',
   },
   props: {},
-  sampleData:  {
+  sampleData: {
     "id": 123,
     "token": "s3i5reaF",
     "name": "Getting Started with MeisterTask",

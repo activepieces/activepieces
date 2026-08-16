@@ -1,8 +1,7 @@
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Project } from '@activepieces/pieces-framework';
 
 export const updateTask = createAction({
   auth: meistertaskAuth,
@@ -41,14 +40,14 @@ export const updateTask = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { task_id, name, notes, status, assigned_to, due_date } = context.propsValue;
 
-    const body: any = {};
+    const body: { name?: string; notes?: string; status?: number; assigned_to_id?: string; due?: string } = {};
     if (name) body.name = name;
     if (notes) body.notes = notes;
-    if (status) body.status = status;
-    if (assigned_to) body.assigned_to_id = assigned_to;
+    if (status !== undefined && status !== null) body.status = status;
+    if (assigned_to) body.assigned_to_id = assigned_to as string;
     if (due_date) body.due = due_date;
 
     const response = await makeRequest(

@@ -1,7 +1,6 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
@@ -10,13 +9,8 @@ import {
   pollingHelper,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { meistertaskAuth } from '../auth';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { meisterTaskCommon, makeRequest } from '../common/common';
-
-const getToken = (auth: any): string => {
-  return typeof auth === 'string' ? auth : (auth as any).access_token;
-};
 
 const newLabelPolling: Polling<
   AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
@@ -24,14 +18,14 @@ const newLabelPolling: Polling<
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const token = getToken(auth);
+    const token = getAccessToken(auth);
     const response = await makeRequest(
       HttpMethod.GET,
       `/projects/${propsValue.project}/labels`,
       token
     );
 
-    const labels = response.body || [];
+    const labels = Array.isArray(response.body) ? response.body : [];
     return labels.map((label: any) => ({
       id: label.id,
       data: label,
@@ -43,18 +37,15 @@ export const newLabel = createTrigger({
   auth: meistertaskAuth,
   name: 'new_label',
   displayName: 'New Label',
-  description: 'Triggers when a label is created.',
-  aiMetadata: {
-    description: 'Fires when a new label is created in the selected MeisterTask project. Represents a newly defined tag available to apply to that project\'s tasks.',
-  },
+  description: 'Triggers when a new label is created.',
   props: {
     project: meisterTaskCommon.project,
   },
   sampleData: {
-    "id": 24,
-    "project_id": 42,
+    "id": 1,
+    "project_id": 15,
     "name": "Bug",
-    "color": "d93651"
+    "color": "ff0000"
   },
   type: TriggerStrategy.POLLING,
   async test(context) {

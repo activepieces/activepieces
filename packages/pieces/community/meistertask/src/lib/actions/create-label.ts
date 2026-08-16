@@ -1,16 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { meistertaskAuth, getAccessToken } from '../auth';
 import { makeRequest, meisterTaskCommon } from '../common/common';
-import { meistertaskAuth } from '../auth';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-
 
 export const createLabel = createAction({
   auth: meistertaskAuth,
   name: 'create_label',
   displayName: 'Create Label',
-  description: 'Creates a new label',
-  audience: 'both',
-  aiMetadata: { description: 'Create a new label in a MeisterTask project, optionally with a hex color. Use to define a reusable tag for tasks; requires the target project and a label name. Not idempotent — each call creates another label even if one with the same name already exists (use Find or Create Label to avoid duplicates).', idempotent: false },
+  description: 'Creates a new label in a project',
   props: {
     project: meisterTaskCommon.project,
     name: Property.ShortText({
@@ -18,16 +15,17 @@ export const createLabel = createAction({
       required: true,
     }),
     color: Property.ShortText({
-      displayName: 'Color',
-      description: 'Hex color code (e.g., #FF0000)',
+      displayName: 'Color (Hex)',
       required: false,
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = getAccessToken(context.auth);
     const { project, name, color } = context.propsValue;
 
-    const body: any = { name };
+    const body: { name: string; color?: string } = {
+      name,
+    };
     if (color) body.color = color;
 
     const response = await makeRequest(

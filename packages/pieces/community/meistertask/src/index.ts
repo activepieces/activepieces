@@ -1,5 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { taskCreated } from './lib/triggers/task-created';
+import { taskCompleted } from './lib/triggers/task-completed';
 import { newAttachment } from './lib/triggers/new-attachment';
 import { newPerson } from './lib/triggers/new-person';
 import { newSection } from './lib/triggers/new-section';
@@ -9,22 +11,22 @@ import { newChecklistItem } from './lib/triggers/new-checklist-item';
 import { newProject } from './lib/triggers/new-project';
 import { newLabel } from './lib/triggers/new-label';
 import { newTask } from './lib/triggers/new-task';
+import { createProject } from './lib/actions/create-project';
+import { createTask } from './lib/actions/create-task';
+import { updateTask } from './lib/actions/update-task';
+import { findTask } from './lib/actions/find-task';
 import { createLabel } from './lib/actions/create-label';
 import { createTaskLabel } from './lib/actions/create-task-label';
 import { createAttachment } from './lib/actions/create-attachment';
-import { createTask } from './lib/actions/create-task';
-import { updateTask } from './lib/actions/update-task';
 import { findAttachment } from './lib/actions/find-attachment';
 import { findLabel } from './lib/actions/find-label';
 import { findPerson } from './lib/actions/find-person';
-import { findTask } from './lib/actions/find-task';
 import { findOrCreateAttachment } from './lib/actions/find-or-create-attachment';
 import { findOrCreateTask } from './lib/actions/find-or-create-task';
 import { findOrCreateLabel } from './lib/actions/find-or-create-label';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType, createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { MEISTERTASK_API_URL } from './lib/common/common';
-import { meistertaskAuth } from './lib/auth';
+import { meistertaskAuth, getAccessToken } from './lib/auth';
 
 export const meistertask = createPiece({
   displayName: 'MeisterTask',
@@ -33,17 +35,18 @@ export const meistertask = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/meistertask.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['Ani-4x', 'sanket-a11y'],
+  authors: ['Ani-4x', 'sanket-a11y', 'BountyGrid'],
   actions: [
+    createTask,
+    updateTask,
+    findTask,
+    createProject,
     createLabel,
     createTaskLabel,
     createAttachment,
-    createTask,
-    updateTask,
     findAttachment,
     findLabel,
     findPerson,
-    findTask,
     findOrCreateAttachment,
     findOrCreateTask,
     findOrCreateLabel,
@@ -52,12 +55,15 @@ export const meistertask = createPiece({
       baseUrl: () => MEISTERTASK_API_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          Authorization: `Bearer ${getAccessToken(auth)}`,
         };
       },
     }),
   ],
   triggers: [
+    taskCreated,
+    taskCompleted,
+    newTask,
     newAttachment,
     newPerson,
     newSection,
@@ -66,6 +72,5 @@ export const meistertask = createPiece({
     newChecklistItem,
     newProject,
     newLabel,
-    newTask,
   ],
 });
