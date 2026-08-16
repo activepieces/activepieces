@@ -1,8 +1,9 @@
-import { Agent, Project } from '@activepieces/shared'
+import { Agent, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type AgentWithRelations = Agent & {
+    owner: User
     project: Project
 }
 
@@ -11,6 +12,10 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
+        ownerId: {
             ...ApIdSchema,
             nullable: false,
         },
@@ -34,6 +39,15 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             type: String,
             nullable: false,
         },
+        visibility: {
+            type: String,
+            nullable: false,
+        },
+        sharedWithUserIds: {
+            type: String,
+            array: true,
+            nullable: false,
+        },
         draft: {
             type: 'jsonb',
             nullable: false,
@@ -55,6 +69,14 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
         },
     ],
     relations: {
+        owner: {
+            type: 'many-to-one',
+            target: 'user',
+            joinColumn: {
+                name: 'ownerId',
+                foreignKeyConstraintName: 'fk_agent_owner_id',
+            },
+        },
         project: {
             type: 'many-to-one',
             target: 'project',

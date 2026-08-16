@@ -9,6 +9,11 @@ const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
 const DEFAULT_AGENT_MAX_STEPS = 20
 
+enum AgentVisibility {
+    PROJECT = 'PROJECT',
+    RESTRICTED = 'RESTRICTED',
+}
+
 enum AgentIcon {
     BOT = 'bot',
     SPARKLES = 'sparkles',
@@ -36,11 +41,14 @@ const AgentConfig = z.object({
 const Agent = z.object({
     ...BaseModelSchema,
     projectId: ApId,
+    ownerId: ApId,
     externalId: z.string(),
     displayName: z.string(),
     description: Nullable(z.string()),
     icon: z.enum(AgentIcon),
     color: z.enum(ColorName),
+    visibility: z.enum(AgentVisibility),
+    sharedWithUserIds: z.array(ApId),
     draft: AgentConfig,
     published: Nullable(AgentConfig),
 })
@@ -49,6 +57,7 @@ export {
     Agent,
     AgentConfig,
     AgentIcon,
+    AgentVisibility,
     DEFAULT_AGENT_MAX_STEPS,
     MAX_AGENT_OUTPUT_FIELDS,
     MAX_AGENT_STEP_BUDGET,
