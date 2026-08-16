@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 
 const MAX_NAME_PART_LENGTH = 50
 const FALLBACK_FIRST_NAME = 'there'
+const PLATFORM_NAME_NOUN = 'Platform'
 const FALLBACK_PLATFORM_NAME = 'My Platform'
 const SAFE_STRING_CHARS = /[./]/g
 
@@ -24,9 +25,13 @@ function platformNameFromPerson({ firstName, email }: PlatformNameFromPersonPara
     const [given] = firstName.replace(SAFE_STRING_CHARS, '').trim().split(/\s+/)
     if (isNil(given) || given.length === 0) {
         const [fromEmail] = localPartTokens(email)
-        return isNil(fromEmail) ? FALLBACK_PLATFORM_NAME : possessive(fromEmail.slice(0, MAX_NAME_PART_LENGTH))
+        return isNil(fromEmail) ? FALLBACK_PLATFORM_NAME : platformNameFor(fromEmail)
     }
-    return possessive(given.slice(0, MAX_NAME_PART_LENGTH))
+    return platformNameFor(given)
+}
+
+function platformNameFor(name: string): string {
+    return `${possessive(name.slice(0, MAX_NAME_PART_LENGTH))} ${PLATFORM_NAME_NOUN}`
 }
 
 function possessive(name: string): string {

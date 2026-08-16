@@ -45,10 +45,10 @@ describe('signupNames', () => {
 
     describe('platformNameFromPerson', () => {
         it.each([
-            ['Ahmad', "Ahmad's"],
-            ['Ahmad Bin', "Ahmad's"],
-            ['Chris', "Chris's"],
-            ["Ahmad's", "Ahmad's"],
+            ['Ahmad', "Ahmad's Platform"],
+            ['Ahmad Bin', "Ahmad's Platform"],
+            ['Chris', "Chris's Platform"],
+            ["Ahmad's", "Ahmad's Platform"],
         ])('names the platform from %s -> %s', (firstName, expected) => {
             expect(
                 signupNames.platformNameFromPerson({ firstName, email: 'a.b@activepieces.com' }),
@@ -58,7 +58,7 @@ describe('signupNames', () => {
         it('falls back to the email local part when the person has no usable name', () => {
             expect(
                 signupNames.platformNameFromPerson({ firstName: '', email: 'ahmad.tash@activepieces.com' }),
-            ).toBe("Ahmad's")
+            ).toBe("Ahmad's Platform")
         })
 
         it('uses the whole fallback when neither the name nor the address yields a word', () => {
