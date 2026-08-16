@@ -12,13 +12,19 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { authenticationService } from './authentication.service'
+import { disposableEmail } from './lib/disposable-email'
 import { signupNames } from './lib/signup-names'
+import { turnstile } from './lib/turnstile'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
-    async requestCode({ email, platformId }: RequestCodeParams): Promise<void> {
+    async requestCode({ email, platformId, captchaToken, remoteIp }: RequestCodeParams): Promise<void> {
+        await turnstile.assertSolved({ token: captchaToken, remoteIp, log })
         const existingIdentity = await userIdentityService(log).getIdentityByEmail(email)
+        if (isNil(existingIdentity)) {
+            await disposableEmail.assertMaySignUp({ email, log })
+        }
         if (!isNil(platformId)) {
             await assertPlatformAuthIsOpenTo({ email, platformId, log })
             const mayJoin = await mayJoinPlatform({ email, platformId, identity: existingIdentity, log })
@@ -155,6 +161,8 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
 type RequestCodeParams = {
     email: string
     platformId: string | null
+    captchaToken: string | undefined
+    remoteIp: string | undefined
 }
 
 type CompleteSignUpResult = {

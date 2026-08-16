@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/input-otp';
 import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
+import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -61,6 +62,8 @@ import {
   useShowThirdPartyProviders,
   useThirdPartyAvailability,
 } from '../third-party-logins';
+
+import { TurnstileWidget, useTurnstileSiteKey } from './turnstile-widget';
 
 const CODE_LENGTH = 6;
 
@@ -95,6 +98,28 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
   );
   const [emailForCode, setEmailForCode] = useState('');
   const [checkEmailNote, setCheckEmailNote] = useState(false);
+  const { capture } = useTelemetry();
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  const handleCaptchaUnavailable = useCallback(() => {
+    setCaptchaUnavailable(true);
+    capture({
+      name: TelemetryEventName.CAPTCHA_UNAVAILABLE,
+      payload: { surface: 'code-request' },
+    });
+  }, [capture]);
+  // A token is single-use, so every request spends the one in hand and the
+  // widget has to mint the next. The widget itself lives out here rather than
+  // inside a step: asking for a code and resending one are two requests, and a
+  // widget that unmounted with the email step would leave the resend with
+  // nothing to send.
+  const spendCaptcha = useCallback(() => {
+    setCaptchaToken(undefined);
+    setCaptchaReset((count) => count + 1);
+  }, []);
+  const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
+  const challengeApplies = step === 'method' || step === 'code';
 
   return (
     <AutoHeight>
@@ -118,9 +143,19 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
             checkEmailNote={checkEmailNote}
             setCheckEmailNote={setCheckEmailNote}
             invitedEmail={invitedEmail}
+            captchaToken={captchaToken}
+            captchaRequired={captchaRequired}
+            onCaptchaSpent={spendCaptcha}
           />
         </motion.div>
       </AnimatePresence>
+      {challengeApplies && (
+        <TurnstileWidget
+          onToken={setCaptchaToken}
+          onUnavailable={handleCaptchaUnavailable}
+          resetSignal={captchaReset}
+        />
+      )}
     </AutoHeight>
   );
 }
@@ -167,6 +202,9 @@ function AuthStep({
   checkEmailNote,
   setCheckEmailNote,
   invitedEmail,
+  captchaToken,
+  captchaRequired,
+  onCaptchaSpent,
 }: AuthStepProps) {
   const { data: emailAuthEnabledFlag } = flagsHooks.useFlag<boolean>(
     ApFlagId.EMAIL_AUTH_ENABLED,
@@ -324,6 +362,9 @@ function AuthStep({
     return (
       <DrawerShell>
         <CodeStep
+          captchaToken={captchaToken}
+          captchaRequired={captchaRequired}
+          onCaptchaSpent={onCaptchaSpent}
           email={emailForCode}
           onBack={() => setStep('method')}
           onNeedsName={() => setStep('verified')}
@@ -354,6 +395,9 @@ function AuthStep({
       )}
       <EmailStep
         invitedEmail={invitedEmail}
+        captchaToken={captchaToken}
+        captchaRequired={captchaRequired}
+        onCaptchaSpent={onCaptchaSpent}
         onCodeSent={(email) => {
           setEmailForCode(email);
           setStep('code');
@@ -445,7 +489,13 @@ function WorkEmailHint() {
   );
 }
 
-function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
+function EmailStep({
+  invitedEmail,
+  captchaToken,
+  captchaRequired,
+  onCaptchaSpent,
+  onCodeSent,
+}: EmailStepProps) {
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
     defaultValues: { email: invitedEmail },
@@ -464,16 +514,21 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
     formatUtils.emailRegex.test(email.trim()) && isPersonalEmail(email);
 
   const { mutate, isPending } = authMutations.useRequestEmailCode({
-    onSuccess: () => onCodeSent(form.getValues().email.trim()),
-    onError: (error) =>
+    onSuccess: () => {
+      onCaptchaSpent();
+      onCodeSent(form.getValues().email.trim());
+    },
+    onError: (error) => {
+      onCaptchaSpent();
       form.setError('root.serverError', {
         message: requestErrorMessage(error),
-      }),
+      });
+    },
   });
 
   const onSubmit: SubmitHandler<EmailSchema> = (data) => {
     form.clearErrors('root.serverError');
-    mutate({ email: data.email.trim() });
+    mutate({ email: data.email.trim(), captchaToken });
   };
 
   return (
@@ -508,6 +563,7 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
                   <Button
                     type="submit"
                     loading={isPending}
+                    disabled={captchaRequired && isNil(captchaToken)}
                     aria-label={t('Continue')}
                     data-testid="auth-continue"
                     className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2 rounded-md p-0"
@@ -736,7 +792,14 @@ function NameStep({ onSessionRejected }: NameStepProps) {
   );
 }
 
-function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
+function CodeStep({
+  captchaToken,
+  captchaRequired,
+  onCaptchaSpent,
+  email,
+  onBack,
+  onNeedsName,
+}: CodeStepProps) {
   const [code, setCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
@@ -776,14 +839,17 @@ function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
   const { mutate: resend, isPending: isResending } =
     authMutations.useRequestEmailCode({
       onSuccess: () => {
+        onCaptchaSpent();
         setCooldown(RESEND_COOLDOWN_SECONDS);
         capture({
           name: TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
           payload: {},
         });
       },
-      onError: () =>
-        setErrorMessage(t('Something went wrong, please try again later')),
+      onError: (error) => {
+        onCaptchaSpent();
+        setErrorMessage(requestErrorMessage(error));
+      },
     });
 
   const handleChange = (value: string) => {
@@ -821,8 +887,12 @@ function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
         )}
         <button
           type="button"
-          disabled={cooldown > 0 || isResending}
-          onClick={() => resend({ email })}
+          disabled={
+            cooldown > 0 ||
+            isResending ||
+            (captchaRequired && isNil(captchaToken))
+          }
+          onClick={() => resend({ email, captchaToken })}
           className="text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
         >
           {cooldown > 0
@@ -919,6 +989,9 @@ function requestErrorMessage(error: HttpError): string {
     if (errorCode === ErrorCode.EMAIL_AUTH_DISABLED) {
       return t('Email sign-in is disabled');
     }
+    if (captchaUtils.isRejection(error)) {
+      return t('That verification expired. Please try again.');
+    }
   }
   return t('Something went wrong, please try again later');
 }
@@ -988,6 +1061,9 @@ const FullNameZodSchema = z.object({
 type FullNameSchema = z.infer<typeof FullNameZodSchema>;
 
 type CodeStepProps = {
+  captchaToken: string | undefined;
+  captchaRequired: boolean;
+  onCaptchaSpent: () => void;
   email: string;
   onBack: () => void;
   onNeedsName: () => void;
@@ -995,6 +1071,9 @@ type CodeStepProps = {
 
 type EmailStepProps = {
   invitedEmail: string;
+  captchaToken: string | undefined;
+  captchaRequired: boolean;
+  onCaptchaSpent: () => void;
   onCodeSent: (email: string) => void;
 };
 
@@ -1018,6 +1097,9 @@ type AuthStepProps = {
   checkEmailNote: boolean;
   setCheckEmailNote: Dispatch<SetStateAction<boolean>>;
   invitedEmail: string;
+  captchaToken: string | undefined;
+  captchaRequired: boolean;
+  onCaptchaSpent: () => void;
 };
 
 type Step = 'method' | 'code' | 'verified' | 'name' | 'password' | 'reset';

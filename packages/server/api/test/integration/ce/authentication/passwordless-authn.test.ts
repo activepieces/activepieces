@@ -97,6 +97,47 @@ describe('Passwordless Authentication API', () => {
             expect(identity?.lastName).toBe('')
         })
 
+        it('refuses a throwaway address and creates nothing', async () => {
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/otp/request',
+                body: { email: 'someone@mailinator.com' },
+            })
+
+            expect(response?.statusCode).not.toBe(StatusCodes.NO_CONTENT)
+            expect(response?.json()?.code).toBe('DOMAIN_NOT_ALLOWED')
+            const identity = await databaseConnection().getRepository('user_identity')
+                .findOneBy({ email: 'someone@mailinator.com' })
+            expect(identity).toBeNull()
+        })
+
+        it('lets an invited member through even on a throwaway domain', async () => {
+            const invited = 'guest@mailinator.com'
+            await databaseConnection().getRepository('user_invitation').save({
+                id: apId(),
+                email: invited,
+                type: 'PLATFORM',
+                platformId: apId(),
+                status: 'ACCEPTED',
+                platformRole: PlatformRole.MEMBER,
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/otp/request',
+                body: { email: invited },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('issues a code with no captcha token when no challenge is configured', async () => {
+            const statusCode = await requestCode(EMAIL)
+
+            expect(statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect((await storedOtp(EMAIL))?.value).toMatch(/^[0-9]{6}$/)
+        })
+
         it('does not set the USER_CREATED flag before a code is verified', async () => {
             await requestCode(EMAIL)
 

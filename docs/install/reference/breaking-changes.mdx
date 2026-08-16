@@ -60,6 +60,10 @@ Nothing on upgrade. Re-check any flow or API integration that filters a Date col
 
 ### What has changed?
 
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
+
 #### Plans and credits are now managed by our billing service
 
 Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `POST /v1/license-keys/verify`. Applying a key is now `POST /v1/platform-billing/activate`.
@@ -76,6 +80,7 @@ When a platform has no credits left, new production runs are recorded with the `
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
 ### Do you need to take action?
+- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
 - Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
 - Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.

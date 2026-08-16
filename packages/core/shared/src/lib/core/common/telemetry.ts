@@ -49,6 +49,10 @@ type EmailCodeRejected = {
 
 type EmailCodeResendRequested = Record<string, never>
 
+type CaptchaUnavailable = {
+    surface: string
+}
+
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -206,6 +210,7 @@ export enum TelemetryEventName {
     EMAIL_CODE_VERIFIED = 'email.code.verified',
     EMAIL_CODE_REJECTED = 'email.code.rejected',
     EMAIL_CODE_RESEND_REQUESTED = 'email.code.resend.requested',
+    CAPTCHA_UNAVAILABLE = 'captcha.unavailable',
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
@@ -272,6 +277,10 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<
   TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
   EmailCodeResendRequested
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.CAPTCHA_UNAVAILABLE,
+  CaptchaUnavailable
   >
   | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
   | BaseTelemetryEvent<
