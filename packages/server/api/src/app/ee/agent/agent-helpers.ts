@@ -61,15 +61,15 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
-async function resolveRunProvider({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+async function resolveRunProvider({ platformId, provider, projectId, log }: { platformId: string, provider?: AIProviderName, projectId?: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
-        return resolveChatProvider({ platformId, log })
+        return resolveChatProvider({ platformId, projectId, log })
     }
-    return aiProviderService(log).getConfigOrThrow({ platformId, provider })
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider, projectId })
 }
 
-async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+async function resolveChatProvider({ platformId, projectId, log }: { platformId: string, projectId?: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId, projectId })
     if (isNil(chatProvider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,

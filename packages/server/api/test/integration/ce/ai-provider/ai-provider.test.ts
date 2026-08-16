@@ -7,6 +7,7 @@ import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 
 let app: FastifyInstance | null = null
 let ctx: TestContext
@@ -421,6 +422,60 @@ describe('AI Providers API', () => {
             expect(chatRows).toHaveLength(1)
             expect(chatRows[0].id).toBe(second.id)
             expect(chatRows[0].id).not.toBe(first.id)
+        })
+
+        it('lists models of a specific key when configId is given', async () => {
+            const olderModels = [
+                { modelId: 'older-model', modelName: 'Older model', modelType: 'text' },
+            ]
+            const newerModels = [
+                { modelId: 'newer-model', modelName: 'Newer model', modelType: 'text' },
+            ]
+            const older = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Older key',
+                config: customConfig('https://older-key.example.com', olderModels),
+                created: '2026-08-01T00:00:00.000Z',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Newer key',
+                config: customConfig('https://newer-key.example.com', newerModels),
+                created: '2026-08-10T00:00:00.000Z',
+            })
+
+            const withoutConfigId = await ctx.get(`/v1/ai-providers/${AIProviderName.CUSTOM}/models`)
+            expect(withoutConfigId?.statusCode).toBe(StatusCodes.OK)
+            expect(withoutConfigId?.json().map((m: { id: string }) => m.id)).toEqual(['newer-model'])
+
+            const withConfigId = await ctx.get(`/v1/ai-providers/${AIProviderName.CUSTOM}/models`, { configId: older.id })
+            expect(withConfigId?.statusCode).toBe(StatusCodes.OK)
+            expect(withConfigId?.json().map((m: { id: string }) => m.id)).toEqual(['older-model'])
+        })
+
+        it('scopes the chat provider to the requesting project', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Scoped chat key',
+                config: customConfig('https://chat-scoped.example.com'),
+                enabledForChat: true,
+                projectScope: 'selected',
+                projectIds: [apId()],
+            })
+
+            const excluded = await aiProviderService(app!.log).getChatProvider({
+                platformId: ctx.platform.id,
+                projectId: ctx.project.id,
+            })
+            expect(excluded).toBeNull()
+
+            const platformWide = await aiProviderService(app!.log).getChatProvider({
+                platformId: ctx.platform.id,
+            })
+            expect(platformWide?.provider).toBe(AIProviderName.CUSTOM)
         })
 
         it('filters models by the resolved key allow-list for engine calls only', async () => {

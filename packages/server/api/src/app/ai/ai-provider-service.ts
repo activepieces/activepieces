@@ -64,8 +64,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             }))
     },
 
-    async listModels({ platformId, provider, projectId }: { platformId: PlatformId, provider: AIProviderName, projectId?: string }): Promise<AIProviderModel[]> {
-        const aiProvider = await resolveEligibleRow({ platformId, provider, projectId })
+    async listModels({ platformId, provider, projectId, configId }: { platformId: PlatformId, provider: AIProviderName, projectId?: string, configId?: string }): Promise<AIProviderModel[]> {
+        const aiProvider = isNil(configId)
+            ? await resolveEligibleRow({ platformId, provider, projectId })
+            : await getRowByIdOrThrow({ platformId, provider, configId })
         const { config } = aiProvider
         const auth = await decryptRowAuth({ aiProvider, platformId })
 
@@ -164,8 +166,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return chatProvider?.provider ?? null
     },
 
-    async getChatProvider({ platformId }: { platformId: PlatformId }): Promise<GetProviderConfigResponse | null> {
-        const chatProvider = await findAvailableChatProviderRow({ platformId, log })
+    async getChatProvider({ platformId, projectId }: { platformId: PlatformId, projectId?: string }): Promise<GetProviderConfigResponse | null> {
+        const chatProvider = await findAvailableChatProviderRow({ platformId, projectId, log })
         if (isNil(chatProvider)) {
             return null
         }
@@ -280,6 +282,20 @@ async function resolveEligibleRow({ platformId, provider, projectId }: { platfor
     return winner
 }
 
+async function getRowByIdOrThrow({ platformId, provider, configId }: { platformId: PlatformId, provider: AIProviderName, configId: string }): Promise<AIProviderSchema> {
+    const aiProvider = await aiProviderRepo().findOneBy({ id: configId, platformId, provider })
+    if (isNil(aiProvider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityId: configId,
+                entityType: 'AIProvider',
+            },
+        })
+    }
+    return aiProvider
+}
+
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {
     const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
     if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
@@ -292,8 +308,9 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
     return auth
 }
 
-async function findAvailableChatProviderRow({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const chatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
+async function findAvailableChatProviderRow({ platformId, projectId, log }: { platformId: PlatformId, projectId?: string, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    const allChatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
+    const chatProviders = isNil(projectId) ? allChatProviders : allChatProviders.filter((row) => rowAllowsProject({ row, projectId }))
     if (!chatProviders.some((chatProvider) => chatProvider.provider === AIProviderName.ACTIVEPIECES)) {
         return chatProviders[0] ?? null
     }
