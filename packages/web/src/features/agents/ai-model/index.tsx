@@ -194,7 +194,7 @@ export function AIModelSelector({
               <CommandGroup className="max-h-64 overflow-auto">
                 {sortedProviders.map((provider) => (
                   <CommandItem
-                    key={provider.id}
+                    key={provider.provider}
                     value={provider.provider}
                     onSelect={() =>
                       handleProviderChange(provider.provider as AIProviderName)

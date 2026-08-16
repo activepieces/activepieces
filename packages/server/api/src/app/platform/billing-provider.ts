@@ -125,6 +125,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         nextBillingAmount: 0,
         cancelAt: null,
         trialEndsAt: null,
+        planInterval: null,
         planName: null,
         scheduledPlanName: null,
         billingPortalAvailable: false,
@@ -231,6 +232,7 @@ export type CreditUsageByProjectParams = {
 export type ProjectCreditsAggregate = {
     projectId: string
     creditsUsed: number
+    aiCreditsUsed: number
 }
 
 export type CreditUsage = {
@@ -288,6 +290,7 @@ export type BillingInfo = {
     scheduledPlanName: string | null
     billingPortalAvailable: boolean
     creditsResetInterval: string | null
+    planInterval: string | null
 }
 
 export type BillingOverview = BillingInfo & {

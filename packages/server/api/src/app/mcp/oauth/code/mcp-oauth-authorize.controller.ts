@@ -5,6 +5,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 
@@ -60,14 +61,14 @@ const AuthorizeRequest = {
     schema: {
         hide: true,
         querystring: z.object({
-            client_id: z.string(),
-            redirect_uri: z.string(),
-            response_type: z.string(),
-            code_challenge: z.string().max(256),
-            code_challenge_method: z.string().default('S256'),
-            state: z.string().max(512).optional(),
-            scope: z.string().optional(),
-            resource: z.string().optional(),
+            client_id: z.string().max(64),
+            redirect_uri: z.string().max(2048),
+            response_type: z.string().max(64),
+            code_challenge: mcpOAuthValidation.storableText(256).refine((value) => value.length >= 43, { message: 'code_challenge is too short' }),
+            code_challenge_method: z.string().max(8).default('S256'),
+            state: mcpOAuthValidation.storableText(512).optional(),
+            scope: mcpOAuthValidation.storableText(512).optional(),
+            resource: mcpOAuthValidation.storableText(2048).optional(),
         }),
     },
 }
