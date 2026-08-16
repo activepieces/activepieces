@@ -25,7 +25,7 @@ import {
   useState,
 } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -80,7 +80,13 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
   // gave us a name, so resume there wherever they re-enter the app.
   const [step, setStep] = useState<Step>('method');
   const [samlOpen, setSamlOpen] = useState(false);
-  const [mode, setMode] = useState<AuthMode>(initialMode);
+  // An invitation arrives as /sign-up?email=…, which that route forwards here
+  // with the search intact. The address is the invitee's, and they have no
+  // account yet, so the card opens on sign-up with the field already filled.
+  const invitedEmail = useSearchParams()[0].get('email') ?? '';
+  const [mode, setMode] = useState<AuthMode>(
+    invitedEmail.length > 0 ? 'signup' : initialMode,
+  );
   const [emailForCode, setEmailForCode] = useState('');
   const [checkEmailNote, setCheckEmailNote] = useState(false);
 
@@ -105,6 +111,7 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
             setEmailForCode={setEmailForCode}
             checkEmailNote={checkEmailNote}
             setCheckEmailNote={setCheckEmailNote}
+            invitedEmail={invitedEmail}
           />
         </motion.div>
       </AnimatePresence>
@@ -153,6 +160,7 @@ function AuthStep({
   setEmailForCode,
   checkEmailNote,
   setCheckEmailNote,
+  invitedEmail,
 }: AuthStepProps) {
   const navigate = useNavigate();
   const { data: emailAuthEnabledFlag } = flagsHooks.useFlag<boolean>(
@@ -240,8 +248,21 @@ function AuthStep({
     return (
       <DrawerShell>
         <BackLink onClick={() => setStep('method')} />
-        <Heading title={t('Sign in with password')} />
-        <SignInForm onForgotPassword={() => setStep('reset')} />
+        <Heading
+          title={
+            effectiveMode === 'signup'
+              ? t('Create your account')
+              : t('Sign in with password')
+          }
+        />
+        {effectiveMode === 'signup' ? (
+          <SignUpForm
+            showCheckYourEmailNote={checkEmailNote}
+            setShowCheckYourEmailNote={setCheckEmailNote}
+          />
+        ) : (
+          <SignInForm onForgotPassword={() => setStep('reset')} />
+        )}
       </DrawerShell>
     );
   }
@@ -292,6 +313,7 @@ function AuthStep({
         </>
       )}
       <EmailStep
+        invitedEmail={invitedEmail}
         onCodeSent={(email) => {
           setEmailForCode(email);
           setStep('code');
@@ -326,7 +348,48 @@ function AuthStep({
           </>
         )}
       </div>
+      <LegalNote />
     </DrawerShell>
+  );
+}
+
+function LegalNote() {
+  const { data: termsUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.TERMS_OF_SERVICE_URL,
+  );
+  const { data: privacyUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.PRIVACY_POLICY_URL,
+  );
+
+  if (isNil(termsUrl) && isNil(privacyUrl)) {
+    return null;
+  }
+
+  return (
+    <p className="mt-8 border-t pt-5 text-center text-[11px] leading-relaxed text-muted-foreground">
+      {t('By continuing, you agree to our')}{' '}
+      {!isNil(termsUrl) && (
+        <a
+          href={termsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2 transition-colors hover:text-foreground"
+        >
+          {t('Terms of Service')}
+        </a>
+      )}
+      {!isNil(termsUrl) && !isNil(privacyUrl) && ` ${t('and')} `}
+      {!isNil(privacyUrl) && (
+        <a
+          href={privacyUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2 transition-colors hover:text-foreground"
+        >
+          {t('Privacy Policy')}
+        </a>
+      )}
+    </p>
   );
 }
 
@@ -342,10 +405,10 @@ function WorkEmailHint() {
   );
 }
 
-function EmailStep({ onCodeSent }: EmailStepProps) {
+function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: invitedEmail },
     // Never call an address invalid before the user has actually tried to
     // continue — not while typing, not on blur. After a failed submit it
     // corrects live as they fix it.
@@ -756,6 +819,7 @@ type CodeStepProps = {
 };
 
 type EmailStepProps = {
+  invitedEmail: string;
   onCodeSent: (email: string) => void;
 };
 
@@ -774,8 +838,9 @@ type AuthStepProps = {
   setEmailForCode: Dispatch<SetStateAction<string>>;
   checkEmailNote: boolean;
   setCheckEmailNote: Dispatch<SetStateAction<boolean>>;
+  invitedEmail: string;
 };
 
-type Step = 'method' | 'code' | 'password' | 'reset' | 'saml';
+type Step = 'method' | 'code' | 'password' | 'reset';
 
-type AuthMode = 'signin' | 'signup';
+export type AuthMode = 'signin' | 'signup';
