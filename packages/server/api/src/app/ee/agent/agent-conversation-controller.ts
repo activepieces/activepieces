@@ -9,9 +9,9 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
+import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
-import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
@@ -19,10 +19,10 @@ import { findConnectionsForPiece } from './tools/agent-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
-export const agentController: FastifyPluginAsyncZod = async (app) => {
+export const agentConversationController: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/conversations', CreateConversationRoute, async (request, reply) => {
-        const conversation = await agentService(request.log).createConversation({
+        const conversation = await agentConversationService(request.log).createConversation({
             platformId: request.principal.platform.id,
             userId: request.principal.id,
             request: request.body,
@@ -31,7 +31,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/conversations', ListConversationsRoute, async (request) => {
-        return agentService(request.log).listConversations({
+        return agentConversationService(request.log).listConversations({
             platformId: request.principal.platform.id,
             userId: request.principal.id,
             cursor: request.query.cursor,
@@ -40,7 +40,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
-        return agentService(request.log).getConversationOrThrow({
+        return agentConversationService(request.log).getConversationOrThrow({
             id: request.params.id,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -48,7 +48,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id', UpdateConversationRoute, async (request) => {
-        return agentService(request.log).updateConversation({
+        return agentConversationService(request.log).updateConversation({
             id: request.params.id,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -57,7 +57,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.delete('/conversations/:id', DeleteConversationRoute, async (request, reply) => {
-        await agentService(request.log).deleteConversation({
+        await agentConversationService(request.log).deleteConversation({
             id: request.params.id,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -66,7 +66,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/conversations/:id/messages', GetMessagesRoute, async (request) => {
-        return agentService(request.log).getMessages({
+        return agentConversationService(request.log).getMessages({
             id: request.params.id,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -74,7 +74,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/conversations/:id/messages/:messageIndex/feedback', SetMessageFeedbackRoute, async (request, reply) => {
-        await agentService(request.log).setMessageFeedback({
+        await agentConversationService(request.log).setMessageFeedback({
             id: request.params.id,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -102,9 +102,9 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
 
-        log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[agentController] Chat message received')
+        log.info({ filesCount: files?.length ?? 0, contentLength: content.length }, '[agentConversationController] Chat message received')
 
-        const conversation = await agentService(log).getConversationOrThrow({
+        const conversation = await agentConversationService(log).getConversationOrThrow({
             id: conversationId,
             platformId,
             userId,
@@ -119,7 +119,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         if (needsCreditDecision) {
             const { error } = await tryCatch(() => chatPlanGrant.grant({ userId, platformId, log }))
             if (!isNil(error)) {
-                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentController] Chat plan grant failed; continuing to the credit gate')
+                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentConversationController] Chat plan grant failed; continuing to the credit gate')
             }
         }
 
@@ -136,7 +136,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         await agentHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
 
         if (conversation.status === AgentConversationStatus.STREAMING) {
-            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentController] Cancelling in-flight run before new message')
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 agentApprovalGate.requestCancel({ conversationId }),
             ]
@@ -169,13 +169,13 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
                 files,
             },
         })
-        runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentController] Enqueued chat agent job')
+        runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')
 
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
-        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[agentController] Tool approval received')
+        request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[agentConversationController] Tool approval received')
         await agentApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
@@ -190,9 +190,9 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         const log = request.log.child({ conversation: { id: conversationId }, user: { id: userId }, platform: { id: platformId } })
-        const conversation = await agentService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await agentConversationService(log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const activeRunId = conversation.activeRunId
-        log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[agentController] Cancel requested')
+        log.info({ ...spreadIfDefined('activeRunId', activeRunId ?? undefined) }, '[agentConversationController] Cancel requested')
         const cancelPromises = [
             agentApprovalGate.requestCancel({ conversationId }),
         ]
@@ -211,7 +211,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        const conversation = await agentService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const gate = await agentApprovalGate.getPendingGate({ conversationId })
         // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
         // the gate when it belongs to the run that currently owns the conversation.
@@ -224,7 +224,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await agentService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
         const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
         if (cached.length > 0) {
@@ -301,7 +301,7 @@ async function assertAgentMessageRateLimitNotExceeded({ platformId, userId, log 
         ttlSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS,
     })
     if (!allowed) {
-        log.warn({ user: { id: userId }, count }, '[agentController] Chat message rate limit exceeded')
+        log.warn({ user: { id: userId }, count }, '[agentConversationController] Chat message rate limit exceeded')
         throw new ActivepiecesError({
             code: ErrorCode.CHAT_MESSAGE_LIMIT_EXCEEDED,
             params: { limit: CHAT_MESSAGES_PER_WINDOW, windowSeconds: CHAT_MESSAGE_RATE_WINDOW_SECONDS },

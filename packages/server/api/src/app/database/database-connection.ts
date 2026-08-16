@@ -9,6 +9,7 @@ import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-r
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
+import { AgentEntity } from '../ee/agent/agent-entity'
 import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -106,6 +107,7 @@ function getEntities(): EntitySchema<unknown>[] {
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
         ToolSearchIndexEntity,
+        AgentEntity,
         AgentConversationEntity,
         ChatRolloutUserEntity,
         UserMemoryEntity,
