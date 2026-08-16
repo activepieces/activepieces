@@ -4,7 +4,7 @@ import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFA
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { aiProviderService } from '../../ai/ai-provider-service'
+import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
@@ -61,15 +61,15 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
-async function resolveRunProvider({ platformId, provider, projectId, log }: { platformId: string, provider?: AIProviderName, projectId?: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+async function resolveRunProvider({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
-        return resolveChatProvider({ platformId, projectId, log })
+        return resolveChatProvider({ platformId, scope, log })
     }
-    return aiProviderService(log).getConfigOrThrow({ platformId, provider, projectId })
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider, scope })
 }
 
-async function resolveChatProvider({ platformId, projectId, log }: { platformId: string, projectId?: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId, projectId })
+async function resolveChatProvider({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId, scope })
     if (isNil(chatProvider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -120,8 +120,8 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+async function resolveFastModel({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider) })
     return agentAiUtils.createChatModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,
@@ -134,8 +134,8 @@ function resolveFastModelId({ provider }: { provider: AIProviderName }): string 
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
-async function resolveEmbeddingModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+async function resolveEmbeddingModel({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider) })
     return agentAiUtils.createEmbeddingModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,
@@ -143,8 +143,8 @@ async function resolveEmbeddingModel({ platformId, provider, log }: { platformId
     })
 }
 
-async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
+async function resolveChatProviderName({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope }))
     return result.error ? null : result.data
 }
 

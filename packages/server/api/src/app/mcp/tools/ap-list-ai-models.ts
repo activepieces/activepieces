@@ -23,7 +23,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
 
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const service = aiProviderService(log)
-                const providers = await service.listProviders(platformId)
+                const providers = await service.listForProject({ platformId, projectId: mcp.projectId })
 
                 if (providers.length === 0) {
                     return {
@@ -49,7 +49,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const sections = await Promise.all(
                     filteredProviders.map(async (p) => {
                         try {
-                            const models = await service.listModels({ platformId, provider: p.provider, projectId: mcp.projectId })
+                            const models = await service.listModels({ platformId, provider: p.provider, scope: { type: 'project', projectId: mcp.projectId } })
                             const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
                             const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
                             structuredProviders.push({

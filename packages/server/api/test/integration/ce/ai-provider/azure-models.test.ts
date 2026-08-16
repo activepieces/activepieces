@@ -44,7 +44,7 @@ describe('GET /v1/ai-providers/:provider/models (azure)', () => {
             config: { resourceName: 'my-resource', apiVersion: '2024-10-21' },
         })
 
-        const response = await ctx.get('/v1/ai-providers/azure/models')
+        const response = await ctx.get('/v1/ai-providers/azure/models', { projectId: ctx.project.id })
 
         expect(response?.statusCode).toBe(StatusCodes.OK)
         expect(mockSendRequest).toHaveBeenCalledTimes(1)

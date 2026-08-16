@@ -167,7 +167,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
-            agentHelpers.resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('projectId', requestedProjectId) }),
+            agentHelpers.resolveRunProvider({ platformId, log, scope: isNil(requestedProjectId) ? { type: 'platform' } : { type: 'project', projectId: requestedProjectId }, ...spreadIfDefined('provider', input.provider) }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
@@ -525,7 +525,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
         }
         const { projectId, platformId } = conversation
-        const model = await agentHelpers.resolveFastModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider) })
         const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
             model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
@@ -551,7 +551,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider) })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,
