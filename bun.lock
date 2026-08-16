@@ -6129,6 +6129,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/mpesa": {
+      "name": "@activepieces/piece-mpesa",
+      "version": "0.1.2",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/muna-ai": {
       "name": "@activepieces/piece-muna-ai",
       "version": "0.0.5",
@@ -11937,6 +11948,8 @@
     "@activepieces/piece-moveo-ai": ["@activepieces/piece-moveo-ai@workspace:packages/pieces/community/moveo-ai"],
 
     "@activepieces/piece-moxie-crm": ["@activepieces/piece-moxie-crm@workspace:packages/pieces/community/moxie-crm"],
+
+    "@activepieces/piece-mpesa": ["@activepieces/piece-mpesa@workspace:packages/pieces/community/mpesa"],
 
     "@activepieces/piece-muna-ai": ["@activepieces/piece-muna-ai@workspace:packages/pieces/community/muna-ai"],
 
