@@ -64,6 +64,24 @@ describe('Chat credit gate on self-hosted (managed AI unavailable)', () => {
         expect(response.json().params.entityType).toBe('ChatAiProvider')
     })
 
+    it('rejects a projectless conversation whose adopted project is excluded, rather than resolving platform-wide', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const chatProvider = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.OPENAI,
+        })
+        await db.update('ai_provider', chatProvider.id, {
+            enabledForChat: true,
+            projectScope: 'except',
+            projectIds: [ctx.project.id],
+        })
+
+        const response = await sendMessage(ctx)
+
+        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(response.json().params.entityType).toBe('ChatAiProvider')
+    })
+
     it('accepts a message when the conversation project is inside the enabled chat key scope', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
         const chatProvider = await mockAndSaveAIProvider({
