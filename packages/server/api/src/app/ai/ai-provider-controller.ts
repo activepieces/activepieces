@@ -22,7 +22,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     })
     app.get('/:provider/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).listModels({ platformId, provider: request.params.provider, projectId: extractEngineProjectId(request.principal) })
+        const isUser = request.principal.type === PrincipalType.USER
+        return aiProviderService(app.log).listModels({
+            platformId,
+            provider: request.params.provider,
+            projectId: extractEngineProjectId(request.principal),
+            configId: isUser ? request.query.configId : undefined,
+        })
     })
     app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
@@ -67,6 +73,9 @@ const ListModels = {
     schema: {
         params: z.object({
             provider: z.nativeEnum(AIProviderName),
+        }),
+        querystring: z.object({
+            configId: z.string().optional(),
         }),
         response: {
             [StatusCodes.OK]: z.array(AIProviderModel),

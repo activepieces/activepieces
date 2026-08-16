@@ -689,7 +689,7 @@ export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): P
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,
+        enabledForChat: aiProvider?.enabledForChat ?? (aiProvider?.provider === AIProviderName.ACTIVEPIECES),
         modelScope: aiProvider?.modelScope ?? 'all',
         modelIds: aiProvider?.modelIds ?? [],
         projectScope: aiProvider?.projectScope ?? 'all',
@@ -704,7 +704,7 @@ export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Prom
     return mockAIProvider
 }
 
-type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
