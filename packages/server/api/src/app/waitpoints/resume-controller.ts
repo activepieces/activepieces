@@ -159,12 +159,16 @@ async function serveSignalConfirmationPage({ flowRunId, signalId, url, queryPara
 async function handleSignalDecision({ flowRunId, signalId, action, body, headers, log, reply }: SignalDecisionParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
+    if (action !== 'approve' && action !== 'disapprove') {
+        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: UNKNOWN_ACTION_TITLE, message: UNKNOWN_ACTION_MESSAGE, success: false } })
+        return
+    }
     const open = await resolveOpenSignal({ flowRunId, signalId, projectId: flowRun.projectId, flowRunStatus: flowRun.status, log })
     if (isNil(open)) {
         await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
         return
     }
-    const approved = action !== 'disapprove'
+    const approved = action === 'approve'
     const reason = readReason(body)
     if (!isNil(reason) && reason.length > MAX_SIGNAL_REASON_LENGTH) {
         await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
@@ -351,6 +355,9 @@ const CONFIRM_MESSAGE = 'A flow is paused and waiting for your response. Please 
 const REASON_REQUIRED_TITLE = 'A reason is required'
 const REASON_REQUIRED_MESSAGE = 'This request needs a reason before it can be recorded. Go back, write one, and submit again.'
 const REASON_TOO_LONG_TITLE = 'Your reason is too long'
+
+const UNKNOWN_ACTION_TITLE = 'Nothing was recorded'
+const UNKNOWN_ACTION_MESSAGE = 'This link needs to say whether you approve or disapprove. Open it in a browser and use one of the buttons — nothing was recorded.'
 
 const RECORDED_MESSAGE = 'Your response has been recorded. You can close this page now.'
 const EXPIRED_MESSAGE = 'This link has expired. The action may have already been processed.'

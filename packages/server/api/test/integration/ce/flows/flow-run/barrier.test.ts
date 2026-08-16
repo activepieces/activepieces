@@ -441,6 +441,32 @@ describe('multi-approval confirm page', () => {
         expect(response.body).toContain('Already responded')
     })
 
+    it('records nothing when the confirm url is posted with no action at all', async () => {
+        const { flowRun, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm`,
+            payload: { reason: 'posted the bare link' },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+
+    it('records nothing when the action is misspelled rather than treating it as an approval', async () => {
+        const { flowRun, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=aprove`,
+            payload: { reason: 'typo' },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+
     it('refuses a signal id that belongs to another run', async () => {
         const { signals } = await createApprovalBarrier()
         const { flowRun: otherRun } = await createParentRun()
