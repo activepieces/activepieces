@@ -1,6 +1,7 @@
 import { AgentOutputField, AgentTool } from '@activepieces/core-execution'
 import { AIProviderName, ApId, BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
 
 const MAX_AGENT_TEXT_LENGTH = 51_200
@@ -53,17 +54,50 @@ const Agent = z.object({
     published: Nullable(AgentConfig),
 })
 
+const CreateAgentRequest = z.object({
+    projectId: ApId,
+    displayName: z.string().min(1, formErrors.required),
+    description: Nullable(z.string()),
+    icon: z.enum(AgentIcon),
+    color: z.enum(ColorName),
+    visibility: z.enum(AgentVisibility).optional(),
+    sharedWithUserIds: z.array(ApId).optional(),
+    draft: AgentConfig,
+})
+
+const UpdateAgentRequest = z.object({
+    displayName: z.optional(z.string().min(1, formErrors.required)),
+    description: Nullable(z.string()),
+    icon: z.enum(AgentIcon).optional(),
+    color: z.enum(ColorName).optional(),
+    visibility: z.enum(AgentVisibility).optional(),
+    sharedWithUserIds: z.array(ApId).optional(),
+    draft: AgentConfig.optional(),
+})
+
+const ListAgentsRequest = z.object({
+    projectId: z.optional(ApId),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().optional(),
+})
+
 export {
     Agent,
     AgentConfig,
     AgentIcon,
     AgentVisibility,
+    CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
+    ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
     MAX_AGENT_TOOLS,
+    UpdateAgentRequest,
 }
 
 export type Agent = z.infer<typeof Agent>
 export type AgentConfig = z.infer<typeof AgentConfig>
+export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
+export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
+export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

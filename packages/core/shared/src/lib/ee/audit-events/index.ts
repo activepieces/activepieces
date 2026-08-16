@@ -34,6 +34,9 @@ export enum ApplicationEventName {
     FOLDER_DELETED = 'folder.deleted',
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
+    AGENT_CREATED = 'agent.created',
+    AGENT_UPDATED = 'agent.updated',
+    AGENT_DELETED = 'agent.deleted',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -98,6 +101,24 @@ export const ConnectionDeletedEvent = z.object({
     data: ConnectionEventData,
 })
 export type ConnectionDeletedEvent = z.infer<typeof ConnectionDeletedEvent>
+
+const AgentEventData = z.object({
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string(),
+    }),
+})
+
+export const AgentAuditEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.AGENT_CREATED),
+        z.literal(ApplicationEventName.AGENT_UPDATED),
+        z.literal(ApplicationEventName.AGENT_DELETED),
+    ]),
+    data: AgentEventData,
+})
+export type AgentAuditEvent = z.infer<typeof AgentAuditEvent>
 
 const VariableEventData = z.object({
     variable: z.object({
@@ -478,6 +499,7 @@ export const ProjectReplacedEvent = z.object({
 export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
 
 export const ApplicationEvent = z.union([
+    AgentAuditEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
@@ -534,6 +556,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`
         case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
+        case ApplicationEventName.AGENT_CREATED:
+            return `Agent ${event.data.agent.displayName} is created`
+        case ApplicationEventName.AGENT_UPDATED:
+            return `Agent ${event.data.agent.displayName} is updated`
+        case ApplicationEventName.AGENT_DELETED:
+            return `Agent ${event.data.agent.displayName} is deleted`
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
