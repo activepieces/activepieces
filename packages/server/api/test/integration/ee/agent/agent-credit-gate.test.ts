@@ -41,6 +41,50 @@ describe('Chat credit gate on self-hosted (managed AI unavailable)', () => {
         expect(response.json().params.entityType).toBe('ChatAiProvider')
     })
 
+    it('rejects a message whose project is excluded from every enabled chat key, rather than queueing a job the worker cannot service', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const chatProvider = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.OPENAI,
+        })
+        await db.update('ai_provider', chatProvider.id, {
+            enabledForChat: true,
+            projectScope: 'except',
+            projectIds: [ctx.project.id],
+        })
+
+        const conversationResponse = await ctx.post(CONVERSATIONS_URL, {})
+        expect(conversationResponse.statusCode).toBe(StatusCodes.CREATED)
+        const conversationId = conversationResponse.json().id
+        await db.update('agent_conversation', conversationId, { projectId: ctx.project.id })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages`, { content: 'hello' })
+
+        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(response.json().params.entityType).toBe('ChatAiProvider')
+    })
+
+    it('accepts a message when the conversation project is inside the enabled chat key scope', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
+        const chatProvider = await mockAndSaveAIProvider({
+            platformId: ctx.platform.id,
+            provider: AIProviderName.OPENAI,
+        })
+        await db.update('ai_provider', chatProvider.id, {
+            enabledForChat: true,
+            projectScope: 'selected',
+            projectIds: [ctx.project.id],
+        })
+
+        const conversationResponse = await ctx.post(CONVERSATIONS_URL, {})
+        const conversationId = conversationResponse.json().id
+        await db.update('agent_conversation', conversationId, { projectId: ctx.project.id })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversationId}/messages`, { content: 'hello' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('rejects messages with a provider-not-found error when no chat provider is configured', async () => {
         const ctx = await createTestContext(app, { plan: { chatEnabled: true } })
 

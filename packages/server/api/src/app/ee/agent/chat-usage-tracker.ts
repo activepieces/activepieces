@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName } from '@activepieces/core-utils'
 import { AgentConversation, AgentRunSource, CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents } from '../../helper/telemetry.utils'
@@ -21,7 +21,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
 
         const provider = await agentHelpers.resolveChatProviderName({
             platformId: conversation.platformId,
-            scope: isNil(conversation.projectId) ? { type: 'platform' } : { type: 'project', projectId: conversation.projectId },
+            scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }),
             log,
         })
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })

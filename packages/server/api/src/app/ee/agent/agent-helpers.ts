@@ -61,6 +61,10 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
+function providerScopeFor({ projectId }: { projectId: string | null }): ProviderScope {
+    return isNil(projectId) ? { type: 'platform' } : { type: 'project', projectId }
+}
+
 async function resolveRunProvider({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
         return resolveChatProvider({ platformId, scope, log })
@@ -252,6 +256,7 @@ export const agentHelpers = {
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,
+    providerScopeFor,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

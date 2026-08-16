@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
+import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -150,7 +150,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertChatProviderConfigured({ platformId, log })
+        await assertChatProviderConfigured({ platformId, scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }), log })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
@@ -279,8 +279,8 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
 
 }
 
-async function assertChatProviderConfigured({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const provider = await aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'platform' } })
+async function assertChatProviderConfigured({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+    const provider = await aiProviderService(log).getChatProviderName({ platformId, scope })
     if (isNil(provider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
