@@ -9,8 +9,8 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
-import { agentService } from './agent-service'
 import { agentPrompt } from './prompt/agent-prompt'
 
 const API_KEY_HEADER = 'api-key'
@@ -59,7 +59,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
-        const conversation = await agentService(log).createConversation({
+        const conversation = await agentConversationService(log).createConversation({
             platformId,
             userId: evalUserId,
             request: {},
@@ -142,7 +142,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             const platform = await platformService(log).getOneOrThrow(platformId)
             evalPlatformId = platformId
             evalUserId = platform.ownerId
-            const conversation = await agentService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+            const conversation = await agentConversationService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
             convId = conversation.id
             priorAssistantTurns = 0
         }

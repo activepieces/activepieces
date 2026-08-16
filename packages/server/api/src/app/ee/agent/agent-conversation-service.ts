@@ -10,7 +10,7 @@ import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentHistory } from './history/agent-history'
 
-export const agentService = (log: FastifyBaseLogger) => ({
+export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
@@ -22,7 +22,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             modelName: request.modelName ?? null,
             messages: [],
         })
-        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentService] Conversation created')
+        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
         return conversation
     },
 
@@ -98,7 +98,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             })
         }
         await agentHelpers.conversationRepo().delete(conversation.id)
-        log.info({ conversation: { id }, platform: { id: platformId }, user: { id: userId } }, '[agentService] Conversation deleted')
+        log.info({ conversation: { id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation deleted')
     },
 
     async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedAgentMessage[] | AgentHistoryMessage[] }> {
@@ -134,7 +134,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             const value = JSON.stringify(sanitizeObjectForPostgresql(feedback))
             await repo.query(`UPDATE "${table}" SET "uiMessages" = jsonb_set("uiMessages", $1::text[], $2::jsonb, true) WHERE id = $3`, [path, value, conversation.id])
         }
-        log.info({ conversation: { id }, messageIndex, rating: request.rating }, '[agentService] Message feedback recorded')
+        log.info({ conversation: { id }, messageIndex, rating: request.rating }, '[agentConversationService] Message feedback recorded')
     },
 
 })
