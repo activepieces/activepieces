@@ -1,6 +1,7 @@
 import { FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
+    AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
     AuthenticationEvent,
@@ -164,6 +165,21 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         updated: isoNow,
                     },
                     project,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.AGENT_CREATED:
+        case ApplicationEventName.AGENT_UPDATED:
+        case ApplicationEventName.AGENT_DELETED: {
+            const mock: AgentAuditEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    agent: {
+                        id: apId(),
+                        displayName: 'Marketing agent',
+                    },
                 },
             }
             return mock

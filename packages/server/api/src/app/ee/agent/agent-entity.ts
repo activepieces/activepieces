@@ -2,7 +2,7 @@ import { Agent, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-type AgentWithRelations = Agent & {
+export type AgentWithRelations = Agent & {
     owner: User
     project: Project
 }
