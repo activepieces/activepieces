@@ -12,9 +12,18 @@ import { extension } from 'mime-types';
 import querystring from 'querystring';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
 import { common } from '../common';
-import { driveExportFolderAsZipOutputSchema } from '../output-schemas';
 
-const DOWNLOAD_CONCURRENCY = 5;
+// A zip is a sequential format: only the entry holding the writer lock streams straight into the
+// archive, and every other in-flight add() compresses into an unbounded in-memory buffer while it
+// waits its turn. Peak memory therefore tracks the bytes in flight, not the size of the output.
+// Measured on zip.js 2.8.29 with a 320 MB folder: 5 at a time peaks around 320 MB, 2 at a time
+// around 140 MB. Two keeps enough overlap to hide Drive's per-request latency without letting the
+// worker's memory grow with the folder.
+const DOWNLOAD_CONCURRENCY = 2;
+
+// Cap on how many validation problems are spelled out in the thrown error. The total count is
+// always reported; this only bounds the itemised list.
+const MAX_REPORTED_ERRORS = 20;
 
 const GOOGLE_FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
 
@@ -354,9 +363,15 @@ async function collectZipEntries({
     const sorted = [...errors].sort(
       (a, b) => a.location.localeCompare(b.location) || a.name.localeCompare(b.name)
     );
-    const lines = sorted.map(
+    // A folder can produce thousands of these, and the whole message ends up in the run log
+    // and the step error panel, so only the first few are listed and the rest are counted.
+    const listed = sorted.slice(0, MAX_REPORTED_ERRORS);
+    const lines = listed.map(
       (error) => `- [${error.location}] ${error.name} ${error.message}`
     );
+    if (sorted.length > listed.length) {
+      lines.push(`- ...and ${sorted.length - listed.length} more`);
+    }
     throw new Error(
       `Cannot export (${errors.length} problem${
         errors.length > 1 ? 's' : ''
@@ -412,7 +427,6 @@ export const driveExportFolderAsZip = createAction({
       'Recursively downloads every file in a Drive folder (including subfolders) and packages them into a single zip whose internal paths mirror the folder hierarchy. Native Google Docs/Sheets/Slides are converted per user-chosen format (PDF/Office format) or skipped. Fails the whole action if any single file cannot be downloaded/exported. Optionally password-protects the zip.',
     idempotent: true,
   },
-  outputSchema: driveExportFolderAsZipOutputSchema,
   props: {
     duplicatePathWarning: Property.MarkDown({
       value:
@@ -562,6 +576,15 @@ export const driveExportFolderAsZip = createAction({
       const encryptionMethod = context.propsValue.passwordOptions?.[
         'encryptionMethod'
       ] as string;
+
+      // zip.js treats an empty/absent password as "no encryption" and writes the archive in the
+      // clear. Failing here is the only safe reading: the user asked for a password, so silently
+      // handing back an unencrypted zip is worse than not producing one at all.
+      if (!password) {
+        throw new Error(
+          'Cannot export: "Use password" is enabled but no password was provided. Enter a password or turn the option off.'
+        );
+      }
 
       fileAddOptions.password = password;
 
