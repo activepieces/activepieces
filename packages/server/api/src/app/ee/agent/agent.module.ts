@@ -11,7 +11,7 @@ export const agentModule: FastifyPluginAsyncZod = async (app) => {
         await chatSurface.register(agentConversationController, { prefix: '/v1/agents' })
     })
     await app.register(async (agentSurface) => {
-        agentSurface.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.chatEnabled))
+        agentSurface.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.agentsEnabled))
         await agentSurface.register(agentController, { prefix: '/v1/agents' })
     })
     await app.register(agentRunController, { prefix: '/v1/agents' })

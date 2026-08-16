@@ -24,7 +24,7 @@ const agentBody = (projectId: string, overrides: Record<string, unknown> = {}) =
 })
 
 async function context(): Promise<TestContext> {
-    return createTestContext(app, { plan: { chatEnabled: true } })
+    return createTestContext(app, { plan: { agentsEnabled: true } })
 }
 
 async function createAgent(ctx: TestContext, overrides: Record<string, unknown> = {}) {
@@ -168,7 +168,7 @@ describe('agent permissions', () => {
 
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
-        const ctx = await context()
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
@@ -182,8 +182,8 @@ describe('agent routes coexist with the chat routes already on /v1/agents', () =
 })
 
 describe('agent feature gate', () => {
-    it('refuses every agent route when the platform has the surface turned off', async () => {
-        const ctx = await createTestContext(app, { plan: { chatEnabled: false } })
+    it('refuses every agent route when the platform does not have agents', async () => {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: false } })
 
         expect((await ctx.get('/v1/agents')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents', agentBody(ctx.project.id))).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
