@@ -1,6 +1,12 @@
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
 import JSZip from 'jszip';
-import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
+import {
+  Type,
+  Calendar,
+  CalendarClock,
+  Hash,
+  ChevronDownCircle,
+} from 'lucide-react';
 import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/dom-utils';
@@ -16,6 +22,8 @@ function getColumnIcon(type: FieldType): ReactNode {
       return <Type className="h-4 w-4" />;
     case FieldType.DATE:
       return <Calendar className="h-4 w-4" />;
+    case FieldType.DATETIME:
+      return <CalendarClock className="h-4 w-4" />;
     case FieldType.NUMBER:
       return <Hash className="h-4 w-4" />;
     case FieldType.STATIC_DROPDOWN:

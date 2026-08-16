@@ -26,7 +26,11 @@ export type ClientField = {
   name: string;
 } & (
   | {
-      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+      type:
+        | FieldType.DATE
+        | FieldType.DATETIME
+        | FieldType.NUMBER
+        | FieldType.TEXT;
     }
   | {
       type: FieldType.STATIC_DROPDOWN;
@@ -129,7 +133,13 @@ export const createApTableStore = (
         }),
       setSelectedCell: (
         selectedCell: { rowIdx: number; columnIdx: number } | null,
-      ) => set({ selectedCell }),
+      ) =>
+        set((state) =>
+          state.selectedCell?.rowIdx === selectedCell?.rowIdx &&
+          state.selectedCell?.columnIdx === selectedCell?.columnIdx
+            ? state
+            : { selectedCell },
+        ),
       fields: fields.map((field) => {
         if (field.type === FieldType.STATIC_DROPDOWN) {
           return {

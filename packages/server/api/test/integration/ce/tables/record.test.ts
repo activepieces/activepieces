@@ -418,6 +418,82 @@ describe('Record API', () => {
         })
     })
 
+    describeWithAuth('GET /v1/records (List with date filters)', () => app!, (setup) => {
+        it('GT: should compare DATETIME cells chronologically, not numerically', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithTypedField({ ctx, type: FieldType.DATETIME })
+            const records = await saveRecordsWithValues({
+                ctx,
+                table,
+                field,
+                values: ['2026-03-01T08:00:00.000Z', '2026-08-12T14:30:00.000Z', '2026-11-20T22:15:00.000Z'],
+            })
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.GT, value: '2026-06-01T00:00:00.000Z' }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data.map((record: { id: string }) => record.id).sort()).toEqual([records[1].id, records[2].id].sort())
+        })
+
+        it('LT: should compare DATE cells chronologically, not numerically', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithTypedField({ ctx, type: FieldType.DATE })
+            const records = await saveRecordsWithValues({
+                ctx,
+                table,
+                field,
+                values: ['2026-03-01T08:00:00.000Z', '2026-08-12T14:30:00.000Z', '2026-11-20T22:15:00.000Z'],
+            })
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.LT, value: '2026-06-01T00:00:00.000Z' }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.data.length).toBe(1)
+            expect(body.data[0].id).toBe(records[0].id)
+        })
+
+        it('GT: should exclude a DATETIME cell holding an unparseable value', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithTypedField({ ctx, type: FieldType.DATETIME })
+            await saveRecordsWithValues({ ctx, table, field, values: ['not a date'] })
+
+            const response = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.GT, value: '2026-01-01T00:00:00.000Z' }] })}`,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().data.length).toBe(0)
+        })
+
+        it('EQ: should compare DATETIME cells as strings, not as instants', async () => {
+            const ctx = await setup()
+            const { table, field } = await createTableWithTypedField({ ctx, type: FieldType.DATETIME })
+            const records = await saveRecordsWithValues({ ctx, table, field, values: ['2026-08-12T14:30:00.000Z'] })
+
+            const exactMatch = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: '2026-08-12T14:30:00.000Z' }] })}`,
+            })
+            expect(exactMatch?.json().data.length).toBe(1)
+            expect(exactMatch?.json().data[0].id).toBe(records[0].id)
+
+            const sameInstantDifferentText = await ctx.inject({
+                method: 'GET',
+                url: `/api/v1/records?${qs.stringify({ tableId: table.id, filters: [{ fieldId: field.id, operator: FilterOperator.EQ, value: '2026-08-12T14:30:00Z' }] })}`,
+            })
+            expect(sameInstantDifferentText?.json().data.length).toBe(0)
+        })
+    })
+
     describeWithAuth('DELETE /v1/records (Delete)', () => app!, (setup) => {
         it('should delete records by IDs', async () => {
             const ctx = await setup()
@@ -459,10 +535,26 @@ describe('Record API', () => {
 })
 
 async function createTableWithField(ctx: TestContext) {
+    return createTableWithTypedField({ ctx, type: FieldType.TEXT })
+}
+
+async function createTableWithTypedField({ ctx, type }: { ctx: TestContext, type: FieldType }) {
     const table = createMockTable({ projectId: ctx.project.id })
     await db.save('table', table)
     const field = createMockField({ tableId: table.id, projectId: ctx.project.id })
-    field.type = FieldType.TEXT
+    field.type = type
     await db.save('field', field)
     return { table, field }
+}
+
+async function saveRecordsWithValues({ ctx, table, field, values }: { ctx: TestContext, table: { id: string }, field: { id: string }, values: string[] }) {
+    const records = values.map(() => createMockRecord({ tableId: table.id, projectId: ctx.project.id }))
+    await db.save('record', records)
+    const cells = records.map((record, index) => {
+        const cell = createMockCell({ recordId: record.id, fieldId: field.id, projectId: ctx.project.id })
+        cell.value = values[index]
+        return cell
+    })
+    await db.save('cell', cells)
+    return records
 }
