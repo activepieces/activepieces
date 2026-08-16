@@ -145,14 +145,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async findPreCompletedByFlowRunId({ flowRunId }: FindPreCompletedByFlowRunIdParams): Promise<Waitpoint | null> {
-        const stillOpen = await waitpointRepo().existsBy({ flowRunId, status: WaitpointStatus.PENDING })
-        if (stillOpen) {
-            return null
-        }
-        return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+        const latest = await waitpointRepo().findOne({
+            where: { flowRunId },
             order: { created: 'DESC' },
         })
+        if (isNil(latest) || latest.status !== WaitpointStatus.COMPLETED) {
+            return null
+        }
+        return latest
     },
 
     async hasPendingBarrier({ flowRunId, projectId }: HasPendingBarrierParams): Promise<boolean> {
