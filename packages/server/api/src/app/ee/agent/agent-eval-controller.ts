@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -257,7 +257,7 @@ const SimulateRoute = {
 const EvalTurnStartRequest = z.object({
     conversationId: z.string().optional(),
     platformId: z.string().optional(),
-    userMessage: z.string().min(1).max(51200),
+    userMessage: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     promptOverride: AgentPromptOverride.optional(),
     // Opt-in (default off): run the turn with tools actually executing against the platform
     // owner's real connections, instead of the dry-run playground stub. The failure-mode eval

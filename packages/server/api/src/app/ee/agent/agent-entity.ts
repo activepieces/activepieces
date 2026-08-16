@@ -1,9 +1,8 @@
-import { Agent, Platform, Project } from '@activepieces/shared'
+import { Agent, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type AgentWithRelations = Agent & {
-    platform: Platform
     project: Project
 }
 
@@ -11,10 +10,6 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
     name: 'agent',
     columns: {
         ...BaseColumnSchemaPart,
-        platformId: {
-            ...ApIdSchema,
-            nullable: false,
-        },
         projectId: {
             ...ApIdSchema,
             nullable: false,
@@ -47,10 +42,6 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             type: 'jsonb',
             nullable: true,
         },
-        publishedAt: {
-            type: 'timestamp with time zone',
-            nullable: true,
-        },
     },
     indices: [
         {
@@ -64,16 +55,6 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
         },
     ],
     relations: {
-        platform: {
-            type: 'many-to-one',
-            target: 'platform',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'platformId',
-                foreignKeyConstraintName: 'fk_agent_platform_id',
-            },
-        },
         project: {
             type: 'many-to-one',
             target: 'project',
