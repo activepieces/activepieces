@@ -182,10 +182,13 @@ const SignUpForm = ({
   const [captchaToken, setCaptchaToken] = useState<string | undefined>();
   const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
   const [captchaReset, setCaptchaReset] = useState(0);
-  const handleCaptchaUnavailable = useCallback(
-    () => setCaptchaUnavailable(true),
-    [],
-  );
+  const handleCaptchaUnavailable = useCallback(() => {
+    setCaptchaUnavailable(true);
+    capture({
+      name: TelemetryEventName.CAPTCHA_UNAVAILABLE,
+      payload: { surface: 'password-sign-up' },
+    });
+  }, [capture]);
   const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
 
   const onSubmit: SubmitHandler<SignUpSchema> = (data) => {

@@ -449,6 +449,7 @@ function WorkEmailHint() {
 }
 
 function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
+  const { capture } = useTelemetry();
   const form = useForm<EmailSchema>({
     resolver: zodResolver(EmailZodSchema),
     defaultValues: { email: invitedEmail },
@@ -471,10 +472,13 @@ function EmailStep({ invitedEmail, onCodeSent }: EmailStepProps) {
   const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
   // A new identity here would re-run the widget effect on every keystroke,
   // tearing down a challenge the visitor may already have solved.
-  const handleCaptchaUnavailable = useCallback(
-    () => setCaptchaUnavailable(true),
-    [],
-  );
+  const handleCaptchaUnavailable = useCallback(() => {
+    setCaptchaUnavailable(true);
+    capture({
+      name: TelemetryEventName.CAPTCHA_UNAVAILABLE,
+      payload: { surface: 'code-request' },
+    });
+  }, [capture]);
   // Fail open when the challenge cannot load. The server still refuses a
   // request with no token, so nothing is weakened — but the person gets a
   // reason instead of an arrow that never lights up.
