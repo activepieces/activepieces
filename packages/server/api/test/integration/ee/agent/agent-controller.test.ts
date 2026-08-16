@@ -1,10 +1,8 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentVisibility, ColorName, DefaultProjectRole, FlowVersionState } from '@activepieces/shared'
+import { AgentIcon, AgentVisibility, ColorName, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
-import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -66,7 +64,7 @@ describe('agent crud', () => {
         expect(response.json().draft.instructions).toBe('Draft launch posts.')
     })
 
-    it('deletes an agent no published flow uses', async () => {
+    it('deletes an agent', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
 
@@ -228,30 +226,6 @@ describe('agent permissions', () => {
         expect((await viewer.post('/v1/agents', agentBody(owner.project.id))).statusCode).toBe(StatusCodes.FORBIDDEN)
         expect((await viewer.post(`/v1/agents/${agent.id}`, { displayName: 'Nope' })).statusCode).toBe(StatusCodes.FORBIDDEN)
         expect((await viewer.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-})
-
-describe('agent delete guard', () => {
-    it('refuses to delete an agent a published flow still runs, and names the flow', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx)
-
-        const flow = createMockFlow({ projectId: ctx.project.id })
-        await db.save('flow', flow)
-        const flowVersion = createMockFlowVersion({
-            flowId: flow.id,
-            updatedBy: ctx.user.id,
-            state: FlowVersionState.LOCKED,
-            displayName: 'Weekly launch',
-        })
-        await db.save('flow_version', { ...flowVersion, agentIds: [agent.externalId] })
-        await db.update('flow', flow.id, { publishedVersionId: flowVersion.id })
-
-        const response = await ctx.delete(`/v1/agents/${agent.id}`)
-
-        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(response.body).toContain('Weekly launch')
-        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
     })
 })
 

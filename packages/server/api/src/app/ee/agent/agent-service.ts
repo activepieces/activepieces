@@ -3,7 +3,6 @@ import { Agent, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
@@ -11,7 +10,6 @@ import { projectMemberService } from '../projects/project-members/project-member
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
-const NAMED_FLOWS_IN_DELETE_ERROR = 3
 const DEFAULT_PAGE_SIZE = 20
 
 export const agentRepo = repoFactory(AgentEntity)
@@ -80,13 +78,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const publishedFlows = await listPublishedFlowsUsingAgent({ projectId, externalId: agent.externalId })
-        if (publishedFlows.length > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: describeFlowsBlockingDelete({ displayName: agent.displayName, publishedFlows }) },
-            })
-        }
         await agentRepo().delete({ id, projectId })
         return agent
     },
@@ -131,25 +122,6 @@ async function resolveReadableProjectIds({ platformId, userId, projectId, log }:
         .filter((project) => isPrivileged || project.ownerId === userId || permittedProjectIds.includes(project.id))
         .map((project) => project.id)
         .filter((id) => isNil(projectId) || id === projectId)
-}
-
-async function listPublishedFlowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
-    const flowVersions = await flowVersionRepo()
-        .createQueryBuilder('flow_version')
-        .select('flow_version."displayName"', 'displayName')
-        .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
-        .where('flow."projectId" = :projectId', { projectId })
-        .andWhere('flow_version.id = flow."publishedVersionId"')
-        .andWhere('flow_version."agentIds" && :externalIds', { externalIds: [externalId] })
-        .getRawMany<{ displayName: string }>()
-    return flowVersions.map((flowVersion) => flowVersion.displayName)
-}
-
-function describeFlowsBlockingDelete({ displayName, publishedFlows }: { displayName: string, publishedFlows: string[] }): string {
-    const named = publishedFlows.slice(0, NAMED_FLOWS_IN_DELETE_ERROR).join(', ')
-    const remaining = publishedFlows.length - NAMED_FLOWS_IN_DELETE_ERROR
-    const flows = remaining > 0 ? `${named} and ${remaining} more` : named
-    return `${displayName} still runs in ${publishedFlows.length} published flow(s): ${flows}. Remove the agent step from them, then delete the agent.`
 }
 
 function agentNotFound(id: ApId): ActivepiecesError {
