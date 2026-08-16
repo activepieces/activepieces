@@ -56,7 +56,7 @@ export function ProvidersTab() {
     AIProviderName | undefined
   >(undefined);
 
-  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
+  const { data: providers, refetch } = aiProviderQueries.useAiProviderConfigs();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const configs = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
@@ -104,8 +104,8 @@ export function ProvidersTab() {
       openConfig(createdId);
     }
   };
-  const selectChatProvider = (provider: AIProviderName) => {
-    const row = newestConfigOf({ configs: providers ?? [], provider });
+  const selectChatConfig = (configId: string) => {
+    const row = (providers ?? []).find((config) => config.id === configId);
     if (row) {
       toggleChatProvider({ providerId: row.id, displayName: row.name });
     }
@@ -126,7 +126,7 @@ export function ProvidersTab() {
     return (
       <>
         <ConfigDetail
-          key={`${activeConfig.id}-${JSON.stringify(activeConfig)}`}
+          key={activeConfig.id}
           config={activeConfig}
           info={activeInfo}
           projects={projects}
@@ -180,9 +180,9 @@ export function ProvidersTab() {
         ) : (
           <>
             <ChatProviderRow
-              providers={connectedProviders}
-              value={chatProviderRow?.provider ?? null}
-              onChange={selectChatProvider}
+              configs={providers ?? []}
+              value={chatProviderRow?.id ?? null}
+              onChange={selectChatConfig}
             />
             <div className="flex flex-col gap-6">
               {connectedProviders.map((provider) => (
@@ -450,13 +450,13 @@ function ProjectChips({
 }
 
 function ChatProviderRow({
-  providers,
+  configs,
   value,
   onChange,
 }: {
-  providers: AIProviderName[];
-  value: AIProviderName | null;
-  onChange: (provider: AIProviderName) => void;
+  configs: AIProviderWithoutSensitiveData[];
+  value: string | null;
+  onChange: (configId: string) => void;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
@@ -469,21 +469,18 @@ function ChatProviderRow({
           {t('Powers the built-in chat for everyone on this platform')}
         </p>
       </div>
-      <Select
-        value={value ?? undefined}
-        onValueChange={(selected) => onChange(selected as AIProviderName)}
-      >
+      <Select value={value ?? undefined} onValueChange={onChange}>
         <SelectTrigger className="w-52">
           <SelectValue placeholder={t('Select provider')} />
         </SelectTrigger>
         <SelectContent>
-          {providers.map((provider) => {
-            const info = providerInfoOf({ provider });
+          {configs.map((config) => {
+            const info = providerInfoOf({ provider: config.provider });
             return (
-              <SelectItem key={provider} value={provider}>
+              <SelectItem key={config.id} value={config.id}>
                 <div className="flex items-center gap-2">
                   {info && <ProviderLogo info={info} size="sm" />}
-                  <span>{info?.name ?? provider}</span>
+                  <span className="truncate">{config.name}</span>
                 </div>
               </SelectItem>
             );
@@ -532,7 +529,7 @@ function EmptyProviders({
           <AvailableProviderCard
             key={info.provider}
             info={info}
-            tagline={RECOMMENDED_TAGLINES[info.provider]}
+            tagline={recommendedTagline({ provider: info.provider })}
             recommended
             onConnect={() => onConnect(info.provider)}
           />
@@ -597,22 +594,22 @@ function providerInfoOf({
   );
 }
 
-function newestConfigOf({
-  configs,
-  provider,
-}: {
-  configs: AIProviderWithoutSensitiveData[];
-  provider: AIProviderName;
-}): AIProviderWithoutSensitiveData | undefined {
-  return configs.filter((config) => config.provider === provider).at(-1);
-}
-
 const RECOMMENDED_PROVIDERS: AIProviderName[] = [
   AIProviderName.ANTHROPIC,
   AIProviderName.OPENAI,
 ];
 
-const RECOMMENDED_TAGLINES: Partial<Record<AIProviderName, string>> = {
-  [AIProviderName.ANTHROPIC]: t('Claude models — strong for chat and agents'),
-  [AIProviderName.OPENAI]: t('GPT models — broad ecosystem and tooling'),
-};
+function recommendedTagline({
+  provider,
+}: {
+  provider: AIProviderName;
+}): string | undefined {
+  switch (provider) {
+    case AIProviderName.ANTHROPIC:
+      return t('Claude models — strong for chat and agents');
+    case AIProviderName.OPENAI:
+      return t('GPT models — broad ecosystem and tooling');
+    default:
+      return undefined;
+  }
+}

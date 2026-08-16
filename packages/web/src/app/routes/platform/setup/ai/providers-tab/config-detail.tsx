@@ -62,9 +62,8 @@ export function ConfigDetail({
     provider: config.provider,
   });
   const { data: models = [] } = useQuery({
-    queryKey: ['ai-provider-models', config.provider, config.id],
-    queryFn: () =>
-      aiProviderApi.listModelsForProvider(config.provider, config.id),
+    queryKey: ['ai-provider-config-models', config.id],
+    queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
   });
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));

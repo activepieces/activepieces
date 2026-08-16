@@ -7,6 +7,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type AIModelType = 'text' | 'image';
 
@@ -51,20 +52,27 @@ function managedTierLabel(modelId: string): string | undefined {
 
 export const aiModelHooks = {
   useListProviders: () => {
+    const projectId = authenticationSession.getProjectId();
     return useQuery({
-      queryKey: ['ai-providers'],
-      queryFn: () => aiProviderApi.list(),
+      queryKey: ['ai-providers', projectId],
+      enabled: !isNil(projectId),
+      queryFn: () =>
+        isNil(projectId) ? [] : aiProviderApi.listForProject(projectId),
     });
   },
 
   useGetModelsForProvider: (provider?: AIProviderName) => {
+    const projectId = authenticationSession.getProjectId();
     return useQuery({
-      queryKey: ['ai-models', provider],
-      enabled: !!provider,
+      queryKey: ['ai-models', provider, projectId],
+      enabled: !isNil(provider) && !isNil(projectId),
       queryFn: async () => {
-        if (isNil(provider)) return [];
+        if (isNil(provider) || isNil(projectId)) return [];
 
-        const allModels = await aiProviderApi.listModelsForProvider(provider);
+        const allModels = await aiProviderApi.listModelsForProvider(
+          provider,
+          projectId,
+        );
 
         return getAllowedModelsForProvider(provider, allModels, 'text');
       },

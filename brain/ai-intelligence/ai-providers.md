@@ -61,7 +61,7 @@ Entry point: `aiProviderModule`, registered in `packages/server/api/src/app/app.
 - `packages/core/shared/src/lib/management/ai-providers/index.ts` — shared zod schemas, enums, request/response types
 - `packages/core/shared/src/lib/management/ai-tools/index.ts` — shared schemas for the AI Tool Configs sibling
 - `packages/web/src/features/platform-admin/api/` + `packages/web/src/features/platform-admin/hooks/` — frontend API clients and TanStack Query hooks (`ai-provider-*`, `ai-tool-config-*`)
-- `packages/web/src/app/routes/platform/setup/ai/` — platform admin AI setup page and the `universal-pieces/` provider card, upsert dialog, config form, model popover
+- `packages/web/src/app/routes/platform/setup/ai/` — the AI Center: `providers-tab/` (provider groups, connect dialog, per-config detail panel with model and project scope pickers) and `capabilities-tab/`
 - `packages/web/src/app/routes/platform/setup/ai-capabilities/` — admin page, capability dialog, provider catalog for AI Tool Configs
 - `packages/web/src/features/agents/ai-model/` — model selector used in agent step settings
 
