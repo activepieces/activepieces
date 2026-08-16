@@ -1,5 +1,6 @@
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, agentUtils, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, agentUtils, AgentVisibility, CreateAgentRequest, DraftAgentResponse, parseToJsonIfPossible, UpdateAgentRequest } from '@activepieces/shared'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -11,6 +12,14 @@ import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
 const DEFAULT_PAGE_SIZE = 20
+const DRAFT_SYSTEM_PROMPT = `You turn one sentence into an agent definition.
+Reply with only a JSON object, no prose and no code fence, shaped exactly:
+{"displayName": string, "description": string, "icon": string, "color": string, "instructions": string}
+displayName is at most four words and names the job, not the tools.
+description is one sentence saying what it does for the person.
+icon is one of: bot, sparkles, message-square, users, book-open, chart-line, calendar, mail, globe, file-text, search, zap.
+color is one of: RED, BLUE, YELLOW, PURPLE, GREEN, PINK, VIOLET, ORANGE, DARK_GREEN, CYAN, LAVENDER, DEEP_ORANGE.
+instructions is written to the agent as "You ...", says how to decide rather than only what to do, and states what it must not do. Do not mention tools it has not been given.`
 
 export const agentRepo = repoFactory(AgentEntity)
 
@@ -105,12 +114,34 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
+    async draft({ platformId, prompt }: DraftParams): Promise<DraftAgentResponse> {
+        const { text } = await generateText({
+            model: await agentHelpers.resolveFastModel({ platformId, log }),
+            instructions: DRAFT_SYSTEM_PROMPT,
+            prompt,
+        })
+        const parsed = DraftAgentResponse.safeParse(parseToJsonIfPossible(extractJsonObject(text)))
+        if (!parsed.success) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Could not draft an agent from that description, try rewording it' },
+            })
+        }
+        return parsed.data
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+function extractJsonObject(raw: string): string {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    return start === -1 || end <= start ? raw : raw.slice(start, end + 1)
+}
 
 function visibleAgents({ userId }: { userId: UserId }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
@@ -193,6 +224,11 @@ type ResolveProjectsParams = {
     userId: UserId
     projectId?: ProjectId
     log: FastifyBaseLogger
+}
+
+type DraftParams = {
+    platformId: PlatformId
+    prompt: string
 }
 
 type ResolveShareParams = {

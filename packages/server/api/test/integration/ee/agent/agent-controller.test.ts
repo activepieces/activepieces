@@ -292,10 +292,69 @@ describe('agent permissions', () => {
     })
 })
 
+describe('agent templates', () => {
+    it('serves starter agents with no ai provider and no connections configured', async () => {
+        const ctx = await context()
+
+        const response = await ctx.get('/v1/agents/templates')
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const templates = response.json().data
+        expect(templates.length).toBeGreaterThan(0)
+        for (const template of templates) {
+            expect(template.instructions.length).toBeGreaterThan(0)
+            expect(Object.values(AgentIcon)).toContain(template.icon)
+            expect(Object.values(ColorName)).toContain(template.color)
+        }
+    })
+
+    it('creates a working agent straight from a template', async () => {
+        const ctx = await context()
+        const template = (await ctx.get('/v1/agents/templates')).json().data[0]
+
+        const created = await ctx.post('/v1/agents', {
+            projectId: ctx.project.id,
+            displayName: template.displayName,
+            icon: template.icon,
+            color: template.color,
+            draft: { instructions: template.instructions, provider: null, modelName: null, maxSteps: 5 },
+        })
+
+        expect(created.statusCode).toBe(StatusCodes.CREATED)
+        expect((await ctx.post(`/v1/agents/${created.json().id}/publish`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('fails the ai draft honestly when no provider is configured, while templates keep working', async () => {
+        const ctx = await context()
+
+        const drafted = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'watch competitor pricing' })
+
+        expect(drafted.statusCode).toBeGreaterThanOrEqual(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to draft for a project the caller cannot write', async () => {
+        const owner = await context()
+        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
+
+        const response = await viewer.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'anything' })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
+    it('gives every template a distinct id', async () => {
+        const ctx = await context()
+        const ids = (await ctx.get('/v1/agents/templates')).json().data.map((t: { id: string }) => t.id)
+
+        expect(new Set(ids).size).toBe(ids.length)
+    })
+})
+
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
+        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })

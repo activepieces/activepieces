@@ -69,6 +69,28 @@ const CreateAgentRequest = z.object({
 
 const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial()
 
+const AgentTemplate = z.object({
+    id: z.string(),
+    displayName: z.string(),
+    description: z.string(),
+    icon: z.enum(AgentIcon),
+    color: z.enum(ColorName),
+    instructions: z.string(),
+})
+
+const DraftAgentRequest = z.object({
+    projectId: ApId,
+    prompt: z.string().min(1, formErrors.required).max(MAX_AGENT_TEXT_LENGTH),
+})
+
+const DraftAgentResponse = z.object({
+    displayName: z.string(),
+    description: z.string(),
+    icon: z.enum(AgentIcon),
+    color: z.enum(ColorName),
+    instructions: z.string(),
+})
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
     cursor: z.string().optional(),
@@ -85,8 +107,11 @@ export {
     AgentConfig,
     AgentIcon,
     AgentVisibility,
+    AgentTemplate,
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
+    DraftAgentRequest,
+    DraftAgentResponse,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
     MAX_AGENT_PAGE_SIZE,
@@ -99,6 +124,9 @@ export {
 
 export type Agent = z.infer<typeof Agent>
 export type AgentConfig = z.infer<typeof AgentConfig>
+export type AgentTemplate = z.infer<typeof AgentTemplate>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
+export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
+export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>
