@@ -139,8 +139,17 @@ export const systemUsage = {
     // budget against "the container" has to be able to tell "capped at N" apart from "uncapped",
     // and treating a host's total RAM as a container limit would shrink the budget of anyone
     // running the worker outside a memory-limited container.
+    //
+    // A reported limit is only believed when it is strictly smaller than the machine's own RAM.
+    // An unconstrained cgroup does not reliably say so: v2 writes the literal 'max', but a v1 root
+    // group reports either a huge sentinel or, on some hosts, total host RAM — which is
+    // indistinguishable from a real limit by magnitude alone. os.totalmem() reads the un-namespaced
+    // /proc/meminfo, so it is the host's RAM even from inside a container, which makes
+    // "limit >= host RAM" exactly the "nothing is actually capping me" case.
     async getContainerMemoryLimitInBytes(): Promise<number | null> {
-        return await getCgroupMemoryLimit() ?? getConstrainedMemoryTotal()
+        const limit = await getCgroupMemoryLimit() ?? getConstrainedMemoryTotal()
+        if (limit === null || limit >= os.totalmem()) return null
+        return limit
     },
 
     async getContainerMemoryUsage() {
