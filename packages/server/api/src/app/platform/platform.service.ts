@@ -323,6 +323,10 @@ async function rotateTokenVersion(identityId: string): Promise<void> {
 }
 
 function personalProjectName(platformName: string): string {
+    const noun = ' Platform'
+    if (platformName.endsWith(noun)) {
+        return `${platformName.slice(0, -noun.length)} Project`
+    }
     return /['’]s$/.test(platformName) ? `${platformName} Project` : `${platformName}'s Project`
 }
 
