@@ -197,7 +197,7 @@ describe('Passwordless Authentication API', () => {
             expect(identity?.firstName).toBe('Ahmad')
             expect(identity?.lastName).toBe('Bin Tash')
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
-            expect(platform?.name).toBe("Ahmad's")
+            expect(platform?.name).toBe("Ahmad's Platform")
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
             expect(project?.displayName).toBe("Ahmad's Project")
         })
