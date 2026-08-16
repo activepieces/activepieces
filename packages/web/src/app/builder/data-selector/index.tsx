@@ -12,11 +12,13 @@ import { t } from 'i18next';
 import { Database, SearchXIcon, Variable } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useDebounce } from 'use-debounce';
 
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
@@ -302,9 +304,42 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const currentStructure =
     viewMode === 'friendly' ? friendlyStructure : advancedStructure;
+  const [debouncedSearchTerm] = useDebounce(searchTerm, 250);
   const filteredNodes = useMemo(
-    () => dataSelectorUtils.filterBy(currentStructure, searchTerm),
-    [currentStructure, searchTerm],
+    () => dataSelectorUtils.filterBy(currentStructure, debouncedSearchTerm),
+    [currentStructure, debouncedSearchTerm],
+  );
+
+  const expansionScope = `${viewMode}|${debouncedSearchTerm}`;
+  const [expansion, setExpansion] = useState<ExpansionState>({
+    scope: '',
+    overrides: EMPTY_OVERRIDES,
+  });
+  const overrides =
+    expansion.scope === expansionScope ? expansion.overrides : EMPTY_OVERRIDES;
+
+  const rows = useMemo(
+    () =>
+      dataSelectorUtils.flattenVisibleRows({
+        nodes: filteredNodes,
+        searchActive: debouncedSearchTerm.length > 0,
+        overrides,
+      }),
+    [filteredNodes, debouncedSearchTerm, overrides],
+  );
+
+  const setRowExpanded = useCallback(
+    (rowId: string, expanded: boolean) => {
+      setExpansion((current) => ({
+        scope: expansionScope,
+        overrides: new Map(
+          current.scope === expansionScope
+            ? current.overrides
+            : EMPTY_OVERRIDES,
+        ).set(rowId, expanded),
+      }));
+    },
+    [expansionScope],
   );
 
   const checkFocus = useCallback(() => {
@@ -409,14 +444,19 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
               </Tabs>
             </div>
             <ScrollArea className="transition-all flex-1 w-full ">
-              {filteredNodes.map((node) => (
-                <DataSelectorNode
-                  depth={0}
-                  key={node.key}
-                  node={node}
-                  searchTerm={searchTerm}
-                ></DataSelectorNode>
-              ))}
+              <VirtualizedList
+                items={rows}
+                estimateSize={32}
+                getItemKey={(index) => rows[index].id}
+                renderItem={(row) => (
+                  <DataSelectorNode
+                    depth={row.depth}
+                    node={row.node}
+                    expanded={row.expanded}
+                    setExpanded={(expanded) => setRowExpanded(row.id, expanded)}
+                  ></DataSelectorNode>
+                )}
+              />
               {filteredNodes.length === 0 && (
                 <div className="flex items-center justify-center gap-2 mt-5  flex-col">
                   <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
@@ -441,4 +481,12 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 };
 
 DataSelector.displayName = 'DataSelector';
+
+const EMPTY_OVERRIDES: ReadonlyMap<string, boolean> = new Map();
+
+type ExpansionState = {
+  scope: string;
+  overrides: ReadonlyMap<string, boolean>;
+};
+
 export { DataSelector };
