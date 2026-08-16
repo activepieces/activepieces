@@ -91,6 +91,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .set({ published: () => '"draft"' })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
             .andWhere('"draft" ->> \'instructions\' ~ \'[^[:space:]]\'')
+            .andWhere(visibleToUser({ userId, prefix: '' }))
             .returning('id')
             .execute()
 
@@ -111,11 +112,15 @@ export const agentService = (log: FastifyBaseLogger) => ({
 function visibleAgents({ userId }: { userId: UserId }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
         .createQueryBuilder('agent')
-        .where(new Brackets((qb) => {
-            qb.where('agent.visibility = :projectVisibility', { projectVisibility: AgentVisibility.PROJECT })
-                .orWhere('agent."ownerId" = :userId', { userId })
-                .orWhere(':userId = ANY(agent."sharedWithUserIds")', { userId })
-        }))
+        .where(visibleToUser({ userId, prefix: 'agent.' }))
+}
+
+function visibleToUser({ userId, prefix }: { userId: UserId, prefix: string }): Brackets {
+    return new Brackets((qb) => {
+        qb.where(`${prefix}"visibility" = :projectVisibility`, { projectVisibility: AgentVisibility.PROJECT })
+            .orWhere(`${prefix}"ownerId" = :userId`, { userId })
+            .orWhere(`:userId = ANY(${prefix}"sharedWithUserIds")`, { userId })
+    })
 }
 
 async function resolveShare({ visibility, sharedWithUserIds, projectId, log }: ResolveShareParams): Promise<UserId[]> {
