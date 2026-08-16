@@ -1,0 +1,217 @@
+import { apId } from '@activepieces/core-utils'
+import { AgentIcon, AgentVisibility, ColorName, DefaultProjectRole, FlowVersionState } from '@activepieces/shared'
+import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
+import { db } from '../../../helpers/db'
+import { createMockFlow, createMockFlowVersion } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance
+
+const agentBody = (projectId: string, overrides: Record<string, unknown> = {}) => ({
+    projectId,
+    displayName: 'Marketing agent',
+    icon: AgentIcon.SPARKLES,
+    color: ColorName.PURPLE,
+    draft: {
+        instructions: 'Draft launch posts.',
+        provider: null,
+        modelName: null,
+        maxSteps: 5,
+        tools: [],
+        structuredOutput: [],
+    },
+    ...overrides,
+})
+
+async function context(): Promise<TestContext> {
+    return createTestContext(app, { plan: { chatEnabled: true } })
+}
+
+async function createAgent(ctx: TestContext, overrides: Record<string, unknown> = {}) {
+    const response = await ctx.post('/v1/agents', agentBody(ctx.project.id, overrides))
+    expect(response.statusCode).toBe(StatusCodes.CREATED)
+    return response.json()
+}
+
+beforeAll(async () => {
+    app = await setupTestEnvironment()
+})
+
+afterAll(async () => {
+    await teardownTestEnvironment()
+})
+
+describe('agent crud', () => {
+    it('creates an agent owned by the caller, in draft, unpublished', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        expect(agent.ownerId).toBe(ctx.user.id)
+        expect(agent.projectId).toBe(ctx.project.id)
+        expect(agent.visibility).toBe(AgentVisibility.PROJECT)
+        expect(agent.published).toBeNull()
+        expect(agent.draft.instructions).toBe('Draft launch posts.')
+    })
+
+    it('updates only the fields the request names', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const response = await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().displayName).toBe('Renamed')
+        expect(response.json().draft.instructions).toBe('Draft launch posts.')
+    })
+
+    it('deletes an agent no published flow uses', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+})
+
+describe('agent project isolation', () => {
+    it('refuses to read an agent belonging to another project', async () => {
+        const owner = await context()
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        expect((await stranger.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
+    it('refuses to update an agent belonging to another project', async () => {
+        const owner = await context()
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        const response = await stranger.post(`/v1/agents/${agent.id}`, { displayName: 'Hijacked' })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).json().displayName).toBe('Marketing agent')
+    })
+
+    it('refuses to delete an agent belonging to another project', async () => {
+        const owner = await context()
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        expect((await stranger.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to create an agent in a project the caller is not a member of', async () => {
+        const owner = await context()
+        const stranger = await context()
+
+        const response = await stranger.post('/v1/agents', agentBody(owner.project.id))
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
+    it('never lists another project\'s agents', async () => {
+        const owner = await context()
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        const listed = (await stranger.get('/v1/agents')).json().data
+        expect(listed.map((row: { id: string }) => row.id)).not.toContain(agent.id)
+    })
+})
+
+describe('agent visibility', () => {
+    it('shows a project-visible agent to every member', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+
+        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('hides a restricted agent from a member it was not shared with, even one who may write', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner, { visibility: AgentVisibility.RESTRICTED })
+
+        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await member.post(`/v1/agents/${agent.id}`, { displayName: 'Nope' })).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await member.get('/v1/agents')).json().data).toHaveLength(0)
+    })
+
+    it('shows a restricted agent to a member named in the share', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner, {
+            visibility: AgentVisibility.RESTRICTED,
+            sharedWithUserIds: [member.user.id],
+        })
+
+        expect((await member.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+        expect((await member.get('/v1/agents')).json().data).toHaveLength(1)
+    })
+})
+
+describe('agent permissions', () => {
+    it('lets a viewer read an agent but never create or change one', async () => {
+        const owner = await context()
+        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
+        const agent = await createAgent(owner)
+
+        expect((await viewer.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+        expect((await viewer.post('/v1/agents', agentBody(owner.project.id))).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await viewer.post(`/v1/agents/${agent.id}`, { displayName: 'Nope' })).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await viewer.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+})
+
+describe('agent delete guard', () => {
+    it('refuses to delete an agent a published flow still runs, and names the flow', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+        const flowVersion = createMockFlowVersion({
+            flowId: flow.id,
+            updatedBy: ctx.user.id,
+            state: FlowVersionState.LOCKED,
+            displayName: 'Weekly launch',
+        })
+        await db.save('flow_version', { ...flowVersion, agentIds: [agent.externalId] })
+        await db.update('flow', flow.id, { publishedVersionId: flowVersion.id })
+
+        const response = await ctx.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.body).toContain('Weekly launch')
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+})
+
+describe('agent routes coexist with the chat routes already on /v1/agents', () => {
+    it('does not swallow the static sibling routes with /:id', async () => {
+        const ctx = await context()
+
+        expect((await ctx.get('/v1/agents/memory')).statusCode).not.toBe(StatusCodes.NOT_FOUND)
+        expect((await ctx.get('/v1/agents/conversations')).statusCode).not.toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('reports a missing agent as not found rather than routing it elsewhere', async () => {
+        const ctx = await context()
+
+        expect((await ctx.get(`/v1/agents/${apId()}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+})
+
+describe('agent feature gate', () => {
+    it('refuses every agent route when the platform has the surface turned off', async () => {
+        const ctx = await createTestContext(app, { plan: { chatEnabled: false } })
+
+        expect((await ctx.get('/v1/agents')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.post('/v1/agents', agentBody(ctx.project.id))).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+    })
+})
