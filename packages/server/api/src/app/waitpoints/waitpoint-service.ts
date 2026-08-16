@@ -156,10 +156,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         if (barrierPending) {
             return null
         }
-        return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+        const latest = await waitpointRepo().findOne({
+            where: { flowRunId },
             order: { created: 'DESC' },
         })
+        if (isNil(latest) || latest.status !== WaitpointStatus.COMPLETED) {
+            return null
+        }
+        return latest
     },
 
     async hasPendingBarrier({ flowRunId, projectId }: HasPendingBarrierParams): Promise<boolean> {
