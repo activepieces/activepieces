@@ -1,5 +1,10 @@
 import { ErrorCode, isNil } from '@activepieces/core-utils';
-import { ApFlagId, CreateOtpRequestBody, OtpType } from '@activepieces/shared';
+import {
+  ApFlagId,
+  CreateOtpRequestBody,
+  OtpType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -25,6 +30,7 @@ import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
 import { FullLogo } from '@/components/custom/full-logo';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -505,6 +511,7 @@ function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
   const redirectAfterLogin = useRedirectAfterLogin();
+  const { capture } = useTelemetry();
 
   useEffect(() => {
     if (cooldown <= 0) {
@@ -529,12 +536,22 @@ function CodeStep({ email, onBack, onNeedsName }: CodeStepProps) {
       onError: (error) => {
         setCode('');
         setErrorMessage(codeErrorMessage(error));
+        capture({
+          name: TelemetryEventName.EMAIL_CODE_REJECTED,
+          payload: { errorCode: serverErrorCode(error) ?? 'UNKNOWN' },
+        });
       },
     });
 
   const { mutate: resend, isPending: isResending } =
     authMutations.useRequestEmailCode({
-      onSuccess: () => setCooldown(RESEND_COOLDOWN_SECONDS),
+      onSuccess: () => {
+        setCooldown(RESEND_COOLDOWN_SECONDS);
+        capture({
+          name: TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
+          payload: {},
+        });
+      },
       onError: () =>
         setErrorMessage(t('Something went wrong, please try again later')),
     });
@@ -674,6 +691,10 @@ function requestErrorMessage(error: HttpError): string {
     }
   }
   return t('Something went wrong, please try again later');
+}
+
+function serverErrorCode(error: HttpError): string | undefined {
+  return (error.response?.data as { code?: string })?.code;
 }
 
 function codeErrorMessage(error: HttpError): string {
