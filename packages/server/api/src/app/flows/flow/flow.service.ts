@@ -3,7 +3,7 @@ import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
 import { CreateFlowRequest, Flow, FlowCreator, FlowOperationRequest, FlowOperationStatus, FlowOperationType, flowPieceUtil, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, PopulatedFlow, SharedTemplate, TelemetryEventName, TemplateStatus, TemplateType, TriggerSource, UncategorizedFolderId, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull, Not } from 'typeorm'
+import { EntityManager, In, IsNull, Not, QueryFailedError } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -28,8 +28,44 @@ import { flowRepo } from './flow.repo'
 
 
 
+const POSTGRES_UNIQUE_VIOLATION = '23505'
+const SQLITE_UNIQUE_VIOLATION_MESSAGE = 'UNIQUE constraint failed'
+
+function isUniqueViolation(error: unknown): boolean {
+    if (!(error instanceof QueryFailedError)) {
+        return false
+    }
+    const driverError: unknown = error.driverError
+    if (typeof driverError !== 'object' || driverError === null) {
+        return false
+    }
+    if ('code' in driverError && driverError.code === POSTGRES_UNIQUE_VIOLATION) {
+        return true
+    }
+    return (
+        'message' in driverError &&
+        typeof driverError.message === 'string' &&
+        driverError.message.includes(SQLITE_UNIQUE_VIOLATION_MESSAGE)
+    )
+}
+
+function duplicateExternalIdError(projectId: string, externalId: string): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: `A flow with externalId '${externalId}' already exists in project '${projectId}'.`,
+        },
+    })
+}
+
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+        if (!isNil(externalId)) {
+            const existingFlow = await flowRepo().findOneBy({ projectId, externalId })
+            if (!isNil(existingFlow)) {
+                throw duplicateExternalIdError(projectId, externalId)
+            }
+        }
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -54,6 +90,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
             })
             return { savedFlow: flow, savedFlowVersion: flowVersion }
+        }).catch((error) => {
+            if (!isNil(externalId) && isUniqueViolation(error)) {
+                throw duplicateExternalIdError(projectId, externalId)
+            }
+            throw error
         })
 
         rejectedPromiseHandler(
