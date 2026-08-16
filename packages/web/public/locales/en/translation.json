@@ -2317,5 +2317,10 @@
   "We sent a 6-digit code to {email}": "We sent a 6-digit code to {email}",
   "Welcome": "Welcome",
   "You need an invitation to sign up.": "You need an invitation to sign up.",
-  "name@work.com": "name@work.com"
+  "name@work.com": "name@work.com",
+  "Email verified": "Email verified",
+  "Full Name": "Full Name",
+  "Tell us your name so we know what to call you.": "Tell us your name so we know what to call you.",
+  "This names your workspace and how we greet you.": "This names your workspace and how we greet you.",
+  "What should we call you?": "What should we call you?"
 }
