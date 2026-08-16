@@ -7,6 +7,7 @@ import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
+import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
@@ -113,6 +114,22 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         return authenticationUtils(log).getOnboardingResponse({ identityId: verifiedIdentity.id })
     },
 
+    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
+        const writeNames = async (): Promise<void> => {
+            await userIdentityService(log).updateNames({ id: identityId, firstName, lastName })
+        }
+        const { response, provisioned } = await platformService(log).createPlatformWithProject({
+            identityId,
+            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+            invalidatePreviousTokens: false,
+            isFirstPlatform: true,
+            callerTokenVersion: undefined,
+            beforeProvision: writeNames,
+        })
+        return { response, signedUp: provisioned }
+    },
 })
 
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
@@ -138,6 +155,16 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
 type RequestCodeParams = {
     email: string
     platformId: string | null
+}
+
+type CompleteSignUpResult = {
+    response: AuthenticationResponse
+    signedUp: boolean
+}
+
+type CompleteSignUpParams = {
+    identityId: string
+    fullName: string
 }
 
 type VerifyCodeParams = {
