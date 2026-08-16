@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -53,7 +53,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
         }
-        if (params.type === PauseType.DELAY && !isNil(params.resumeDateTime)) {
+        if (!isNil(params.resumeDateTime)) {
             await systemJobsSchedule(log).upsertJob({
                 job: {
                     name: SystemJobName.RESUME_DELAY_WAITPOINT,

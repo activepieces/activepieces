@@ -78,3 +78,14 @@ describe('resolveModelIdForAnalytics', () => {
         expect(forAnalytics({ provider: null, selectedModel: '<script>alert(1)</script>' })).toBeNull()
     })
 })
+
+describe('chatUsageTracker — a flow step is not billed as a chat message', () => {
+    it('returns before doing any work, since the flow run meters its own AI usage', async () => {
+        const { chatUsageTracker } = await import('../../../../../src/app/ee/agent/chat-usage-tracker')
+        const log = { info: () => undefined, warn: () => undefined, error: () => undefined }
+
+        await expect(chatUsageTracker(log as never).track({
+            conversation: { id: 'conv-1', source: 'FLOW_STEP', platformId: 'plat-1', modelName: 'anthropic/claude-opus-4.6' } as never,
+        })).resolves.toBeUndefined()
+    })
+})

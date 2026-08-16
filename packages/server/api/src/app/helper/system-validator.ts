@@ -35,7 +35,10 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {
@@ -177,6 +180,7 @@ const systemPropValidators: {
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {
