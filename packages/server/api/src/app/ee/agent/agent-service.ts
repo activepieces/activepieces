@@ -1,5 +1,5 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
+import { Agent, agentUtils, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -28,7 +28,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             color: request.color,
             visibility,
             sharedWithUserIds: await resolveShare({ visibility, sharedWithUserIds: request.sharedWithUserIds, projectId, log }),
-            draft: request.draft,
+            draft: sanitizeObjectForPostgresql(request.draft),
             published: null,
         })
     },
@@ -73,7 +73,36 @@ export const agentService = (log: FastifyBaseLogger) => ({
             projectId,
             log,
         })
-        return agentRepo().save({ ...agent, ...request, visibility, sharedWithUserIds })
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
+        return agentRepo().save({ ...omit(agent, ['published']), ...request, draft, visibility, sharedWithUserIds })
+    },
+
+    async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        if (!agentUtils.isPublishable(agent.draft)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'An agent needs instructions before it can be published' },
+            })
+        }
+        const published = await agentRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ published: () => '"draft"' })
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere('"draft" = CAST(:reviewedDraft AS jsonb)', { reviewedDraft: JSON.stringify(agent.draft) })
+            .andWhere(visibleToUser({ userId, prefix: '' }))
+            .returning('id')
+            .execute()
+
+        const publishedRows: unknown[] = published.raw ?? []
+        if (publishedRows.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'The agent changed while it was being published, review it and publish again' },
+            })
+        }
+        return this.getOneOrThrow({ id, projectId, userId })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -86,11 +115,15 @@ export const agentService = (log: FastifyBaseLogger) => ({
 function visibleAgents({ userId }: { userId: UserId }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
         .createQueryBuilder('agent')
-        .where(new Brackets((qb) => {
-            qb.where('agent.visibility = :projectVisibility', { projectVisibility: AgentVisibility.PROJECT })
-                .orWhere('agent."ownerId" = :userId', { userId })
-                .orWhere(':userId = ANY(agent."sharedWithUserIds")', { userId })
-        }))
+        .where(visibleToUser({ userId, prefix: 'agent.' }))
+}
+
+function visibleToUser({ userId, prefix }: { userId: UserId, prefix: string }): Brackets {
+    return new Brackets((qb) => {
+        qb.where(`${prefix}"visibility" = :projectVisibility`, { projectVisibility: AgentVisibility.PROJECT })
+            .orWhere(`${prefix}"ownerId" = :userId`, { userId })
+            .orWhere(`:userId = ANY(${prefix}"sharedWithUserIds")`, { userId })
+    })
 }
 
 async function resolveShare({ visibility, sharedWithUserIds, projectId, log }: ResolveShareParams): Promise<UserId[]> {

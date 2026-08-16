@@ -58,6 +58,19 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         return agent
     })
 
+    app.post('/:id/publish', PublishAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).publish({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_PUBLISHED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return agent
+    })
+
     app.delete('/:id', DeleteAgentRoute, async (request, reply): Promise<void> => {
         const agent = await agentService(request.log).delete({
             id: request.params.id,
@@ -145,6 +158,25 @@ const UpdateAgentRoute = {
         description: 'Update an agent',
         params: z.object({ id: ApId }),
         body: UpdateAgentRequest,
+        response: {
+            [StatusCodes.OK]: Agent,
+        },
+    },
+}
+
+const PublishAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Publish an agent, so flow steps run the current draft',
+        params: z.object({ id: ApId }),
         response: {
             [StatusCodes.OK]: Agent,
         },
