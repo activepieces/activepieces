@@ -47,6 +47,7 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             type: String,
             array: true,
             nullable: false,
+            default: '{}',
         },
         draft: {
             type: 'jsonb',
