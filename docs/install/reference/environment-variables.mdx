@@ -142,7 +142,7 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_EXECUTION_MODE` | Sandbox strategy: `UNSANDBOXED`, `SANDBOX_PROCESS`, `SANDBOX_CODE_ONLY`, or `SANDBOX_CODE_AND_PROCESS`. | `UNSANDBOXED` |
 | `AP_CONTAINER_TYPE` | Which services run in the container: `APP` (API only), `WORKER` (worker only), or `WORKER_AND_APP` (both). | `WORKER_AND_APP` |
 | `AP_WORKER_CONCURRENCY` | Concurrent jobs a worker processes at once. Each job uses one sandbox instance. | `5` |
-| `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. | `1048576` |
+| `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. Capped at the container's memory limit minus 320 MB reserved for the worker, divided by `AP_WORKER_CONCURRENCY`, so the engine heaps cannot together exceed the container. | `1048576` |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS` | Comma-separated environment variables propagated into sandboxed code. For pieces, keep everything in the authentication object so it works across instances. | `None` |
 | `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. | `600` |
 | `AP_TRIGGER_TIMEOUT_SECONDS` | Maximum runtime for a trigger's polling, in seconds. | `60` |

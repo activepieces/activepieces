@@ -8,6 +8,18 @@ icon: "hammer"
 
 ### What has changed?
 
+#### `AP_SANDBOX_MEMORY_LIMIT` is now capped by the container's memory limit
+
+The engine child process is started with `--max-old-space-size` taken from `AP_SANDBOX_MEMORY_LIMIT`, whose default is `1048576` KB (1024 MB). That number had no relationship to the container it runs in, so on a 1 GiB container the engine alone was permitted the entire container budget — and the worker process, which lives in the same container, needs a few hundred MB of it. The heaps summed to more than the container, so the kernel's cgroup OOM killer reached its threshold before V8 ever reached its own. The engine died on an opaque `SIGKILL` instead of a `JavaScript heap out of memory`, at a threshold that moved with whatever the worker happened to be holding — so identical runs of the same flow failed with `MEMORY_LIMIT_EXCEEDED` at random, and could fail before executing a single step.
+
+The worker now reads its container's memory limit on startup and caps the engine heap at `(container limit - 320 MB) / AP_WORKER_CONCURRENCY`. The reserve covers the worker process and native overhead. `AP_SANDBOX_MEMORY_LIMIT` is still honoured exactly whenever it already fits; it is only ever lowered, never raised, and the worker logs a warning naming both numbers when it clamps. If the container limit cannot be read (no cgroup limit set, so the process may use the whole host), the configured value stands unchanged.
+
+#### What you need to do
+
+Nothing if you set `AP_SANDBOX_MEMORY_LIMIT` to a value that already fits in your container, or if you run without a container memory limit.
+
+If you rely on the `1048576` default in a container smaller than about 1.4 GB, the effective engine heap will now be lower than 1024 MB — that ceiling was never actually reachable, since the kernel killed the process first, but flows that sat just under it may now surface a clean `MEMORY_LIMIT_EXCEEDED` where they previously succeeded intermittently. Give the worker container more memory to restore the old headroom: at `AP_WORKER_CONCURRENCY=1`, a container of `desired engine heap + 320 MB`. Check the worker's startup logs for the clamp warning to see the values it derived.
+
 #### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
 Two changes to the MCP OAuth endpoints:
