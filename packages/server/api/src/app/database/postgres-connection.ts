@@ -414,6 +414,7 @@ import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/
 import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
 import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
 import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
+import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -843,6 +844,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationFlowStepRetentionIndex1821000000000,
         RenameChatTablesToAgent1822000000000,
         AddRenamedChatTableCompatViews1823000000000,
+        AddAgentTable1825000000000,
     ]
     return migrations
 }
