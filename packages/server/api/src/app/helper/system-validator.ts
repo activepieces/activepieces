@@ -93,6 +93,7 @@ const systemPropValidators: {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
+    [AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX]: numberValidator,
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: stringValidator,
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,
