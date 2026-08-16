@@ -3,6 +3,7 @@ import { apVersionUtil } from '@activepieces/server-utils'
 import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
+import { distributedLock } from '../database/redis-connections'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -18,6 +19,8 @@ import { pieceBundle } from './piece-bundle'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
+const PIECE_SYNC_LOCK_KEY = 'piece-sync'
+const PIECE_SYNC_LOCK_TIMEOUT_SECONDS = 60
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -43,40 +46,51 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.info('Piece sync service is disabled')
             return
         }
-        try {
-            log.info('Starting piece synchronization')
-            const startTime = performance.now()
-            const [dbPieces, cloudPieces] = await Promise.all([pieceRepos().find({
-                select: {
-                    name: true,
-                    version: true,
-                    pieceType: true,
-                },
-            }), listCloudPieces()])
-            log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
-            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
-            const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
-
-            log.info({
-                added,
-                deleted,
-                durationMs: Math.floor(performance.now() - startTime),
-            }, 'Piece synchronization completed')
-
-            // React to the catalog-change signal: enqueue an async tool-search reconcile (never inline
-            // — embedding must not block sync). The hash-gate means an unchanged catalog re-embeds
-            // nothing, so this is cheap; only fire when something changed AND the engine is enabled —
-            // without the flag guard a delta would enqueue a reconcile even when tool-search is off,
-            // which (if an OpenAI key exists but pgvector does not) crashes silently on every change.
-            if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
-                rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
-            }
-        }
-        catch (error) {
-            log.error({ error }, 'Error syncing pieces')
+        const { error: lockError } = await tryCatch(() => distributedLock(log).runExclusive({
+            key: PIECE_SYNC_LOCK_KEY,
+            timeoutInSeconds: PIECE_SYNC_LOCK_TIMEOUT_SECONDS,
+            fn: () => runSync({ publishCacheRefresh, log }),
+        }))
+        if (lockError) {
+            log.info('Piece synchronization already in progress, skipping')
         }
     },
 })
+
+async function runSync({ publishCacheRefresh, log }: { publishCacheRefresh: boolean, log: FastifyBaseLogger }): Promise<void> {
+    try {
+        log.info('Starting piece synchronization')
+        const startTime = performance.now()
+        const [dbPieces, cloudPieces] = await Promise.all([pieceRepos().find({
+            select: {
+                name: true,
+                version: true,
+                pieceType: true,
+            },
+        }), listCloudPieces()])
+        log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
+        const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
+        const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
+
+        log.info({
+            added,
+            deleted,
+            durationMs: Math.floor(performance.now() - startTime),
+        }, 'Piece synchronization completed')
+
+        // React to the catalog-change signal: enqueue an async tool-search reconcile (never inline
+        // — embedding must not block sync). The hash-gate means an unchanged catalog re-embeds
+        // nothing, so this is cheap; only fire when something changed AND the engine is enabled —
+        // without the flag guard a delta would enqueue a reconcile even when tool-search is off,
+        // which (if an OpenAI key exists but pgvector does not) crashes silently on every change.
+        if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
+            rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
+        }
+    }
+    catch (error) {
+        log.error({ error }, 'Error syncing pieces')
+    }
+}
 
 async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
     const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))

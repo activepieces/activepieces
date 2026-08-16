@@ -143,13 +143,13 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 platformId,
             })
             const savedPiece = await pieceRepos().save({
-                id: apId(),
                 packageType,
                 pieceType,
                 archiveId,
                 platformId,
                 created: createdDate,
                 ...pieceMetadata,
+                id: apId(),
             })
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()
