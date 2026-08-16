@@ -48,6 +48,19 @@ orders the queue but does not free the slot.
 
 ## Gotchas
 
+- **A batch step cannot be placed inside another batch step, and the guard is post-hoc rather than
+  positional.** `_addAction` applies the transform and *then* rejects if the result nests a batch **and the
+  input did not** (`FLOW_OPERATION_INVALID`). Written that way on purpose: it needs no reasoning about
+  `stepLocationRelativeToParent`, it catches every insertion shape — including nesting through an
+  intermediate loop or router, and a container pasted *with* a batch already inside it, since paste and
+  duplicate both route through `ADD_ACTION` — and the "input did not" clause means an existing flow that
+  somehow contains one is never invalidated, so the constraint is non-breaking by construction. The builder
+  hides the piece rather than letting the user hit the error (`pieceSelectorUtils.isInsideBatch` →
+  `excludeProcessInBatches`), but that is affordance only; the operation layer is the authority, which is what
+  makes it hold for MCP `ap_add_step` too. The constraint is new — nothing in
+  `flow-version-validator-util.ts` (settings-only), the selector, or `add-action` forbade it before. The
+  trigger was visual: two nested batch regions on the canvas draw *exactly coincident* hairlines, not inset
+  ones, so nesting read as one box with two stray rules across it.
 - **A child run's entry step has to survive a pause.** A child starts at the batch body's entry step with the
   parent's steps seeded as SUCCEEDED, so the engine cannot walk from the trigger — the batch step itself would
   read as already done and the walk would fall through to the step *after* the batch. `entryStepName` arrives on

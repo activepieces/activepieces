@@ -39,9 +39,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   stepToReplacePieceDisplayName,
 }) => {
   const isMobile = useIsMobile();
-  const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
-    (state) => [state.selectedPieceMetadataInPieceSelector],
-  );
+  const [selectedPieceMetadataInPieceSelector, flowVersion] =
+    useBuilderStateContext((state) => [
+      state.selectedPieceMetadataInPieceSelector,
+      state.flowVersion,
+    ]);
   const { isLoading: isLoadingPieces, data: categories } =
     piecesHooks.usePiecesSearch({
       shouldCaptureEvent: true,
@@ -50,6 +52,10 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         operation.type === FlowOperationType.UPDATE_TRIGGER
           ? 'trigger'
           : 'action',
+      excludeProcessInBatches: pieceSelectorUtils.isInsideBatch({
+        operation,
+        flowVersion,
+      }),
     });
 
   const noResultsFound = !isLoadingPieces && categories.length === 0;

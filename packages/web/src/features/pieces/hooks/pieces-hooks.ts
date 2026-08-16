@@ -87,6 +87,7 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+  excludeProcessInBatches?: boolean;
 };
 
 export const piecesHooks = {
@@ -232,7 +233,11 @@ export const piecesHooks = {
       };
     }
     const piecesMetadataWithoutEmptySuggestions =
-      filterOutPiecesWithNoSuggestions(metadata);
+      filterOutPiecesWithNoSuggestions(metadata).filter(
+        (stepMetadata) =>
+          !props.excludeProcessInBatches ||
+          stepMetadata.type !== FlowActionType.PROCESS_IN_BATCHES,
+      );
 
     const pinnedPieces = getPinnedPieces(
       piecesMetadataWithoutEmptySuggestions,

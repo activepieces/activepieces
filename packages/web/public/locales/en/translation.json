@@ -2496,6 +2496,7 @@
   "Split a list into batches and run them in parallel. Batches don't finish in order.": "Split a list into batches and run them in parallel. Batches don't finish in order.",
   "batchSizeMustBeAWholeNumber": "Batch size must be a whole number",
   "Items per Batch": "Items per Batch",
+  "Batched": "Batched",
   "Batches run in parallel. Completion order is not guaranteed.": "Batches run in parallel. Completion order is not guaranteed.",
   "Smaller batches run wider, up to what your workers can run at once.": "Smaller batches run wider, up to what your workers can run at once.",
   "Paste Inside Batch": "Paste Inside Batch",

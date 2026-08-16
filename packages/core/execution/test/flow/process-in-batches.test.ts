@@ -36,15 +36,18 @@ const emptyFlowVersion: FlowVersion = {
     },
 }
 
-function addBatchStep({ name = 'step_1', batchSize = 10, items = '{{ trigger }}' }: {
+function addBatchStep({ name = 'step_1', batchSize = 10, items = '{{ trigger }}', parentStep = 'trigger', stepLocationRelativeToParent }: {
     name?: string
     batchSize?: number
     items?: string
+    parentStep?: string
+    stepLocationRelativeToParent?: StepLocationRelativeToParent
 } = {}): FlowOperationRequest {
     return {
         type: FlowOperationType.ADD_ACTION,
         request: {
-            parentStep: 'trigger',
+            parentStep,
+            stepLocationRelativeToParent,
             action: {
                 name,
                 type: FlowActionType.PROCESS_IN_BATCHES,
@@ -216,6 +219,63 @@ describe('Process in Batches step', () => {
             parentStep: 'step_1',
             stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
         })], withBatch)).toThrow()
+    })
+
+    it('refuses a batch step anywhere inside another batch step', () => {
+        const withBatch = applyAll([addBatchStep()])
+        expect(() => applyAll([addBatchStep({
+            name: 'step_2',
+            parentStep: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+        })], withBatch)).toThrow()
+
+        const withLoopInsideBatch = applyAll([{
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'step_1',
+                stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+                action: {
+                    name: 'step_2',
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    displayName: 'Loop',
+                    valid: true,
+                    settings: { items: '{{ trigger }}' },
+                },
+            },
+        }], withBatch)
+        expect(() => applyAll([addBatchStep({
+            name: 'step_3',
+            parentStep: 'step_2',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+        })], withLoopInsideBatch)).toThrow()
+    })
+
+    it('allows a batch step after another batch step, and inside a top-level loop', () => {
+        const withBatch = applyAll([addBatchStep()])
+        expect(() => applyAll([addBatchStep({
+            name: 'step_2',
+            parentStep: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        })], withBatch)).not.toThrow()
+
+        const withLoop = applyAll([{
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+                parentStep: 'trigger',
+                action: {
+                    name: 'step_1',
+                    type: FlowActionType.LOOP_ON_ITEMS,
+                    displayName: 'Loop',
+                    valid: true,
+                    settings: { items: '{{ trigger }}' },
+                },
+            },
+        }])
+        expect(() => applyAll([addBatchStep({
+            name: 'step_2',
+            parentStep: 'step_1',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+        })], withLoop)).not.toThrow()
     })
 
     it('traverses into the body', () => {

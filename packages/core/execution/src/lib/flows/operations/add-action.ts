@@ -165,7 +165,27 @@ function handleContinueOnFailureBranches(parentStep: Step, request: AddActionReq
     return parentStep
 }
 
+function hasNestedBatch(flowVersion: FlowVersion): boolean {
+    return flowStructureUtil.getAllSteps(flowVersion.trigger)
+        .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
+        .some((batch) => flowStructureUtil.getAllChildSteps(batch)
+            .some((child) => child.name !== batch.name && child.type === FlowActionType.PROCESS_IN_BATCHES))
+}
+
 function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
+    const updated = addActionToFlow(flowVersion, request)
+    if (hasNestedBatch(updated) && !hasNestedBatch(flowVersion)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: 'A Process in Batches step cannot be placed inside another Process in Batches step',
+            },
+        })
+    }
+    return updated
+}
+
+function addActionToFlow(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep: Step) => {
         if (parentStep.name !== request.parentStep) {
             return parentStep

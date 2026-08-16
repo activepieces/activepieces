@@ -28,6 +28,7 @@ import {
   FlowVersion,
   FlowOperationType,
   AUTHENTICATION_PROPERTY_NAME,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 import { useRef } from 'react';
 
@@ -383,6 +384,31 @@ const getStepNameFromOperationType = (
       return 'trigger';
   }
 };
+const isInsideBatch = ({
+  operation,
+  flowVersion,
+}: {
+  operation: PieceSelectorOperation;
+  flowVersion: FlowVersion;
+}): boolean => {
+  if (operation.type !== FlowOperationType.ADD_ACTION) {
+    return false;
+  }
+  const { parentStep, stepLocationRelativeToParent } = operation.actionLocation;
+  if (
+    stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BATCH
+  ) {
+    return true;
+  }
+  return flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .some(
+      (step) =>
+        step.type === FlowActionType.PROCESS_IN_BATCHES &&
+        flowStructureUtil.isChildOf(step, parentStep),
+    );
+};
+
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
@@ -391,6 +417,7 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
+  isInsideBatch,
   isManualTrigger: isManualPieceTrigger,
   PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };

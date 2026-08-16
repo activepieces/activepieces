@@ -13,14 +13,21 @@ import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly, isPieceSelectorOpen, canvasOrientation] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.readonly,
-      state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
-      state.canvasOrientation,
-    ]);
+  const [
+    activeDraggingStep,
+    readonly,
+    isPieceSelectorOpen,
+    canvasOrientation,
+    setHoveredCanvasTarget,
+  ] = useBuilderStateContext((state) => [
+    state.activeDraggingStep,
+    state.readonly,
+    state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
+    state.canvasOrientation,
+    state.setHoveredCanvasTarget,
+  ]);
   const isHorizontal = canvasOrientation === 'horizontal';
+  const hoverTarget = flowCanvasUtils.toCanvasHoverTarget(props);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -34,10 +41,17 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.edgeId);
+      const isOver = event.collisions?.[0]?.id === props.edgeId;
+      if (isOver !== isStepInsideDropZone) {
+        setIsStepInsideDropzone(isOver);
+        if (isOver) {
+          setHoveredCanvasTarget(hoverTarget);
+        }
+      }
     },
     onDragEnd() {
       setIsStepInsideDropzone(false);
+      setHoveredCanvasTarget(null);
     },
   });
 
@@ -91,6 +105,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
               width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
               height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
             }}
+            onPointerEnter={() => setHoveredCanvasTarget(hoverTarget)}
+            onPointerLeave={() => setHoveredCanvasTarget(null)}
           >
             <div
               style={{
