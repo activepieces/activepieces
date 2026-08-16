@@ -150,7 +150,14 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertChatProviderConfigured({ platformId, scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }), log })
+        // Resolve the project the run will adopt, so admission asks about the same credentials the
+        // worker will resolve. A brand-new conversation carries no project until the first turn
+        // persists one, and checking platform-wide there would admit a message no key can serve.
+        const runProjectId = agentHelpers.selectRunProject({
+            conversationProjectId: conversation.projectId ?? null,
+            projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
+        })
+        await assertChatProviderConfigured({ platformId, scope: agentHelpers.providerScopeFor({ projectId: runProjectId }), log })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({

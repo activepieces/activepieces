@@ -65,6 +65,14 @@ function providerScopeFor({ projectId }: { projectId: string | null }): Provider
     return isNil(projectId) ? { type: 'platform' } : { type: 'project', projectId }
 }
 
+// The project a chat turn runs in: the conversation's own if the user still reaches it, else the
+// first they can see. Admission and the run both read it, so a message is accepted against the
+// same project whose credentials will serve it.
+function selectRunProject({ conversationProjectId, projects }: { conversationProjectId: string | null, projects: Project[] }): string | null {
+    const stillReachable = !isNil(conversationProjectId) && projects.some((project) => project.id === conversationProjectId)
+    return stillReachable ? conversationProjectId : projects[0]?.id ?? null
+}
+
 async function resolveRunProvider({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
         return resolveChatProvider({ platformId, scope, log })
@@ -257,6 +265,7 @@ export const agentHelpers = {
     resolveEmbeddingModel,
     resolveChatProviderName,
     providerScopeFor,
+    selectRunProject,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,
