@@ -363,6 +363,7 @@ export type BatchProgressData = {
 export type AgentAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
+export * from './agent'
 export { agentToolClassification } from './tool-classification'
 export { agentToolPhases, type AgentPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
