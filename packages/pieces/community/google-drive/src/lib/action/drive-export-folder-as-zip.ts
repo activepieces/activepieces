@@ -3,7 +3,6 @@ import {
   Property,
   PieceAuth,
   MarkdownVariant,
-  chunk,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
@@ -13,13 +12,24 @@ import querystring from 'querystring';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
 import { common } from '../common';
 
-// A zip is a sequential format: only the entry holding the writer lock streams straight into the
-// archive, and every other in-flight add() compresses into an unbounded in-memory buffer while it
-// waits its turn. Peak memory therefore tracks the bytes in flight, not the size of the output.
-// Measured on zip.js 2.8.29 with a 320 MB folder: 5 at a time peaks around 320 MB, 2 at a time
-// around 140 MB. Two keeps enough overlap to hide Drive's per-request latency without letting the
-// worker's memory grow with the folder.
-const DOWNLOAD_CONCURRENCY = 2;
+// A zip is a sequential format. Only the entry holding the writer lock streams straight into the
+// archive -- that one is paced by backpressure and costs almost nothing. Every *other* in-flight
+// add() compresses into a temporary stream zip.js creates with an unbounded high water mark, so
+// it is read as fast as the network delivers and held whole until its turn comes. Peak memory
+// therefore tracks the bytes waiting behind the lock, not the size of the output.
+//
+// So the thing that has to be bounded is bytes in flight, not the number of downloads. Batches
+// are capped by both: enough small files overlap to hide Drive's per-request latency, while a
+// large file ends up alone in its batch and streams through the cheap direct-write path.
+// Measured on zip.js 2.8.29 with a 320 MB folder: 5 at a time peaked around 320 MB, 2 at a time
+// around 140 MB, one at a time around 34 MB and flat as the folder grows.
+const DOWNLOAD_CONCURRENCY = 4;
+const MAX_IN_FLIGHT_BYTES = 16 * 1024 * 1024;
+
+// Native Google files are generated at export time, so Drive reports no size for them until the
+// export runs. They are typically small, but the estimate is deliberately generous: guessing too
+// high only costs a little parallelism, guessing too low costs worker memory.
+const UNKNOWN_SIZE_ESTIMATE = 8 * 1024 * 1024;
 
 // Cap on how many validation problems are spelled out in the thrown error. The total count is
 // always reported; this only bounds the itemised list.
@@ -72,12 +82,16 @@ interface ZipFolderEntry {
   fileId: string;
   isEmptyFolder: boolean;
   downloadUrl?: string;
+  sizeBytes: number;
 }
 
 interface DriveListItem {
   id: string;
   name: string;
   mimeType: string;
+  // Drive returns this as a string, and omits it entirely for native Google files (which have
+  // no stored bytes until an export generates them) and for folders.
+  size?: string;
 }
 
 async function listFolderChildren({
@@ -94,7 +108,7 @@ async function listFolderChildren({
 
   const params: Record<string, string> = {
     q: `'${folderId}' in parents and trashed=false`,
-    fields: 'nextPageToken,files(id,name,mimeType)',
+    fields: 'nextPageToken,files(id,name,mimeType,size)',
     supportsAllDrives: 'true',
     includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
     corpora: includeTeamDrives ? 'allDrives' : 'user',
@@ -297,6 +311,7 @@ async function walk({
         relativePath: relativePrefix,
         fileId: folderId,
         isEmptyFolder: true,
+        sizeBytes: 0,
       });
     }
     return;
@@ -338,11 +353,15 @@ async function walk({
       continue;
     }
 
+    const reportedSize = Number(resolved.item.size);
     out.push({
       relativePath: itemPath,
       fileId: resolved.item.id,
       isEmptyFolder: false,
       downloadUrl: resolved.downloadUrl,
+      sizeBytes: Number.isFinite(reportedSize)
+        ? reportedSize
+        : UNKNOWN_SIZE_ESTIMATE,
     });
   }
 }
@@ -394,6 +413,33 @@ async function collectZipEntries({
   }
 
   return out;
+}
+
+// Groups entries into batches that are downloaded concurrently, bounded by both the number of
+// requests and the bytes they put in flight. A file bigger than the whole budget still gets its
+// own batch rather than being skipped -- alone it holds the writer lock and streams straight
+// into the archive, which is the one path zip.js paces with real backpressure.
+function batchByBytes(entries: ZipFolderEntry[]): ZipFolderEntry[][] {
+  const batches: ZipFolderEntry[][] = [];
+  let current: ZipFolderEntry[] = [];
+  let currentBytes = 0;
+
+  for (const entry of entries) {
+    const wouldExceedBytes = currentBytes + entry.sizeBytes > MAX_IN_FLIGHT_BYTES;
+    const wouldExceedCount = current.length >= DOWNLOAD_CONCURRENCY;
+    if (current.length > 0 && (wouldExceedBytes || wouldExceedCount)) {
+      batches.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(entry);
+    currentBytes += entry.sizeBytes;
+  }
+
+  if (current.length > 0) {
+    batches.push(current);
+  }
+  return batches;
 }
 
 async function downloadAndAddZipEntry({
@@ -622,10 +668,11 @@ export const driveExportFolderAsZip = createAction({
     }
 
     try {
-      for (const batch of chunk(fileEntries, DOWNLOAD_CONCURRENCY)) {
+      for (const batch of batchByBytes(fileEntries)) {
         // zip.js supports adding multiple entries concurrently (see its own "Adding concurrently
-        // multiple entries" example) -- each entry streams straight from the network into the
-        // archive, so neither the individual files nor the growing zip are buffered in memory
+        // multiple entries" example). Only the entry holding the writer lock streams straight
+        // into the archive; the others are buffered until their turn, which is why the batch is
+        // bounded by bytes rather than by count alone.
         await Promise.all(
           batch.map((entry) =>
             downloadAndAddZipEntry({
