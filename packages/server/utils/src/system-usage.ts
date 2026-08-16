@@ -121,7 +121,28 @@ async function getCgroupCpuCores(): Promise<number | null> {
     return null
 }
 
+async function getCgroupMemoryLimit(): Promise<number | null> {
+    const paths = ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']
+    for (const path of paths) {
+        const limitStr = await readCgroupFile(path)
+        if (!limitStr || limitStr === 'max') continue
+        const limit = parseInt(limitStr)
+        if (isNaN(limit) || limit <= 0 || limit > MAX_REASONABLE_MEMORY_BYTES) continue
+        return limit
+    }
+    return null
+}
+
 export const systemUsage = {
+    // The ceiling imposed on THIS process, or null when nothing constrains it. Unlike
+    // getContainerMemoryUsage this deliberately never falls back to host RAM: a caller sizing a
+    // budget against "the container" has to be able to tell "capped at N" apart from "uncapped",
+    // and treating a host's total RAM as a container limit would shrink the budget of anyone
+    // running the worker outside a memory-limited container.
+    async getContainerMemoryLimitInBytes(): Promise<number | null> {
+        return await getCgroupMemoryLimit() ?? getConstrainedMemoryTotal()
+    },
+
     async getContainerMemoryUsage() {
         const cgroupMemory = await getCgroupMemory()
         if (cgroupMemory) return cgroupMemory

@@ -17,12 +17,20 @@ export const sandboxConfig = {
     // real ceiling from the cgroup once per (re)connect and clamp to it. Best-effort: when the
     // container limit is unreadable the configured value stands.
     async primeEngineHeapCeiling({ concurrency }: { concurrency: number }): Promise<void> {
-        const { data, error } = await tryCatch(() => systemUsage.getContainerMemoryUsage())
+        // Recomputed from scratch on every (re)connect, and reset to null whenever the limit is
+        // unreadable or absent, so a ceiling derived from an earlier reading can never outlive it.
+        engineHeapCeilingKb = null
+        const { data: containerLimitInBytes, error } = await tryCatch(() => systemUsage.getContainerMemoryLimitInBytes())
         if (error) {
-            logger.warn({ error }, 'Could not read container memory, keeping configured sandbox memory limit')
+            logger.warn({ error }, 'Could not read the container memory limit, keeping configured sandbox memory limit')
             return
         }
-        const containerKb = Math.floor(data.totalRamInBytes / 1024)
+        // No cgroup limit means the worker may use the whole host, so there is no container budget
+        // to divide and nothing to clamp against — the operator's value stands.
+        if (isNil(containerLimitInBytes)) {
+            return
+        }
+        const containerKb = Math.floor(containerLimitInBytes / 1024)
         const availableKb = containerKb - WORKER_MEMORY_RESERVE_KB
         engineHeapCeilingKb = Math.max(MIN_ENGINE_HEAP_KB, Math.floor(availableKb / concurrency))
         const configuredKb = parseSandboxMemoryLimit(workerSettings.getSettings().SANDBOX_MEMORY_LIMIT)

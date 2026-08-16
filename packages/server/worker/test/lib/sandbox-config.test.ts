@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const getSettings = vi.fn()
-const getContainerMemoryUsage = vi.fn()
+const getContainerMemoryLimitInBytes = vi.fn()
 
 vi.mock('../../src/lib/config/worker-settings', () => ({
     workerSettings: { getSettings },
@@ -9,7 +9,7 @@ vi.mock('../../src/lib/config/worker-settings', () => ({
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...await importOriginal<typeof import('@activepieces/server-utils')>(),
-    systemUsage: { getContainerMemoryUsage },
+    systemUsage: { getContainerMemoryLimitInBytes },
 }))
 
 const ONE_GIB_IN_BYTES = 1024 * 1024 * 1024
@@ -23,7 +23,7 @@ async function loadSandboxConfig() {
 describe('sandboxConfig memory limit', () => {
     beforeEach(() => {
         getSettings.mockReturnValue({ SANDBOX_MEMORY_LIMIT: '1048576' })
-        getContainerMemoryUsage.mockReset()
+        getContainerMemoryLimitInBytes.mockReset()
     })
 
     it('uses the server-provided limit before the ceiling is primed', async () => {
@@ -33,14 +33,14 @@ describe('sandboxConfig memory limit', () => {
 
     it('clamps a limit that would fill the whole container', async () => {
         const sandboxConfig = await loadSandboxConfig()
-        getContainerMemoryUsage.mockResolvedValue({ totalRamInBytes: ONE_GIB_IN_BYTES, ramUsage: 0 })
+        getContainerMemoryLimitInBytes.mockResolvedValue(ONE_GIB_IN_BYTES)
         await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('720896')
     })
 
     it('divides the remaining budget across concurrent boxes', async () => {
         const sandboxConfig = await loadSandboxConfig()
-        getContainerMemoryUsage.mockResolvedValue({ totalRamInBytes: 4 * ONE_GIB_IN_BYTES, ramUsage: 0 })
+        getContainerMemoryLimitInBytes.mockResolvedValue(4 * ONE_GIB_IN_BYTES)
         await sandboxConfig.primeEngineHeapCeiling({ concurrency: 5 })
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('773324')
     })
@@ -48,21 +48,50 @@ describe('sandboxConfig memory limit', () => {
     it('honors a configured limit that already fits', async () => {
         const sandboxConfig = await loadSandboxConfig()
         getSettings.mockReturnValue({ SANDBOX_MEMORY_LIMIT: '262144' })
-        getContainerMemoryUsage.mockResolvedValue({ totalRamInBytes: ONE_GIB_IN_BYTES, ramUsage: 0 })
+        getContainerMemoryLimitInBytes.mockResolvedValue(ONE_GIB_IN_BYTES)
         await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('262144')
     })
 
     it('never drops below the floor on an undersized container', async () => {
         const sandboxConfig = await loadSandboxConfig()
-        getContainerMemoryUsage.mockResolvedValue({ totalRamInBytes: 256 * 1024 * 1024, ramUsage: 0 })
+        getContainerMemoryLimitInBytes.mockResolvedValue(256 * 1024 * 1024)
         await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('131072')
     })
 
     it('keeps the configured limit when the container size cannot be read', async () => {
         const sandboxConfig = await loadSandboxConfig()
-        getContainerMemoryUsage.mockRejectedValue(new Error('no cgroup'))
+        getContainerMemoryLimitInBytes.mockRejectedValue(new Error('unreadable'))
+        await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
+        expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('1048576')
+    })
+
+    it('does not clamp when the process is unconstrained', async () => {
+        const sandboxConfig = await loadSandboxConfig()
+        getContainerMemoryLimitInBytes.mockResolvedValue(null)
+        await sandboxConfig.primeEngineHeapCeiling({ concurrency: 5 })
+        expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('1048576')
+    })
+
+    it('drops a previously derived ceiling when the limit is no longer readable', async () => {
+        const sandboxConfig = await loadSandboxConfig()
+        getContainerMemoryLimitInBytes.mockResolvedValue(ONE_GIB_IN_BYTES)
+        await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
+        expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('720896')
+
+        getContainerMemoryLimitInBytes.mockResolvedValue(null)
+        await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
+        expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('1048576')
+    })
+
+    it('re-derives the ceiling when the container is resized', async () => {
+        const sandboxConfig = await loadSandboxConfig()
+        getContainerMemoryLimitInBytes.mockResolvedValue(ONE_GIB_IN_BYTES)
+        await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
+        expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('720896')
+
+        getContainerMemoryLimitInBytes.mockResolvedValue(2 * ONE_GIB_IN_BYTES)
         await sandboxConfig.primeEngineHeapCeiling({ concurrency: 1 })
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('1048576')
     })
