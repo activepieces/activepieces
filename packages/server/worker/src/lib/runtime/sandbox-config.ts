@@ -13,29 +13,33 @@ export const sandboxConfig = {
     },
     // The engine's --max-old-space-size and the worker's own heap are independent ceilings inside
     // ONE container. SANDBOX_MEMORY_LIMIT arrives from the app with no knowledge of the container,
-    // so its 1024 MB default fills a 1 GiB cgroup on its own and the sum over-commits. Derive the
-    // real ceiling from the cgroup once per (re)connect and clamp to it. Best-effort: when the
-    // container limit is unreadable the configured value stands.
-    async primeEngineHeapCeiling({ concurrency }: { concurrency: number }): Promise<void> {
-        // Recomputed from scratch on every (re)connect, and reset to null whenever the limit is
-        // unreadable or absent, so a ceiling derived from an earlier reading can never outlive it.
-        engineHeapCeilingKb = null
+    // so its 1024 MB default fills a 1 GiB cgroup on its own and the sum over-commits. This derives
+    // the real ceiling from the cgroup, and returns null when there is nothing to clamp against —
+    // either the limit was unreadable or no limit exists, in which case the operator's value stands.
+    //
+    // Deliberately pure: it reads the cgroup but writes no shared state, so a caller suspended on
+    // this await can be abandoned without its result ever reaching a live runtime. Assignment is a
+    // separate, synchronous step the caller takes once it knows it is still the current generation.
+    async deriveEngineHeapCeilingKb({ concurrency }: { concurrency: number }): Promise<number | null> {
         const { data: containerLimitInBytes, error } = await tryCatch(() => systemUsage.getContainerMemoryLimitInBytes())
         if (error) {
             logger.warn({ error }, 'Could not read the container memory limit, keeping configured sandbox memory limit')
-            return
+            return null
         }
-        // No cgroup limit means the worker may use the whole host, so there is no container budget
-        // to divide and nothing to clamp against — the operator's value stands.
         if (isNil(containerLimitInBytes)) {
-            return
+            return null
         }
         const containerKb = Math.floor(containerLimitInBytes / 1024)
         const availableKb = containerKb - WORKER_MEMORY_RESERVE_KB
-        engineHeapCeilingKb = Math.max(MIN_ENGINE_HEAP_KB, Math.floor(availableKb / concurrency))
+        return Math.max(MIN_ENGINE_HEAP_KB, Math.floor(availableKb / concurrency))
+    },
+    // Replaces the ceiling wholesale, including with null, so one derived from an earlier reading
+    // can never outlive it.
+    applyEngineHeapCeiling(ceilingKb: number | null): void {
+        engineHeapCeilingKb = ceilingKb
         const configuredKb = parseSandboxMemoryLimit(workerSettings.getSettings().SANDBOX_MEMORY_LIMIT)
-        if (!isNil(configuredKb) && configuredKb > engineHeapCeilingKb) {
-            logger.warn({ containerKb, concurrency, configuredKb, engineHeapCeilingKb }, 'Configured sandbox memory limit over-commits the container, clamping engine heap ceiling')
+        if (!isNil(ceilingKb) && !isNil(configuredKb) && configuredKb > ceilingKb) {
+            logger.warn({ configuredKb, engineHeapCeilingKb: ceilingKb }, 'Configured sandbox memory limit over-commits the container, clamping engine heap ceiling')
         }
     },
     // The worker's runtime settings mapped to what the pool reads. REUSE_SANDBOX is an env-only
