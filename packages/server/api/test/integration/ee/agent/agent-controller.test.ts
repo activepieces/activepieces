@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
+import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
 import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -336,6 +337,20 @@ describe('agent templates', () => {
         expect(drafted.statusCode).toBe(StatusCodes.CONFLICT)
         expect(drafted.body).toContain('Connect an AI provider')
         expect(drafted.body).not.toContain('ChatAiProvider')
+    })
+
+    it('rate limits one caller without blocking another on the same platform', async () => {
+        const owner = await context()
+        const colleague = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const draft = (ctx: TestContext) => ctx.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'watch competitor pricing' })
+
+        const responses = []
+        for (let attempt = 0; attempt <= DRAFTS_PER_MINUTE; attempt++) {
+            responses.push(await draft(owner))
+        }
+
+        expect(responses[responses.length - 1].body).toContain(`above the limit of ${DRAFTS_PER_MINUTE}`)
+        expect((await draft(colleague)).body).not.toContain('above the limit')
     })
 
     it('refuses a draft prompt longer than the endpoint is meant to take', async () => {

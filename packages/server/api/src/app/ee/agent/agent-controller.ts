@@ -16,7 +16,7 @@ import { agentHelpers } from './agent-helpers'
 import { agentService } from './agent-service'
 import { AGENT_TEMPLATES } from './agent-templates'
 
-const DRAFTS_PER_MINUTE = 20
+export const DRAFTS_PER_MINUTE = 20
 
 export const agentController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAgentRoute, async (request, reply) => {
@@ -51,7 +51,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         await assertCreditsAndAppSumoNotExceeded({ platformId, log: request.log })
         const { allowed, count } = await agentHelpers.incrementAndCheckLimit({
-            key: `agent-draft:${platformId}:${await resolveUserId(request)}`,
+            key: `agent-draft:${platformId}:${request.principal.id}`,
             limit: DRAFTS_PER_MINUTE,
             ttlSeconds: 60,
         })
