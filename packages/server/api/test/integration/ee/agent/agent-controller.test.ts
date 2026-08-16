@@ -118,8 +118,10 @@ describe('agent project isolation', () => {
         const stranger = await context()
         const agent = await createAgent(owner)
 
+        const own = await createAgent(stranger)
+
         const listed = (await stranger.get('/v1/agents')).json().data
-        expect(listed.map((row: { id: string }) => row.id)).not.toContain(agent.id)
+        expect(listed.map((row: { id: string }) => row.id)).toStrictEqual([own.id])
     })
 })
 
@@ -168,6 +170,54 @@ describe('agent visibility', () => {
     })
 })
 
+describe('agent sharing rules', () => {
+    it('refuses to share with someone who is not in the project', async () => {
+        const owner = await context()
+        const outsider = await context()
+
+        const response = await owner.post('/v1/agents', agentBody(owner.project.id, {
+            visibility: AgentVisibility.RESTRICTED,
+            sharedWithUserIds: [outsider.user.id],
+        }))
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('drops the share list when the agent goes back to project-wide', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner, {
+            visibility: AgentVisibility.RESTRICTED,
+            sharedWithUserIds: [member.user.id],
+        })
+
+        const response = await owner.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.PROJECT })
+
+        expect(response.json().sharedWithUserIds).toStrictEqual([])
+    })
+})
+
+describe('agent list across projects', () => {
+    it('narrows to one project on request, and never widens to a project the caller cannot read', async () => {
+        const owner = await context()
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        const narrowed = (await owner.get('/v1/agents', { projectId: owner.project.id })).json().data
+        expect(narrowed.map((row: { id: string }) => row.id)).toStrictEqual([agent.id])
+
+        const foreign = (await owner.get('/v1/agents', { projectId: stranger.project.id })).json().data
+        expect(foreign).toStrictEqual([])
+    })
+
+    it('refuses a page size that would disable pagination', async () => {
+        const ctx = await context()
+
+        expect((await ctx.get('/v1/agents', { limit: '-1' })).statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/agents', { limit: '1000000' })).statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+})
+
 describe('agent permissions', () => {
     it('lets a viewer read an agent but never create or change one', async () => {
         const owner = await context()
@@ -209,8 +259,8 @@ describe('agent routes coexist with the chat routes already on /v1/agents', () =
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await context()
 
-        expect((await ctx.get('/v1/agents/memory')).statusCode).not.toBe(StatusCodes.NOT_FOUND)
-        expect((await ctx.get('/v1/agents/conversations')).statusCode).not.toBe(StatusCodes.NOT_FOUND)
+        expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
+        expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })
 
     it('reports a missing agent as not found rather than routing it elsewhere', async () => {

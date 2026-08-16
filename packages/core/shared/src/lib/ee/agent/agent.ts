@@ -8,6 +8,8 @@ const MAX_AGENT_TEXT_LENGTH = 51_200
 const MAX_AGENT_TOOLS = 100
 const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
+const MAX_AGENT_SHARED_MEMBERS = 200
+const MAX_AGENT_PAGE_SIZE = 100
 const DEFAULT_AGENT_MAX_STEPS = 20
 
 enum AgentVisibility {
@@ -35,8 +37,8 @@ const AgentConfig = z.object({
     provider: Nullable(z.enum(AIProviderName)),
     modelName: Nullable(z.string()),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).default(DEFAULT_AGENT_MAX_STEPS),
-    tools: z.array(AgentTool).max(MAX_AGENT_TOOLS),
-    structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS),
+    tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).default([]),
+    structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).default([]),
 })
 
 const Agent = z.object({
@@ -61,24 +63,16 @@ const CreateAgentRequest = z.object({
     icon: z.enum(AgentIcon),
     color: z.enum(ColorName),
     visibility: z.enum(AgentVisibility).optional(),
-    sharedWithUserIds: z.array(ApId).optional(),
+    sharedWithUserIds: z.array(ApId).max(MAX_AGENT_SHARED_MEMBERS).optional(),
     draft: AgentConfig,
 })
 
-const UpdateAgentRequest = z.object({
-    displayName: z.optional(z.string().min(1, formErrors.required)),
-    description: Nullable(z.string()),
-    icon: z.enum(AgentIcon).optional(),
-    color: z.enum(ColorName).optional(),
-    visibility: z.enum(AgentVisibility).optional(),
-    sharedWithUserIds: z.array(ApId).optional(),
-    draft: AgentConfig.optional(),
-})
+const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial()
 
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
     cursor: z.string().optional(),
-    limit: z.coerce.number().optional(),
+    limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
 
 export {
@@ -90,6 +84,8 @@ export {
     DEFAULT_AGENT_MAX_STEPS,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
+    MAX_AGENT_PAGE_SIZE,
+    MAX_AGENT_SHARED_MEMBERS,
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
     MAX_AGENT_TOOLS,

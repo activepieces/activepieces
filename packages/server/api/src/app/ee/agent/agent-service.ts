@@ -1,146 +1,136 @@
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, SeekPage, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
 import { Agent, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Brackets, In } from 'typeorm'
+import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
-import { AgentEntity } from './agent-entity'
+import { AgentEntity, AgentWithRelations } from './agent-entity'
+import { agentHelpers } from './agent-helpers'
+
+const NAMED_FLOWS_IN_DELETE_ERROR = 3
+const DEFAULT_PAGE_SIZE = 20
 
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentService = (log: FastifyBaseLogger) => ({
     async create({ projectId, ownerId, request }: CreateParams): Promise<Agent> {
-        const id = apId()
-        await agentRepo().save({
-            id,
+        const visibility = request.visibility ?? AgentVisibility.PROJECT
+        return agentRepo().save({
+            id: apId(),
             projectId,
             ownerId,
-            externalId: id,
+            externalId: apId(),
             displayName: request.displayName,
             description: request.description ?? null,
             icon: request.icon,
             color: request.color,
-            visibility: request.visibility ?? AgentVisibility.PROJECT,
-            sharedWithUserIds: request.sharedWithUserIds ?? [],
+            visibility,
+            sharedWithUserIds: await resolveShare({ visibility, sharedWithUserIds: request.sharedWithUserIds, projectId, log }),
             draft: request.draft,
             published: null,
         })
-        log.info({ agent: { id }, project: { id: projectId } }, 'Agent created')
-        return reloadOrThrow({ id, projectId })
     },
 
-    async list({ platformId, userId, isPrivileged, projectId, cursor, limit }: ListParams): Promise<SeekPage<Agent>> {
-        const readableProjectIds = await resolveReadableProjectIds({ platformId, userId, isPrivileged, projectId, log })
+    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<Agent>> {
+        const readableProjectIds = await resolveReadableProjectIds({ platformId, userId, projectId, log })
         if (readableProjectIds.length === 0) {
             return paginationHelper.createPage([], null)
         }
 
+        const { nextCursor, previousCursor } = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentEntity,
             query: {
-                limit: limit ?? 20,
+                limit: limit ?? DEFAULT_PAGE_SIZE,
                 order: 'DESC',
-                afterCursor: paginationHelper.decodeCursor(cursor ?? null).nextCursor,
-                beforeCursor: paginationHelper.decodeCursor(cursor ?? null).previousCursor,
+                afterCursor: nextCursor,
+                beforeCursor: previousCursor,
             },
         })
 
-        const query = agentRepo()
-            .createQueryBuilder('agent')
-            .where({ projectId: In(readableProjectIds) })
-        applyVisibilityFilter(query, userId)
-
-        const { data, cursor: newCursor } = await paginator.paginate(query)
+        const { data, cursor: newCursor } = await paginator.paginate(
+            visibleAgents({ userId }).andWhere({ projectId: In(readableProjectIds) }),
+        )
         return paginationHelper.createPage(data, newCursor)
     },
 
     async getOneOrThrow({ id, projectId, userId }: GetParams): Promise<Agent> {
-        const query = agentRepo()
-            .createQueryBuilder('agent')
-            .where({ id, projectId })
-        applyVisibilityFilter(query, userId)
-
-        const agent = await query.getOne()
+        const agent = await visibleAgents({ userId }).andWhere({ id, projectId }).getOne()
         if (isNil(agent)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: id, entityType: 'agent' },
-            })
+            throw agentNotFound(id)
         }
         return agent
     },
 
     async update({ id, projectId, userId, request }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        await agentRepo().save({
-            ...agent,
-            ...spreadIfNotUndefined('displayName', request.displayName),
-            ...spreadIfNotUndefined('description', request.description),
-            ...spreadIfNotUndefined('icon', request.icon),
-            ...spreadIfNotUndefined('color', request.color),
-            ...spreadIfNotUndefined('visibility', request.visibility),
-            ...spreadIfNotUndefined('sharedWithUserIds', request.sharedWithUserIds),
-            ...spreadIfNotUndefined('draft', request.draft),
+        const visibility = request.visibility ?? agent.visibility
+        const sharedWithUserIds = await resolveShare({
+            visibility,
+            sharedWithUserIds: request.sharedWithUserIds ?? agent.sharedWithUserIds,
+            projectId,
+            log,
         })
-        log.info({ agent: { id }, project: { id: projectId } }, 'Agent updated')
-        return reloadOrThrow({ id, projectId })
+        return agentRepo().save({ ...agent, ...request, visibility, sharedWithUserIds })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const publishedFlowNames = await listPublishedFlowsUsingAgent({ projectId, externalId: agent.externalId })
-        if (publishedFlowNames.length > 0) {
+        const publishedFlows = await listPublishedFlowsUsingAgent({ projectId, externalId: agent.externalId })
+        if (publishedFlows.length > 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `Agent is used by published flows: ${publishedFlowNames.join(', ')}` },
+                params: { message: describeFlowsBlockingDelete({ displayName: agent.displayName, publishedFlows }) },
             })
         }
         await agentRepo().delete({ id, projectId })
-        log.info({ agent: { id }, project: { id: projectId } }, 'Agent deleted')
         return agent
     },
 })
 
-async function reloadOrThrow({ id, projectId }: { id: ApId, projectId: ProjectId }): Promise<Agent> {
-    const agent = await agentRepo().findOneBy({ id, projectId })
-    if (isNil(agent)) {
+function visibleAgents({ userId }: { userId: UserId }): SelectQueryBuilder<AgentWithRelations> {
+    return agentRepo()
+        .createQueryBuilder('agent')
+        .where(new Brackets((qb) => {
+            qb.where('agent.visibility = :projectVisibility', { projectVisibility: AgentVisibility.PROJECT })
+                .orWhere('agent."ownerId" = :userId', { userId })
+                .orWhere(':userId = ANY(agent."sharedWithUserIds")', { userId })
+        }))
+}
+
+async function resolveShare({ visibility, sharedWithUserIds, projectId, log }: ResolveShareParams): Promise<UserId[]> {
+    if (visibility === AgentVisibility.PROJECT || isNil(sharedWithUserIds) || sharedWithUserIds.length === 0) {
+        return []
+    }
+    const uniqueUserIds = [...new Set(sharedWithUserIds)]
+    const members = await projectMemberService(log).listProjectMemberUserIds({ projectId })
+    const strangers = uniqueUserIds.filter((userId) => !members.includes(userId))
+    if (strangers.length > 0) {
         throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: id, entityType: 'agent' },
+            code: ErrorCode.VALIDATION,
+            params: { message: 'An agent can only be shared with people who are already in its project' },
         })
     }
-    return agent
+    return uniqueUserIds
 }
 
-async function resolveReadableProjectIds({ platformId, userId, isPrivileged, projectId, log }: ResolveProjectsParams): Promise<ProjectId[]> {
-    const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
-    const accessible = isPrivileged ? projects : await filterByAgentReadPermission({ projects, userId, platformId, log })
-    const accessibleIds = accessible.map((project) => project.id)
-    if (isNil(projectId)) {
-        return accessibleIds
-    }
-    return accessibleIds.filter((id) => id === projectId)
-}
+async function resolveReadableProjectIds({ platformId, userId, projectId, log }: ResolveProjectsParams): Promise<ProjectId[]> {
+    const users = userService(log)
+    const user = await users.getOneOrFail({ id: userId })
+    const isPrivileged = users.isUserPrivileged(user)
+    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const permittedProjectIds = isPrivileged
+        ? []
+        : await projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_AGENT })
 
-async function filterByAgentReadPermission({ projects, userId, platformId, log }: FilterByPermissionParams): Promise<{ id: ProjectId, ownerId: UserId }[]> {
-    const permittedProjectIds = await projectMemberService(log).listProjectIdsWithPermission({
-        userId,
-        platformId,
-        permission: Permission.READ_AGENT,
-    })
-    return projects.filter((project) => project.ownerId === userId || permittedProjectIds.includes(project.id))
-}
-
-function applyVisibilityFilter(query: AgentQuery, userId: UserId): void {
-    query.andWhere(new Brackets((qb) => {
-        qb.where('agent.visibility = :projectVisibility', { projectVisibility: AgentVisibility.PROJECT })
-            .orWhere('agent."ownerId" = :userId', { userId })
-            .orWhere(':userId = ANY(agent."sharedWithUserIds")', { userId })
-    }))
+    return projects
+        .filter((project) => isPrivileged || project.ownerId === userId || permittedProjectIds.includes(project.id))
+        .map((project) => project.id)
+        .filter((id) => isNil(projectId) || id === projectId)
 }
 
 async function listPublishedFlowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
@@ -155,7 +145,19 @@ async function listPublishedFlowsUsingAgent({ projectId, externalId }: { project
     return flowVersions.map((flowVersion) => flowVersion.displayName)
 }
 
-type AgentQuery = ReturnType<ReturnType<typeof agentRepo>['createQueryBuilder']>
+function describeFlowsBlockingDelete({ displayName, publishedFlows }: { displayName: string, publishedFlows: string[] }): string {
+    const named = publishedFlows.slice(0, NAMED_FLOWS_IN_DELETE_ERROR).join(', ')
+    const remaining = publishedFlows.length - NAMED_FLOWS_IN_DELETE_ERROR
+    const flows = remaining > 0 ? `${named} and ${remaining} more` : named
+    return `${displayName} still runs in ${publishedFlows.length} published flow(s): ${flows}. Remove the agent step from them, then delete the agent.`
+}
+
+function agentNotFound(id: ApId): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: { entityId: id, entityType: 'agent' },
+    })
+}
 
 type CreateParams = {
     projectId: ProjectId
@@ -166,7 +168,6 @@ type CreateParams = {
 type ListParams = {
     platformId: PlatformId
     userId: UserId
-    isPrivileged: boolean
     projectId?: ProjectId
     cursor?: Cursor
     limit?: number
@@ -185,14 +186,13 @@ type UpdateParams = GetParams & {
 type ResolveProjectsParams = {
     platformId: PlatformId
     userId: UserId
-    isPrivileged: boolean
     projectId?: ProjectId
     log: FastifyBaseLogger
 }
 
-type FilterByPermissionParams = {
-    projects: { id: ProjectId, ownerId: UserId }[]
-    userId: UserId
-    platformId: PlatformId
+type ResolveShareParams = {
+    visibility: AgentVisibility
+    sharedWithUserIds?: UserId[]
+    projectId: ProjectId
     log: FastifyBaseLogger
 }

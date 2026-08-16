@@ -8,7 +8,6 @@ import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
-import { userService } from '../../user/user-service'
 import { AgentEntity } from './agent-entity'
 import { agentService } from './agent-service'
 
@@ -28,12 +27,9 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/', ListAgentsRoute, async (request): Promise<SeekPage<Agent>> => {
-        const userId = await resolveUserId(request)
-        const user = await userService(request.log).getOneOrFail({ id: userId })
         return agentService(request.log).list({
             platformId: request.principal.platform.id,
-            userId,
-            isPrivileged: userService(request.log).isUserPrivileged(user),
+            userId: await resolveUserId(request),
             projectId: request.query.projectId,
             cursor: request.query.cursor,
             limit: request.query.limit,
@@ -103,7 +99,7 @@ const CreateAgentRoute = {
 
 const ListAgentsRoute = {
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['agents'],
@@ -146,7 +142,7 @@ const UpdateAgentRoute = {
     schema: {
         tags: ['agents'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Update an agent draft',
+        description: 'Update an agent',
         params: z.object({ id: ApId }),
         body: UpdateAgentRequest,
         response: {
