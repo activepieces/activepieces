@@ -7,6 +7,8 @@ import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
 const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
+const CGROUP_V2_MEMORY_LIMIT_PATH = '/sys/fs/cgroup/memory.max'
+const CGROUP_V1_MEMORY_LIMIT_PATH = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
@@ -121,16 +123,11 @@ async function getCgroupCpuCores(): Promise<number | null> {
     return null
 }
 
-async function getCgroupMemoryLimit(): Promise<number | null> {
-    const paths = ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']
-    for (const path of paths) {
-        const limitStr = await readCgroupFile(path)
-        if (!limitStr || limitStr === 'max') continue
-        const limit = parseInt(limitStr)
-        if (isNaN(limit) || limit <= 0 || limit > MAX_REASONABLE_MEMORY_BYTES) continue
-        return limit
-    }
-    return null
+function parseMemoryLimitBytes(raw: string | null): number | null {
+    if (!raw || raw === 'max') return null
+    const limit = parseInt(raw)
+    if (isNaN(limit) || limit <= 0 || limit > MAX_REASONABLE_MEMORY_BYTES) return null
+    return limit
 }
 
 export const systemUsage = {
@@ -140,14 +137,20 @@ export const systemUsage = {
     // and treating a host's total RAM as a container limit would shrink the budget of anyone
     // running the worker outside a memory-limited container.
     //
-    // A reported limit is only believed when it is strictly smaller than the machine's own RAM.
-    // An unconstrained cgroup does not reliably say so: v2 writes the literal 'max', but a v1 root
-    // group reports either a huge sentinel or, on some hosts, total host RAM — which is
-    // indistinguishable from a real limit by magnitude alone. os.totalmem() reads the un-namespaced
-    // /proc/meminfo, so it is the host's RAM even from inside a container, which makes
-    // "limit >= host RAM" exactly the "nothing is actually capping me" case.
+    // How much a reported limit is trusted depends on which interface reported it, because only one
+    // of them can say "unconstrained" unambiguously.
     async getContainerMemoryLimitInBytes(): Promise<number | null> {
-        const limit = await getCgroupMemoryLimit() ?? getConstrainedMemoryTotal()
+        // cgroup v2 writes the literal 'max' when nothing caps the process, so ANY number here is a
+        // genuine cap and is believed as-is — including one that happens to equal host RAM.
+        const v2Limit = parseMemoryLimitBytes(await readCgroupFile(CGROUP_V2_MEMORY_LIMIT_PATH))
+        if (v2Limit !== null) return v2Limit
+
+        // v1 has no such sentinel, and neither does process.constrainedMemory(): an unconstrained
+        // v1 root group reports a huge number or, on some hosts, exactly total host RAM, which no
+        // threshold on the value alone can tell apart from a real cap. So believe these two only
+        // below the machine's own RAM. os.totalmem() reads the un-namespaced /proc/meminfo, so it
+        // is the host's RAM even from inside a container.
+        const limit = parseMemoryLimitBytes(await readCgroupFile(CGROUP_V1_MEMORY_LIMIT_PATH)) ?? getConstrainedMemoryTotal()
         if (limit === null || limit >= os.totalmem()) return null
         return limit
     },

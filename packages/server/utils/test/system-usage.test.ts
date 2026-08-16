@@ -43,6 +43,21 @@ describe('getContainerMemoryLimitInBytes', () => {
         expect(await systemUsage.getContainerMemoryLimitInBytes()).toBeNull()
     })
 
+    it('believes a cgroup v2 cap even when it equals host RAM, since v2 says max when uncapped', async () => {
+        mockCgroup({ [CGROUP_V2_LIMIT]: String(HOST_RAM_BYTES) })
+        expect(await systemUsage.getContainerMemoryLimitInBytes()).toBe(HOST_RAM_BYTES)
+    })
+
+    it('prefers a v2 cap over a v1 root value', async () => {
+        mockCgroup({ [CGROUP_V2_LIMIT]: String(1024 ** 3), [CGROUP_V1_LIMIT]: String(HOST_RAM_BYTES) })
+        expect(await systemUsage.getContainerMemoryLimitInBytes()).toBe(1024 ** 3)
+    })
+
+    it('falls through to v1 when v2 reports max', async () => {
+        mockCgroup({ [CGROUP_V2_LIMIT]: 'max', [CGROUP_V1_LIMIT]: String(2 * 1024 ** 3) })
+        expect(await systemUsage.getContainerMemoryLimitInBytes()).toBe(2 * 1024 ** 3)
+    })
+
     it('returns null when no cgroup file exists at all', async () => {
         mockCgroup({})
         expect(await systemUsage.getContainerMemoryLimitInBytes()).toBeNull()

@@ -185,7 +185,16 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
+    // Reading the cgroup is the only await before the runtime is installed, and a disconnect during
+    // it clears `polling`, so a reconnect can start a newer generation while this one is suspended.
+    // Without this check the older generation resumes, aborts the newer runtime and overwrites it
+    // with one sized from a stale reading, then starts poll loops that exit immediately on the
+    // generation mismatch — leaving the worker consuming nothing.
     await sandboxConfig.primeEngineHeapCeiling({ concurrency })
+    if (connectionGeneration !== generation) {
+        logger.info({ generation, connectionGeneration }, 'Reconnected while sizing the engine heap, abandoning this generation')
+        return
+    }
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
     // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
