@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Permission, PlatformId, ProjectId, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, agentUtils, AgentVisibility, CreateAgentRequest, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -78,13 +78,25 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
     async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        if (agent.draft.instructions.trim().length === 0) {
+        if (!agentUtils.isPublishable(agent.draft)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'An agent needs instructions before it can be published' },
             })
         }
-        return agentRepo().save({ ...agent, published: agent.draft })
+        const published = await agentRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ published: () => '"draft"' })
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .returning('id')
+            .execute()
+
+        const publishedRows: unknown[] = published.raw ?? []
+        if (publishedRows.length === 0) {
+            throw agentNotFound(id)
+        }
+        return this.getOneOrThrow({ id, projectId, userId })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {

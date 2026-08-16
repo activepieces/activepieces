@@ -75,8 +75,13 @@ const ListAgentsRequest = z.object({
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
 
+const agentUtils = {
+    isPublishable: (config: AgentConfig): boolean => config.instructions.trim().length > 0,
+}
+
 export {
     Agent,
+    agentUtils,
     AgentConfig,
     AgentIcon,
     AgentVisibility,

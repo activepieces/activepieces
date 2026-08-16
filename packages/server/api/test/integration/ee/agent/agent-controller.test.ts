@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentVisibility, ColorName, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -96,12 +97,51 @@ describe('agent publish', () => {
         expect(after.published.instructions).toBe('Draft launch posts.')
     })
 
-    it('refuses to publish an agent with no instructions', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '   ' } })
+    it.each([['spaces', '   '], ['tabs', '\t\t'], ['newlines', '\n\n'], ['empty', '']])(
+        'refuses to publish an agent whose instructions are only %s',
+        async (_kind, instructions) => {
+            const ctx = await context()
+            const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions } })
 
-        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.CONFLICT)
-        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
+            expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.CONFLICT)
+            expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
+        })
+
+    it('keeps a rich config byte-for-byte through the copy', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'Check the brand guide first.',
+            provider: null,
+            modelName: 'claude-sonnet-4-6',
+            maxSteps: 7,
+            tools: [],
+            structuredOutput: [{ displayName: 'summary', type: 'text' }],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        const published = (await ctx.post(`/v1/agents/${agent.id}/publish`)).json().published
+        expect(published).toStrictEqual(draft)
+    })
+
+    it('republishes the newer draft, and is a no-op when nothing changed', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const first = (await ctx.post(`/v1/agents/${agent.id}/publish`)).json()
+        const again = (await ctx.post(`/v1/agents/${agent.id}/publish`)).json()
+        expect(again.published).toStrictEqual(first.published)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Second version.' } })
+        const third = (await ctx.post(`/v1/agents/${agent.id}/publish`)).json()
+        expect(third.published.instructions).toBe('Second version.')
+    })
+
+    it('refuses to publish a restricted agent the caller cannot see', async () => {
+        const owner = await context()
+        const member = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner, { visibility: AgentVisibility.RESTRICTED })
+
+        expect((await member.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
     })
 
     it('refuses a viewer, and an agent in another project', async () => {
@@ -225,10 +265,17 @@ describe('agent routes coexist with the chat routes already on /v1/agents', () =
 })
 
 describe('agent feature gate', () => {
-    it('refuses every agent route when the platform does not have agents', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: false } })
+    it('refuses every agent route once the platform loses the entitlement', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const plan = await db.findOneByOrFail<{ id: string }>('platform_plan', { platformId: ctx.platform.id })
+        await db.update('platform_plan', plan.id, { agentsEnabled: false })
 
         expect((await ctx.get('/v1/agents')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents', agentBody(ctx.project.id))).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })
