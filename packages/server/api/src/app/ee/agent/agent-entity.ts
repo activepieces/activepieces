@@ -31,11 +31,11 @@ export const AgentEntity = new EntitySchema<AgentWithRelations>({
             type: String,
             nullable: true,
         },
-        iconKey: {
+        icon: {
             type: String,
             nullable: false,
         },
-        colorKey: {
+        color: {
             type: String,
             nullable: false,
         },
