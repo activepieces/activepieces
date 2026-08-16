@@ -90,14 +90,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .update()
             .set({ published: () => '"draft"' })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
-            .andWhere('"draft" ->> \'instructions\' ~ \'[^[:space:]]\'')
+            .andWhere('"draft" = CAST(:reviewedDraft AS jsonb)', { reviewedDraft: JSON.stringify(agent.draft) })
             .andWhere(visibleToUser({ userId, prefix: '' }))
             .returning('id')
             .execute()
 
         const publishedRows: unknown[] = published.raw ?? []
         if (publishedRows.length === 0) {
-            throw agentNotFound(id)
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'The agent changed while it was being published, review it and publish again' },
+            })
         }
         return this.getOneOrThrow({ id, projectId, userId })
     },
