@@ -2,18 +2,20 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { findUserByEmailActionOutputSchema } from '../output-schemas';
 
 export const findUserByEmailAction = createAction({
   auth: slackAuth,
   name: 'slack-find-user-by-email',
   displayName: 'Find User by Email',
   description: 'Finds a user by matching against their email address.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Look up a single Slack user by their exact email address, returning their profile and user ID. Pick this to resolve an email into a Slack user ID before messaging or referencing that user. Read-only and idempotent; errors if no workspace member matches the email.',
     idempotent: true,
   },
+  outputSchema: findUserByEmailActionOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',

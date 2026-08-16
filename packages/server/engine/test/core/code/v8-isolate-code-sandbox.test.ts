@@ -68,4 +68,5 @@ describe('v8IsolateCodeSandbox', () => {
             await expect(runWithSource(source)).rejects.toThrow(/process/)
         })
     })
+
 })

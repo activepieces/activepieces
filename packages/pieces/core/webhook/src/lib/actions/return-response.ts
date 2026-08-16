@@ -21,10 +21,11 @@ enum FlowExecution {
 }
 
 export const returnResponse = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'return_response',
   displayName: 'Return Response',
   description: 'return a response',
+  aiMetadata: { description: 'Sends the HTTP response for a run started by the Catch Webhook trigger, with the body typed as JSON, Raw, or Redirect and Flow Execution choosing whether the run stops here or responds and continues; leave Flow Execution unset and no response is emitted. Prefer Respond and Wait for Next Webhook when the flow must answer then pause for a follow-up call, or the Forms piece Respond on UI action for form and chat triggers. Only synchronous (/sync) webhook calls receive it; not idempotent, since each call emits a response.', idempotent: false },
   props: {
     responseType: Property.StaticDropdown({
       displayName: 'Response Type',

@@ -8,7 +8,9 @@ export type ToolCategory = {
 // NOTE: Keep this list in sync with ALL_CONTROLLABLE_TOOL_NAMES and LOCKED_TOOL_NAMES in
 // packages/server/api/src/app/mcp/tools/index.ts
 // Any tool added to the backend index must also be added here so it appears in the UI settings panel.
-export const TOOL_CATEGORIES: ToolCategory[] = [
+// The tool-search pair only registers server-side when AP_TOOL_SEARCH_ENABLED is on, so the panel
+// renders it only when the TOOL_SEARCH_ENABLED flag is true — use getToolCategories, not the raw list.
+const TOOL_CATEGORIES: ToolCategory[] = [
   {
     label: 'Discovery',
     locked: true,
@@ -28,6 +30,11 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
           'Read full source code, package.json, and input of a CODE step',
       },
       {
+        name: 'ap_read_step_settings',
+        description:
+          'Read the full untruncated settings of any step, including piece input, code source, loop items, and router branches',
+      },
+      {
         name: 'ap_validate_flow',
         description:
           'Validate a flow for structural issues without publishing — checks step validity, template references, and empty branches',
@@ -36,6 +43,16 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
         name: 'ap_research_pieces',
         description:
           'Research pieces with actions and triggers — required before adding or updating steps',
+      },
+      {
+        name: 'ap_search_actions',
+        description:
+          'Semantic search across the whole action catalog — find the right action by describing the task in plain language',
+      },
+      {
+        name: 'ap_search_triggers',
+        description:
+          'Semantic search across the whole trigger catalog — find the right trigger by describing the event in plain language',
       },
       {
         name: 'ap_get_piece_props',
@@ -224,6 +241,24 @@ export const TOOL_CATEGORIES: ToolCategory[] = [
     ],
   },
 ];
+
+const TOOL_SEARCH_TOOL_NAMES = ['ap_search_actions', 'ap_search_triggers'];
+
+export function getToolCategories({
+  toolSearchEnabled,
+}: {
+  toolSearchEnabled: boolean;
+}): ToolCategory[] {
+  if (toolSearchEnabled) {
+    return TOOL_CATEGORIES;
+  }
+  return TOOL_CATEGORIES.map((category) => ({
+    ...category,
+    tools: category.tools.filter(
+      (tool) => !TOOL_SEARCH_TOOL_NAMES.includes(tool.name),
+    ),
+  }));
+}
 
 export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = TOOL_CATEGORIES.filter(
   (c) => !c.locked,

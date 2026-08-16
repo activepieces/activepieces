@@ -4,14 +4,16 @@ import { WebClient } from '@slack/web-api';
 import { slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { threadRepliesActionOutputSchema } from '../output-schemas';
 
 export const retrieveThreadMessages = createAction({
   name: 'retrieveThreadMessages',
   displayName: 'Retrieve Thread Messages',
   description: 'Retrieves thread messages by channel and thread timestamp.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieve all replies in a thread given the channel and the parent message timestamp; read-only and repeatable. The timestamp must be that of the parent message, not a reply. Use this to read a conversation thread; use Get channel history for top-level channel messages.', idempotent: true },
   auth: slackAuth,
+  outputSchema: threadRepliesActionOutputSchema,
   props: {
     channel: slackChannel(true),
     threadTs: Property.ShortText({

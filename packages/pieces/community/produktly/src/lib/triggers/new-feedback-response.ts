@@ -65,6 +65,9 @@ export const newFeedbackResponse = createTrigger({
   name: 'new_feedback_response',
   displayName: 'New Feedback Response',
   description: 'Fires when a user submits a new response to the selected feedback widget.',
+  aiMetadata: {
+    description: 'Fires when an end user submits feedback through one selected Produktly feedback widget. Polls that widget on a schedule and emits each new submission, carrying the reaction type and option, any free-text message, the submitter name and email, and the page the feedback came from.',
+  },
   props: triggerProps,
   sampleData: {
     response_id: 456,

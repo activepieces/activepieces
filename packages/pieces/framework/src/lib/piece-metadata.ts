@@ -24,6 +24,7 @@ export const PieceBase = z.object({
   categories: z.optional(z.array(z.enum(PieceCategory))),
   minimumSupportedRelease: z.optional(z.string()),
   maximumSupportedRelease: z.optional(z.string()),
+  deprecated: z.optional(z.boolean()),
   i18n: I18nForPiece,
 })
 
@@ -41,6 +42,7 @@ export type PieceBase = {
   categories?: PieceCategory[];
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
+  deprecated?: boolean;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
   // this method didn't exist in older version
   getContextInfo: (() => { version: ContextVersion }) | undefined;
@@ -56,16 +58,34 @@ export const AiMetadata = z.object({
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 
+export const ActionClassification = z.enum(['READ', 'WRITE'])
+export type ActionClassification = z.infer<typeof ActionClassification>
+
+export const PropertyGroupDisplay = z.enum(['tabs', 'section', 'summary', 'builder', 'footer'])
+export type PropertyGroupDisplay = z.infer<typeof PropertyGroupDisplay>
+
+export const PropertyGroup = z.object({
+  key: z.string(),
+  display: PropertyGroupDisplay,
+  label: z.optional(z.string()),
+  description: z.optional(z.string()),
+  icon: z.optional(z.string()),
+  props: z.array(z.string()),
+})
+export type PropertyGroup = z.infer<typeof PropertyGroup>
+
 export const ActionBase = z.object({
   name: z.string(),
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
+  propertyGroups: z.optional(z.array(PropertyGroup)),
   requireAuth: z.boolean(),
   errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
   outputSchema: z.optional(z.custom<OutputSchema>()),
   audience: z.optional(Audience),
   aiMetadata: z.optional(AiMetadata),
+  classification: z.optional(ActionClassification),
 })
 
 export type ActionBase = {
@@ -73,11 +93,13 @@ export type ActionBase = {
   displayName: string,
   description: string,
   props: PiecePropertyMap,
+  propertyGroups?: PropertyGroup[];
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
   outputSchema?: OutputSchema;
   audience?: Audience;
   aiMetadata?: AiMetadata;
+  classification?: ActionClassification;
 }
 
 export const TriggerBase = z.object({
@@ -85,6 +107,7 @@ export const TriggerBase = z.object({
   displayName: z.string(),
   description: z.string(),
   props: PiecePropertyMap,
+  propertyGroups: z.optional(z.array(PropertyGroup)),
   errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
   type: z.enum(TriggerStrategy),
   sampleData: z.unknown(),
@@ -93,6 +116,7 @@ export const TriggerBase = z.object({
   testStrategy: z.enum(TriggerTestStrategy),
   outputSchema: z.optional(z.custom<OutputSchema>()),
   aiMetadata: z.optional(AiMetadata),
+  classification: z.optional(ActionClassification),
 })
 export type TriggerBase = Omit<ActionBase, 'audience'> & {
   type: TriggerStrategy;
@@ -119,8 +143,8 @@ export const PieceMetadataSummary = z.object({
   ...PieceBase.shape,
   actions: z.number(),
   triggers: z.number(),
-  suggestedActions: z.optional(z.array(TriggerBase)),
-  suggestedTriggers: z.optional(z.array(ActionBase)),
+  suggestedActions: z.optional(z.array(ActionBase)),
+  suggestedTriggers: z.optional(z.array(TriggerBase)),
 })
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
   actions: number;

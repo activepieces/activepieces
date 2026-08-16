@@ -35,7 +35,10 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {
@@ -75,6 +78,7 @@ const systemPropValidators: {
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
+    [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
     [AppSystemProp.HYPERDX_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_TOKEN]: stringValidator,
     [AppSystemProp.AXIOM_DATASET]: stringValidator,
@@ -148,11 +152,10 @@ const systemPropValidators: {
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
+    [AppSystemProp.AUTUMN_CONSOLE_URL]: urlValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
     [AppSystemProp.FIREBASE_HASH_PARAMETERS]: stringValidator,
-    [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
-    [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.WORKERS]: numberValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
@@ -172,14 +175,12 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_SAAS_FALLBACK_ORIGIN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
-    // Secret Manager
-    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
-
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {

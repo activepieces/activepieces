@@ -31,6 +31,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly deprecated?: boolean,
   ) {
     if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
@@ -49,9 +50,10 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       categories: this.categories,
       description: this.description,
       authors: this.authors,
-      auth: this.auth,
+      auth: withConnectionIdentifierFlag(this.auth),
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      deprecated: this.deprecated,
       contextInfo: this.getContextInfo?.()
     };
   }
@@ -96,6 +98,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.deprecated,
   );
 };
 
@@ -113,6 +116,7 @@ type CreatePieceParams<
   actions: Action[];
   triggers: Trigger[];
   categories?: PieceCategory[];
+  deprecated?: boolean;
 };
 
 type PieceEventProcessors = {
@@ -127,6 +131,19 @@ type PieceEventProcessors = {
 type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
+}
+
+function withConnectionIdentifierFlag(
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
+): PieceAuthProperty | PieceAuthProperty[] | undefined {
+  if (auth === undefined) {
+    return undefined;
+  }
+  return Array.isArray(auth) ? auth.map(flagConnectionIdentifier) : flagConnectionIdentifier(auth);
+}
+
+function flagConnectionIdentifier(auth: PieceAuthProperty): PieceAuthProperty {
+  return { ...auth, hasConnectionIdentifier: auth.getConnectionIdentifier !== undefined };
 }
 
 function isValidSimpleSemver(version: string): boolean {

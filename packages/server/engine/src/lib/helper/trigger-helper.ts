@@ -1,6 +1,6 @@
 import { assertEqual, isNil } from '@activepieces/core-utils'
-import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
+import { PiecePropertyMap, SetScheduleRequest, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
+import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EventPayload, ExecuteTriggerResponse, FlowTrigger, InvalidCronExpressionError, InvalidScheduleIntervalError, PieceTrigger, PropertySettings, ScheduleOptions, TriggerHookType, TriggerSourceScheduleType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -68,6 +68,7 @@ export const triggerHelper = {
                 engineToken: constants.engineToken,
                 target: 'triggers',
                 contextVersion: piece.getContextInfo?.().version,
+                pieceName,
             }),
         }
         await pieceTrigger.onStart(context)
@@ -111,7 +112,18 @@ export const triggerHelper = {
                     appListeners.push({ events, identifierValue, identifierKey })
                 },
             },
-            setSchedule(request: ScheduleOptions) {
+            setSchedule(request: SetScheduleRequest) {
+                if ('intervalMs' in request) {
+                    const parsed = ScheduleOptions.safeParse({
+                        type: TriggerSourceScheduleType.INTERVAL,
+                        intervalMs: request.intervalMs,
+                    })
+                    if (!parsed.success) {
+                        throw new InvalidScheduleIntervalError(request.intervalMs)
+                    }
+                    scheduleOptions = parsed.data
+                    return
+                }
                 if (!isValidCron(request.cronExpression)) {
                     throw new InvalidCronExpressionError(request.cronExpression)
                 }
@@ -128,6 +140,7 @@ export const triggerHelper = {
                 flowVersionId: params.flowVersion.id,
             }),
             webhookUrl: params.webhookUrl,
+            isRepublish: params.isRepublish,
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,
             payload: params.triggerPayload ?? {},
@@ -146,6 +159,7 @@ export const triggerHelper = {
                 engineToken: constants.engineToken,
                 target: 'triggers',
                 contextVersion: piece.getContextInfo?.().version,
+                pieceName,
             }),
         }
         switch (params.hookType) {
@@ -258,6 +272,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         engineToken,
         contextVersion: piece.getContextInfo?.().version,
         stepNames,
+        pieceName,
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState: FlowExecutorContext.empty(),

@@ -20,19 +20,19 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAI
 
         const { data } = res.body
 
-        const openaiImageModels = [
-            'gpt-image-1',
-            'dall-e-3',
-            'dall-e-2',
-        ]
-
         return data.map((model: OpenAIModel) => ({
             id: model.id,
             name: model.id,
-            type: openaiImageModels.includes(model.id) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
+            type: isImageModel({ modelId: model.id }) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }))
     },
 }
+
+function isImageModel({ modelId }: { modelId: string }): boolean {
+    return modelId.startsWith('gpt-image') || DALL_E_MODELS.includes(modelId)
+}
+
+const DALL_E_MODELS = ['dall-e-3', 'dall-e-2']
 
 type OpenAIModel = {
     id: string

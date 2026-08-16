@@ -1,13 +1,15 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { findRecordByIdActionOutputSchema } from '../output-schemas';
 
 export const airtableGetRecordByIdAction = createAction({
   auth: airtableAuth,
   name: 'airtable_get_record_by_id',
   displayName: 'Get Record by ID',
   description: 'Retrieve a single record from a table by its unique ID.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: findRecordByIdActionOutputSchema,
   aiMetadata: {
     description:
       'Retrieves a single record and its field values from a table by the record ID. Use when you already know the exact record ID; to find records by a field value instead, use Find Airtable Record. Read-only and idempotent.',

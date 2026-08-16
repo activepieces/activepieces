@@ -36,6 +36,7 @@ import {
 } from '@/features/pieces/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
@@ -68,6 +69,7 @@ type UsePieceProps = {
   name: string;
   version?: string;
   enabled?: boolean;
+  projectId?: string;
 };
 
 type UseMultiplePiecesProps = {
@@ -88,20 +90,32 @@ type UsePiecesSearchProps = {
 };
 
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
+  usePiece: ({ name, version, enabled = true, projectId }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language],
+      queryKey: ['piece', name, version, i18n.language, projectId],
       queryFn: () =>
-        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
+        piecesApi.get({
+          name,
+          version,
+          locale: i18n.language as LocalesEnum,
+          projectId,
+        }),
       staleTime: Infinity,
       enabled,
+      retry: (failureCount, error) => {
+        if (isPieceNotFoundError(error)) {
+          return false;
+        }
+        return failureCount < 3;
+      },
     });
     return {
       pieceModel: query.data,
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
       isError: query.isError,
+      isNotFound: query.isError && isPieceNotFoundError(query.error),
       refetch: query.refetch,
     };
   },
@@ -122,6 +136,7 @@ export const piecesHooks = {
       pieceModel: pieceQuery.pieceModel,
       isLoading: pieceQuery.isLoading,
       isSuccess: pieceQuery.isSuccess,
+      isNotFound: pieceQuery.isNotFound,
       refetch: pieceQuery.refetch,
     };
   },
@@ -456,6 +471,9 @@ export const piecesMutations = {
     });
   },
 };
+
+const isPieceNotFoundError = (error: unknown) =>
+  api.isError(error) && error.response?.status === 404;
 
 const filterOutPiecesWithNoSuggestions = (
   stepsMetadata: StepMetadataWithSuggestions[],

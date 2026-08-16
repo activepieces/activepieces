@@ -15,7 +15,7 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
     return {
         async resolve(input: ResolveInput): Promise<ResolveResult> {
             let pieces = input.pieces ?? []
-            let codes: CodeArtifact[] = []
+            let codes: CodeArtifact[] = input.codes ?? []
             let flowVersion: FlowVersion | undefined
 
             if (!isNil(input.flow)) {
@@ -24,7 +24,7 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
                     return { kind: 'flow-not-found' }
                 }
                 if (resolved.kind === 'disabled') {
-                    return { kind: 'disabled' }
+                    return { kind: 'disabled', failedStep: resolved.failedStep }
                 }
                 flowVersion = resolved.flowVersion
                 pieces = [...pieces, ...resolved.pieces]

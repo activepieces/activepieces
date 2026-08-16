@@ -60,11 +60,12 @@ async function generateWithRetry(
 }
 
 export const generateText = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: cohereAuth,
   name: 'generate_text',
   displayName: 'Generate Text',
   description: 'Generate a text response using Cohere AI Chat API',
+  aiMetadata: { description: 'Runs a single-turn completion against Cohere\'s v2 Chat API - one user prompt in, one generated message out - with optional model, temperature, and max-token controls. This is the only purpose-built action in the Cohere piece and covers only chat-style generation, not multi-turn conversation history, embeddings, rerank, or classify; use the piece\'s Custom API Call action to reach those Cohere endpoints. Requires a prompt and a chat-capable model name. Not idempotent: each call bills a fresh generation and the wording varies unless temperature is set to 0.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',

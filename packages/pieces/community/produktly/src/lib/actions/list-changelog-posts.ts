@@ -9,6 +9,8 @@ export const listChangelogPosts = createAction({
   name: 'list_changelog_posts',
   displayName: 'List Changelog Posts',
   description: 'List all posts within a specific changelog.',
+  audience: 'both',
+  aiMetadata: { description: 'List the posts inside one Produktly changelog, paginated with limit and offset and optionally narrowed to a release-date range. Pick this to read announcements in a known changelog or to resolve a post ID for Update Changelog Post; use List Changelogs first to find the changelog itself. Requires a changelog ID. Read-only and idempotent.', idempotent: true },
   props: {
     changelog: produktlyProps.changelog,
     limit: Property.Number({

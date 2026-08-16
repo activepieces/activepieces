@@ -1,6 +1,8 @@
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
+import { t } from 'i18next';
 
 import { CardListItem } from '@/components/custom/card-list';
+import { Badge } from '@/components/ui/badge';
 import {
   PieceIcon,
   PieceSelectorItem,
@@ -23,11 +25,13 @@ const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
     return {
       displayName: item.actionOrTrigger.displayName,
       description: item.actionOrTrigger.description,
+      classification: item.actionOrTrigger.classification,
     };
   }
   return {
     displayName: item.displayName,
     description: item.description,
+    classification: undefined,
   };
 };
 
@@ -37,7 +41,7 @@ const GenericActionOrTriggerItem = ({
   stepMetadataWithSuggestions,
   onClick,
 }: GenericActionOrTriggerItemProps) => {
-  // we add this style because we hide the piece icon and description when they are in a virtualized list
+  // we add this style because we hide the piece icon when they are in a virtualized list
   const style = hidePieceIconAndDescription
     ? {
         height: `${PIECE_SELECTOR_ELEMENTS_HEIGHTS.ACTION_OR_TRIGGER_ITEM_HEIGHT}px`,
@@ -48,14 +52,8 @@ const GenericActionOrTriggerItem = ({
       };
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
   return (
-    <CardListItem
-      className={cn('p-2 w-full ', {
-        truncate: hidePieceIconAndDescription,
-      })}
-      onClick={onClick}
-      style={style}
-    >
-      <div className="flex gap-3 items-center">
+    <CardListItem className="p-2 w-full" onClick={onClick} style={style}>
+      <div className="flex gap-3 items-center w-full min-w-0">
         <div
           className={cn({
             'opacity-0': hidePieceIconAndDescription,
@@ -68,15 +66,35 @@ const GenericActionOrTriggerItem = ({
             size={'sm'}
           />
         </div>
-        <div className="flex flex-col gap-0.5">
-          <div className="text-sm">{pieceSelectorItemInfo.displayName}</div>
-          {!hidePieceIconAndDescription && (
-            <div className="text-xs text-muted-foreground">
-              {pieceSelectorItemInfo.description.endsWith('.')
-                ? pieceSelectorItemInfo.description.slice(0, -1)
-                : pieceSelectorItemInfo.description}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <div
+              className={cn('text-sm', {
+                truncate: hidePieceIconAndDescription,
+              })}
+            >
+              {pieceSelectorItemInfo.displayName}
             </div>
-          )}
+            {pieceSelectorItemInfo.classification && (
+              <Badge
+                variant="accent"
+                className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
+              >
+                {pieceSelectorItemInfo.classification === 'READ'
+                  ? t('Read')
+                  : t('Write')}
+              </Badge>
+            )}
+          </div>
+          <div
+            className={cn('text-xs text-muted-foreground', {
+              truncate: hidePieceIconAndDescription,
+            })}
+          >
+            {pieceSelectorItemInfo.description.endsWith('.')
+              ? pieceSelectorItemInfo.description.slice(0, -1)
+              : pieceSelectorItemInfo.description}
+          </div>
         </div>
       </div>
     </CardListItem>

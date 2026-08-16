@@ -1,5 +1,6 @@
 import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { AppConnectionType } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendgridCommon = {
   baseUrl: (residency = 'US'): string => {
@@ -23,6 +24,27 @@ export function getBaseUrl(auth: SendgridAuthValue): string {
     return sendgridCommon.baseUrl('US');
   }
   return sendgridCommon.baseUrl(auth.props['dataResidency'] as string);
+}
+
+export async function fetchAllLists(auth: SendgridAuthValue): Promise<SendgridList[]> {
+  const lists: SendgridList[] = [];
+  let url: string | undefined = `${getBaseUrl(auth)}/marketing/lists?page_size=1000`;
+  while (url) {
+    const response = await httpClient.sendRequest<{
+      result: SendgridList[];
+      _metadata: { next?: string };
+    }>({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: getApiKey(auth),
+      },
+    }) as any;
+    lists.push(...(response.body.result ?? []));
+    url = response.body._metadata?.next;
+  }
+  return lists;
 }
 
 export const sendgridAuth = [
@@ -58,3 +80,9 @@ export const sendgridAuth = [
 ];
 
 export type SendgridAuthValue = AppConnectionValueForAuthProperty<typeof sendgridAuth>;
+
+export type SendgridList = {
+  id: string;
+  name: string;
+  contact_count: number;
+};

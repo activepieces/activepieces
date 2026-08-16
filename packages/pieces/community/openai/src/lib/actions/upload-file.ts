@@ -15,12 +15,13 @@ const isFilePurpose = (value: string): value is FilePurpose =>
   allowedPurposes.some((p) => p === value);
 
 export const uploadFile = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: openaiAuth,
   name: 'upload_file',
   displayName: 'Upload File',
   description:
     'Upload a file to OpenAI for use with Assistants, Vector Stores, Batch jobs, Fine-tuning, or Vision.',
+  aiMetadata: { description: 'Uploads a file to the connected OpenAI account and returns its file id for later use with Assistants, vector stores, batch jobs, fine-tuning, or vision. The purpose is required and decides which file types are accepted; the original filename is kept unless an override including the extension is supplied. Run find_file first to avoid duplicates, and delete_file to remove one afterwards. Not idempotent: every call stores another copy under a new file id, even for identical content.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

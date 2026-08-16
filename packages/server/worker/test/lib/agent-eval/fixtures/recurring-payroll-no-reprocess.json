@@ -1,0 +1,54 @@
+{
+    "id": "recurring-payroll-no-reprocess",
+    "description": "Capability (Class A logic): a recurring flow that reads a persistent sheet must not reprocess entries it already handled. Asked for a weekly 'work out who to pay from logged hours' automation over a timesheet with no paid/processed marker, the agent must recognize that read-all -> summarize -> send would re-pay the same logged hours every week, and commit to an anti-reprocessing mechanism (mark-paid + filter-to-unpaid, dedup/new-item trigger, delete-after, or a last-processed marker). Pins the 'Recurring flows must not reprocess' doctrine. Judgment-heavy -> capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Every Friday go through my Timesheets sheet, work out what I owe each worker from their logged hours and rate, and send me a summary of who to pay."
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_gsheets", "displayName": "Google Sheets", "pieceName": "@activepieces/piece-google-sheets", "status": "ACTIVE", "scope": "PROJECT" }
+                ],
+                "tables": []
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 6 record(s)." }],
+                "structuredContent": {
+                    "count": 6,
+                    "records": [
+                        { "worker": "Dana Cole", "date": "2026-07-13", "hours": 8, "rate": 22 },
+                        { "worker": "Dana Cole", "date": "2026-07-14", "hours": 7.5, "rate": 22 },
+                        { "worker": "Sam Ortiz", "date": "2026-07-13", "hours": 9, "rate": 25 },
+                        { "worker": "Sam Ortiz", "date": "2026-07-15", "hours": 6, "rate": 25 },
+                        { "worker": "Priya Nair", "date": "2026-07-14", "hours": 8, "rate": 30 },
+                        { "worker": "Leo Marsh", "date": "2026-07-16", "hours": 5, "rate": 20 }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "recurring_avoids_reprocessing",
+            "rubric": "The user asked for a RECURRING automation (every Friday) that reads a persistent timesheet whose rows are individual logged shifts and which has NO 'paid'/'processed' column. The silent bug this pins: a plain read-all -> total -> send-summary flow re-pays the same logged hours every week because nothing marks a shift as already paid. PASS if the assistant's plan/approach shows it recognizes the flow must NOT re-pay hours it already paid, and commits to at least one concrete anti-reprocessing mechanism: filtering to only new/unpaid rows AND marking them paid (e.g. writing a 'Paid' column) after summarizing, a 'new row'/dedup trigger instead of reading the whole sheet, deleting/archiving processed rows, or tracking a last-processed date/marker so the next run only covers new shifts. Naming the risk explicitly ('so we don't pay the same hours twice') and committing to handle it counts as PASS. It is FINE for the assistant to still confirm which sheet/tab or pause on the Google Sheets connection - those are not failures. FAIL if the assistant plans or builds a weekly flow that reads all rows and sends a summary with NO mechanism to avoid re-paying already-paid hours, i.e. it treats a repeating job as if it runs once.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

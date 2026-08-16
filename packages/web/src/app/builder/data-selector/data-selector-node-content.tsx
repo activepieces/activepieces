@@ -94,8 +94,9 @@ const DataSelectorNodeContent = ({
       onKeyDown={handleKeyPress}
       ref={ripple}
       onClick={handleClick}
+      aria-expanded={isExpandable ? expanded : undefined}
       className={cn(
-        'w-full max-w-full select-none focus:outline-hidden cursor-pointer group transition-colors',
+        'w-full max-w-full relative select-none focus:outline-hidden cursor-pointer group transition-colors',
         'hover:bg-accent/60 focus:bg-accent dark:hover:bg-accent/20',
       )}
       data-depth={depth}

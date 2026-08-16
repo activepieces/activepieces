@@ -1,8 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const find = createAction({
-  audience: 'human',
+  audience: 'both',
   description: 'Find substring (Regex or Text).',
+  aiMetadata: {
+    description:
+      'Matches a regex or plain-text pattern against a text and returns the first match along with its capture groups, with an optional case-insensitive mode. Pick it to test whether a pattern occurs or to pull one value out via a capture group; use Find All for every occurrence, or Replace to change the matched text. The pattern is compiled as a regular expression and an invalid one throws; deterministic and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Find',
   name: 'find',
   errorHandlingOptions: {

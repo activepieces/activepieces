@@ -1,0 +1,53 @@
+{
+    "id": "recurring-digest-only-new",
+    "description": "Capability (Class A logic): a daily inbox digest must cover only NEW items, not re-summarize the whole inbox every morning. Asked for a daily summary of support emails to Slack, the agent must scope to emails since the last run (date/query filter, dedup, or a since-marker) rather than reading all emails each day. Pins 'Recurring flows must not reprocess'. Judgment-heavy -> capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Every morning, summarize the new support emails from my inbox and post the summary to our #support Slack channel."
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_gmail", "displayName": "Gmail", "pieceName": "@activepieces/piece-gmail", "status": "ACTIVE", "scope": "PROJECT" },
+                    { "externalId": "conn_slack", "displayName": "Slack", "pieceName": "@activepieces/piece-slack", "status": "ACTIVE", "scope": "PROJECT" }
+                ],
+                "tables": []
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 4 message(s)." }],
+                "structuredContent": {
+                    "count": 4,
+                    "records": [
+                        { "from": "dana@northwind.io", "subject": "Cannot log in", "received_at": "2026-07-18T22:10:00Z" },
+                        { "from": "sam@brightloop.com", "subject": "Billing question", "received_at": "2026-07-18T23:02:00Z" },
+                        { "from": "priya@harborstack.com", "subject": "Feature request", "received_at": "2026-07-19T01:15:00Z" },
+                        { "from": "leo@kettleworks.co", "subject": "Refund status", "received_at": "2026-07-19T05:40:00Z" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "recurring_avoids_reprocessing",
+            "rubric": "The user asked for a RECURRING automation (every morning) that reads their inbox (persistent data) and posts a summary of NEW support emails to Slack. The silent bug this pins: reading ALL emails each morning re-summarizes the same old emails every day, so the digest is wrong and repetitive. PASS if the assistant's plan/approach shows it recognizes the digest must cover only emails NOT already summarized, and commits to a concrete mechanism: scoping the read to messages since the last run (a date/'newer_than' query filter aligned to the daily cadence), a last-processed timestamp marker, or dedup of already-seen messages. Explicitly reasoning 'only the last 24h / only new since yesterday' counts as PASS. It is FINE for it to still pause on a connection or confirm the Slack channel. FAIL if the assistant plans or builds a daily flow that reads the entire inbox and summarizes everything with NO mechanism restricting it to new/unseen messages, i.e. treating a repeating job as if it runs once.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

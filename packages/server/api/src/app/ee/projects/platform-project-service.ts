@@ -179,6 +179,16 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                         .execute()
                 }
             }
+            if (!isNil(request.plan) && request.plan.activeFlowsLimit !== undefined) {
+                const platform = await platformService(log).getOneWithPlanOrThrow(project.platformId)
+                if (platform.plan.billedTeamProjectsLimit !== 0) {
+                    await projectLimitsService(log).updateActiveFlowsLimit({
+                        projectId,
+                        activeFlowsLimit: request.plan.activeFlowsLimit,
+                        entityManager,
+                    })
+                }
+            }
         })
         if (resolvedPoolId !== undefined) {
             await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })

@@ -23,6 +23,7 @@ type EmbeddingState = {
   hidePageHeader: boolean;
   hideActiveUsers: boolean;
   hideGlobalSearch: boolean;
+  formulasDocsUrl?: string;
 };
 
 const defaultState: EmbeddingState = {

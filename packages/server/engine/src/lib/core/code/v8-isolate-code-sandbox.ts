@@ -44,6 +44,16 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
     },
 
     async runScript({ script, scriptContext, functions }) {
+        const session = await v8IsolateCodeSandbox.createScriptSession({ scriptContext, functions })
+        try {
+            return await session.run(script)
+        }
+        finally {
+            session.dispose()
+        }
+    },
+
+    async createScriptSession({ scriptContext, functions }) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
@@ -53,18 +63,38 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
                 isolate,
                 codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
+            const globalSets = new Map<string, Promise<void>>(
+                [...Object.keys(scriptContext), ...Object.keys(functions)].map((key) => [key, Promise.resolve()]),
+            )
 
             const serializedFunctions = Object.entries(functions).map(([key, value]) => `const ${key} = ${value.toString()};`).join('\n')
-            const scriptWithFunctions = `${serializedFunctions}\n${script}`
+            if (serializedFunctions.length > 0) {
+                const setupScript = await isolate.compileScript(serializedFunctions)
+                await setupScript.run(isolateContext)
+            }
 
-            return await executeIsolate({
-                isolate,
-                isolateContext,
-                code: scriptWithFunctions,
-            })
+            return {
+                run: async (script: string) => executeIsolate({
+                    isolate,
+                    isolateContext,
+                    code: script,
+                }),
+                setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
+                    const pendingSet = globalSets.get(key)
+                    if (noOverwrite && pendingSet !== undefined) {
+                        await pendingSet
+                        return
+                    }
+                    const newSet = isolateContext.global.set(key, new ivm.ExternalCopy(JSON.parse(JSON.stringify(value))).copyInto())
+                    globalSets.set(key, newSet)
+                    await newSet
+                },
+                dispose: () => isolate.dispose(),
+            }
         }
-        finally {
+        catch (error) {
             isolate.dispose()
+            throw error
         }
     },
 }

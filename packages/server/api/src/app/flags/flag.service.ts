@@ -11,6 +11,7 @@ import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { knowledgeBaseSchema } from '../knowledge-base/knowledge-base-schema'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 import { webhookSecretsUtils } from './webhook-secrets-util'
@@ -93,30 +94,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_BUY_AI_CREDITS,
-                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_PAGE,
-                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -207,6 +184,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TOOL_SEARCH_ENABLED,
+                value: isToolSearchEnabled(),
                 created,
                 updated,
             },
