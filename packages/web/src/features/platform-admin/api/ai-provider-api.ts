@@ -11,8 +11,11 @@ export const aiProviderApi = {
   list() {
     return api.get<AIProviderWithoutSensitiveData[]>('/v1/ai-providers');
   },
-  listModelsForProvider(provider: string) {
-    return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`);
+  listModelsForProvider(provider: string, configId?: string) {
+    return api.get<AIProviderModel[]>(
+      `/v1/ai-providers/${provider}/models`,
+      configId ? { configId } : undefined,
+    );
   },
   upsert(request: CreateAIProviderRequest) {
     return api.post<AIProviderWithoutSensitiveData>(
