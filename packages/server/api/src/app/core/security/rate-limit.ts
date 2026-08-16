@@ -1,4 +1,4 @@
-import RateLimitPlugin from '@fastify/rate-limit'
+import RateLimitPlugin, { RateLimitOptions } from '@fastify/rate-limit'
 import FastifyPlugin from 'fastify-plugin'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { redisConnections } from '../../database/redis-connections'
@@ -21,3 +21,11 @@ export const rateLimitModule: FastifyPluginAsyncZod = FastifyPlugin(
         }
     },
 )
+
+export const authnRateLimit: RateLimitOptions = {
+    max: Number.parseInt(
+        system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_MAX),
+        10,
+    ),
+    timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
+}
