@@ -175,3 +175,38 @@ export const listDomainsOutputSchema: OutputSchema = {
     { key: 'domains', label: 'Domains', value: '', labelKey: 'name', listItems: domainFields },
   ],
 };
+
+const broadcastFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Broadcast ID' },
+  { key: 'name', label: 'Name' },
+  { key: 'audience_id', label: 'Audience ID' },
+  { key: 'status', label: 'Status' },
+  { key: 'reply_to', label: 'Reply To' },
+  { key: 'preview_text', label: 'Preview Text' },
+  { key: 'created_at', label: 'Created At', format: 'datetime' },
+  // Empty strings until the broadcast is scheduled or sent, rather than absent keys.
+  { key: 'scheduled_at', label: 'Scheduled At', format: 'datetime' },
+  { key: 'sent_at', label: 'Sent At', format: 'datetime' },
+];
+
+export const createBroadcastOutputSchema: OutputSchema = {
+  fields: [{ key: 'id', label: 'Broadcast ID' }],
+};
+
+export const sendBroadcastOutputSchema: OutputSchema = {
+  fields: [{ key: 'id', label: 'Broadcast ID' }],
+};
+
+export const deleteBroadcastOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Broadcast ID' },
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+  ],
+};
+
+export const listBroadcastsOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [
+    { key: 'broadcasts', label: 'Broadcasts', value: '', labelKey: 'name', listItems: broadcastFields },
+  ],
+};
