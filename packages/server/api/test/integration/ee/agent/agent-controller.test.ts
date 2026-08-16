@@ -73,6 +73,49 @@ describe('agent crud', () => {
     })
 })
 
+describe('agent publish', () => {
+    it('copies the draft to published, so a flow step has something to run', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().published).toStrictEqual(response.json().draft)
+    })
+
+    it('leaves the published copy alone when the draft moves on', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Rewritten.' } })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Rewritten.')
+        expect(after.published.instructions).toBe('Draft launch posts.')
+    })
+
+    it('refuses to publish an agent with no instructions', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '   ' } })
+
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.CONFLICT)
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
+    })
+
+    it('refuses a viewer, and an agent in another project', async () => {
+        const owner = await context()
+        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
+        const stranger = await context()
+        const agent = await createAgent(owner)
+
+        expect((await viewer.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await stranger.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
+    })
+})
+
 describe('agent project isolation', () => {
     it.each([
         ['read', (ctx: TestContext, id: string) => ctx.get(`/v1/agents/${id}`)],

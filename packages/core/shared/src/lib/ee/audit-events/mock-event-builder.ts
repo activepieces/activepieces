@@ -171,7 +171,8 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         }
         case ApplicationEventName.AGENT_CREATED:
         case ApplicationEventName.AGENT_UPDATED:
-        case ApplicationEventName.AGENT_DELETED: {
+        case ApplicationEventName.AGENT_DELETED:
+        case ApplicationEventName.AGENT_PUBLISHED: {
             const mock: AgentAuditEvent = {
                 ...baseEnvelope,
                 action: event,

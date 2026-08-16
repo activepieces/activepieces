@@ -76,6 +76,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agentRepo().save({ ...agent, ...request, visibility, sharedWithUserIds })
     },
 
+    async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        if (agent.draft.instructions.trim().length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'An agent needs instructions before it can be published' },
+            })
+        }
+        return agentRepo().save({ ...agent, published: agent.draft })
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await agentRepo().delete({ id, projectId })

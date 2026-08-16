@@ -37,6 +37,7 @@ export enum ApplicationEventName {
     AGENT_CREATED = 'agent.created',
     AGENT_UPDATED = 'agent.updated',
     AGENT_DELETED = 'agent.deleted',
+    AGENT_PUBLISHED = 'agent.published',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -115,6 +116,7 @@ export const AgentAuditEvent = z.object({
         z.literal(ApplicationEventName.AGENT_CREATED),
         z.literal(ApplicationEventName.AGENT_UPDATED),
         z.literal(ApplicationEventName.AGENT_DELETED),
+        z.literal(ApplicationEventName.AGENT_PUBLISHED),
     ]),
     data: AgentEventData,
 })
@@ -562,6 +564,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is updated`
         case ApplicationEventName.AGENT_DELETED:
             return `Agent ${event.data.agent.displayName} is deleted`
+        case ApplicationEventName.AGENT_PUBLISHED:
+            return `Agent ${event.data.agent.displayName} is published`
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
