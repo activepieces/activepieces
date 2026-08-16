@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
 
-const MAX_PLATFORM_NAME_LENGTH = 100
 const MAX_NAME_PART_LENGTH = 50
 const FALLBACK_FIRST_NAME = 'there'
 const FALLBACK_PLATFORM_NAME = 'My Platform'
@@ -19,14 +18,6 @@ function localPartTokens(email: string): string[] {
 function firstNameFromEmail(email: string): string {
     const [first] = localPartTokens(email)
     return first ?? FALLBACK_FIRST_NAME
-}
-
-function platformNameFromEmail(email: string): string {
-    const tokens = localPartTokens(email)
-    if (tokens.length === 0) {
-        return FALLBACK_PLATFORM_NAME
-    }
-    return tokens.join(' ').slice(0, MAX_PLATFORM_NAME_LENGTH)
 }
 
 function platformNameFromPerson({ firstName, email }: PlatformNameFromPersonParams): string {
@@ -59,7 +50,6 @@ function splitFullName({ fullName, email }: SplitFullNameParams): SplitName {
 
 export const signupNames = {
     firstNameFromEmail,
-    platformNameFromEmail,
     platformNameFromPerson,
     splitFullName,
 }

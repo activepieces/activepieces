@@ -88,32 +88,4 @@ describe('signupNames', () => {
         })
     })
 
-    describe('platformNameFromEmail', () => {
-        it.each([
-            ['ahmad@activepieces.com', 'Ahmad'],
-            ['ahmad.tash@activepieces.com', 'Ahmad Tash'],
-            ['ahmad-tash+work@activepieces.com', 'Ahmad Tash Work'],
-        ])('derives %s into %s', (email, expected) => {
-            expect(signupNames.platformNameFromEmail(email)).toBe(expected)
-        })
-
-        it('falls back when the local part carries no letters or digits', () => {
-            expect(signupNames.platformNameFromEmail('___@activepieces.com')).toBe('My Platform')
-        })
-
-        it('never produces a name the platform name rule rejects', () => {
-            const safeString = new RegExp('^[^./]+$')
-            const names = [
-                'ahmad.tash@activepieces.com',
-                'a.b.c.d@activepieces.com',
-                'ahmad/tash@activepieces.com',
-                '___@activepieces.com',
-            ].map(signupNames.platformNameFromEmail)
-
-            names.forEach((name) => {
-                expect(name).toMatch(safeString)
-                expect(name.length).toBeLessThanOrEqual(100)
-            })
-        })
-    })
 })
