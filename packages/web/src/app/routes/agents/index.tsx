@@ -11,6 +11,13 @@ import {
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AgentCard } from '@/features/agents/agent-card';
 import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
@@ -24,26 +31,40 @@ const SUGGESTIONS = [
   'Enrich a lead',
 ];
 
+const SORT_LABELS = {
+  updated: 'Recently updated',
+  created: 'Recently created',
+  name: 'Name',
+} as const;
+
+const SORT_COMPARATORS: Record<
+  AgentSort,
+  (left: AgentSummary, right: AgentSummary) => number
+> = {
+  updated: (left, right) => right.updated.localeCompare(left.updated),
+  created: (left, right) => right.created.localeCompare(left.created),
+  name: (left, right) => left.displayName.localeCompare(right.displayName),
+};
+
 const AgentsPage = () => {
   const [search, setSearch] = useState('');
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
+  const [sort, setSort] = useState<AgentSort>('updated');
   const [prompt, setPrompt] = useState('');
   const [creating, setCreating] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data, isLoading } = agentsQueries.useAgents({});
 
   const agents = useMemo(() => {
-    const all = data?.data ?? [];
     const needle = search.trim().toLowerCase();
-    if (needle.length === 0) {
-      return all;
-    }
-    return all.filter(
+    const matching = (data?.data ?? []).filter(
       (agent) =>
+        needle.length === 0 ||
         agent.displayName.toLowerCase().includes(needle) ||
         (agent.description ?? '').toLowerCase().includes(needle),
     );
-  }, [data, search]);
+    return [...matching].sort(SORT_COMPARATORS[sort]);
+  }, [data, search, sort]);
 
   return (
     <div className="relative flex w-full flex-col">
@@ -126,13 +147,29 @@ const AgentsPage = () => {
                 className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <button
-              type="button"
-              className="flex h-8 items-center gap-2 rounded-md border border-border px-3 text-[13px] leading-4 transition-colors hover:bg-accent"
-            >
-              {t('Recently used')}
-              <ChevronsUpDown size={14} className="text-muted-foreground" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-8 items-center gap-2 rounded-md border border-border px-3 text-[13px] leading-4 transition-colors hover:bg-accent"
+                >
+                  {t(SORT_LABELS[sort])}
+                  <ChevronsUpDown size={14} className="text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuRadioGroup
+                  value={sort}
+                  onValueChange={(value) => setSort(value as AgentSort)}
+                >
+                  {Object.entries(SORT_LABELS).map(([value, label]) => (
+                    <DropdownMenuRadioItem key={value} value={value}>
+                      {t(label)}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="flex h-8 items-center gap-[2px] rounded-full border border-border p-[3px]">
               <button
                 type="button"
@@ -231,5 +268,7 @@ const AgentsEmptyState = ({ hasSearch }: { hasSearch: boolean }) => (
     </p>
   </div>
 );
+
+type AgentSort = keyof typeof SORT_LABELS;
 
 export { AgentsPage };
