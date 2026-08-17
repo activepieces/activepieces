@@ -16,6 +16,7 @@ const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
 const PREVIEW_ITEM_COUNT = 5
+const CLIPPED_PREVIEW_ITEM_COUNT = 25
 const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
 const MAX_CLAMP_ATTEMPTS = 8
 const CARD_ERROR_MAX_LENGTH = 300
@@ -86,6 +87,18 @@ function truncateLargeResult(result: unknown): unknown {
         })
         // Defense 2: only keep the preview if it actually fits; otherwise fall through.
         if (withinResultCap(previewEnvelope)) return previewEnvelope
+
+        // Defense 2b: the records are individually large — a mailbox page carries whole bodies, so
+        // five of them can miss the cap on their own. Keep every record and clip each one instead,
+        // because a summarising task needs one line about all of them rather than all of two.
+        const clipped = array
+            .slice(0, CLIPPED_PREVIEW_ITEM_COUNT)
+            .map((record) => shrinkLargeValue(record, { maxStringLength: 400, maxArrayItems: 4 }))
+        const clippedEnvelope = buildOversizeEnvelope({
+            result,
+            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${Math.min(totalCount, CLIPPED_PREVIEW_ITEM_COUNT)} of ${totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
+        })
+        if (withinResultCap(clippedEnvelope)) return clippedEnvelope
     }
 
     // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).

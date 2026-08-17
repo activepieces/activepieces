@@ -422,6 +422,26 @@ describe('agentWorkerTools', () => {
             expect(text).toContain('Preview (5 of 5000 items)')
         })
 
+        it('keeps every mailbox item, clipped, when five whole ones will not fit', () => {
+            // A mailbox page carries whole bodies, so the first five on their own miss the cap.
+            const result = agentWorkerTools.truncateLargeResult({
+                messages: Array.from({ length: 12 }, (_, i) => ({
+                    id: `msg-${i}`,
+                    from: `sender-${i}@example.com`,
+                    subject: `Subject ${i}`,
+                    body: 'b'.repeat(60_000),
+                })),
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('values in each item were clipped')
+            expect(text).toContain('Items (12 of 12, values clipped)')
+            for (let index = 0; index < 12; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+                expect(text).toContain(`Subject ${index}`)
+            }
+        })
+
         it('structurally shrinks a large non-array object instead of discarding it', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 description: 'd'.repeat(600_000),
