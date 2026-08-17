@@ -45,23 +45,24 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
 })
 
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
-    const provider = await agentHelpers.resolveChatProviderName({ platformId, log })
-    const value = provider === AIProviderName.ACTIVEPIECES ? agentHelpers.resolveTier({ tierId: FAST_TIER_ID }).creditWeight : CHAT_BYOK_CREDIT_WEIGHT
-    const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    const usage = {
-        platformId,
-        value,
-        source: CreditUsageSource.AGENT_DRAFT as const,
-        idempotencyKey: `agent-draft:${apId()}`,
-        properties: { platformId, projectId, provider },
-    }
-
-    const { error } = await tryCatch(() => trackBillingAndSendTelemetry({
-        log,
-        licenseKey: platformPlan.licenseKey,
-        credits: usage,
-        ...(isAppSumoCreditedPlan(platformPlan.plan) ? { appSumo: { ...usage, idempotencyKey: `agent-draft-appsumo:${apId()}` } } : {}),
-    }))
+    const { error } = await tryCatch(async () => {
+        const provider = await agentHelpers.resolveChatProviderName({ platformId, log })
+        const value = provider === AIProviderName.ACTIVEPIECES ? agentHelpers.resolveTier({ tierId: FAST_TIER_ID }).creditWeight : CHAT_BYOK_CREDIT_WEIGHT
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        const usage = {
+            platformId,
+            value,
+            source: CreditUsageSource.AGENT_DRAFT as const,
+            idempotencyKey: `agent-draft:${apId()}`,
+            properties: { platformId, projectId, provider },
+        }
+        await trackBillingAndSendTelemetry({
+            log,
+            licenseKey: platformPlan.licenseKey,
+            credits: usage,
+            ...(isAppSumoCreditedPlan(platformPlan.plan) ? { appSumo: { ...usage, idempotencyKey: `agent-draft-appsumo:${apId()}` } } : {}),
+        })
+    })
     if (!isNil(error)) {
         log.warn({ error, platform: { id: platformId } }, '[agentDraftAi] Draft usage was not recorded')
     }
