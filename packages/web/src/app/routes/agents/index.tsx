@@ -6,6 +6,7 @@ import {
 import { t } from 'i18next';
 import {
   ArrowUp,
+  Settings2,
   ChevronsUpDown,
   LayoutGrid,
   List,
@@ -33,6 +34,7 @@ import {
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
@@ -103,6 +105,13 @@ const AgentsPageContent = () => {
     onSuccess: (agent) =>
       navigate(`/projects/${agent.projectId}/agents/${agent.id}`),
   });
+  const {
+    data: chatProvider,
+    isLoading: isLoadingProvider,
+    isError: providerLookupFailed,
+  } = aiProviderQueries.useChatProvider();
+  const needsProvider =
+    !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
@@ -140,16 +149,28 @@ const AgentsPageContent = () => {
             : t('What should your agent do?')}
         </h1>
         <p className="text-[15px] leading-[18px] text-muted-foreground">
-          {isBuilding
+          {needsProvider
+            ? t('Connect an AI provider and I can start building agents.')
+            : isBuilding
             ? t('Picking the tools and writing its instructions')
             : t(
                 "Describe what you need. I'll pick the tools and set up the steps.",
               )}
         </p>
+        {needsProvider && (
+          <Button
+            className="mt-4 gap-2"
+            onClick={() => navigate('/platform/setup/ai')}
+          >
+            <Settings2 size={16} />
+            {t('Connect an AI provider')}
+          </Button>
+        )}
         <div
           className={cn(
             'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
             isBuilding ? 'border-primary/40' : 'border-border',
+            needsProvider && 'hidden',
           )}
         >
           <Textarea
