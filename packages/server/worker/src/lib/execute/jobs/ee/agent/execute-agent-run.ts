@@ -5,6 +5,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet,
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
+import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
@@ -35,8 +36,6 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 // The only chat tools an unattended run keeps: reading the public web needs no one present.
-const AGENT_CONNECTION_TOOLS: string[] = ['ap_discover_action_auth', 'ap_revalidate_connection']
-const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -622,10 +621,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         })
         : {}
 
-    const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
-    if (source === AgentRunSource.CHAT) {
-        return allTools
-    }
     // Listed, not subtracted. Everything else in the chat set assumes someone is reading and can
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
@@ -646,24 +641,24 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    const unattendedWebTools: ToolSet = Object.fromEntries(
-        Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name)),
-    )
-    // An agent conversation is attended, so it keeps the tools that need a reader: the display
-    // prompts, the full web set, and a real approval gate. It never gets the flow-building set,
-    // project switching, phases or build plans — those belong to the platform assistant, not to
-    // an agent someone configured.
-    if (source === AgentRunSource.AGENT) {
-        // The connection card is populated by ap_discover_action_auth, so without it the picker
-        // renders empty and the agent cannot tell the user which accounts they already have.
-        // ap_execute_action stays out: an agent runs the tools someone configured for it, not an
-        // arbitrary action it picked.
-        const connectionTools: ToolSet = Object.fromEntries(
-            Object.entries(crossProjectTools).filter(([name]) => AGENT_CONNECTION_TOOLS.includes(name)),
-        )
-        return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...connectionTools, ...displayTools, ...webTools, ...thinkingTools, ...completionTool }
-    }
-    return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedWebTools, ...completionTool }
+    return agentToolPolicy.selectToolsForSource({
+        source,
+        groups: {
+            local: localTools,
+            display: displayTools,
+            crossProject: crossProjectTools,
+            web: webTools,
+            thinking: thinkingTools,
+            phase: phaseTools,
+            buildPlan: buildPlanTools,
+            email: emailTools,
+            mcp: mcpTools as ToolSet,
+            configuredPiece: configuredTools,
+            configuredFlow: configuredFlowToolSet,
+            knowledgeBase: knowledgeBaseTools,
+            completion: completionTool,
+        },
+    })
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {

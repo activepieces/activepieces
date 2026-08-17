@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import { lazy, Suspense } from 'react';
 import {
   RouterProvider,
@@ -19,6 +20,7 @@ import { RouteErrorBoundary } from '../components/global-error-boundary';
 import { ProjectDashboardLayout } from '../components/project-layout';
 
 import { DefaultRoute } from './default-route';
+import { RoutePermissionGuard } from './permission-guard';
 import { TokenCheckerWrapper } from './project-route-wrapper';
 
 const ChatWithAIPage = lazyWithRetry(
@@ -46,6 +48,32 @@ function chatElement() {
 const chatRoutes = [
   { path: '/chat', element: chatElement() },
   { path: '/chat/:conversationId', element: chatElement() },
+];
+
+const AgentsPage = lazyWithRetry(
+  () => import('@/app/routes/agents').then((m) => ({ default: m.AgentsPage })),
+  'agents',
+);
+
+// The list spans every project the caller can read, so it has no project of its own to sit under.
+// A single agent does, and stays project-scoped in project-routes.
+const agentRoutes = [
+  {
+    path: '/agents',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <ProjectDashboardLayout>
+          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+            <PageTitle title="Agents">
+              <Suspense fallback={<RouteLoadingBar />}>
+                <AgentsPage />
+              </Suspense>
+            </PageTitle>
+          </RoutePermissionGuard>
+        </ProjectDashboardLayout>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  },
 ];
 
 const CrashTestPage = import.meta.env.DEV
@@ -77,6 +105,7 @@ const routes = [
   ...authRoutes,
   ...platformRoutes,
   ...chatRoutes,
+  ...agentRoutes,
   {
     path: '/projects/:projectId',
     element: (

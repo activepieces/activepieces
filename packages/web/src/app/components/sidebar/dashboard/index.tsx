@@ -159,7 +159,6 @@ export function ProjectDashboardSidebar({
     icon: SendIcon,
     hasPermission: true,
     isSubItem: false,
-    badge: t('Beta'),
     onClick: () => {
       window.dispatchEvent(new Event(chatUtils.newChatEvent));
     },
@@ -173,7 +172,6 @@ export function ProjectDashboardSidebar({
     icon: BotIcon,
     hasPermission: checkAccess(Permission.READ_AGENT),
     isSubItem: false,
-    badge: t('New'),
   };
 
   const exploreLink: SidebarItemType = {
