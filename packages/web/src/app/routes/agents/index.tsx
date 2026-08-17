@@ -166,6 +166,11 @@ const AgentsPageContent = () => {
             <span className="text-[15px] leading-[18px] text-muted-foreground">
               {agents.length}
             </span>
+            {data?.next && (
+              <span className="text-[13px] leading-4 text-muted-foreground">
+                {t('showing the first {count}', { count: agents.length })}
+              </span>
+            )}
           </div>
           <div className="ms-auto flex items-center gap-3">
             <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-border bg-muted px-3">

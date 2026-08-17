@@ -2370,5 +2370,6 @@
   "Chat with this agent": "Chat with this agent",
   "Talking to an agent from here is coming next.": "Talking to an agent from here is coming next.",
   "Unlock Agents": "Unlock Agents",
-  "Build reusable agents your flows and your team can share.": "Build reusable agents your flows and your team can share."
+  "Build reusable agents your flows and your team can share.": "Build reusable agents your flows and your team can share.",
+  "showing the first {count}": "showing the first {count}"
 }

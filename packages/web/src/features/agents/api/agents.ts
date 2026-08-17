@@ -13,6 +13,9 @@ import {
 
 import { api } from '@/lib/api';
 
+// Bounded so a runaway cursor cannot fire requests forever. Past this the page says it is
+// showing a partial list rather than pretending the rest do not exist; a project that really
+// holds this many agents wants server-side search instead of loading them all.
 const MAX_AGENT_PAGES = 20;
 
 export const agentsApi = {
