@@ -25,6 +25,7 @@ export const appMachineCache = {
             ramTotalBytes: memory.totalRamInBytes,
             ramUsagePercentage: memory.ramUsage,
             diskPercentage: disk.percentage,
+            diskTotalBytes: disk.total,
             eventLoopDelayMs,
             ...cpuPressure,
             updated: apDayjs().toISOString(),
