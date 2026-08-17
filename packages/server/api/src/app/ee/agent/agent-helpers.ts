@@ -79,6 +79,26 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
+async function assertRunProviderConfigured({ platformId, provider, log }: { platformId: string, provider?: AIProviderName | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(provider)) {
+        const chatProvider = await aiProviderService(log).getChatProviderName({ platformId })
+        if (isNil(chatProvider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: platformId, entityType: 'ChatAiProvider' },
+            }, 'no AI provider on this platform is enabled for chat')
+        }
+        return
+    }
+    const configured = await aiProviderService(log).exists({ platformId, provider })
+    if (!configured) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: 'AIProvider' },
+        }, `the ${provider} AI provider is not configured on this platform`)
+    }
+}
+
 function findTier({ tierId }: { tierId: string | null }) {
     return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
 }
@@ -244,6 +264,7 @@ export const agentHelpers = {
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
+    assertRunProviderConfigured,
     resolveTier,
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,

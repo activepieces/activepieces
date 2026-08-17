@@ -12,6 +12,10 @@ type RpcSocket = {
 
 type NotifySocket = Pick<RpcSocket, 'emit'>
 
+type RpcLog = {
+    error(obj: unknown, msg: string): void
+}
+
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
     timeoutMs: number,
@@ -41,6 +45,7 @@ export function createRpcClient<T extends Contract>(
 export function createRpcServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
     socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
@@ -49,6 +54,7 @@ export function createRpcServer<T extends Contract>(
             ack(result)
         }
         catch (error) {
+            log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
             ack({ __rpcError: error instanceof Error ? error.message : String(error) })
         }
     })

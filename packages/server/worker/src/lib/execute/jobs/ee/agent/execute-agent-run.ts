@@ -44,14 +44,39 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const config = await ctx.apiClient.getAgentConfig({
+        const configuredPieceTools = (data.tools ?? []).filter(isPieceTool)
+        const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
+        const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
+
+        const sendEventWithRetry = ({ event }: { event: AgentEvent }) =>
+            retryWithBackoff({
+                fn: () => ctx.apiClient.sendAgentEvent({ userId, conversationId, runId, event }),
+                log,
+            })
+
+        const configResult = await tryCatch(() => ctx.apiClient.getAgentConfig({
             conversationId, runId, platformId, userId, userMessage, modelName, files,
             ...spreadIfDefined('source', jobSource),
             ...spreadIfDefined('provider', data.provider),
             ...spreadIfDefined('projectId', projectId),
             ...spreadIfDefined('promptOverride', promptOverride),
             ...spreadIfDefined('dryRun', dryRun),
-        })
+        }))
+        if (configResult.error !== null) {
+            const configError = configResult.error
+            const rawMessage = configError instanceof Error ? configError.message : 'An unexpected error occurred'
+            const clientMessage = isTransientFailureText(rawMessage)
+                ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
+                : rawMessage
+            log.error({ error: configError }, '[executeAgentRun] Could not load the agent config; failing the turn')
+            const failedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, failure: clientMessage })
+            await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source: jobSource ?? AgentRunSource.CHAT, log }))
+            await tryCatch(() => ctx.apiClient.saveAgentMessages({ conversationId, runId, messages: [], uiMessages: [] }))
+            await tryCatch(() => sendEventWithRetry({ event: { type: AgentEventType.ERROR, data: { message: clientMessage } } }))
+            await tryCatch(() => sendEventWithRetry({ event: { type: AgentEventType.FINISHED, data: { conversationId } } }))
+            throw configError
+        }
+        const config = configResult.data
 
         const provider = config.provider as AIProviderName
         const source = config.source
@@ -81,16 +106,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { mcpClient, mcpToolSet } = dryRun
             ? { mcpClient: null, mcpToolSet: {} }
             : await agentMcpClient.connect({ mcpCredentials: config.mcpCredentials, conversationId, log })
-
-        const configuredPieceTools = (data.tools ?? []).filter(isPieceTool)
-        const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
-        const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
-
-        const sendEventWithRetry = ({ event }: { event: AgentEvent }) =>
-            retryWithBackoff({
-                fn: () => ctx.apiClient.sendAgentEvent({ userId, conversationId, runId, event }),
-                log,
-            })
 
         const abortController = new AbortController()
 

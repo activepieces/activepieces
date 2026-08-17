@@ -161,6 +161,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
+    async exists({ platformId, provider }: { platformId: PlatformId, provider: AIProviderName }): Promise<boolean> {
+        return aiProviderRepo().existsBy({ platformId, provider })
+    },
+
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         await aiProviderRepo().delete({
             platformId,
