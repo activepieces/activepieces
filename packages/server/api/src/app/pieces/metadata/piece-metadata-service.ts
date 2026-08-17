@@ -142,6 +142,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 name: pieceMetadata.name,
                 platformId,
             })
+            const { id: _ignoredId, ...cleanPieceMetadata } = pieceMetadata as (typeof pieceMetadata & { id?: string })
             const savedPiece = await pieceRepos().save({
                 id: apId(),
                 packageType,
@@ -149,7 +150,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 archiveId,
                 platformId,
                 created: createdDate,
-                ...pieceMetadata,
+                ...cleanPieceMetadata,
             })
             if (publishCacheRefresh) {
                 await pieceCache(log).invalidate()

@@ -133,4 +133,52 @@ describe('Piece Metadata Create', () => {
         expect(allPieces).toHaveLength(1)
         expect(allPieces[0].name).toBe('keep-me')
     })
+
+    it('should ignore incoming payload id and generate fresh unique primary key (#14834)', async () => {
+        const service = pieceMetadataService(mockLog)
+
+        const savedPiece1 = await service.create({
+            pieceMetadata: {
+                id: 'UExr6bNYWIwodXeO9vMgL', // Predefined cloud ID
+                name: 'cloud-piece-1',
+                displayName: 'Cloud Piece 1',
+                version: '1.0.0',
+                minimumSupportedRelease: '0.0.0',
+                maximumSupportedRelease: '9.9.9',
+                actions: {},
+                triggers: {},
+                authors: [],
+                logoUrl: 'https://example.com/logo.png',
+            } as any,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+            publishCacheRefresh: false,
+        })
+
+        const savedPiece2 = await service.create({
+            pieceMetadata: {
+                id: 'UExr6bNYWIwodXeO9vMgL', // Duplicate predefined cloud ID on another piece
+                name: 'cloud-piece-2',
+                displayName: 'Cloud Piece 2',
+                version: '1.0.0',
+                minimumSupportedRelease: '0.0.0',
+                maximumSupportedRelease: '9.9.9',
+                actions: {},
+                triggers: {},
+                authors: [],
+                logoUrl: 'https://example.com/logo.png',
+            } as any,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+            publishCacheRefresh: false,
+        })
+
+        expect(savedPiece1.id).not.toBe('UExr6bNYWIwodXeO9vMgL')
+        expect(savedPiece2.id).not.toBe('UExr6bNYWIwodXeO9vMgL')
+        expect(savedPiece1.id).not.toBe(savedPiece2.id)
+
+        const repo = databaseConnection().getRepository('piece_metadata')
+        const allPieces = await repo.find()
+        expect(allPieces).toHaveLength(2)
+    })
 })
