@@ -792,8 +792,8 @@ export async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun>
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
     return repo.createQueryBuilder('flow_run')
-        .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
-        .addSelect(['"flowVersion"."displayName"'])
+        .leftJoin('flow_run.flowVersion', 'flowVersion')
+        .addSelect(['flowVersion.id', 'flowVersion.displayName'])
 }
 
 async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
