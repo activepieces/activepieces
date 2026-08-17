@@ -21,7 +21,7 @@ export const AgentToolStack = ({
 
   if (toolCount === 0) {
     return (
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1.5 text-[13px] leading-5 text-muted-foreground">
         <Unplug size={12} />
         {t('No tools')}
       </span>

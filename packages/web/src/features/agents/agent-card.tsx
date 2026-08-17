@@ -1,6 +1,5 @@
 import { AgentSummary, AgentVisibility } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Lock } from 'lucide-react';
 
 import { AgentMark } from './agent-mark';
 import { AgentToolStack } from './agent-tool-stack';
@@ -8,43 +7,62 @@ import { AgentToolStack } from './agent-tool-stack';
 type AgentCardProps = {
   agent: AgentSummary;
   projectName?: string;
+  projectDotColor?: string;
   onClick: () => void;
 };
 
-export const AgentCard = ({ agent, projectName, onClick }: AgentCardProps) => {
+const AgentChip = ({
+  label,
+  dotColor,
+}: {
+  label: string;
+  dotColor?: string;
+}) => (
+  <span className="flex items-center gap-[6px] rounded-full border border-border px-[9px] py-[3px] text-xs leading-4">
+    {dotColor && (
+      <span
+        className="size-[7px] shrink-0 rounded-[2px]"
+        style={{ backgroundColor: dotColor }}
+      />
+    )}
+    {label}
+  </span>
+);
+
+export const AgentCard = ({
+  agent,
+  projectName,
+  projectDotColor,
+  onClick,
+}: AgentCardProps) => {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex flex-col gap-3 rounded-lg border border-border bg-background p-4 text-left transition-colors hover:bg-accent"
+      className="flex h-[137px] w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A08] transition-colors hover:bg-accent"
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-[14px]">
         <AgentMark icon={agent.icon} color={agent.color} />
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-base font-semibold tracking-[-0.01em]">
+        <div className="flex min-w-0 grow basis-0 flex-col gap-[3px]">
+          <span className="truncate text-base font-semibold leading-5">
             {agent.displayName}
           </span>
-          <span className="line-clamp-2 text-sm text-muted-foreground">
+          <span className="line-clamp-2 text-sm leading-5 text-muted-foreground">
             {agent.description ?? t('No description yet')}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-[10px]">
         <AgentToolStack
           toolCount={agent.toolCount}
           toolPieceNames={agent.toolPieceNames}
         />
         <div className="ms-auto">
           {agent.visibility === AgentVisibility.RESTRICTED ? (
-            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground">
-              <Lock size={11} />
-              {t('Private')}
-            </span>
+            <AgentChip label={t('Private')} dotColor="#A3A3A3" />
           ) : (
             projectName && (
-              <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground">
-                {projectName}
-              </span>
+              <AgentChip label={projectName} dotColor={projectDotColor} />
             )
           )}
         </div>

@@ -4,8 +4,8 @@ import {
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 import {
-  Bot,
   BookOpen,
+  Bot,
   Calendar,
   ChartLine,
   FileText,
@@ -37,8 +37,8 @@ const GLYPHS: Record<AgentIcon, LucideIcon> = {
 };
 
 const SIZES = {
-  sm: { box: 'size-8 rounded-md', glyph: 16 },
-  default: { box: 'size-11 rounded-lg', glyph: 20 },
+  sm: { box: 'size-8 rounded-lg', glyph: 16 },
+  default: { box: 'size-12 rounded-[14px]', glyph: 24 },
 } as const;
 
 type AgentMarkProps = {
@@ -55,15 +55,14 @@ export const AgentMark = ({
   className,
 }: AgentMarkProps) => {
   const Glyph = GLYPHS[icon];
-  const palette = PROJECT_COLOR_PALETTE[color];
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center',
+        'flex shrink-0 items-center justify-center border border-[#E7E7EA] bg-background',
         SIZES[size].box,
         className,
       )}
-      style={{ backgroundColor: palette.color, color: palette.textColor }}
+      style={{ color: PROJECT_COLOR_PALETTE[color].color }}
     >
       <Glyph size={SIZES[size].glyph} strokeWidth={2} />
     </div>

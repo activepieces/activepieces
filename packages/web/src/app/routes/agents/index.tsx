@@ -1,10 +1,9 @@
-import { AgentSummary } from '@activepieces/shared';
+import { AgentSummary, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUp, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AgentCard } from '@/features/agents/agent-card';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
@@ -36,83 +35,84 @@ const AgentsPage = () => {
   }, [data, search]);
 
   return (
-    <div className="flex w-full flex-col gap-10 px-6 py-10">
-      <section className="flex flex-col items-center gap-4">
-        <div className="flex flex-col items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-[-0.02em]">
-            {t('What should your agent do?')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              "Describe it in a sentence — I'll assemble the tools, model, and steps.",
-            )}
-          </p>
-        </div>
-        <div className="flex w-full max-w-[680px] items-center gap-2 rounded-full border border-border bg-muted/40 py-1.5 ps-5 pe-1.5">
-          <Input
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 pb-10">
+      <section className="flex flex-col items-center gap-2 px-12 pt-8">
+        <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
+          {t('What should your agent do?')}
+        </h1>
+        <p className="text-[15px] leading-[18px] text-muted-foreground">
+          {t(
+            "Describe it in a sentence — I'll assemble the tools, model, and steps.",
+          )}
+        </p>
+        <div className="mt-4 flex h-14 w-full max-w-[680px] items-center gap-3.5 rounded-full border border-border bg-muted ps-5 pe-2">
+          <input
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             placeholder={t(
               'Draft weekly launch posts and file them in Notion...',
             )}
-            className="h-9 border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
+            className="h-10 w-full bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
           />
-          <Button size="icon" className="size-9 shrink-0 rounded-full">
-            <ArrowUp size={16} />
+          <Button size="icon" className="size-10 shrink-0 rounded-full">
+            <ArrowUp size={18} />
           </Button>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
           <span className="text-sm text-muted-foreground">{t('Try:')}</span>
           {SUGGESTIONS.map((suggestion) => (
-            <Button
+            <button
               key={suggestion}
-              variant="outline"
-              size="sm"
+              type="button"
               onClick={() => setPrompt(t(suggestion))}
+              className="rounded-full border border-border px-3 py-[5px] text-sm transition-colors hover:bg-accent"
             >
               {t(suggestion)}
-            </Button>
+            </button>
           ))}
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section className="mx-auto flex w-full max-w-[1104px] flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-xl font-semibold tracking-[-0.015em]">
-            {t('Your agents')}
-          </h2>
-          <span className="text-sm text-muted-foreground">{agents.length}</span>
-          <div className="ms-auto flex items-center gap-2">
-            <div className="relative">
-              <Search
-                size={14}
-                className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <Input
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
+              {t('Your agents')}
+            </h2>
+            <span className="text-[15px] leading-[18px] text-muted-foreground">
+              {agents.length}
+            </span>
+          </div>
+          <div className="ms-auto flex items-center gap-3">
+            <div className="flex h-8 w-[180px] shrink-0 items-center gap-2 rounded-full border border-border bg-muted px-3">
+              <Search size={14} className="shrink-0 text-muted-foreground" />
+              <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t('Search agents')}
-                thin
-                className="w-[220px] ps-8"
+                className="w-full bg-transparent text-[13px] leading-5 outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <Button variant="outline" size="sm">
+            <button
+              type="button"
+              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-sm transition-colors hover:bg-accent"
+            >
               <Plus size={16} />
               {t('New agent')}
-            </Button>
+            </button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2].map((index) => (
-              <Skeleton key={index} className="h-[132px] rounded-lg" />
+              <Skeleton key={index} className="h-[137px] rounded-[19px]" />
             ))}
           </div>
         ) : agents.length === 0 ? (
           <AgentsEmptyState hasSearch={search.trim().length > 0} />
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {agents.map((agent: AgentSummary) => (
               <AgentCard
                 key={agent.id}
@@ -121,6 +121,9 @@ const AgentsPage = () => {
                   agent.projectId === project.id
                     ? project.displayName
                     : undefined
+                }
+                projectDotColor={
+                  PROJECT_COLOR_PALETTE[project.icon.color]?.color
                 }
                 onClick={() => undefined}
               />
