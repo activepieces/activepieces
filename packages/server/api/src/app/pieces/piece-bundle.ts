@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, safeHttp } from '@activepieces/server-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { FileType, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo } from '../file/file.service'
@@ -8,13 +8,12 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
-import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 // Resolves a piece to a single downloadable link (see ADR 0002 — "Pieces are distributed as links").
-// Official/registry pieces resolve to a signed-S3 object when cached, else to the npm tarball (and a
-// lazy SYSTEM job caches it for next time). Custom (ARCHIVE) pieces are served straight from the file
-// store. Always platform-scoped via the engine token's platformId.
+// Official/registry pieces resolve to the CDN tarball when available, else to the npm tarball. Custom
+// (ARCHIVE) pieces are served straight from the file store. Always platform-scoped via the engine
+// token's platformId.
 export const pieceBundle = (log: FastifyBaseLogger) => ({
     async resolve({ name, version, archiveId, platformId, projectId }: ResolveParams): Promise<PieceBundleResolution> {
         // ARCHIVE pieces are addressed by archiveId — they may not be registered in metadata yet
@@ -33,16 +32,6 @@ export const pieceBundle = (log: FastifyBaseLogger) => ({
         }
         if (metadata.packageType === PackageType.ARCHIVE && !isNil(metadata.archiveId)) {
             return { type: 'stream', archiveId: metadata.archiveId }
-        }
-        const s3Enabled = !isNil(system.get(AppSystemProp.S3_BUCKET))
-        if (s3Enabled) {
-            const s3 = s3Helper(log)
-            const key = pieceBundleS3Key({ name, version })
-            if (await s3.objectExists(key)) {
-                const fileName = `${name.replace('/', '-')}-${version}.tgz`
-                return { type: 'redirect', url: await s3.getS3SignedUrl(key, fileName) }
-            }
-            void tryCatch(() => enqueueBundleJob({ name, version, log }))
         }
         // CDN only mirrors official pieces — dev/custom/private registry pieces may 404 there, so fall back to npm.
         if (metadata.pieceType === PieceType.OFFICIAL && system.getBoolean(AppSystemProp.USE_CDN_FOR_BUNDLES)) {
@@ -82,17 +71,6 @@ async function preferredTarballSource({ name, version, log }: PreferredTarballSo
         }
     }
     return { kind: 'npm', url: npmTarballUrl({ name, version }) }
-}
-
-async function enqueueBundleJob({ name, version, log }: EnqueueBundleJobParams): Promise<void> {
-    await systemJobsSchedule(log).upsertJob({
-        job: {
-            name: SystemJobName.BUNDLE_PIECE,
-            data: { name, version },
-            jobId: `bundle-piece:${name}:${version}`,
-        },
-        schedule: { type: 'one-time', date: apDayjs() },
-    })
 }
 
 function cdnTarballUrl({ name, version }: PieceRef): string {
@@ -141,10 +119,6 @@ const S3_PIECES_PREFIX = 'pieces/v2/'
 type PieceRef = {
     name: string
     version: string
-}
-
-type EnqueueBundleJobParams = PieceRef & {
-    log: FastifyBaseLogger
 }
 
 type PreferredTarballSourceParams = PieceRef & {
