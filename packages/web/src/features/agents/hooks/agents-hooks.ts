@@ -108,5 +108,6 @@ export const agentsMutations = {
   useDraftAgent: () =>
     useMutation({
       mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
+      onError: () => undefined,
     }),
 };
