@@ -22,7 +22,7 @@ export const AgentToolStack = ({
   if (toolCount === 0) {
     return (
       <span className="flex items-center gap-1.5 text-[13px] leading-5 text-muted-foreground">
-        <Unplug size={12} />
+        <Unplug size={14} className="text-neutral-400" />
         {t('No tools')}
       </span>
     );
@@ -32,19 +32,21 @@ export const AgentToolStack = ({
   const remaining = toolCount - visible.length;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex shrink-0 items-center gap-[5px]">
       {visible.map((metadata) => (
         <PieceIcon
           key={metadata.name}
           logoUrl={metadata.logoUrl}
           displayName={metadata.displayName}
           showTooltip={true}
-          size="sm"
+          size="tile"
           border={true}
         />
       ))}
       {remaining > 0 && (
-        <span className="text-xs text-muted-foreground">+{remaining}</span>
+        <span className="flex size-[20px] items-center justify-center rounded-[5px] bg-[#F0F0F2] text-xss leading-none font-semibold text-[#8A8A8F]">
+          +{remaining}
+        </span>
       )}
     </div>
   );

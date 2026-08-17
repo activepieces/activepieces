@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AgentCard } from '@/features/agents/agent-card';
+import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,7 @@ const AgentsPage = () => {
   const [search, setSearch] = useState('');
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [prompt, setPrompt] = useState('');
+  const [creating, setCreating] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data, isLoading } = agentsQueries.useAgents({});
 
@@ -44,8 +46,16 @@ const AgentsPage = () => {
   }, [data, search]);
 
   return (
-    <div className="flex w-full flex-col">
-      <section className="flex flex-col items-center gap-2 px-12 pt-8">
+    <div className="relative flex w-full flex-col">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[300px]"
+        style={{
+          backgroundImage:
+            'radial-gradient(ellipse 60% 100% at 50% 0% in oklab, oklab(65% 0.053 -0.173 / 20%) 0%, oklab(71.4% -0.038 -0.138 / 6%) 35%, oklab(0% 0 0 / 0%) 70%)',
+        }}
+      />
+      <section className="relative flex flex-col items-center gap-2 px-12 pt-8">
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
           {t('What should your agent do?')}
         </h1>
@@ -58,23 +68,37 @@ const AgentsPage = () => {
           <input
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && prompt.trim().length > 0) {
+                setCreating(true);
+              }
+            }}
             placeholder={t(
-              'Draft weekly launch posts and file them in Notion...',
+              'Draft weekly launch posts and file them in Notion…',
             )}
-            className="h-10 w-full bg-transparent text-[15px] outline-none placeholder:text-muted-foreground"
+            className="h-10 w-full bg-transparent text-base leading-5 outline-none placeholder:text-neutral-400"
           />
-          <Button size="icon" className="size-10 shrink-0 rounded-full">
-            <ArrowUp size={18} />
+          <Button
+            size="icon"
+            onClick={() => setCreating(true)}
+            className="size-10 shrink-0 rounded-full"
+          >
+            <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
         </div>
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-          <span className="text-sm text-muted-foreground">{t('Try:')}</span>
+        <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">
+          <span className="text-[13px] leading-4 text-muted-foreground">
+            {t('Try:')}
+          </span>
           {SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
-              onClick={() => setPrompt(t(suggestion))}
-              className="rounded-full border border-border px-3 py-[5px] text-sm transition-colors hover:bg-accent"
+              onClick={() => {
+                setPrompt(t(suggestion));
+                setCreating(true);
+              }}
+              className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent"
             >
               {t(suggestion)}
             </button>
@@ -82,7 +106,7 @@ const AgentsPage = () => {
         </div>
       </section>
 
-      <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
+      <section className="relative flex w-full flex-col gap-5 px-12 pt-11 pb-12">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-baseline gap-2">
             <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
@@ -99,7 +123,7 @@ const AgentsPage = () => {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t('Search agents')}
-                className="w-full bg-transparent text-[13px] leading-5 outline-none placeholder:text-muted-foreground"
+                className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-muted-foreground"
               />
             </div>
             <button
@@ -107,7 +131,7 @@ const AgentsPage = () => {
               className="flex h-8 items-center gap-2 rounded-md border border-border px-3 text-[13px] leading-4 transition-colors hover:bg-accent"
             >
               {t('Recently used')}
-              <ChevronsUpDown size={13} className="text-muted-foreground" />
+              <ChevronsUpDown size={14} className="text-muted-foreground" />
             </button>
             <div className="flex h-8 items-center gap-[2px] rounded-full border border-border p-[3px]">
               <button
@@ -119,7 +143,10 @@ const AgentsPage = () => {
                   layout === 'grid' && 'bg-neutral-100',
                 )}
               >
-                <LayoutGrid size={14} />
+                <LayoutGrid
+                  size={15}
+                  className={cn(layout !== 'grid' && 'text-neutral-400')}
+                />
               </button>
               <button
                 type="button"
@@ -130,14 +157,18 @@ const AgentsPage = () => {
                   layout === 'list' && 'bg-neutral-100',
                 )}
               >
-                <List size={14} />
+                <List
+                  size={15}
+                  className={cn(layout !== 'list' && 'text-neutral-400')}
+                />
               </button>
             </div>
             <button
               type="button"
-              className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-sm transition-colors hover:bg-accent"
+              onClick={() => setCreating(true)}
+              className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-accent"
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={2.2} className="text-neutral-600" />
               {t('New agent')}
             </button>
           </div>
@@ -146,7 +177,7 @@ const AgentsPage = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {[0, 1, 2].map((index) => (
-              <Skeleton key={index} className="h-[137px] rounded-[19px]" />
+              <Skeleton key={index} className="h-[151px] rounded-[19px]" />
             ))}
           </div>
         ) : agents.length === 0 ? (
@@ -178,6 +209,12 @@ const AgentsPage = () => {
           </div>
         )}
       </section>
+
+      <CreateAgentDialog
+        open={creating}
+        initialPrompt={prompt}
+        onOpenChange={setCreating}
+      />
     </div>
   );
 };

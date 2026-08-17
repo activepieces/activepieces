@@ -39,20 +39,28 @@ export const AgentCard = ({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-[137px] w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A08] transition-colors hover:bg-accent"
+      className="group relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A08]"
     >
-      <div className="flex items-center gap-[14px]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-0 right-0 h-[150px] w-[260px] opacity-0 transition-opacity group-hover:opacity-100"
+        style={{
+          backgroundImage:
+            'radial-gradient(ellipse 90% 90% at 100% 0% in oklab, oklab(60% -0.103 -0.009 / 20%) 0%, oklab(60% -0.103 -0.009 / 0%) 70%)',
+        }}
+      />
+      <div className="relative flex items-center gap-[14px]">
         <AgentMark icon={agent.icon} color={agent.color} />
         <div className="flex min-w-0 grow basis-0 flex-col gap-[3px]">
           <span className="truncate text-base font-semibold leading-5">
             {agent.displayName}
           </span>
-          <span className="line-clamp-2 text-sm leading-5 text-muted-foreground">
+          <span className="line-clamp-2 text-[13px] leading-4 text-muted-foreground">
             {agent.description ?? t('No description yet')}
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-[10px]">
+      <div className="relative flex items-center gap-[10px]">
         <AgentToolStack
           toolCount={agent.toolCount}
           toolPieceNames={agent.toolPieceNames}

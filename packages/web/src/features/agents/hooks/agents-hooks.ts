@@ -37,7 +37,13 @@ export const agentsQueries = {
 };
 
 export const agentsMutations = {
-  useCreateAgent: ({ onSuccess }: { onSuccess?: (agent: Agent) => void }) => {
+  useCreateAgent: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess?: (agent: Agent) => void;
+    onError?: () => void;
+  }) => {
     const queryClient = useQueryClient();
     return useMutation({
       mutationFn: (request: CreateAgentRequest) => agentsApi.create(request),
@@ -45,7 +51,7 @@ export const agentsMutations = {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
         onSuccess?.(agent);
       },
-      onError: internalErrorToast,
+      onError: onError ?? internalErrorToast,
     });
   },
   useUpdateAgent: ({ id }: { id: string }) => {

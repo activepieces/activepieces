@@ -2346,5 +2346,16 @@
   "Agents": "Agents",
   "Recently used": "Recently used",
   "Grid view": "Grid view",
-  "List view": "List view"
+  "List view": "List view",
+  "agentConfigTooLarge": "Agent configuration is too large",
+  "Could not create the agent. Try again.": "Could not create the agent. Try again.",
+  "Could not draft that agent. Try rewording it, or start blank.": "Could not draft that agent. Try rewording it, or start blank.",
+  "Start from a template": "Start from a template",
+  "Start blank": "Start blank",
+  "Create agent": "Create agent",
+  "Instructions": "Instructions",
+  "Describe it in a sentence — I'll assemble the tools and steps.": "Describe it in a sentence — I'll assemble the tools and steps.",
+  "Draft weekly launch posts and file them in Notion…": "Draft weekly launch posts and file them in Notion…",
+  "Research analyst": "Research analyst",
+  "Searches the web, returns a cited brief.": "Searches the web, returns a cited brief."
 }
