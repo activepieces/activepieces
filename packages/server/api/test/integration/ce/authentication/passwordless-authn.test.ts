@@ -57,8 +57,6 @@ async function storedOtpRow(email: string) {
     })
 }
 
-// The row stores a keyed digest rather than the code, so `value` is swapped for the code the
-// person would actually read out of their inbox — which is what these tests are exercising.
 async function storedOtp(email: string) {
     const row = await storedOtpRow(email)
     if (row === null) {

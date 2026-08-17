@@ -38,9 +38,6 @@ export const otpService = (log: FastifyBaseLogger) => ({
         })
         const identityId = userIdentity.id
         const otpIsInFlight = !isNil(existingOtp) && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
-        // The row holds only a digest, so re-sending the code in flight means recovering the
-        // plaintext from the short-lived cache. Without it a repeat request has to mint a new
-        // code, which would let anyone who knows an address invalidate the owner's code at will.
         const codeInFlight = otpIsInFlight ? await cachedCode({ identityId, type }) : null
         if (!isNil(codeInFlight)) {
             await emailService(log).sendOtp({
@@ -139,10 +136,6 @@ async function discard({ otp, identityId, type, log }: DiscardParams): Promise<v
     log.warn({ identityId, type }, '[otpService#confirm] credential discarded')
 }
 
-// Keyed with a server-held secret rather than a bare hash: six digits is a million
-// candidates, so an unkeyed digest is recovered offline in milliseconds by anyone holding a
-// database dump or a read replica. The key never lives in the database, so reading the table
-// no longer yields a usable credential.
 async function digestOf(code: string): Promise<string> {
     const secret = await jwtUtils.getJwtSecret()
     return createHmac('sha256', secret).update(code).digest('hex')

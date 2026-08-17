@@ -12,8 +12,6 @@ const EMAIL = 'otp.budget@example.com'
 const MAX_ATTEMPTS = 5
 const MAX_ATTEMPTS_PER_IDENTITY = 10
 
-// The row holds a keyed digest, so the code a person would read from their inbox is only
-// recoverable from the short-lived cache the resend path uses.
 async function issuedCode(): Promise<string> {
     const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
     const code = await distributedStore.get<string>(`otp-pending-code:${identity!.id}:${OtpType.EMAIL_LOGIN}`)
