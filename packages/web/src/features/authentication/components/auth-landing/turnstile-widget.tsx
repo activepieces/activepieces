@@ -71,9 +71,16 @@ export function TurnstileWidget({
         }
         widgetId = window.turnstile.render(container.current, {
           sitekey: siteKey,
-          callback: (token: string) => onToken(token),
+          appearance: 'interaction-only',
+          callback: (token: string) => {
+            setFailed(false);
+            onToken(token);
+          },
           'expired-callback': () => onToken(undefined),
-          'error-callback': () => onToken(undefined),
+          'error-callback': () => {
+            setFailed(true);
+            onToken(undefined);
+          },
         });
         widget.current = widgetId;
       })
@@ -109,16 +116,18 @@ export function TurnstileWidget({
   // Say so rather than leaving a dead submit button: the server requires a
   // solved challenge whenever one is configured, so a blocked script means
   // sign-in cannot proceed and the person needs to know why.
-  if (failed) {
-    return (
-      <p className="mt-3 text-center text-xs text-destructive">
-        {t(
-          'The verification step could not load. Disable your ad blocker for this page, then reload.',
-        )}
-      </p>
-    );
-  }
-  return <div ref={container} className="mt-4 flex justify-center" />;
+  return (
+    <>
+      <div ref={container} className="flex justify-center" />
+      {failed && (
+        <p className="mt-3 text-center text-xs text-destructive">
+          {t(
+            'The verification step could not load. Disable your ad blocker for this page, then reload.',
+          )}
+        </p>
+      )}
+    </>
+  );
 }
 
 type TurnstileWidgetProps = {
