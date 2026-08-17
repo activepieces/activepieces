@@ -80,7 +80,9 @@ function s3Store({ bucket, endpoint, region }) {
       }
     },
     async put(key, filePath) {
-      run(['s3api', 'put-object', ...base, '--key', key, '--body', filePath])
+      // public-read: the engine's CDN check is an unauthenticated HTTPS HEAD against
+      // cdn.activepieces.com, not an authenticated S3 call — objects must be publicly readable.
+      run(['s3api', 'put-object', ...base, '--key', key, '--body', filePath, '--acl', 'public-read'])
       return { key, bytes: fs.statSync(filePath).size }
     },
     async get(key, destPath) {
