@@ -1,9 +1,11 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentVisibility, ColorName, DefaultProjectRole } from '@activepieces/shared'
+import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
+import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
+import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -199,6 +201,103 @@ describe('agent publish', () => {
     })
 })
 
+describe('agent governance', () => {
+    it('keeps a project admin able to see an agent an editor restricted', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(editor)
+
+        await editor.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        expect((await owner.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to let a non-owner hide an agent from the rest of the project', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const mine = await createAgent(owner)
+
+        const response = await editor.post(`/v1/agents/${mine.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${mine.id}`)).json().visibility).toBe(AgentVisibility.PROJECT)
+    })
+
+    it('lets an editor still rename an agent, so the gate is on sharing only', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+
+        expect((await editor.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('takes a published agent offline without destroying it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/unpublish`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().published).toBeNull()
+        expect(response.json().draft.instructions).toBe('Draft launch posts.')
+    })
+
+    it('never returns a stored mcp credential to a reader', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'Use the server.',
+            tools: [{
+                type: 'MCP',
+                toolName: 'remote',
+                serverUrl: 'https://mcp.example.com',
+                protocol: 'streamable-http',
+                auth: { type: 'api_key', apiKey: 'sk-live-SECRET', apiKeyHeader: 'x-api-key' },
+            }],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).body).not.toContain('sk-live-SECRET')
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).body).not.toContain('sk-live-SECRET')
+        expect((await ctx.get('/v1/agents')).body).not.toContain('sk-live-SECRET')
+    })
+
+    it('keeps the stored credential usable after an unrelated edit', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'Use the server.',
+            tools: [{
+                type: 'MCP',
+                toolName: 'remote',
+                serverUrl: 'https://mcp.example.com',
+                protocol: 'streamable-http',
+                auth: { type: 'api_key', apiKey: 'sk-live-SECRET', apiKeyHeader: 'x-api-key' },
+            }],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })
+
+        const stored = await db.findOneByOrFail<{ draft: { tools: { auth: { apiKey?: string } }[] } }>('agent', { id: agent.id })
+        expect(stored.draft.tools[0].auth.apiKey).toBe('sk-live-SECRET')
+    })
+
+    it('refuses a config larger than an agent is allowed to be', async () => {
+        const ctx = await context()
+        const fields = Object.fromEntries(Array.from({ length: 4000 }, (_, index) => [`f${index}`, { mode: 'choose-yourself', value: 'x'.repeat(100) }]))
+        const draft = {
+            instructions: 'Big.',
+            tools: [{
+                type: 'PIECE',
+                toolName: 'big',
+                pieceMetadata: { pieceName: 'p', pieceVersion: '1.0.0', actionName: 'a', predefinedInput: { fields } },
+            }],
+        }
+
+        expect((await ctx.post('/v1/agents', agentBody(ctx.project.id, { draft }))).statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+})
+
 describe('agent project isolation', () => {
     it.each([
         ['read', (ctx: TestContext, id: string) => ctx.get(`/v1/agents/${id}`)],
@@ -292,10 +391,89 @@ describe('agent permissions', () => {
     })
 })
 
+describe('agent templates', () => {
+    it('serves starter agents with no ai provider and no connections configured', async () => {
+        const ctx = await context()
+
+        const response = await ctx.get('/v1/agents/templates')
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const templates = response.json().data
+        expect(templates.length).toBe(AGENT_TEMPLATES.length)
+        expect(new Set(templates.map((t: { id: string }) => t.id)).size).toBe(templates.length)
+        for (const template of templates) {
+            expect(template.instructions.length).toBeGreaterThan(0)
+        }
+    })
+
+    it.each(AGENT_TEMPLATES.map((template) => [template.id, template]))(
+        'creates and publishes the %s starter, with only what the template carries',
+        async (_id, template) => {
+            const ctx = await context()
+
+            const created = await ctx.post('/v1/agents', {
+                projectId: ctx.project.id,
+                displayName: template.displayName,
+                description: template.description,
+                icon: template.icon,
+                color: template.color,
+                draft: { instructions: template.instructions },
+            })
+
+            expect(created.statusCode).toBe(StatusCodes.CREATED)
+            expect(created.json().description).toBe(template.description)
+            expect(created.json().draft.maxSteps).toBe(DEFAULT_AGENT_MAX_STEPS)
+            expect((await ctx.post(`/v1/agents/${created.json().id}/publish`)).statusCode).toBe(StatusCodes.OK)
+        })
+
+    it('tells the caller to connect a provider, rather than naming an internal entity', async () => {
+        const ctx = await context()
+
+        const drafted = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'watch competitor pricing' })
+
+        expect(drafted.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(drafted.body).toContain('Connect an AI provider')
+        expect(drafted.body).not.toContain('ChatAiProvider')
+    })
+
+    it('rate limits one caller without blocking another on the same platform', async () => {
+        const owner = await context()
+        const colleague = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const draft = (ctx: TestContext) => ctx.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'watch competitor pricing' })
+
+        const responses = []
+        for (let attempt = 0; attempt <= DRAFTS_PER_MINUTE; attempt++) {
+            responses.push(await draft(owner))
+        }
+
+        expect(responses[responses.length - 1].body).toContain(`above the limit of ${DRAFTS_PER_MINUTE}`)
+        expect((await draft(colleague)).body).not.toContain('above the limit')
+    })
+
+    it('refuses a draft prompt longer than the endpoint is meant to take', async () => {
+        const ctx = await context()
+
+        const response = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'a'.repeat(MAX_DRAFT_PROMPT_LENGTH + 1) })
+
+        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+
+    it('refuses to draft for a project the caller cannot write', async () => {
+        const owner = await context()
+        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
+
+        const response = await viewer.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'anything' })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+    })
+
+})
+
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
+        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })
@@ -319,6 +497,8 @@ describe('agent feature gate', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
+        expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })
