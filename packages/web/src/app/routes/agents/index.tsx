@@ -325,11 +325,7 @@ const AgentsPageContent = () => {
         )}
       </section>
 
-      <CreateAgentDialog
-        open={creating}
-        initialPrompt={prompt}
-        onOpenChange={setCreating}
-      />
+      <CreateAgentDialog open={creating} onOpenChange={setCreating} />
     </div>
   );
 };

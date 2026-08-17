@@ -3,12 +3,10 @@ import {
   AgentTemplate,
   ColorName,
   DraftAgentResponse,
-  MAX_DRAFT_PROMPT_LENGTH,
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +32,6 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { projectCollectionUtils } from '@/features/projects';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { AgentMark } from './agent-mark';
@@ -222,97 +219,46 @@ const CreateAgentForm = ({
   );
 };
 
-const DescribeStep = ({
-  initialPrompt,
-  onDrafted,
+const StartStep = ({
+  onPicked,
 }: {
-  initialPrompt: string;
-  onDrafted: (draft: DraftAgentResponse | null) => void;
+  onPicked: (draft: DraftAgentResponse | null) => void;
 }) => {
-  const [prompt, setPrompt] = useState(initialPrompt);
-  const { project } = projectCollectionUtils.useCurrentProject();
   const { data: templates, isLoading } = agentsQueries.useAgentTemplates();
-  const draftAgent = agentsMutations.useDraftAgent();
-
-  const submitPrompt = () => {
-    const trimmed = prompt.trim();
-    if (trimmed.length === 0 || draftAgent.isPending) {
-      return;
-    }
-    draftAgent.mutate(
-      { projectId: project.id, prompt: trimmed },
-      { onSuccess: onDrafted },
-    );
-  };
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex h-14 items-center gap-3.5 rounded-full border border-border bg-muted ps-5 pe-2">
-        <input
-          value={prompt}
-          maxLength={MAX_DRAFT_PROMPT_LENGTH}
-          onChange={(event) => setPrompt(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              submitPrompt();
-            }
-          }}
-          placeholder={t('Draft weekly launch posts and file them in Notion…')}
-          className="h-10 w-full bg-transparent text-base leading-5 outline-none placeholder:text-neutral-400"
-        />
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold">{t('Start from a template')}</p>
         <Button
-          size="icon"
-          onClick={submitPrompt}
-          loading={draftAgent.isPending}
-          className="size-10 shrink-0 rounded-full"
+          type="button"
+          variant="link"
+          size="sm"
+          onClick={() => onPicked(null)}
         >
-          <ArrowUp size={16} strokeWidth={2.2} />
+          {t('Start blank')}
         </Button>
       </div>
-      {draftAgent.error !== null && (
-        <p className="text-sm text-destructive">
-          {api.extractServerErrorMessage(
-            draftAgent.error,
-            t("That didn't work. Try describing the agent another way."),
-          )}
-        </p>
-      )}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">{t('Start from a template')}</p>
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            onClick={() => onDrafted(null)}
-          >
-            {t('Start blank')}
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {isLoading
-            ? [0, 1, 2, 3].map((index) => (
-                <Skeleton key={index} className="h-[62px] rounded-[14px]" />
-              ))
-            : (templates?.data ?? []).map((template) => (
-                <TemplateTile
-                  key={template.id}
-                  template={template}
-                  onSelect={() => onDrafted(template)}
-                />
-              ))}
-        </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {isLoading
+          ? [0, 1, 2, 3].map((index) => (
+              <Skeleton key={index} className="h-[62px] rounded-[14px]" />
+            ))
+          : (templates?.data ?? []).map((template) => (
+              <TemplateTile
+                key={template.id}
+                template={template}
+                onSelect={() => onPicked(template)}
+              />
+            ))}
       </div>
     </div>
   );
 };
 
 const CreateAgentDialogBody = ({
-  initialPrompt,
   onOpenChange,
 }: {
-  initialPrompt: string;
   onOpenChange: (open: boolean) => void;
 }) => {
   const [draft, setDraft] = useState<DraftAgentResponse | null>(null);
@@ -320,10 +266,9 @@ const CreateAgentDialogBody = ({
 
   if (!reviewing) {
     return (
-      <DescribeStep
-        initialPrompt={initialPrompt}
-        onDrafted={(drafted) => {
-          setDraft(drafted);
+      <StartStep
+        onPicked={(picked) => {
+          setDraft(picked);
           setReviewing(true);
         }}
       />
@@ -334,11 +279,9 @@ const CreateAgentDialogBody = ({
 
 export const CreateAgentDialog = ({
   open,
-  initialPrompt = '',
   onOpenChange,
 }: {
   open: boolean;
-  initialPrompt?: string;
   onOpenChange: (open: boolean) => void;
 }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
@@ -346,12 +289,11 @@ export const CreateAgentDialog = ({
       <DialogHeader>
         <DialogTitle>{t('New agent')}</DialogTitle>
         <DialogDescription>
-          {t("Describe what you need. I'll set up the tools and steps.")}
+          {t('Start from a template, or build one from scratch.')}
         </DialogDescription>
       </DialogHeader>
       <CreateAgentDialogBody
         key={open ? 'open' : 'closed'}
-        initialPrompt={initialPrompt}
         onOpenChange={onOpenChange}
       />
     </DialogContent>

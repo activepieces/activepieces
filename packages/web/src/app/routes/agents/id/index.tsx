@@ -12,7 +12,6 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AnimatePresence, motion } from 'framer-motion';
 import { t } from 'i18next';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState } from 'react';
@@ -97,7 +96,6 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
-const PANEL_TRANSITION = { duration: 0.22, ease: [0.35, 0, 0.25, 1] } as const;
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -436,40 +434,40 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
-      <AnimatePresence initial={false}>
-        {conversationsOpen && (
-          <motion.aside
-            key="conversations"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={PANEL_TRANSITION}
-            className="shrink-0 overflow-hidden border-r border-border"
-          >
-            <div className="flex h-full w-[260px] flex-col">
-              <ConversationList
-                agentId={agent.id}
-                hideSettings
-                selectedId={conversationId ?? null}
-                onSelect={openConversation}
-                onNewChat={startNewConversation}
-              />
-            </div>
-          </motion.aside>
+      <aside
+        className={cn(
+          'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
+          conversationsOpen ? 'w-[220px]' : 'w-0',
         )}
-      </AnimatePresence>
+      >
+        <div className="flex h-full w-[220px] flex-col">
+          <ConversationList
+            agentId={agent.id}
+            hideSettings
+            selectedId={conversationId ?? null}
+            onSelect={openConversation}
+            onNewChat={startNewConversation}
+          />
+        </div>
+      </aside>
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
-          {!conversationsOpen && (
-            <button
-              type="button"
-              aria-label={t('Expand conversations')}
-              onClick={() => setConversationsOpen(true)}
-              className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
+          <button
+            type="button"
+            aria-label={
+              conversationsOpen
+                ? t('Collapse conversations')
+                : t('Expand conversations')
+            }
+            onClick={() => setConversationsOpen(!conversationsOpen)}
+            className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            {conversationsOpen ? (
+              <ChevronsLeft size={16} />
+            ) : (
               <ChevronsRight size={16} />
-            </button>
-          )}
+            )}
+          </button>
           <AgentMark icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
             <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
@@ -479,16 +477,16 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {agent.draft.modelName && (
-              <span className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
+          <div className="flex min-w-0 shrink items-center gap-2">
+            {agent.draft.modelName && !configureOpen && (
+              <span className="flex h-[34px] max-w-[220px] items-center gap-[7px] overflow-hidden rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
                 <span
                   className="size-[11px] shrink-0 rounded-[3px]"
                   style={{
                     backgroundColor: PROJECT_COLOR_PALETTE[agent.color].color,
                   }}
                 />
-                {agent.draft.modelName}
+                <span className="truncate">{agent.draft.modelName}</span>
               </span>
             )}
             {!configureOpen && (
@@ -525,36 +523,30 @@ const AgentEditorContent = () => {
         </div>
       </div>
 
-      <AnimatePresence initial={false}>
-        {configureOpen && (
-          <motion.aside
-            key="configure"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 452, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={PANEL_TRANSITION}
-            className="shrink-0 overflow-hidden border-l border-border"
-          >
-            <div className="flex h-full w-[452px] flex-col">
-              <ConfigurePanel
-                key={agent.updated}
-                agentId={agent.id}
-                icon={agent.icon}
-                color={agent.color}
-                displayName={agent.displayName}
-                defaults={{
-                  displayName: agent.displayName,
-                  description: agent.description ?? '',
-                  icon: agent.icon,
-                  color: agent.color,
-                  draft: agent.draft,
-                }}
-                onCollapse={() => setConfigureOpen(false)}
-              />
-            </div>
-          </motion.aside>
+      <aside
+        className={cn(
+          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
+          configureOpen ? 'w-[452px]' : 'w-0',
         )}
-      </AnimatePresence>
+      >
+        <div className="flex h-full w-[452px] flex-col">
+          <ConfigurePanel
+            key={agent.updated}
+            agentId={agent.id}
+            icon={agent.icon}
+            color={agent.color}
+            displayName={agent.displayName}
+            defaults={{
+              displayName: agent.displayName,
+              description: agent.description ?? '',
+              icon: agent.icon,
+              color: agent.color,
+              draft: agent.draft,
+            }}
+            onCollapse={() => setConfigureOpen(false)}
+          />
+        </div>
+      </aside>
     </div>
   );
 };

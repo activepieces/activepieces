@@ -2388,5 +2388,7 @@
   "Expand conversations": "Expand conversations",
   "Agent saved": "Agent saved",
   "Building your agent": "Building your agent",
-  "Picking the tools and writing its instructions...": "Picking the tools and writing its instructions..."
+  "Picking the tools and writing its instructions...": "Picking the tools and writing its instructions...",
+  "Collapse conversations": "Collapse conversations",
+  "Start from a template, or build one from scratch.": "Start from a template, or build one from scratch."
 }
