@@ -12,10 +12,6 @@ type RpcSocket = {
 
 type NotifySocket = Pick<RpcSocket, 'emit'>
 
-type RpcLog = {
-    error(obj: unknown, msg: string): void
-}
-
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
     timeoutMs: number,
@@ -84,4 +80,8 @@ export function createNotifyServer<T extends Contract>(
 
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
     return typeof value === 'object' && value !== null && '__rpcError' in value
+}
+
+type RpcLog = {
+    error(obj: unknown, msg: string): void
 }
