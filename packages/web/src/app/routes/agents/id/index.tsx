@@ -1,4 +1,4 @@
-import { unique } from '@activepieces/core-utils';
+import { isNil, unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
@@ -209,10 +209,12 @@ const SettingsFields = ({
 
 const ConfigureFields = ({
   form,
+  needsModel,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
+  needsModel: boolean;
 }) => (
   <>
     <FormField
@@ -242,6 +244,11 @@ const ConfigureFields = ({
       )}
     />
     <FormItem className="flex flex-col gap-[9px]">
+      {needsModel && (
+        <p className="text-[13px] leading-4 text-destructive">
+          {t('Pick a model so this agent can answer.')}
+        </p>
+      )}
       <AIModelSelector
         defaultProvider={form.watch('draft.provider') ?? undefined}
         defaultModel={form.watch('draft.modelName') ?? undefined}
@@ -299,6 +306,7 @@ const ConfigurePanel = ({
   icon,
   color,
   displayName,
+  needsModel,
   defaults,
   onCollapse,
 }: {
@@ -306,6 +314,7 @@ const ConfigurePanel = ({
   icon: AgentIcon;
   color: ColorName;
   displayName: string;
+  needsModel: boolean;
   defaults: ConfigureAgentInput;
   onCollapse: () => void;
 }) => {
@@ -364,8 +373,15 @@ const ConfigurePanel = ({
           </div>
           <Tabs value={tab} onValueChange={setTab} className="px-[18px]">
             <TabsList variant="outline" className="gap-[22px]">
-              <TabsTrigger value="configure" variant="outline">
+              <TabsTrigger
+                value="configure"
+                variant="outline"
+                className="gap-2"
+              >
                 {t('Configure')}
+                {needsModel && (
+                  <span className="size-[7px] rounded-full bg-destructive" />
+                )}
               </TabsTrigger>
               <TabsTrigger value="settings" variant="outline">
                 {t('Settings')}
@@ -377,7 +393,7 @@ const ConfigurePanel = ({
         <ScrollArea className="min-h-0 grow">
           <div className="flex flex-col gap-5 p-[18px]">
             {tab === 'configure' ? (
-              <ConfigureFields form={form} />
+              <ConfigureFields form={form} needsModel={needsModel} />
             ) : (
               <SettingsFields form={form} />
             )}
@@ -407,21 +423,32 @@ const ConfigurePanel = ({
 const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [configureOpen, setConfigureOpen] = useState(false);
+  const [configureOpen, setConfigureOpen] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
+  const [openedConversationId, setOpenedConversationId] =
+    useState(conversationId);
+  const [freshConversations, setFreshConversations] = useState(0);
 
-  const openConversation = (nextConversationId: string) => {
+  const writeConversationParam = (nextConversationId: string | null) => {
     const next = new URLSearchParams(searchParams);
-    next.set(CONVERSATION_QUERY_PARAM, nextConversationId);
+    if (nextConversationId === null) {
+      next.delete(CONVERSATION_QUERY_PARAM);
+    } else {
+      next.set(CONVERSATION_QUERY_PARAM, nextConversationId);
+    }
     setSearchParams(next, { replace: true });
   };
+  const openConversation = (nextConversationId: string) => {
+    setOpenedConversationId(nextConversationId);
+    writeConversationParam(nextConversationId);
+  };
   const startNewConversation = () => {
-    const next = new URLSearchParams(searchParams);
-    next.delete(CONVERSATION_QUERY_PARAM);
-    setSearchParams(next, { replace: true });
+    setOpenedConversationId(undefined);
+    setFreshConversations((count) => count + 1);
+    writeConversationParam(null);
   };
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
@@ -431,6 +458,9 @@ const AgentEditorContent = () => {
   if (isLoading || agent === undefined) {
     return <AgentEditorSkeleton />;
   }
+
+  const needsModel = isNil(agent.draft.modelName);
+  const isConfigureOpen = configureOpen ?? needsModel;
 
   return (
     <div className="flex h-full w-full">
@@ -444,7 +474,7 @@ const AgentEditorContent = () => {
           <ConversationList
             agentId={agent.id}
             hideSettings
-            selectedId={conversationId ?? null}
+            selectedId={openedConversationId ?? conversationId ?? null}
             onSelect={openConversation}
             onNewChat={startNewConversation}
           />
@@ -478,7 +508,7 @@ const AgentEditorContent = () => {
             </span>
           </div>
           <div className="flex min-w-0 shrink items-center gap-2">
-            {agent.draft.modelName && !configureOpen && (
+            {agent.draft.modelName && !isConfigureOpen && (
               <span className="flex h-[34px] max-w-[220px] items-center gap-[7px] overflow-hidden rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
                 <span
                   className="size-[11px] shrink-0 rounded-[3px]"
@@ -489,14 +519,17 @@ const AgentEditorContent = () => {
                 <span className="truncate">{agent.draft.modelName}</span>
               </span>
             )}
-            {!configureOpen && (
+            {!isConfigureOpen && (
               <button
                 type="button"
                 aria-label={t('Expand configuration')}
                 onClick={() => setConfigureOpen(true)}
-                className="flex size-[34px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="relative flex size-[34px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <ChevronsLeft size={16} />
+                {needsModel && (
+                  <span className="absolute top-[6px] right-[6px] size-[7px] rounded-full bg-destructive" />
+                )}
               </button>
             )}
           </div>
@@ -504,11 +537,11 @@ const AgentEditorContent = () => {
 
         <div className="flex min-h-0 grow flex-col">
           <AIChatBox
-            key={conversationId ?? 'new'}
+            key={openedConversationId ?? `new-${freshConversations}`}
             incognito={false}
             agentId={agent.id}
-            conversationId={conversationId ?? null}
-            onConversationCreated={openConversation}
+            conversationId={openedConversationId ?? null}
+            onConversationCreated={writeConversationParam}
             placeholder={t('Ask {name}...', { name: agent.displayName })}
             footerNote={buildCapabilityNote(agent)}
             emptyState={
@@ -526,7 +559,7 @@ const AgentEditorContent = () => {
       <aside
         className={cn(
           'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
-          configureOpen ? 'w-[452px]' : 'w-0',
+          isConfigureOpen ? 'w-[452px]' : 'w-0',
         )}
       >
         <div className="flex h-full w-[452px] flex-col">
@@ -536,6 +569,7 @@ const AgentEditorContent = () => {
             icon={agent.icon}
             color={agent.color}
             displayName={agent.displayName}
+            needsModel={needsModel}
             defaults={{
               displayName: agent.displayName,
               description: agent.description ?? '',

@@ -2390,5 +2390,6 @@
   "Building your agent": "Building your agent",
   "Picking the tools and writing its instructions...": "Picking the tools and writing its instructions...",
   "Collapse conversations": "Collapse conversations",
-  "Start from a template, or build one from scratch.": "Start from a template, or build one from scratch."
+  "Start from a template, or build one from scratch.": "Start from a template, or build one from scratch.",
+  "Pick a model so this agent can answer.": "Pick a model so this agent can answer."
 }
