@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -93,6 +94,7 @@ function baseEnv({ settings, networkMode }: { settings: SandboxSettings, network
         NODE_PATH: '/usr/src/node_modules',
         AP_NETWORK_MODE: networkMode,
         ...(settings.ENFORCE_CONNECTION_PIECE_BINDING ? { AP_ENFORCE_CONNECTION_PIECE_BINDING: 'true' } : {}),
+        ...(isNil(settings.REUSE_SANDBOX) ? {} : { AP_REUSE_SANDBOX: settings.REUSE_SANDBOX }),
     }
 }
 
