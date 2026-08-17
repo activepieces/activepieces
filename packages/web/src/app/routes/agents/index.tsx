@@ -37,7 +37,6 @@ import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 const SUGGESTIONS = [
@@ -103,9 +102,7 @@ const AgentsPageContent = () => {
   const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
     onSuccess: (agent) =>
-      navigate(
-        authenticationSession.appendProjectRoutePrefix(`/agents/${agent.id}`),
-      ),
+      navigate(`/projects/${agent.projectId}/agents/${agent.id}`),
   });
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
@@ -320,11 +317,7 @@ const AgentsPageContent = () => {
                   ]?.color
                 }
                 onClick={() =>
-                  navigate(
-                    authenticationSession.appendProjectRoutePrefix(
-                      `/agents/${agent.id}`,
-                    ),
-                  )
+                  navigate(`/projects/${agent.projectId}/agents/${agent.id}`)
                 }
               />
             ))}

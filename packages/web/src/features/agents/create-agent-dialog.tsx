@@ -35,7 +35,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { projectCollectionUtils } from '@/features/projects';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AgentMark } from './agent-mark';
@@ -103,9 +102,7 @@ const CreateAgentForm = ({
   const createAgent = agentsMutations.useCreateAgent({
     onSuccess: (agent) => {
       onOpenChange(false);
-      navigate(
-        authenticationSession.appendProjectRoutePrefix(`/agents/${agent.id}`),
-      );
+      navigate(`/projects/${agent.projectId}/agents/${agent.id}`);
     },
     onError: () =>
       form.setError('root.serverError', {

@@ -2,8 +2,9 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
+import { AgentIcon, CHAT_BYOK_CREDIT_WEIGHT, ColorName, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
 import { generateText, Output, zodSchema } from 'ai'
+import { z } from 'zod'
 import { FastifyBaseLogger } from 'fastify'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -13,6 +14,18 @@ import { agentHelpers } from './agent-helpers'
 const DRAFT_TIMEOUT_MS = 30_000
 const FAST_TIER_ID = 'fast'
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
+
+// Types and enums only. Structured output runs the schema through the provider, and a strict
+// provider rejects the length bounds and defaults that DraftAgentResponse carries, failing the
+// whole call. The bounds still apply: the generated object is parsed with DraftAgentResponse
+// below, which is also where the enum fallbacks land.
+const DraftGeneration = z.object({
+    displayName: z.string(),
+    description: z.string(),
+    icon: z.enum(AgentIcon),
+    color: z.enum(ColorName),
+    instructions: z.string(),
+})
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
@@ -28,7 +41,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             model,
             instructions: DRAFT_SYSTEM_PROMPT,
             prompt,
-            output: Output.object({ schema: zodSchema(DraftAgentResponse) }),
+            output: Output.object({ schema: zodSchema(DraftGeneration) }),
             telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
             abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
         }))
@@ -39,8 +52,16 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
                 params: { message: 'Could not draft an agent from that description, try rewording it' },
             })
         }
+        const parsed = DraftAgentResponse.safeParse(generated.output)
+        if (!parsed.success) {
+            log.warn({ error: parsed.error, platform: { id: platformId } }, '[agentDraftAi] Drafted an agent that did not fit the schema')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Could not draft an agent from that description, try rewording it' },
+            })
+        }
         await debitDraft({ platformId, projectId, log })
-        return generated.output
+        return parsed.data
     },
 })
 
