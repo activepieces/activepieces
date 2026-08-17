@@ -15,7 +15,6 @@ export enum SystemJobName {
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
-    OTP_CLEANUP = 'otp-cleanup',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -57,7 +56,6 @@ type SystemJobDataMap = {
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
-    [SystemJobName.OTP_CLEANUP]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

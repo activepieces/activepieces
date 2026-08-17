@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { timingSafeEqual } from 'node:crypto'
 import { apId, isNil, PlatformId } from '@activepieces/core-utils'
 import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock, distributedStore } from '../../database/redis-connections'
 import { emailService } from '../../ee/helper/email/email-service'
-import { jwtUtils } from '../../helper/jwt-utils'
+import { encryptUtils } from '../../helper/encryption'
 import { userIdentityService } from '../user-identity/user-identity-service'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
@@ -49,7 +49,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     updated: dayjs().toISOString(),
                     type,
                     identityId,
-                    value: await digestOf(freshCode),
+                    value: await encryptUtils.hmacString(freshCode),
                     state: OtpState.PENDING,
                     attempts: 0,
                 }
@@ -64,23 +64,6 @@ export const otpService = (log: FastifyBaseLogger) => ({
             otp: code,
             type,
         })
-    },
-
-    async deleteExpired(): Promise<number> {
-        const removedPerType = await Promise.all(
-            Object.entries(OTP_EXPIRATION_MS).map(async ([type, lifetimeMs]) => {
-                const result = await repo()
-                    .createQueryBuilder()
-                    .delete()
-                    .where('type = :type AND updated < :cutoff', {
-                        type,
-                        cutoff: dayjs().subtract(lifetimeMs, 'millisecond').toISOString(),
-                    })
-                    .execute()
-                return result.affected ?? 0
-            }),
-        )
-        return removedPerType.reduce((total, removed) => total + removed, 0)
     },
 
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
@@ -106,7 +89,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     return false
                 }
                 const otpIsPending = otp.state === OtpState.PENDING
-                const otpMatches = digestsMatch(otp.value, await digestOf(value))
+                const otpMatches = digestsMatch(otp.value, await encryptUtils.hmacString(value))
                 if (otpMatches && otpIsPending) {
                     await repo().delete({ id: otp.id })
                     await forgetCachedCode({ identityId, type })
@@ -132,11 +115,6 @@ async function discard({ otp, identityId, type, log }: DiscardParams): Promise<v
     await repo().delete({ id: otp.id })
     await forgetCachedCode({ identityId, type })
     log.warn({ identityId, type }, '[otpService#confirm] credential discarded')
-}
-
-async function digestOf(code: string): Promise<string> {
-    const secret = await jwtUtils.getJwtSecret()
-    return createHmac('sha256', secret).update(code).digest('hex')
 }
 
 function digestsMatch(stored: string, candidate: string): boolean {

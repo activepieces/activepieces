@@ -148,26 +148,6 @@ describe('otpService#createAndSend at rest', () => {
     })
 })
 
-describe('otpService#deleteExpired', () => {
-    it('removes a code that has outlived its window', async () => {
-        await seedIdentityWithCode()
-        await backdateCode(11)
-
-        await otpService(app!.log).deleteExpired()
-
-        expect(await currentOtp()).toBeNull()
-    })
-
-    it('leaves a code that is still in flight alone', async () => {
-        const issued = await seedIdentityWithCode()
-
-        await otpService(app!.log).deleteExpired()
-
-        expect(await currentOtp()).not.toBeNull()
-        expect(await confirmCode(issued)).toBe(true)
-    })
-})
-
 describe('otpService#confirm', () => {
     it('throws an expired code away rather than leaving it to linger', async () => {
         const value = await seedIdentityWithCode()
