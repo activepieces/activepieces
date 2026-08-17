@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
 import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
@@ -11,6 +12,7 @@ import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/platform-plan.entity'
 import { encryptUtils } from '../../../src/app/helper/encryption'
+import { jwtUtils } from '../../../src/app/helper/jwt-utils'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
 
@@ -369,6 +371,13 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
         attempts: otp?.attempts ?? 0,
     }
+}
+
+export const createMockOtpWithCode = async (otp?: Partial<OtpModel>): Promise<MockOtpWithCode> => {
+    const code = otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString()
+    const secret = await jwtUtils.getJwtSecret()
+    const value = createHmac('sha256', secret).update(code).digest('hex')
+    return { otp: createMockOtp({ ...otp, value }), code }
 }
 
 export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
@@ -780,4 +789,9 @@ type MockBasicSetupParams = {
     plan?: Partial<PlatformPlan>
     platform?: Partial<Platform>
     project?: Partial<Project>
+}
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
 }
