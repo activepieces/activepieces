@@ -2385,7 +2385,8 @@
   "Collapse": "Collapse",
   "Expand configuration": "Expand configuration",
   "Collapse configuration": "Collapse configuration",
-  "No conversations yet": "No conversations yet",
-  "Collapse conversations": "Collapse conversations",
-  "Expand conversations": "Expand conversations"
+  "Expand conversations": "Expand conversations",
+  "Agent saved": "Agent saved",
+  "Building your agent": "Building your agent",
+  "Picking the tools and writing its instructions...": "Picking the tools and writing its instructions..."
 }

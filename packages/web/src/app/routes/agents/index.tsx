@@ -142,12 +142,18 @@ const AgentsPageContent = () => {
             "Describe what you need. I'll pick the tools and set up the steps.",
           )}
         </p>
-        <div className="mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-border bg-muted ps-5 pe-2 py-2">
+        <div
+          className={cn(
+            'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
+            isBuilding ? 'border-primary/40' : 'border-border',
+          )}
+        >
           <Textarea
             value={prompt}
             minRows={1}
             maxRows={8}
             maxLength={MAX_DRAFT_PROMPT_LENGTH}
+            disabled={isBuilding}
             onChange={(event) => setPrompt(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {

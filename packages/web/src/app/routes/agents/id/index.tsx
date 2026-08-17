@@ -12,16 +12,19 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AnimatePresence, motion } from 'framer-motion';
 import { t } from 'i18next';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -38,7 +41,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
-import { AgentConversationList } from '@/features/agents/agent-conversation-list';
 import { AgentMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
@@ -95,6 +97,7 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+const PANEL_TRANSITION = { duration: 0.22, ease: [0.35, 0, 0.25, 1] } as const;
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -319,6 +322,10 @@ const ConfigurePanel = ({
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
+      onSuccess: () => {
+        form.reset(values);
+        toast(t('Agent saved'));
+      },
       onError: (error) =>
         form.setError('root.serverError', {
           type: 'manual',
@@ -388,6 +395,7 @@ const ConfigurePanel = ({
           <Button
             type="submit"
             loading={updateAgent.isPending}
+            disabled={!form.formState.isDirty}
             className="h-[38px] rounded-lg px-[18px]"
           >
             {t('Save changes')}
@@ -428,17 +436,28 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
-      {conversationsOpen && (
-        <aside className="flex w-[260px] shrink-0 flex-col border-r border-border">
-          <AgentConversationList
-            agentId={agent.id}
-            activeConversationId={conversationId}
-            onSelect={openConversation}
-            onNewConversation={startNewConversation}
-            onCollapse={() => setConversationsOpen(false)}
-          />
-        </aside>
-      )}
+      <AnimatePresence initial={false}>
+        {conversationsOpen && (
+          <motion.aside
+            key="conversations"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 260, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={PANEL_TRANSITION}
+            className="shrink-0 overflow-hidden border-r border-border"
+          >
+            <div className="flex h-full w-[260px] flex-col">
+              <ConversationList
+                agentId={agent.id}
+                hideSettings
+                selectedId={conversationId ?? null}
+                onSelect={openConversation}
+                onNewChat={startNewConversation}
+              />
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
           {!conversationsOpen && (
@@ -506,25 +525,36 @@ const AgentEditorContent = () => {
         </div>
       </div>
 
-      {configureOpen && (
-        <aside className="flex w-[452px] shrink-0 flex-col border-l border-border">
-          <ConfigurePanel
-            key={agent.updated}
-            agentId={agent.id}
-            icon={agent.icon}
-            color={agent.color}
-            displayName={agent.displayName}
-            defaults={{
-              displayName: agent.displayName,
-              description: agent.description ?? '',
-              icon: agent.icon,
-              color: agent.color,
-              draft: agent.draft,
-            }}
-            onCollapse={() => setConfigureOpen(false)}
-          />
-        </aside>
-      )}
+      <AnimatePresence initial={false}>
+        {configureOpen && (
+          <motion.aside
+            key="configure"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 452, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={PANEL_TRANSITION}
+            className="shrink-0 overflow-hidden border-l border-border"
+          >
+            <div className="flex h-full w-[452px] flex-col">
+              <ConfigurePanel
+                key={agent.updated}
+                agentId={agent.id}
+                icon={agent.icon}
+                color={agent.color}
+                displayName={agent.displayName}
+                defaults={{
+                  displayName: agent.displayName,
+                  description: agent.description ?? '',
+                  icon: agent.icon,
+                  color: agent.color,
+                  draft: agent.draft,
+                }}
+                onCollapse={() => setConfigureOpen(false)}
+              />
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
