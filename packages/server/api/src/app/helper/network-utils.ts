@@ -59,12 +59,6 @@ const getPublicIp = async (): Promise<IpMetadata> => {
     }
 }
 
-// The forwarded header is only meaningful when a proxy we run put it there. Taken from a
-// direct caller it is attacker-controlled, and since it keys the authentication rate limit
-// that turns the limit into a formality: rotate the header, get a fresh bucket every
-// request. Honour it only when the connection reached us through a loopback or private-range
-// peer, which is where a reverse proxy sits, and fall back to the socket address otherwise —
-// never to an empty key, which would collapse every header-less caller into one bucket.
 const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | undefined): string => {
     if (isNil(clientIpHeader) || !forwardedHeaderIsTrustworthy(request)) {
         return request.ip
