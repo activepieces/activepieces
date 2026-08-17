@@ -6,7 +6,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
-import { triggerHelper } from '../helper/trigger-helper'
+import { pieceClient } from '../piece-process/piece-client'
 import { utils } from '../utils'
 import { resolveJobPayload } from './utils/resolve-job-payload'
 
@@ -183,7 +183,7 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
-    const newPayload = await triggerHelper.executeTrigger({
+    const newPayload = await pieceClient.executeTrigger({
         params: {
             ...input,
             hookType: TriggerHookType.RUN,

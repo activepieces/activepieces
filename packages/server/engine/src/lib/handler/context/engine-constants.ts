@@ -10,7 +10,7 @@ type RetryConstants = {
     retryInterval: number
 }
 
-type EngineConstantsParams = {
+export type EngineConstantsParams = {
     flowId: string
     flowVersionId: string
     flowVersionState: FlowVersionState
@@ -193,6 +193,32 @@ export class EngineConstants {
     public externalProjectId = async (): Promise<string | undefined> => {
         const project = await this.getProject()
         return project.externalId ?? undefined
+    }
+}
+
+export function engineConstantsToParams(constants: EngineConstants): EngineConstantsParams {
+    return {
+        flowId: constants.flowId,
+        flowVersionId: constants.flowVersionId,
+        flowVersionState: constants.flowVersionState,
+        triggerPieceName: constants.triggerPieceName,
+        flowRunId: constants.flowRunId,
+        publicApiUrl: constants.publicApiUrl,
+        internalApiUrl: constants.internalApiUrl,
+        retryConstants: constants.retryConstants,
+        engineToken: constants.engineToken,
+        projectId: constants.projectId,
+        streamStepProgress: constants.streamStepProgress,
+        workerHandlerId: constants.workerHandlerId,
+        httpRequestId: constants.httpRequestId,
+        resumePayload: constants.resumePayload,
+        runEnvironment: constants.runEnvironment,
+        stepNameToTest: constants.stepNameToTest,
+        logsFileId: constants.logsFileId,
+        timeoutInSeconds: constants.timeoutInSeconds,
+        platformId: constants.platformId,
+        stepNames: constants.stepNames,
+        actionRunMode: constants.actionRunMode,
     }
 }
 

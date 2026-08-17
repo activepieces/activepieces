@@ -5,13 +5,13 @@ import {
     ExecuteExtractPieceMetadataOperation,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { pieceHelper } from '../helper/piece-helper'
+import { pieceClient } from '../piece-process/piece-client'
 
 
 export const pieceMetadataOperation = {
     extract: async (operation: ExecuteExtractPieceMetadataOperation): Promise<EngineResponse<PieceMetadata>>  => {
         const input = operation as ExecuteExtractPieceMetadataOperation
-        const output = await pieceHelper.extractPieceMetadata({
+        const output = await pieceClient.extractPieceMetadata({
             params: input,
             devPieces: EngineConstants.DEV_PIECES,
         })

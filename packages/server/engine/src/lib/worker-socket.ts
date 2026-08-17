@@ -10,6 +10,7 @@ import {
 import { io, type ManagerOptions, type Socket, type SocketOptions } from 'socket.io-client'
 import { flowRunProgressReporter } from './helper/flow-run-progress-reporter'
 import { execute } from './operations'
+import { pieceHost } from './piece-process/piece-host'
 
 const INITIAL_CONNECT_TIMEOUT_MS = 60_000
 
@@ -90,6 +91,9 @@ export const workerSocket = {
                     return JSON.parse(JSON.stringify(response)) as EngineResponse<unknown>
                 }
                 finally {
+                    // Kill the per-operation piece host (and every piece module it loaded) so the
+                    // reused engine never accumulates piece modules. No-op when nothing was offloaded.
+                    pieceHost.kill()
                     await flowRunProgressReporter.shutdown()
                 }
             },

@@ -4,12 +4,12 @@ import {
     EngineResponseStatus,
     ExecutePropsOptions,
 } from '@activepieces/shared'
-import { pieceHelper } from '../helper/piece-helper'
+import { pieceClient } from '../piece-process/piece-client'
 
 
 export const propertyOperation = {
     execute: async (operation: ExecutePropsOptions): Promise<EngineResponse<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>>> => {
-        const output = await pieceHelper.executeProps({
+        const output = await pieceClient.executeProps({
             ...operation,
             pieceName: operation.piece.pieceName,
             pieceVersion: operation.piece.pieceVersion,

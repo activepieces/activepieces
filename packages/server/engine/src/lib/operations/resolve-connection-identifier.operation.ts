@@ -5,11 +5,11 @@ import {
     ExecuteResolveConnectionIdentifierResponse,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { pieceHelper } from '../helper/piece-helper'
+import { pieceClient } from '../piece-process/piece-client'
 
 export const resolveConnectionIdentifierOperation = {
     execute: async (operation: ExecuteResolveConnectionIdentifierOperation): Promise<EngineResponse<ExecuteResolveConnectionIdentifierResponse>> => {
-        const output = await pieceHelper.executeResolveConnectionIdentifier({
+        const output = await pieceClient.executeResolveConnectionIdentifier({
             params: operation,
             devPieces: EngineConstants.DEV_PIECES,
         })

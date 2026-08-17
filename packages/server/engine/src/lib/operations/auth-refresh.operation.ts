@@ -5,11 +5,11 @@ import {
     ExecuteRefreshTokenAuthResponse,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { pieceHelper } from '../helper/piece-helper'
+import { pieceClient } from '../piece-process/piece-client'
 
 export const authRefreshOperation = {
     execute: async (operation: ExecuteRefreshTokenAuthOperation): Promise<EngineResponse<ExecuteRefreshTokenAuthResponse>> => {
-        const output = await pieceHelper.executeRefreshTokenAuth({
+        const output = await pieceClient.executeRefreshTokenAuth({
             params: operation,
             devPieces: EngineConstants.DEV_PIECES,
         })

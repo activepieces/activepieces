@@ -2,7 +2,7 @@ import { inspect } from 'util'
 import { formatPieceError } from '@activepieces/core-utils'
 import { EngineResponse, EngineResponseStatus, ExecuteTriggerOperation, ExecuteTriggerResponse, TriggerHookType } from '@activepieces/shared'
 import { EngineConstants, ResolvedExecuteTriggerOperation } from '../handler/context/engine-constants'
-import { triggerHelper } from '../helper/trigger-helper'
+import { pieceClient } from '../piece-process/piece-client'
 import { utils } from '../utils'
 import { resolveJobPayload } from './utils/resolve-job-payload'
 
@@ -18,7 +18,7 @@ export const triggerHookOperation = {
             }),
         }
         const { data: output, error } = await utils.tryCatchAndThrowOnEngineError(() =>
-            triggerHelper.executeTrigger({
+            pieceClient.executeTrigger({
                 params: input,
                 constants: EngineConstants.fromExecuteTriggerInput(input),
             }),

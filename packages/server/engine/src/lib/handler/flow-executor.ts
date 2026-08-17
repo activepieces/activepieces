@@ -4,7 +4,7 @@ import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunS
 import dayjs from 'dayjs'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
-import { triggerHelper } from '../helper/trigger-helper'
+import { pieceClient } from '../piece-process/piece-client'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
@@ -49,7 +49,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await pieceClient.executeOnStart(trigger, constants, input.triggerPayload)
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
