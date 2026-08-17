@@ -119,6 +119,8 @@ Register in `app.ts`, in the CE or EE section. EE-only modules live under `src/a
 
 Queued work: add to `SystemJobName` or `WorkerJobType` in shared, register the handler via `systemJobHandlers.registerJobHandler()` in `app.ts`.
 
+**Retiring a `SystemJobName` is two steps, and doing only the first orphans jobs forever.** Deleting the enum member removes it from `knownJobNames`, but `isDeprecated()` in `system-job.ts` is `!knownJobNames.includes(name) && deprecatedJobs.some(d => name.startsWith(d))` — so a name that is unknown *and* unlisted matches neither branch and is never swept. Whatever is already queued in Redis then survives every `init()`, and `getJobHandler` throws `No handler for job <name>` on each scan, forever. So also **add the string literal to the `deprecatedJobs` array** in the same file; the 14 names already there are the precedent. Seed one in `test/unit/app/helper/system-jobs/remove-deprecated-jobs.test.ts` — its assertions compare the whole remaining queue, so a seeded job is covered for free.
+
 ## Tests
 
 `packages/server/api/test/integration/ce/{feature}.test.ts`, using `setupTestEnvironment()` + `createTestContext(app)` → `ctx.post()` / `ctx.get()`. The DB is cleaned between tests.
