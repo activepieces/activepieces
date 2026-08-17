@@ -237,7 +237,6 @@ function toSummary(agent: Agent, project?: Project): AgentSummary {
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,
         toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
-        isPublished: !isNil(agent.published),
     }
 }
 

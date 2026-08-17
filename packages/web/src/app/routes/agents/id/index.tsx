@@ -473,7 +473,6 @@ const AgentEditorContent = () => {
         <div className="flex h-full w-[220px] flex-col">
           <ConversationList
             agentId={agent.id}
-            hideSettings
             selectedId={openedConversationId ?? conversationId ?? null}
             onSelect={openConversation}
             onNewChat={startNewConversation}

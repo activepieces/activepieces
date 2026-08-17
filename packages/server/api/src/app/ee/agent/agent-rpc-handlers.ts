@@ -33,11 +33,7 @@ import { pieceToolRunner } from './tools/piece-tool-runner'
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
-// Internal bookkeeping the attended surfaces need: cancellation polling, approval gates and the
-// connection picker. An unattended flow step has no reader for any of them.
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
-// A run whose tools were configured up front rather than discovered: a flow step, or a
-// conversation with a saved agent. Both carry the project the tools belong to.
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
@@ -172,9 +168,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
         const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
-        // The owner's chat memory, MCP token and email address belong to the chat surface. A saved
-        // agent answers from its own instructions, so carrying one person's remembered preferences
-        // into it would change how it behaves for everyone who talks to it.
+        // A saved agent answers from its own instructions, so one person's remembered preferences
+        // must not change how it behaves for everyone else who talks to it.
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT
 
         const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
@@ -245,13 +240,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        // Chat picks a tier and the tier picks the model. A flow step and a saved agent both name
-        // the model itself, so running anything else would quietly ignore what the builder or the
-        // configuration panel shows. Routing a concrete model id through the tier resolver would
-        // not fail either: it finds no tier by that name and silently returns the default one.
-        const namesItsOwnModel = !carriesChatContext
-        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
-        const resolvedModelId = namesItsOwnModel && !isNil(modelName)
+        // The tier resolver finds no tier for a concrete model id and silently returns the default,
+        // so a source that names its own model must never be routed through it.
+        const tier = agentHelpers.resolveTier({ tierId: carriesChatContext ? selectedModel : null })
+        const resolvedModelId = !carriesChatContext && !isNil(modelName)
             ? modelName
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
@@ -604,14 +596,12 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
-        if (ATTENDED_STATE_TOOLS.includes(input.toolName)) {
-            if (input.source === AgentRunSource.FLOW_STEP) {
-                log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected an attended-only tool for an unattended run — the worker should not have called it')
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: { message: `Tool "${input.toolName}" is only available to attended runs` },
-                })
-            }
+        if (ATTENDED_STATE_TOOLS.includes(input.toolName) && input.source === AgentRunSource.FLOW_STEP) {
+            log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected an attended-only tool for an unattended run — the worker should not have called it')
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: `Tool "${input.toolName}" is only available to attended runs` },
+            })
         }
         const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
             && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))

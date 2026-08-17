@@ -60,14 +60,12 @@ type AgentMarkProps = {
   icon: AgentIcon;
   color: ColorName;
   size?: keyof typeof SIZES;
-  className?: string;
 };
 
 export const AgentMark = ({
   icon,
   color,
   size = 'default',
-  className,
 }: AgentMarkProps) => {
   const shape = SHAPE_BY_ICON[icon];
   const eyes = EYES_BY_SHAPE[shape] ?? { cy: 24, dx: 5 };
@@ -77,7 +75,6 @@ export const AgentMark = ({
       className={cn(
         'flex shrink-0 items-center justify-center border border-[#E7E7EA] bg-background',
         SIZES[size].box,
-        className,
       )}
     >
       <svg

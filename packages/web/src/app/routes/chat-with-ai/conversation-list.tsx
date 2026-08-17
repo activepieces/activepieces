@@ -31,7 +31,6 @@ export function ConversationList({
   className,
   mobile = false,
   agentId,
-  hideSettings = false,
 }: {
   onSelect?: (id: string) => void;
   onNewChat?: () => void;
@@ -39,7 +38,6 @@ export function ConversationList({
   className?: string;
   mobile?: boolean;
   agentId?: string;
-  hideSettings?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -287,7 +285,7 @@ export function ConversationList({
           <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
         )}
       </div>
-      {!hideSettings && (
+      {agentId === undefined && (
         <div className="shrink-0 border-t px-2 py-2">
           <button
             type="button"

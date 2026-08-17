@@ -135,12 +135,16 @@ const AgentsPageContent = () => {
     <div className="flex w-full flex-col">
       <section className="flex flex-col items-center gap-2 px-12 pt-8">
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
-          {t('What should your agent do?')}
+          {isBuilding
+            ? t('Building your agent')
+            : t('What should your agent do?')}
         </h1>
         <p className="text-[15px] leading-[18px] text-muted-foreground">
-          {t(
-            "Describe what you need. I'll pick the tools and set up the steps.",
-          )}
+          {isBuilding
+            ? t('Picking the tools and writing its instructions')
+            : t(
+                "Describe what you need. I'll pick the tools and set up the steps.",
+              )}
         </p>
         <div
           className={cn(

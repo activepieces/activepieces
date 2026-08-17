@@ -5,8 +5,6 @@ import {
   UpdateAgentRequest,
 } from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 
@@ -68,39 +66,6 @@ export const agentsMutations = {
         agentsApi.update(id, request),
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
-      },
-      onError: internalErrorToast,
-    });
-  },
-  usePublishAgent: ({ id }: { id: string }) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: () => agentsApi.publish(id),
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
-        toast(t('Agent published'));
-      },
-      onError: internalErrorToast,
-    });
-  },
-  useUnpublishAgent: ({ id }: { id: string }) => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: () => agentsApi.unpublish(id),
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
-        toast(t('Agent unpublished'));
-      },
-      onError: internalErrorToast,
-    });
-  },
-  useDeleteAgent: () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-      mutationFn: (id: string) => agentsApi.delete(id),
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
-        toast(t('Agent deleted'));
       },
       onError: internalErrorToast,
     });

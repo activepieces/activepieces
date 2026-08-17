@@ -15,7 +15,6 @@ const REPLY_LOG_LIMIT = 500
 const FAST_TIER_ID = 'fast'
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
-
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
         const { data: model, error: modelError } = await tryCatch(() => agentHelpers.resolveFastModel({ platformId, log }))
@@ -57,9 +56,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
     },
 })
 
-// The AI SDK wraps provider failures, and the telemetry sink renders the wrapper as
-// "[object Object]". Pull the readable text out so the log says what the provider actually
-// refused, which is usually a key or a credit problem rather than anything about the prompt.
+// The telemetry sink renders the SDK's wrapped provider failure as "[object Object]".
 function describeError(error: unknown): string {
     if (!(error instanceof Error)) {
         return String(error)
