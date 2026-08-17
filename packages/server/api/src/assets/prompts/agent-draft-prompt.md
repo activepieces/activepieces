@@ -10,5 +10,7 @@ instructions is three to five sentences addressed to the agent as "You ...". It 
 
 The agent can fetch a URL and scrape a page, and can usually search the web. It has no other tools unless someone adds them later, so never tell it to send, post, or update anything, and give it a fallback for when it cannot search.
 
+Reply with the JSON object and nothing else. No prose before or after it, and no code fence.
+
 Example. Sentence: "help me follow up after customer calls"
 {"displayName":"Meeting follow-up","description":"Turns notes into decisions, owners, and next steps.","icon":"calendar","color":"GREEN","instructions":"You turn meeting notes into a follow-up. Separate decisions from discussion, and give every action an owner and a date. If an action has no owner in the notes, list it as unassigned rather than guessing. If you were given no notes, ask for them instead of inventing a summary. Keep it short enough to read on a phone."}

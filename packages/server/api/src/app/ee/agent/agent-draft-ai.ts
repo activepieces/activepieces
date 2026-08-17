@@ -1,10 +1,9 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentIcon, CHAT_BYOK_CREDIT_WEIGHT, ColorName, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
-import { generateText, Output, zodSchema } from 'ai'
-import { z } from 'zod'
+import { CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -12,20 +11,10 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { agentHelpers } from './agent-helpers'
 
 const DRAFT_TIMEOUT_MS = 30_000
+const REPLY_LOG_LIMIT = 500
 const FAST_TIER_ID = 'fast'
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
-// Types and enums only. Structured output runs the schema through the provider, and a strict
-// provider rejects the length bounds and defaults that DraftAgentResponse carries, failing the
-// whole call. The bounds still apply: the generated object is parsed with DraftAgentResponse
-// below, which is also where the enum fallbacks land.
-const DraftGeneration = z.object({
-    displayName: z.string(),
-    description: z.string(),
-    icon: z.enum(AgentIcon),
-    color: z.enum(ColorName),
-    instructions: z.string(),
-})
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
@@ -37,33 +26,50 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const { data: generated, error: generateError } = await tryCatch(() => generateText({
-            model,
-            instructions: DRAFT_SYSTEM_PROMPT,
-            prompt,
-            output: Output.object({ schema: zodSchema(DraftGeneration) }),
-            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
-            abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
-        }))
-        if (!isNil(generateError) || isNil(generated)) {
-            log.warn({ error: generateError, platform: { id: platformId } }, '[agentDraftAi] Could not draft an agent')
+        const { data: raw, error: generateError } = await tryCatch(async () => {
+            const { text } = await generateText({
+                model,
+                instructions: DRAFT_SYSTEM_PROMPT,
+                prompt,
+                telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
+                abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
+            })
+            return text
+        })
+        if (!isNil(generateError) || isNil(raw)) {
+            log.error({ error: generateError, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: 'Could not draft an agent from that description, try rewording it' },
+                params: { message: 'Could not reach the AI provider to draft an agent, check the provider configuration' },
             })
         }
-        const parsed = DraftAgentResponse.safeParse(generated.output)
-        if (!parsed.success) {
-            log.warn({ error: parsed.error, platform: { id: platformId } }, '[agentDraftAi] Drafted an agent that did not fit the schema')
+
+        const parsed = parseDraft(raw)
+        if (isNil(parsed)) {
+            log.error({ platform: { id: platformId }, reply: raw.slice(0, REPLY_LOG_LIMIT) }, '[agentDraftAi] The model replied with something that is not a draft')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Could not draft an agent from that description, try rewording it' },
             })
         }
         await debitDraft({ platformId, projectId, log })
-        return parsed.data
+        return parsed
     },
 })
+
+function parseDraft(raw: string): DraftAgentResponse | null {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    if (start === -1 || end <= start) {
+        return null
+    }
+    const { data: json, error } = tryCatchSync(() => JSON.parse(raw.slice(start, end + 1)))
+    if (!isNil(error)) {
+        return null
+    }
+    const parsed = DraftAgentResponse.safeParse(json)
+    return parsed.success ? parsed.data : null
+}
 
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {
