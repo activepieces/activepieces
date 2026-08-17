@@ -2380,5 +2380,7 @@
   "Ask {name}...": "Ask {name}...",
   "{name} can use {tools} and replies may need review": "{name} can use {tools} and replies may need review",
   "{name} has no tools yet, so replies may need review": "{name} has no tools yet, so replies may need review",
-  "Describe what you need. I'll pick the tools and set up the steps.": "Describe what you need. I'll pick the tools and set up the steps."
+  "Describe what you need. I'll pick the tools and set up the steps.": "Describe what you need. I'll pick the tools and set up the steps.",
+  "Shape": "Shape",
+  "Collapse": "Collapse"
 }

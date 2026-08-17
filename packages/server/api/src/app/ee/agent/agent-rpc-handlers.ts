@@ -172,6 +172,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
         const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
+        // The owner's chat memory, MCP token and email address belong to the chat surface. A saved
+        // agent answers from its own instructions, so carrying one person's remembered preferences
+        // into it would change how it behaves for everyone who talks to it.
+        const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT
 
         const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
@@ -180,7 +184,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUserEmail] = isFlowStep
+        const [scopedMcpCredentials, runMemory, runUserEmail] = !carriesChatContext
             ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, '']
             : await Promise.all([
                 agentMcp.getCredentials({ platformId, userId, log }),

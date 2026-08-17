@@ -2,7 +2,9 @@ import { unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
+  AgentIcon,
   AgentToolType,
+  ColorName,
   DEFAULT_AGENT_MAX_STEPS,
   MAX_AGENT_STEP_BUDGET,
   PROJECT_COLOR_PALETTE,
@@ -11,7 +13,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { Settings2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
@@ -20,7 +22,6 @@ import { z } from 'zod';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -32,7 +33,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,10 +45,13 @@ import {
 } from '@/features/agents/hooks/agents-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const ConfigureAgentSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
   description: z.string(),
+  icon: z.enum(AgentIcon),
+  color: z.enum(ColorName),
   draft: AgentConfig,
 });
 
@@ -58,6 +61,8 @@ type ConfigureAgentValues = z.output<typeof ConfigureAgentSchema>;
 const toUpdateRequest = (values: ConfigureAgentValues): UpdateAgentRequest => ({
   displayName: values.displayName,
   description: values.description.length > 0 ? values.description : null,
+  icon: values.icon,
+  color: values.color,
   draft: values.draft,
 });
 
@@ -65,6 +70,9 @@ const parseProvider = (provider?: string) => {
   const parsed = AgentConfig.shape.provider.safeParse(provider ?? null);
   return parsed.success ? parsed.data : null;
 };
+
+const pieceDisplayName = (pieceName: string): string =>
+  pieceName.replace('@activepieces/piece-', '');
 
 const buildCapabilityNote = (agent: Agent): string => {
   const toolNames = unique(
@@ -85,9 +93,6 @@ const buildCapabilityNote = (agent: Agent): string => {
   });
 };
 
-const pieceDisplayName = (pieceName: string): string =>
-  pieceName.replace('@activepieces/piece-', '');
-
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
     <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
@@ -100,15 +105,207 @@ const AgentEditorSkeleton = () => (
   </div>
 );
 
+const SettingsFields = ({
+  form,
+}: {
+  form: ReturnType<
+    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
+  >;
+}) => (
+  <>
+    <FormField
+      control={form.control}
+      name="displayName"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
+          <FormControl>
+            <Input {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="description"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel>{t('Description')}</FormLabel>
+          <FormControl>
+            <Textarea {...field} minRows={2} maxRows={4} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="icon"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel>{t('Shape')}</FormLabel>
+          <div className="grid grid-cols-6 gap-2">
+            {Object.values(AgentIcon).map((iconName) => (
+              <button
+                key={iconName}
+                type="button"
+                aria-label={iconName}
+                onClick={() => field.onChange(iconName)}
+                className={cn(
+                  'flex items-center justify-center rounded-[10px] p-[3px]',
+                  field.value === iconName && 'ring-2 ring-foreground',
+                )}
+              >
+                <AgentMark
+                  icon={iconName}
+                  color={form.watch('color')}
+                  size="sm"
+                />
+              </button>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="color"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel>{t('Color')}</FormLabel>
+          <div className="grid grid-cols-6 gap-2">
+            {Object.values(ColorName).map((colorName) => (
+              <button
+                key={colorName}
+                type="button"
+                aria-label={colorName}
+                onClick={() => field.onChange(colorName)}
+                className={cn(
+                  'flex items-center justify-center rounded-full p-[3px]',
+                  field.value === colorName && 'ring-2 ring-foreground',
+                )}
+              >
+                <span
+                  className="size-6 rounded-full"
+                  style={{
+                    backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  </>
+);
+
+const ConfigureFields = ({
+  form,
+}: {
+  form: ReturnType<
+    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
+  >;
+}) => (
+  <>
+    <FormField
+      control={form.control}
+      name="draft.instructions"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel showRequiredIndicator>{t('Instructions')}</FormLabel>
+          <FormControl>
+            <Textarea {...field} minRows={4} maxRows={12} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="draft.tools"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <AgentTools
+            toolsField={field}
+            selectedProvider={form.watch('draft.provider') ?? undefined}
+          />
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormItem className="flex flex-col gap-[9px]">
+      <AIModelSelector
+        defaultProvider={form.watch('draft.provider') ?? undefined}
+        defaultModel={form.watch('draft.modelName') ?? undefined}
+        onChange={({ provider, model }) => {
+          form.setValue('draft.provider', parseProvider(provider), {
+            shouldDirty: true,
+          });
+          form.setValue('draft.modelName', model ?? null, {
+            shouldDirty: true,
+          });
+        }}
+      />
+    </FormItem>
+    <FormField
+      control={form.control}
+      name="draft.structuredOutput"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <AgentStructuredOutput
+            disabled={false}
+            structuredOutputField={field}
+          />
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="draft.maxSteps"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <FormLabel>{t('Max steps')}</FormLabel>
+          <FormControl>
+            <Input
+              type="number"
+              min={1}
+              max={MAX_AGENT_STEP_BUDGET}
+              value={field.value}
+              onChange={(event) =>
+                field.onChange(
+                  Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
+                )
+              }
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  </>
+);
+
 const ConfigurePanel = ({
   agentId,
+  icon,
+  color,
+  displayName,
   defaults,
-  onOpenChange,
+  onCollapse,
 }: {
   agentId: string;
+  icon: AgentIcon;
+  color: ColorName;
+  displayName: string;
   defaults: ConfigureAgentInput;
-  onOpenChange: (open: boolean) => void;
+  onCollapse: () => void;
 }) => {
+  const [tab, setTab] = useState('configure');
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: defaults,
@@ -119,7 +316,6 @@ const ConfigurePanel = ({
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
-      onSuccess: () => onOpenChange(false),
       onError: (error) =>
         form.setError('root.serverError', {
           type: 'manual',
@@ -135,114 +331,48 @@ const ConfigurePanel = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex min-h-0 grow flex-col"
+        className="flex h-full min-h-0 flex-col"
       >
+        <div className="flex shrink-0 flex-col border-b border-border">
+          <div className="flex items-center gap-[14px] px-[18px] py-3">
+            <AgentMark icon={icon} color={color} size="sm" />
+            <div className="flex min-w-0 grow basis-0 flex-col">
+              <span className="truncate text-sm font-semibold">
+                {displayName}
+              </span>
+              <span className="text-[13px] leading-4 text-muted-foreground">
+                {t('Agent configuration')}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t('Collapse')}
+              onClick={onCollapse}
+            >
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+          <Tabs value={tab} onValueChange={setTab} className="px-[18px]">
+            <TabsList variant="outline" className="gap-[22px]">
+              <TabsTrigger value="configure" variant="outline">
+                {t('Configure')}
+              </TabsTrigger>
+              <TabsTrigger value="settings" variant="outline">
+                {t('Settings')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
         <ScrollArea className="min-h-0 grow">
           <div className="flex flex-col gap-5 p-[18px]">
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <FormLabel>{t('Description')}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="draft.instructions"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <FormLabel showRequiredIndicator>
-                    {t('Instructions')}
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea {...field} minRows={4} maxRows={12} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="draft.tools"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <AgentTools
-                    toolsField={field}
-                    selectedProvider={form.watch('draft.provider') ?? undefined}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormItem className="flex flex-col gap-[9px]">
-              <AIModelSelector
-                defaultProvider={form.watch('draft.provider') ?? undefined}
-                defaultModel={form.watch('draft.modelName') ?? undefined}
-                onChange={({ provider, model }) => {
-                  form.setValue('draft.provider', parseProvider(provider), {
-                    shouldDirty: true,
-                  });
-                  form.setValue('draft.modelName', model ?? null, {
-                    shouldDirty: true,
-                  });
-                }}
-              />
-            </FormItem>
-            <FormField
-              control={form.control}
-              name="draft.structuredOutput"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <AgentStructuredOutput
-                    disabled={false}
-                    structuredOutputField={field}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="draft.maxSteps"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-[9px]">
-                  <FormLabel>{t('Max steps')}</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={MAX_AGENT_STEP_BUDGET}
-                      value={field.value}
-                      onChange={(event) =>
-                        field.onChange(
-                          Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
-                        )
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {tab === 'configure' ? (
+              <ConfigureFields form={form} />
+            ) : (
+              <SettingsFields form={form} />
+            )}
             {form.formState.errors.root?.serverError && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.root.serverError.message}
@@ -250,15 +380,8 @@ const ConfigurePanel = ({
             )}
           </div>
         </ScrollArea>
+
         <div className="flex shrink-0 items-center justify-end gap-[10px] border-t border-border px-[18px] py-[14px]">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-[38px] rounded-lg px-[18px]"
-            onClick={() => onOpenChange(false)}
-          >
-            {t('Cancel')}
-          </Button>
           <Button
             type="submit"
             loading={updateAgent.isPending}
@@ -275,7 +398,7 @@ const ConfigurePanel = ({
 const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
-  const [configuring, setConfiguring] = useState(false);
+  const [configureOpen, setConfigureOpen] = useState(false);
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
     enabled: agentId !== undefined && platform.plan.agentsEnabled,
@@ -286,112 +409,81 @@ const AgentEditorContent = () => {
   }
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
-        <AgentMark icon={agent.icon} color={agent.color} />
-        <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
-          <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
-            {agent.displayName}
-          </span>
-          <span className="truncate text-[13px] leading-4 text-muted-foreground">
-            {agent.description ?? t('No description yet')}
-          </span>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {agent.draft.modelName && (
-            <span className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
-              <span
-                className="size-[11px] shrink-0 rounded-[3px]"
-                style={{
-                  backgroundColor: PROJECT_COLOR_PALETTE[agent.color].color,
-                }}
-              />
-              {agent.draft.modelName}
+    <div className="flex h-full w-full">
+      <div className="flex min-w-0 grow flex-col">
+        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+          <AgentMark icon={agent.icon} color={agent.color} />
+          <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
+            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
+              {agent.displayName}
             </span>
-          )}
-          <button
-            type="button"
-            onClick={() => setConfiguring(true)}
-            className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[13px] text-[13px] leading-4 font-semibold transition-colors hover:bg-accent"
-          >
-            <Settings2 size={15} />
-            {t('Configure')}
-          </button>
+            <span className="truncate text-[13px] leading-4 text-muted-foreground">
+              {agent.description ?? t('No description yet')}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {agent.draft.modelName && (
+              <span className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
+                <span
+                  className="size-[11px] shrink-0 rounded-[3px]"
+                  style={{
+                    backgroundColor: PROJECT_COLOR_PALETTE[agent.color].color,
+                  }}
+                />
+                {agent.draft.modelName}
+              </span>
+            )}
+            {!configureOpen && (
+              <button
+                type="button"
+                onClick={() => setConfigureOpen(true)}
+                className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[13px] text-[13px] leading-4 font-semibold transition-colors hover:bg-accent"
+              >
+                <Settings2 size={15} />
+                {t('Configure')}
+                <ChevronLeft size={15} className="text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex min-h-0 grow flex-col">
+          <AIChatBox
+            incognito={false}
+            agentId={agent.id}
+            placeholder={t('Ask {name}...', { name: agent.displayName })}
+            footerNote={buildCapabilityNote(agent)}
+            emptyState={
+              <AgentChatWelcome
+                displayName={agent.displayName}
+                description={agent.description ?? null}
+                icon={agent.icon}
+                color={agent.color}
+              />
+            }
+          />
         </div>
       </div>
 
-      <div className="flex min-h-0 grow flex-col">
-        <AIChatBox
-          incognito={false}
-          agentId={agent.id}
-          placeholder={t('Ask {name}...', { name: agent.displayName })}
-          footerNote={buildCapabilityNote(agent)}
-          emptyState={
-            <AgentChatWelcome
-              displayName={agent.displayName}
-              description={agent.description ?? null}
-              icon={agent.icon}
-              color={agent.color}
-            />
-          }
-        />
-      </div>
-
-      <Sheet open={configuring} onOpenChange={setConfiguring}>
-        <SheetContent
-          hideCloseButton
-          className="flex w-[452px] max-w-none flex-col gap-0 p-0 sm:max-w-none"
-        >
-          <div className="flex shrink-0 flex-col border-b border-border">
-            <div className="flex items-center gap-[14px] px-[18px] py-3">
-              <AgentMark icon={agent.icon} color={agent.color} size="sm" />
-              <div className="flex min-w-0 grow basis-0 flex-col">
-                <span className="truncate text-sm font-semibold">
-                  {agent.displayName}
-                </span>
-                <span className="text-[13px] leading-4 text-muted-foreground">
-                  {t('Agent configuration')}
-                </span>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t('Close')}
-                onClick={() => setConfiguring(false)}
-              >
-                <X size={16} />
-              </Button>
-            </div>
-            <Tabs value="configure" className="px-[18px]">
-              <TabsList variant="outline" className="gap-[22px]">
-                <TabsTrigger value="configure" variant="outline">
-                  {t('Configure')}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="runs"
-                  variant="outline"
-                  disabled
-                  className="gap-2"
-                >
-                  {t('Runs')}
-                  <Badge variant="secondary">{t('Soon')}</Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+      {configureOpen && (
+        <aside className="flex w-[452px] shrink-0 flex-col border-l border-border">
           <ConfigurePanel
-            key={configuring ? 'open' : 'closed'}
+            key={agent.updated}
             agentId={agent.id}
+            icon={agent.icon}
+            color={agent.color}
+            displayName={agent.displayName}
             defaults={{
               displayName: agent.displayName,
               description: agent.description ?? '',
+              icon: agent.icon,
+              color: agent.color,
               draft: agent.draft,
             }}
-            onOpenChange={setConfiguring}
+            onCollapse={() => setConfigureOpen(false)}
           />
-        </SheetContent>
-      </Sheet>
+        </aside>
+      )}
     </div>
   );
 };
