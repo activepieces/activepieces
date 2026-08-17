@@ -105,9 +105,13 @@ const AgentsPageContent = () => {
     onSuccess: (agent) =>
       navigate(`/projects/${agent.projectId}/agents/${agent.id}`),
   });
-  const { data: chatProvider, isLoading: isLoadingProvider } =
-    aiProviderQueries.useChatProvider();
-  const needsProvider = !isLoadingProvider && chatProvider === undefined;
+  const {
+    data: chatProvider,
+    isLoading: isLoadingProvider,
+    isError: providerLookupFailed,
+  } = aiProviderQueries.useChatProvider();
+  const needsProvider =
+    !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 

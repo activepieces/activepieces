@@ -110,18 +110,24 @@ type AgentRequirement = {
   met: boolean;
 };
 
-const requirementsFor = (agent: Agent): AgentRequirement[] => [
-  {
-    label: t('Instructions'),
-    hint: t('What the agent should do, and how to decide.'),
-    met: agentUtils.isPublishable(agent.draft),
-  },
-  {
-    label: t('Model'),
-    hint: t('The model that answers, and the provider behind it.'),
-    met: !isNil(agent.draft.modelName) && !isNil(agent.draft.provider),
-  },
-];
+// A run reads the published configuration and only falls back to the draft, so readiness has to
+// be judged on the same one. Otherwise clearing a published agent's draft would present a
+// perfectly runnable agent as unfinished.
+const requirementsFor = (agent: Agent): AgentRequirement[] => {
+  const running = agent.published ?? agent.draft;
+  return [
+    {
+      label: t('Instructions'),
+      hint: t('What the agent should do, and how to decide.'),
+      met: agentUtils.isPublishable(running),
+    },
+    {
+      label: t('Model'),
+      hint: t('The model that answers, and the provider behind it.'),
+      met: !isNil(running.modelName) && !isNil(running.provider),
+    },
+  ];
+};
 
 const AgentNotReady = ({
   requirements,

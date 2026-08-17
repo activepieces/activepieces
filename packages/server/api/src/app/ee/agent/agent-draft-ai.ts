@@ -62,10 +62,11 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
 })
 
 // The telemetry sink renders the SDK's wrapped provider failure as "[object Object]".
-// A provider that cannot resolve the key answers 401 or 403, and the body it returns is written
-// for whoever holds the key rather than whoever configured it. OpenRouter says "User not found."
+// 401 is the key itself being refused, and the body says so in terms written for whoever holds it
+// rather than whoever configured it: OpenRouter answers "User not found". 403 is a key that
+// resolved but may not carry this model, so its own reason is the useful one and is left alone.
 function rejectedCredentials(status?: number): boolean {
-    return status === 401 || status === 403
+    return status === 401
 }
 
 function describeError(error: unknown): string {
