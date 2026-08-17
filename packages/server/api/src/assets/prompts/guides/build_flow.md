@@ -54,7 +54,8 @@ Activepieces ships pieces that need no external app or connection; registry sear
 
 | User says | Piece | What it is |
 |---|---|---|
-| "a form" | `@activepieces/piece-forms` (**Human Input**) | hosted web form trigger w/ shareable link |
+| "a form" | `@activepieces/piece-forms` (**Human Input**) → `form_submission` | hosted web form w/ shareable link |
+| "a chatbot", "an assistant to talk to", "a chat" | `@activepieces/piece-forms` (**Human Input**) → `chat_submission` | **hosted chat page** w/ shareable link — see the chatbot recipe below |
 | "every day/hour", "cron" | `@activepieces/piece-schedule` | schedule triggers |
 | "webhook", "receive events" | `@activepieces/piece-webhook` | inbound webhook trigger |
 | "save/track data here" | `@activepieces/piece-tables` | built-in database — `ap_load_guide('tables')` |
@@ -63,6 +64,17 @@ Activepieces ships pieces that need no external app or connection; registry sear
 | "human sign-off" | `@activepieces/piece-approval` | pause for approve/reject |
 | "wait/pause" | `@activepieces/piece-delay` | delay step |
 | "split big work" | `@activepieces/piece-subflows` | call another flow |
+
+### The chatbot recipe (Human Input → Chat UI)
+"Build me a chatbot / an assistant my customers can talk to" is a **three-step flow**, not a webhook and not something they need a website for — we host the chat page:
+1. **Trigger** `@activepieces/piece-forms` → `chat_submission`. Set `botName` (required — name it for their use case, e.g. "Support Assistant"). Its output is `{{trigger['output'].message}}`, `{{trigger['output'].sessionId}}`, `files`.
+2. **The brain** — `@activepieces/piece-ai` (Ask AI, or Run Agent when it needs their tools/data). Feed it `{{trigger['output'].message}}`; put who-the-bot-is and what it may answer in the prompt, grounded in what you know about their business. Set `conversationKey` = `{{trigger['output'].sessionId}}` — that is Ask AI's built-in memory, so the bot remembers earlier turns of the same chat; never hand-roll a transcript in Store/Tables for this. Set `maxOutputTokens` generously (2000, the piece's own default) — a small cap cuts answers off mid-sentence while the run still reports success.
+3. **Reply** `@activepieces/piece-forms` → `return_response` (**Respond on UI**), markdown = the Ask AI step's raw output (`{{step_1['output']}}` in this shape) — Ask AI returns the answer text **itself**, not an object, so `.response`/`.text`/`.answer` silently resolve to nothing and the customer gets a blank bubble. (The one exception: with Web Search on and sources included, the output becomes `{text, sources}` — map `.text` then.) **This step is not optional** — a Chat UI (or a Web Form with Wait for Response) that never calls Respond on UI leaves the person staring at a spinner forever. Always the last step on every path.
+
+A chat flow whose run "succeeded" can still be broken: an empty or truncated reply is a passing run. Verify the reply step's **actual output text** — non-empty, ends properly — before you call it done, not just the run status.
+
+`conversationKey` above already covers remembering the current chat session. Reach for Store/Tables (`ap_load_guide('state')`) only for memory that must survive ACROSS sessions — returning customers, order history.
+Hand over `{{FRONTEND_URL}}/chats/{flowId}` when you're done (forms: `/forms/{flowId}`) — publish first, or the link only answers in draft/test mode.
 
 ## CODE is the last resort — use inline expressions & conditions first
 Dropping a **CODE step** into a flow to filter, reshape, calculate, or format data is almost always the wrong first move — it's slower to build, opaque to a non-coder, and harder to debug. Walk this ladder and stop at the first rung that fits; only the last rung is code:
@@ -172,7 +184,7 @@ Then close with the **brief**: enumerate the specific business assumptions you m
 
 ## Converting a one-time task into a recurring automation
 1. Ensure the one-time task's project is selected via `ap_select_project`.
-2. Pick the starting event: new/incoming items → app trigger if available; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
+2. Pick the starting event: new/incoming items → app trigger if available; **a person typing to it → Human Input (Chat UI for a conversation, Web Form for fields)**; periodic → Schedule; ambiguous → default to once and ask "Would you like this to run once, or repeat automatically?". Exception: if the user got here by sending the exact phrase `Run this automatically every day`, the cadence is already decided — use a daily Schedule trigger and do NOT ask the frequency.
 3. Reuse the same app, action, connection, and inputs from the one-time task.
 4. **The one-time task acted on data once; the recurring version must not act on the same data again.** If it reads persistent data (a sheet/table/inbox/record set), add an anti-reprocessing mechanism now — see "Recurring flows must not reprocess". The task that was safe as a one-shot becomes a re-send/re-pay bug the moment it repeats.
 5. Build per this guide.
