@@ -3,7 +3,7 @@ import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
-import { agentMcpClient } from './agent-mcp-client'
+import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
@@ -44,47 +44,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const config = await ctx.apiClient.getAgentConfig({
-            conversationId, runId, platformId, userId, userMessage, modelName, files,
-            ...spreadIfDefined('source', jobSource),
-            ...spreadIfDefined('provider', data.provider),
-            ...spreadIfDefined('projectId', projectId),
-            ...spreadIfDefined('promptOverride', promptOverride),
-            ...spreadIfDefined('dryRun', dryRun),
-        })
-
-        const provider = config.provider as AIProviderName
-        const source = config.source
-        const aiTools = config.aiTools
-        // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
-        const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-        const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
-        const model = agentAiUtils.createChatModel({
-            provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
-            metadata: { platformId, conversationId, runId },
-            webSearchEnabled: webSearchActive,
-        })
-        const fastModel = agentAiUtils.createChatModel({
-            provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
-        })
-
-        log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
-
-        const eventEmitter = agentWorkerTools.createEventEmitter({
-            sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
-            userId,
-            conversationId,
-            log,
-        })
-
-        // dryRun (playground): skip MCP and don't execute tools, so the run has no side effects.
-        const { mcpClient, mcpToolSet } = dryRun
-            ? { mcpClient: null, mcpToolSet: {} }
-            : await agentMcpClient.connect({ mcpCredentials: config.mcpCredentials, conversationId, log })
-
         const configuredPieceTools = (data.tools ?? []).filter(isPieceTool)
-        const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
-        const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
 
         const sendEventWithRetry = ({ event }: { event: AgentEvent }) =>
             retryWithBackoff({
@@ -94,42 +54,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
         const abortController = new AbortController()
 
-        // Absolute backstop: guarantees the turn tears down even if every finer-grained
-        // signal misses. Routes through the same abortController as user-cancel and the
-        // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
-        const turnWallClockTimer = setTimeout(() => {
-            log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
-            abortController.abort()
-        }, MAX_TURN_WALL_CLOCK_MS)
-
-        const checkCancelled = async () => {
-            const { data: response } = await tryCatch(() => ctx.apiClient.executeAgentTool({
-                toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId, source,
-            }))
-            if (response?.result === true) {
-                abortController.abort()
-            }
-        }
-
-        const cancelCheckInterval = source === AgentRunSource.CHAT
-            ? setInterval(() => {
-                checkCancelled().catch(() => {})
-            }, 3_000)
-            : undefined
-
-        // Continuous liveness signal for the entire turn — covers long tool/LLM steps and
-        // approval waits alike, not just gaps between AI-SDK steps. Refreshes connected
-        // clients' last-chunk clock (empty keepalive chunk) AND the server-side `updated`
-        // timestamp, so a slow-but-live turn is never reclaimed as stale by either the
-        // client stale-check or the server's getConversationOrThrow stale-recovery.
-        const sendHeartbeat = () => {
-            void tryCatch(() => ctx.apiClient.sendAgentEvent({
-                userId, conversationId, runId,
-                event: { type: AgentEventType.CHUNK, data: [] },
-            }))
-            void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
-        }
-        const heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
+        let source = jobSource ?? AgentRunSource.CHAT
+        let mcpClient: McpConnection['mcpClient'] = null
+        let turnWallClockTimer: NodeJS.Timeout | undefined
+        let cancelCheckInterval: NodeJS.Timeout | undefined
+        let heartbeatInterval: NodeJS.Timeout | undefined
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
@@ -154,6 +83,86 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: configuredPieceTools, stillRunning: true }))
 
         try {
+            const config = await ctx.apiClient.getAgentConfig({
+                conversationId, runId, platformId, userId, userMessage, modelName, files,
+                ...spreadIfDefined('source', jobSource),
+                ...spreadIfDefined('provider', data.provider),
+                ...spreadIfDefined('projectId', projectId),
+                ...spreadIfDefined('promptOverride', promptOverride),
+                ...spreadIfDefined('dryRun', dryRun),
+            })
+
+            const provider = config.provider as AIProviderName
+            source = config.source
+            const aiTools = config.aiTools
+            // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
+            const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
+            const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
+            const model = agentAiUtils.createChatModel({
+                provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+                metadata: { platformId, conversationId, runId },
+                webSearchEnabled: webSearchActive,
+            })
+            const fastModel = agentAiUtils.createChatModel({
+                provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+            })
+
+            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
+
+            const eventEmitter = agentWorkerTools.createEventEmitter({
+                sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
+                userId,
+                conversationId,
+                log,
+            })
+
+            // dryRun (playground): skip MCP and don't execute tools, so the run has no side effects.
+            const connection: McpConnection = dryRun
+                ? { mcpClient: null, mcpToolSet: {} }
+                : await agentMcpClient.connect({ mcpCredentials: config.mcpCredentials, conversationId, log })
+            mcpClient = connection.mcpClient
+            const mcpToolSet = connection.mcpToolSet
+
+            const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
+            const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
+
+            // Absolute backstop: guarantees the turn tears down even if every finer-grained
+            // signal misses. Routes through the same abortController as user-cancel and the
+            // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
+            turnWallClockTimer = setTimeout(() => {
+                log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
+                abortController.abort()
+            }, MAX_TURN_WALL_CLOCK_MS)
+
+            const checkCancelled = async () => {
+                const { data: response } = await tryCatch(() => ctx.apiClient.executeAgentTool({
+                    toolName: '__cancel_check', toolInput: { conversationId, runId }, platformId, userId, source,
+                }))
+                if (response?.result === true) {
+                    abortController.abort()
+                }
+            }
+
+            cancelCheckInterval = source === AgentRunSource.CHAT
+                ? setInterval(() => {
+                    checkCancelled().catch(() => {})
+                }, 3_000)
+                : undefined
+
+            // Continuous liveness signal for the entire turn — covers long tool/LLM steps and
+            // approval waits alike, not just gaps between AI-SDK steps. Refreshes connected
+            // clients' last-chunk clock (empty keepalive chunk) AND the server-side `updated`
+            // timestamp, so a slow-but-live turn is never reclaimed as stale by either the
+            // client stale-check or the server's getConversationOrThrow stale-recovery.
+            const sendHeartbeat = () => {
+                void tryCatch(() => ctx.apiClient.sendAgentEvent({
+                    userId, conversationId, runId,
+                    event: { type: AgentEventType.CHUNK, data: [] },
+                }))
+                void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
+            }
+            heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
+
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
 
