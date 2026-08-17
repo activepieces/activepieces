@@ -1,22 +1,23 @@
 import {
   AgentConfig,
-  AgentIcon,
-  ColorName,
   DEFAULT_AGENT_MAX_STEPS,
   MAX_AGENT_STEP_BUDGET,
+  PROJECT_COLOR_PALETTE,
   UpdateAgentRequest,
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ArrowLeft } from 'lucide-react';
+import { Settings2, X } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -27,7 +28,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
 import { AgentMark } from '@/features/agents/agent-mark';
@@ -36,18 +40,17 @@ import {
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 
-const EditAgentFormSchema = z.object({
+const ConfigureAgentSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
   description: z.string(),
   draft: AgentConfig,
 });
 
-type EditAgentFormInput = z.input<typeof EditAgentFormSchema>;
-type EditAgentFormValues = z.output<typeof EditAgentFormSchema>;
+type ConfigureAgentInput = z.input<typeof ConfigureAgentSchema>;
+type ConfigureAgentValues = z.output<typeof ConfigureAgentSchema>;
 
-const toUpdateRequest = (values: EditAgentFormValues): UpdateAgentRequest => ({
+const toUpdateRequest = (values: ConfigureAgentValues): UpdateAgentRequest => ({
   displayName: values.displayName,
   description: values.description.length > 0 ? values.description : null,
   draft: values.draft,
@@ -59,38 +62,37 @@ const parseProvider = (provider?: string) => {
 };
 
 const AgentEditorSkeleton = () => (
-  <div className="flex w-full flex-col gap-5 px-12 pt-8 pb-12">
-    <Skeleton className="h-12 w-[280px] rounded-[14px]" />
-    <Skeleton className="h-[420px] w-full rounded-[19px]" />
+  <div className="flex h-full w-full flex-col">
+    <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+      <Skeleton className="size-12 rounded-[14px]" />
+      <Skeleton className="h-5 w-[220px]" />
+    </div>
+    <div className="flex grow items-center justify-center p-6">
+      <Skeleton className="h-[360px] w-full max-w-[720px] rounded-[19px]" />
+    </div>
   </div>
 );
 
-const AgentEditorForm = ({
+const ConfigurePanel = ({
   agentId,
-  icon,
-  color,
   defaults,
-  isPublished,
+  onOpenChange,
 }: {
   agentId: string;
-  icon: AgentIcon;
-  color: ColorName;
-  defaults: EditAgentFormInput;
-  isPublished: boolean;
+  defaults: ConfigureAgentInput;
+  onOpenChange: (open: boolean) => void;
 }) => {
-  const navigate = useNavigate();
-  const form = useForm<EditAgentFormInput, unknown, EditAgentFormValues>({
-    resolver: zodResolver(EditAgentFormSchema),
+  const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
+    resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: defaults,
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agentId });
-  const publishAgent = agentsMutations.usePublishAgent({ id: agentId });
-  const unpublishAgent = agentsMutations.useUnpublishAgent({ id: agentId });
 
-  const handleSubmit = (values: EditAgentFormValues) => {
+  const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
+      onSuccess: () => onOpenChange(false),
       onError: () =>
         form.setError('root.serverError', {
           type: 'manual',
@@ -103,61 +105,15 @@ const AgentEditorForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex w-full flex-col gap-6 px-12 pt-8 pb-12"
+        className="flex min-h-0 grow flex-col"
       >
-        <div className="flex items-center gap-[14px]">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t('Back')}
-            onClick={() =>
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/agents'),
-              )
-            }
-          >
-            <ArrowLeft size={16} />
-          </Button>
-          <AgentMark icon={icon} color={color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-[3px]">
-            <span className="truncate text-xl leading-6 font-semibold tracking-[-0.01em]">
-              {form.watch('displayName')}
-            </span>
-            <span className="text-[13px] leading-4 text-muted-foreground">
-              {isPublished ? t('Published') : t('Draft only')}
-            </span>
-          </div>
-          {isPublished && (
-            <Button
-              type="button"
-              variant="outline"
-              loading={unpublishAgent.isPending}
-              onClick={() => unpublishAgent.mutate()}
-            >
-              {t('Unpublish')}
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            loading={publishAgent.isPending}
-            onClick={() => publishAgent.mutate()}
-          >
-            {t('Publish')}
-          </Button>
-          <Button type="submit" loading={updateAgent.isPending}>
-            {t('Save')}
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex flex-col gap-5 rounded-[19px] border border-border bg-background p-5 shadow-[0_1px_2px_#0A0A0A08]">
+        <ScrollArea className="min-h-0 grow">
+          <div className="flex flex-col gap-5 p-[18px]">
             <FormField
               control={form.control}
               name="displayName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-[9px]">
                   <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
@@ -170,7 +126,7 @@ const AgentEditorForm = ({
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-[9px]">
                   <FormLabel>{t('Description')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
@@ -183,18 +139,31 @@ const AgentEditorForm = ({
               control={form.control}
               name="draft.instructions"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-[9px]">
                   <FormLabel showRequiredIndicator>
                     {t('Instructions')}
                   </FormLabel>
                   <FormControl>
-                    <Textarea {...field} minRows={6} maxRows={20} />
+                    <Textarea {...field} minRows={4} maxRows={12} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormItem>
+            <FormField
+              control={form.control}
+              name="draft.tools"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-[9px]">
+                  <AgentTools
+                    toolsField={field}
+                    selectedProvider={form.watch('draft.provider') ?? undefined}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormItem className="flex flex-col gap-[9px]">
               <AIModelSelector
                 defaultProvider={form.watch('draft.provider') ?? undefined}
                 defaultModel={form.watch('draft.modelName') ?? undefined}
@@ -210,22 +179,9 @@ const AgentEditorForm = ({
             </FormItem>
             <FormField
               control={form.control}
-              name="draft.tools"
-              render={({ field }) => (
-                <FormItem>
-                  <AgentTools
-                    toolsField={field}
-                    selectedProvider={form.watch('draft.provider') ?? undefined}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="draft.structuredOutput"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-[9px]">
                   <AgentStructuredOutput
                     disabled={false}
                     structuredOutputField={field}
@@ -238,7 +194,7 @@ const AgentEditorForm = ({
               control={form.control}
               name="draft.maxSteps"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col gap-[9px]">
                   <FormLabel>{t('Max steps')}</FormLabel>
                   <FormControl>
                     <Input
@@ -263,23 +219,137 @@ const AgentEditorForm = ({
               </p>
             )}
           </div>
-
-          <div className="flex min-h-[560px] flex-col overflow-clip rounded-[19px] border border-border bg-background shadow-[0_1px_2px_#0A0A0A08]">
-            <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-              <p className="text-sm font-semibold">{t('Try this agent')}</p>
-              <span className="text-[13px] leading-4 text-muted-foreground">
-                {isPublished
-                  ? t('Using the published version')
-                  : t('Using the draft')}
-              </span>
-            </div>
-            <div className="flex min-h-0 grow flex-col">
-              <AIChatBox incognito={false} agentId={agentId} />
-            </div>
-          </div>
+        </ScrollArea>
+        <div className="flex shrink-0 items-center justify-end gap-[10px] border-t border-border px-[18px] py-[14px]">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-[38px] rounded-lg px-[18px]"
+            onClick={() => onOpenChange(false)}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            type="submit"
+            loading={updateAgent.isPending}
+            className="h-[38px] rounded-lg px-[18px]"
+          >
+            {t('Save changes')}
+          </Button>
         </div>
       </form>
     </Form>
+  );
+};
+
+const AgentEditorContent = () => {
+  const { agentId } = useParams<{ agentId: string }>();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const [configuring, setConfiguring] = useState(false);
+  const { data: agent, isLoading } = agentsQueries.useAgent({
+    id: agentId ?? '',
+    enabled: agentId !== undefined && platform.plan.agentsEnabled,
+  });
+
+  if (isLoading || agent === undefined) {
+    return <AgentEditorSkeleton />;
+  }
+
+  return (
+    <div className="flex h-full w-full flex-col">
+      <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+        <AgentMark icon={agent.icon} color={agent.color} />
+        <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
+          <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
+            {agent.displayName}
+          </span>
+          <span className="truncate text-[13px] leading-4 text-muted-foreground">
+            {agent.description ?? t('No description yet')}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {agent.draft.modelName && (
+            <span className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
+              <span
+                className="size-[11px] shrink-0 rounded-[3px]"
+                style={{
+                  backgroundColor: PROJECT_COLOR_PALETTE[agent.color].color,
+                }}
+              />
+              {agent.draft.modelName}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setConfiguring(true)}
+            className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[13px] text-[13px] leading-4 font-semibold transition-colors hover:bg-accent"
+          >
+            <Settings2 size={15} />
+            {t('Configure')}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 grow flex-col">
+        <AIChatBox incognito={false} agentId={agent.id} />
+      </div>
+
+      <Sheet open={configuring} onOpenChange={setConfiguring}>
+        <SheetContent
+          hideCloseButton
+          className="flex w-[452px] max-w-none flex-col gap-0 p-0 sm:max-w-none"
+        >
+          <div className="flex shrink-0 flex-col border-b border-border">
+            <div className="flex items-center gap-[14px] px-[18px] py-3">
+              <AgentMark icon={agent.icon} color={agent.color} size="sm" />
+              <div className="flex min-w-0 grow basis-0 flex-col">
+                <span className="truncate text-sm font-semibold">
+                  {agent.displayName}
+                </span>
+                <span className="text-[13px] leading-4 text-muted-foreground">
+                  {t('Agent configuration')}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('Close')}
+                onClick={() => setConfiguring(false)}
+              >
+                <X size={16} />
+              </Button>
+            </div>
+            <Tabs value="configure" className="px-[18px]">
+              <TabsList variant="outline" className="gap-[22px]">
+                <TabsTrigger value="configure" variant="outline">
+                  {t('Configure')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="runs"
+                  variant="outline"
+                  disabled
+                  className="gap-2"
+                >
+                  {t('Runs')}
+                  <Badge variant="secondary">{t('Soon')}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <ConfigurePanel
+            key={configuring ? 'open' : 'closed'}
+            agentId={agent.id}
+            defaults={{
+              displayName: agent.displayName,
+              description: agent.description ?? '',
+              draft: agent.draft,
+            }}
+            onOpenChange={setConfiguring}
+          />
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 };
 
@@ -294,33 +364,6 @@ const AgentEditorPage = () => {
     >
       <AgentEditorContent />
     </LockedFeatureGuard>
-  );
-};
-
-const AgentEditorContent = () => {
-  const { agentId } = useParams<{ agentId: string }>();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: agent, isLoading } = agentsQueries.useAgent({
-    id: agentId ?? '',
-    enabled: agentId !== undefined && platform.plan.agentsEnabled,
-  });
-
-  if (isLoading || agent === undefined) {
-    return <AgentEditorSkeleton />;
-  }
-
-  return (
-    <AgentEditorForm
-      agentId={agent.id}
-      icon={agent.icon}
-      color={agent.color}
-      isPublished={agent.published !== null}
-      defaults={{
-        displayName: agent.displayName,
-        description: agent.description ?? '',
-        draft: agent.draft,
-      }}
-    />
   );
 };
 

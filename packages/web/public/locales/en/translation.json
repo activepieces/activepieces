@@ -2373,5 +2373,8 @@
   "Using the published version": "Using the published version",
   "Using the draft": "Using the draft",
   "Describe what you need. I'll set up the tools and steps.": "Describe what you need. I'll set up the tools and steps.",
-  "Build an agent once, then use it in any flow.": "Build an agent once, then use it in any flow."
+  "Build an agent once, then use it in any flow.": "Build an agent once, then use it in any flow.",
+  "Configure": "Configure",
+  "Agent configuration": "Agent configuration",
+  "Soon": "Soon"
 }
