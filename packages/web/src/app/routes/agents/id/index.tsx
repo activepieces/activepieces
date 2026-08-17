@@ -192,7 +192,6 @@ const AgentEditorForm = ({
               )}
             />
             <FormItem>
-              <FormLabel>{t('Model')}</FormLabel>
               <AIModelSelector
                 defaultProvider={form.watch('draft.provider') ?? undefined}
                 defaultModel={form.watch('draft.modelName') ?? undefined}
@@ -211,7 +210,6 @@ const AgentEditorForm = ({
               name="draft.tools"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Tools')}</FormLabel>
                   <AgentTools
                     toolsField={field}
                     selectedProvider={form.watch('draft.provider') ?? undefined}
@@ -225,7 +223,6 @@ const AgentEditorForm = ({
               name="draft.structuredOutput"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('Structured output')}</FormLabel>
                   <AgentStructuredOutput
                     disabled={false}
                     structuredOutputField={field}
