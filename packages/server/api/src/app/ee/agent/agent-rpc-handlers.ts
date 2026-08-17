@@ -36,6 +36,9 @@ const OWNER_SCOPED_TOOLS = ['ap_remember']
 // Internal bookkeeping the attended surfaces need: cancellation polling, approval gates and the
 // connection picker. An unattended flow step has no reader for any of them.
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
+// A run whose tools were configured up front rather than discovered: a flow step, or a
+// conversation with a saved agent. Both carry the project the tools belong to.
+const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
@@ -527,8 +530,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
         }
         const { projectId, platformId } = conversation
         const model = await agentHelpers.resolveFastModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
@@ -552,8 +555,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can search a knowledge base' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to search a knowledge base' } })
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
@@ -581,8 +584,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a flow tool' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a flow tool' } })
         }
         const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId })
         if (isNil(flow)) {

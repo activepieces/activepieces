@@ -44,7 +44,7 @@ export const AgentToolStack = ({
         />
       ))}
       {remaining > 0 && (
-        <span className="flex size-[20px] items-center justify-center rounded-[5px] bg-[#F0F0F2] text-xss leading-none font-semibold text-[#8A8A8F]">
+        <span className="flex size-[26px] items-center justify-center rounded-[7px] bg-[#F0F0F2] text-xs leading-none font-semibold text-[#8A8A8F]">
           +{remaining}
         </span>
       )}

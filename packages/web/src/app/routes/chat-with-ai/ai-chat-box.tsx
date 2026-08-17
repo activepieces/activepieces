@@ -307,6 +307,7 @@ function ChatBoxContent({
             onInputChange={setHasInput}
             selectedModel={modelName}
             onModelChange={setModelName}
+            hideModelSelector={agentId !== undefined}
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
             placeholder={
