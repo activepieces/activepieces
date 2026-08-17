@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   PROJECT_COLOR_PALETTE,
   PlatformRole,
@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { SearchInput } from '@/components/custom/search-input';
+import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { SendIcon } from '@/components/icons/send';
@@ -43,7 +44,10 @@ import {
   getProjectName,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -132,6 +136,8 @@ export function ProjectDashboardSidebar({
     [navigate, projects],
   );
 
+  const { checkAccess } = useAuthorization();
+
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
@@ -157,6 +163,17 @@ export function ProjectDashboardSidebar({
     onClick: () => {
       window.dispatchEvent(new Event(chatUtils.newChatEvent));
     },
+  };
+
+  const agentsLink: SidebarItemType = {
+    type: 'link',
+    to: '/agents',
+    label: t('Agents'),
+    show: platform.plan.agentsEnabled,
+    icon: BotIcon,
+    hasPermission: checkAccess(Permission.READ_AGENT),
+    isSubItem: false,
+    badge: t('New'),
   };
 
   const exploreLink: SidebarItemType = {
@@ -200,7 +217,7 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const items = [chatLink, exploreLink, impactLink]
+  const items = [chatLink, agentsLink, exploreLink, impactLink]
     .filter((item) => item.show !== false)
     .filter(permissionFilter);
 

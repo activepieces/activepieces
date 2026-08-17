@@ -16,6 +16,10 @@ import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { AutomationsPage } from './automations';
+const AgentsPage = lazyWithRetry(
+  () => import('./agents').then((m) => ({ default: m.AgentsPage })),
+  'agents',
+);
 const FlowBuilderPage = lazyWithRetry(
   () => import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
   'flow-builder',
@@ -83,6 +87,20 @@ const automationsPagePermissions = [
 ];
 
 export const projectRoutes = [
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.agents,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+          <PageTitle title="Agents">
+            <SuspenseWrapper>
+              <AgentsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
     element: (

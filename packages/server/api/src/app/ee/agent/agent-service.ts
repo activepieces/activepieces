@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -39,7 +39,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<Agent>> {
+    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjectIds = await resolveReadableProjectIds({ platformId, userId, projectId, log })
         if (readableProjectIds.length === 0) {
             return paginationHelper.createPage([], null)
@@ -59,7 +59,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(
             visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) }),
         )
-        return paginationHelper.createPage(data, newCursor)
+        return paginationHelper.createPage(data.map(toSummary), newCursor)
     },
 
     async getOneOrThrow({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -213,6 +213,15 @@ async function resolveReadableProjectIds({ platformId, userId, projectId, log }:
         .filter((project) => isPrivileged || project.ownerId === userId || permittedProjectIds.includes(project.id))
         .map((project) => project.id)
         .filter((id) => isNil(projectId) || id === projectId)
+}
+
+function toSummary(agent: Agent): AgentSummary {
+    return {
+        ...omit(agent, ['draft', 'published']),
+        toolCount: agent.draft.tools.length,
+        toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
+        isPublished: !isNil(agent.published),
+    }
 }
 
 function withoutToolSecrets(agent: Agent): Agent {
