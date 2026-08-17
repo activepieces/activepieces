@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
-import { generateText, Output, zodSchema } from 'ai'
+import { generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -11,6 +11,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { agentHelpers } from './agent-helpers'
 
 const DRAFT_TIMEOUT_MS = 30_000
+const REPLY_LOG_LIMIT = 500
 const FAST_TIER_ID = 'fast'
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
@@ -24,25 +25,63 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const { data: generated, error: generateError } = await tryCatch(() => generateText({
-            model,
-            instructions: DRAFT_SYSTEM_PROMPT,
-            prompt,
-            output: Output.object({ schema: zodSchema(DraftAgentResponse) }),
-            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
-            abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
-        }))
-        if (!isNil(generateError) || isNil(generated)) {
-            log.warn({ error: generateError, platform: { id: platformId } }, '[agentDraftAi] Could not draft an agent')
+        const { data: raw, error: generateError } = await tryCatch(async () => {
+            const { text } = await generateText({
+                model,
+                instructions: DRAFT_SYSTEM_PROMPT,
+                prompt,
+                telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
+                abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
+            })
+            return text
+        })
+        if (!isNil(generateError) || isNil(raw)) {
+            log.error({ error: generateError, reason: describeError(generateError), platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Could not reach the AI provider to draft an agent, check the provider configuration' },
+            })
+        }
+
+        const parsed = parseDraft(raw)
+        if (isNil(parsed)) {
+            log.error({ platform: { id: platformId }, reply: raw.slice(0, REPLY_LOG_LIMIT) }, '[agentDraftAi] The model replied with something that is not a draft')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Could not draft an agent from that description, try rewording it' },
             })
         }
         await debitDraft({ platformId, projectId, log })
-        return generated.output
+        return parsed
     },
 })
+
+// The telemetry sink renders the SDK's wrapped provider failure as "[object Object]".
+function describeError(error: unknown): string {
+    if (!(error instanceof Error)) {
+        return String(error)
+    }
+    const parts = [error.message]
+    const cause = (error as { cause?: unknown }).cause
+    if (cause instanceof Error) {
+        parts.push(cause.message)
+    }
+    return parts.filter((part) => part.length > 0).join(' | ')
+}
+
+function parseDraft(raw: string): DraftAgentResponse | null {
+    const start = raw.indexOf('{')
+    const end = raw.lastIndexOf('}')
+    if (start === -1 || end <= start) {
+        return null
+    }
+    const { data: json, error } = tryCatchSync(() => JSON.parse(raw.slice(start, end + 1)))
+    if (!isNil(error)) {
+        return null
+    }
+    const parsed = DraftAgentResponse.safeParse(json)
+    return parsed.success ? parsed.data : null
+}
 
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {

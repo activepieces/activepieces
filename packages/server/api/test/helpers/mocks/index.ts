@@ -21,7 +21,7 @@ export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): Us
         id: userIdentity?.id ?? apId(),
         created: userIdentity?.created ?? faker.date.recent().toISOString(),
         updated: userIdentity?.updated ?? faker.date.recent().toISOString(),
-        email: (userIdentity?.email ?? faker.internet.email()).toLowerCase().trim(),
+        email: (userIdentity?.email ?? `${apId()}@example.com`).toLowerCase().trim(),
         firstName: userIdentity?.firstName ?? faker.person.firstName(),
         lastName: userIdentity?.lastName ?? faker.person.lastName(),
         tokenVersion: userIdentity?.tokenVersion ?? undefined,

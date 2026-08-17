@@ -319,6 +319,18 @@ describe('agent project isolation', () => {
         expect((await stranger.post('/v1/agents', agentBody(owner.project.id))).statusCode).toBe(StatusCodes.FORBIDDEN)
     })
 
+    it('lists enough for a card without shipping the config', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, tools: [] } })
+
+        const listed = (await ctx.get('/v1/agents')).json().data.find((row: { id: string }) => row.id === agent.id)
+
+        expect(listed.toolCount).toBe(0)
+        expect(listed.toolPieceNames).toStrictEqual([])
+        expect(listed.draft).toBeUndefined()
+        expect(listed.published).toBeUndefined()
+    })
+
     it('never lists another project\'s agents', async () => {
         const owner = await context()
         const stranger = await context()

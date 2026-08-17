@@ -8,16 +8,21 @@ import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
+        const agent = isNil(request.agentId)
+            ? null
+            : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
-            projectId: null,
+            projectId: agent?.projectId ?? null,
             userId,
-            source: AgentRunSource.CHAT,
+            agentId: agent?.id ?? null,
+            source: isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
@@ -26,7 +31,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
+    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentConversationEntity,
@@ -57,7 +62,14 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
             .andWhere('agent_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
-            .andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+        if (isNil(agentId)) {
+            queryBuilder.andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+        }
+        else {
+            queryBuilder
+                .andWhere('agent_conversation.source = :agentSource', { agentSource: AgentRunSource.AGENT })
+                .andWhere('agent_conversation."agentId" = :agentId', { agentId })
+        }
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
@@ -70,7 +82,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (conversation.source !== AgentRunSource.CHAT) {
+        if (![AgentRunSource.CHAT, AgentRunSource.AGENT].includes(conversation.source)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         return conversation
@@ -151,6 +163,7 @@ type ListConversationsParams = {
     userId: string
     cursor?: string
     limit: number
+    agentId?: string
 }
 
 type ConversationIdentifier = {
