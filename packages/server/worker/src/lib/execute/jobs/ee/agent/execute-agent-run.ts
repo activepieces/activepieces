@@ -59,6 +59,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let turnWallClockTimer: NodeJS.Timeout | undefined
         let cancelCheckInterval: NodeJS.Timeout | undefined
         let heartbeatInterval: NodeJS.Timeout | undefined
+        let runProvider: string | undefined
+        let runModelId: string | undefined
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
@@ -93,6 +95,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
 
             const provider = config.provider as AIProviderName
+            runProvider = provider
+            runModelId = config.modelId
             source = config.source
             const aiTools = config.aiTools
             // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
@@ -351,13 +355,17 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
-            log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
+            log.error({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
             const errorCode = isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined
+            // "User not found" is OpenRouter refusing a key, and reads like a missing account.
+            const attributed = isNil(runProvider) || isCreditError || isTransientFailureText(errorMessage)
+                ? errorMessage
+                : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
-                : errorMessage
+                : attributed
             const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
