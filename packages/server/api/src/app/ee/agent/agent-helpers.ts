@@ -141,9 +141,9 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-async function resolveFastModelWithId({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+async function resolveTierModel({ platformId, tierId, provider, log }: { platformId: string, tierId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
-    const modelId = resolveFastModelId({ provider: providerConfig.provider })
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
@@ -157,7 +157,7 @@ async function resolveFastModelWithId({ platformId, provider, log }: { platformI
 }
 
 async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveFastModelWithId({ platformId, log, ...spreadIfDefined('provider', provider) })).model
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, log, ...spreadIfDefined('provider', provider) })).model
 }
 
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
@@ -280,7 +280,7 @@ export const agentHelpers = {
     resolveModelIdForAnalytics,
     resolveFastModelId,
     resolveFastModel,
-    resolveFastModelWithId,
+    resolveTierModel,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,

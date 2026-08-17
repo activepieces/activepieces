@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
-import { APICallError, generateText } from 'ai'
+import { CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
+import { APICallError, generateText, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -18,34 +18,38 @@ const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/a
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
-        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveFastModelWithId({ platformId, log }))
+        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: FAST_TIER_ID, log }))
         if (!isNil(modelError) || isNil(resolved)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Connect an AI provider before drafting an agent, or start from a starter agent instead' },
             })
         }
-        const { model, modelId, provider } = resolved
 
-        const { data: raw, error: generateError } = await tryCatch(async () => {
-            const { text } = await generateText({
-                model,
-                instructions: DRAFT_SYSTEM_PROMPT,
-                prompt,
-                telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
-                abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
-            })
-            return text
-        })
+        // Drafting asks for the cheap tier, which is a different model from the one chat runs on, so
+        // an account that can serve one and not the other has working chat and failing drafts. A
+        // refused key will refuse again, but anything else is worth one attempt on chat's own model.
+        let attempt = await runDraft({ model: resolved.model, prompt })
+        let usedModelId = resolved.modelId
+        if (!isNil(attempt.error) && !rejectedCredentials(statusOf(attempt.error))) {
+            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, log }))
+            if (!isNil(fallback) && fallback.modelId !== resolved.modelId) {
+                log.warn({ from: resolved.modelId, to: fallback.modelId, platform: { id: platformId } }, '[agentDraftAi] Retrying the draft on the model chat runs on')
+                attempt = await runDraft({ model: fallback.model, prompt })
+                usedModelId = fallback.modelId
+            }
+        }
+
+        const { data: raw, error: generateError } = attempt
         if (!isNil(generateError) || isNil(raw)) {
             const reason = describeError(generateError)
-            const status = APICallError.isInstance(generateError) ? generateError.statusCode : undefined
-            log.error({ error: generateError, reason, status, provider, model: { id: modelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            const status = statusOf(generateError)
+            log.error({ error: generateError, reason, status, provider: resolved.provider, model: { id: usedModelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: rejectedCredentials(status)
-                    ? `${provider} rejected the API key. Update it in the AI settings and try again.`
-                    : `The ${provider} provider could not run ${modelId}: ${reason.slice(0, REASON_LIMIT)}` },
+                    ? `${resolved.provider} rejected the API key. Update it in the AI settings and try again.`
+                    : `The ${resolved.provider} provider could not run ${usedModelId}: ${reason.slice(0, REASON_LIMIT)}` },
             })
         }
 
@@ -66,6 +70,23 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
 // 401 is the key itself being refused, and the body says so in terms written for whoever holds it
 // rather than whoever configured it: OpenRouter answers "User not found". 403 is a key that
 // resolved but may not carry this model, so its own reason is the useful one and is left alone.
+async function runDraft({ model, prompt }: { model: LanguageModel, prompt: string }) {
+    return tryCatch(async () => {
+        const { text } = await generateText({
+            model,
+            instructions: DRAFT_SYSTEM_PROMPT,
+            prompt,
+            telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
+            abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
+        })
+        return text
+    })
+}
+
+function statusOf(error: unknown): number | undefined {
+    return APICallError.isInstance(error) ? error.statusCode : undefined
+}
+
 function rejectedCredentials(status?: number): boolean {
     return status === 401
 }
