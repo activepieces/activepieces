@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +35,7 @@ import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 const EditAgentFormSchema = z.object({
@@ -282,10 +284,27 @@ const AgentEditorForm = ({
 };
 
 const AgentEditorPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  return (
+    <LockedFeatureGuard
+      locked={!platform.plan.agentsEnabled}
+      lockTitle={t('Unlock Agents')}
+      lockDescription={t(
+        'Build reusable agents your flows and your team can share.',
+      )}
+      featureKey="AGENTS"
+    >
+      <AgentEditorContent />
+    </LockedFeatureGuard>
+  );
+};
+
+const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
-    enabled: agentId !== undefined,
+    enabled: agentId !== undefined && platform.plan.agentsEnabled,
   });
 
   if (isLoading || agent === undefined) {

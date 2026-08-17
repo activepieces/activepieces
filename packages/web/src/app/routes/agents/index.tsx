@@ -11,6 +11,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ import { AgentCard } from '@/features/agents/agent-card';
 import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +51,22 @@ const SORT_COMPARATORS: Record<
 };
 
 const AgentsPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  return (
+    <LockedFeatureGuard
+      locked={!platform.plan.agentsEnabled}
+      lockTitle={t('Unlock Agents')}
+      lockDescription={t(
+        'Build reusable agents your flows and your team can share.',
+      )}
+      featureKey="AGENTS"
+    >
+      <AgentsPageContent />
+    </LockedFeatureGuard>
+  );
+};
+
+const AgentsPageContent = () => {
   const [search, setSearch] = useState('');
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [sort, setSort] = useState<AgentSort>('updated');
@@ -56,7 +74,11 @@ const AgentsPage = () => {
   const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { data, isLoading } = agentsQueries.useAgents({});
+  const { data: allProjects } = projectCollectionUtils.useAll();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data, isLoading } = agentsQueries.useAgents({
+    enabled: platform.plan.agentsEnabled,
+  });
 
   const agents = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -68,6 +90,11 @@ const AgentsPage = () => {
     );
     return [...matching].sort(SORT_COMPARATORS[sort]);
   }, [data, search, sort]);
+
+  const projectById = useMemo(
+    () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
+    [allProjects],
+  );
 
   return (
     <div className="relative flex w-full flex-col">
@@ -235,13 +262,12 @@ const AgentsPage = () => {
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                projectName={
-                  agent.projectId === project.id
-                    ? project.displayName
-                    : undefined
-                }
+                projectName={projectById.get(agent.projectId)?.displayName}
                 projectDotColor={
-                  PROJECT_COLOR_PALETTE[project.icon.color]?.color
+                  PROJECT_COLOR_PALETTE[
+                    projectById.get(agent.projectId)?.icon.color ??
+                      project.icon.color
+                  ]?.color
                 }
                 onClick={() =>
                   navigate(

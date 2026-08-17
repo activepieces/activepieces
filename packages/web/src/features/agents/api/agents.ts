@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   Agent,
+  MAX_AGENT_PAGE_SIZE,
   AgentSummary,
   AgentTemplate,
   CreateAgentRequest,
@@ -12,9 +13,30 @@ import {
 
 import { api } from '@/lib/api';
 
+const MAX_AGENT_PAGES = 20;
+
 export const agentsApi = {
   list(request: ListAgentsRequest): Promise<SeekPage<AgentSummary>> {
     return api.get<SeekPage<AgentSummary>>('/v1/agents', request);
+  },
+  async listAll(
+    request: Omit<ListAgentsRequest, 'cursor' | 'limit'>,
+  ): Promise<SeekPage<AgentSummary>> {
+    const collected: AgentSummary[] = [];
+    let cursor: string | undefined = undefined;
+    for (let page = 0; page < MAX_AGENT_PAGES; page++) {
+      const response: SeekPage<AgentSummary> = await agentsApi.list({
+        ...request,
+        limit: MAX_AGENT_PAGE_SIZE,
+        ...(cursor === undefined ? {} : { cursor }),
+      });
+      collected.push(...response.data);
+      if (!response.next) {
+        return { data: collected, next: null, previous: null };
+      }
+      cursor = response.next;
+    }
+    return { data: collected, next: cursor ?? null, previous: null };
   },
   get(id: string): Promise<Agent> {
     return api.get<Agent>(`/v1/agents/${id}`);

@@ -16,10 +16,17 @@ const AGENTS_KEY = 'agents';
 const AGENT_TEMPLATES_KEY = 'agent-templates';
 
 export const agentsQueries = {
-  useAgents: ({ projectId }: { projectId?: string }) =>
+  useAgents: ({
+    projectId,
+    enabled = true,
+  }: {
+    projectId?: string;
+    enabled?: boolean;
+  }) =>
     useQuery({
       queryKey: [AGENTS_KEY, projectId ?? 'all'],
-      queryFn: () => agentsApi.list({ ...(projectId ? { projectId } : {}) }),
+      queryFn: () => agentsApi.listAll({ ...(projectId ? { projectId } : {}) }),
+      enabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
   useAgent: ({ id, enabled = true }: { id: string; enabled?: boolean }) =>
