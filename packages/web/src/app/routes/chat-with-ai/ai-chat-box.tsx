@@ -38,6 +38,9 @@ import { getTextFromParts } from './lib/message-parsers';
 export function AIChatBox({
   incognito,
   agentId,
+  emptyState,
+  footerNote,
+  placeholder,
   conversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -54,6 +57,9 @@ export function AIChatBox({
       <ChatBoxContent
         incognito={incognito}
         agentId={agentId}
+        emptyState={emptyState}
+        footerNote={footerNote}
+        placeholder={placeholder}
         conversationId={conversationId}
         onTitleUpdate={onTitleUpdate}
         onConversationCreated={onConversationCreated}
@@ -65,6 +71,9 @@ export function AIChatBox({
 function ChatBoxContent({
   incognito,
   agentId,
+  emptyState,
+  footerNote,
+  placeholder,
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -180,12 +189,14 @@ function ChatBoxContent({
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
-            <EmptyState
-              onSuggestionClick={(text) => void handleSend(text)}
-              incognito={incognito}
-              showFlowCards={!hasConversations}
-              hasInput={hasInput}
-            />
+            {emptyState ?? (
+              <EmptyState
+                onSuggestionClick={(text) => void handleSend(text)}
+                incognito={incognito}
+                showFlowCards={!hasConversations}
+                hasInput={hasInput}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -299,7 +310,8 @@ function ChatBoxContent({
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
             placeholder={
-              isEmpty ? t('Ask, build, or run a task...') : undefined
+              placeholder ??
+              (isEmpty ? t('Ask, build, or run a task...') : undefined)
             }
             banner={
               showBanner && !hasBlockingCard ? (
@@ -311,6 +323,11 @@ function ChatBoxContent({
               ) : null
             }
           />
+          {footerNote !== undefined && (
+            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
+              {footerNote}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -348,6 +365,9 @@ function computeClaimedBuildIds(
 type AIChatBoxProps = {
   incognito: boolean;
   agentId?: string;
+  emptyState?: React.ReactNode;
+  footerNote?: string;
+  placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;

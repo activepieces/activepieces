@@ -2376,5 +2376,9 @@
   "Build an agent once, then use it in any flow.": "Build an agent once, then use it in any flow.",
   "Configure": "Configure",
   "Agent configuration": "Agent configuration",
-  "Soon": "Soon"
+  "Soon": "Soon",
+  "Ask {name} anything": "Ask {name} anything",
+  "Ask {name}...": "Ask {name}...",
+  "{name} can use {tools} and replies may need review": "{name} can use {tools} and replies may need review",
+  "{name} has no tools yet, so replies may need review": "{name} has no tools yet, so replies may need review"
 }

@@ -53,6 +53,7 @@ const EYES_BY_SHAPE: Partial<Record<MarkShape, { cy: number; dx: number }>> = {
 const SIZES = {
   sm: { box: 'size-8 rounded-lg', canvas: 32 },
   default: { box: 'size-12 rounded-[14px]', canvas: 48 },
+  welcome: { box: 'size-[60px] rounded-[14px]', canvas: 44 },
 } as const;
 
 type AgentMarkProps = {

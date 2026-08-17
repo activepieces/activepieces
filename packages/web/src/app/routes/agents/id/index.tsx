@@ -1,5 +1,8 @@
+import { unique } from '@activepieces/core-utils';
 import {
+  Agent,
   AgentConfig,
+  AgentToolType,
   DEFAULT_AGENT_MAX_STEPS,
   MAX_AGENT_STEP_BUDGET,
   PROJECT_COLOR_PALETTE,
@@ -34,6 +37,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
@@ -60,6 +64,28 @@ const parseProvider = (provider?: string) => {
   const parsed = AgentConfig.shape.provider.safeParse(provider ?? null);
   return parsed.success ? parsed.data : null;
 };
+
+const buildCapabilityNote = (agent: Agent): string => {
+  const toolNames = unique(
+    agent.draft.tools.map((tool) =>
+      tool.type === AgentToolType.PIECE
+        ? pieceDisplayName(tool.pieceMetadata.pieceName)
+        : tool.toolName,
+    ),
+  );
+  if (toolNames.length === 0) {
+    return t('{name} has no tools yet, so replies may need review', {
+      name: agent.displayName,
+    });
+  }
+  return t('{name} can use {tools} and replies may need review', {
+    name: agent.displayName,
+    tools: toolNames.join(', '),
+  });
+};
+
+const pieceDisplayName = (pieceName: string): string =>
+  pieceName.replace('@activepieces/piece-', '');
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -291,7 +317,20 @@ const AgentEditorContent = () => {
       </div>
 
       <div className="flex min-h-0 grow flex-col">
-        <AIChatBox incognito={false} agentId={agent.id} />
+        <AIChatBox
+          incognito={false}
+          agentId={agent.id}
+          placeholder={t('Ask {name}...', { name: agent.displayName })}
+          footerNote={buildCapabilityNote(agent)}
+          emptyState={
+            <AgentChatWelcome
+              displayName={agent.displayName}
+              description={agent.description ?? null}
+              icon={agent.icon}
+              color={agent.color}
+            />
+          }
+        />
       </div>
 
       <Sheet open={configuring} onOpenChange={setConfiguring}>
