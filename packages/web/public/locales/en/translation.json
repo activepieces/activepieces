@@ -2380,5 +2380,12 @@
   "Pick a model so this agent can answer.": "Pick a model so this agent can answer.",
   "agentConfigTooLarge": "Agent configuration is too large",
   "Building your agent": "Building your agent",
-  "Picking the tools and writing its instructions": "Picking the tools and writing its instructions"
+  "Picking the tools and writing its instructions": "Picking the tools and writing its instructions",
+  "Connect an AI provider and I can start building agents.": "Connect an AI provider and I can start building agents.",
+  "Connect an AI provider": "Connect an AI provider",
+  "Almost ready": "Almost ready",
+  "Fill these in and you can start talking to this agent.": "Fill these in and you can start talking to this agent.",
+  "What the agent should do, and how to decide.": "What the agent should do, and how to decide.",
+  "Finish setting up": "Finish setting up",
+  "The model that answers, and the provider behind it.": "The model that answers, and the provider behind it."
 }

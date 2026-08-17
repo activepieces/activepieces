@@ -3,6 +3,7 @@ import {
   Agent,
   AgentConfig,
   AgentIcon,
+  agentUtils,
   AgentToolType,
   ColorName,
   DEFAULT_AGENT_MAX_STEPS,
@@ -13,7 +14,13 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import {
+  Check,
+  ChevronsLeft,
+  ChevronsRight,
+  Circle,
+  Settings2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -96,6 +103,83 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+
+type AgentRequirement = {
+  label: string;
+  hint: string;
+  met: boolean;
+};
+
+// A run reads the published configuration and only falls back to the draft, so readiness has to
+// be judged on the same one. Otherwise clearing a published agent's draft would present a
+// perfectly runnable agent as unfinished.
+const requirementsFor = (agent: Agent): AgentRequirement[] => {
+  const running = agent.published ?? agent.draft;
+  return [
+    {
+      label: t('Instructions'),
+      hint: t('What the agent should do, and how to decide.'),
+      met: agentUtils.isPublishable(running),
+    },
+    {
+      label: t('Model'),
+      hint: t('The model that answers, and the provider behind it.'),
+      met: !isNil(running.modelName) && !isNil(running.provider),
+    },
+  ];
+};
+
+const AgentNotReady = ({
+  requirements,
+  onConfigure,
+}: {
+  requirements: AgentRequirement[];
+  onConfigure: () => void;
+}) => (
+  <div className="flex h-full flex-col items-center justify-center gap-5 px-6">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="text-xl leading-7 font-semibold tracking-[-0.02em]">
+        {t('Almost ready')}
+      </p>
+      <p className="max-w-[420px] text-sm leading-[150%] text-muted-foreground">
+        {t('Fill these in and you can start talking to this agent.')}
+      </p>
+    </div>
+
+    <ul className="flex w-full max-w-[420px] flex-col gap-2">
+      {requirements.map((requirement) => (
+        <li
+          key={requirement.label}
+          className="flex items-start gap-3 rounded-[10px] border border-border p-3"
+        >
+          {requirement.met ? (
+            <Check size={16} className="mt-[3px] shrink-0 text-success-700" />
+          ) : (
+            <Circle size={16} className="mt-[3px] shrink-0 text-neutral-400" />
+          )}
+          <span className="flex min-w-0 flex-col gap-[2px]">
+            <span
+              className={cn(
+                'text-sm font-semibold',
+                requirement.met && 'text-muted-foreground line-through',
+              )}
+            >
+              {requirement.label}
+            </span>
+            <span className="text-[13px] leading-4 text-muted-foreground">
+              {requirement.hint}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
+
+    <Button className="gap-2" onClick={onConfigure}>
+      <Settings2 size={16} />
+      {t('Finish setting up')}
+    </Button>
+  </div>
+);
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -459,7 +543,8 @@ const AgentEditorContent = () => {
     return <AgentEditorSkeleton />;
   }
 
-  const needsModel = isNil(agent.draft.modelName);
+  const requirements = requirementsFor(agent);
+  const needsModel = requirements.some((requirement) => !requirement.met);
   const isConfigureOpen = configureOpen ?? needsModel;
 
   return (
@@ -535,23 +620,30 @@ const AgentEditorContent = () => {
         </div>
 
         <div className="flex min-h-0 grow flex-col">
-          <AIChatBox
-            key={openedConversationId ?? `new-${freshConversations}`}
-            incognito={false}
-            agentId={agent.id}
-            conversationId={openedConversationId ?? null}
-            onConversationCreated={writeConversationParam}
-            placeholder={t('Ask {name}...', { name: agent.displayName })}
-            footerNote={buildCapabilityNote(agent)}
-            emptyState={
-              <AgentChatWelcome
-                displayName={agent.displayName}
-                description={agent.description ?? null}
-                icon={agent.icon}
-                color={agent.color}
-              />
-            }
-          />
+          {needsModel ? (
+            <AgentNotReady
+              requirements={requirements}
+              onConfigure={() => setConfigureOpen(true)}
+            />
+          ) : (
+            <AIChatBox
+              key={openedConversationId ?? `new-${freshConversations}`}
+              incognito={false}
+              agentId={agent.id}
+              conversationId={openedConversationId ?? null}
+              onConversationCreated={writeConversationParam}
+              placeholder={t('Ask {name}...', { name: agent.displayName })}
+              footerNote={buildCapabilityNote(agent)}
+              emptyState={
+                <AgentChatWelcome
+                  displayName={agent.displayName}
+                  description={agent.description ?? null}
+                  icon={agent.icon}
+                  color={agent.color}
+                />
+              }
+            />
+          )}
         </div>
       </div>
 
