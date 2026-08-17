@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { AgentEvent, AgentEventType, AgentRunSource, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentRunSource, EngineResponseStatus, ExecuteAgentRunJobData, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { JobContext } from '../../../../../../src/lib/execute/types'
@@ -14,11 +14,11 @@ const noopLogger = {
     fatal: () => undefined,
 }
 
-function buildContext() {
+function buildContext(configError?: Error) {
     const events: AgentEvent[] = []
     const resumed: { flowRunId: string, waitpointId: string, output: unknown }[] = []
     const apiClient = {
-        getAgentConfig: () => Promise.reject(new ActivepiecesError({
+        getAgentConfig: () => Promise.reject(configError ?? new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityId: 'OPENAI', entityType: 'AIProvider' },
         })),
@@ -72,6 +72,15 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
 
         await expect(executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))).rejects.toThrow('ENTITY_NOT_FOUND')
 
+        expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
+    })
+
+    it('completes the job when the platform is out of credits, so it is not retried or paged', async () => {
+        const { ctx, events } = buildContext(new Error('You have run out of AI credits'))
+
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
+
+        expect(result.status).toBe(EngineResponseStatus.OK)
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 })

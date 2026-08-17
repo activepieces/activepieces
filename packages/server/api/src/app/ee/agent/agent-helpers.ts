@@ -74,7 +74,7 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityId: platformId, entityType: 'ChatAiProvider' },
-        })
+        }, 'no AI provider on this platform is enabled for chat')
     }
     return chatProvider
 }

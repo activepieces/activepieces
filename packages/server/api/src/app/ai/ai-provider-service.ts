@@ -204,7 +204,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     entityId: provider,
                     entityType: 'AIProvider',
                 },
-            })
+            }, `the ${provider} AI provider is not configured on this platform`)
         }
 
         let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
