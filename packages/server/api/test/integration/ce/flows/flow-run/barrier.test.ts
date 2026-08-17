@@ -4,6 +4,8 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { system } from '../../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../../src/app/helper/system/system-props'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { handleFanOutDispatch, handleFanOutDispatchExhausted } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
@@ -48,17 +50,19 @@ async function createParentRun(status: FlowRunStatus = FlowRunStatus.PAUSED) {
     return { flow, flowVersion, flowRun }
 }
 
-async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, timeoutSeconds }: {
     flowRunId: string
     items: unknown[]
     batchSize: number
     stepName?: string
+    timeoutSeconds?: number
 }) {
     return barrierService(app.log).create({
         flowRunId,
         projectId: ctx.project.id,
         stepName: stepName ?? 'fan_out',
         version: 'V1',
+        timeoutSeconds,
         fanOut: {
             entryStepName: 'trigger',
             batchSize,
@@ -66,6 +70,18 @@ async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
             seedSteps: {},
         },
     })
+}
+
+async function withBarrierQueuePaused<T>(fn: () => Promise<T>): Promise<T> {
+    const queue = barrierQueue(app.log).get()
+    await queue.pause()
+    try {
+        await queue.drain(true)
+        return await fn()
+    }
+    finally {
+        await queue.resume()
+    }
 }
 
 async function waitFor(condition: () => Promise<boolean>): Promise<void> {
@@ -249,6 +265,40 @@ describe('fan-out dispatch', () => {
         expect(await listChildren(barrier.id)).toHaveLength(beforeCancel)
     })
 
+    it('refuses to attribute a child to a barrier that already released, so a timeout mid-dispatch cannot leak children', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+            await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+            expect((await db.findOneBy('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.COMPLETED)
+
+            await expect(flowRunService(app.log).dispatchChild({
+                childRunId: apId(),
+                projectId: ctx.project.id,
+                parentRunId: flowRun.id,
+                entryStepName: 'trigger',
+                seedSteps: {},
+                parentWaitpointId: barrier.id,
+                dispatchIndex: 0,
+                dispatchKey: 'after-release',
+            })).rejects.toThrow()
+
+            expect(await listChildren(barrier.id)).toHaveLength(0)
+        })
+    })
+
+    it('stops dispatching when the barrier releases mid-flight', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+            await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+
+            await expect(handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log })).resolves.toBeUndefined()
+
+            expect(await listChildren(barrier.id)).toHaveLength(0)
+        })
+    })
+
     it('refuses to attribute a child to a barrier that no longer resolves', async () => {
         const { flowRun } = await createParentRun()
 
@@ -314,6 +364,26 @@ describe('barrier deadline', () => {
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
         expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('brings the deadline forward when the step asks for a shorter timeout', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: 3600 })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(50, 'minute'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(70, 'minute'))).toBe(true)
+    })
+
+    it('clamps a timeout longer than the paused-flow limit down to the limit', async () => {
+        const { flowRun } = await createParentRun()
+        const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        const beyondCap = (maxDurationInDays + 10) * 24 * 60 * 60
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: beyondCap })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(maxDurationInDays, 'day').subtract(1, 'hour'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(maxDurationInDays, 'day').add(1, 'hour'))).toBe(true)
     })
 
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {

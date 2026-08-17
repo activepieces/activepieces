@@ -17,6 +17,7 @@ import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../plat
 import { projectService } from '../../project/project-service'
 import { barrierService } from '../../waitpoints/barrier-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
+import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -359,10 +360,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
         const barrier = await barrierService(log).findById({ barrierId: parentWaitpointId, projectId })
-        if (isNil(barrier)) {
+        if (isNil(barrier) || barrier.status !== WaitpointStatus.PENDING) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'waitpoint', entityId: parentWaitpointId, message: 'The barrier this child would be attributed to no longer exists, so the child must not be created.' },
+                params: { entityType: 'waitpoint', entityId: parentWaitpointId, message: 'The barrier this child would be attributed to is no longer waiting, so the child must not be created.' },
             })
         }
 

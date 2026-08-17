@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { BarrierSummary, DEFAULT_BATCH_SIZE, ExecutionError, ExecutionErrorType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, PauseType, ProcessInBatchesAction, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
@@ -64,6 +64,7 @@ async function handOverToDispatcher({ action, executionState, constants }: Execu
                     items: [...items],
                     seedSteps: buildSeed({ action, executionState, constants }),
                 },
+                ...spreadIfDefined('timeoutSeconds', action.settings.timeoutSeconds),
             },
         })
 

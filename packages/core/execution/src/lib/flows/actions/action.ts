@@ -113,10 +113,13 @@ export const LoopOnItemsActionSchema = z.object({
 
 export const DEFAULT_BATCH_SIZE = 10
 
+export const MIN_BATCH_TIMEOUT_SECONDS = 3600
+
 export const ProcessInBatchesActionSettings = z.object({
     ...commonActionSettings,
     items: z.string(),
     batchSize: z.number().int({ message: 'batchSizeMustBeAWholeNumber' }).min(1, { message: 'batchSizeMustBeAtLeastOne' }).default(DEFAULT_BATCH_SIZE),
+    timeoutSeconds: z.number().int({ message: 'batchTimeoutMustBeAWholeNumber' }).min(MIN_BATCH_TIMEOUT_SECONDS, { message: 'batchTimeoutMustBeAtLeastOneHour' }).optional(),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type ProcessInBatchesActionSettings = z.infer<
