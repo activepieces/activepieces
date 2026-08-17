@@ -1,0 +1,74 @@
+---
+title: "AI Metadata"
+icon: "robot"
+description: "Make your piece's actions and triggers discoverable and safe for AI agents"
+---
+
+Every action and trigger you build is also an AI tool: agents connected through the [MCP server](/mcp/overview) discover piece actions and execute them directly. Two optional fields control how your piece appears to agents — `aiMetadata` describes the operation in agent terms, and `audience` controls which surfaces an action shows up in. Both are additive: omitting them leaves the piece behaving exactly as before.
+
+## aiMetadata
+
+Available on both actions and triggers:
+
+```typescript
+aiMetadata: {
+  description: string,   // optional — agent-oriented description
+  idempotent: boolean,   // optional — is repeating the call with the same input safe?
+}
+```
+
+**`description`** is written for an agent, not for the UI. The regular `description` stays a short label under the action name in the builder; `aiMetadata.description` can be a full paragraph that states what the operation does, its notable options and constraints, and how it differs from sibling actions ("Use *Send Message To A User* for a private DM"). This text feeds the [tool search](/mcp/tool-search) index, so a precise description directly improves whether agents find your action.
+
+**`idempotent`** declares whether calling the operation twice with the same input is safe. Reads, upserts, and set-value operations are idempotent; anything that creates, sends, or appends on every call is not. The value is exposed to agents and MCP clients as metadata that informs whether a retry is safe — it does not by itself prevent or trigger retries.
+
+```typescript
+import { createAction } from '@activepieces/pieces-framework';
+
+export const createTask = createAction({
+  name: 'create_task',
+  displayName: 'Create Task',
+  description: 'Create a task in a project',
+  aiMetadata: {
+    description:
+      'Create a new task in a given project, with optional assignee, due date, and labels. ' +
+      'Each call creates a new task, so it is not idempotent. ' +
+      'Use Update Task to modify an existing task instead.',
+    idempotent: false,
+  },
+  props: {
+    /* ... */
+  },
+  run: async (context) => {
+    /* ... */
+  },
+});
+```
+
+## audience
+
+Available on actions only (triggers have no audience — they always start flows, which both humans and agents build):
+
+```typescript
+audience: 'human' | 'ai' | 'both'
+```
+
+| Value | Visual builder | AI agents |
+|---|---|---|
+| `both` (default when omitted) | Shown | Shown |
+| `human` | Shown | Hidden from agent discovery |
+| `ai` | Hidden from the piece selector | Shown |
+
+Mark an action `human` when it only makes sense with the builder around it — for example the generic custom API call, or composite actions whose inputs assume a person picking from dropdowns. Mark an action `ai` for atomic operations added specifically for agents that would clutter the human piece selector.
+
+<Note>
+`audience` is a discovery filter, not a permission. It controls which catalogs an action appears in — it does not prevent execution, so don't rely on it to keep a dangerous action away from agents.
+</Note>
+
+## Writing actions agents can use well
+
+Agents work best with actions that behave like clean API calls:
+
+- **Atomic over composite.** One action should map to one capability with explicit inputs. Agents compose multi-step work themselves, so a focused *Create Task* beats a *Create Task and Notify Channel*.
+- **Explicit inputs.** Every behavior should be reachable through a documented prop — agents fill inputs from the [property schema](/build-pieces/piece-reference/properties), not from a UI.
+- **Describe the output.** Pair the action with an [output schema](/build-pieces/piece-reference/output-schema) so both the data selector and agents know the shape of what comes back.
+- **Disambiguate in `aiMetadata.description`.** When a piece has several similar actions, say which one to use when — that sentence is often what decides which action the search returns.
