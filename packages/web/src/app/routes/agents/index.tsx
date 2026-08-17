@@ -2,6 +2,7 @@ import {
   AgentSummary,
   MAX_DRAFT_PROMPT_LENGTH,
   PROJECT_COLOR_PALETTE,
+  ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -303,6 +304,10 @@ const AgentsPageContent = () => {
               <AgentCard
                 key={agent.id}
                 agent={agent}
+                projectIsPrivate={
+                  projectById.get(agent.projectId)?.type ===
+                  ProjectType.PERSONAL
+                }
                 projectName={projectById.get(agent.projectId)?.displayName}
                 projectDotColor={
                   PROJECT_COLOR_PALETTE[

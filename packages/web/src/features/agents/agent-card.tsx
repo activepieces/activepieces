@@ -10,10 +10,13 @@ import { AgentToolStack } from './agent-tool-stack';
 
 type AgentCardProps = {
   agent: AgentSummary;
+  projectIsPrivate?: boolean;
   projectName?: string;
   projectDotColor?: string;
   onClick: () => void;
 };
+
+const PRIVATE_DOT_COLOR = '#A3A3A3';
 
 const AgentChip = ({
   label,
@@ -35,6 +38,7 @@ const AgentChip = ({
 
 export const AgentCard = ({
   agent,
+  projectIsPrivate,
   projectName,
   projectDotColor,
   onClick,
@@ -71,8 +75,9 @@ export const AgentCard = ({
           toolPieceNames={agent.toolPieceNames}
         />
         <div className="ms-auto">
-          {agent.visibility === AgentVisibility.RESTRICTED ? (
-            <AgentChip label={t('Private')} dotColor="#A3A3A3" />
+          {agent.visibility === AgentVisibility.RESTRICTED ||
+          projectIsPrivate === true ? (
+            <AgentChip label={t('Private')} dotColor={PRIVATE_DOT_COLOR} />
           ) : (
             projectName && (
               <AgentChip label={projectName} dotColor={projectDotColor} />
