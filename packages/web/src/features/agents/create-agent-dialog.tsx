@@ -2,7 +2,6 @@ import {
   AgentIcon,
   AgentTemplate,
   ColorName,
-  CreateAgentRequest,
   DraftAgentResponse,
   MAX_DRAFT_PROMPT_LENGTH,
   formErrors,
@@ -40,6 +39,7 @@ import { cn } from '@/lib/utils';
 
 import { AgentMark } from './agent-mark';
 import { agentsMutations, agentsQueries } from './hooks/agents-hooks';
+import { createAgentUtils } from './lib/create-agent-utils';
 
 const CreateAgentFormSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
@@ -59,28 +59,6 @@ const buildDefaultValues = (
   instructions: draft?.instructions ?? '',
   icon: draft?.icon ?? AgentIcon.BOT,
   color: draft?.color ?? ColorName.PURPLE,
-});
-
-const toCreateRequest = ({
-  values,
-  projectId,
-}: {
-  values: CreateAgentFormValues;
-  projectId: string;
-}): CreateAgentRequest => ({
-  projectId,
-  displayName: values.displayName,
-  description: values.description.length > 0 ? values.description : null,
-  icon: values.icon,
-  color: values.color,
-  draft: {
-    instructions: values.instructions,
-    provider: null,
-    modelName: null,
-    maxSteps: 20,
-    tools: [],
-    structuredOutput: [],
-  },
 });
 
 const TemplateTile = ({
@@ -131,13 +109,18 @@ const CreateAgentForm = ({
     onError: () =>
       form.setError('root.serverError', {
         type: 'manual',
-        message: t('Could not create the agent. Try again.'),
+        message: t("The agent wasn't saved. Try again."),
       }),
   });
 
   const handleSubmit = (values: CreateAgentFormValues) => {
     form.clearErrors('root.serverError');
-    createAgent.mutate(toCreateRequest({ values, projectId: project.id }));
+    createAgent.mutate(
+      createAgentUtils.buildCreateRequest({
+        draft: values,
+        projectId: project.id,
+      }),
+    );
   };
 
   return (
@@ -291,7 +274,7 @@ const DescribeStep = ({
       </div>
       {draftAgent.isError && (
         <p className="text-sm text-destructive">
-          {t('Could not draft that agent. Try rewording it, or start blank.')}
+          {t("That didn't work. Try describing the agent another way.")}
         </p>
       )}
       <div className="flex flex-col gap-3">
@@ -362,7 +345,7 @@ export const CreateAgentDialog = ({
       <DialogHeader>
         <DialogTitle>{t('New agent')}</DialogTitle>
         <DialogDescription>
-          {t("Describe it in a sentence — I'll assemble the tools and steps.")}
+          {t("Describe what you need. I'll set up the tools and steps.")}
         </DialogDescription>
       </DialogHeader>
       <CreateAgentDialogBody

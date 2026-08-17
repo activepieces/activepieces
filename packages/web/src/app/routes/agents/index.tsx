@@ -1,4 +1,8 @@
-import { AgentSummary, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
+import {
+  AgentSummary,
+  MAX_DRAFT_PROMPT_LENGTH,
+  PROJECT_COLOR_PALETTE,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowUp,
@@ -21,9 +25,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { AgentCard } from '@/features/agents/agent-card';
 import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
-import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
+import {
+  agentsMutations,
+  agentsQueries,
+} from '@/features/agents/hooks/agents-hooks';
+import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -56,9 +65,7 @@ const AgentsPage = () => {
     <LockedFeatureGuard
       locked={!platform.plan.agentsEnabled}
       lockTitle={t('Unlock Agents')}
-      lockDescription={t(
-        'Build reusable agents your flows and your team can share.',
-      )}
+      lockDescription={t('Build an agent once, then use it in any flow.')}
       featureKey="AGENTS"
     >
       <AgentsPageContent />
@@ -91,6 +98,36 @@ const AgentsPageContent = () => {
     return [...matching].sort(SORT_COMPARATORS[sort]);
   }, [data, search, sort]);
 
+  const draftAgent = agentsMutations.useDraftAgent();
+  const createAgent = agentsMutations.useCreateAgent({
+    onSuccess: (agent) =>
+      navigate(
+        authenticationSession.appendProjectRoutePrefix(`/agents/${agent.id}`),
+      ),
+  });
+  const isBuilding = draftAgent.isPending || createAgent.isPending;
+  const buildError = draftAgent.isError || createAgent.isError;
+
+  const buildAgent = (text?: string) => {
+    const trimmed = (text ?? prompt).trim();
+    if (trimmed.length === 0 || isBuilding) {
+      return;
+    }
+    setPrompt(trimmed);
+    draftAgent.mutate(
+      { projectId: project.id, prompt: trimmed },
+      {
+        onSuccess: (draft) =>
+          createAgent.mutate(
+            createAgentUtils.buildCreateRequest({
+              draft,
+              projectId: project.id,
+            }),
+          ),
+      },
+    );
+  };
+
   const projectById = useMemo(
     () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
     [allProjects],
@@ -107,28 +144,38 @@ const AgentsPageContent = () => {
             "Describe it in a sentence — I'll assemble the tools, model, and steps.",
           )}
         </p>
-        <div className="mt-4 flex h-14 w-full max-w-[680px] items-center gap-3.5 rounded-full border border-border bg-muted ps-5 pe-2">
-          <input
+        <div className="mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-border bg-muted ps-5 pe-2 py-2">
+          <Textarea
             value={prompt}
+            minRows={1}
+            maxRows={8}
+            maxLength={MAX_DRAFT_PROMPT_LENGTH}
             onChange={(event) => setPrompt(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === 'Enter' && prompt.trim().length > 0) {
-                setCreating(true);
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                buildAgent();
               }
             }}
             placeholder={t(
               'Draft weekly launch posts and file them in Notion…',
             )}
-            className="h-10 w-full bg-transparent text-base leading-5 outline-none placeholder:text-neutral-400"
+            className="min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400"
           />
           <Button
             size="icon"
-            onClick={() => setCreating(true)}
+            loading={isBuilding}
+            onClick={() => buildAgent()}
             className="size-10 shrink-0 rounded-full"
           >
             <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
         </div>
+        {buildError && (
+          <p className="text-[13px] leading-4 text-destructive">
+            {t("That didn't work. Try describing the agent another way.")}
+          </p>
+        )}
         <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">
           <span className="text-[13px] leading-4 text-muted-foreground">
             {t('Try:')}
@@ -137,10 +184,7 @@ const AgentsPageContent = () => {
             <button
               key={suggestion}
               type="button"
-              onClick={() => {
-                setPrompt(t(suggestion));
-                setCreating(true);
-              }}
+              onClick={() => buildAgent(t(suggestion))}
               className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent"
             >
               {t(suggestion)}
@@ -160,7 +204,7 @@ const AgentsPageContent = () => {
             </span>
             {data?.next && (
               <span className="text-[13px] leading-4 text-muted-foreground">
-                {t('showing the first {count}', { count: agents.length })}
+                {t('Showing the first {count}', { count: agents.length })}
               </span>
             )}
           </div>
@@ -295,8 +339,8 @@ const AgentsEmptyState = ({ hasSearch }: { hasSearch: boolean }) => (
     </p>
     <p className="text-sm text-muted-foreground">
       {hasSearch
-        ? t('Try a different name, or clear the search.')
-        : t('Describe what you need above, or start from one of the starters.')}
+        ? t('Try another name, or clear the search.')
+        : t('Describe one above, or pick a template.')}
     </p>
   </div>
 );

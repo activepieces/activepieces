@@ -94,7 +94,7 @@ const AgentEditorForm = ({
       onError: () =>
         form.setError('root.serverError', {
           type: 'manual',
-          message: t('Could not save the agent. Try again.'),
+          message: t("Your changes weren't saved. Try again."),
         }),
     });
   };
@@ -269,8 +269,8 @@ const AgentEditorForm = ({
               <p className="text-sm font-semibold">{t('Try this agent')}</p>
               <span className="text-[13px] leading-4 text-muted-foreground">
                 {isPublished
-                  ? t('Running the published version')
-                  : t('Running the draft')}
+                  ? t('Using the published version')
+                  : t('Using the draft')}
               </span>
             </div>
             <div className="flex min-h-0 grow flex-col">
@@ -289,9 +289,7 @@ const AgentEditorPage = () => {
     <LockedFeatureGuard
       locked={!platform.plan.agentsEnabled}
       lockTitle={t('Unlock Agents')}
-      lockDescription={t(
-        'Build reusable agents your flows and your team can share.',
-      )}
+      lockDescription={t('Build an agent once, then use it in any flow.')}
       featureKey="AGENTS"
     >
       <AgentEditorContent />
