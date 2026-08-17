@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
+import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -272,16 +272,19 @@ describe('fan-out dispatch', () => {
             await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
             expect((await db.findOneBy('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.COMPLETED)
 
-            await expect(flowRunService(app.log).dispatchChild({
-                childRunId: apId(),
+            const target = await flowRunService(app.log).prepareChildDispatch({
                 projectId: ctx.project.id,
                 parentRunId: flowRun.id,
                 entryStepName: 'trigger',
+            })
+            await expect(flowRunService(app.log).dispatchChild({
+                target,
+                childRunId: apId(),
                 seedSteps: {},
                 parentWaitpointId: barrier.id,
                 dispatchIndex: 0,
                 dispatchKey: 'after-release',
-            })).rejects.toThrow()
+            })).rejects.toThrow(ErrorCode.ENTITY_NOT_FOUND)
 
             expect(await listChildren(barrier.id)).toHaveLength(0)
         })
@@ -302,16 +305,37 @@ describe('fan-out dispatch', () => {
     it('refuses to attribute a child to a barrier that no longer resolves', async () => {
         const { flowRun } = await createParentRun()
 
-        await expect(flowRunService(app.log).dispatchChild({
-            childRunId: apId(),
+        const target = await flowRunService(app.log).prepareChildDispatch({
             projectId: ctx.project.id,
             parentRunId: flowRun.id,
-            entryStepName: 'step_1',
+            entryStepName: 'trigger',
+        })
+        await expect(flowRunService(app.log).dispatchChild({
+            target,
+            childRunId: apId(),
             seedSteps: {},
             parentWaitpointId: apId(),
             dispatchIndex: 0,
             dispatchKey: 'nope',
-        })).rejects.toThrow()
+        })).rejects.toThrow(ErrorCode.ENTITY_NOT_FOUND)
+    })
+
+    it('refuses to resolve a dispatch target for a parent run outside the project', async () => {
+        await expect(flowRunService(app.log).prepareChildDispatch({
+            projectId: ctx.project.id,
+            parentRunId: apId(),
+            entryStepName: 'trigger',
+        })).rejects.toThrow(ErrorCode.VALIDATION)
+    })
+
+    it('refuses to resolve a dispatch target for a step the flow version does not have', async () => {
+        const { flowRun } = await createParentRun()
+
+        await expect(flowRunService(app.log).prepareChildDispatch({
+            projectId: ctx.project.id,
+            parentRunId: flowRun.id,
+            entryStepName: 'step_does_not_exist',
+        })).rejects.toThrow(ErrorCode.VALIDATION)
     })
 
     it('marks the rest undispatched when dispatch exhausts its attempts, so the barrier releases now', async () => {

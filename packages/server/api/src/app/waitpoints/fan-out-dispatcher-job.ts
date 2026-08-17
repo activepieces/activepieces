@@ -25,6 +25,16 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
     }
 
     const signals = await barrierService(log).listUnclaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
+    if (signals.length === 0) {
+        await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+        return
+    }
+
+    const target = await flowRunService(log).prepareChildDispatch({
+        projectId: data.projectId,
+        parentRunId: barrier.flowRunId,
+        entryStepName: source.entryStepName,
+    })
     const limit = pLimit(MAX_DISPATCHES_IN_FLIGHT)
     let cancelled = false
 
@@ -40,10 +50,8 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
             return
         }
         const { error } = await tryCatch(() => flowRunService(log).dispatchChild({
+            target,
             childRunId,
-            projectId: data.projectId,
-            parentRunId: barrier.flowRunId,
-            entryStepName: source.entryStepName,
             seedSteps: { ...source.seedSteps, [barrier.stepName]: batchStepOutput(batch) },
             parentWaitpointId: barrier.id,
             dispatchIndex: sequence,

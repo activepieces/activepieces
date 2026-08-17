@@ -42,9 +42,17 @@ of that window.
 
 `benchmark/PROCESS-IN-BATCHES-BENCHMARK.md` S5 measured 200 children in **1 293 ms (~174/s)** on a quiet
 single-app/single-worker rig with warm sandboxes. Moving the loop server-side removes the HTTP hop but keeps
-the per-child cost: flow-version read, insert, `addToQueue`, `onStart`. Budget **~60 s of held poll slot at
-the 10 000 cap**, and re-derive the number rather than quoting an estimate. A priority above the children
+the per-child cost: barrier freshness read, insert, `addToQueue`, `onStart`. Budget **~60 s of held poll slot
+at the 10 000 cap**, and re-derive the number rather than quoting an estimate. A priority above the children
 orders the queue but does not free the slot.
+
+Only the barrier read is per child, and only because it must be fresh. Everything else the dispatch needs is
+invariant across the barrier and is resolved once by `flowRunService.prepareChildDispatch` — parent run,
+flow version (the whole JSONB graph, the migration service, and the `flowStructureUtil.getStep` tree walk
+that validates `entryStepName`), and `projectId → platformId`. It used to be five SELECTs and one flow-graph
+parse *per child*, i.e. ~40 000 SELECTs and 10 000 parses at the cap, five-wide inside the app process while
+it also served HTTP. Do not reintroduce a read inside `dispatchChild`: if a new value is needed, put it on
+`ChildDispatchTarget`.
 
 ## Gotchas
 
@@ -118,3 +126,18 @@ orders the queue but does not free the slot.
   save the pass-through methods therefore adds a third cycle,
   `waitpoint-service → barrier-queue → barrier-service → resume-service → waitpoint-service`. Move the
   closure if you like; leave the key and the types on a leaf.
+- **`isBarrierGone` matches *any* `ENTITY_NOT_FOUND`, so anything inside the dispatch loop that throws that
+  code is misread as "the barrier was cancelled" — the job completes, no evaluation is enqueued, and the
+  barrier hangs to its deadline.** `flowVersionService.getOneOrThrow` was exactly such a source until the
+  flow-version read moved to `prepareChildDispatch`, above the loop, where the same error fails the job and
+  the barrier releases on retry exhaustion instead. After that move the barrier freshness check is the only
+  `ENTITY_NOT_FOUND` inside `dispatchChild`, which is what makes the heuristic sound. Keep it that way.
+- **The dispatcher must still enqueue an evaluation when it has nothing to dispatch.** Two dispatchers over
+  one barrier is the normal case, `waitpoint` has no FK to `flow_run`, so "parent run gone, barrier still
+  PENDING" is reachable — a second dispatcher that finds zero unclaimed signals has to return via
+  `addEvaluation`, not by failing a validation that then burns the whole retry ladder before release.
+- **A bare `rejects.toThrow()` in `barrier.test.ts` will pass on the wrong guard.** `createMockFlowVersion`
+  builds a flow whose only step is the trigger named `trigger` — there is no `step_1`. A test written to
+  assert the barrier guard while passing `entryStepName: 'step_1'` was in fact tripping the entry-step
+  validation and never reached the barrier at all. Assert the `ErrorCode` in these tests; the guards in this
+  path throw deliberately different ones (`VALIDATION` for the target, `ENTITY_NOT_FOUND` for the barrier).

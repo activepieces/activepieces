@@ -344,7 +344,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
-    async dispatchChild({ childRunId, projectId, parentRunId, entryStepName, seedSteps, parentWaitpointId, dispatchIndex, dispatchKey }: DispatchChildParams): Promise<void> {
+    async prepareChildDispatch({ projectId, parentRunId, entryStepName }: PrepareChildDispatchParams): Promise<ChildDispatchTarget> {
         const parentRun = await flowRunRepo().findOneBy({ id: parentRunId, projectId })
         if (isNil(parentRun)) {
             throw new ActivepiecesError({
@@ -359,6 +359,19 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 params: { message: `The step ${entryStepName} does not exist in this flow version, so a child run cannot start from it.` },
             })
         }
+        return {
+            projectId,
+            parentRunId,
+            entryStepName,
+            flowId: parentRun.flowId,
+            flowVersionId: parentRun.flowVersionId,
+            environment: parentRun.environment,
+            platformId: await projectService(log).getPlatformId(projectId),
+        }
+    },
+
+    async dispatchChild({ target, childRunId, seedSteps, parentWaitpointId, dispatchIndex, dispatchKey }: DispatchChildParams): Promise<void> {
+        const { projectId, parentRunId, entryStepName, flowId, flowVersionId, environment, platformId } = target
         const barrier = await barrierService(log).findById({ barrierId: parentWaitpointId, projectId })
         if (isNil(barrier) || barrier.status !== WaitpointStatus.PENDING) {
             throw new ActivepiecesError({
@@ -367,14 +380,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const platformId = await projectService(log).getPlatformId(projectId)
         const now = new Date().toISOString()
-        await flowRunDispatchRepo().insert({
+        const childRun: FlowRunWithDispatchIndex = {
             id: childRunId,
             projectId,
-            flowId: parentRun.flowId,
-            flowVersionId: parentRun.flowVersionId,
-            environment: parentRun.environment,
+            flowId,
+            flowVersionId,
+            environment,
             parentRunId,
             parentWaitpointId: barrier.id,
             dispatchIndex,
@@ -383,8 +395,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             created: now,
             updated: now,
             tags: [],
-        })
-        const childRun = await flowRunDispatchRepo().findOneByOrFail({ id: childRunId, projectId })
+        }
+        await flowRunDispatchRepo().insert(childRun)
 
         const { error } = await tryCatch(() => addToQueue({
             flowRun: childRun,
@@ -942,15 +954,29 @@ export type AddToQueueParams = AddToQueueParamsCommon & (
     | { executionType: ExecutionType.RESUME, resumeReason: ResumeReason }
 )
 
-type DispatchChildParams = {
-    childRunId: FlowRunId
+type PrepareChildDispatchParams = {
     projectId: ProjectId
     parentRunId: FlowRunId
     entryStepName: string
+}
+
+type DispatchChildParams = {
+    target: ChildDispatchTarget
+    childRunId: FlowRunId
     seedSteps: Record<string, unknown>
     parentWaitpointId: string
     dispatchIndex: number
     dispatchKey: string
+}
+
+export type ChildDispatchTarget = {
+    projectId: ProjectId
+    parentRunId: FlowRunId
+    entryStepName: string
+    flowId: FlowId
+    flowVersionId: FlowVersionId
+    environment: RunEnvironment
+    platformId: PlatformId
 }
 
 
