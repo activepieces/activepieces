@@ -75,7 +75,7 @@ A code found to be expired is thrown away when it is next presented, rather than
 
 #### What you need to do
 
-Nothing, and no new configuration: the key is derived from a secret your instance already has. The upgrade clears any codes outstanding at that moment, because a stored plaintext and a stored digest are indistinguishable, so anyone who is mid-sign-in when you upgrade needs to request a fresh code. Every code expires within ten minutes anyway, so the window where that can happen is small.
+Nothing, and no new configuration: the key is derived from a secret your instance already has. Any code already sent before you upgrade stops working, because a code stored the old way can no longer match, so anyone mid-sign-in at that moment needs to request a fresh one. Every code expires within ten minutes anyway, so the window where that can happen is small, and the next request replaces the old value.
 
 
 ## 0.87.0
