@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 const SCRIPT_ID = 'cf-turnstile';
 const SCRIPT_SRC =
@@ -51,6 +52,19 @@ export function TurnstileWidget({
   const container = useRef<HTMLDivElement>(null);
   const widget = useRef<string | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const element = container.current;
+    if (!element) {
+      return;
+    }
+    const observer = new ResizeObserver(() =>
+      setShown(element.offsetHeight > 0),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!siteKey || !container.current) {
@@ -71,9 +85,17 @@ export function TurnstileWidget({
         }
         widgetId = window.turnstile.render(container.current, {
           sitekey: siteKey,
-          callback: (token: string) => onToken(token),
+          appearance: 'interaction-only',
+          theme: 'light',
+          callback: (token: string) => {
+            setFailed(false);
+            onToken(token);
+          },
           'expired-callback': () => onToken(undefined),
-          'error-callback': () => onToken(undefined),
+          'error-callback': () => {
+            setFailed(true);
+            onToken(undefined);
+          },
         });
         widget.current = widgetId;
       })
@@ -109,16 +131,20 @@ export function TurnstileWidget({
   // Say so rather than leaving a dead submit button: the server requires a
   // solved challenge whenever one is configured, so a blocked script means
   // sign-in cannot proceed and the person needs to know why.
-  if (failed) {
-    return (
-      <p className="mt-3 text-center text-xs text-destructive">
-        {t(
-          'The verification step could not load. Disable your ad blocker for this page, then reload.',
-        )}
-      </p>
-    );
-  }
-  return <div ref={container} className="mt-4 flex justify-center" />;
+  return (
+    <>
+      <div className={cn(shown && 'pb-7')}>
+        <div ref={container} className="flex justify-center" />
+      </div>
+      {failed && (
+        <p className="mt-3 text-center text-xs text-destructive">
+          {t(
+            'The verification step could not load. Disable your ad blocker for this page, then reload.',
+          )}
+        </p>
+      )}
+    </>
+  );
 }
 
 type TurnstileWidgetProps = {

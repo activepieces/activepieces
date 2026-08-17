@@ -679,7 +679,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -691,12 +691,12 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,
+        enabledForChat: aiProvider?.enabledForChat ?? aiProvider?.provider === AIProviderName.ACTIVEPIECES,
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
