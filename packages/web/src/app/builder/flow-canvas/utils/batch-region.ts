@@ -111,26 +111,6 @@ const buildRegion = ({
   };
 };
 
-const findRegionAtPoint = ({
-  regions,
-  point,
-}: {
-  regions: ApBatchRegionNode[];
-  point: ScreenPoint;
-}): string | null =>
-  regions
-    .filter(
-      (region) =>
-        point.x >= region.position.x &&
-        point.x <= region.position.x + region.data.size.width &&
-        point.y >= region.position.y &&
-        point.y <= region.position.y + region.data.size.height,
-    )
-    .sort((a, b) => areaOf(a) - areaOf(b))[0]?.data.stepName ?? null;
-
-const areaOf = (region: ApBatchRegionNode) =>
-  region.data.size.width * region.data.size.height;
-
 const isMember = ({ node, prefixes }: { node: ApNode; prefixes: string[] }) =>
   prefixes.some(
     (prefix) => node.id === prefix || node.id.startsWith(`${prefix}-`),
@@ -182,7 +162,6 @@ const RAIL_PADDING = 64;
 
 export const batchRegionUtils = {
   buildBatchRegionNodes,
-  findRegionAtPoint,
 };
 
 type ScreenPoint = { x: number; y: number };

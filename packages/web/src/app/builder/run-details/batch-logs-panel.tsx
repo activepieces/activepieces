@@ -9,10 +9,11 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 
+import { batchUtils } from './batch-utils';
 import { BatchLogs } from './use-batch-logs';
 
 const BatchLogsPanel = ({ batchLogs }: { batchLogs: BatchLogs }) => {
-  const copy = missingLogsCopy(batchLogs.kind);
+  const copy = batchUtils.missingLogsCopy(batchLogs.kind);
   if (isNil(copy)) {
     return <></>;
   }
@@ -31,15 +32,6 @@ const BatchLogsPanel = ({ batchLogs }: { batchLogs: BatchLogs }) => {
     </EmptyStatePanel>
   );
 };
-
-const BatchSkippedPanel = () => (
-  <EmptyStatePanel
-    title={t('No batches dispatched')}
-    description={t(
-      'Items resolved to an empty array, so nothing ran. The flow continued to the next step.',
-    )}
-  />
-);
 
 const EmptyStatePanel = ({
   title,
@@ -70,41 +62,4 @@ const EmptyStatePanel = ({
   </div>
 );
 
-function missingLogsCopy(
-  kind: BatchLogs['kind'],
-): { title: string; description: string } | null {
-  switch (kind) {
-    case 'neverStarted':
-      return {
-        title: t('This batch never started'),
-        description: t(
-          'It was never picked up by a worker, so it has no logs of its own.',
-        ),
-      };
-    case 'failedToDispatch':
-      return {
-        title: t('This batch failed to dispatch'),
-        description: t(
-          'It was never handed to a worker, so it has no logs of its own.',
-        ),
-      };
-    case 'stillRunning':
-      return {
-        title: t('This batch is still running'),
-        description: t(
-          'The parent finished without it, and its writes may still land.',
-        ),
-      };
-    case 'logsExpired':
-      return {
-        title: t('Logs no longer available'),
-        description: t(
-          'This batch ran, but its logs are past the retention window. The summary on the step above is what remains.',
-        ),
-      };
-    default:
-      return null;
-  }
-}
-
-export { BatchLogsPanel, BatchSkippedPanel, EmptyStatePanel };
+export { BatchLogsPanel, EmptyStatePanel };

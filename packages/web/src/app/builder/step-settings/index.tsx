@@ -158,11 +158,9 @@ const StepSettingsContainer = () => {
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
-    [
-      FlowActionType.CODE,
-      FlowActionType.PIECE,
-      FlowActionType.PROCESS_IN_BATCHES,
-    ].includes(modifiedStep.type as FlowActionType) && !isNil(stepMetadata);
+    [FlowActionType.CODE, FlowActionType.PIECE].includes(
+      modifiedStep.type as FlowActionType,
+    ) && !isNil(stepMetadata);
 
   const runAgentStep =
     modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
@@ -233,7 +231,7 @@ const StepSettingsContainer = () => {
             hideRetryOnFailure={
               stepMetadata.type === FlowActionType.PIECE
                 ? stepMetadata.errorHandlingOptions?.retryOnFailure?.hide
-                : stepMetadata.type === FlowActionType.PROCESS_IN_BATCHES
+                : false
             }
           ></ActionErrorHandlingForm>
         )}

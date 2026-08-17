@@ -377,59 +377,6 @@ describe('batch region silhouette', () => {
     expect(containsPoint(region, centreOf('after'), 'horizontal')).toBe(false);
   });
 
-  describe('hover hit-test', () => {
-    const graph = buildGraph({
-      firstAction: createBatchAction({
-        name: 'outer',
-        firstLoopAction: createBatchAction({
-          name: 'inner',
-          firstLoopAction: createCodeAction('child_1'),
-        }),
-        nextAction: createCodeAction('after'),
-      }),
-    });
-    const regions = graph.nodes.filter(
-      (node): node is ApBatchRegionNode => node.type === ApNodeType.BATCH_REGION,
-    );
-    const at = (point: { x: number; y: number }) =>
-      batchRegionUtils.findRegionAtPoint({ regions, point });
-    const centreOf = (nodeId: string) => {
-      const node = graph.nodes.find((candidate) => candidate.id === nodeId)!;
-      return {
-        x: node.position.x + STEP_WIDTH / 2,
-        y: node.position.y + STEP_HEIGHT / 2,
-      };
-    };
-
-    it('picks the innermost region containing the point', () => {
-      expect(at(centreOf('child_1'))).toBe('inner');
-    });
-
-    it('picks the outer region above where the inner one starts', () => {
-      const outer = getRegion(graph, 'outer');
-      const inner = getRegion(graph, 'inner');
-      expect(at({ x: outer.position.x + 1, y: inner.position.y - 1 })).toBe(
-        'outer',
-      );
-    });
-
-    it('reads the empty canvas between the steps as inside', () => {
-      const inner = getRegion(graph, 'inner');
-      expect(
-        at({
-          x: inner.position.x + inner.data.size.width - 1,
-          y: inner.position.y + inner.data.size.height / 2,
-        }),
-      ).toBe('inner');
-    });
-
-    it('is null outside every region', () => {
-      const outer = getRegion(graph, 'outer');
-      expect(at(centreOf('after'))).toBeNull();
-      expect(at({ x: centreOf('outer').x, y: outer.position.y - 1 })).toBeNull();
-    });
-  });
-
   it('hangs from the batch column when the batch sits in a loop lane', () => {
     const graph = buildGraph({
       firstAction: createLoopAction({

@@ -19,8 +19,6 @@ export type CanvasState = {
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
-  hoveredBatchRegion: string | null;
-  setHoveredBatchRegion: (stepName: string | null) => void;
   selectedBranchIndex: number | null;
   userManuallySelectedStepDuringRun: boolean;
   showMinimap: boolean;
@@ -91,8 +89,6 @@ export const createCanvasState = (
     hideTestWidget: initialState.hideTestWidget ?? false,
     selectedStep: initiallySelectedStep,
     activeDraggingStep: null,
-    hoveredBatchRegion: null,
-    setHoveredBatchRegion: (hoveredBatchRegion) => set({ hoveredBatchRegion }),
     rightSidebar:
       initiallySelectedStep && !isEmptyTriggerInitiallySelected
         ? RightSideBarType.PIECE_SETTINGS

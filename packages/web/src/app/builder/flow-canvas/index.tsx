@@ -17,9 +17,7 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
-  getNodesBounds,
   CoordinateExtent,
-  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -34,10 +32,8 @@ import {
 } from './context-menu/canvas-context-menu';
 import { FlowDragLayer } from './flow-drag-layer';
 import { flowCanvasHooks } from './hooks';
-import { batchRegionUtils } from './utils/batch-region';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApBatchRegionNode, ApNodeType } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
@@ -58,7 +54,6 @@ export const FlowCanvas = React.memo(
       rightSidebar,
       notes,
       canvasOrientation,
-      setHoveredBatchRegion,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -70,7 +65,6 @@ export const FlowCanvas = React.memo(
         state.rightSidebar,
         state.flowVersion.notes,
         state.canvasOrientation,
-        state.setHoveredBatchRegion,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -94,7 +88,6 @@ export const FlowCanvas = React.memo(
     const graphKey = `${createGraphKey(
       flowVersion,
       notes,
-      selectedStep ?? '',
     )}-${canvasOrientation}`;
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph({
@@ -187,41 +180,15 @@ export const FlowCanvas = React.memo(
     }, [selectedNodes, reactFlowStore, selectedStep]);
 
     const { setCursorPosition } = useCursorPosition();
-    const { screenToFlowPosition } = useReactFlow();
-    const hoveredBatchRegionRef = useRef<string | null>(null);
-    const batchRegions = useMemo(
-      () =>
-        graph.nodes.filter(
-          (node): node is ApBatchRegionNode =>
-            node.type === ApNodeType.BATCH_REGION,
-        ),
-      [graphKey],
-    );
-    const updateHoveredBatchRegion = useCallback(
-      (stepName: string | null) => {
-        if (hoveredBatchRegionRef.current !== stepName) {
-          hoveredBatchRegionRef.current = stepName;
-          setHoveredBatchRegion(stepName);
-        }
-      },
-      [setHoveredBatchRegion],
-    );
     const translateExtent = useMemo(() => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight + 100;
-      const nodes = graph.nodes;
-      const graphRectangle = getNodesBounds(nodes);
-      const start = {
-        x: graphRectangle.x - windowWidth,
-        y: graphRectangle.y - windowHeight,
-      };
-      const end = {
-        x: graphRectangle.x + graphRectangle.width + windowWidth,
-        y: graphRectangle.y + graphRectangle.height + windowHeight,
-      };
+      const positions = graph.nodes.map((node) => node.position);
+      const xs = positions.map((position) => position.x);
+      const ys = positions.map((position) => position.y);
       const extent: CoordinateExtent = [
-        [start.x, start.y],
-        [end.x, end.y],
+        [Math.min(...xs) - windowWidth, Math.min(...ys) - windowHeight],
+        [Math.max(...xs) + windowWidth, Math.max(...ys) + windowHeight],
       ];
       return extent;
     }, [graphKey]);
@@ -230,19 +197,9 @@ export const FlowCanvas = React.memo(
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-30 bg-builder-background"
-        onMouseMove={(event) => {
-          const cursorPosition = { x: event.clientX, y: event.clientY };
-          setCursorPosition(cursorPosition);
-          if (batchRegions.length > 0) {
-            updateHoveredBatchRegion(
-              batchRegionUtils.findRegionAtPoint({
-                regions: batchRegions,
-                point: screenToFlowPosition(cursorPosition),
-              }),
-            );
-          }
-        }}
-        onMouseLeave={() => updateHoveredBatchRegion(null)}
+        onMouseMove={(event) =>
+          setCursorPosition({ x: event.clientX, y: event.clientY })
+        }
       >
         <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
@@ -334,11 +291,7 @@ const getChildrenKey = (step: Step) => {
     }
   }
 };
-const createGraphKey = (
-  flowVersion: FlowVersion,
-  notes: Note[],
-  selectedStep: string,
-) => {
+const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
@@ -359,5 +312,5 @@ const createGraphKey = (
   const notesGraphKey = notes
     .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
-  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}-${selectedStep}`;
+  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}`;
 };

@@ -12,7 +12,7 @@ import { flowRunQueries, flowRunUtils } from '@/features/flow-runs';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { BatchChild, batchRailUtils } from './batch-rail-utils';
+import { BatchChild, batchUtils } from './batch-utils';
 
 export const useBatchStepRun = (batchStepName: string | null) => {
   const [run, loopsIndexes, batchIndex] = useBuilderStateContext((state) => [
@@ -29,17 +29,12 @@ export const useBatchStepRun = (batchStepName: string | null) => {
       loopsIndexes,
       run.steps,
     );
-    return batchRailUtils.parseStepOutput(stepOutput?.output);
+    return batchUtils.parseStepOutput(stepOutput?.output);
   }, [run, batchStepName, loopsIndexes]);
   const barrierId = output?.barrierId ?? null;
-  const total = isNil(output) ? 0 : batchRailUtils.batchCount(output);
+  const total = isNil(output) ? 0 : batchUtils.batchCount(output);
   const current = Math.min(batchIndex, Math.max(total - 1, 0));
 
-  const { data: childrenPage } = flowRunQueries.useBatchChildren({
-    barrierId,
-    limit: MAX_ENUMERATED_CHILDREN,
-    enabled: total > 0 && total <= MAX_ENUMERATED_CHILDREN,
-  });
   const { data: selectedPage, isLoading: isSelectedChildLoading } =
     flowRunQueries.useBatchChild({
       barrierId,
@@ -47,20 +42,9 @@ export const useBatchStepRun = (batchStepName: string | null) => {
       enabled: total > 0,
     });
 
-  const children = useMemo(
-    () => toBatchChildren(childrenPage?.data),
-    [childrenPage],
-  );
   const selectedChild = toBatchChildren(selectedPage?.data)[0] ?? null;
 
-  return {
-    output,
-    total,
-    current,
-    children,
-    selectedChild,
-    isSelectedChildLoading,
-  };
+  return { output, total, current, selectedChild, isSelectedChildLoading };
 };
 
 export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
@@ -86,7 +70,7 @@ export const useBatchLogs = (stepName: string | undefined): BatchLogs => {
     return { kind: 'steps', steps, childRunId: selectedChild?.id ?? null };
   }
   return {
-    kind: batchRailUtils.childState({
+    kind: batchUtils.childState({
       output,
       batchIndex: current,
       child: selectedChild,
@@ -111,7 +95,7 @@ export const useStepOutputInRun = (stepName: string | undefined) => {
   return { stepOutput, batchLogs };
 };
 
-function enclosingBatchStepName({
+export function enclosingBatchStepName({
   stepName,
   trigger,
 }: {
@@ -140,8 +124,6 @@ function toBatchChildren(
 }
 
 const NOT_IN_A_BATCH = { kind: 'notInABatch', childRunId: null } as const;
-
-const MAX_ENUMERATED_CHILDREN = 100;
 
 export type BatchLogs =
   | { kind: 'notInABatch'; childRunId: null }

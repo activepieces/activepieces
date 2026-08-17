@@ -38,16 +38,12 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
-import {
-  BatchLogsPanel,
-  BatchSkippedPanel,
-  EmptyStatePanel,
-} from './batch-logs-panel';
-import { batchRailUtils } from './batch-rail-utils';
+import { BatchBreadcrumb, BatchBrowser } from './batch-browser';
+import { BatchLogsPanel, EmptyStatePanel } from './batch-logs-panel';
 import { truncatedInputUtils } from './truncated-input-utils';
 import { useStepOutputInRun } from './use-batch-logs';
 
-type RunActiveTab = 'input' | 'output' | 'timeline';
+type RunActiveTab = 'input' | 'output' | 'timeline' | 'batches';
 
 export const FlowStepInputOutput = () => {
   const [run, selectedStep] = useBuilderStateContext((state) => [
@@ -62,12 +58,24 @@ export const FlowStepInputOutput = () => {
   const isAgent = isRunAgent(selectedStep);
   const isTrigger =
     !isNil(selectedStep) && flowStructureUtil.isTrigger(selectedStep.type);
-  const [requestedTab, setActiveTab] = useState<RunActiveTab>(
-    isAgent ? 'timeline' : 'output',
-  );
+  const [tabChoice, setTabChoice] = useState<{
+    stepName: string;
+    tab: RunActiveTab;
+  } | null>(null);
+  const isBatchStep = selectedStep?.type === FlowActionType.PROCESS_IN_BATCHES;
+  const defaultTab: RunActiveTab = isAgent
+    ? 'timeline'
+    : isBatchStep
+    ? 'batches'
+    : 'output';
+  const requestedTab =
+    !isNil(tabChoice) && tabChoice.stepName === selectedStep?.name
+      ? tabChoice.tab
+      : defaultTab;
   const activeTab: RunActiveTab =
     (requestedTab === 'timeline' && !isAgent) ||
-    (requestedTab === 'input' && isTrigger)
+    (requestedTab === 'input' && isTrigger) ||
+    (requestedTab === 'batches' && !isBatchStep)
       ? 'output'
       : requestedTab;
   const { stepOutput: selectedStepOutput, batchLogs } = useStepOutputInRun(
@@ -115,14 +123,6 @@ export const FlowStepInputOutput = () => {
   }
   if (batchLogs.kind !== 'notInABatch' && batchLogs.kind !== 'steps') {
     return <BatchLogsPanel batchLogs={batchLogs} />;
-  }
-  if (
-    batchRailUtils.isSkippedOnEmptyItems({
-      stepType: selectedStep?.type,
-      stepOutput: selectedStepOutput?.output,
-    })
-  ) {
-    return <BatchSkippedPanel />;
   }
   const isRunDone = isFlowRunStateTerminal({
     status: run.status,
@@ -225,10 +225,16 @@ export const FlowStepInputOutput = () => {
         lastTestDate={run.created}
         viewMode="run"
       />
+      <BatchBreadcrumb stepName={selectedStep.name} />
       <ScrollArea className="flex-1 p-3">
         <Tabs
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as RunActiveTab)}
+          onValueChange={(value) =>
+            setTabChoice({
+              stepName: selectedStep.name,
+              tab: value as RunActiveTab,
+            })
+          }
           className="w-full"
         >
           <div className="flex items-center justify-between gap-2 shrink-0 mb-2">
@@ -240,6 +246,9 @@ export const FlowStepInputOutput = () => {
                 <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
               )}
               <TabsTrigger value="output">{t('Output')}</TabsTrigger>
+              {isBatchStep && (
+                <TabsTrigger value="batches">{t('Batches')}</TabsTrigger>
+              )}
             </TabsList>
             <div className="flex items-center gap-1 shrink-0">
               <StepDataPanelViewToggle />
@@ -264,6 +273,11 @@ export const FlowStepInputOutput = () => {
               <AgentTimeline
                 agentResult={selectedStepOutput.output as AgentResult}
               />
+            </TabsContent>
+          )}
+          {isBatchStep && (
+            <TabsContent value="batches">
+              <BatchBrowser stepName={selectedStep.name} />
             </TabsContent>
           )}
           <TabsContent value="output">

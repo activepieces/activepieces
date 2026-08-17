@@ -1,4 +1,4 @@
-import { FlowAction, FlowActionType, FlowTrigger } from '@activepieces/shared';
+import { FlowAction, FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ShieldAlert } from 'lucide-react';
 import React from 'react';
@@ -27,8 +27,6 @@ const ActionErrorHandlingForm = React.memo(
     disabled,
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<FlowAction | FlowTrigger>();
-    const growsBranches =
-      form.getValues().type !== FlowActionType.PROCESS_IN_BATCHES;
 
     if (hideContinueOnFailure === true && hideRetryOnFailure === true) {
       return null;
@@ -58,20 +56,12 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">
-                    {growsBranches
-                      ? t('Add Error Handler')
-                      : t('Continue on Failure')}
-                  </span>
+                  <span className="ml-2">{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
-                  text={
-                    growsBranches
-                      ? t(
-                          'Adds Success and Failure branches, errors go into Failure.',
-                        )
-                      : t('Lets the flow carry on when this step fails.')
-                  }
+                  text={t(
+                    'Adds Success and Failure branches, errors go into Failure.',
+                  )}
                 />
               </FormItem>
             )}

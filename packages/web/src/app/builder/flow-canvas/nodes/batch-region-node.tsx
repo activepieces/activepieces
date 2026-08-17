@@ -10,10 +10,8 @@ const CORNER_RADIUS = 16;
 
 const ApBatchRegionCanvasNode = React.memo(
   ({ data }: NodeProps & Pick<ApBatchRegionNode, 'data' | 'id'>) => {
-    const isHighlighted = useBuilderStateContext(
-      (state) =>
-        state.selectedNodes.includes(data.stepName) ||
-        state.hoveredBatchRegion === data.stepName,
+    const isHighlighted = useBuilderStateContext((state) =>
+      state.selectedNodes.includes(data.stepName),
     );
     return (
       <svg
