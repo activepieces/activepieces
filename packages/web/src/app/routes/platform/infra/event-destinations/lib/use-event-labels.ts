@@ -8,7 +8,9 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.AGENT_DELETED]: { label: t('Agent deleted') },
     [ApplicationEventName.AGENT_PUBLISHED]: {
       label: t('Agent published'),
-      description: t('Fires when someone publishes an agent. Flow steps read the published copy, not the draft.'),
+      description: t(
+        'Fires when someone publishes an agent. Flow steps read the published copy, not the draft.',
+      ),
     },
     [ApplicationEventName.AGENT_UNPUBLISHED]: {
       label: t('Agent taken offline'),
