@@ -3,6 +3,17 @@ import { t } from 'i18next';
 
 export const useEventLabels = (): EventLabelsMap => {
   return {
+    [ApplicationEventName.AGENT_CREATED]: { label: t('Agent created') },
+    [ApplicationEventName.AGENT_UPDATED]: { label: t('Agent updated') },
+    [ApplicationEventName.AGENT_DELETED]: { label: t('Agent deleted') },
+    [ApplicationEventName.AGENT_PUBLISHED]: {
+      label: t('Agent published'),
+      description: t('Fires when an agent starts running in flows.'),
+    },
+    [ApplicationEventName.AGENT_UNPUBLISHED]: {
+      label: t('Agent taken offline'),
+      description: t('Fires when an agent stops running in flows.'),
+    },
     [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
     [ApplicationEventName.FLOW_RUN_FINISHED]: {
       label: t('Flow run finished'),
