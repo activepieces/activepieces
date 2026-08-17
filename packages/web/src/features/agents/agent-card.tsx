@@ -43,7 +43,7 @@ export const AgentCard = ({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A08]"
+      className="group relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
     >
       <div
         aria-hidden

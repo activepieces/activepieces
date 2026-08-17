@@ -97,16 +97,8 @@ const AgentsPageContent = () => {
   );
 
   return (
-    <div className="relative flex w-full flex-col">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[300px]"
-        style={{
-          backgroundImage:
-            'radial-gradient(ellipse 60% 100% at 50% 0% in oklab, oklab(65% 0.053 -0.173 / 20%) 0%, oklab(71.4% -0.038 -0.138 / 6%) 35%, oklab(0% 0 0 / 0%) 70%)',
-        }}
-      />
-      <section className="relative flex flex-col items-center gap-2 px-12 pt-8">
+    <div className="flex w-full flex-col">
+      <section className="flex flex-col items-center gap-2 px-12 pt-8">
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
           {t('What should your agent do?')}
         </h1>
@@ -157,7 +149,7 @@ const AgentsPageContent = () => {
         </div>
       </section>
 
-      <section className="relative flex w-full flex-col gap-5 px-12 pt-11 pb-12">
+      <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-baseline gap-2">
             <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
