@@ -119,11 +119,15 @@ Register in `app.ts`, in the CE or EE section. EE-only modules live under `src/a
 
 Queued work: add to `SystemJobName` or `WorkerJobType` in shared, register the handler via `systemJobHandlers.registerJobHandler()` in `app.ts`.
 
+**Retiring a `SystemJobName` is two steps, and doing only the first orphans jobs forever.** Deleting the enum member removes it from `knownJobNames`, but `isDeprecated()` in `system-job.ts` is `!knownJobNames.includes(name) && deprecatedJobs.some(d => name.startsWith(d))` — so a name that is unknown *and* unlisted matches neither branch and is never swept. Whatever is already queued in Redis then survives every `init()`, and `getJobHandler` throws `No handler for job <name>` on each scan, forever. So also **add the string literal to the `deprecatedJobs` array** in the same file; the 14 names already there are the precedent. Seed one in `test/unit/app/helper/system-jobs/remove-deprecated-jobs.test.ts` — its assertions compare the whole remaining queue, so a seeded job is covered for free.
+
 ## Tests
 
 `packages/server/api/test/integration/ce/{feature}.test.ts`, using `setupTestEnvironment()` + `createTestContext(app)` → `ctx.post()` / `ctx.get()`. The DB is cleaned between tests.
 
 Verify with `npm run lint-dev` and `npm run test-api`.
+
+**`packages/server/api/test/unit/**` runs in no pipeline — do not trust it as a safety net.** The package defines a `test-unit` script, but CI only runs `turbo run test-ce test-ee test-cloud check-migrations --filter=api` (`ci.yml`), and the root `npm run test-unit` filters to `engine`/`shared`/`sandbox`/`core-utils`/`server-utils`/`pieces-framework`/`web`/`ee-embed-sdk` — `api` is not in that list. So those specs are only ever run by hand, and they rot: measured Aug 2026 on a clean `main`, **18 tests across 4 files already failed** (`workers/job-queue/job-broker`, `workers/machine/machine-service`, `core/canary/worker-group.service`, `knowledge-base/file-service-delete`). Two consequences: put a server test you actually want enforced under `test/integration/ce`, and when a local `test/unit` run goes red, check `main` before assuming your branch caused it.
 
 ## Gotchas
 
