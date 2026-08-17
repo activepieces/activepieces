@@ -701,7 +701,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
             userId: input.userId,
             conversationId: input.conversationId,
-            confinedToProjectId: input.source === AgentRunSource.FLOW_STEP ? await confinedProjectFor({ conversationId: input.conversationId }) : null,
+            confinedToProjectId: input.source === AgentRunSource.CHAT ? null : await confinedProjectFor({ conversationId: input.conversationId }),
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -863,7 +863,7 @@ async function loadOrStartConversation({ conversationId, platformId, userId, sou
 async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string> {
     const conversation = isNil(conversationId) ? null : await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation?.projectId)) {
-        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'A flow-step run must be confined to a project' } })
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run must be confined to a project' } })
     }
     return conversation.projectId
 }

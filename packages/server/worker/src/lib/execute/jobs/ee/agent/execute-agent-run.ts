@@ -35,7 +35,8 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 // The only chat tools an unattended run keeps: reading the public web needs no one present.
-export const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
+const AGENT_CONNECTION_TOOLS: string[] = ['ap_discover_action_auth', 'ap_revalidate_connection']
+const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -653,7 +654,14 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // project switching, phases or build plans — those belong to the platform assistant, not to
     // an agent someone configured.
     if (source === AgentRunSource.AGENT) {
-        return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...displayTools, ...webTools, ...thinkingTools, ...completionTool }
+        // The connection card is populated by ap_discover_action_auth, so without it the picker
+        // renders empty and the agent cannot tell the user which accounts they already have.
+        // ap_execute_action stays out: an agent runs the tools someone configured for it, not an
+        // arbitrary action it picked.
+        const connectionTools: ToolSet = Object.fromEntries(
+            Object.entries(crossProjectTools).filter(([name]) => AGENT_CONNECTION_TOOLS.includes(name)),
+        )
+        return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...connectionTools, ...displayTools, ...webTools, ...thinkingTools, ...completionTool }
     }
     return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedWebTools, ...completionTool }
 }
