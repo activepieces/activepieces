@@ -12,6 +12,7 @@ import { t } from 'i18next';
 import { ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { AgentMark } from './agent-mark';
@@ -113,13 +115,19 @@ const CreateAgentForm = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const { project } = projectCollectionUtils.useCurrentProject();
+  const navigate = useNavigate();
   const form = useForm<CreateAgentFormValues>({
     resolver: zodResolver(CreateAgentFormSchema),
     defaultValues: buildDefaultValues(draft),
     mode: 'onChange',
   });
   const createAgent = agentsMutations.useCreateAgent({
-    onSuccess: () => onOpenChange(false),
+    onSuccess: (agent) => {
+      onOpenChange(false);
+      navigate(
+        authenticationSession.appendProjectRoutePrefix(`/agents/${agent.id}`),
+      );
+    },
     onError: () =>
       form.setError('root.serverError', {
         type: 'manual',

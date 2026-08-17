@@ -2359,5 +2359,14 @@
   "Research analyst": "Research analyst",
   "Searches the web, returns a cited brief.": "Searches the web, returns a cited brief.",
   "Recently updated": "Recently updated",
-  "Recently created": "Recently created"
+  "Recently created": "Recently created",
+  "Unpublish": "Unpublish",
+  "Model": "Model",
+  "Structured output": "Structured output",
+  "Max steps": "Max steps",
+  "Agent published": "Agent published",
+  "Agent unpublished": "Agent unpublished",
+  "Could not save the agent. Try again.": "Could not save the agent. Try again.",
+  "Chat with this agent": "Chat with this agent",
+  "Talking to an agent from here is coming next.": "Talking to an agent from here is coming next."
 }

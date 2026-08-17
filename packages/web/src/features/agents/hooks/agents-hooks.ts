@@ -65,6 +65,28 @@ export const agentsMutations = {
       onError: internalErrorToast,
     });
   },
+  usePublishAgent: ({ id }: { id: string }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => agentsApi.publish(id),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+        toast(t('Agent published'));
+      },
+      onError: internalErrorToast,
+    });
+  },
+  useUnpublishAgent: ({ id }: { id: string }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => agentsApi.unpublish(id),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+        toast(t('Agent unpublished'));
+      },
+      onError: internalErrorToast,
+    });
+  },
   useDeleteAgent: () => {
     const queryClient = useQueryClient();
     return useMutation({

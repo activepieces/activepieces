@@ -1,4 +1,8 @@
-import { AgentSummary, AgentVisibility } from '@activepieces/shared';
+import {
+  AgentSummary,
+  AgentVisibility,
+  PROJECT_COLOR_PALETTE,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { AgentMark } from './agent-mark';
@@ -45,8 +49,9 @@ export const AgentCard = ({
         aria-hidden
         className="pointer-events-none absolute top-0 right-0 h-[150px] w-[260px] opacity-0 transition-opacity group-hover:opacity-100"
         style={{
-          backgroundImage:
-            'radial-gradient(ellipse 90% 90% at 100% 0% in oklab, oklab(60% -0.103 -0.009 / 20%) 0%, oklab(60% -0.103 -0.009 / 0%) 70%)',
+          backgroundImage: `radial-gradient(ellipse 90% 90% at 100% 0% in oklab, color-mix(in oklab, ${
+            PROJECT_COLOR_PALETTE[agent.color].color
+          } 22%, transparent) 0%, transparent 70%)`,
         }}
       />
       <div className="relative flex items-center gap-[14px]">

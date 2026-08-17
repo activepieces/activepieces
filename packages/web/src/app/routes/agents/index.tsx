@@ -9,6 +9,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +24,7 @@ import { AgentCard } from '@/features/agents/agent-card';
 import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 const SUGGESTIONS = [
@@ -52,6 +54,7 @@ const AgentsPage = () => {
   const [sort, setSort] = useState<AgentSort>('updated');
   const [prompt, setPrompt] = useState('');
   const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data, isLoading } = agentsQueries.useAgents({});
 
@@ -240,7 +243,13 @@ const AgentsPage = () => {
                 projectDotColor={
                   PROJECT_COLOR_PALETTE[project.icon.color]?.color
                 }
-                onClick={() => undefined}
+                onClick={() =>
+                  navigate(
+                    authenticationSession.appendProjectRoutePrefix(
+                      `/agents/${agent.id}`,
+                    ),
+                  )
+                }
               />
             ))}
           </div>

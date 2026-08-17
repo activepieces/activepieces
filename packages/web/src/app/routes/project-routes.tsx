@@ -20,6 +20,10 @@ const AgentsPage = lazyWithRetry(
   () => import('./agents').then((m) => ({ default: m.AgentsPage })),
   'agents',
 );
+const AgentEditorPage = lazyWithRetry(
+  () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
+  'agent-editor',
+);
 const FlowBuilderPage = lazyWithRetry(
   () => import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
   'flow-builder',
@@ -95,6 +99,20 @@ export const projectRoutes = [
           <PageTitle title="Agents">
             <SuspenseWrapper>
               <AgentsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.singleAgent,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+          <PageTitle title="Agent">
+            <SuspenseWrapper>
+              <AgentEditorPage />
             </SuspenseWrapper>
           </PageTitle>
         </RoutePermissionGuard>
