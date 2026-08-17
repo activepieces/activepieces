@@ -1,4 +1,3 @@
-import { timingSafeEqual } from 'node:crypto'
 import { apId, isNil, PlatformId } from '@activepieces/core-utils'
 import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -89,7 +88,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     return false
                 }
                 const otpIsPending = otp.state === OtpState.PENDING
-                const otpMatches = digestsMatch(otp.value, await encryptUtils.hmacString(value))
+                const otpMatches = encryptUtils.digestsMatch(otp.value, await encryptUtils.hmacString(value))
                 if (otpMatches && otpIsPending) {
                     await repo().delete({ id: otp.id })
                     await forgetCachedCode({ identityId, type })
@@ -115,12 +114,6 @@ async function discard({ otp, identityId, type, log }: DiscardParams): Promise<v
     await repo().delete({ id: otp.id })
     await forgetCachedCode({ identityId, type })
     log.warn({ identityId, type }, '[otpService#confirm] credential discarded')
-}
-
-function digestsMatch(stored: string, candidate: string): boolean {
-    const left = Buffer.from(stored, 'utf8')
-    const right = Buffer.from(candidate, 'utf8')
-    return left.length === right.length && timingSafeEqual(left, right)
 }
 
 function confirmLockKey({ identityId, type }: IdentityBudgetParams): string {
