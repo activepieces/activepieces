@@ -67,6 +67,14 @@ describe('sandboxConfig memory limit', () => {
         expect(sandboxConfig.getSandboxSettings().SANDBOX_MEMORY_LIMIT).toBe('1048576')
     })
 
+    it('applies a null ceiling without reading worker settings', async () => {
+        const sandboxConfig = await loadSandboxConfig()
+        getSettings.mockImplementation(() => {
+            throw new Error('Worker settings are not initialized. Settings are fetched on socket connect.')
+        })
+        expect(() => sandboxConfig.applyEngineHeapCeiling(null)).not.toThrow()
+    })
+
     it('does not publish a ceiling derived by an abandoned generation', async () => {
         const sandboxConfig = await loadSandboxConfig()
         getContainerMemoryLimitInBytes.mockResolvedValue(ONE_GIB_IN_BYTES)

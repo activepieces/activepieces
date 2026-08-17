@@ -37,8 +37,14 @@ export const sandboxConfig = {
     // can never outlive it.
     applyEngineHeapCeiling(ceilingKb: number | null): void {
         engineHeapCeilingKb = ceilingKb
+        // Nothing to clamp against, so nothing to compare or report. Returning before touching
+        // workerSettings also keeps this callable before the settings fetch has landed, since
+        // getSettings() throws until then.
+        if (isNil(ceilingKb)) {
+            return
+        }
         const configuredKb = parseSandboxMemoryLimit(workerSettings.getSettings().SANDBOX_MEMORY_LIMIT)
-        if (!isNil(ceilingKb) && !isNil(configuredKb) && configuredKb > ceilingKb) {
+        if (!isNil(configuredKb) && configuredKb > ceilingKb) {
             logger.warn({ configuredKb, engineHeapCeilingKb: ceilingKb }, 'Configured sandbox memory limit over-commits the container, clamping engine heap ceiling')
         }
     },
