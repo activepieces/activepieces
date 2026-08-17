@@ -1,5 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -120,6 +121,13 @@ const executeSingleStepOrFlow = async (input: ResolvedExecuteFlowOperation, cons
         return executionState
     }
     if (!isNil(input.entryStepName)) {
+        if (input.executionType === ExecutionType.BEGIN) {
+            await flowRunProgressReporter.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                startTime: dayjs().toISOString(),
+            })
+        }
         return flowExecutor.execute({
             action: flowStructureUtil.getActionOrThrow(input.entryStepName, input.flowVersion.trigger),
             executionState,

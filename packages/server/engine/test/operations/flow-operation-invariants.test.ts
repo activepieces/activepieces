@@ -14,6 +14,8 @@ import {
     StreamStepProgress,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import dayjs from 'dayjs'
 import { describe, expect, it, vi } from 'vitest'
 
 const { mockSendUpdate, mockBackup } = vi.hoisted(() => ({
@@ -505,6 +507,65 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(operation)
 
             expect(mockCreateWaitpoint).not.toHaveBeenCalled()
+        })
+
+        it('reports a start time for a run entered at a step, so a batch child is not left without one', async () => {
+            // Only executeFromTrigger ever passes a startTime to the progress reporter, and a run carrying an
+            // entryStepName skips it entirely — which left every barrier child with flow_run.startTime NULL
+            // and no derivable duration. BEGIN reports it; RESUME must not, or a child that pauses and
+            // resumes would overwrite its own start with the resume time.
+            mockSendUpdate.mockClear()
+
+            await flowOperation.execute(makeBeginOperation({
+                flowVersion: makeFlowVersionWithBatchBody(),
+                entryStepName: 'step_2',
+            }))
+
+            const started = mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))
+            expect(started).toHaveLength(1)
+            expect(dayjs(started[0][0].startTime).isValid()).toBe(true)
+        })
+
+        it('does not re-report a start time when a run entered at a step resumes', async () => {
+            mockSendUpdate.mockClear()
+            mockDownload.mockReset()
+            mockCreateWaitpoint.mockReset()
+            mockCreateWaitpoint.mockResolvedValue({
+                id: 'wp-after-batch',
+                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
+            })
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            step_1: {
+                                type: FlowActionType.PROCESS_IN_BATCHES,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: { items: [1, 2] },
+                            },
+                            step_2: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                        },
+                        tags: [],
+                        entryStepName: 'step_2',
+                    },
+                })),
+            )
+
+            await flowOperation.execute(makeResumeOperation({
+                flowVersion: makeFlowVersionWithBatchBody(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }))
+
+            expect(mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))).toHaveLength(0)
         })
 
         it('resumes a batch child run from its entry step instead of walking the flow from the trigger', async () => {
