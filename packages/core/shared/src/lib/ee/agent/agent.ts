@@ -68,6 +68,8 @@ const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
     isPublished: z.boolean(),
+    projectDisplayName: z.string(),
+    projectIsPrivate: z.boolean(),
 })
 
 const CreateAgentRequest = z.object({

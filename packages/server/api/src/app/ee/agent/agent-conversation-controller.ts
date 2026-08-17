@@ -36,6 +36,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             userId: request.principal.id,
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
+            ...spreadIfDefined('agentId', request.query.agentId),
         })
     })
 
@@ -333,6 +334,7 @@ const ListConversationsRoute = {
         querystring: z.object({
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+            agentId: z.string().optional(),
         }),
     },
 }

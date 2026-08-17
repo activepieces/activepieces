@@ -16,7 +16,7 @@ import { t } from 'i18next';
 import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
@@ -38,6 +38,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
+import { AgentConversationList } from '@/features/agents/agent-conversation-list';
 import { AgentMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
@@ -92,6 +93,8 @@ const buildCapabilityNote = (agent: Agent): string => {
     tools: toolNames.join(', '),
   });
 };
+
+const CONVERSATION_QUERY_PARAM = 'conversation';
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -399,6 +402,21 @@ const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
   const { platform } = platformHooks.useCurrentPlatform();
   const [configureOpen, setConfigureOpen] = useState(false);
+  const [conversationsOpen, setConversationsOpen] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const conversationId =
+    searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
+
+  const openConversation = (nextConversationId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set(CONVERSATION_QUERY_PARAM, nextConversationId);
+    setSearchParams(next, { replace: true });
+  };
+  const startNewConversation = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(CONVERSATION_QUERY_PARAM);
+    setSearchParams(next, { replace: true });
+  };
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
     enabled: agentId !== undefined && platform.plan.agentsEnabled,
@@ -410,8 +428,29 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
+      {conversationsOpen && (
+        <aside className="flex w-[260px] shrink-0 flex-col border-r border-border">
+          <AgentConversationList
+            agentId={agent.id}
+            activeConversationId={conversationId}
+            onSelect={openConversation}
+            onNewConversation={startNewConversation}
+            onCollapse={() => setConversationsOpen(false)}
+          />
+        </aside>
+      )}
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+          {!conversationsOpen && (
+            <button
+              type="button"
+              aria-label={t('Expand conversations')}
+              onClick={() => setConversationsOpen(true)}
+              className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          )}
           <AgentMark icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
             <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
@@ -438,7 +477,7 @@ const AgentEditorContent = () => {
                 type="button"
                 aria-label={t('Expand configuration')}
                 onClick={() => setConfigureOpen(true)}
-                className="flex size-[34px] items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-accent"
+                className="flex size-[34px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 <ChevronsLeft size={16} />
               </button>
@@ -448,8 +487,11 @@ const AgentEditorContent = () => {
 
         <div className="flex min-h-0 grow flex-col">
           <AIChatBox
+            key={conversationId ?? 'new'}
             incognito={false}
             agentId={agent.id}
+            conversationId={conversationId ?? null}
+            onConversationCreated={openConversation}
             placeholder={t('Ask {name}...', { name: agent.displayName })}
             footerNote={buildCapabilityNote(agent)}
             emptyState={

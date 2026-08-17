@@ -31,7 +31,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
+    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentConversationEntity,
@@ -62,7 +62,14 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             .where({ platformId, userId })
             // Eval conversations are owned by the platform owner; keep them out of the regular list.
             .andWhere('agent_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
-            .andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+        if (isNil(agentId)) {
+            queryBuilder.andWhere('agent_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+        }
+        else {
+            queryBuilder
+                .andWhere('agent_conversation.source = :agentSource', { agentSource: AgentRunSource.AGENT })
+                .andWhere('agent_conversation."agentId" = :agentId', { agentId })
+        }
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
@@ -156,6 +163,7 @@ type ListConversationsParams = {
     userId: string
     cursor?: string
     limit: number
+    agentId?: string
 }
 
 type ConversationIdentifier = {
