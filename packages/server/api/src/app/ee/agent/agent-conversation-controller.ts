@@ -151,22 +151,23 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await agentHelpers.assertRunProviderConfigured({ platformId, log })
-        await assertCreditsAndAppSumoNotExceeded({ platformId, log })
-
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
         const agentConfig = agent?.published ?? agent?.draft ?? null
-        // Never fall through to the platform's chat provider. resolveRunProvider does exactly that
-        // when no provider is named, which would run someone's agent on a model they did not choose
-        // and cannot see. An agent answers on the model its configuration names, or it does not run.
+        // Never fall through to the platform's chat provider. Both resolveRunProvider and this
+        // assertion do exactly that when no provider is named, which would run someone's agent on a
+        // model they did not choose and cannot see. An agent answers on the model its configuration
+        // names, or it does not run.
         if (!isNil(agent) && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Pick a model for this agent before talking to it' },
             })
         }
+
+        await agentHelpers.assertRunProviderConfigured({ platformId, log, ...spreadIfDefined('provider', agentConfig?.provider ?? undefined) })
+        await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
             id: apId(),
