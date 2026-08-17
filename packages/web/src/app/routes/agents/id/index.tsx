@@ -3,6 +3,7 @@ import {
   Agent,
   AgentConfig,
   AgentIcon,
+  agentUtils,
   AgentToolType,
   ColorName,
   DEFAULT_AGENT_MAX_STEPS,
@@ -13,7 +14,13 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronsLeft, ChevronsRight, Settings2 } from 'lucide-react';
+import {
+  Check,
+  ChevronsLeft,
+  ChevronsRight,
+  Circle,
+  Settings2,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -97,22 +104,73 @@ const buildCapabilityNote = (agent: Agent): string => {
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
 
-const AgentNotReady = ({ onConfigure }: { onConfigure: () => void }) => (
-  <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-    <div className="flex size-16 items-center justify-center rounded-2xl bg-muted">
-      <Settings2 size={26} className="text-muted-foreground" />
-    </div>
-    <div className="flex flex-col items-center gap-2">
-      <p className="text-xl font-semibold">{t('Pick a model first')}</p>
-      <p className="max-w-[400px] text-sm leading-[150%] text-muted-foreground">
-        {t(
-          'This agent has no model yet, so it cannot answer. Choose one and it is ready.',
-        )}
+type AgentRequirement = {
+  label: string;
+  hint: string;
+  met: boolean;
+};
+
+const requirementsFor = (agent: Agent): AgentRequirement[] => [
+  {
+    label: t('Instructions'),
+    hint: t('What the agent should do, and how to decide.'),
+    met: agentUtils.isPublishable(agent.draft),
+  },
+  {
+    label: t('Model'),
+    hint: t('The model that answers, and the provider behind it.'),
+    met: !isNil(agent.draft.modelName) && !isNil(agent.draft.provider),
+  },
+];
+
+const AgentNotReady = ({
+  requirements,
+  onConfigure,
+}: {
+  requirements: AgentRequirement[];
+  onConfigure: () => void;
+}) => (
+  <div className="flex h-full flex-col items-center justify-center gap-5 px-6">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <p className="text-xl leading-7 font-semibold tracking-[-0.02em]">
+        {t('Almost ready')}
+      </p>
+      <p className="max-w-[420px] text-sm leading-[150%] text-muted-foreground">
+        {t('Fill these in and you can start talking to this agent.')}
       </p>
     </div>
+
+    <ul className="flex w-full max-w-[420px] flex-col gap-2">
+      {requirements.map((requirement) => (
+        <li
+          key={requirement.label}
+          className="flex items-start gap-3 rounded-[10px] border border-border p-3"
+        >
+          {requirement.met ? (
+            <Check size={16} className="mt-[3px] shrink-0 text-success-700" />
+          ) : (
+            <Circle size={16} className="mt-[3px] shrink-0 text-neutral-400" />
+          )}
+          <span className="flex min-w-0 flex-col gap-[2px]">
+            <span
+              className={cn(
+                'text-sm font-semibold',
+                requirement.met && 'text-muted-foreground line-through',
+              )}
+            >
+              {requirement.label}
+            </span>
+            <span className="text-[13px] leading-4 text-muted-foreground">
+              {requirement.hint}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
+
     <Button className="gap-2" onClick={onConfigure}>
       <Settings2 size={16} />
-      {t('Choose a model')}
+      {t('Finish setting up')}
     </Button>
   </div>
 );
@@ -479,7 +537,8 @@ const AgentEditorContent = () => {
     return <AgentEditorSkeleton />;
   }
 
-  const needsModel = isNil(agent.draft.modelName);
+  const requirements = requirementsFor(agent);
+  const needsModel = requirements.some((requirement) => !requirement.met);
   const isConfigureOpen = configureOpen ?? needsModel;
 
   return (
@@ -556,7 +615,10 @@ const AgentEditorContent = () => {
 
         <div className="flex min-h-0 grow flex-col">
           {needsModel ? (
-            <AgentNotReady onConfigure={() => setConfigureOpen(true)} />
+            <AgentNotReady
+              requirements={requirements}
+              onConfigure={() => setConfigureOpen(true)}
+            />
           ) : (
             <AIChatBox
               key={openedConversationId ?? `new-${freshConversations}`}

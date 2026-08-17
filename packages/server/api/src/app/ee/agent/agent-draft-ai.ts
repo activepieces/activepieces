@@ -3,7 +3,7 @@ import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
-import { generateText } from 'ai'
+import { APICallError, generateText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -38,10 +38,13 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         })
         if (!isNil(generateError) || isNil(raw)) {
             const reason = describeError(generateError)
-            log.error({ error: generateError, reason, provider, model: { id: modelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            const status = APICallError.isInstance(generateError) ? generateError.statusCode : undefined
+            log.error({ error: generateError, reason, status, provider, model: { id: modelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `The ${provider} provider could not run ${modelId}: ${reason}` },
+                params: { message: rejectedCredentials(status)
+                    ? `${provider} rejected the API key. Update it in the AI settings and try again.`
+                    : `The ${provider} provider could not run ${modelId}: ${reason}` },
             })
         }
 
@@ -59,6 +62,12 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
 })
 
 // The telemetry sink renders the SDK's wrapped provider failure as "[object Object]".
+// A provider that cannot resolve the key answers 401 or 403, and the body it returns is written
+// for whoever holds the key rather than whoever configured it. OpenRouter says "User not found."
+function rejectedCredentials(status?: number): boolean {
+    return status === 401 || status === 403
+}
+
 function describeError(error: unknown): string {
     if (!(error instanceof Error)) {
         return String(error)
