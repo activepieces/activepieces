@@ -119,7 +119,9 @@ export function AuthDrawerBody({ initialMode }: AuthDrawerBodyProps) {
     setCaptchaReset((count) => count + 1);
   }, []);
   const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
-  const challengeApplies = step === 'method' || step === 'code';
+  const passwordlessAvailable = usePasswordlessAvailable();
+  const challengeApplies =
+    passwordlessAvailable && (step === 'method' || step === 'code');
 
   return (
     <AutoHeight>
@@ -209,9 +211,6 @@ function AuthStep({
   const { data: emailAuthEnabledFlag } = flagsHooks.useFlag<boolean>(
     ApFlagId.EMAIL_AUTH_ENABLED,
   );
-  const { data: smtpConfigured } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SMTP_CONFIGURED,
-  );
   const { data: userCreated } = flagsHooks.useFlag<boolean>(
     ApFlagId.USER_CREATED,
   );
@@ -221,7 +220,7 @@ function AuthStep({
   const firstUser = userCreated !== true;
   const effectiveMode: AuthMode = firstUser ? 'signup' : mode;
   const emailAuthEnabled = emailAuthEnabledFlag ?? true;
-  const passwordlessAvailable = emailAuthEnabled && !!smtpConfigured;
+  const passwordlessAvailable = usePasswordlessAvailable();
   const showThirdParty = useShowThirdPartyProviders();
   const thirdParty = useThirdPartyAvailability();
 
@@ -962,6 +961,16 @@ function ModeSwitch({
       </button>
     </div>
   );
+}
+
+function usePasswordlessAvailable(): boolean {
+  const { data: emailAuthEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.EMAIL_AUTH_ENABLED,
+  );
+  const { data: smtpConfigured } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SMTP_CONFIGURED,
+  );
+  return (emailAuthEnabled ?? true) && !!smtpConfigured;
 }
 
 // Country variants are endless (yahoo.co.uk, hotmail.fr, …), so match the
