@@ -2343,5 +2343,8 @@
   "Try a different name, or clear the search.": "Try a different name, or clear the search.",
   "Describe what you need above, or start from one of the starters.": "Describe what you need above, or start from one of the starters.",
   "Agent deleted": "Agent deleted",
-  "Agents": "Agents"
+  "Agents": "Agents",
+  "Recently used": "Recently used",
+  "Grid view": "Grid view",
+  "List view": "List view"
 }

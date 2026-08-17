@@ -1,6 +1,13 @@
 import { AgentSummary, PROJECT_COLOR_PALETTE } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ArrowUp, Plus, Search } from 'lucide-react';
+import {
+  ArrowUp,
+  ChevronsUpDown,
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -8,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AgentCard } from '@/features/agents/agent-card';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { projectCollectionUtils } from '@/features/projects';
+import { cn } from '@/lib/utils';
 
 const SUGGESTIONS = [
   'Triage support tickets',
@@ -17,6 +25,7 @@ const SUGGESTIONS = [
 
 const AgentsPage = () => {
   const [search, setSearch] = useState('');
+  const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [prompt, setPrompt] = useState('');
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data, isLoading } = agentsQueries.useAgents({});
@@ -35,7 +44,7 @@ const AgentsPage = () => {
   }, [data, search]);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 pb-10">
+    <div className="flex w-full flex-col">
       <section className="flex flex-col items-center gap-2 px-12 pt-8">
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
           {t('What should your agent do?')}
@@ -73,7 +82,7 @@ const AgentsPage = () => {
         </div>
       </section>
 
-      <section className="mx-auto flex w-full max-w-[1104px] flex-col gap-4">
+      <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-baseline gap-2">
             <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
@@ -95,6 +104,37 @@ const AgentsPage = () => {
             </div>
             <button
               type="button"
+              className="flex h-8 items-center gap-2 rounded-md border border-border px-3 text-[13px] leading-4 transition-colors hover:bg-accent"
+            >
+              {t('Recently used')}
+              <ChevronsUpDown size={13} className="text-muted-foreground" />
+            </button>
+            <div className="flex h-8 items-center gap-[2px] rounded-full border border-border p-[3px]">
+              <button
+                type="button"
+                aria-label={t('Grid view')}
+                onClick={() => setLayout('grid')}
+                className={cn(
+                  'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
+                  layout === 'grid' && 'bg-neutral-100',
+                )}
+              >
+                <LayoutGrid size={14} />
+              </button>
+              <button
+                type="button"
+                aria-label={t('List view')}
+                onClick={() => setLayout('list')}
+                className={cn(
+                  'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
+                  layout === 'list' && 'bg-neutral-100',
+                )}
+              >
+                <List size={14} />
+              </button>
+            </div>
+            <button
+              type="button"
               className="flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-sm transition-colors hover:bg-accent"
             >
               <Plus size={16} />
@@ -112,7 +152,14 @@ const AgentsPage = () => {
         ) : agents.length === 0 ? (
           <AgentsEmptyState hasSearch={search.trim().length > 0} />
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={cn(
+              'grid gap-6',
+              layout === 'grid'
+                ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+                : 'grid-cols-1',
+            )}
+          >
             {agents.map((agent: AgentSummary) => (
               <AgentCard
                 key={agent.id}
