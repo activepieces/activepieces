@@ -13,7 +13,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronLeft, ChevronRight, Settings2 } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
@@ -348,10 +348,10 @@ const ConfigurePanel = ({
               type="button"
               variant="ghost"
               size="icon-sm"
-              aria-label={t('Collapse')}
+              aria-label={t('Collapse configuration')}
               onClick={onCollapse}
             >
-              <ChevronRight size={16} />
+              <ChevronsRight size={16} />
             </Button>
           </div>
           <Tabs value={tab} onValueChange={setTab} className="px-[18px]">
@@ -436,12 +436,11 @@ const AgentEditorContent = () => {
             {!configureOpen && (
               <button
                 type="button"
+                aria-label={t('Expand configuration')}
                 onClick={() => setConfigureOpen(true)}
-                className="flex h-[34px] items-center gap-[7px] rounded-lg border border-border bg-background px-[13px] text-[13px] leading-4 font-semibold transition-colors hover:bg-accent"
+                className="flex size-[34px] items-center justify-center rounded-lg border border-border bg-background transition-colors hover:bg-accent"
               >
-                <Settings2 size={15} />
-                {t('Configure')}
-                <ChevronLeft size={15} className="text-muted-foreground" />
+                <ChevronsLeft size={16} />
               </button>
             )}
           </div>

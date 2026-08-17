@@ -2382,5 +2382,7 @@
   "{name} has no tools yet, so replies may need review": "{name} has no tools yet, so replies may need review",
   "Describe what you need. I'll pick the tools and set up the steps.": "Describe what you need. I'll pick the tools and set up the steps.",
   "Shape": "Shape",
-  "Collapse": "Collapse"
+  "Collapse": "Collapse",
+  "Expand configuration": "Expand configuration",
+  "Collapse configuration": "Collapse configuration"
 }
