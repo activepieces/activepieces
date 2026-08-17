@@ -160,6 +160,17 @@ jobs:
           git push origin "$BRANCH" --force
           echo "Created $BRANCH at $SHA"
 
+      - name: Notify on-call channel
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          IMAGE_TAG: ${{ steps.image.outputs.image_tag }}
+          DEPLOY_KIND: ${{ github.event_name == 'workflow_dispatch' && 'hotfix' || 'scheduled promotion' }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚀 **Cloud production deployed** ($DEPLOY_KIND)\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/latest\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "$WEBHOOK"
+
   # Run smoke test after scheduled promotion
   smoke-test:
     needs: promote-to-production
