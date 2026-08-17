@@ -6,10 +6,12 @@ import {
     DynamicProperties,
     ExecutePropsResult,
     getAuthPropertyForValue,
+    isPieceServerContextError,
     MultiSelectDropdownProperty,
     PieceAuthProperty,
     PieceMetadata,
     PiecePropertyMap,
+    PieceServerContextError,
     pieceTranslation,
     PropertyType,
     ServerContext,
@@ -133,12 +135,19 @@ export const pieceHelper = {
 
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
         const server = buildAuthValidationServerContext(params)
-        return  validateAuth({
-            authValue: params.auth,
-            pieceAuth: piece.auth,
-            server,
-        })
-
+        try {
+            return await validateAuth({
+                authValue: params.auth,
+                pieceAuth: piece.auth,
+                server,
+            })
+        }
+        catch (error) {
+            if (isPieceServerContextError(error)) {
+                throw new EngineGenericError('OidcTokenRequestFailedError', error.message)
+            }
+            throw error
+        }
     },
 
     async executeResolveConnectionIdentifier(
@@ -376,7 +385,7 @@ function buildAuthValidationServerContext({ internalApiUrl, publicApiUrl, engine
                 body: JSON.stringify({ audience }),
             })
             if (!response.ok) {
-                throw new EngineGenericError('OidcTokenRequestFailedError', `Failed to get OIDC token: ${response.statusText}`)
+                throw new PieceServerContextError(`Failed to get OIDC token: ${response.statusText}`)
             }
             const { token } = await response.json() as { token: string }
             return token

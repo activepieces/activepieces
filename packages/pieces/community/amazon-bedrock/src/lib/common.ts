@@ -28,11 +28,12 @@ export async function createBedrockRuntimeClient({
 }): Promise<BedrockRuntimeClient> {
   if (isOidcAuth(auth)) {
     const credentials = await getTemporaryCredentials({ auth, server });
-    return new BedrockRuntimeClient({ credentials, region: auth.region });
+    return new BedrockRuntimeClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
   }
   return new BedrockRuntimeClient({
     credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
     region: auth.region,
+    ...BEDROCK_CLIENT_TIMEOUTS,
   });
 }
 
@@ -61,11 +62,12 @@ export async function getBedrockModelOptions(
         return { disabled: true, options: [], placeholder: 'Unable to load models for IAM Role auth in this context.' };
       }
       const credentials = await getTemporaryCredentials({ auth, server });
-      client = new BedrockClient({ credentials, region: auth.region });
+      client = new BedrockClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
     } else {
       client = new BedrockClient({
         credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
         region: auth.region,
+        ...BEDROCK_CLIENT_TIMEOUTS,
       });
     }
 
@@ -171,11 +173,11 @@ export async function getTemporaryCredentials({
   if (!auth.roleArn) {
     throw new Error('Role ARN is required for IAM Role authentication');
   }
+  if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
+    throw new Error(`Invalid AWS region: ${auth.region}`);
+  }
   const clampedDuration = Math.min(Math.max(durationSeconds, MIN_STS_DURATION_SECONDS), MAX_STS_DURATION_SECONDS);
 
-  // Scoped by server.token (unique per flow execution) so credentials are never reused
-  // across projects/tenants, only across steps within the same run. Connection
-  // validation has no token and is a one-shot check, so it skips the cache.
   const cacheKey = 'token' in server ? `${server.token}:${auth.roleArn}:${auth.region}:${clampedDuration}` : undefined;
   if (cacheKey) {
     const cached = credentialsCache.get(cacheKey);
@@ -185,10 +187,6 @@ export async function getTemporaryCredentials({
   }
 
   const token = await mintOidcToken({ server });
-
-  if (!AWS_REGION_REGEX.test(auth.region ?? '')) {
-    throw new Error(`Invalid AWS region: ${auth.region}`);
-  }
 
   const sts = new STSClient({
     region: auth.region,
@@ -376,7 +374,7 @@ export function formatBedrockError(error: unknown): string {
       if (err.message && name !== 'Error' && name !== 'UnknownError') {
         return `${name}: ${err.message}`;
       }
-      return err.message ?? 'An unexpected error occurred.';
+      return err.message || 'An unexpected error occurred.';
   }
 }
 
@@ -387,6 +385,10 @@ const credentialsCache = new Map<string, CachedCredentials>();
 const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d$/;
 const STS_REQUEST_TIMEOUT_MS = 10_000;
 const STS_CONNECT_TIMEOUT_MS = 5_000;
+const BEDROCK_CLIENT_TIMEOUTS = {
+  maxAttempts: 2,
+  requestHandler: { requestTimeout: 15_000, connectionTimeout: 5_000 },
+} as const;
 
 export const MIN_STS_DURATION_SECONDS = 900;
 export const MAX_STS_DURATION_SECONDS = 43200;

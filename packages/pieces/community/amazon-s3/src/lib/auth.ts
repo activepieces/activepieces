@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { isPieceServerContextError, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createS3, getTemporaryCredentials } from './common';
 
 const accessKeyDescription = `
@@ -251,6 +251,7 @@ export const amazonS3OidcAuth = PieceAuth.OIDC({
       await getTemporaryCredentials({ auth: { roleArn: auth.roleArn, bucket: auth.bucket, region: auth.region }, server });
       return { valid: true };
     } catch (error) {
+      if (isPieceServerContextError(error)) throw error;
       return { valid: false, error: formatAssumeRoleError(error) };
     }
   },
@@ -260,10 +261,12 @@ export const amazonS3OidcAuth = PieceAuth.OIDC({
 export const amazonS3CombinedAuth = [amazonS3Auth, amazonS3OidcAuth];
 
 function formatAssumeRoleError(error: unknown): string {
+  const fallback = 'Failed to assume the IAM role. Check the role ARN and trust policy.';
   if (error instanceof Error) {
-    return error.name && error.name !== 'Error' ? `${error.name}: ${error.message}` : error.message;
+    if (error.name && error.name !== 'Error') return `${error.name}: ${error.message}`;
+    return error.message || fallback;
   }
-  return 'Failed to assume the IAM role. Check the role ARN and trust policy.';
+  return fallback;
 }
 
 export type AccessKeyAuthProps = {

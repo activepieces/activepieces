@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { isPieceServerContextError, PieceAuth, Property } from '@activepieces/pieces-framework';
 import {
   SecretsManagerClient,
   ListSecretsCommand,
@@ -233,6 +233,7 @@ export const awsSecretsManagerOidcAuth = PieceAuth.OIDC({
       await getTemporaryCredentials({ auth: { roleArn: auth.roleArn, region: auth.region }, server });
       return { valid: true };
     } catch (error) {
+      if (isPieceServerContextError(error)) throw error;
       return { valid: false, error: formatAssumeRoleError(error) };
     }
   },
@@ -242,10 +243,12 @@ export const awsSecretsManagerOidcAuth = PieceAuth.OIDC({
 export const awsSecretsManagerCombinedAuth = [awsSecretsManagerAuth, awsSecretsManagerOidcAuth];
 
 function formatAssumeRoleError(error: unknown): string {
+  const fallback = 'Failed to assume the IAM role. Check the role ARN and trust policy.';
   if (error instanceof Error) {
-    return error.name && error.name !== 'Error' ? `${error.name}: ${error.message}` : error.message;
+    if (error.name && error.name !== 'Error') return `${error.name}: ${error.message}`;
+    return error.message || fallback;
   }
-  return 'Failed to assume the IAM role. Check the role ARN and trust policy.';
+  return fallback;
 }
 
 export type SecretsAccessKeyAuthProps = {

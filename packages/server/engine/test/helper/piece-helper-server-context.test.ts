@@ -1,7 +1,7 @@
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AppConnectionType } from '@activepieces/shared'
+import { AppConnectionType, EngineGenericError } from '@activepieces/shared'
 import type { ExecuteValidateAuthOperation } from '@activepieces/shared'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockLoadPieceOrThrow } = vi.hoisted(() => ({
     mockLoadPieceOrThrow: vi.fn(),
@@ -42,6 +42,10 @@ describe('piece-helper server context', () => {
         mockLoadPieceOrThrow.mockReset()
     })
 
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
     it('gives the validate hook an OIDC-minting capability instead of the engine token', async () => {
         const validate = vi.fn().mockResolvedValue({ valid: true })
         mockLoadPieceOrThrow.mockResolvedValue({
@@ -80,7 +84,23 @@ describe('piece-helper server context', () => {
         expect(url).toBe('http://127.0.0.1:3000/api/v1/worker/oidc-token')
         expect(init.headers.Authorization).toBe(`Bearer ${ENGINE_TOKEN}`)
         expect(JSON.parse(init.body)).toEqual({ audience: 'sts.amazonaws.com' })
-        vi.unstubAllGlobals()
+    })
+
+    it('converts a piece-thrown PieceServerContextError to EngineGenericError so oncall pages instead of the user seeing INVALID_APP_CONNECTION', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+            new Response('Forbidden', { status: 403 }),
+        ))
+        const validate = vi.fn().mockImplementation(async ({ server }) => {
+            await server.mintOidcToken({ audience: 'sts.amazonaws.com' })
+            return { valid: true }
+        })
+        mockLoadPieceOrThrow.mockResolvedValue({
+            auth: { type: PropertyType.OIDC, validate },
+        })
+
+        await expect(
+            pieceHelper.executeValidateAuth({ params: makeOperation(), devPieces: [] }),
+        ).rejects.toBeInstanceOf(EngineGenericError)
     })
 
     it('withholds the engine token from the getConnectionIdentifier hook', async () => {

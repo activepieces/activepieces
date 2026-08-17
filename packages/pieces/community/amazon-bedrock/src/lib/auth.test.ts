@@ -7,6 +7,7 @@ vi.mock('@aws-sdk/client-sts', () => ({
   AssumeRoleWithWebIdentityCommand: vi.fn((input: unknown) => ({ input })),
 }));
 
+import { PieceServerContextError } from '@activepieces/pieces-framework';
 import { awsBedrockOidcAuth } from './auth';
 
 const mintOidcToken = vi.fn();
@@ -60,18 +61,15 @@ describe('awsBedrockOidcAuth.validate', () => {
     });
   });
 
-  it('returns an error when the platform cannot mint an OIDC token', async () => {
-    mintOidcToken.mockRejectedValue(new Error('Failed to get OIDC token: Forbidden'));
+  it('re-throws PieceServerContextError so an engine failure surfaces as ENGINE, not INVALID_APP_CONNECTION', async () => {
+    mintOidcToken.mockRejectedValue(new PieceServerContextError('Failed to get OIDC token: Forbidden'));
 
-    const result = await awsBedrockOidcAuth.validate?.({
-      auth: { roleArn: 'arn:aws:iam::123456789012:role/token-endpoint-down', region: 'us-east-1' },
-      server,
-    });
-
-    expect(result).toEqual({
-      valid: false,
-      error: 'Failed to get OIDC token: Forbidden',
-    });
+    await expect(
+      awsBedrockOidcAuth.validate?.({
+        auth: { roleArn: 'arn:aws:iam::123456789012:role/token-endpoint-down', region: 'us-east-1' },
+        server,
+      }),
+    ).rejects.toBeInstanceOf(PieceServerContextError);
     expect(sendMock).not.toHaveBeenCalled();
   });
 

@@ -15,7 +15,7 @@ Saving an AWS connection (Bedrock, S3, Secrets Manager) with the **IAM Role / OI
 
 Two consequences. A connection that was accepted before is now rejected if its IAM OIDC provider, trust policy, or `AP_FRONTEND_URL` issuer is not set up correctly. And because the save now calls AWS, an instance with no outbound access to `sts.<region>.amazonaws.com` cannot create these connections at all.
 
-The region on these connections is also validated against the AWS region format, and the STS call now times out after 10 seconds instead of waiting for the job timeout.
+The region on these connections is also validated against the AWS region format at both save time and every flow step (the region flows into the STS endpoint hostname, so the check is enforced everywhere it is used). The STS call now times out after 10 seconds instead of waiting for the job timeout.
 
 ### Do you need to take action?
 - Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it.
