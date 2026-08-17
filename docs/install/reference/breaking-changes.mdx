@@ -55,6 +55,18 @@ This affects the Tables piece's Find Records action and any direct API call that
 
 Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
+#### The forwarded client IP header is only trusted behind a proxy
+
+The authentication rate limit identifies callers by the header named in `AP_CLIENT_REAL_IP_HEADER` (default `x-real-ip`). That header used to be read from every request without checking who sent it, so a caller could set it itself, change the value on each request, and never hit the limit at all. When the header was missing entirely, all such callers were counted as one, and unrelated clients throttled each other.
+
+The header is now honoured only when the connection reaches Activepieces from a loopback or private address — where a reverse proxy sits. A request that arrives directly from the internet is counted by its real network address instead.
+
+#### What you need to do
+
+Nothing if you run Activepieces behind nginx, Traefik, Caddy, kamal-proxy, or a Kubernetes ingress on the same network, which covers the official deployments: the proxy's address is private, so real client addresses are still used exactly as before. Nothing either if you expose Activepieces directly — you are now protected by default.
+
+Set `AP_TRUST_PROXY=true` only if your proxy or CDN reaches Activepieces over a **public** address. Before you do, make sure that proxy **overwrites** the header rather than passing along whatever the client sent — for nginx that is `proxy_set_header X-Real-IP $remote_addr;`. Enabling the flag in front of a proxy that forwards the client's own value puts you back to a rate limit that callers can choose for themselves. If you leave the flag off in that setup, sign-in traffic is grouped per proxy address rather than per client, which is safe but stricter, and may show up as unexpected throttling.
+
 
 ## 0.87.0
 
