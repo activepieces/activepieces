@@ -1,6 +1,6 @@
 import { apId, chunk, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
-import { ActivepiecesError, BarrierPolicy, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
+import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
@@ -101,8 +101,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         if (isNil(barrier)) {
             return
         }
-        const counts = await countSignalsByStatus({ barrierId: barrier.id, projectId })
-        if (!shouldReleaseBarrier({ policy: barrier.policy, sealed: barrier.sealed, counts })) {
+        if (!await passesReleasePredicate({ barrier, projectId })) {
             return
         }
         await this.release({ barrier, timedOut: false, releaseReason: 'predicate' })
@@ -169,6 +168,15 @@ async function completeAndDrainSignals({ barrier, timedOut }: CompleteAndDrainPa
         await signalRepo(entityManager).delete({ waitpointId: pending.id, projectId: pending.projectId })
         return summary
     })
+}
+
+async function passesReleasePredicate({ barrier, projectId }: PassesReleasePredicateParams): Promise<boolean> {
+    const { policy, sealed } = barrier
+    if (barrierReleasesOnLastPendingSignal({ policy, sealed })) {
+        return !await signalRepo().existsBy({ waitpointId: barrier.id, projectId, status: BarrierSignalStatus.PENDING })
+    }
+    const counts = await countSignalsByStatus({ barrierId: barrier.id, projectId })
+    return shouldReleaseBarrier({ policy, sealed, counts })
 }
 
 async function countSignalsByStatus({ barrierId, projectId, entityManager }: CountSignalsByStatusParams): Promise<BarrierSignalCounts> {
@@ -290,6 +298,11 @@ type ReleaseParams = {
 type CompleteAndDrainParams = {
     barrier: Waitpoint
     timedOut: boolean
+}
+
+type PassesReleasePredicateParams = {
+    barrier: Waitpoint
+    projectId: string
 }
 
 type CountSignalsByStatusParams = {
