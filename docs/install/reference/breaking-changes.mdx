@@ -75,7 +75,9 @@ A code found to be expired is thrown away when it is next presented, rather than
 
 #### What you need to do
 
-Nothing, and no new configuration: the key is derived from a secret your instance already has. Any code already sent before you upgrade stops working, because a code stored the old way can no longer match, so anyone mid-sign-in at that moment needs to request a fresh one. Every code expires within ten minutes anyway, so the window where that can happen is small, and the next request replaces the old value.
+Nothing, and no new configuration: the key is derived from a secret your instance already has. The upgrade converts codes that are still in flight as it goes, so a sign-in already underway when you deploy still completes, and email verification links — which live a day rather than ten minutes — keep working. Codes that had already expired are cleared out at the same time.
+
+Rolling back is the one case that costs a code: the older build cannot read the converted values, so the rollback clears the table and anyone mid-sign-in asks for a fresh one.
 
 
 ## 0.87.0
