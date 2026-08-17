@@ -13,7 +13,7 @@ import {
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -96,6 +96,26 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+
+const AgentNotReady = ({ onConfigure }: { onConfigure: () => void }) => (
+  <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+    <div className="flex size-16 items-center justify-center rounded-2xl bg-muted">
+      <Settings2 size={26} className="text-muted-foreground" />
+    </div>
+    <div className="flex flex-col items-center gap-2">
+      <p className="text-xl font-semibold">{t('Pick a model first')}</p>
+      <p className="max-w-[400px] text-sm leading-[150%] text-muted-foreground">
+        {t(
+          'This agent has no model yet, so it cannot answer. Choose one and it is ready.',
+        )}
+      </p>
+    </div>
+    <Button className="gap-2" onClick={onConfigure}>
+      <Settings2 size={16} />
+      {t('Choose a model')}
+    </Button>
+  </div>
+);
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -535,23 +555,27 @@ const AgentEditorContent = () => {
         </div>
 
         <div className="flex min-h-0 grow flex-col">
-          <AIChatBox
-            key={openedConversationId ?? `new-${freshConversations}`}
-            incognito={false}
-            agentId={agent.id}
-            conversationId={openedConversationId ?? null}
-            onConversationCreated={writeConversationParam}
-            placeholder={t('Ask {name}...', { name: agent.displayName })}
-            footerNote={buildCapabilityNote(agent)}
-            emptyState={
-              <AgentChatWelcome
-                displayName={agent.displayName}
-                description={agent.description ?? null}
-                icon={agent.icon}
-                color={agent.color}
-              />
-            }
-          />
+          {needsModel ? (
+            <AgentNotReady onConfigure={() => setConfigureOpen(true)} />
+          ) : (
+            <AIChatBox
+              key={openedConversationId ?? `new-${freshConversations}`}
+              incognito={false}
+              agentId={agent.id}
+              conversationId={openedConversationId ?? null}
+              onConversationCreated={writeConversationParam}
+              placeholder={t('Ask {name}...', { name: agent.displayName })}
+              footerNote={buildCapabilityNote(agent)}
+              emptyState={
+                <AgentChatWelcome
+                  displayName={agent.displayName}
+                  description={agent.description ?? null}
+                  icon={agent.icon}
+                  color={agent.color}
+                />
+              }
+            />
+          )}
         </div>
       </div>
 

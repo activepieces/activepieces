@@ -17,13 +17,14 @@ const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/a
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
-        const { data: model, error: modelError } = await tryCatch(() => agentHelpers.resolveFastModel({ platformId, log }))
-        if (!isNil(modelError) || isNil(model)) {
+        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveFastModelWithId({ platformId, log }))
+        if (!isNil(modelError) || isNil(resolved)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Connect an AI provider before drafting an agent, or start from a starter agent instead' },
             })
         }
+        const { model, modelId, provider } = resolved
 
         const { data: raw, error: generateError } = await tryCatch(async () => {
             const { text } = await generateText({
@@ -36,10 +37,11 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             return text
         })
         if (!isNil(generateError) || isNil(raw)) {
-            log.error({ error: generateError, reason: describeError(generateError), platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            const reason = describeError(generateError)
+            log.error({ error: generateError, reason, provider, model: { id: modelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: 'Could not reach the AI provider to draft an agent, check the provider configuration' },
+                params: { message: `The ${provider} provider could not run ${modelId}: ${reason}` },
             })
         }
 
