@@ -3,7 +3,7 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../../../database/database-common'
+} from '../../database/database-common'
 
 export type OtpSchema = OtpModel & {
     userIdentity: UserIdentity
@@ -30,6 +30,11 @@ export const OtpEntity = new EntitySchema<OtpSchema>({
             type: String,
             enum: OtpState,
             nullable: false,
+        },
+        attempts: {
+            type: Number,
+            nullable: false,
+            default: 0,
         },
     },
     indices: [

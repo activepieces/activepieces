@@ -195,6 +195,22 @@ S3-compatible bucket.
 
 ---
 
+### Sign-up protection
+
+Controls on who may create an account. Both default to the safe behaviour with
+no configuration: disposable addresses are refused, and no challenge is served
+until you supply Turnstile keys.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_ALLOW_DISPOSABLE_EMAILS` | Accept addresses from throwaway email providers. | `false` |
+| `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
+| `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
+
+The challenge is only served when **both** Turnstile variables are set. With
+either missing, the sign-in page renders no widget and the server verifies
+nothing, so a self-hosted instance needs no Cloudflare account.
+
 ### Email (SMTP)
 
 Outbound mail for invitations, notifications, and password resets.

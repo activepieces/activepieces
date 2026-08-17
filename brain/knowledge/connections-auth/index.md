@@ -25,11 +25,11 @@ Platform owners register their own OAuth client_id/secret per piece so connectio
 
 ### CE Authentication
 
-User identity, sign-in, JWT sessions. `UserIdentity` = canonical email+password+provider (one per email, shared across platforms); `User` = platform-scoped membership. First sign-up auto-creates a Platform + personal Project + ADMIN user. JWT is 7-day, signed with a shared secret; rotating `tokenVersion` on UserIdentity invalidates all sessions. `accessTokenManager` also mints long-lived engine/worker tokens. Endpoints: `/v1/authentication/sign-up|sign-in|switch-platform`. PrincipalTypes: USER/ENGINE/WORKER/SERVICE/UNKNOWN.
+User identity, sign-in, JWT sessions. `UserIdentity` = canonical email+password+provider (one per email, shared across platforms); `User` = platform-scoped membership. First sign-up auto-creates a Platform + personal Project + ADMIN user. JWT is 7-day, signed with a shared secret; rotating `tokenVersion` on UserIdentity invalidates all sessions. `accessTokenManager` also mints long-lived engine/worker tokens. Endpoints: `/v1/authentication/sign-up|sign-in|switch-platform`. PrincipalTypes: USER/ENGINE/WORKER/SERVICE/UNKNOWN/ONBOARDING (the last is the pre-platform session that can only call `POST /v1/platforms`).
 
 ### EE Authentication
 
-Extends CE with SSO + RBAC. SAML 2.0 (`/v1/authn/saml/login` → IdP → ACS `/acs`) and Google/GitHub federated OAuth both funnel into `authenticationService.federatedAuthn()`; gated by `ssoEnabled`. Per-project RBAC via `assertPrincipalAccessToProject()` and `assertUserHasPermissionToFlow()`. Config stored on `platform.federatedAuthProviders`. Authz hooks: `platformMustHaveFeatureEnabled` (402), `projectMustBeTeamType`, `platformMustBeOwnedByCurrentUser`. OTP (email verify + password reset) lives here but is available in CE too.
+Extends CE with SSO + RBAC. SAML 2.0 (`/v1/authn/saml/login` → IdP → ACS `/acs`) and Google/GitHub federated OAuth both funnel into `authenticationService.federatedAuthn()`; gated by `ssoEnabled`. Per-project RBAC via `assertPrincipalAccessToProject()` and `assertUserHasPermissionToFlow()`. Config stored on `platform.federatedAuthProviders`. Authz hooks: `platformMustHaveFeatureEnabled` (402), `projectMustBeTeamType`, `platformMustBeOwnedByCurrentUser`. OTP (email verify, password reset, and the `EMAIL_LOGIN` sign-in code) lives here. Its entity is registered for every edition, but `otpModule` is only registered on Cloud/EE and `sendOtp` returns early off those editions, so CE can send nothing today except `EMAIL_LOGIN`, which is gated on `SMTP_CONFIGURED` instead.
 
 ### Managed Auth / Embedding (EE)
 
