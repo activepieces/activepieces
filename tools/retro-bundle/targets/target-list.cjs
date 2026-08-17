@@ -50,19 +50,21 @@ async function fetchRegistry(name) {
   return res.json()
 }
 
+const ALL_VERSIONS = process.env.RETRO_ALL_VERSIONS === '1'
+
 function collapse(doc) {
   const versions = Object.keys(doc.versions || {})
   const time = doc.time || {}
-  const minorMap = new Map() // "maj.min" -> {patch, version}
+  const minorMap = new Map() // "maj.min" -> {patch, version}, or "maj.min.patch" -> itself when ALL_VERSIONS
   let parseFails = 0
   for (const v of versions) {
     const p = semverParts(v)
     if (!p) { parseFails++; continue }
     // skip prerelease / beta tags for the target line
     if (/-/.test(v)) continue
-    const key = `${p.major}.${p.minor}`
+    const key = ALL_VERSIONS ? v : `${p.major}.${p.minor}`
     const cur = minorMap.get(key)
-    if (!cur || p.patch > cur.patch) minorMap.set(key, { patch: p.patch, version: v })
+    if (ALL_VERSIONS || !cur || p.patch > cur.patch) minorMap.set(key, { patch: p.patch, version: v })
   }
   const targets = [...minorMap.entries()]
     .map(([minor, { version }]) => {
