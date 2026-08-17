@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { apId, isNil, PlatformId } from '@activepieces/core-utils'
 import { OtpModel, OtpState, OtpType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -5,6 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock, distributedStore } from '../../database/redis-connections'
 import { emailService } from '../../ee/helper/email/email-service'
+import { jwtUtils } from '../../helper/jwt-utils'
 import { userIdentityService } from '../user-identity/user-identity-service'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
@@ -34,32 +36,56 @@ export const otpService = (log: FastifyBaseLogger) => ({
             identityId: userIdentity.id,
             type,
         })
-        const existingOtpIsReusable = !isNil(existingOtp) && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
-        if (existingOtpIsReusable) {
+        const identityId = userIdentity.id
+        const otpIsInFlight = !isNil(existingOtp) && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
+        // The row holds only a digest, so re-sending the code in flight means recovering the
+        // plaintext from the short-lived cache. Without it a repeat request has to mint a new
+        // code, which would let anyone who knows an address invalidate the owner's code at will.
+        const codeInFlight = otpIsInFlight ? await cachedCode({ identityId, type }) : null
+        if (!isNil(codeInFlight)) {
             await emailService(log).sendOtp({
                 platformId,
                 userIdentity,
-                otp: existingOtp.value,
-                type: existingOtp.type,
+                otp: codeInFlight,
+                type,
             })
             return
         }
+        const code = otpGenerator.generate({ type })
         const newOtp: Omit<OtpModel, 'created'> = {
             id: apId(),
             updated: dayjs().toISOString(),
             type,
-            identityId: userIdentity.id,
-            value: otpGenerator.generate({ type }),
+            identityId,
+            value: await digestOf(code),
             state: OtpState.PENDING,
             attempts: 0,
         }
         await repo().upsert(newOtp, ['identityId', 'type'])
+        await cacheCode({ identityId, type, code })
         await emailService(log).sendOtp({
             platformId,
             userIdentity,
-            otp: newOtp.value,
-            type: newOtp.type,
+            otp: code,
+            type,
         })
+    },
+
+    async deleteExpired(): Promise<number> {
+        const removedPerType = await Promise.all(
+            Object.entries(OTP_EXPIRATION_MS).map(async ([type, lifetimeMs]) => {
+                const result = await repo()
+                    .createQueryBuilder()
+                    .delete()
+                    .where('type = :type AND updated < :cutoff', {
+                        type,
+                        cutoff: dayjs().subtract(lifetimeMs, 'millisecond').toISOString(),
+                    })
+                    .execute()
+                return result.affected ?? 0
+            }),
+        )
+        return removedPerType.reduce((total, removed) => total + removed, 0)
     },
 
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
@@ -80,11 +106,15 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     await discard({ otp, identityId, type, log })
                     return false
                 }
+                if (otpIsExpired(otp)) {
+                    await discard({ otp, identityId, type, log })
+                    return false
+                }
                 const otpIsPending = otp.state === OtpState.PENDING
-                const otpIsNotExpired = !otpIsExpired(otp)
-                const otpMatches = otp.value === value
-                if (otpIsNotExpired && otpMatches && otpIsPending) {
+                const otpMatches = digestsMatch(otp.value, await digestOf(value))
+                if (otpMatches && otpIsPending) {
                     await repo().delete({ id: otp.id })
+                    await forgetCachedCode({ identityId, type })
                     await clearIdentityBudget({ identityId, type })
                     return true
                 }
@@ -105,7 +135,40 @@ async function countAttempt(otpId: string): Promise<void> {
 
 async function discard({ otp, identityId, type, log }: DiscardParams): Promise<void> {
     await repo().delete({ id: otp.id })
-    log.warn({ identityId, type }, '[otpService#confirm] attempt budget exhausted, credential discarded')
+    await forgetCachedCode({ identityId, type })
+    log.warn({ identityId, type }, '[otpService#confirm] credential discarded')
+}
+
+// Keyed with a server-held secret rather than a bare hash: six digits is a million
+// candidates, so an unkeyed digest is recovered offline in milliseconds by anyone holding a
+// database dump or a read replica. The key never lives in the database, so reading the table
+// no longer yields a usable credential.
+async function digestOf(code: string): Promise<string> {
+    const secret = await jwtUtils.getJwtSecret()
+    return createHmac('sha256', secret).update(code).digest('hex')
+}
+
+function digestsMatch(stored: string, candidate: string): boolean {
+    const left = Buffer.from(stored, 'utf8')
+    const right = Buffer.from(candidate, 'utf8')
+    return left.length === right.length && timingSafeEqual(left, right)
+}
+
+function cachedCodeKey({ identityId, type }: IdentityBudgetParams): string {
+    return `otp-pending-code:${identityId}:${type}`
+}
+
+async function cacheCode({ identityId, type, code }: CacheCodeParams): Promise<void> {
+    const ttlSeconds = Math.ceil(OTP_EXPIRATION_MS[type] / 1000)
+    await distributedStore.put(cachedCodeKey({ identityId, type }), code, ttlSeconds)
+}
+
+async function cachedCode({ identityId, type }: IdentityBudgetParams): Promise<string | null> {
+    return distributedStore.get<string>(cachedCodeKey({ identityId, type }))
+}
+
+async function forgetCachedCode({ identityId, type }: IdentityBudgetParams): Promise<void> {
+    await distributedStore.delete(cachedCodeKey({ identityId, type }))
 }
 
 function otpIsExpired(otp: OtpModel): boolean {
@@ -147,6 +210,10 @@ type IdentityBudgetParams = {
 
 type CountGuessOnIdentityParams = IdentityBudgetParams & {
     spent: number
+}
+
+type CacheCodeParams = IdentityBudgetParams & {
+    code: string
 }
 
 type IdentityGuessBudget = {

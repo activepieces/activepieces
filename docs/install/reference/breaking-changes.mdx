@@ -67,6 +67,16 @@ Two consequences worth knowing. Someone who spends ten wrong guesses on an accou
 
 Nothing. The limit applies out of the box and needs no configuration. If your support team sees a report of "the code keeps saying it's wrong", have them check whether the account has burned its hourly budget, and point the user at password or Google sign-in in the meantime.
 
+#### One-time codes are no longer stored in a readable form
+
+The `otp` table used to hold the six-digit sign-in code as plain text, so anyone who could read the database — a replica, a backup, a support query — could sign in as any account for the ten minutes that code was alive, without a password. Codes are now stored as a digest keyed with a server-held secret, so reading the table no longer yields anything you can sign in with. The code itself is held only long enough to re-send it if the person asks for it again.
+
+Expired codes are also swept every ten minutes now, rather than sitting in the table until the same person happens to request another one.
+
+#### What you need to do
+
+Nothing, and no new configuration: the key is derived from a secret your instance already has. The upgrade clears any codes outstanding at that moment, because a stored plaintext and a stored digest are indistinguishable, so anyone who is mid-sign-in when you upgrade needs to request a fresh code. Every code expires within ten minutes anyway, so the window where that can happen is small.
+
 
 ## 0.87.0
 

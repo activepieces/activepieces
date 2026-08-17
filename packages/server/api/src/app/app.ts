@@ -19,6 +19,7 @@ import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
+import { otpService } from './authentication/otp/otp-service'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -280,6 +281,24 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         schedule: {
             type: 'repeated',
             cron: '* * * * *',
+        },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.OTP_CLEANUP, async () => {
+        const removed = await otpService(app.log).deleteExpired()
+        if (removed > 0) {
+            app.log.info({ removed }, '[otpCleanup] expired one-time codes removed')
+        }
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.OTP_CLEANUP,
+            data: {},
+            jobId: SystemJobName.OTP_CLEANUP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '*/10 * * * *',
         },
     })
 
