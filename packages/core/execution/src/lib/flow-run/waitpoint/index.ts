@@ -15,6 +15,10 @@ export function shouldReleaseBarrier({ policy, sealed, counts }: ShouldReleaseBa
     return countOf({ counts, status: BarrierSignalStatus.PENDING }) === 0
 }
 
+export function barrierReleasesOnLastPendingSignal({ policy, sealed }: BarrierReleaseShapeParams): boolean {
+    return sealed && isNil(policy?.requiredSuccesses) && policy?.releaseOnFirstFailure !== true
+}
+
 function countOf({ counts, status }: { counts: BarrierSignalCounts, status: BarrierSignalStatus }): number {
     return counts[status] ?? 0
 }
@@ -115,3 +119,5 @@ export type ShouldReleaseBarrierParams = {
     sealed: boolean
     counts: BarrierSignalCounts
 }
+
+export type BarrierReleaseShapeParams = Pick<ShouldReleaseBarrierParams, 'policy' | 'sealed'>

@@ -52,10 +52,10 @@ export class AddWaitpointSignals1821000000000 implements Migration {
                 END IF;
             END $$
         `)
-        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_waitpoint_signal_waitpoint_id_status"`)
+        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_waitpoint_signal_waitpoint_id_project_id_status"`)
         await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_waitpoint_signal_waitpoint_id_status"
-            ON "waitpoint_signal" ("waitpointId", "status")
+            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_waitpoint_signal_waitpoint_id_project_id_status"
+            ON "waitpoint_signal" ("waitpointId", "projectId", "status")
         `)
         await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_waitpoint_signal_ref_id"`)
         await queryRunner.query(`

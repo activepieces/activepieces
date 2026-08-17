@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BarrierSignalStatus, shouldReleaseBarrier } from '../../../src/lib/flow-run/waitpoint'
+import { barrierReleasesOnLastPendingSignal, BarrierPolicy, BarrierSignalCounts, BarrierSignalStatus, shouldReleaseBarrier } from '../../../src/lib/flow-run/waitpoint'
 
 describe('shouldReleaseBarrier', () => {
     describe('sealed barrier with no policy', () => {
@@ -105,5 +105,34 @@ describe('shouldReleaseBarrier', () => {
             sealed: true,
             counts: { [BarrierSignalStatus.FAILED]: 1, [BarrierSignalStatus.PENDING]: 9 },
         })).toBe(true)
+    })
+})
+
+describe('barrierReleasesOnLastPendingSignal', () => {
+    const shapes: { name: string, policy: BarrierPolicy | null, sealed: boolean, reducesToPending: boolean }[] = [
+        { name: 'sealed, no policy', policy: null, sealed: true, reducesToPending: true },
+        { name: 'sealed, policy carrying only reasonRequiredOn', policy: { reasonRequiredOn: 'reject' }, sealed: true, reducesToPending: true },
+        { name: 'sealed, releaseOnFirstFailure explicitly off', policy: { releaseOnFirstFailure: false }, sealed: true, reducesToPending: true },
+        { name: 'unsealed', policy: null, sealed: false, reducesToPending: false },
+        { name: 'sealed, requiredSuccesses', policy: { requiredSuccesses: 2 }, sealed: true, reducesToPending: false },
+        { name: 'sealed, releaseOnFirstFailure', policy: { releaseOnFirstFailure: true }, sealed: true, reducesToPending: false },
+    ]
+
+    const countSets: BarrierSignalCounts[] = [
+        {},
+        { [BarrierSignalStatus.PENDING]: 3 },
+        { [BarrierSignalStatus.SUCCEEDED]: 2, [BarrierSignalStatus.PENDING]: 1 },
+        { [BarrierSignalStatus.SUCCEEDED]: 2, [BarrierSignalStatus.FAILED]: 1 },
+        { [BarrierSignalStatus.NOT_DISPATCHED]: 4 },
+    ]
+
+    it.each(shapes)('reports $name as $reducesToPending', ({ policy, sealed, reducesToPending }) => {
+        expect(barrierReleasesOnLastPendingSignal({ policy, sealed })).toBe(reducesToPending)
+    })
+
+    it.each(shapes.filter((shape) => shape.reducesToPending))('agrees with shouldReleaseBarrier on the pending count alone for $name', ({ policy, sealed }) => {
+        for (const counts of countSets) {
+            expect(shouldReleaseBarrier({ policy, sealed, counts })).toBe((counts[BarrierSignalStatus.PENDING] ?? 0) === 0)
+        }
     })
 })
