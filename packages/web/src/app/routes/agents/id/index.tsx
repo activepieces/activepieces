@@ -44,6 +44,7 @@ import {
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 
 const ConfigureAgentSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
@@ -119,10 +120,13 @@ const ConfigurePanel = ({
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => onOpenChange(false),
-      onError: () =>
+      onError: (error) =>
         form.setError('root.serverError', {
           type: 'manual',
-          message: t("Your changes weren't saved. Try again."),
+          message: api.extractServerErrorMessage(
+            error,
+            t("Your changes weren't saved. Try again."),
+          ),
         }),
     });
   };

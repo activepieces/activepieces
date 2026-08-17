@@ -34,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { projectCollectionUtils } from '@/features/projects';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -272,9 +273,12 @@ const DescribeStep = ({
           <ArrowUp size={16} strokeWidth={2.2} />
         </Button>
       </div>
-      {draftAgent.isError && (
+      {draftAgent.error !== null && (
         <p className="text-sm text-destructive">
-          {t("That didn't work. Try describing the agent another way.")}
+          {api.extractServerErrorMessage(
+            draftAgent.error,
+            t("That didn't work. Try describing the agent another way."),
+          )}
         </p>
       )}
       <div className="flex flex-col gap-3">

@@ -2326,7 +2326,6 @@
   "The verification step could not load. Disable your ad blocker for this page, then reload.": "The verification step could not load. Disable your ad blocker for this page, then reload.",
   "That verification expired. Please try again.": "That verification expired. Please try again.",
   "What should your agent do?": "What should your agent do?",
-  "Describe it in a sentence — I'll assemble the tools, model, and steps.": "Describe it in a sentence — I'll assemble the tools, model, and steps.",
   "Draft weekly launch posts and file them in Notion...": "Draft weekly launch posts and file them in Notion...",
   "Try:": "Try:",
   "Triage support tickets": "Triage support tickets",
@@ -2380,5 +2379,6 @@
   "Ask {name} anything": "Ask {name} anything",
   "Ask {name}...": "Ask {name}...",
   "{name} can use {tools} and replies may need review": "{name} can use {tools} and replies may need review",
-  "{name} has no tools yet, so replies may need review": "{name} has no tools yet, so replies may need review"
+  "{name} has no tools yet, so replies may need review": "{name} has no tools yet, so replies may need review",
+  "Describe what you need. I'll pick the tools and set up the steps.": "Describe what you need. I'll pick the tools and set up the steps."
 }

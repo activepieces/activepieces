@@ -310,9 +310,11 @@ export function ProjectDashboardSidebar({
                         <ProjectSideBarItem
                           key={project.id}
                           project={project}
-                          isCurrentProject={location.pathname.includes(
-                            `/projects/${project.id}`,
-                          )}
+                          isCurrentProject={
+                            location.pathname.includes(
+                              `/projects/${project.id}`,
+                            ) && !isProjectAgnosticRoute(location.pathname)
+                          }
                           handleProjectSelect={handleProjectSelect}
                         />
                       </SidebarMenuItem>
@@ -350,6 +352,12 @@ export function ProjectDashboardSidebar({
       </Sidebar>
     )
   );
+}
+
+// These live under the project prefix but have their own nav item, so the project
+// they happen to be scoped to should not read as the selected one.
+function isProjectAgnosticRoute(pathname: string): boolean {
+  return PROJECT_AGNOSTIC_ROUTES.some((route) => pathname.includes(route));
 }
 
 function DelayedSidebarUsageLimits() {
@@ -402,5 +410,7 @@ function SidebarPlatformAdminLink() {
     </SidebarMenu>
   );
 }
+
+const PROJECT_AGNOSTIC_ROUTES = ['/agents'];
 
 export const SIDEBAR_ID = 'project-sidebar';

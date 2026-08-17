@@ -36,6 +36,7 @@ import {
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
@@ -107,7 +108,7 @@ const AgentsPageContent = () => {
       ),
   });
   const isBuilding = draftAgent.isPending || createAgent.isPending;
-  const buildError = draftAgent.isError || createAgent.isError;
+  const buildError = draftAgent.error ?? createAgent.error ?? null;
 
   const buildAgent = (text?: string) => {
     const trimmed = (text ?? prompt).trim();
@@ -142,7 +143,7 @@ const AgentsPageContent = () => {
         </h1>
         <p className="text-[15px] leading-[18px] text-muted-foreground">
           {t(
-            "Describe it in a sentence — I'll assemble the tools, model, and steps.",
+            "Describe what you need. I'll pick the tools and set up the steps.",
           )}
         </p>
         <div className="mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-border bg-muted ps-5 pe-2 py-2">
@@ -172,9 +173,12 @@ const AgentsPageContent = () => {
             <ArrowUp size={16} strokeWidth={2.2} />
           </Button>
         </div>
-        {buildError && (
-          <p className="text-[13px] leading-4 text-destructive">
-            {t("That didn't work. Try describing the agent another way.")}
+        {buildError !== null && (
+          <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
+            {api.extractServerErrorMessage(
+              buildError,
+              t("That didn't work. Try describing the agent another way."),
+            )}
           </p>
         )}
         <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">

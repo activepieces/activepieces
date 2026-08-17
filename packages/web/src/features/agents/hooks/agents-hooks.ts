@@ -49,7 +49,7 @@ export const agentsMutations = {
     onError,
   }: {
     onSuccess?: (agent: Agent) => void;
-    onError?: () => void;
+    onError?: (error: Error) => void;
   }) => {
     const queryClient = useQueryClient();
     return useMutation({
