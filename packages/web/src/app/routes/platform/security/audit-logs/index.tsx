@@ -490,6 +490,22 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       const { variable } = event.data;
       return [{ label: t('Variable'), value: variable.name }];
     }
+    case ApplicationEventName.AGENT_CREATED:
+    case ApplicationEventName.AGENT_UPDATED:
+    case ApplicationEventName.AGENT_DELETED:
+    case ApplicationEventName.AGENT_PUBLISHED:
+    case ApplicationEventName.AGENT_UNPUBLISHED: {
+      const { agent } = event.data;
+      return [
+        { label: t('Agent'), value: agent.displayName },
+        ...(agent.publishedDigest
+          ? [{ label: t('Published version'), value: agent.publishedDigest }]
+          : []),
+        ...(agent.publishedToolNames?.length
+          ? [{ label: t('Tools'), value: agent.publishedToolNames.join(', ') }]
+          : []),
+      ];
+    }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:
     case ApplicationEventName.FOLDER_DELETED:
