@@ -1,4 +1,5 @@
 import fs from 'fs/promises'
+import { createRequire } from 'node:module'
 import path from 'path'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
@@ -16,7 +17,7 @@ export const pieceLoader = {
                 devPieces,
             })
             const piecePath = await pieceLoader.getPiecePath({ packageName, devPieces })
-            const module = await import(piecePath)
+            const module = loadAndCapPieces(piecePath)
 
             const piece = extractPieceFromModule<Piece>({
                 module,
@@ -128,6 +129,64 @@ export const pieceLoader = {
         }
         return piecePath
     },
+}
+
+const MAX_LOADED_PIECES = 10
+const engineRequire = createRequire(__filename)
+const loadedPieceEntries = new Map<string, true>()
+const baselineModuleIds = new Set(Object.keys(engineRequire.cache))
+
+function loadAndCapPieces(piecePath: string): Record<string, unknown> {
+    const resolvedEntry = engineRequire.resolve(piecePath)
+    const loadedModule: Record<string, unknown> = engineRequire(resolvedEntry)
+    loadedPieceEntries.delete(resolvedEntry)
+    loadedPieceEntries.set(resolvedEntry, true)
+    if (loadedPieceEntries.size > MAX_LOADED_PIECES) {
+        const leastRecentEntry = loadedPieceEntries.keys().next().value
+        if (!isNil(leastRecentEntry)) {
+            loadedPieceEntries.delete(leastRecentEntry)
+            evictPieceSubtree(leastRecentEntry)
+            global.gc?.()
+        }
+    }
+    return loadedModule
+}
+
+function evictPieceSubtree(evictedEntry: string): void {
+    const survivorReachable = collectReachableModules([...loadedPieceEntries.keys()])
+    const evictedReachable = collectReachableModules([evictedEntry])
+    const doomed = new Set([...evictedReachable].filter((id) => !survivorReachable.has(id) && !baselineModuleIds.has(id)))
+    if (doomed.size === 0) {
+        return
+    }
+    for (const id of Object.keys(engineRequire.cache)) {
+        const mod = engineRequire.cache[id]
+        if (!isNil(mod) && !doomed.has(id)) {
+            mod.children = mod.children.filter((child) => !doomed.has(child.id))
+        }
+    }
+    if (!isNil(engineRequire.main)) {
+        engineRequire.main.children = engineRequire.main.children.filter((child) => !doomed.has(child.id))
+    }
+    for (const id of doomed) {
+        Reflect.deleteProperty(engineRequire.cache, id)
+    }
+}
+
+function collectReachableModules(rootIds: string[]): Set<string> {
+    const reachable = new Set<string>()
+    const stack = rootIds.filter((id) => !isNil(engineRequire.cache[id]))
+    while (stack.length > 0) {
+        const id = stack.pop()
+        if (isNil(id) || reachable.has(id)) {
+            continue
+        }
+        reachable.add(id)
+        for (const child of engineRequire.cache[id]?.children ?? []) {
+            stack.push(child.id)
+        }
+    }
+    return reachable
 }
 
 async function findInDistFolder(packageName: string): Promise<string | null> {
