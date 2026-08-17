@@ -27,14 +27,6 @@ The `@activepieces/cli` `project replace` command mirrors a project's flows, tab
 | Connections | **Metadata auto-mirrored** (externalId, pieceName, displayName); secret values never cross the wire. New connections land on the destination as placeholders with `status: MISSING`. Operator authorizes each one in the destination UI before flows can run. |
 | MCP servers, agents, project metadata, custom domains, app credentials | **Out of scope.** Not touched. |
 
-## Installation
-
-Run via `npx` (no install needed), pinning to the version that matches your destination instance to keep request shapes aligned:
-
-```bash
-npx @activepieces/cli@latest project replace ...
-```
-
 ## Command
 
 ```bash
