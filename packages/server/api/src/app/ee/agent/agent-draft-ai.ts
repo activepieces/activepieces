@@ -37,7 +37,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             return text
         })
         if (!isNil(generateError) || isNil(raw)) {
-            log.error({ error: generateError, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            log.error({ error: generateError, reason: describeError(generateError), platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Could not reach the AI provider to draft an agent, check the provider configuration' },
@@ -56,6 +56,21 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         return parsed
     },
 })
+
+// The AI SDK wraps provider failures, and the telemetry sink renders the wrapper as
+// "[object Object]". Pull the readable text out so the log says what the provider actually
+// refused, which is usually a key or a credit problem rather than anything about the prompt.
+function describeError(error: unknown): string {
+    if (!(error instanceof Error)) {
+        return String(error)
+    }
+    const parts = [error.message]
+    const cause = (error as { cause?: unknown }).cause
+    if (cause instanceof Error) {
+        parts.push(cause.message)
+    }
+    return parts.filter((part) => part.length > 0).join(' | ')
+}
 
 function parseDraft(raw: string): DraftAgentResponse | null {
     const start = raw.indexOf('{')
