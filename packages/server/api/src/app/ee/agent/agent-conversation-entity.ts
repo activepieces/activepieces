@@ -1,4 +1,4 @@
-import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -6,7 +6,6 @@ type AgentConversationWithRelations = AgentConversation & {
     platform: Platform
     project: Project
     user: User
-    agent: Agent
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
@@ -109,15 +108,6 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_agent_conversation_project_id',
-            },
-        },
-        agent: {
-            type: 'many-to-one',
-            target: 'agent',
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'agentId',
-                foreignKeyConstraintName: 'fk_agent_conversation_agent_id',
             },
         },
         user: {
