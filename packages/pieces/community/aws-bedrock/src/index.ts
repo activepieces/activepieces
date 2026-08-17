@@ -12,7 +12,7 @@ export const awsBedrock = createPiece({
   displayName: 'AWS Bedrock (Deprecated)',
   description: 'Build generative AI applications with foundation models',
   auth: awsBedrockCombinedAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.87.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-bedrock.png',
   deprecated: true,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],

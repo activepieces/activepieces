@@ -176,6 +176,10 @@ export type ServerContext = {
   token: string;
 };
 
+export type AuthValidationServerContext = Omit<ServerContext, 'token'> & {
+  mintOidcToken: (params: { audience: string }) => Promise<string>;
+};
+
 export type CreateWaitpointParams = {
   type: 'DELAY' | 'WEBHOOK';
   version?: 'V0' | 'V1';
