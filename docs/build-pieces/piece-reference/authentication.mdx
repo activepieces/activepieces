@@ -199,3 +199,31 @@ PieceAuth.OAuth2({
 <Tip>
 Please note `OAuth2GrantType.CLIENT_CREDENTIALS` is also supported for service-based authentication.
 </Tip>
+
+### Connection Identifier
+
+Every auth type (`SecretText`, `BasicAuth`, `OAuth2`, `CustomAuth`) accepts an optional `getConnectionIdentifier` callback. It resolves a human-readable label for a connection (e.g. the account email, or Slack's "display-name (workspace)"), shown in the UI so users can tell which account a connection belongs to.
+
+**Example:**
+
+```typescript
+PieceAuth.OAuth2({
+    displayName: 'OAuth2 Authentication',
+    authUrl: 'https://example.com/auth',
+    tokenUrl: 'https://example.com/token',
+    required: true,
+    scope: ['read', 'write'],
+    getConnectionIdentifier: async ({ auth }) => {
+        const response = await httpClient.sendRequest<{ email: string }>({
+            method: HttpMethod.GET,
+            url: 'https://api.example.com/v1/me',
+            headers: { Authorization: `Bearer ${auth.access_token}` },
+        });
+        return response.body.email;
+    },
+})
+```
+
+<Note>
+This is best-effort: it must never throw, and returning `undefined` is fine when no identifier can be resolved. For OAuth2 connections, Activepieces already derives an identifier from the token response's OIDC claims when present. Only add `getConnectionIdentifier` when the provider needs custom handling (e.g. Slack's workspace + user lookup).
+</Note>

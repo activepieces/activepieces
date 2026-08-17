@@ -1,8 +1,8 @@
-import { tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
-import { agentToolPhases } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { agentAiUtils, mcpTransport } from '@activepieces/server-utils'
+import { AgentMcpTool, agentToolPhases, McpAuthConfig, McpAuthType, mcpToolNameUtils } from '@activepieces/shared'
 import { createMCPClient } from '@ai-sdk/mcp'
-import { ToolExecutionOptions } from 'ai'
+import { ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentWorkerTools } from './agent-worker-tools'
 
@@ -50,6 +50,106 @@ async function connectMcpClient({ mcpCredentials, conversationId, log }: {
         }
     }
     return { mcpClient: client, mcpToolSet }
+}
+
+function mcpAuthSecrets(auth: McpAuthConfig): string[] {
+    switch (auth.type) {
+        case McpAuthType.NONE:
+            return []
+        case McpAuthType.HEADERS:
+            return Object.values(auth.headers)
+        case McpAuthType.ACCESS_TOKEN:
+            return [auth.accessToken]
+        case McpAuthType.API_KEY:
+            return [auth.apiKey]
+    }
+}
+
+function redactMcpAuthSecrets({ text, secrets }: { text: string, secrets: string[] }): string {
+    return secrets.reduce((redacted, secret) => (secret.length > 0 ? redacted.split(secret).join('[REDACTED]') : redacted), text)
+}
+
+function mcpErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message
+    }
+    if (typeof error === 'string') {
+        return error
+    }
+    return 'Unknown error'
+}
+
+async function connectAgentMcpTool({ tool, log }: {
+    tool: AgentMcpTool
+    log: FastifyBaseLogger
+}): Promise<{ client: Awaited<ReturnType<typeof createMCPClient>>, toolSet: ToolSet } | null> {
+    const secrets = mcpAuthSecrets(tool.auth)
+    const transport = mcpTransport.createTransport({ protocol: tool.protocol, serverUrl: tool.serverUrl, auth: tool.auth })
+    const { data: client, error: connectError } = await tryCatch(() => createMCPClient({ transport }))
+    if (!client) {
+        log.warn({ tool: { name: tool.toolName }, error: redactMcpAuthSecrets({ text: mcpErrorMessage(connectError), secrets }) }, 'Failed to connect to a step-configured MCP server — its tools will be unavailable this turn')
+        return null
+    }
+    const { data: toolSet, error: listError } = await tryCatch(() => client.tools())
+    if (!toolSet) {
+        log.warn({ tool: { name: tool.toolName }, error: redactMcpAuthSecrets({ text: mcpErrorMessage(listError), secrets }) }, 'Failed to list tools from a step-configured MCP server')
+        await client.close().catch(() => undefined)
+        return null
+    }
+    return { client, toolSet }
+}
+
+async function connectAgentMcpTools({ tools, log }: {
+    tools: AgentMcpTool[]
+    log: FastifyBaseLogger
+}): Promise<AgentMcpToolsConnection> {
+    const clients: Awaited<ReturnType<typeof createMCPClient>>[] = []
+    const toolSet: ToolSet = {}
+    for (const [serverIndex, tool] of tools.entries()) {
+        const connection = await connectAgentMcpTool({ tool, log })
+        if (!connection) {
+            continue
+        }
+        clients.push(connection.client)
+        for (const [name, fn] of Object.entries(connection.toolSet)) {
+            const preferred = mcpToolNameUtils.createToolName(`${tool.toolName}_${name}`)
+            const key = isNil(toolSet[preferred]) ? preferred : mcpToolNameUtils.createToolName(`${tool.toolName}_${serverIndex}_${name}`)
+            if (key !== preferred) {
+                log.warn({ tool: { name: key } }, '[agentMcpClient] Two configured servers resolve to the same tool name, keeping both apart by position')
+            }
+            toolSet[key] = fn
+        }
+    }
+    return { clients, toolSet }
+}
+
+async function closeAgentMcpTools({ clients, tools, log }: {
+    clients: Awaited<ReturnType<typeof createMCPClient>>[]
+    tools: AgentMcpTool[]
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const secrets = tools.flatMap((tool) => mcpAuthSecrets(tool.auth))
+    await Promise.all(clients.map((client) => client.close().catch((closeError: unknown) => {
+        log.warn({ error: redactMcpAuthSecrets({ text: mcpErrorMessage(closeError), secrets }) }, 'Failed to close a step-configured MCP client')
+    })))
+}
+
+async function withStepMcpTools<T>({ tools, skip, log, run }: {
+    tools: AgentMcpTool[]
+    skip: boolean
+    log: FastifyBaseLogger
+    run: (toolSet: ToolSet) => Promise<T>
+}): Promise<T> {
+    if (skip || tools.length === 0) {
+        return run({})
+    }
+    const { clients, toolSet } = await connectAgentMcpTools({ tools, log })
+    try {
+        return await run(toolSet)
+    }
+    finally {
+        await closeAgentMcpTools({ clients, tools, log })
+    }
 }
 
 function hasExecute(tool: object): tool is object & { execute: (args: unknown, options?: ToolExecutionOptions<undefined>) => Promise<unknown> } {
@@ -236,13 +336,22 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
     return result
 }
 
-type McpConnection = {
+export type McpConnection = {
     mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
     mcpToolSet: Record<string, unknown>
 }
 
+
 export const agentMcpClient = {
     connect: connectMcpClient,
+    connectAgentMcpTools,
+    closeAgentMcpTools,
+    withStepMcpTools,
     withToolTimeouts,
     classifyMcpAuthError,
+    redactMcpAuthSecrets,
+}
+type AgentMcpToolsConnection = {
+    clients: Awaited<ReturnType<typeof createMCPClient>>[]
+    toolSet: ToolSet
 }

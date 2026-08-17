@@ -18,11 +18,29 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
-    mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
+    mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
     mockFindOne: vi.fn().mockResolvedValue(null),
     mockTrack: vi.fn().mockResolvedValue(undefined),
     mockSendConversationUpdate: vi.fn(),
+}))
+
+const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
+    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
+    mockKbSearch: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
+}))
+
+const { mockEmbed } = vi.hoisted(() => ({
+    mockEmbed: vi.fn().mockResolvedValue({ embedding: new Array(768).fill(0.1) }),
+}))
+
+vi.mock('ai', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    embed: () => mockEmbed(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
@@ -42,9 +60,25 @@ vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
     pieceToolRunner: { runFromInstruction: mockRunFromInstruction },
 }))
 
+const { mockGetOnePopulated } = vi.hoisted(() => ({
+    mockGetOnePopulated: vi.fn(),
+}))
+
+vi.mock('../../../../../src/app/flows/flow/flow.service', () => ({
+    flowService: () => ({ getOnePopulated: mockGetOnePopulated }),
+}))
+
+const { mockRunFlowAsTool } = vi.hoisted(() => ({
+    mockRunFlowAsTool: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] }),
+}))
+
+vi.mock('../../../../../src/app/mcp/mcp-server-builder', () => ({
+    runFlowAsTool: mockRunFlowAsTool,
+}))
+
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: () => ({}) },
+    agentAiUtils: { createChatModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
 }))
 
 type QueryBuilderMock = {
@@ -52,12 +86,14 @@ type QueryBuilderMock = {
     set: (values: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
-    execute: () => Promise<{ affected: number }>
+    returning: (columns: string) => QueryBuilderMock
+    execute: () => Promise<{ raw?: unknown[] }>
 }
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         resolveFastModel: () => ({}),
+        resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
             findOne: mockFindOne,
@@ -68,6 +104,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                     set: (values) => { mockSet(values); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    returning: () => builder,
                     execute: mockExecute,
                 }
                 return builder
@@ -185,7 +222,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('does not bill when the fenced save was rejected (preempted by a newer run)', async () => {
-        mockExecute.mockResolvedValue({ affected: 0 })
+        mockExecute.mockResolvedValue({ raw: [] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -195,7 +232,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('bills under the owning run id when the save landed', async () => {
-        mockExecute.mockResolvedValue({ affected: 1 })
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -204,13 +241,13 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
         expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
     })
 
-    it('still bills when affected is undefined (driver reports no row count)', async () => {
+    it('does not bill when the write returned nothing, on any driver', async () => {
         mockExecute.mockResolvedValue({})
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
 
-        expect(mockTrack).toHaveBeenCalledTimes(1)
+        expect(mockTrack).not.toHaveBeenCalled()
     })
 })
 
@@ -368,6 +405,54 @@ describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a c
     })
 })
 
+describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
+    async function runFlowTool(conversation: unknown, flowId = 'flow-1') {
+        mockRunFlowAsTool.mockClear()
+        mockGetOnePopulated.mockClear()
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).executeFlowTool({
+            conversationId: 'conv-1',
+            toolName: 'run_subflow',
+            flowId,
+            toolInput: { foo: 'bar' },
+            returnsResponse: false,
+        })
+    }
+
+    it('refuses a CHAT conversation, never touching the flow lookup or execution', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so the flow lookup is never left unscoped', async () => {
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+
+        expect(mockGetOnePopulated).not.toHaveBeenCalled()
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flowId that does not belong to the conversation\'s own project (cross-project)', async () => {
+        mockGetOnePopulated.mockResolvedValue(null)
+
+        await expect(runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-in-other-project')).rejects.toThrow()
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-in-other-project', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).not.toHaveBeenCalled()
+    })
+
+    it('runs the flow scoped to the conversation\'s own project when everything checks out', async () => {
+        mockGetOnePopulated.mockResolvedValue({ id: 'flow-1', version: { displayName: 'My Flow' } })
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own' })
+        expect(mockRunFlowAsTool).toHaveBeenCalledTimes(1)
+    })
+})
+
 describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
 
     let progressConversation = 0
@@ -450,5 +535,54 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
 
         expect(mockGetFlowRun).not.toHaveBeenCalled()
         expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may search, and only its own project\'s knowledge base', () => {
+    async function search(conversation: unknown) {
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue(conversation)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+    }
+
+    it('refuses a CHAT conversation, never reaching the knowledge base', async () => {
+        await expect(search({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1', platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('refuses a flow-step run with no project, so no query is ever left unscoped', async () => {
+        await expect(search({ id: 'conv-1', source: 'FLOW_STEP', projectId: null, platformId: 'plat-1' })).rejects.toThrow()
+
+        expect(mockGetFileOrThrow).not.toHaveBeenCalled()
+        expect(mockKbSearch).not.toHaveBeenCalled()
+    })
+
+    it('scopes both the file lookup and the search to the conversation\'s own project', async () => {
+        await search({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+
+        expect(mockGetFileOrThrow).toHaveBeenCalledWith({ projectId: 'proj-own', id: 'kb-1' })
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ projectId: 'proj-own' }))
+    })
+})
+
+describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding is truncated to what the knowledge base stores', () => {
+    it('searches with a vector cut to the stored size rather than the provider\'s own', async () => {
+        mockEmbed.mockResolvedValueOnce({ embedding: new Array(1536).fill(0.1) })
+        mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
+        mockKbSearch.mockClear().mockResolvedValue([])
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
+            conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
+        })
+
+        expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ queryEmbedding: expect.objectContaining({ length: 768 }) }))
     })
 })

@@ -52,7 +52,7 @@ describe('Enterprise Local Authn API', () => {
             const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(true)
             const otp = await db.findOneBy('otp', { id: mockOtp.id })
-            expect(otp?.state).toBe(OtpState.CONFIRMED)
+            expect(otp).toBeNull()
         })
 
         it('Fails if OTP is wrong', async () => {
@@ -108,7 +108,7 @@ describe('Enterprise Local Authn API', () => {
             const mockOtp = createMockOtp({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
-                updated: dayjs().subtract(31, 'minutes').toISOString(),
+                updated: dayjs().subtract(25, 'hours').toISOString(),
                 state: OtpState.PENDING,
             })
             await db.save('otp', mockOtp)

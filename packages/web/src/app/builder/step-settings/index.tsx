@@ -156,14 +156,14 @@ const StepSettingsContainer = () => {
 
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
-  const showActionErrorHandlingForm =
-    [FlowActionType.CODE, FlowActionType.PIECE].includes(
-      modifiedStep.type as FlowActionType,
-    ) && !isNil(stepMetadata);
-
   const runAgentStep =
     modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
     modifiedStep.settings.actionName === 'run_agent';
+
+  const showActionErrorHandlingForm =
+    !isNil(stepMetadata) &&
+    (modifiedStep.type === FlowActionType.CODE ||
+      (modifiedStep.type === FlowActionType.PIECE && runAgentStep));
 
   useEffect(() => {
     //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually

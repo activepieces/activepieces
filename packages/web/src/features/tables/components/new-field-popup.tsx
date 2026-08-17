@@ -35,7 +35,11 @@ type NewFieldFormData =
     }
   | {
       name: string;
-      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+      type:
+        | FieldType.DATE
+        | FieldType.DATETIME
+        | FieldType.NUMBER
+        | FieldType.TEXT;
       data: null;
     };
 
@@ -43,6 +47,7 @@ const FIELD_TYPE_FRIENDLY_NAME: Record<FieldType, string> = {
   [FieldType.TEXT]: 'Text',
   [FieldType.NUMBER]: 'Number',
   [FieldType.DATE]: 'Date',
+  [FieldType.DATETIME]: 'Date & Time',
   [FieldType.STATIC_DROPDOWN]: 'Dropdown',
 };
 

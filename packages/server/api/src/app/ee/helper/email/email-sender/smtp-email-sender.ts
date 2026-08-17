@@ -138,6 +138,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
         'chat-notification': vars.subject,
         'platform-deleted': 'Your platform has been deleted',
+        'login-code': `${vars.code} is your sign-in code`,
     }
 
     return templateToSubject[templateName]

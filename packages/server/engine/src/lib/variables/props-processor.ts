@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import { isNil, isObject } from '@activepieces/core-utils'
-import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { DateRangeValue, getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
 import { dynamicPropKeys } from '../helper/dynamic-prop-keys'
 import { processors } from './processors'
@@ -86,6 +86,9 @@ export const propsProcessor = {
                     }
                 }
             }
+            if (!property.required && isNil(processedInput[key])) {
+                processedInput[key] = undefined
+            }
             const processor = processors[property.type]
             if (processor) {
                 processedInput[key] = await processor(property, processedInput[key])
@@ -157,6 +160,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.RICH_TEXT:
             return typeof value === 'string' ? [] : [`Expected string, received: ${originalValue}`]
         case PropertyType.NUMBER:
             return typeof value === 'number' && !Number.isNaN(value) ? [] : [`Expected number, received: ${originalValue}`]
@@ -164,6 +168,8 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
             return typeof value === 'boolean' ? [] : [`Expected boolean, received: ${originalValue}`]
         case PropertyType.DATE_TIME:
             return typeof value === 'string' ? [] : [`Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`]
+        case PropertyType.DATE_RANGE:
+            return DateRangeValue.safeParse(value).success ? [] : [`Expected date range, received: ${originalValue}`]
         case PropertyType.ARRAY:
         case PropertyType.MULTI_SELECT_DROPDOWN:
         case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:

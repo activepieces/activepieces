@@ -46,6 +46,9 @@ Variables marked ❗ are required for a self-hosted production deployment.
   <Card title="Pieces & flows" icon="puzzle-piece" href="#pieces-&-flows">
     Piece syncing, polling, publish behavior.
   </Card>
+  <Card title="Tool search" icon="magnifying-glass" href="#tool-search">
+    Semantic action discovery for AI agents.
+  </Card>
 </CardGroup>
 
 ---
@@ -195,6 +198,22 @@ S3-compatible bucket.
 
 ---
 
+### Sign-up protection
+
+Controls on who may create an account. Both default to the safe behaviour with
+no configuration: disposable addresses are refused, and no challenge is served
+until you supply Turnstile keys.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_ALLOW_DISPOSABLE_EMAILS` | Accept addresses from throwaway email providers. | `false` |
+| `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
+| `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
+
+The challenge is only served when **both** Turnstile variables are set. With
+either missing, the sign-in page renders no widget and the server verifies
+nothing, so a self-hosted instance needs no Cloudflare account.
+
 ### Email (SMTP)
 
 Outbound mail for invitations, notifications, and password resets.
@@ -238,4 +257,17 @@ flow-authoring defaults.
 | `AP_PIECES_SYNC_MODE` | `OFFICIAL_AUTO` syncs piece metadata automatically from the cloud; `NONE` disables syncing. | `OFFICIAL_AUTO` |
 | `AP_TRIGGER_DEFAULT_POLL_INTERVAL` | Minutes between checks for new data on pieces with scheduled triggers (e.g. new Google Contacts). | `5` |
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Automatically enable a flow when a new version is published. | `true` |
+| `AP_ENFORCE_CONNECTION_PIECE_BINDING` | Reject a step's connection at runtime unless the connection was created for the same piece as the step. | `false` |
 | `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES` | Load translations for dev pieces (configured via `AP_DEV_PIECES`). Affects development mode only. | `false` |
+
+---
+
+### Tool search
+
+Semantic discovery of piece actions and triggers for AI agents connected
+through the MCP server. See [Tool Search](/mcp/tool-search) for how it works.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_TOOL_SEARCH_ENABLED` | Registers the `ap_search_actions` and `ap_search_triggers` MCP tools. Read live, so flipping it takes effect without a restart. | `false` |
+| `AP_OPENAI_API_KEY` | OpenAI API key that funds tool-search embeddings (indexing and queries). When unset, the platform's OpenAI [AI provider](/admin-guide/guides/setup-ai-providers) is used instead; with neither, tool search serves keyword matches rather than semantic ones. | `None` |

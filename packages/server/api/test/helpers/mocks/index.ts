@@ -176,6 +176,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
         workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
         billedTeamProjectsLimit: platformPlan?.billedTeamProjectsLimit === undefined ? 0 : platformPlan.billedTeamProjectsLimit,
         usersLimit: platformPlan?.usersLimit ?? null,
@@ -366,6 +367,7 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         value:
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+        attempts: otp?.attempts ?? 0,
     }
 }
 
@@ -677,7 +679,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -689,12 +691,12 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.provider === AIProviderName.ACTIVEPIECES ? true : false,
+        enabledForChat: aiProvider?.enabledForChat ?? aiProvider?.provider === AIProviderName.ACTIVEPIECES,
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider

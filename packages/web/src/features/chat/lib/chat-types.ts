@@ -310,10 +310,6 @@ export type TypedToolOutput<T> =
   | { state: 'success'; data: T }
   | { state: 'error'; errorText: string };
 
-export type CreditsWarning = {
-  percentage: number;
-};
-
 export type QuickRepliesData = {
   replies: string[];
   offerRecurringAutomation: boolean;

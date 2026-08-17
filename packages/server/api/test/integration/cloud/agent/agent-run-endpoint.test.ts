@@ -1,10 +1,11 @@
-import { apId } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
-import { createTestContext } from '../../../helpers/test-context'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const RUNS_URL = '/api/v1/agents/runs'
@@ -21,7 +22,7 @@ afterAll(async () => {
 
 describe('POST /v1/agents/runs', () => {
     it('writes nothing before publishing, so an interrupted request cannot strand a conversation', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await contextThatCanRunAgents()
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
             jobId: 'job-that-is-not-a-user',
             projectId: ctx.project.id,
@@ -43,7 +44,7 @@ describe('POST /v1/agents/runs', () => {
     })
 
     it('ignores a project sent in the body and uses the one the engine token is scoped to', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await contextThatCanRunAgents()
         const other = await createTestContext(app)
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
             jobId: 'job-1',
@@ -113,10 +114,10 @@ describe('POST /v1/agents/runs', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 
-    it('refuses a tool kind it cannot run yet instead of dropping it silently', async () => {
+    it('refuses two tools sharing a name, so neither silently replaces the other', async () => {
         const ctx = await createTestContext(app)
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: 'job-5',
+            jobId: 'job-dup',
             projectId: ctx.project.id,
             platformId: ctx.platform.id,
         })
@@ -129,16 +130,19 @@ describe('POST /v1/agents/runs', () => {
                 instruction: 'do a thing',
                 flowRunId: apId(),
                 waitpointId: apId(),
-                tools: [{ type: 'FLOW', toolName: 'call_sub_flow', externalFlowId: 'flow-1' }],
+                tools: [
+                    { type: 'PIECE', toolName: 'shared_name', pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' } },
+                    { type: 'FLOW', toolName: 'shared_name', externalFlowId: 'flow-1' },
+                ],
             },
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('FLOW')
+        expect(JSON.stringify(response.json())).toContain('shared_name')
     })
 
     it('accepts the piece tools configured on the step', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await contextThatCanRunAgents()
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
             jobId: 'job-6',
             projectId: ctx.project.id,
@@ -193,7 +197,7 @@ describe('POST /v1/agents/runs', () => {
     })
 
     it('allows that name when the step has no output fields, since no completion tool is installed', async () => {
-        const ctx = await createTestContext(app)
+        const ctx = await contextThatCanRunAgents()
         const engineToken = await accessTokenManager(app.log).generateEngineToken({
             jobId: 'job-8',
             projectId: ctx.project.id,
@@ -237,3 +241,9 @@ describe('POST /v1/agents/runs', () => {
         expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
     })
 })
+
+async function contextThatCanRunAgents(): Promise<TestContext> {
+    const ctx = await createTestContext(app)
+    await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+    return ctx
+}
