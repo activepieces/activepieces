@@ -124,6 +124,16 @@ describe('otpService#createAndSend at rest', () => {
         expect(stored).toMatch(/^[0-9a-f]{64}$/)
     })
 
+    it('hands out one code when two requests race, and that code works', async () => {
+        const identity = createMockUserIdentity({ email: EMAIL, verified: true })
+        await databaseConnection().getRepository('user_identity').save(identity)
+
+        await Promise.all([sendCode(), sendCode(), sendCode()])
+
+        const delivered = await issuedCode()
+        expect(await confirmCode(delivered)).toBe(true)
+    })
+
     it('accepts the code it sent even though the row holds a digest', async () => {
         const issued = await seedIdentityWithCode()
 

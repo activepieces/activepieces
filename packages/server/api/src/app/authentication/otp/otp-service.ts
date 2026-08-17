@@ -32,34 +32,32 @@ export const otpService = (log: FastifyBaseLogger) => ({
         if (!userIdentity) {
             return
         }
-        const existingOtp = await repo().findOneBy({
-            identityId: userIdentity.id,
-            type,
-        })
         const identityId = userIdentity.id
-        const otpIsInFlight = !isNil(existingOtp) && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
-        const codeInFlight = otpIsInFlight ? await cachedCode({ identityId, type }) : null
-        if (!isNil(codeInFlight)) {
-            await emailService(log).sendOtp({
-                platformId,
-                userIdentity,
-                otp: codeInFlight,
-                type,
-            })
-            return
-        }
-        const code = otpGenerator.generate({ type })
-        const newOtp: Omit<OtpModel, 'created'> = {
-            id: apId(),
-            updated: dayjs().toISOString(),
-            type,
-            identityId,
-            value: await digestOf(code),
-            state: OtpState.PENDING,
-            attempts: 0,
-        }
-        await repo().upsert(newOtp, ['identityId', 'type'])
-        await cacheCode({ identityId, type, code })
+        const code = await distributedLock(log).runExclusive({
+            key: confirmLockKey({ identityId, type }),
+            timeoutInSeconds: 15,
+            fn: async () => {
+                const existingOtp = await repo().findOneBy({ identityId, type })
+                const otpIsInFlight = !isNil(existingOtp) && existingOtp.state === OtpState.PENDING && !otpIsExpired(existingOtp)
+                const codeInFlight = otpIsInFlight ? await cachedCode({ identityId, type }) : null
+                if (!isNil(codeInFlight)) {
+                    return codeInFlight
+                }
+                const freshCode = otpGenerator.generate({ type })
+                const newOtp: Omit<OtpModel, 'created'> = {
+                    id: apId(),
+                    updated: dayjs().toISOString(),
+                    type,
+                    identityId,
+                    value: await digestOf(freshCode),
+                    state: OtpState.PENDING,
+                    attempts: 0,
+                }
+                await repo().upsert(newOtp, ['identityId', 'type'])
+                await cacheCode({ identityId, type, code: freshCode })
+                return freshCode
+            },
+        })
         await emailService(log).sendOtp({
             platformId,
             userIdentity,
@@ -87,7 +85,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
 
     async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
         return distributedLock(log).runExclusive({
-            key: `otp-confirm-${identityId}-${type}`,
+            key: confirmLockKey({ identityId, type }),
             timeoutInSeconds: 15,
             fn: async () => {
                 const spentOnIdentity = await guessesSpentOnIdentity({ identityId, type })
@@ -145,6 +143,10 @@ function digestsMatch(stored: string, candidate: string): boolean {
     const left = Buffer.from(stored, 'utf8')
     const right = Buffer.from(candidate, 'utf8')
     return left.length === right.length && timingSafeEqual(left, right)
+}
+
+function confirmLockKey({ identityId, type }: IdentityBudgetParams): string {
+    return `otp-confirm-${identityId}-${type}`
 }
 
 function cachedCodeKey({ identityId, type }: IdentityBudgetParams): string {
