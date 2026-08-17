@@ -406,6 +406,7 @@ function AuthStep({
         <button
           type="button"
           onClick={() => setStep('password')}
+          data-testid="auth-use-password"
           className="transition-colors hover:text-foreground"
         >
           {t('Use password')}
@@ -955,6 +956,7 @@ function ModeSwitch({
       <button
         type="button"
         onClick={() => onSwitch(mode === 'signup' ? 'signin' : 'signup')}
+        data-testid="auth-switch-mode"
         className="pl-1 font-medium text-foreground hover:underline"
       >
         {mode === 'signup' ? t('Sign in') : t('Sign up')}

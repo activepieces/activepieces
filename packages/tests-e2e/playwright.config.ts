@@ -62,9 +62,8 @@ const config: PlaywrightTestConfig = {
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: process.env.CI
-      ? 'npm run dev'
-      : 'export $(cat .env.e2e | xargs) && npm run dev',
+    command: 'npm run dev',
+    cwd: path.resolve(__dirname, '../..'),
     url: 'http://localhost:4200/api/v1/flags',
     reuseExistingServer: !process.env.CI,
     timeout: 100000,
