@@ -1,3 +1,4 @@
+import type { ActionClassification } from '@activepieces/pieces-framework';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -15,6 +16,18 @@ type GenericActionOrTriggerItemProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions;
   onClick: () => void;
+};
+
+// Only DESTRUCTIVE is coloured — a red pill on every mutating step would read as a
+// warning the user has to dismiss 40 times, so WRITE stays as quiet as the reads.
+const CLASSIFICATION_BADGE: Record<
+  ActionClassification,
+  { label: () => string; variant: 'accent' | 'destructive' }
+> = {
+  READ: { label: () => t('Read'), variant: 'accent' },
+  SEARCH: { label: () => t('Search'), variant: 'accent' },
+  WRITE: { label: () => t('Write'), variant: 'accent' },
+  DESTRUCTIVE: { label: () => t('Destructive'), variant: 'destructive' },
 };
 
 const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
@@ -77,12 +90,15 @@ const GenericActionOrTriggerItem = ({
             </div>
             {pieceSelectorItemInfo.classification && (
               <Badge
-                variant="accent"
+                variant={
+                  CLASSIFICATION_BADGE[pieceSelectorItemInfo.classification]
+                    .variant
+                }
                 className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
               >
-                {pieceSelectorItemInfo.classification === 'READ'
-                  ? t('Read')
-                  : t('Write')}
+                {CLASSIFICATION_BADGE[
+                  pieceSelectorItemInfo.classification
+                ].label()}
               </Badge>
             )}
           </div>
