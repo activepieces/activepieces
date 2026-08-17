@@ -52,7 +52,7 @@ The page component itself is `React.lazy()`-imported. `requiredPermissions` take
 
 - Feature flags: `flagsHooks.useFlag()`, or `<FlagGuard>` / `flag-route-guard.tsx` for whole routes.
 - Paid features: `LockedFeatureGuard` on the frontend, `enabled: platform.plan.<flag>` on the query. The backend counterpart is `platformMustHaveFeatureEnabled()`, which returns 402.
-- Translations go in `packages/web/public/locales/en/translation.json` **only** — the other locales are generated. Zod validation messages must be keys in that file, not raw English; reuse the `formErrors` constant from `@activepieces/shared` for common ones.
+- Translations go in `packages/web/public/locales/en/translation.json` **only** — the other locales are generated. Zod validation messages must be keys in that file, not raw English; reuse the `formErrors` constant from `@activepieces/shared` for common ones. **Append new keys; never round-trip the file through a sorting serializer.** It is not sorted on disk, so a `json.load` → sort → `json.dump` (or any formatter that reorders keys) turns a 5-line feature into a ~2,400-line reordering diff that buries the actual change and conflicts with every other branch touching it.
 
 ## Editions
 
@@ -62,6 +62,7 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
 
 ## Gotchas
 
+- **Build a segmented bar as one box with a hard-stop gradient, never as sibling flex children.** Percentage-width children land on fractional pixels (e.g. `355.265625px` for 90% of a panel), and inside a `rounded-full` + `overflow-hidden` container each child gets its own antialiased edge on top of the clip's — which paints as a **1px vertical step** between segments even though `getBoundingClientRect` reports them identical (`top: 233, height: 8` for both). Measure before you chase it: if the rects match, it is paint, not layout, and no amount of `items-stretch` or explicit `h-full` will help. One element with `linear-gradient(to right, <color> 0% 90%, <color> 90% 100%)` has no internal edges, so the seam cannot exist — and it is less code. Keep the colours as tokens with `hsl(var(--success))`, the form already used by `STATUS_CATEGORIES` in `flow-run-hooks.ts`. Surfaced 2026-08 on the batch browser's progress bar.
 - **Paper design files are readable from an agent session, but the tools are *deferred*.** `app.paper.design`
   is auth-gated, so `WebFetch` returns only the SPA shell — and the `plugin:paper-desktop:paper` tools do not
   appear in the tool list until a session loads them by name (`ToolSearch` on
@@ -84,6 +85,20 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
   portal: make it a react-flow node with `selectable: false`, `draggable: false` and a low `zIndex` — nodes
   are cloned, pan and zoom for free, and stay out of layout as long as the new `ApNodeType` is absent from
   `doesNodeAffectBoundingBox` and from `AP_NODE_SIZE`.
+- **`useReactFlow().getNodesBounds` reads the store, which is empty on the first render.** The standalone
+  `getNodesBounds(nodes)` from `@xyflow/react` logs a dev warning telling you to take it from the hook instead
+  (it needs `nodeLookup` to resolve sub-flow parents). The hook version ignores the node objects you pass and
+  looks each one up by id in the store — and because our `<ReactFlowProvider>` (`routes/flows/id/index.tsx`)
+  is created without `initialNodes`, the store is only filled by `StoreUpdater`'s **effect**, after render. So
+  anything computed in a `useMemo` during that first render (the `translateExtent` in `flow-canvas/index.tsx`)
+  gets `{x:0,y:0,width:0,height:0}` and the pan extent collapses to one window around the origin — you can no
+  longer scroll to the end of the canvas. `useNodesInitialized()` in the memo deps looks like the fix and is
+  not: it stays `false` here, so the collapsed extent is never recomputed. Building a `nodeLookup` by hand is
+  no way out either — it is typed `Map<string, InternalNode>` and needs a cast. Don't ask xyflow at all:
+  **no `ApNode` carries a top-level `width`/`height`** (`AP_NODE_SIZE` is applied in the components, not on the
+  node objects), so `getNodesBounds` was only ever taking min/max of `node.position` with zero-size boxes.
+  A `Math.min`/`Math.max` over `graph.nodes.map(n => n.position)` is identical, needs no store, and the dev
+  warning goes away with it.
 - **A canvas node component must not be typed `Omit<ApXNode, 'position'>`.** Node types that pin literals
   (`selectable: false`, `draggable: false`, as `ApBatchRegionNode` does) make the component unassignable to
   react-flow's `NodeTypes` index signature — `boolean | undefined` is not `false`, and the error surfaces at
@@ -154,19 +169,45 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
   deep branch, so the region swallows the shallow branch's empty canvas. Everything the bullets above pin —
   the 32/52 sibling clearance, the rail padding, `LOOP_RETURN_NODE` being traced as a zero-width line — is
   unchanged, because they were always about *cross extents*, never about the band slicing.
-- **The region highlights on hover-anywhere-inside via a geometry hit-test, not `pointer-events` on the
-  region node.** The canvas runs `selectionOnDrag` with `panOnDrag={[1]}`, so a region rect that accepts
-  pointer events would swallow left-drag box-selection, pane clicks and the context menu across its whole
-  area — never make it hoverable. Instead the `onMouseMove` already on the canvas container
-  (`flow-canvas/index.tsx`) feeds `screenToFlowPosition` into `batchRegionUtils.findRegionAtPoint`, a
-  point-in-rect test over the BATCH_REGION nodes (N = process-in-batches steps, 0–3), and writes
-  `hoveredBatchRegion` through a ref guard so the store only changes on a boundary crossing — same
-  re-render count as the `onPointerEnter` it replaced. That hit-test is the **single source of truth**:
-  step-node's batch `onPointerEnter/Leave`, both add-buttons' hover writes and `toCanvasHoverTarget` were
-  all deleted, because the region hangs off the *middle* of the batch card (the card's top half is
-  geometrically outside), so a second source fights it — enter sets, the next mousemove nulls. Nested
-  batches resolve to the smallest containing rect; `onMouseLeave` clears so the highlight can't stick when
-  the cursor exits onto the sidebar.
+- **The region has no hover state at all — it highlights only while its batch step is selected, and that is
+  deliberate.** Two dead ends are already behind that. `pointer-events` on the region rect is unusable: the
+  canvas runs `selectionOnDrag` with `panOnDrag={[1]}`, so a rect that accepts pointer events swallows
+  left-drag box-selection, pane clicks and the context menu across its whole area. Hover-anywhere-inside via
+  a geometry hit-test on the canvas container's `onMouseMove` shipped and was then **removed for cost**: see
+  the `screenToFlowPosition` bullet below. If someone wants the hover back, it needs to cost nothing per
+  pointer event, and it cannot be reinstated as per-node `onPointerEnter/Leave` either — the region hangs off
+  the *middle* of the batch card (the card's top half is geometrically outside it), so node-level enter/leave
+  and any geometry test fight each other: enter sets, the next mousemove nulls.
+- **Never call xyflow's `screenToFlowPosition` (or `flowToScreenPosition`) from a `mousemove`/`pointermove`
+  handler.** Both read `domNode.getBoundingClientRect()` on every call, and since pointer movement dirties
+  layout through `:hover` styles, that read forces a synchronous layout of the entire canvas subtree each
+  event — the whole builder goes sluggish and clicks land late, and the symptom only appears for whoever has
+  the feature that installed the call (batch regions, in our case, because the hit-test was gated on a
+  region existing). If you need flow coordinates in a hot handler, convert by hand: `transform`
+  (`[x, y, zoom]`) off `useStoreApi()` plus a `getBoundingClientRect()` cached once per mouse-enter —
+  `(clientX - rect.left - x) / zoom`, same maths as xyflow with zero DOM reads per move. For the batch
+  region we deleted the hover instead: a cosmetic hairline is not worth any per-event budget.
+- **Three independent things made clicking a step re-render every node on the canvas — all three must stay
+  fixed or the lag comes straight back.** Measured with a Web Worker ping-probe (the main thread echoes each
+  ping; RTT spikes = blocking) plus a render counter in `ApStepCanvasNode`: one click on a 16-step flow cost
+  **64–96 node renders and 360–730ms of blocked main thread**, and it was never batch-specific — a batch flow
+  is just where it got noticed. After all three: **4–8 renders**, ~200ms (what is left is the step-settings
+  panel mounting, a separate fish).
+  1. `useBuilderStateContext` is `useStore(store, useShallow(selector))`. Zustand's default `Object.is` makes
+     *every* array-returning selector — which is nearly all of them — re-render its component on *every*
+     store write. This one is load-bearing: reverting it alone put the count back to 64 even with the other
+     two fixed. Before switching it we had to remove the one in-place mutation that shallow equality would
+     have hidden (`addNote` wrote into `flowVersion.notes` and set the same array back, `notes-state.tsx`).
+     Any new setter must therefore build new objects, never mutate and re-set.
+  2. **dnd-kit `useSensor(sensor, options)` memoizes on `[sensor, options]`** — an inline options literal in
+     `flow-drag-layer.tsx` meant every render produced a new sensor → new `sensors` array → new DndContext
+     value → *every* `useDraggable` on the canvas re-rendered. The options object must be `useMemo`'d.
+  3. `graphKey` in `flow-canvas/index.tsx` included `selectedStep`, but `createFlowGraph` only takes
+     `(version, notes, orientation)`. So each selection rebuilt an identical graph and handed every node a
+     new `data` object, defeating its `React.memo`. Keep the key to what the builder actually reads.
+  Related: never do tree work inside a selector — `ApStepNodeStatusInRun` ran
+  `flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type` in its own, so each node walked the
+  whole flow on every write; the step is already in the parent's `data`, so pass `step.type` down.
 - **The builder's dark theme moves `--primary` from purple to blue, and no canvas edge ever carries run
   colour.** `--primary` is `257 74% 57%` (#6E40E3) in `:root` but `210 90% 50%` (#0D7FF2) in `.dark`
   (`styles.css`), so anything styled `stroke-primary` / `fill-primary` / `bg-primary` changes *hue*, not
@@ -187,6 +228,7 @@ Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the who
 - **The canvas layout algorithm is implemented twice, and only one copy is in `packages/web`.** `flow-canvas/utils/flow-canvas-utils.ts` builds the `ApGraph` the builder renders; `flowCanvasUtils.computeStepPositions` in `packages/core/execution/src/lib/flows/util/flow-canvas-util.ts` re-derives the same x/y for every step server-side, and the MCP `ap_flow_structure` tool reports those coordinates to an LLM. They share only the `FLOW_CANVAS_*` constants — the container/router offset maths is duplicated line for line, so changing how a step type is laid out in the builder silently drifts the MCP copy. Decide explicitly whether to fork both; the MCP positions are an approximation used for note placement, so leaving it behind is defensible, but do it knowingly rather than by not noticing the second copy exists.
 - **The piece-selector popover sizes its list to fit the viewport, but the fit needs slack or it clips against the screen edge.** `useAdjustPieceListHeightToAvailableSpace` (`features/pieces/utils/piece-selector-utils.ts`) measures the room above vs. below the trigger, renders the list on whichever side has more, and clamps the height to `[MIN 100, MAX 300]`. That measurement alone still let the popover butt flush against the top/bottom of the builder on short screens (the Radix content + its own padding/offset overran the raw available space). The fix is a `PIECE_SELECTOR_CLIPPING_THRESHOLD` (20px) subtracted from the computed `listHeight` at the call site in `builder/pieces-selector/index.tsx`, leaving a margin so the popover never touches the viewport edge. If it clips again, that constant — not the min/max clamp — is the lever.
 - **Never run bare `npx prettier --write` on a `packages/web` file — it will fail lint.** The repo's `.prettierrc` sets only `singleQuote`, but `packages/web/.eslintrc.json` passes its own options to the `prettier/prettier` rule (`trailingComma: "all"`, `printWidth: 80`, `tabWidth: 2`). The installed prettier is 2.8.4, whose default `trailingComma` is `es5`, so the CLI strips exactly the trailing commas eslint then demands back. Either format with the matching flags (`npx prettier --write --single-quote --trailing-comma all --print-width 80 --tab-width 2 <file>`) or just use `npx turbo run lint --filter=web` / `npm run lint-dev`, which auto-fix through eslint and are the only source of truth.
-- **Web tests run in vitest's `node` environment with no jsdom and no `@testing-library/react`** (`packages/web/vitest.config.ts`), so a component cannot be rendered in a test. Test the pure logic instead: pull it into a sibling `*-utils.ts` exporting one grouped const and mirror it under `test/app/...` — `run-details/truncated-input-utils.ts` and `run-details/iteration-rail-utils.ts` are the pattern. Do not add jsdom to test one component.
+- **Web tests run in vitest's `node` environment with no jsdom and no `@testing-library/react`** (`packages/web/vitest.config.ts`), so a component cannot be rendered in a test. Test the pure logic instead: pull it into a sibling `*-utils.ts` exporting one grouped const and mirror it under `test/app/...` — `run-details/truncated-input-utils.ts` and `run-details/batch-utils.ts` are the pattern. Do not add jsdom to test one component.
 - **`test/features/chat/lib/chunk-reducer.test.ts` fails to collect on `main`** (`ReferenceError: window is not defined`, via `features/projects/stores/project-collection.ts` → `components/providers/embed-provider.tsx`, which reads `window.opener` at module scope in the node test env). `npm test` in `packages/web` therefore exits non-zero with "1 failed | 47 passed" while every individual test passes. Pre-existing since #14540 — don't chase it as a regression from your change.
+- **That same `window` explosion will take out *your* new util test if the util imports a feature barrel.** It is not specific to chat: `@/features/flow-runs` (and any barrel that transitively reaches `features/projects/stores/project-collection.ts`) pulls `embed-provider.tsx` in at module scope, so a pure `*-utils.ts` that does nothing worse than `import { flowRunUtils } from '@/features/flow-runs'` fails to *collect* under `npm test` while typechecking and running fine in the browser. Import the module by its full path instead — `@/features/flow-runs/utils/flow-run-utils` — which several files in `src/` already do. Symptom to recognise: your brand-new test file fails with `ReferenceError: window is not defined` pointing at a provider you never imported.
 - **`npx turbo run serve --filter=web -- --mode=cloud` cannot do OAuth2 connections.** The provider redirects to `cloud.activepieces.com` after sign-in instead of your local frontend. Use API-key or basic-auth connections, or run a fully local backend.

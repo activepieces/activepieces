@@ -56,8 +56,9 @@ orders the queue but does not free the slot.
   duplicate both route through `ADD_ACTION` — and the "input did not" clause means an existing flow that
   somehow contains one is never invalidated, so the constraint is non-breaking by construction. The builder
   hides the piece rather than letting the user hit the error (`pieceSelectorUtils.isInsideBatch` →
-  `excludeProcessInBatches`), but that is affordance only; the operation layer is the authority, which is what
-  makes it hold for MCP `ap_add_step` too. The constraint is new — nothing in
+  `excludeProcessInBatches`), but that is affordance only — `isInsideBatch` bails unless the operation is
+  `ADD_ACTION`, so replacing a step that already sits inside a batch region still offers the piece and the user
+  meets the error. The operation layer is the authority, which is what makes it hold for MCP `ap_add_step` too. The constraint is new — nothing in
   `flow-version-validator-util.ts` (settings-only), the selector, or `add-action` forbade it before. The
   trigger was visual: two nested batch regions on the canvas draw *exactly coincident* hairlines, not inset
   ones, so nesting read as one box with two stray rules across it.
@@ -102,6 +103,14 @@ orders the queue but does not free the slot.
   1 293 ms to 116 ms at 200 children purely because the loop moved into the dispatcher job. Measure the span
   of the children's `created` timestamps instead (~4.3 ms per child at 200 wide). Any dashboard or benchmark
   reading fan-out cost off the parent leg is silently reporting a constant.
+- **There is no live progress for a running batch step, by construction.** The per-status counts
+  (`succeeded`, `failed`, `stillRunning`, …) live only in the batch step's *output*, and the output is written
+  when the barrier releases — so mid-run the UI has `barrierId`, `totalItems`, `batchSize`, `total` and
+  nothing else (`batchUtils.headerState` returns `{ kind: 'pending' }`). Anything that wants a live progress
+  bar needs a second source. The cheap one is `flowRunService.countByStatus`, which today hardcodes
+  `parentWaitpointId: IsNull()` to exclude children; taking a `parentWaitpointId` instead is index-only work,
+  the partial index `(parentWaitpointId, projectId, dispatchIndex, status)` already covers the group-by.
+  Paginating `flowRuns.list` client-side to count is the trap — it is O(children) requests for six numbers.
 - **`barrier-queue-factory.ts` is the module graph's acyclic leaf, not a testing seam.** `barrier-queue.ts`
   already sits in two import cycles (with `barrier-service.ts` and with `fan-out-dispatcher-job.ts`), so the
   factory file is where `barrierSourceKey` and the shared job types live for everyone who needs them without
