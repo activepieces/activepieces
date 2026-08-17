@@ -121,10 +121,6 @@ async function guessesSpentOnIdentity({ identityId, type }: IdentityBudgetParams
     return isNil(budget) ? 0 : budget.count
 }
 
-// Read-modify-write is safe without an atomic INCR because confirm() already holds the
-// per-identity-and-type lock, and that lock is the only writer of this key. The window is
-// fixed rather than sliding: the remaining TTL is carried forward so a wrong guess cannot
-// keep pushing a legitimate owner's lockout further away.
 async function countGuessOnIdentity({ identityId, type, spent }: CountGuessOnIdentityParams): Promise<void> {
     const key = identityBudgetKey({ identityId, type })
     const existing = await distributedStore.get<IdentityGuessBudget>(key)
