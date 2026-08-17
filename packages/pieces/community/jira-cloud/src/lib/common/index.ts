@@ -7,8 +7,22 @@ import {
 	httpClient,
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
-import { isNil } from '@activepieces/pieces-framework';
+import { isNil, Store } from '@activepieces/pieces-framework';
 import { JiraSearchResponse } from './types';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Jira Cloud's /search/jql endpoint is eventually consistent, so a recently
+// updated issue can be briefly missing from results, which would permanently
+// break a plain checkpoint watermark (see the id+timestamp dedupe below).
+// https://developer.atlassian.com/cloud/jira/platform/search-and-reconcile/
+// https://github.com/activepieces/activepieces/issues/14863
+const POLLING_LOOKBACK_MS = 10 * 60 * 1000;
+const POLLING_MAX_PAGES = 10;
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -167,6 +181,116 @@ export async function searchIssuesByJql({
 	})) as JiraSearchResponse;
 
 	return searchResult;
+}
+
+export async function getJiraProfileTimeZone({ auth }: { auth: JiraAuth }): Promise<string> {
+	const response = await sendJiraRequest({
+		auth,
+		url: 'myself',
+		method: HttpMethod.GET,
+	});
+	const profile = response.body as { timeZone?: string };
+	return profile.timeZone ?? 'UTC';
+}
+
+export function formatJqlDateTime({
+	epochMilliSeconds,
+	timeZone,
+}: {
+	epochMilliSeconds: number;
+	timeZone: string;
+}): string {
+	return dayjs(epochMilliSeconds).tz(timeZone).format('YYYY-MM-DD HH:mm');
+}
+
+export function getPollingLookbackWindowStartEpochMilliSeconds(lastFetchEpochMS: number): number {
+	return Math.max(0, lastFetchEpochMS - POLLING_LOOKBACK_MS);
+}
+
+export function toPollingCheckpointSafeEpochMilliSeconds({
+	epochMilliSeconds,
+	lastFetchEpochMS,
+}: {
+	epochMilliSeconds: number;
+	lastFetchEpochMS: number;
+}): number {
+	return Math.max(epochMilliSeconds, lastFetchEpochMS + 1);
+}
+
+export async function fetchAllIssuesByJql<T>({
+	auth,
+	jql,
+	sanitizeJql,
+	fields,
+	expand,
+	orderByClause,
+}: {
+	auth: JiraAuth;
+	jql: string;
+	sanitizeJql: boolean;
+	fields?: string[];
+	expand?: string[];
+	orderByClause: string;
+}): Promise<T[]> {
+	const allIssues: T[] = [];
+	let nextPageToken: string | undefined = undefined;
+	let pagesFetched = 0;
+
+	do {
+		const response = await searchIssuesByJql({
+			auth,
+			jql: `${jql} ${orderByClause}`,
+			maxResults: 50,
+			sanitizeJql,
+			nextPageToken,
+			fields,
+			expand,
+		});
+		allIssues.push(...response.issues);
+		nextPageToken = response.nextPageToken;
+		pagesFetched += 1;
+	} while (!isNil(nextPageToken) && pagesFetched < POLLING_MAX_PAGES);
+
+	return allIssues;
+}
+
+export async function filterUnseenPollingItems<T>({
+	store,
+	storeKey,
+	items,
+	getId,
+	getEpochMilliSeconds,
+	pruneBeforeEpochMilliSeconds,
+}: {
+	store: Store;
+	storeKey: string;
+	items: T[];
+	getId: (item: T) => string;
+	getEpochMilliSeconds: (item: T) => number;
+	pruneBeforeEpochMilliSeconds: number;
+}): Promise<T[]> {
+	const seenEntries = (await store.get<Record<string, number>>(storeKey)) ?? {};
+
+	const unseenItems = items.filter((item) => {
+		const previouslyEmittedEpochMilliSeconds = seenEntries[getId(item)];
+		return (
+			isNil(previouslyEmittedEpochMilliSeconds) ||
+			getEpochMilliSeconds(item) > previouslyEmittedEpochMilliSeconds
+		);
+	});
+
+	const mergedEntries = { ...seenEntries };
+	for (const item of items) {
+		mergedEntries[getId(item)] = getEpochMilliSeconds(item);
+	}
+	const prunedEntries = Object.fromEntries(
+		Object.entries(mergedEntries).filter(
+			([, epochMilliSeconds]) => epochMilliSeconds >= pruneBeforeEpochMilliSeconds
+		)
+	);
+	await store.put(storeKey, prunedEntries);
+
+	return unseenItems;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {

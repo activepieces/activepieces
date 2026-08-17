@@ -9,26 +9,52 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
-import dayjs from 'dayjs';
+import {
+  fetchAllIssuesByJql,
+  filterUnseenPollingItems,
+  formatJqlDateTime,
+  getJiraProfileTimeZone,
+  getPollingLookbackWindowStartEpochMilliSeconds,
+  toPollingCheckpointSafeEpochMilliSeconds,
+} from '../common';
+
+type PolledIssue = {
+  id: string;
+  fields: { updated: string } & Record<string, unknown>;
+} & Record<string, unknown>;
 
 const polling: Polling<   JiraAuth,
   { jql?: string; sanitizeJql?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS, propsValue }) => {
+  items: async ({ auth, store, lastFetchEpochMS, propsValue }) => {
     const { jql, sanitizeJql } = propsValue;
-    const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
-      lastFetchEpochMS
-    ).format('YYYY-MM-DD HH:mm')}'`;
-    const response = await searchIssuesByJql({
+    const sinceEpochMilliSeconds = getPollingLookbackWindowStartEpochMilliSeconds(lastFetchEpochMS);
+    const timeZone = await getJiraProfileTimeZone({ auth });
+    const since = formatJqlDateTime({ epochMilliSeconds: sinceEpochMilliSeconds, timeZone });
+    const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${since}'`;
+
+    const issues = await fetchAllIssuesByJql<PolledIssue>({
       auth,
       jql: searchQuery,
-      maxResults: 50,
       sanitizeJql: sanitizeJql ?? false,
+      orderByClause: 'ORDER BY updated ASC',
     });
-    return response.issues.map((issue: any) => ({
-      epochMilliSeconds: Date.parse(issue.fields.updated),
+
+    const unseenIssues = await filterUnseenPollingItems({
+      store,
+      storeKey: 'updatedIssueSeenIds',
+      items: issues,
+      getId: (issue) => issue.id,
+      getEpochMilliSeconds: (issue) => Date.parse(issue.fields.updated),
+      pruneBeforeEpochMilliSeconds: sinceEpochMilliSeconds,
+    });
+
+    return unseenIssues.map((issue) => ({
+      epochMilliSeconds: toPollingCheckpointSafeEpochMilliSeconds({
+        epochMilliSeconds: Date.parse(issue.fields.updated),
+        lastFetchEpochMS,
+      }),
       data: issue,
     }));
   },
