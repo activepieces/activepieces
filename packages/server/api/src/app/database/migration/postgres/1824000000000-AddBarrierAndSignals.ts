@@ -41,8 +41,8 @@ export class AddBarrierAndSignals1824000000000 implements Migration {
             )
         `)
         await queryRunner.query(`
-            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_waitpoint_signal_waitpoint_id_status"
-            ON "waitpoint_signal" ("waitpointId", "status")
+            CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_waitpoint_signal_waitpoint_id_project_id_status"
+            ON "waitpoint_signal" ("waitpointId", "projectId", "status")
         `)
         await queryRunner.query(`
             CREATE INDEX ${concurrently()} IF NOT EXISTS "idx_waitpoint_signal_ref_id"
@@ -97,6 +97,7 @@ export class AddBarrierAndSignals1824000000000 implements Migration {
             ON "flow_run" ("projectId", "environment", "flowId", "status", "created" DESC, "archivedAt")
             WHERE "parentWaitpointId" IS NULL
         `)
+        await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_waitpoint_signal_waitpoint_id_status"`)
         await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_status_created_archived_at"`)
         await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_created_status_archived_at"`)
         await queryRunner.query(`DROP INDEX ${concurrently()} IF EXISTS "idx_run_project_id_environment_created_archived_at"`)

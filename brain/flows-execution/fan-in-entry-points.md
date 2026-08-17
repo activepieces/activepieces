@@ -172,10 +172,19 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   `flowRunService.countByStatus` cannot serve it as written: it hardcodes `parentWaitpointId: IsNull()`
   specifically to keep barrier children out of the runs-list counters, and `SeekPage` carries no total, so
   `list` cannot substitute.
-- **The release test is `EXISTS`, never `COUNT(*)`.** It stops at the first still-pending signal, so the
-  common not-ready evaluation is O(1) whatever N is. Count exactly once, at release, to build the summary.
-  A predicate that is "always `COUNT(*)`" pays a full index scan on every signal batch and then needs a
-  coalescing job to afford what it just gave away.
+- **The release test is `EXISTS` for every barrier that does not need arithmetic, and the gate is a named
+  function, not an inline condition.** `barrierService.evaluate` asks
+  `barrierReleasesOnLastPendingSignal({ policy, sealed })` — sealed, no `requiredSuccesses`, no
+  `releaseOnFirstFailure` — and on the true branch runs `signalRepo().existsBy({ waitpointId, projectId,
+  status: PENDING })`, one `SELECT 1 … LIMIT 1`. Only a counting policy falls through to
+  `countSignalsByStatus`; the exact breakdown otherwise stays in `buildSummary`, inside the release
+  transaction. The gate lives beside `shouldReleaseBarrier` in `core-execution` on purpose: it *is* the
+  claim "this predicate reduces to PENDING === 0", and the unit test asserts the two agree rather than
+  restating the truth table, so adding a counting policy field without updating the reduction fails the
+  build. Before this, `evaluate` counted unconditionally and the coalescing job did not pay for it —
+  `processBarrierJob` clears the deduplication key at job *start*, so each child finishing afterwards
+  re-arms another evaluation, making it ~N evaluations × N rows. See [flow-runs](./flow-runs.md) for the
+  full accounting.
 - **`flow_run.dispatchIndex` is the only *durable* batch→child mapping, so the signal table cannot replace
   it.** Signals are deleted at release, so `(barrier, ordinal) → child` off `waitpoint_signal` answers only
   while the barrier is pending — and both UI readers need it afterwards: `batch-child-context-strip.tsx`

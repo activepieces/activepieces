@@ -111,11 +111,14 @@ purely because child rows appeared later than the dispatch that created them.
   queries key on) and `totalItems`/`batchSize` (the per-dot item ranges), spread around the summary.
   `canceled` is an eighth count for the same reason.
 - **The release predicate is pure and lives in `core-execution`, not in the service.**
-  `shouldReleaseBarrier({ policy, sealed, counts })` takes counts rather than issuing its own queries, so one
-  `GROUP BY status` replaces up to three round-trips and the policy matrix is unit-testable without a
-  database. The `EXISTS`-not-`COUNT(*)` note above is therefore no longer literal — the decision it encodes
-  (take counts once, on a barrier being summarised) survives; the floor rule now reads the PENDING count out
-  of the same grouped row set.
+  `shouldReleaseBarrier({ policy, sealed, counts })` takes counts rather than issuing its own queries, so the
+  policy matrix is unit-testable without a database. The `EXISTS`-not-`COUNT(*)` rule above holds literally
+  for the floor rule, but it is the *service* that decides which query to issue, not the predicate:
+  `barrierReleasesOnLastPendingSignal({ policy, sealed })` — exported beside `shouldReleaseBarrier`, so the
+  reduction cannot drift from the matrix it mirrors — is true for a sealed barrier with no counting policy,
+  and `barrierService.evaluate` then probes `EXISTS` on a PENDING signal instead of grouping. A counting
+  policy (`requiredSuccesses`, `releaseOnFirstFailure`) still takes the grouped row set, where one
+  `GROUP BY status` replaces up to three round-trips.
 - **`policy` carries no deadline override.** The plan allowed "or the policy's shorter value"; nothing
   produces one, so `resolveDeadline()` is `now + AP_PAUSED_FLOW_TIMEOUT_DAYS` and takes no arguments. Add the
   field when a caller for it exists, not before.

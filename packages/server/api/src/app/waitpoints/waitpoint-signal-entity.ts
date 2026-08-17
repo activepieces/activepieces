@@ -43,8 +43,8 @@ export const WaitpointSignalEntity = new EntitySchema<WaitpointSignalSchema>({
     },
     indices: [
         {
-            name: 'idx_waitpoint_signal_waitpoint_id_status',
-            columns: ['waitpointId', 'status'],
+            name: 'idx_waitpoint_signal_waitpoint_id_project_id_status',
+            columns: ['waitpointId', 'projectId', 'status'],
         },
         {
             name: 'idx_waitpoint_signal_ref_id',
