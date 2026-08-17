@@ -201,6 +201,103 @@ describe('agent publish', () => {
     })
 })
 
+describe('agent governance', () => {
+    it('keeps a project admin able to see an agent an editor restricted', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(editor)
+
+        await editor.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        expect((await owner.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('refuses to let a non-owner hide an agent from the rest of the project', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const mine = await createAgent(owner)
+
+        const response = await editor.post(`/v1/agents/${mine.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${mine.id}`)).json().visibility).toBe(AgentVisibility.PROJECT)
+    })
+
+    it('lets an editor still rename an agent, so the gate is on sharing only', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+
+        expect((await editor.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('takes a published agent offline without destroying it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/unpublish`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().published).toBeNull()
+        expect(response.json().draft.instructions).toBe('Draft launch posts.')
+    })
+
+    it('never returns a stored mcp credential to a reader', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'Use the server.',
+            tools: [{
+                type: 'MCP',
+                toolName: 'remote',
+                serverUrl: 'https://mcp.example.com',
+                protocol: 'streamable-http',
+                auth: { type: 'api_key', apiKey: 'sk-live-SECRET', apiKeyHeader: 'x-api-key' },
+            }],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).body).not.toContain('sk-live-SECRET')
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).body).not.toContain('sk-live-SECRET')
+        expect((await ctx.get('/v1/agents')).body).not.toContain('sk-live-SECRET')
+    })
+
+    it('keeps the stored credential usable after an unrelated edit', async () => {
+        const ctx = await context()
+        const draft = {
+            instructions: 'Use the server.',
+            tools: [{
+                type: 'MCP',
+                toolName: 'remote',
+                serverUrl: 'https://mcp.example.com',
+                protocol: 'streamable-http',
+                auth: { type: 'api_key', apiKey: 'sk-live-SECRET', apiKeyHeader: 'x-api-key' },
+            }],
+        }
+        const agent = await createAgent(ctx, { draft })
+
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed' })
+
+        const stored = await db.findOneByOrFail<{ draft: { tools: { auth: { apiKey?: string } }[] } }>('agent', { id: agent.id })
+        expect(stored.draft.tools[0].auth.apiKey).toBe('sk-live-SECRET')
+    })
+
+    it('refuses a config larger than an agent is allowed to be', async () => {
+        const ctx = await context()
+        const fields = Object.fromEntries(Array.from({ length: 4000 }, (_, index) => [`f${index}`, { mode: 'choose-yourself', value: 'x'.repeat(100) }]))
+        const draft = {
+            instructions: 'Big.',
+            tools: [{
+                type: 'PIECE',
+                toolName: 'big',
+                pieceMetadata: { pieceName: 'p', pieceVersion: '1.0.0', actionName: 'a', predefinedInput: { fields } },
+            }],
+        }
+
+        expect((await ctx.post('/v1/agents', agentBody(ctx.project.id, { draft }))).statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+})
+
 describe('agent project isolation', () => {
     it.each([
         ['read', (ctx: TestContext, id: string) => ctx.get(`/v1/agents/${id}`)],

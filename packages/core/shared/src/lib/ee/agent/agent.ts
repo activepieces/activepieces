@@ -11,6 +11,8 @@ const MAX_AGENT_STEP_BUDGET = 1_000
 const MAX_AGENT_SHARED_MEMBERS = 200
 const MAX_AGENT_PAGE_SIZE = 100
 const MAX_AGENT_NAME_LENGTH = 200
+const MAX_AGENT_DESCRIPTION_LENGTH = 2_000
+const MAX_AGENT_CONFIG_BYTES = 128_000
 const MAX_DRAFT_PROMPT_LENGTH = 2_000
 const DEFAULT_AGENT_MAX_STEPS = 20
 
@@ -37,10 +39,14 @@ enum AgentIcon {
 const AgentConfig = z.object({
     instructions: z.string().max(MAX_AGENT_TEXT_LENGTH),
     provider: Nullable(z.enum(AIProviderName)),
-    modelName: Nullable(z.string()),
+    modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).default(DEFAULT_AGENT_MAX_STEPS),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).default([]),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).default([]),
+}).superRefine((config, ctx) => {
+    if (JSON.stringify(config).length > MAX_AGENT_CONFIG_BYTES) {
+        ctx.addIssue({ code: 'custom', message: formErrors.agentConfigTooLarge })
+    }
 })
 
 const Agent = z.object({
@@ -57,6 +63,8 @@ const Agent = z.object({
     draft: AgentConfig,
     published: Nullable(AgentConfig),
 })
+
+const AgentSummary = Agent.omit({ draft: true, published: true })
 
 const CreateAgentRequest = z.object({
     projectId: ApId,
@@ -98,6 +106,7 @@ const agentUtils = {
 
 export {
     Agent,
+    AgentSummary,
     agentUtils,
     AgentConfig,
     AgentIcon,
@@ -109,6 +118,8 @@ export {
     DraftAgentResponse,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
+    MAX_AGENT_CONFIG_BYTES,
+    MAX_AGENT_DESCRIPTION_LENGTH,
     MAX_AGENT_NAME_LENGTH,
     MAX_AGENT_PAGE_SIZE,
     MAX_DRAFT_PROMPT_LENGTH,
@@ -120,6 +131,7 @@ export {
 }
 
 export type Agent = z.infer<typeof Agent>
+export type AgentSummary = z.infer<typeof AgentSummary>
 export type AgentConfig = z.infer<typeof AgentConfig>
 export type AgentTemplate = z.infer<typeof AgentTemplate>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
