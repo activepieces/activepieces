@@ -58,22 +58,9 @@ export const AiMetadata = z.object({
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 
-/**
- * What a step does to the connected system, in escalating order of consequence.
- *
- * - `READ`        fetches a known resource by id or returns fixed state — get, retrieve, describe
- * - `SEARCH`      queries or enumerates without mutating — search, list, find, lookup
- * - `WRITE`       adds or changes state, recoverable — create, send, update, upsert
- * - `DESTRUCTIVE` removes or disables state; a retry cannot undo it — delete, archive, revoke
- *
- * Exactly one value per action or trigger. `SEARCH` narrows `READ` and `DESTRUCTIVE` narrows
- * `WRITE`, so anything non-mutating is one of the first two and anything mutating is one of the
- * last two.
- */
 export const ActionClassification = z.enum(['READ', 'SEARCH', 'WRITE', 'DESTRUCTIVE'])
 export type ActionClassification = z.infer<typeof ActionClassification>
 
-/** Non-mutating classifications — safe to run without confirmation. */
 export const READ_ONLY_CLASSIFICATIONS: readonly ActionClassification[] = ['READ', 'SEARCH']
 
 export const isReadOnlyClassification = (classification: ActionClassification | undefined): boolean =>

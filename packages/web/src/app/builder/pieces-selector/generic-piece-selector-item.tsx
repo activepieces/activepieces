@@ -108,8 +108,6 @@ const GenericActionOrTriggerItem = ({
 GenericActionOrTriggerItem.displayName = 'GenericActionOrTriggerItem';
 export default GenericActionOrTriggerItem;
 
-// Only DESTRUCTIVE is coloured — a red pill on every mutating step would read as a
-// warning the user has to dismiss 40 times, so WRITE stays as quiet as the reads.
 const CLASSIFICATION_BADGE: Record<
   ActionClassification,
   { label: () => string; variant: 'accent' | 'destructive' }
