@@ -9,6 +9,7 @@ let app: FastifyInstance | null = null
 
 const EMAIL = 'otp.budget@example.com'
 const MAX_ATTEMPTS = 5
+const MAX_ATTEMPTS_PER_IDENTITY = 10
 
 async function seedIdentityWithCode(): Promise<string> {
     const identity = createMockUserIdentity({ email: EMAIL, verified: true })
@@ -53,6 +54,19 @@ async function sendCode(): Promise<void> {
         email: EMAIL,
         type: OtpType.EMAIL_LOGIN,
     })
+}
+
+async function burnOneCodeWithWrongGuesses(): Promise<void> {
+    await sendCode()
+    const otp = await currentOtp()
+    for (let guess = 0; guess < MAX_ATTEMPTS; guess++) {
+        await confirmCode(wrongVersionOf(otp!.value))
+    }
+}
+
+async function freshCorrectCode(): Promise<string> {
+    await sendCode()
+    return (await currentOtp())!.value
 }
 
 async function backdateCode(minutesAgo: number): Promise<Date> {
@@ -143,6 +157,28 @@ describe('otpService#confirm', () => {
         await backdateCode(11)
 
         expect(await confirmCode(value)).toBe(false)
+    })
+
+    it('refuses a correct code once the identity has spent its budget across several codes', async () => {
+        await seedIdentityWithCode()
+        const rounds = MAX_ATTEMPTS_PER_IDENTITY / MAX_ATTEMPTS
+        for (let round = 0; round < rounds; round++) {
+            await burnOneCodeWithWrongGuesses()
+        }
+
+        const accepted = await confirmCode(await freshCorrectCode())
+
+        expect(accepted).toBe(false)
+    })
+
+    it('clears the identity budget when the right code lands, so an owner who fumbles is not locked out', async () => {
+        await seedIdentityWithCode()
+        await burnOneCodeWithWrongGuesses()
+
+        expect(await confirmCode(await freshCorrectCode())).toBe(true)
+
+        await burnOneCodeWithWrongGuesses()
+        expect(await confirmCode(await freshCorrectCode())).toBe(true)
     })
 
     it('does not extend the life of a code by guessing at it', async () => {
