@@ -86,9 +86,9 @@ These live directly on the property. They fine-tune placement without changing t
 | `placeholder` | string | Any text input — show an example value (`you@example.com`). |
 | `width` | `'half'` | Two short related fields should sit side-by-side (First / Last name). Only takes effect **inside a `section` group**. |
 | `icon` | icon name | Give a filter-builder row or section field a leading glyph. Must be a **valid name** — see §5. |
-| `advanced` | `true` / `false` | `false` promotes a normally-optional field into the main form (e.g. a message body). `true` pushes an important-looking field into the collapsible **Advanced** section. |
+| `advanced` | `true` | Tucks a secondary field into the collapsible **Advanced** section. Nothing collapses there unless you set it — `advanced: false` is the default and does nothing. |
 
-**Advanced section rule:** non-required props collapse into *Advanced* by default. Reach for `advanced: false` when an optional field is actually central to the action.
+**Advanced section rule:** every prop renders in the main form by default, required or not. Opt a field *out* with `advanced: true`. Don't set it on a required prop — the Advanced section starts collapsed, so a mandatory field hidden there only surfaces as a validation error.
 
 ---
 
@@ -106,13 +106,14 @@ propertyGroups: [{ key, display, label?, description?, icon?, props: ['fieldA', 
 | Intent | `display` | Behaviour |
 |---|---|---|
 | Mutually-exclusive **modes** of the same concept (To / Cc / Bcc; by-URL vs by-ID) | `'tabs'` | Segmented control; one tab's fields visible at a time. |
-| **Related fields as a titled card** (a "Send to" card, a "Message" card) | `'section'` | Titled card; `width: 'half'` packs two-up. **Keeps the Advanced section** — ungrouped optional props still collapse as usual. |
+| **Related fields as a titled card** (a "Send to" card, a "Message" card) | `'section'` | Titled card; `width: 'half'` packs two-up. **Keeps the Advanced section** for props outside the cards — group members are always essential. |
 | A **search/filter** action where users add only the filters they need | `'builder'` | Progressive "Add filter" picker; each `builder` group is a category. A filter row persists only when its value is set — give each filter a `placeholder` + `icon`. |
-| A pinned control **below** a filter builder (result limit) | `'footer'` | Pins its prop (e.g. a `stepper`) under the builder list. Pair with `'builder'` groups. |
+| A pinned control **below** a filter builder (result limit) | `'footer'` | Pins its prop (e.g. a `stepper`) under the builder list. Pair with `'builder'` groups — like `'builder'`, it disables the Advanced section form-wide. |
 
 **Rules:**
 - Every prop named in a group must exist in `props`.
-- Props left out of every group follow the normal essential/Advanced rule (only `section` preserves this — `tabs` and `builder` take full control of their members).
+- Only ungrouped props honour `advanced: true` — members of `tabs` and `section` groups are always essential; the flag is ignored on them.
+- **One `builder` or `footer` group disables the Advanced section for the whole action/trigger** — every prop is forced essential and `advanced: true` stops working form-wide. Don't combine a filter builder with Advanced props.
 - Give `section` and `builder` groups a `label` and `icon` so cards/categories read clearly.
 
 ---
@@ -140,7 +141,7 @@ props: {
   chat_id: Property.ShortText({ displayName: 'Chat Id', required: true, placeholder: '@channel or 123456789' }),
   format:  Property.StaticDropdown({ displayName: 'Format', required: false, display: 'cards', options: { options: [/* Markdown / HTML / Plain */] } }),
   message: Property.RichText({ displayName: 'Message', required: true, formatProperty: 'format' }),
-  disable_notification: Property.Checkbox({ displayName: 'Disable notification', required: false }), // → Advanced
+  disable_notification: Property.Checkbox({ displayName: 'Disable notification', required: false, advanced: true }), // → Advanced (ungrouped + flagged)
 },
 ```
 
@@ -179,5 +180,6 @@ props: {
 - **Invalid `icon` name.** Anything outside the §5 list silently renders nothing; verify before shipping.
 - **`Property.Json` as an escape hatch.** If the shape is known, model it with real props or an `Array` of fields.
 - **`Property.DynamicProperties` for a static form.** It's the heaviest widget; only use it when fields truly depend on runtime data.
+- **`advanced: true` on a required prop.** Advanced starts collapsed; a mandatory field hidden there only surfaces as a validation error.
 
 Full type syntax and dynamic-dropdown/refresher mechanics: `props-patterns.md`. Rendered previews of every option: `docs/build-pieces/piece-reference/properties.mdx`.
