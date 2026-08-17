@@ -12,6 +12,7 @@ import { agentHelpers } from './agent-helpers'
 
 const DRAFT_TIMEOUT_MS = 30_000
 const REPLY_LOG_LIMIT = 500
+const REASON_LIMIT = 200
 const FAST_TIER_ID = 'fast'
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
@@ -44,7 +45,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.VALIDATION,
                 params: { message: rejectedCredentials(status)
                     ? `${provider} rejected the API key. Update it in the AI settings and try again.`
-                    : `The ${provider} provider could not run ${modelId}: ${reason}` },
+                    : `The ${provider} provider could not run ${modelId}: ${reason.slice(0, REASON_LIMIT)}` },
             })
         }
 
