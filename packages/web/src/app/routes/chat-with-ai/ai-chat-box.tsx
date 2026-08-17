@@ -37,6 +37,7 @@ import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  agentId,
   conversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -52,6 +53,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
+        agentId={agentId}
         conversationId={conversationId}
         onTitleUpdate={onTitleUpdate}
         onConversationCreated={onConversationCreated}
@@ -62,6 +64,7 @@ export function AIChatBox({
 
 function ChatBoxContent({
   incognito,
+  agentId,
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -84,6 +87,7 @@ function ChatBoxContent({
     setConversationId,
     setModelName,
   } = useAgentChat({
+    ...(agentId === undefined ? {} : { agentId }),
     onTitleUpdate,
     onConversationCreated,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
@@ -343,6 +347,7 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  agentId?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;

@@ -111,7 +111,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
         }
 
-        const cancelCheckInterval = source === AgentRunSource.CHAT
+        const cancelCheckInterval = source !== AgentRunSource.FLOW_STEP
             ? setInterval(() => {
                 checkCancelled().catch(() => {})
             }, 3_000)
@@ -487,7 +487,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
-        if (source !== AgentRunSource.CHAT) {
+        if (source === AgentRunSource.FLOW_STEP) {
             return { outcome: 'declined' }
         }
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
@@ -639,6 +639,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const unattendedWebTools: ToolSet = Object.fromEntries(
         Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name)),
     )
+    // An agent conversation is attended, so it keeps the tools that need a reader: the display
+    // prompts, the full web set, and a real approval gate. It never gets the flow-building set,
+    // project switching, phases or build plans — those belong to the platform assistant, not to
+    // an agent someone configured.
+    if (source === AgentRunSource.AGENT) {
+        return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...displayTools, ...webTools, ...thinkingTools, ...completionTool }
+    }
     return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedWebTools, ...completionTool }
 }
 

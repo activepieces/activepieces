@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversationStatus, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentRunSource, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -12,6 +12,7 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
+import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
@@ -153,6 +154,11 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await assertChatProviderConfigured({ platformId, log })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
+        const agent = isNil(conversation.agentId)
+            ? null
+            : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
+        const agentConfig = agent?.published ?? agent?.draft ?? null
+
         await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -165,8 +171,16 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: conversation.modelName ?? null,
+                modelName: agentConfig?.modelName ?? conversation.modelName ?? null,
                 files,
+                ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...(isNil(agentConfig) ? {} : {
+                    tools: agentConfig.tools,
+                    structuredOutput: agentConfig.structuredOutput,
+                    maxSteps: agentConfig.maxSteps,
+                    ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                    promptOverride: { system: agentConfig.instructions },
+                }),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')

@@ -33,6 +33,9 @@ import { pieceToolRunner } from './tools/piece-tool-runner'
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
+// Internal bookkeeping the attended surfaces need: cancellation polling, approval gates and the
+// connection picker. An unattended flow step has no reader for any of them.
+const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
@@ -591,7 +594,17 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
-        const chatOnlyTool = input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName)
+        if (ATTENDED_STATE_TOOLS.includes(input.toolName)) {
+            if (input.source === AgentRunSource.FLOW_STEP) {
+                log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected an attended-only tool for an unattended run — the worker should not have called it')
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: `Tool "${input.toolName}" is only available to attended runs` },
+                })
+            }
+        }
+        const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
+            && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
         if (chatOnlyTool && input.source !== AgentRunSource.CHAT) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({

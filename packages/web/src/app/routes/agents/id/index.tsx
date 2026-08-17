@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
+import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -261,11 +262,18 @@ const AgentEditorForm = ({
             )}
           </div>
 
-          <div className="flex flex-col items-start gap-1 rounded-[19px] border border-dashed border-border p-5">
-            <p className="text-sm font-medium">{t('Chat with this agent')}</p>
-            <p className="text-[13px] leading-4 text-muted-foreground">
-              {t('Talking to an agent from here is coming next.')}
-            </p>
+          <div className="flex min-h-[560px] flex-col overflow-clip rounded-[19px] border border-border bg-background shadow-[0_1px_2px_#0A0A0A08]">
+            <div className="flex items-center gap-2 border-b border-border px-5 py-3">
+              <p className="text-sm font-semibold">{t('Try this agent')}</p>
+              <span className="text-[13px] leading-4 text-muted-foreground">
+                {isPublished
+                  ? t('Running the published version')
+                  : t('Running the draft')}
+              </span>
+            </div>
+            <div className="flex min-h-0 grow flex-col">
+              <AIChatBox incognito={false} agentId={agentId} />
+            </div>
           </div>
         </div>
       </form>

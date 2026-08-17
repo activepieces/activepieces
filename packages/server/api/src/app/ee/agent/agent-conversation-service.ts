@@ -8,16 +8,21 @@ import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
+import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
+        const agent = isNil(request.agentId)
+            ? null
+            : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
-            projectId: null,
+            projectId: agent?.projectId ?? null,
             userId,
-            source: AgentRunSource.CHAT,
+            agentId: agent?.id ?? null,
+            source: isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
@@ -70,7 +75,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (conversation.source !== AgentRunSource.CHAT) {
+        if (![AgentRunSource.CHAT, AgentRunSource.AGENT].includes(conversation.source)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         return conversation

@@ -71,6 +71,20 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agent
     },
 
+    async getOneOrThrowByPlatform({ id, platformId, userId }: GetByPlatformParams): Promise<Agent> {
+        const readableProjectIds = await resolveReadableProjectIds({ platformId, userId, log })
+        if (readableProjectIds.length === 0) {
+            throw agentNotFound(id)
+        }
+        const agent = await visibleAgents({ userId, isProjectAdmin: false })
+            .andWhere({ id, projectId: In(readableProjectIds) })
+            .getOne()
+        if (isNil(agent)) {
+            throw agentNotFound(id)
+        }
+        return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
+    },
+
     async update({ id, projectId, userId, request }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
@@ -272,6 +286,12 @@ type ListParams = {
 type GetParams = {
     id: ApId
     projectId: ProjectId
+    userId: UserId
+}
+
+type GetByPlatformParams = {
+    id: string
+    platformId: PlatformId
     userId: UserId
 }
 
