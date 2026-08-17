@@ -1,4 +1,4 @@
-import { isNil, unique } from '@activepieces/core-utils'
+import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -90,7 +90,7 @@ async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessPa
         if (flow.status === FlowStatus.DISABLED || isNil(flow.publishedVersionId)) {
             continue
         }
-        await flowService(log).update({
+        const { error } = await tryCatch(async () => flowService(log).update({
             id: flow.id,
             userId: null,
             projectId: flow.projectId,
@@ -100,7 +100,15 @@ async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessPa
                 type: FlowOperationType.CHANGE_STATUS,
                 request: { status: FlowStatus.DISABLED },
             },
-        })
+        }))
+        if (!isNil(error)) {
+            log.warn({
+                error,
+                flow: { id: flow.id },
+                project: { id: flow.projectId },
+                platform: { id: platformId },
+            }, '[stopPlatformExecution] Skipping trigger disable; platform teardown proceeding')
+        }
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
