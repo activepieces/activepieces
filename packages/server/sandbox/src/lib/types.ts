@@ -18,6 +18,7 @@ export type ResolveInput = {
     engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
+    codes?: CodeArtifact[]
 }
 
 export type ResolveResult =
@@ -41,6 +42,7 @@ export type ExecuteParams = {
     operationType: EngineOperationType
     operation: EngineOperation
     timeoutInSeconds: number
+    expiresAt?: number
     provision: ProvisionInput
 }
 
@@ -110,6 +112,7 @@ export type SandboxSettings = {
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
     SSRF_ALLOW_LIST: string[]
+    ENFORCE_CONNECTION_PIECE_BINDING: boolean
     WORKER_GROUP_ID?: string | undefined
     PROJECT_WORKER?: boolean | undefined
 }

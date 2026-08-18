@@ -10,7 +10,7 @@ export const githubAuthHelpers = {
     if (isGithubAppAuth(a)) {
       return getInstallationToken(a.props);
     }
-    return a.access_token;
+    return getUserToken(a);
   },
 };
 
@@ -42,7 +42,7 @@ export async function getAuthenticatedLogin(
     method: HttpMethod.GET,
     url: 'https://api.github.com/user',
     headers: {
-      Authorization: `Bearer ${a.access_token}`,
+      Authorization: `Bearer ${getUserToken(a)}`,
     },
   });
   return response.body.login;
@@ -115,6 +115,12 @@ function isGithubAppAuth(auth: GithubAuth): auth is GithubAppAuth {
   return auth.type === AppConnectionType.CUSTOM_AUTH;
 }
 
+function getUserToken(auth: GithubOAuth2Auth | GithubPatAuth): string {
+  return auth.type === AppConnectionType.SECRET_TEXT
+    ? auth.secret_text
+    : auth.access_token;
+}
+
 async function getInstallationToken({
   appId,
   installationId,
@@ -170,4 +176,9 @@ type GithubAppAuth = {
   };
 };
 
-type GithubAuth = GithubOAuth2Auth | GithubAppAuth;
+type GithubPatAuth = {
+  type: AppConnectionType.SECRET_TEXT;
+  secret_text: string;
+};
+
+type GithubAuth = GithubOAuth2Auth | GithubAppAuth | GithubPatAuth;

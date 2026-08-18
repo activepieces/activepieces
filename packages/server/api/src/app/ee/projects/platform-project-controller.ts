@@ -1,5 +1,5 @@
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage } from '@activepieces/core-utils'
-import { CreatePlatformProjectRequest, ListProjectRequestForPlatformQueryParams, PlatformRole, Principal, PrincipalType, ProjectType, ProjectWithLimits, SERVICE_KEY_SECURITY_OPENAPI, TeamProjectsLimit, UpdateProjectPlatformRequest } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, SeekPage } from '@activepieces/core-utils'
+import { CreatePlatformProjectRequest, ListProjectRequestForPlatformQueryParams, PlatformRole, Principal, PrincipalType, ProjectType, ProjectWithLimits, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -154,31 +154,27 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {
     const platform = await platformService(log).getOneWithPlanOrThrow(platformId)
+    const billedTeamProjectsLimit = platform.plan.billedTeamProjectsLimit
 
-    switch (platform.plan.teamProjectsLimit) {
-        case TeamProjectsLimit.NONE: {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Team projects are not available on your current plan',
-                },
-            })
-        }
-        case TeamProjectsLimit.ONE: {
-            const projectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
-            if (projectsCount >= 1) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.FEATURE_DISABLED,
-                    params: {
-                        message: 'Maximum limit of 1 team project reached for this plan. Upgrade your plan to add more team projects.',
-                    },
-                })
-            }
-            break
-        }
-        case TeamProjectsLimit.UNLIMITED: {
-            break
-        }
+    if (isNil(billedTeamProjectsLimit)) {
+        return
+    }
+    if (billedTeamProjectsLimit <= 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Team projects are not available on your current plan',
+            },
+        })
+    }
+    const projectsCount = await projectService(log).countByPlatformIdAndType(platformId, ProjectType.TEAM)
+    if (projectsCount >= billedTeamProjectsLimit) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: {
+                message: `Maximum limit of ${billedTeamProjectsLimit} team project(s) reached for this plan. Upgrade your plan to add more team projects.`,
+            },
+        })
     }
 }
 

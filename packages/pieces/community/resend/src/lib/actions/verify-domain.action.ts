@@ -2,11 +2,13 @@ import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendProps } from '../common/props';
+import { verifyDomainOutputSchema } from '../output-schemas';
 
 export const verifyDomain = createAction({
   name: 'verify_domain',
   auth: resendAuth,
   displayName: 'Verify Domain',
+  outputSchema: verifyDomainOutputSchema,
   description: 'Trigger a DNS verification check for a domain',
   audience: 'both',
   aiMetadata: { description: 'Triggers Resend to re-check the DNS records of a domain and update its verification status, identified by domain ID. Use this after adding the required DNS records (from Create Domain) to confirm the domain is ready to send. Safe to call repeatedly — it only re-runs the check.', idempotent: true },

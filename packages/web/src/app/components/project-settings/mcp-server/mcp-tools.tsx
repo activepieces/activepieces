@@ -1,3 +1,4 @@
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lock } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -15,9 +16,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
-import { TOOL_CATEGORIES } from './utils/mcp-tools-metadata';
+import { getToolCategories } from './utils/mcp-tools-metadata';
 
 type McpToolsProps = {
   disabledTools: string[] | null;
@@ -30,6 +32,12 @@ export function McpTools({
   isPending,
   onUpdateDisabledTools,
 }: McpToolsProps) {
+  const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.TOOL_SEARCH_ENABLED,
+  );
+  const toolCategories = getToolCategories({
+    toolSearchEnabled: toolSearchEnabled ?? false,
+  });
   const [disabledTools, setDisabledTools] = useState<string[]>(
     () => externalDisabledTools ?? [],
   );
@@ -65,7 +73,7 @@ export function McpTools({
 
   return (
     <Accordion type="multiple" className="space-y-2">
-      {TOOL_CATEGORIES.map((category) => {
+      {toolCategories.map((category) => {
         const toolNames = category.tools.map((tool) => tool.name);
         const enabledInCategory = category.locked
           ? toolNames

@@ -7,10 +7,12 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
+import { updateBoardActionOutputSchema } from '../output-schemas';
 
 export const updateBoard = createAction({
   auth: pinterestAuth,
   name: 'updateBoard',
+  outputSchema: updateBoardActionOutputSchema,
   displayName: 'Update Board',
   description: "Update a board's name, description, or privacy settings.",
   audience: 'both',

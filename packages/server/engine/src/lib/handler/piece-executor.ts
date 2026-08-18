@@ -1,7 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
-import type { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { engineRunApi } from '../api/engine-run-api'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
@@ -11,10 +10,9 @@ import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
 import { waitpointClient } from '../piece-context/waitpoint-client'
-import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
-import { ActionHandler, BaseExecutor } from './base-executor'
+import { ActionHandler, BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
@@ -53,7 +51,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             devPieces: constants.devPieces,
         })
 
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion: piece.getContextInfo?.().version, pieceName: action.settings.pieceName }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -74,9 +72,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 tags: [],
             },
         }
-        const outputContext = flowRunProgressReporter.createOutputContext({
-            engineConstants: constants,
-        })
+        const outputContext = constants.actionRunMode
+            ? { update: async (): Promise<void> => { /* no-op: action runs have no live progress channel */ } }
+            : flowRunProgressReporter.createOutputContext({
+                engineConstants: constants,
+            })
 
         const isPaused = executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
@@ -115,13 +115,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
-            agent: {
-                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
-                    engineConstants: constants,
-                    tools: params.tools,
-                    model: params.model,
-                }),
-            },
             propsValue: processedInput,
             tags: createTagsManager(params),
             connections: utils.createConnectionManager({
@@ -131,13 +124,14 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 target: 'actions',
                 hookResponse: params.hookResponse,
                 contextVersion: piece.getContextInfo?.().version,
+                pieceName: action.settings.pieceName,
             }),
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
-                waitForWaitpoint: createWaitForWaitpointHook({ hookParams: params }),
+                waitForWaitpoint: createWaitForWaitpointHook({ constants, hookParams: params }),
             },
             project: {
                 id: constants.projectId,
@@ -194,20 +188,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
     }))
 
     if (executionStateError) {
-        const failedStepOutput = stepOutput
-            .setStatus(StepOutputStatus.FAILED)
-            .setErrorMessage(utils.formatError(executionStateError))
-            .setDuration(performance.now() - stepStartTime)
-
-        return (await executionState
-            .upsertStep(action.name, failedStepOutput))
-            .setVerdict({
-                status: FlowRunStatus.FAILED, failedStep: {
-                    name: action.name,
-                    displayName: action.displayName,
-                    message: utils.formatError(executionStateError),
-                },
-            })
+        return failStep({
+            action,
+            executionState,
+            stepOutput,
+            error: executionStateError,
+            durationMs: performance.now() - stepStartTime,
+        })
     }
 
     return executionStateResult
@@ -271,41 +258,53 @@ type CreateRespondHookParams = {
 }
 
 function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
-    return async (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
-        assertDelayWithinTimeout(req.resumeDateTime)
-        if (!isNil(req.responseToSend)) {
-            hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
-        }
-        const result = await waitpointClient.create({
-            apiUrl: constants.internalApiUrl,
-            engineToken: constants.engineToken,
-            flowRunId: constants.flowRunId,
-            projectId: constants.projectId,
-            stepName,
-            type: req.type,
-            version: req.version ?? 'V1',
-            resumeDateTime: req.resumeDateTime,
-            responseToSend: req.responseToSend,
-            workerHandlerId: constants.workerHandlerId ?? undefined,
-            httpRequestId: constants.httpRequestId ?? undefined,
-        })
-        return {
-            ...result,
-            buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
-                const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
-                url.search = new URLSearchParams(params.queryParams).toString()
-                return url.toString()
-            },
-        }
+    return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
+        assertActionRunCannotSuspend(constants)
+        return submitWaitpoint({ constants, stepName, hookParams, req })
     }
 }
 
-function createWaitForWaitpointHook({ hookParams }: { hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
+async function submitWaitpoint({ constants, stepName, hookParams, req }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
+    assertDelayWithinTimeout(req.resumeDateTime)
+    if (!isNil(req.responseToSend)) {
+        hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
+    }
+    const result = await waitpointClient.create({
+        apiUrl: constants.internalApiUrl,
+        engineToken: constants.engineToken,
+        flowRunId: constants.flowRunId,
+        projectId: constants.projectId,
+        stepName,
+        type: req.type,
+        version: req.version ?? 'V1',
+        resumeDateTime: req.resumeDateTime,
+        responseToSend: req.responseToSend,
+        workerHandlerId: constants.workerHandlerId ?? undefined,
+        httpRequestId: constants.httpRequestId ?? undefined,
+    })
+    return {
+        ...result,
+        buildResumeUrl: (params: { queryParams: Record<string, string>, sync?: boolean }): string => {
+            const url = new URL(`${result.resumeUrl}${params.sync ? '/sync' : ''}`)
+            url.search = new URLSearchParams(params.queryParams).toString()
+            return url.toString()
+        },
+    }
+}
+
+function createWaitForWaitpointHook({ constants, hookParams }: { constants: EngineConstants, hookParams: { hookResponse: HookResponse } }): WaitForWaitpointHook {
     return (_waitpointId: string) => {
+        assertActionRunCannotSuspend(constants)
         hookParams.hookResponse = {
             ...hookParams.hookResponse,
             type: 'paused',
         }
+    }
+}
+
+function assertActionRunCannotSuspend(constants: EngineConstants): void {
+    if (constants.actionRunMode) {
+        throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not as a action run.')
     }
 }
 

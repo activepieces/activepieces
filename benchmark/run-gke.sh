@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Real GKE benchmark of the worker-is-the-sandbox model (ADR 0003), with in-cluster MinIO as a
-# same-region S3 + signed URLs. Deploys benchmark/k8s-sandbox.yaml to OUR cluster, runs the load test
-# against the app LoadBalancer, and reports cold-boot latency, warm throughput, and the per-run
-# breakdown (from worker pod logs). Leaves the cluster up — teardown commands are printed at the end.
+# Real GKE benchmark of the worker-is-the-sandbox model (ADR 0003), against a same-region GCS bucket
+# over the S3-interop endpoint with signed URLs. Deploys benchmark/k8s-sandbox.yaml to OUR cluster, runs
+# the load test against the app LoadBalancer, and reports cold-boot latency, warm throughput, and the
+# per-run breakdown (from worker pod logs). Leaves the cluster up — teardown commands are printed at the end.
 #
 # Usage: benchmark/run-gke.sh [total_requests] [concurrency]
-#   CLUSTER (default ap-sandbox-bench)  ZONE (default europe-west1-b)  WORKER_IMAGE_TAG
+#   CLUSTER (default ap-sandbox-bench)  ZONE (default europe-west1-b)
 
 TOTAL_REQUESTS=${1:-1000}
 CONCURRENCY=${2:-32}
@@ -15,10 +15,10 @@ WORKER_CPU=${WORKER_CPU:-500m}
 WORKER_REPLICAS=${WORKER_REPLICAS:-16}
 REUSE_SANDBOX=${REUSE_SANDBOX:-false}
 APP_REPLICAS=${APP_REPLICAS:-2}
-APP_CPU=${APP_CPU:-1500m}
+APP_CPU=${APP_CPU:-1000m}
 APP_IMAGE=${APP_IMAGE:-europe-west1-docker.pkg.dev/activepieces-b3803/poolserver/ap-app:latest}
 CLUSTER=${CLUSTER:-ap-sandbox-bench}
-ZONE=${ZONE:-us-central1-a}
+ZONE=${ZONE:-europe-west1-b}
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
@@ -44,12 +44,20 @@ kubectl apply -f "$MANIFEST"
 rm -f "$MANIFEST"
 
 # Force fresh WORKER pods so the (same-tag) image is re-pulled — imagePullPolicy:Always gets the new
-# digest. Only the worker image changes between runs; restarting the app would destabilize signup.
+# digest. The APP must restart too: `envFrom` is read once at container start, so app pods keep the
+# JWT secret they booted with while each run substitutes a fresh one into the configmap and into the
+# worker token. Restarting only the worker leaves the two signed with different secrets — the app then
+# rejects every worker connection, no worker consumes jobs, and the first thing to fail is publishing
+# the flow ("Worker did not respond within the safety timeout") ~5 minutes later. Both, or neither.
+echo "=== Forcing fresh app rollout (re-read JWT secret) ==="
+kubectl rollout restart deployment/app
+kubectl rollout status deployment/app --timeout=600s
+
+# Strictly after the app is fully rolled out. A worker that hits an old app pod still holding the
+# previous run's JWT secret gets "Authentication error" on the socket handshake and then sits there —
+# it does not recover on its own, so the fleet is silently dead and the flow publish times out.
 echo "=== Forcing fresh worker rollout (re-pull image) ==="
 kubectl rollout restart deployment/worker
-
-echo "=== Waiting for app + worker rollouts ==="
-kubectl rollout status deployment/app --timeout=600s
 kubectl rollout status deployment/worker --timeout=600s
 
 echo "=== Waiting for app LoadBalancer IP ==="
@@ -88,17 +96,53 @@ fi
 echo "=== Setting up flow ==="
 FLOW_ID=$(BASE_URL="$BASE_URL" FLOW_ENABLE_TIMEOUT=60 "$ROOT/benchmark/setup.sh")
 echo "Flow ID: $FLOW_ID"
-WEBHOOK="http://$LB_IP/api/v1/webhooks/$FLOW_ID/sync"
+# Load is generated INSIDE the cluster, against the app Service — not from the operator's laptop over the
+# public LoadBalancer. Driving 120+ concurrent sync webhooks from a workstation exhausts its ephemeral
+# port range (macOS gives ~16k ports; hey then fails with "can't assign requested address") and the run
+# collapses in a way that looks exactly like a server-side ceiling. The 120-worker tier is where it bites.
+# In-cluster load also drops the internet RTT and the LB hop, so what is measured is server service time.
+WEBHOOK="http://app:80/api/v1/webhooks/$FLOW_ID/sync"
+HEY_IMAGE=${HEY_IMAGE:-williamyeh/hey}
+
+# Runs hey in a one-shot pod and echoes its stdout. The image's entrypoint IS hey, so only args are passed.
+# The pod requests real CPU so the generator is never the thing being throttled.
+run_load() {
+  local name=$1 n=$2 c=$3
+  kubectl delete pod "$name" --ignore-not-found --now >/dev/null 2>&1
+  kubectl run "$name" --image="$HEY_IMAGE" --restart=Never --overrides="$(cat <<JSON
+{"spec":{"containers":[{"name":"hey","image":"$HEY_IMAGE",
+ "args":["-n","$n","-c","$c","-t","120","-m","POST","-H","Content-Type: application/json","-d","{\"test\":true}","$WEBHOOK"],
+ "resources":{"requests":{"cpu":"2","memory":"1Gi"}}}]}}
+JSON
+)" >/dev/null 2>&1
+  # Poll .status.phase, NOT the STATUS column of `kubectl get pod` — that column renders a Succeeded pod
+  # as "Completed", so matching on "Succeeded" there never fires and every load pod burns the full timeout.
+  local phase=""
+  for _ in $(seq 1 200); do
+    phase=$(kubectl get pod "$name" -o jsonpath='{.status.phase}' 2>/dev/null)
+    case "$phase" in Succeeded|Failed) break;; esac
+    sleep 3
+  done
+  # A Failed or still-Running generator produces partial/empty output that parses into a plausible-looking
+  # throughput number. Refuse it loudly and leave the pod up to diagnose, rather than publishing a fiction.
+  if [ "$phase" != "Succeeded" ]; then
+    echo "ERROR: load pod '$name' did not succeed (phase='${phase:-unknown}'). Pod left in place for triage:" >&2
+    kubectl logs "$name" --tail=20 >&2 2>/dev/null || true
+    return 1
+  fi
+  kubectl logs "$name" 2>/dev/null
+  kubectl delete pod "$name" --ignore-not-found --now >/dev/null 2>&1
+}
 
 echo "=== COLD BOOT: first request (cold process + cold cache) ==="
-COLD_MS=$(curl -s -o /dev/null -w '%{time_total}' -m 120 -X POST -H 'Content-Type: application/json' -d '{"test":true}' "$WEBHOOK" | awk '{printf "%.0f", $1 * 1000}')
+COLD_MS=$(run_load hey-cold 1 1 | awk '/Average:/{printf "%.0f", $2 * 1000}')
 echo "Cold boot latency: ${COLD_MS} ms"
 
 # Warmup so the engine processes are hot before the measured pass (warm = AP_REUSE_SANDBOX=true).
 # Without it the first ~CONCURRENCY cold forks drag the average down and muddy the warm number.
 WARMUP_REQUESTS=${WARMUP_REQUESTS:-500}
 echo "=== WARMUP: $WARMUP_REQUESTS requests @ concurrency $CONCURRENCY (not measured) ==="
-hey -n "$WARMUP_REQUESTS" -c "$CONCURRENCY" -t 120 -m POST -H 'Content-Type: application/json' -d '{"test":true}' "$WEBHOOK" 2>&1 | awk '/Requests\/sec/{print "  warmup "$0}'
+run_load hey-warmup "$WARMUP_REQUESTS" "$CONCURRENCY" | awk '/Requests\/sec/{print "  warmup "$0}'
 
 echo "=== WARM THROUGHPUT: $TOTAL_REQUESTS requests @ concurrency $CONCURRENCY ==="
 # Sample app vs worker CPU during the load test to find the app:worker ratio (is the app the bottleneck?).
@@ -107,7 +151,8 @@ echo "=== WARM THROUGHPUT: $TOTAL_REQUESTS requests @ concurrency $CONCURRENCY =
     sleep 3
   done > /tmp/topsamples.txt ) &
 SAMPLER=$!
-hey -n "$TOTAL_REQUESTS" -c "$CONCURRENCY" -t 120 -m POST -H 'Content-Type: application/json' -d '{"test":true}' "$WEBHOOK" | tee /tmp/hey-gke.txt
+LOAD_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+run_load hey-load "$TOTAL_REQUESTS" "$CONCURRENCY" | tee /tmp/hey-gke.txt
 kill "$SAMPLER" 2>/dev/null || true
 
 echo ""
@@ -121,24 +166,35 @@ awk '$1=="app"{as+=$2;an++} $1=="worker"{ws+=$2;wn++} $1=="postgres"{ps+=$2;pn++
      }' /tmp/topsamples.txt 2>/dev/null || echo "  (no samples)"
 
 echo ""
-echo "=== PER-RUN BREAKDOWN (avg ms across all flow runs, from worker pod logs) ==="
-kubectl logs -l app=worker --tail=-1 --prefix=false --since=20m 2>/dev/null \
-  | jq -rR 'fromjson? | select(.event=="job.execute" and .timings)
-            | [.timings.flowBundleDownloadMs, .timings.installPiecesMs, .timings.installEngineMs, .timings.provisionMs, .timings.executionMs, .timings.sandboxStartMs, .timings.sandboxRunMs] | @tsv' 2>/dev/null \
-  | awk 'BEGIN{FS="\t"}
-         {for(i=1;i<=7;i++){if($i!=""){s[i]+=$i;n[i]++}} runs++}
+echo "=== PER-RUN BREAKDOWN (avg ms across the measured pass only, from worker pod logs) ==="
+# --since-time is the measured pass's start, so the cold first request and the warmup pass are excluded
+# from the averages — this block describes warm steady state, nothing else.
+# Format-agnostic on purpose. The worker ignores AP_LOG_PRETTY and renders the `job.execute` wide event
+# with the pretty renderer (`timings: sandboxRunMs=125 ...`), but a JSON drain writes the same keys as
+# `"sandboxRunMs":125`. Strip ANSI, then harvest every `<name>Ms` number off the timings line either way —
+# parsing the keys rather than the container makes this survive the next renderer change.
+# The `|| true` on both greps matters under `set -euo pipefail`: a measured window with no timing events
+# makes grep exit 1, which would kill the script before awk can report it — taking the summary and the
+# teardown instructions with it. Let the empty stream reach awk and say "no timing samples found".
+{ kubectl logs -l app=worker --tail=-1 --prefix=false --since-time="$LOAD_START" 2>/dev/null || true; } \
+  | sed 's/\x1b\[[0-9;]*m//g' \
+  | { grep -E 'timings' || true; } \
+  | { grep -oE '[a-zA-Z]+Ms"?[:=][0-9]+' || true; } \
+  | tr -d '"' | tr ':' '=' \
+  | awk -F= '{s[$1]+=$2; n[$1]++}
          END{
+           runs = n["executionMs"]
            if(runs==0){print "  (no timing samples found)"; exit}
            printf "  samples              : %d runs\n", runs
            printf "  -- provisioning --\n"
-           printf "  flow bundle download : %.1f ms\n", (n[1]?s[1]/n[1]:0)
-           printf "  pieces install       : %.1f ms\n", (n[2]?s[2]/n[2]:0)
-           printf "  engine install       : %.1f ms  (V8-cached)\n", (n[3]?s[3]/n[3]:0)
-           printf "  provision (total)    : %.1f ms\n", (n[4]?s[4]/n[4]:0)
+           printf "  flow bundle download : %.1f ms\n", (n["flowBundleDownloadMs"]?s["flowBundleDownloadMs"]/n["flowBundleDownloadMs"]:0)
+           printf "  pieces install       : %.1f ms\n", (n["installPiecesMs"]?s["installPiecesMs"]/n["installPiecesMs"]:0)
+           printf "  engine install       : %.1f ms  (V8-cached)\n", (n["installEngineMs"]?s["installEngineMs"]/n["installEngineMs"]:0)
+           printf "  provision (total)    : %.1f ms\n", (n["provisionMs"]?s["provisionMs"]/n["provisionMs"]:0)
            printf "  -- engine execution timeline --\n"
-           printf "  sandbox start (boot) : %.1f ms  (fork + Node + parse + isolated-vm init + connect)\n", (n[6]?s[6]/n[6]:0)
-           printf "  sandbox run (flow)   : %.1f ms  (webhook -> math -> code -> response)\n", (n[7]?s[7]/n[7]:0)
-           printf "  execution (total)    : %.1f ms\n", (n[5]?s[5]/n[5]:0)
+           printf "  sandbox start (boot) : %.1f ms  (fork + Node + parse + isolated-vm init + connect)\n", (n["sandboxStartMs"]?s["sandboxStartMs"]/n["sandboxStartMs"]:0)
+           printf "  sandbox run (flow)   : %.1f ms  (webhook -> math -> code -> response)\n", (n["sandboxRunMs"]?s["sandboxRunMs"]/n["sandboxRunMs"]:0)
+           printf "  execution (total)    : %.1f ms\n", (n["executionMs"]?s["executionMs"]/n["executionMs"]:0)
          }'
 
 echo ""

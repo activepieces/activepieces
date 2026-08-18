@@ -156,6 +156,22 @@ describe('createSandbox', () => {
             })
         })
 
+        it('scopes code mount to a nested action-run namespace when non-reusable', async () => {
+            const log = createMockLogger()
+            testPM = createTestProcessMaker()
+            sandbox = createSandbox(log, 'sb-action-run', { ...defaultOptions, reusable: false }, testPM.maker)
+
+            await sandbox.start({ flowVersionId: 'action-runs/plat-xyz_deadbeef', platformId: '', mounts: [] })
+
+            const createCall = (testPM.maker.create as ReturnType<typeof vi.fn>).mock.calls[0][0]
+            const codeMount = createCall.mounts.find((m: { sandboxPath: string }) => m.sandboxPath.startsWith('/root/codes'))
+            expect(codeMount).toEqual({
+                hostPath: '/tmp/test-cache/codes/action-runs/plat-xyz_deadbeef',
+                sandboxPath: '/root/codes/action-runs/plat-xyz_deadbeef',
+                optional: true,
+            })
+        })
+
         it('mounts full codes directory when reusable even with flowVersionId', async () => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
@@ -204,11 +220,16 @@ describe('createSandbox', () => {
             ['.'],
             ['..'],
             ['../etc'],
-            ['a/b'],
+            ['a/b/c'],
+            ['a//b'],
+            ['/a'],
+            ['a/'],
+            ['action-runs/..'],
+            ['action-runs/../../etc'],
             ['fv\\1'],
             ['fv\0null'],
             [''],
-        ])('rejects path traversal in flowVersionId: %s', async (flowVersionId) => {
+        ])('rejects an unsafe code namespace in flowVersionId: %s', async (flowVersionId) => {
             const log = createMockLogger()
             testPM = createTestProcessMaker()
             sandbox = createSandbox(log, 'sb-fv-trav', defaultOptions, testPM.maker)
@@ -715,6 +736,64 @@ describe('createSandbox', () => {
 
             client.on('rpc', () => {
                 ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('Caught fatal signal 9\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
+            }
+        })
+
+        // We SIGKILL the sandbox ourselves on shutdown, and isolate prints the same "Caught fatal
+        // signal 9" it prints for an OOM kill — so a deploy-time abort must not be reported as the
+        // user's flow exhausting memory.
+        it('does NOT classify a shutdown-initiated SIGKILL as SANDBOX_MEMORY_ISSUE', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                void sandbox.shutdown()
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('Caught fatal signal 9\n'))
+                setTimeout(() => child.emit('close', 1, null), 20)
+            })
+
+            const executePromise = sandbox.execute(
+                'EXECUTE_FLOW' as any,
+                {} as any,
+                { timeoutInSeconds: 10 },
+            )
+
+            await expect(executePromise).rejects.toThrow()
+            try {
+                await executePromise
+            }
+            catch (err) {
+                expect((err as ActivepiecesError).error.code).not.toBe(ErrorCode.SANDBOX_MEMORY_ISSUE)
+                expect((err as ActivepiecesError).error.code).toBe(ErrorCode.SANDBOX_INTERNAL_ERROR)
+            }
+        })
+
+        // A V8 heap-OOM message can only come from the engine actually exhausting memory — we never
+        // produce it — so a concurrent shutdown must not strip the memory classification off it.
+        it('still classifies a V8 heap-OOM as SANDBOX_MEMORY_ISSUE even during shutdown', async () => {
+            const { sandbox } = await startSandbox()
+            const client = testPM.getClient()
+            const child = testPM.getChild()
+
+            client.on('rpc', () => {
+                void sandbox.shutdown()
+                ;(child.stderr as unknown as EventEmitter).emit('data', Buffer.from('FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n'))
                 setTimeout(() => child.emit('close', 1, null), 20)
             })
 

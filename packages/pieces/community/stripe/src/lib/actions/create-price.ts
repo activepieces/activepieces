@@ -7,13 +7,14 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { priceOutputSchema } from '../output-schemas';
 export const stripeCreatePrice = createAction({
   name: 'create_price',
   auth: stripeAuth,
   displayName: 'Create Price',
   description:
     'Create a price (one-time or recurring), associated with a product.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a price for an existing Stripe product, in either one-time or recurring mode depending on the selected billing interval. Use after creating a product to define what to charge before building a subscription or payment link. Requires the product ID; not idempotent, as each call creates a new price.',
@@ -69,6 +70,7 @@ export const stripeCreatePrice = createAction({
       required: false,
     }),
   },
+  outputSchema: priceOutputSchema,
   async run(context) {
     const {
       product,

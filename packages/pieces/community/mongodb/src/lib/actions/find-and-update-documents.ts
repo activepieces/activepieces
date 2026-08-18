@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../..';
+import { findAndUpdateDocumentsOutputSchema } from '../output-schemas';
 import { mongodbCommon, mongodbConnect } from '../common';
 
 export default createAction({
@@ -8,6 +9,7 @@ export default createAction({
   displayName: 'Find and Update Documents',
   description: 'Find documents and update them, returning the updated documents',
   audience: 'both',
+  outputSchema: findAndUpdateDocumentsOutputSchema,
   aiMetadata: { description: 'Applies MongoDB update operators to all documents matching a filter via updateMany, then optionally re-reads and returns the matched documents in their post-update state. Choose this over plain Update Documents when the agent needs to see the resulting documents, not just counts. Filter and update are required; supports upsert. Not idempotent: it mutates state and operators like $inc compound on each call.', idempotent: false },
   props: {
     database: mongodbCommon.database,

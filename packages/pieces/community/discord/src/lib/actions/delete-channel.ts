@@ -6,13 +6,15 @@ import {
 import { createAction } from '@activepieces/pieces-framework';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordGetChannelActionOutputSchema } from '../output-schemas';
 
 export const discordDeleteChannel = createAction({
   auth: discordAuth,
   name: 'delete_channel',
   description: 'delete a channel',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Permanently deletes a channel, identified by channel ID. Use to remove a channel and its messages; this is destructive and cannot be undone. Requires the bot to have Manage Channels permission; idempotent in end state, since deleting an already-removed channel leaves it gone.', idempotent: true },
+  outputSchema: discordGetChannelActionOutputSchema,
   displayName: 'Delete channel',
   props: {
     channel_id: discordCommon.channel,
@@ -28,8 +30,16 @@ export const discordDeleteChannel = createAction({
       },
     };
 
-    const res = await httpClient.sendRequest<never>(request);
-
-    return res.body;
+    try {
+      const res = await httpClient.sendRequest<never>(request);
+      return res.body;
+    } catch (error: any) {
+      // Discord returns 404 (Unknown Channel, 10003) when the channel is
+      // already gone. Treat that as success so the action is idempotent.
+      if (error?.response?.status === 404) {
+        return { success: true, alreadyAbsent: true };
+      }
+      throw error;
+    }
   },
 });

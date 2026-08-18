@@ -7,15 +7,17 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
+import { OtpEntity } from '../authentication/otp/otp-entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
+import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
+import { AgentEntity } from '../ee/agent/agent-entity'
+import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
+import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
-import { ChatConversationEntity } from '../ee/chat/chat-conversation-entity'
-import { ChatRolloutUserEntity } from '../ee/chat/chat-rollout-user-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -54,6 +56,7 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
+import { TeamsBotInstallationEntity } from '../teams-bot/teams-bot-installation.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -104,10 +107,13 @@ function getEntities(): EntitySchema<unknown>[] {
         KnowledgeBaseFileEntity,
         KnowledgeBaseChunkEntity,
         ToolSearchIndexEntity,
-        ChatConversationEntity,
+        AgentEntity,
+        AgentConversationEntity,
         ChatRolloutUserEntity,
+        UserMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
+        TeamsBotInstallationEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,

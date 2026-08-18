@@ -65,7 +65,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             await getS3Client().putObject({
                 Bucket: getS3BucketName(),
                 Key: s3Key,
-                Body: Readable.from(data),
+                Body: data,
                 ContentLength: data.length,
             })
             log.info({
@@ -139,7 +139,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         try {
             for (const chunk of chunks) {
                 const deleteObjects = chunk.map(Key => ({ Key }))
-                await getS3Client().send(new DeleteObjectsCommand({
+                const response = await getS3Client().send(new DeleteObjectsCommand({
                     Bucket: getS3BucketName(),
                     Delete: {
                         Objects: deleteObjects,
@@ -147,7 +147,11 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                     },
                     ChecksumAlgorithm: 'CRC32C',
                 }))
-                log.info({ count: chunk.length }, 'files deleted from s3')
+                const errors = response.Errors ?? []
+                if (errors.length > 0) {
+                    log.warn({ count: errors.length, codes: errors.map((entry) => entry.Code) }, 'some files could not be deleted from s3')
+                }
+                log.info({ count: chunk.length - errors.length }, 'files deleted from s3')
             }
         }
         catch (error) {

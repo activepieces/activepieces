@@ -72,7 +72,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0/50 23 * * *',
+            cron: '50 23 * * *',
         },
     })
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {

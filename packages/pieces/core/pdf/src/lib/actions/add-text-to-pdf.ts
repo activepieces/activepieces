@@ -8,10 +8,11 @@ const fontOptions = Object.entries(StandardFonts).map(([key, value]) => {
 });
 
 export const addTextToPdf = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'addTextToPdf',
   displayName: 'Add Text to PDF',
   description: 'Stamps one or more text strings at exact pixel distances from the top-left corner.',
+  aiMetadata: { description: 'Stamps one or more text strings onto an existing PDF at exact point offsets from the top-left corner, each item targeting either a single page or every page. Use it for headers, dates or reference numbers — prefer Add Image to PDF for signatures and logos, and Text to PDF to build a document from scratch. Only the 14 standard PDF fonts are available and the call fails if any text would run off a page edge; the input file is never modified and repeating the call produces the same stamped content, so idempotent.', idempotent: true },
   props: {
     file: Property.File({
       displayName: 'PDF File or URL',

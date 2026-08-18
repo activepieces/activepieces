@@ -69,6 +69,10 @@ export const scheduledReportFetchWqlBatch = createTrigger({
 	displayName: 'Scheduled Report Fetch using WQL (Batch)',
 	description:
 		'Polls a WQL query on a schedule and returns matching rows as a batch.',
+	aiMetadata: {
+		description:
+			'Fires on every poll with the rows of a Workday Query Language (WQL) query that are newer than the previous run, delivered as one batch. Recency is judged by a configurable date field, defaulting to lastFunctionallyUpdated, so the query must select that column. Use for scheduled WQL extracts; use Scheduled Report Fetch (Batch) when the data comes from a published report definition instead.',
+	},
 	props,
 	sampleData: {
 		total_count: 1,

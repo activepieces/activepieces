@@ -2,14 +2,16 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { getUserByIdActionOutputSchema } from '../output-schemas';
 
 export const findUserByIdAction = createAction({
 	auth: slackAuth,
 	name: 'find-user-by-id',
 	displayName: 'Find User by ID',
 	description: 'Finds a user by their ID.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Fetch a user profile directly by their Slack user ID; read-only and repeatable. Pick this when you already have the user ID (the fastest, exact lookup); use Find User by Handle when you only know the display-name handle.', idempotent: true },
+	outputSchema: getUserByIdActionOutputSchema,
 	props: {
 		id: Property.ShortText({
 			displayName: 'ID',

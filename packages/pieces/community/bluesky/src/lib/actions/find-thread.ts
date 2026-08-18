@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blueskyAuth } from '../common/auth';
+import { findThreadOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import { postUrlProperty, threadDepthDropdown, parentHeightDropdown, extractPostInfoFromUrl } from '../common/props';
 
@@ -9,6 +10,7 @@ export const findThread = createAction({
   displayName: 'Find Thread',
   description: 'Get a full conversation thread with replies',
   audience: 'both',
+  outputSchema: findThreadOutputSchema,
   aiMetadata: {
     description: 'Retrieves the full conversation thread around a Bluesky post — parent posts and nested replies — given a bsky.app post URL or AT-URI, with configurable reply depth and parent height (each 0-1000). Use to read an entire discussion rather than a single post. Read-only and idempotent.',
     idempotent: true,

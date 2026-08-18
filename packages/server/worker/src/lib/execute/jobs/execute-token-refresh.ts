@@ -1,4 +1,3 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import {
     AppConnectionValue,
     EngineOperationType,
@@ -8,6 +7,8 @@ import {
 } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { JobContext, JobHandler, JobResultKind, SynchronousJobResult } from '../types'
+import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { buildSynchronousResult } from '../utils/synchronous-result'
 
 export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, SynchronousJobResult> = {
     jobType: WorkerJobType.EXECUTE_TOKEN_REFRESH,
@@ -37,16 +38,10 @@ export const executeTokenRefreshJob: JobHandler<ExecuteTokenRefreshJobData, Sync
                 provision: resolved.provision,
             })
 
-            return {
-                kind: JobResultKind.SYNCHRONOUS,
-                status: result.status,
-                response: result.response,
-                errorMessage: result.error,
-                logs: result.logs,
-            }
+            return buildSynchronousResult(result)
         }
         catch (e) {
-            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT) {
+            if (isSandboxTimeout(e)) {
                 return {
                     kind: JobResultKind.SYNCHRONOUS,
                     status: EngineResponseStatus.TIMEOUT,

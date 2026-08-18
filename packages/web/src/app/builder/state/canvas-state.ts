@@ -131,19 +131,13 @@ export const createCanvasState = (
             ? RightSideBarType.NONE
             : RightSideBarType.PIECE_SETTINGS;
 
-        const isEmptyTrigger =
-          selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-
         const userPickedDifferentStepDuringRun =
           !options?.fromAutoFocus &&
           !isNil(state.run) &&
           state.selectedStep !== selectedStep;
 
         return {
-          openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
-            ? 'trigger'
-            : null,
+          openedPieceSelectorStepNameOrAddButtonId: null,
           selectedStep,
           rightSidebar,
           selectedBranchIndex: null,
