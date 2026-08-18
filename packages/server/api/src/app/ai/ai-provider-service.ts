@@ -76,9 +76,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             modelIds: [],
             projectScope: 'all',
             projectIds: [],
-            status: 'active',
-            statusReason: null,
-            statusUpdated: new Date().toISOString(),
+            ...provedHealthy(),
         })
         return toConfigResponse(saved)
     },
@@ -123,6 +121,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('modelIds', request.modelIds),
             ...spreadIfDefined('projectScope', request.projectScope),
             ...spreadIfDefined('projectIds', request.projectIds),
+            ...(revalidated ? provedHealthy() : {}),
             displayName: request.displayName,
         }
 
@@ -134,10 +133,6 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         else {
             await aiProviderRepo().update(providerId, updates)
-        }
-
-        if (revalidated) {
-            await recordKeyOutcome({ platformId, aiProvider, error: undefined, log })
         }
     },
 
@@ -346,6 +341,10 @@ function toInvalidCredentialsError({ provider, error, log }: { provider: AIProvi
             httpErrorResponse: errorMessage,
         },
     })
+}
+
+function provedHealthy(): Pick<AIProviderSchema, 'status' | 'statusReason' | 'statusUpdated'> {
+    return { status: 'active', statusReason: null, statusUpdated: new Date().toISOString() }
 }
 
 async function recordKeyOutcome({ platformId, aiProvider, error, log }: { platformId: PlatformId, aiProvider: AIProviderSchema, error: unknown, log: FastifyBaseLogger }): Promise<void> {
