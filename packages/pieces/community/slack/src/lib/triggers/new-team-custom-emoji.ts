@@ -2,6 +2,8 @@ import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { appWebhookSetupInfo } from '../common/props';
+import { newTeamCustomEmojiTriggerOutputSchema } from '../output-schemas';
 
 const sampleData = {
 	id: 'heart',
@@ -17,9 +19,12 @@ export const newTeamCustomEmojiTrigger = createTrigger({
 		description:
 			'Fires when a new custom emoji is added to the Slack workspace (an emoji_changed event with the "add" subtype). The event payload includes the emoji id (name) and the image URL of the added emoji.',
 	},
-	props: {},
+	props: {
+		info: appWebhookSetupInfo,
+	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData,
+	outputSchema: newTeamCustomEmojiTriggerOutputSchema,
 	onEnable: async (context) => {
 		const teamId = await getTeamId(context.auth as SlackAuthValue);
 		context.app.createListeners({

@@ -1,53 +1,15 @@
-import {
-  ApEdition,
-  ApFlagId,
-  ThirdPartyAuthnProvidersToShowMap,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { useTheme } from '@/components/providers/theme-provider';
-import { authenticationSession } from '@/lib/authentication-session';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { FullLogo } from '../../../components/custom/full-logo';
-import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
 import { AuthAnimation } from './auth-animation';
-import { SamlLoginForm } from './saml-login-form';
-import { SignInForm } from './sign-in-form';
-import { SignUpForm } from './sign-up-form';
-import { ThirdPartyLogin } from './third-party-logins';
-
-const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
-  const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.toString();
-
-  return isSignup ? (
-    <div className="mt-6 text-center text-[14px] text-muted-foreground">
-      {t('Already have an account?')}
-      <Link
-        to={`/sign-in?${searchQuery}`}
-        className="pl-1 font-medium text-foreground hover:underline transition-all duration-200"
-      >
-        {t('Sign in')}
-      </Link>
-    </div>
-  ) : (
-    <div className="mt-6 text-center text-[14px] text-muted-foreground">
-      {t("Don't have an account?")}
-      <Link
-        to={`/sign-up?${searchQuery}`}
-        className="pl-1 font-medium text-foreground hover:underline transition-all duration-200"
-      >
-        {t('Sign up')}
-      </Link>
-    </div>
-  );
-};
 
 const TermsFooter = () => {
   const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
@@ -90,27 +52,6 @@ const TermsFooter = () => {
       .
     </div>
   );
-};
-
-const AuthSeparator = ({
-  isEmailAuthEnabled,
-}: {
-  isEmailAuthEnabled: boolean;
-}) => {
-  const { data: thirdPartyAuthProviders } =
-    flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
-    );
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = edition === ApEdition.CLOUD;
-  const hasThirdPartyLogin =
-    thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml || isCloud;
-
-  return hasThirdPartyLogin && isEmailAuthEnabled ? (
-    <HorizontalSeparatorWithText className="my-5 text-muted-foreground">
-      {t('or')}
-    </HorizontalSeparatorWithText>
-  ) : null;
 };
 
 const AuthImage = () => {
@@ -171,89 +112,4 @@ const AuthLayout = ({
 
 AuthLayout.displayName = 'AuthLayout';
 
-const AuthFormTemplate = React.memo(
-  ({ form }: { form: 'signin' | 'signup' }) => {
-    const isSignUp = form === 'signup';
-    const token = authenticationSession.getToken();
-    const redirectAfterLogin = useRedirectAfterLogin();
-    const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
-    const [showSamlLogin, setShowSamlLogin] = useState(false);
-    const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.EMAIL_AUTH_ENABLED,
-    );
-    const data = {
-      signin: {
-        title: t('Welcome back'),
-        description: t('Sign in to pick up where you left off.'),
-      },
-      signup: {
-        title: t('Create a new account'),
-        description: t('Join thousands of teams running on autopilot.'),
-      },
-    }[form];
-
-    useEffect(() => {
-      if (token) {
-        redirectAfterLogin();
-      }
-    }, [token, redirectAfterLogin]);
-
-    if (token) {
-      return null;
-    }
-
-    if (showSamlLogin) {
-      return (
-        <AuthLayout isSignUp={isSignUp}>
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold tracking-tight font-sentient">
-              {t('Sign in with SAML')}
-            </h1>
-          </div>
-          <SamlLoginForm onBack={() => setShowSamlLogin(false)} />
-        </AuthLayout>
-      );
-    }
-
-    return (
-      <AuthLayout isSignUp={isSignUp}>
-        {!showCheckYourEmailNote && (
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold tracking-tight font-sentient">
-              {data.title}
-            </h1>
-          </div>
-        )}
-
-        {!showCheckYourEmailNote && (
-          <ThirdPartyLogin
-            isSignUp={isSignUp}
-            onSamlClick={() => setShowSamlLogin(true)}
-          />
-        )}
-        <AuthSeparator
-          isEmailAuthEnabled={
-            (isEmailAuthEnabled ?? true) && !showCheckYourEmailNote
-          }
-        />
-
-        {isEmailAuthEnabled ? (
-          isSignUp ? (
-            <SignUpForm
-              setShowCheckYourEmailNote={setShowCheckYourEmailNote}
-              showCheckYourEmailNote={showCheckYourEmailNote}
-            />
-          ) : (
-            <SignInForm />
-          )
-        ) : null}
-
-        <BottomNote isSignup={isSignUp} />
-      </AuthLayout>
-    );
-  },
-);
-
-AuthFormTemplate.displayName = 'AuthFormTemplate';
-
-export { AuthFormTemplate, AuthLayout };
+export { AuthLayout };

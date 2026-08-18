@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { flowHooks } from '@/features/flows';
 import { foldersApi, foldersHooks } from '@/features/folders';
-import { projectCollectionUtils } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { templatesTelemetryApi } from '@/features/templates';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -165,7 +165,7 @@ export const UseTemplateDialog = ({
                 {projects?.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     <ApProjectDisplay
-                      title={project.displayName}
+                      title={getProjectName(project)}
                       icon={project.icon}
                       projectType={project.type}
                     />

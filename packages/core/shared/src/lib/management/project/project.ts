@@ -37,6 +37,7 @@ export const ProjectPlan = z.object({
     name: z.string(),
     piecesFilterType: z.nativeEnum(PiecesFilterType),
     pieces: z.array(z.string()),
+    activeFlowsLimit: Nullable(z.number()),
 })
 
 export type ProjectPlan = z.infer<typeof ProjectPlan>

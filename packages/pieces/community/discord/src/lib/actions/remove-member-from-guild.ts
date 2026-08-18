@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { discordAuth } from '../auth';
 import { discordCommon } from '../common';
+import { discordSuccessActionOutputSchema } from '../output-schemas';
 
 export const discordRemoveMemberFromGuild = createAction({
   auth: discordAuth,
@@ -13,6 +14,7 @@ export const discordRemoveMemberFromGuild = createAction({
   description: 'Remove Guild Member',
   audience: 'both',
   aiMetadata: { description: 'Kicks a member from a guild, identified by guild ID and user ID; the user may rejoin later via an invite. Use to remove someone without a permanent ban. Requires the bot to have Kick Members permission; idempotent, since removing an absent member yields the same end state.', idempotent: true },
+  outputSchema: discordSuccessActionOutputSchema,
   displayName: 'Remove member from guild',
   props: {
     guild_id: discordCommon.guilds,

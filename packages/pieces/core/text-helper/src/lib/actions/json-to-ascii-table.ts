@@ -1,8 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 
 export const jsonToAsciiTable = createAction({
-  audience: 'human',
+  audience: 'both',
   description: 'Convert a list of items to a text table',
+  aiMetadata: {
+    description:
+      'Renders an array of objects as a fixed-width ASCII table, using the union of all object keys as columns and sizing each column to its widest value. Use it when a list must be shown as human-readable plain text in a chat message, email, or log rather than as JSON. The input must be a JSON array or the action throws, and an empty array returns an empty string; deterministic and idempotent.',
+    idempotent: true,
+  },
   displayName: 'List to Text Table',
   name: 'json_to_ascii_table',
   errorHandlingOptions: {

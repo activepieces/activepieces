@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { wordpressAuth } from '../..';
+import { getPostActionOutputSchema } from '../output-schemas';
 
 export const getWordPressPost = createAction({
   auth: wordpressAuth,
@@ -19,6 +20,7 @@ export const getWordPressPost = createAction({
   audience: 'both',
   aiMetadata: { description: 'Fetches a single WordPress post by its numeric post ID via the REST API. Use it to read the current content, status, or metadata of a known post before acting on it. Requires the post ID; read-only and idempotent.', idempotent: true },
   displayName: 'Get Post Details',
+  outputSchema: getPostActionOutputSchema,
   props: {
     id: Property.Number({
       description: 'The ID of the post to get',

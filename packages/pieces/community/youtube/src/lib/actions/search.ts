@@ -8,6 +8,8 @@ export const youtubeSearchAction = createAction({
   displayName: 'Search',
   description:
     'Search YouTube videos, channels, and playlists using the YouTube Data API search.list endpoint.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a YouTube search.list query across videos, channels, and playlists at once or restricted to a single resource type, and can instead be scoped to uploads owned by the authenticated account (For Mine), a CMS content owner, or the developer project. Use it to turn a free-text query, channel, date range, region, or topic into video, channel, or playlist IDs for later steps; prefer List Playlist Items when the playlist ID is already known. Video-only filters such as duration, definition, caption, event type, and location require Type to be Video, and Location must be paired with Location Radius. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

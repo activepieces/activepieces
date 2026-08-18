@@ -1,16 +1,18 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, spreadIfNotUndefined, tryCatch, UserId } from '@activepieces/core-utils'
+import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
+import { billingProvider } from './billing-provider'
 import { PlatformEntity } from './platform.entity'
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
@@ -70,36 +72,54 @@ export const platformService = (log: FastifyBaseLogger) => ({
             platformId: savedPlatform.id,
         })
 
+        await platformPlanService(log).onPlatformCreated(savedPlatform.id)
+
         log.info({ platform: { id: savedPlatform.id }, ownerId }, 'Platform created')
         return stripFederatedAuth(savedPlatform)
     },
-    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens }: CreatePlatformWithProjectParams): Promise<AuthenticationResponse> {
-        const newUser = await userService(log).create({
-            identityId,
-            platformRole: PlatformRole.ADMIN,
-            platformId: null,
-        })
-        const platform = await this.create({ ownerId: newUser.id, name })
-        const defaultProject = await projectService(log).create({
-            displayName: `${name}'s Project`,
-            ownerId: newUser.id,
-            platformId: platform.id,
-            type: ProjectType.PERSONAL,
-        })
-        if (invalidatePreviousTokens) {
-            await userIdentityRepository().update(identityId, {
-                tokenVersion: nanoid(),
-            })
-        }
-        await authenticationUtils(log).sendTelemetry({
-            identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
-            user: newUser,
-            projectId: defaultProject.id,
-        })
-        return authenticationUtils(log).getProjectAndToken({
-            userId: newUser.id,
-            platformId: platform.id,
-            projectId: defaultProject.id,
+    async createPlatformWithProject({ identityId, name, invalidatePreviousTokens, isFirstPlatform, callerTokenVersion, beforeProvision }: CreatePlatformWithProjectParams): Promise<CreatePlatformWithProjectResult> {
+        return distributedLock(log).runExclusive({
+            key: `create-platform-${identityId}`,
+            timeoutInSeconds: 30,
+            fn: async () => {
+                const existingUsers = isFirstPlatform ? await userService(log).getByIdentityId({ identityId }) : []
+                const provisionedOwner = findProvisionedOwner(existingUsers)
+                const platformAlreadyProvisioned = !isNil(provisionedOwner)
+                if (platformAlreadyProvisioned) {
+                    return resumeProvisionedPlatform({ owner: provisionedOwner, identityId, name, invalidatePreviousTokens, callerTokenVersion, log })
+                }
+                const ownerWithoutPlatform = existingUsers.find((user) => isNil(user.platformId))
+                const unlinkedPlatform = isNil(ownerWithoutPlatform) ? null : await platformRepo().findOneBy({ ownerId: ownerWithoutPlatform.id })
+                const provisioningStoppedBeforeLinkingTheOwner = !isNil(ownerWithoutPlatform) && !isNil(unlinkedPlatform)
+                if (provisioningStoppedBeforeLinkingTheOwner) {
+                    await beforeProvision?.()
+                    return linkOwnerToPlatform({ ownerId: ownerWithoutPlatform.id, platformId: unlinkedPlatform.id, identityId, name, invalidatePreviousTokens, log })
+                }
+                await beforeProvision?.()
+                const owner = ownerWithoutPlatform
+                    ?? await userService(log).create({
+                        identityId,
+                        platformRole: PlatformRole.ADMIN,
+                        platformId: null,
+                    })
+                const platform = await this.create({ ownerId: owner.id, name })
+                const personalProject = await projectService(log).create({
+                    displayName: personalProjectName(name),
+                    ownerId: owner.id,
+                    platformId: platform.id,
+                    type: ProjectType.PERSONAL,
+                })
+                if (invalidatePreviousTokens) {
+                    await rotateTokenVersion(identityId)
+                }
+                await reportSignup({ identityId, user: owner, projectId: personalProject.id, log })
+                const response = await authenticationUtils(log).getProjectAndToken({
+                    userId: owner.id,
+                    platformId: platform.id,
+                    projectId: personalProject.id,
+                })
+                return { response, provisioned: true }
+            },
         })
     },
     async getAll(): Promise<PlatformWithoutFederatedAuth[]> {
@@ -234,19 +254,107 @@ export const platformService = (log: FastifyBaseLogger) => ({
     },
     async getOneWithPlanAndUsageOrThrow(id: PlatformId): Promise<PlatformWithoutSensitiveData> {
         const platform = await this.getOneOrThrow(id)
-        const [samlConfigured, usage, plan] = await Promise.all([
+        const [samlConfigured, usage, plan, billingEnforced] = await Promise.all([
             this.hasSamlConfigured(id),
             getUsage(log, platform),
             getPlan(log, platform),
+            getBillingEnforced(log, id),
         ])
         return {
             ...platform,
             federatedAuthProviders: { saml: samlConfigured ? {} : null },
             usage,
+            billingEnforced,
             plan,
         }
     },
 })
+
+function findProvisionedOwner(users: User[]): PlatformOwner | undefined {
+    return users.find((user): user is PlatformOwner => !isNil(user.platformId))
+}
+
+async function resumeProvisionedPlatform({ owner, identityId, name, invalidatePreviousTokens, callerTokenVersion, log }: ResumeProvisionedPlatformParams): Promise<CreatePlatformWithProjectResult> {
+    const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+    const earlierAttemptNeverRotated = isSameTokenVersion(identity.tokenVersion, callerTokenVersion)
+    const response = await finishExistingPlatform({
+        user: owner,
+        platformId: owner.platformId,
+        name,
+        invalidatePreviousTokens: invalidatePreviousTokens && earlierAttemptNeverRotated,
+        identityId,
+        log,
+    })
+    return { response, provisioned: false }
+}
+
+async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, invalidatePreviousTokens, log }: LinkOwnerToPlatformParams): Promise<CreatePlatformWithProjectResult> {
+    await userService(log).addOwnerToPlatform({ id: ownerId, platformId })
+    const owner = await userService(log).getOneOrFail({ id: ownerId })
+    const response = await finishExistingPlatform({
+        user: owner,
+        platformId,
+        name,
+        invalidatePreviousTokens,
+        identityId,
+        log,
+    })
+    if (!isNil(response.projectId)) {
+        await reportSignup({ identityId, user: owner, projectId: response.projectId, log })
+    }
+    return { response, provisioned: true }
+}
+
+async function reportSignup({ identityId, user, projectId, log }: ReportSignupParams): Promise<void> {
+    await authenticationUtils(log).sendTelemetry({
+        identity: await userIdentityService(log).getOneOrFail({ id: identityId }),
+        user,
+        projectId,
+    })
+}
+
+function isSameTokenVersion(current: string | undefined, caller: string | undefined): boolean {
+    const neitherHasBeenRotated = isNil(current) && isNil(caller)
+    return neitherHasBeenRotated || current === caller
+}
+
+async function rotateTokenVersion(identityId: string): Promise<void> {
+    await userIdentityRepository().update(identityId, {
+        tokenVersion: nanoid(),
+    })
+}
+
+function personalProjectName(platformName: string): string {
+    const noun = ' Platform'
+    if (platformName.endsWith(noun)) {
+        return `${platformName.slice(0, -noun.length)} Project`
+    }
+    return /['’]s$/.test(platformName) ? `${platformName} Project` : `${platformName}'s Project`
+}
+
+async function finishExistingPlatform({ user, platformId, name, invalidatePreviousTokens, identityId, log }: FinishExistingPlatformParams): Promise<AuthenticationResponse> {
+    const hasProjects = await projectService(log).userHasProjects({
+        platformId,
+        userId: user.id,
+        isPrivileged: userService(log).isUserPrivileged(user),
+    })
+    const project = hasProjects
+        ? null
+        : await projectService(log).create({
+            displayName: personalProjectName(name),
+            ownerId: user.id,
+            platformId,
+            type: ProjectType.PERSONAL,
+        })
+    if (invalidatePreviousTokens) {
+        await rotateTokenVersion(identityId)
+    }
+    return authenticationUtils(log).getProjectAndToken({
+        userId: user.id,
+        platformId,
+        projectId: project?.id ?? null,
+    })
+}
 
 async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformUsage | undefined> {
     const edition = system.getEdition()
@@ -256,13 +364,23 @@ async function getUsage(log: FastifyBaseLogger, platform: PlatformWithoutFederat
     return platformPlanService(log).getUsage(platform.id)
 }
 
+async function getBillingEnforced(log: FastifyBaseLogger, platformId: PlatformId): Promise<boolean | undefined> {
+    if (system.getEdition() === ApEdition.COMMUNITY) {
+        return undefined
+    }
+    const { data, error } = await tryCatch(() => billingProvider.get(log).isBillingEnforced(platformId))
+    if (!isNil(error)) {
+        log.warn({ error, platform: { id: platformId } }, 'Failed to resolve billing enforcement for the platform payload')
+        return undefined
+    }
+    return data ?? undefined
+}
+
 async function getPlan(log: FastifyBaseLogger, platform: PlatformWithoutFederatedAuth): Promise<PlatformPlanLimits> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return {
             ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
         }
     }
     return platformPlanService(log).getOrCreateForPlatform(platform.id)
@@ -298,10 +416,52 @@ type UpdateParams = UpdatePlatformRequestBody & {
     ssoDomainVerification?: SsoDomainVerification | null
 }
 
+type CreatePlatformWithProjectResult = {
+    response: AuthenticationResponse
+    provisioned: boolean
+}
+
 type CreatePlatformWithProjectParams = {
     identityId: string
     name: string
     invalidatePreviousTokens: boolean
+    isFirstPlatform: boolean
+    callerTokenVersion: string | undefined
+    beforeProvision?: () => Promise<void>
+}
+
+type PlatformOwner = User & {
+    platformId: PlatformId
+}
+type ResumeProvisionedPlatformParams = {
+    owner: PlatformOwner
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
+    callerTokenVersion: string | undefined
+    log: FastifyBaseLogger
+}
+type LinkOwnerToPlatformParams = {
+    ownerId: UserId
+    platformId: PlatformId
+    identityId: string
+    name: string
+    invalidatePreviousTokens: boolean
+    log: FastifyBaseLogger
+}
+type FinishExistingPlatformParams = {
+    user: User
+    platformId: PlatformId
+    name: string
+    invalidatePreviousTokens: boolean
+    identityId: string
+    log: FastifyBaseLogger
+}
+type ReportSignupParams = {
+    identityId: string
+    user: User
+    projectId: string
+    log: FastifyBaseLogger
 }
 
 type ListPlatformsForIdentityParams = {

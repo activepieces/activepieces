@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { findBranchActionOutputSchema } from '../output-schemas';
 
 export const githubFindBranchAction = createAction({
   auth: githubAuth,
@@ -21,6 +22,7 @@ export const githubFindBranchAction = createAction({
       required: true,
     }),
   },
+  outputSchema: findBranchActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     const branchName = propsValue.branch;

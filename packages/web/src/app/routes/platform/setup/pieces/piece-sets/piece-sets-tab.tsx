@@ -12,9 +12,13 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  RowDataWithActions,
+} from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -32,14 +36,19 @@ import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
+
+  const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
+  const limitParam = searchParams.get('limit');
+  const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
   const {
     data: pieceSetsPage,
     isLoading,
     refetch,
-  } = pieceSetQueries.usePieceSets();
+  } = pieceSetQueries.usePieceSets({ cursor, limit });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
 
   const pieceSets = useMemo(() => pieceSetsPage?.data ?? [], [pieceSetsPage]);
@@ -174,11 +183,10 @@ export const PieceSetsTab = () => {
         ]}
         page={{
           data: pieceSets,
-          next: null,
-          previous: null,
+          next: pieceSetsPage?.next ?? null,
+          previous: pieceSetsPage?.previous ?? null,
         }}
         isLoading={isLoading}
-        hidePagination={true}
         clientFiltering={true}
         toolbarButtons={[
           <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,

@@ -3,6 +3,7 @@ import { mkdir } from 'fs/promises'
 import path from 'path'
 import { arch } from 'process'
 import { execPromise } from '../utils/exec'
+import { engineNodeArgs } from './node-args'
 import { CreateSandboxProcessParams, SandboxLogger, SandboxMount, SandboxProcessMaker } from './types'
 
 export function getIsolateExecutableName(nodeArch: NodeJS.Architecture = arch): string {
@@ -58,7 +59,7 @@ const etcDir = path.resolve(process.cwd(), 'packages/server/api/src/assets/etc')
 export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDirectory: string, boxId: number): SandboxProcessMaker {
     return {
         create: async (params: CreateSandboxProcessParams) => {
-            const { sandboxId, mounts, env } = params
+            const { sandboxId, mounts, env, resourceLimits } = params
 
             for (const mount of mounts) {
                 assertMountInsideRoot(mount)
@@ -113,11 +114,16 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
                 '--share-net',
                 `--box-id=${boxId}`,
                 '--processes',
+                // isolate defaults RLIMIT_NOFILE to 64 (soft and hard), which a flow with a few
+                // dozen concurrent sockets exhausts — spawn then fails EMFILE mid-run. Still bounded
+                // so a runaway flow cannot exhaust the host.
+                `--open-files=${SANDBOX_OPEN_FILE_LIMIT}`,
                 '--chdir=/root',
                 ...envArgs,
                 '--run',
                 '--',
                 process.execPath,
+                ...engineNodeArgs(resourceLimits),
                 engineSandboxPath,
             ]
 
@@ -131,3 +137,5 @@ export function isolateProcess(log: SandboxLogger, enginePath: string, _codeDire
         },
     }
 }
+
+const SANDBOX_OPEN_FILE_LIMIT = 1024

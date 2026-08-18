@@ -77,6 +77,13 @@ export const linearUpdatedIssue = createTrigger({
       startedAt: null,
       stateId: 'state_1',
     },
+    type: 'Issue',
+    actor: { id: 'user_1', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-06T12:00:00.000Z',
+    url: 'https://linear.app/test-team/issue/1',
+    organizationId: 'org_1',
+    webhookTimestamp: 1694001600000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -118,7 +125,7 @@ export const linearUpdatedIssue = createTrigger({
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown };
     if (body.action === 'update') {
-      return [body.data];
+      return [body];
     }
     return [];
   },

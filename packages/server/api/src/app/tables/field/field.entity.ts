@@ -32,6 +32,11 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             type: String,
             nullable: false,
         },
+        position: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
         data: {
             type: 'jsonb',
             nullable: true,

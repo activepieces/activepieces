@@ -1,12 +1,12 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
+import { triggerRunner } from '../core/piece/trigger-runner'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
-import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
 import { resolveJobPayload } from './utils/resolve-job-payload'
 
@@ -26,7 +26,7 @@ export const flowOperation = {
             throw resolveError
         }
         const constants = EngineConstants.fromExecuteFlowInput(input)
-        const { data: output, error: executionError } = await tryCatch(() => executieSingleStepOrFlowOperation(input, constants))
+        const { data: output, error: executionError } = await tryCatch(() => executeSingleStepOrFlow(input, constants))
         if (executionError) {
             // Trigger run()/onStart() hooks and single-step test resolution can throw a plain Error/TypeError
             // or a non-ExecutionError (e.g. ENTITY_NOT_FOUND when testing a deleted step). Like an action step
@@ -86,7 +86,7 @@ async function reportFailedRun({ input, constants, error }: ReportFailedRunParam
     }
 }
 
-const executieSingleStepOrFlowOperation = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
+const executeSingleStepOrFlow = async (input: ResolvedExecuteFlowOperation, constants: EngineConstants): Promise<FlowExecutorContext> => {
     const testSingleStepMode = !isNil(constants.stepNameToTest)
     if (testSingleStepMode) {
         const testContext = await testExecutionContext.stateFromFlowVersion({
@@ -183,7 +183,7 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
-    const newPayload = await triggerHelper.executeTrigger({
+    const newPayload = await triggerRunner.executeTrigger({
         params: {
             ...input,
             hookType: TriggerHookType.RUN,

@@ -4,11 +4,12 @@ import OpenAI from 'openai';
 import { isLLM } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
-  audience: 'human',
+  audience: 'both',
 	auth: openaiAuth,
 	name: 'extract-structured-data',
 	displayName: 'Extract Structured Data from Text',
 	description: 'Returns structured data from provided unstructured text.',
+	aiMetadata: { description: 'Pulls a caller-defined set of named fields out of one block of unstructured text and returns them as a flat object, with each field declared as text, number, or boolean and optionally marked to fail the step when it is absent. Use it to turn prose, emails, or documents into machine-readable values; prefer analyze_sentiment or classify_text for a judgement about the text and ask_chatgpt for free-form output. Requires the text plus at least one field definition, and the step errors when the model returns no extraction at all. Not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
 	props: {
 		model: Property.Dropdown({
   auth: openaiAuth,

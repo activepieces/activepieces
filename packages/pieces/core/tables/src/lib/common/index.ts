@@ -21,6 +21,8 @@ const getFieldTypeText = (fieldType: FieldType) => {
       return 'Single Select';
     case FieldType.DATE:
       return 'Date';
+    case FieldType.DATETIME:
+      return 'Date & Time';
     case FieldType.NUMBER:
       return 'Number';
     case FieldType.TEXT:
@@ -92,6 +94,7 @@ export const tablesCommon = {
           }))]));
           break;
         case FieldType.DATE:
+        case FieldType.DATETIME:
           fieldValidations[field.externalId] = z.optional(z.union([z.date(), z.pipe(z.string(), z.transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
@@ -130,6 +133,7 @@ export const tablesCommon = {
             });
             break;
           case FieldType.DATE:
+          case FieldType.DATETIME:
             fields[field.externalId] = Property.DateTime({
               displayName: field.name,
               description,
@@ -285,36 +289,6 @@ export const tablesCommon = {
     assertNotNullOrUndefined(table, `Table with externalId ${tableId} not found`);
     return table.id;
   }
-}
-
-export const csvUtils = {
-  buildCsv({ fields, rows, includeHeaders }: { fields: { name: string }[], rows: Record<string, string>[], includeHeaders: boolean }): string {
-    const columnNames = fields.map((f) => f.name);
-    const lines: string[] = [];
-
-    if (includeHeaders) {
-      lines.push(columnNames.map(this.escapeCsvCell).join(','));
-    }
-
-    for (const row of rows) {
-      lines.push(columnNames.map((name) => this.escapeCsvCell(trimCellEdges(row[name] ?? ''))).join(','));
-    }
-
-    return lines.join('\n');
-  },
-
-  escapeCsvCell(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-  },
-}
-
-const CELL_EDGE_CHARS = /^[\s\u0000-\u001F\u007F-\u009F]+|[\s\u0000-\u001F\u007F-\u009F]+$/g;
-
-function trimCellEdges(value: string): string {
-  return value.replace(CELL_EDGE_CHARS, '');
 }
 
 const fetchAllTables = async (context: { server: { apiUrl: string, token: string }, project: { id: string } }): Promise<Table[]> => {

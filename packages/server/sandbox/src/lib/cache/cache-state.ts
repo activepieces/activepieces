@@ -8,7 +8,6 @@ type CacheMap = Record<string, string>
 
 const cachePath = (folderPath: string): string =>
     join(folderPath, 'cache.json')
-const cached: Record<string, CacheMap | null> = {}
 export const NO_SAVE_GUARD = (_: string): boolean => false
 
 export const cacheState = (folderPath: string) => {
@@ -19,7 +18,7 @@ export const cacheState = (folderPath: string) => {
             installFn,
             skipSave,
         }: CacheStateParams): Promise<CacheResult> {
-            const cache = await readCacheFromMemory(folderPath)
+            const cache = await readCacheFromFile(folderPath)
             const value = cache[key] as string | null
             if (!isNil(value) && !cacheMiss(value)) {
                 return {
@@ -33,7 +32,6 @@ export const cacheState = (folderPath: string) => {
                     const cacheFromDisk = await readCacheFromFile(folderPath)
                     const valueFromDisk = cacheFromDisk[key]
                     if (!isNil(valueFromDisk) && !cacheMiss(valueFromDisk)) {
-                        cached[folderPath] = cacheFromDisk
                         return { cacheHit: true, state: valueFromDisk }
                     }
                     const value = await installFn()
@@ -43,11 +41,7 @@ export const cacheState = (folderPath: string) => {
                             state: value,
                         }
                     }
-                    const freshCache = await cacheState(folderPath).saveCache(
-                        key,
-                        value,
-                    )
-                    cached[folderPath] = freshCache
+                    await cacheState(folderPath).saveCache(key, value)
                     return {
                         cacheHit: false,
                         state: value,
@@ -74,13 +68,6 @@ async function readCacheFromFile(folderPath: string): Promise<CacheMap> {
     }
     const fileContent = await readFile(filePath, 'utf8')
     return JSON.parse(fileContent)
-}
-
-async function readCacheFromMemory(folderPath: string): Promise<CacheMap> {
-    if (isNil(cached[folderPath])) {
-        cached[folderPath] = await readCacheFromFile(folderPath)
-    }
-    return cached[folderPath]
 }
 
 type CacheResult = {
