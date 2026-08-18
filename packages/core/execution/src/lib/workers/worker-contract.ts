@@ -98,6 +98,17 @@ export type WorkerToApiContract = {
     executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
     executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
+    reportAiProviderOutcome(input: ReportAiProviderOutcomeRequest): Promise<void>
+}
+
+// What a chat turn learned about the key it was handed. The worker classifies nothing itself; it
+// forwards the raw HTTP signal so one classifier decides, in the app, for every process.
+export type ReportAiProviderOutcomeRequest = {
+    platformId: string
+    aiProviderId: string
+    statusCode?: number
+    body?: string
+    message?: string
 }
 
 export type SendAgentEventRequest = {
@@ -135,6 +146,7 @@ export type AgentAiToolsConfig = {
 }
 
 export type AgentConfigResponse = {
+    aiProviderId: string
     provider: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>

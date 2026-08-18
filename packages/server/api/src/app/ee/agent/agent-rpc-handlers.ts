@@ -350,6 +350,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[agentRpc#getAgentConfig] System prompt assembled')
 
         return {
+            aiProviderId: providerConfig.id,
             provider: providerConfig.provider,
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,

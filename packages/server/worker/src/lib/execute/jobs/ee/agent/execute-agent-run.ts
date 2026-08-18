@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, isNil, isObject, ProviderOutcomeSignal, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -59,13 +59,25 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
         const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
         const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
+        // Every request the turn makes reports the health of the key the app handed us. The worker
+        // classifies nothing — it forwards the raw HTTP signal so one classifier decides for every
+        // process — and the report is fire-and-forget, never a reason a turn fails.
+        const onOutcome = (signal: ProviderOutcomeSignal) => {
+            void tryCatch(() => ctx.apiClient.reportAiProviderOutcome({
+                platformId,
+                aiProviderId: config.aiProviderId,
+                ...signal,
+            }))
+        }
         const model = agentAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
             metadata: { platformId, conversationId, runId },
             webSearchEnabled: webSearchActive,
+            onOutcome,
         })
         const fastModel = agentAiUtils.createChatModel({
             provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+            onOutcome,
         })
 
         log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')

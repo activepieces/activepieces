@@ -2,6 +2,7 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiProviderHealth } from '../../ai/ai-provider-health'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
@@ -354,6 +355,11 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
+        },
+
+        async reportAiProviderOutcome(input) {
+            const { platformId, aiProviderId, ...signal } = input
+            await aiProviderHealth(log).record({ platformId, providerId: aiProviderId, signal })
         },
     }
 }
