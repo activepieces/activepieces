@@ -16,24 +16,13 @@ export class AddFilePlatformIdIndex1829000000000 implements Migration {
                 CREATE INDEX IF NOT EXISTS "idx_file_platform_id"
                 ON "file" ("platformId")
             `)
-            return
         }
-        await queryRunner.query(`
-            DO $$
-            BEGIN
-                IF EXISTS (
-                    SELECT 1 FROM pg_class c
-                    JOIN pg_index i ON i.indexrelid = c.oid
-                    WHERE c.relname = 'idx_file_platform_id' AND NOT i.indisvalid
-                ) THEN
-                    EXECUTE 'DROP INDEX CONCURRENTLY IF EXISTS "idx_file_platform_id"';
-                END IF;
-            END $$
-        `)
-        await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_file_platform_id"
-            ON "file" ("platformId")
-        `)
+        else {
+            await queryRunner.query(`
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_file_platform_id"
+                ON "file" ("platformId")
+            `)
+        }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
