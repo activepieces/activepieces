@@ -103,6 +103,12 @@ const initialPermissions = [
     read: [Permission.READ_KNOWLEDGE_BASE],
     write: [Permission.READ_KNOWLEDGE_BASE, Permission.WRITE_KNOWLEDGE_BASE],
   },
+  {
+    name: 'Agents',
+    description: 'Read and write agents',
+    read: [Permission.READ_AGENT],
+    write: [Permission.READ_AGENT, Permission.WRITE_AGENT],
+  },
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
