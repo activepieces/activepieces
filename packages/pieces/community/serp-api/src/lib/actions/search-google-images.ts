@@ -12,7 +12,7 @@ export const searchGoogleImages = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Images via SerpApi for a query, returning results in `images_results` (thumbnail URL, full-resolution image URL, title, and source page). Use to discover images, find a full-resolution URL, or locate the page an image came from. Page through results with the page index. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google Images for pictures and photos matching a query. Use to discover images on a topic, find a full-resolution image URL, or locate the page an image came from. Page through results with the page index.',
     idempotent: true,
   },
   outputSchema: searchGoogleImagesOutputSchema,
