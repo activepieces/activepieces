@@ -417,6 +417,7 @@ import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgre
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
 import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
 import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
+import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
 import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -851,6 +852,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTable1825000000000,
         AddAgentIdToAgentConversation1826000000000,
         AddVersionToOtp1827000000000,
+        DropChatbot1828000000000,
     ]
     return migrations
 }
