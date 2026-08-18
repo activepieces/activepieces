@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, isNil } from '@activepieces/core-utils'
 import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import dayjs from 'dayjs'
@@ -6,12 +6,14 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { distributedStore, redisConnections } from '../../../../../src/app/database/redis-connections'
+import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
 import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-factory'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
+import { handleFanOutDispatch, handleFanOutDispatchExhausted } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
@@ -102,6 +104,43 @@ async function completeWithoutConsuming(barrierId: string) {
 async function countPendingEvaluations({ queue, barrierId }: { queue: Queue<BarrierJobData>, barrierId: string }): Promise<number> {
     const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
     return jobs.filter((job) => job.data.barrierId === barrierId).length
+}
+
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
+    flowRunId: string
+    items: unknown[]
+    batchSize: number
+    stepName?: string
+}) {
+    return barrierService(app.log).create({
+        flowRunId,
+        projectId: ctx.project.id,
+        platformId: ctx.platform.id,
+        stepName: stepName ?? 'fan_out',
+        version: 'V1',
+        fanOut: {
+            entryStepName: 'trigger',
+            batchSize,
+            items,
+            seedSteps: {},
+        },
+    })
+}
+
+async function withBarrierQueuePaused<T>(fn: () => Promise<T>): Promise<T> {
+    const queue = barrierQueue(app.log).get()
+    await queue.pause()
+    try {
+        await queue.drain(true)
+        return await fn()
+    }
+    finally {
+        await queue.resume()
+    }
+}
+
+async function listChildren(barrierId: string) {
+    return databaseConnection().getRepository('flow_run').findBy({ parentWaitpointId: barrierId })
 }
 
 async function waitFor(condition: () => Promise<boolean>): Promise<void> {
@@ -628,6 +667,7 @@ describe('multi-approval confirm page', () => {
         const created = await barrierService(app.log).create({
             flowRunId: flowRun.id,
             projectId: ctx.project.id,
+            platformId: ctx.platform.id,
             stepName: 'approval',
             version: 'V1',
             policy: { requiredSuccesses: requiredSuccesses ?? 2, ...(reasonRequiredOn ? { reasonRequiredOn } : {}) },
@@ -839,5 +879,141 @@ describe('multi-approval confirm page', () => {
 
         expect(response.statusCode).toBe(200)
         expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+})
+
+describe('fan-out dispatch', () => {
+    it('creates exactly one child per signal even when two dispatchers run concurrently', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier, signalCount } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4, 5, 6], batchSize: 2 })
+        expect(signalCount).toBe(3)
+
+        await Promise.all([
+            handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log }),
+            handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log }),
+        ])
+        await waitFor(async () => (await listChildren(barrier.id)).length >= 3)
+        await handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log })
+
+        const children = await listChildren(barrier.id)
+        expect(children).toHaveLength(3)
+        expect(children.map((child) => child.dispatchIndex).sort()).toEqual([0, 1, 2])
+    })
+
+    it('stops without dispatching when the barrier was cancelled, and its signals are gone by cascade', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+
+        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        expect(await listSignals(barrier.id)).toHaveLength(0)
+        const beforeCancel = (await listChildren(barrier.id)).length
+
+        await expect(handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log })).resolves.toBeUndefined()
+
+        expect(await listChildren(barrier.id)).toHaveLength(beforeCancel)
+    })
+
+    it('refuses to attribute a child to a barrier that already released, so a timeout mid-dispatch cannot leak children', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+            await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+            expect((await db.findOneByOrFail<{ status: WaitpointStatus }>('waitpoint', { id: barrier.id })).status).toBe(WaitpointStatus.COMPLETED)
+
+            const target = await flowRunService(app.log).prepareChildDispatch({
+                projectId: ctx.project.id,
+                parentRunId: flowRun.id,
+                entryStepName: 'trigger',
+            })
+            await expect(flowRunService(app.log).dispatchChild({
+                target,
+                childRunId: apId(),
+                seedSteps: {},
+                parentWaitpointId: barrier.id,
+                dispatchIndex: 0,
+                dispatchKey: 'after-release',
+            })).rejects.toThrow(ErrorCode.ENTITY_NOT_FOUND)
+
+            expect(await listChildren(barrier.id)).toHaveLength(0)
+        })
+    })
+
+    it('stops dispatching when the barrier releases mid-flight', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+            await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+
+            await expect(handleFanOutDispatch({ data: { barrierId: barrier.id, projectId: ctx.project.id }, log: app.log })).resolves.toBeUndefined()
+
+            expect(await listChildren(barrier.id)).toHaveLength(0)
+        })
+    })
+
+    it('refuses to attribute a child to a barrier that no longer resolves', async () => {
+        const { flowRun } = await createParentRun()
+
+        const target = await flowRunService(app.log).prepareChildDispatch({
+            projectId: ctx.project.id,
+            parentRunId: flowRun.id,
+            entryStepName: 'trigger',
+        })
+        await expect(flowRunService(app.log).dispatchChild({
+            target,
+            childRunId: apId(),
+            seedSteps: {},
+            parentWaitpointId: apId(),
+            dispatchIndex: 0,
+            dispatchKey: 'nope',
+        })).rejects.toThrow(ErrorCode.ENTITY_NOT_FOUND)
+    })
+
+    it('refuses to resolve a dispatch target for a parent run outside the project', async () => {
+        await expect(flowRunService(app.log).prepareChildDispatch({
+            projectId: ctx.project.id,
+            parentRunId: apId(),
+            entryStepName: 'trigger',
+        })).rejects.toThrow(ErrorCode.VALIDATION)
+    })
+
+    it('refuses to resolve a dispatch target for a step the flow version does not have', async () => {
+        const { flowRun } = await createParentRun()
+
+        await expect(flowRunService(app.log).prepareChildDispatch({
+            projectId: ctx.project.id,
+            parentRunId: flowRun.id,
+            entryStepName: 'step_does_not_exist',
+        })).rejects.toThrow(ErrorCode.VALIDATION)
+    })
+
+    it('marks the rest undispatched when dispatch exhausts its attempts, so the barrier releases now', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+
+        await handleFanOutDispatchExhausted({ data: { barrierId: barrier.id, projectId: ctx.project.id }, error: new Error('worker died'), log: app.log })
+        await barrierService(app.log).releaseIfReady({ barrierId: barrier.id, projectId: ctx.project.id })
+
+        const summary = await readSummary(barrier.id)
+        expect(summary.notDispatched).toBe(4)
+        expect(summary.total).toBe(4)
+    })
+
+    it('clamps the batch size so a wide source cannot exceed the signal cap', async () => {
+        const { flowRun } = await createParentRun()
+        const previous = process.env.AP_MAX_BARRIER_SIGNALS
+        process.env.AP_MAX_BARRIER_SIGNALS = '3'
+        try {
+            const created = await createFanOutBarrier({ flowRunId: flowRun.id, items: Array.from({ length: 12 }, (_, index) => index), batchSize: 1 })
+            expect(created.signalCount).toBe(3)
+            expect(created.batchSize).toBe(4)
+        }
+        finally {
+            if (previous === undefined) {
+                delete process.env.AP_MAX_BARRIER_SIGNALS
+            }
+            else {
+                process.env.AP_MAX_BARRIER_SIGNALS = previous
+            }
+        }
     })
 })

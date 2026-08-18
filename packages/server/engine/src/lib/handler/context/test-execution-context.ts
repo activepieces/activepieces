@@ -69,6 +69,7 @@ export const testExecutionContext = {
                 }
                 case FlowActionType.PIECE:
                 case FlowActionType.CODE:
+                case FlowActionType.PROCESS_IN_BATCHES:
                 case FlowTriggerType.EMPTY:
                 case FlowTriggerType.PIECE:
                     flowExecutionContext = await flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
