@@ -11,6 +11,7 @@ import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { piecesHooks, formUtils } from '@/features/pieces';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -77,6 +78,7 @@ const DynamicPropertiesImplementation = React.memo(
         },
         onError: (error) => {
           console.error(error);
+          internalErrorToast();
           propertyLoadingFinished(props.propertyName);
         },
         onSuccess: () => {
