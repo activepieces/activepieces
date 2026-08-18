@@ -114,7 +114,7 @@ function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIPr
         return selectedModel
     }
     const tierModelId = resolveTier({ tierId: selectedModel }).modelId
-    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
+    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER || provider === AIProviderName.ORCAROUTER) {
         return tierModelId
     }
     const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')

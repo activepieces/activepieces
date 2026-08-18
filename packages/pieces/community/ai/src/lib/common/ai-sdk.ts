@@ -102,6 +102,10 @@ export async function createEmbeddingModel({
             const openRouterProvider = createOpenRouter({ apiKey })
             return { model: openRouterProvider.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         }
+        case AIProviderName.ORCAROUTER: {
+            const p = createOpenAICompatible({ name: 'orcarouter', baseURL: 'https://api.orcarouter.ai/v1', apiKey })
+            return { model: p.textEmbeddingModel(embeddingModelId), embeddingModelId, providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+        }
         default:
             throw new Error(`Provider ${provider} does not support embedding models`)
     }
@@ -167,6 +171,10 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+        }
+        case AIProviderName.ORCAROUTER: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({ name: 'orcarouter', baseURL: 'https://api.orcarouter.ai/v1', apiKey }).chatModel(modelId)
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)

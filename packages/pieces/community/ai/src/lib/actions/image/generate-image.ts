@@ -248,6 +248,7 @@ const getGeneratedImage = async ({
       case AIProviderName.GOOGLE:
       case AIProviderName.ACTIVEPIECES:
       case AIProviderName.OPENROUTER:
+      case AIProviderName.ORCAROUTER:
       case AIProviderName.CLOUDFLARE_GATEWAY:
         return generateImageUsingGenerateText({
           model: model as unknown as LanguageModel,

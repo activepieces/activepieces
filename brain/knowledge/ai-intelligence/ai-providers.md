@@ -9,7 +9,7 @@ Lets platform admins configure one or more LLM backends for AI pieces in flows. 
 ### Entities & services
 - **AIProvider** — platform-scoped: `displayName`, `platformId` (unique with `provider`), `provider` (AIProviderName enum), `auth` (EncryptedObject, AES-256 at rest), `config` (JSON), `enabledForChat`.
 - Backend under `packages/server/api/src/app/ai/`; shared schemas in `core/shared/.../ai-providers/`.
-- Supported providers (10): `openai`, `anthropic`, `google`, `azure`, `openrouter`, `bedrock`, `mistral`, `cloudflare-gateway`, `custom` (OpenAI-compatible, e.g. Ollama/LM Studio), `activepieces` (auto-provisioned via OpenRouter).
+- Supported providers (11): `openai`, `anthropic`, `google`, `azure`, `openrouter`, `orcarouter`, `bedrock`, `mistral`, `cloudflare-gateway`, `custom` (OpenAI-compatible, e.g. Ollama/LM Studio), `activepieces` (auto-provisioned via OpenRouter).
 
 ### How it works
 - `GET /` list (auto-creates ACTIVEPIECES when `aiCreditsEnabled`); `GET /:provider/config` returns decrypted auth (engine-only); `GET /:provider/models` (cached); `POST /` create (validates creds first); `POST /:id` update; `DELETE /:id`.

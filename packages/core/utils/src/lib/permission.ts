@@ -48,6 +48,7 @@ export const STEP_NAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/
 export enum AIProviderName {
     OPENAI = 'openai',
     OPENROUTER = 'openrouter',
+    ORCAROUTER = 'orcarouter',
     ANTHROPIC = 'anthropic',
     AZURE = 'azure',
     GOOGLE = 'google',

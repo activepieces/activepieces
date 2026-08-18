@@ -22,6 +22,7 @@ const AzureProviderAuthConfig = BaseAIProviderAuthConfig
 const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
+const OrcaRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 
 export const BedrockProviderAuthConfig = z.object({
@@ -35,6 +36,7 @@ const ActivePiecesProviderConfig = z.object({})
 const GoogleProviderConfig = z.object({})
 const OpenAIProviderConfig = z.object({})
 const OpenRouterProviderConfig = z.object({})
+const OrcaRouterProviderConfig = z.object({})
 const MistralProviderConfig = z.object({})
 
 export const ProviderModelConfig = z.object({
@@ -81,6 +83,7 @@ export const AIProviderAuthConfig = z.union([
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    OrcaRouterProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -99,6 +102,7 @@ export const AIProviderConfig = z.union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    OrcaRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
 ])
@@ -258,6 +262,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.BEDROCK]: 200_000,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
+    [AIProviderName.ORCAROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
     [AIProviderName.MISTRAL]: 128_000,
 }
@@ -273,6 +278,7 @@ const DEFAULT_EMBEDDING_MODELS: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.AZURE]: 'text-embedding-3-small',
     [AIProviderName.ACTIVEPIECES]: 'text-embedding-3-small',
     [AIProviderName.OPENROUTER]: 'openai/text-embedding-3-small',
+    [AIProviderName.ORCAROUTER]: 'openai/text-embedding-3-small',
 }
 
 const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMode>> = {
@@ -312,6 +318,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
     [AIProviderName.ANTHROPIC]: buildProviderCapabilities(AIProviderName.ANTHROPIC),
     [AIProviderName.OPENROUTER]: buildProviderCapabilities(AIProviderName.OPENROUTER),
+    [AIProviderName.ORCAROUTER]: buildProviderCapabilities(AIProviderName.ORCAROUTER),
     [AIProviderName.AZURE]: buildProviderCapabilities(AIProviderName.AZURE),
     [AIProviderName.GOOGLE]: buildProviderCapabilities(AIProviderName.GOOGLE),
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),

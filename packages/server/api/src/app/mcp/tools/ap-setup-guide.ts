@@ -220,6 +220,7 @@ async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         `  - ${AIProviderName.GOOGLE} — requires API key from aistudio.google.com`,
         `  - ${AIProviderName.AZURE} — requires API key + resource name`,
         `  - ${AIProviderName.OPENROUTER} — requires API key from openrouter.ai`,
+        `  - ${AIProviderName.ORCAROUTER} — requires API key from www.orcarouter.ai`,
         '',
         '5. Click Save',
         '',

@@ -10,6 +10,7 @@ import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-pro
 import { LanguageModel } from 'ai'
 
 const MISTRAL_BASE_URL = 'https://api.mistral.ai/v1'
+const ORCAROUTER_BASE_URL = 'https://api.orcarouter.ai/v1'
 
 export function createLanguageModel({ provider, auth, config, modelId, options = {} }: CreateLanguageModelParams): LanguageModel {
     switch (provider) {
@@ -56,6 +57,10 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenRouterChatModel({ apiKey, modelId, options })
+        }
+        case AIProviderName.ORCAROUTER: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({ name: 'orcarouter', baseURL: ORCAROUTER_BASE_URL, apiKey }).chatModel(modelId)
         }
         case AIProviderName.CLOUDFLARE_GATEWAY:
             throw new Error('Cloudflare Gateway routing is caller-specific and is not handled by the shared language-model factory')

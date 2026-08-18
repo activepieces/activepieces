@@ -37,6 +37,9 @@ export type OpenAIProviderAuthConfig = z.infer<typeof OpenAIProviderAuthConfig>
 export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuthConfig>
 
+export const OrcaRouterProviderAuthConfig = BaseAIProviderAuthConfig
+export type OrcaRouterProviderAuthConfig = z.infer<typeof OrcaRouterProviderAuthConfig>
+
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().min(1),
     secretAccessKey: z.string().min(1),
@@ -95,6 +98,9 @@ export type OpenAIProviderConfig = z.infer<typeof OpenAIProviderConfig>
 export const OpenRouterProviderConfig = z.object({})
 export type OpenRouterProviderConfig = z.infer<typeof OpenRouterProviderConfig>
 
+export const OrcaRouterProviderConfig = z.object({})
+export type OrcaRouterProviderConfig = z.infer<typeof OrcaRouterProviderConfig>
+
 export const BedrockProviderConfig = z.object({
     region: z.string().min(1),
 })
@@ -109,6 +115,7 @@ export const AIProviderAuthConfig = z.union([
     GoogleProviderAuthConfig,
     OpenAIProviderAuthConfig,
     OpenRouterProviderAuthConfig,
+    OrcaRouterProviderAuthConfig,
     CloudflareGatewayProviderAuthConfig,
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
@@ -126,6 +133,7 @@ export const AIProviderConfig = z.union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    OrcaRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
 ])
@@ -143,6 +151,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
         auth: OpenRouterProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ORCAROUTER),
+        config: OrcaRouterProviderConfig,
+        auth: OrcaRouterProviderAuthConfig,
     }),
     z.object({
         displayName: z.string().min(1),

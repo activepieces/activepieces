@@ -40,6 +40,7 @@ describe('createLanguageModel', () => {
         expect(identify(buildFor(AIProviderName.BEDROCK)).provider).toBe('amazon-bedrock')
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
         expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
+        expect(identify(buildFor(AIProviderName.ORCAROUTER)).provider).toBe('orcarouter.chat')
     })
 
     it('uses the OpenAI Chat API by default and the Responses API when asked', () => {

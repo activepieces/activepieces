@@ -10,11 +10,13 @@ import { mistralProvider } from './mistral-provider'
 import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
 import { openaiProvider } from './openai-provider'
 import { openRouterProvider } from './openrouter-provider'
+import { orcarouterProvider } from './orcarouter-provider'
 
 export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAuthConfig, AIProviderConfig>> = {
     [AIProviderName.OPENAI]: openaiProvider,
     [AIProviderName.ANTHROPIC]: anthropicProvider,
     [AIProviderName.OPENROUTER]: openRouterProvider,
+    [AIProviderName.ORCAROUTER]: orcarouterProvider,
     [AIProviderName.AZURE]: azureProvider,
     [AIProviderName.GOOGLE]: googleProvider,
     [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,

@@ -127,6 +127,8 @@ function createEmbeddingModel({ provider, auth, config }: {
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
             return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
+        case AIProviderName.ORCAROUTER:
+            return { model: createOpenAICompatible({ name: 'orcarouter', baseURL: 'https://api.orcarouter.ai/v1', apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         default:
             throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
