@@ -40,7 +40,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 await repo.delete({ id: existing.id })
             }
             const id = apId()
-            const deadline = resolveDeadline()
+            const deadline = resolveDeadline({ timeoutSeconds: params.timeoutSeconds })
             await repo
                 .createQueryBuilder()
                 .insert()
@@ -282,9 +282,14 @@ function assertWithinSignalLimit({ signalCount, maxSignals }: { signalCount: num
     }
 }
 
-function resolveDeadline(): string {
+function resolveDeadline({ timeoutSeconds }: ResolveDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return dayjs().add(maxDurationInDays, 'day').toISOString()
+    const cap = dayjs().add(maxDurationInDays, 'day')
+    if (isNil(timeoutSeconds)) {
+        return cap.toISOString()
+    }
+    const requested = dayjs().add(timeoutSeconds, 'second')
+    return (requested.isBefore(cap) ? requested : cap).toISOString()
 }
 
 function asStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
@@ -317,6 +322,7 @@ export type CreateBarrierParams = {
         items: unknown[]
         seedSteps: Record<string, unknown>
     }
+    timeoutSeconds?: number
 }
 
 export type CreateBarrierResult = {
@@ -400,3 +406,6 @@ type ClampBatchSizeParams = {
     maxSignals: number
 }
 
+type ResolveDeadlineParams = {
+    timeoutSeconds?: number
+}

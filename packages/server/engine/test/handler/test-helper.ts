@@ -1,4 +1,4 @@
-import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { ActionErrorHandlingOptions, BeginExecuteFlowOperation, BranchCondition, BranchExecutionType, CodeAction, ExecutionType, FlowAction, FlowActionType, FlowVersionState, LoopOnItemsAction, PieceAction, ProcessInBatchesAction, PropertyExecutionType, RouterExecutionType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation } from '../../src/lib/handler/context/engine-constants'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
@@ -49,6 +49,37 @@ export function buildSimpleLoopAction({
         skip: skip ?? false,
         settings: {
             items: loopItems,
+        },
+        firstLoopAction,
+        valid: true,
+    }
+}
+
+export function buildProcessInBatchesAction({
+    name,
+    items,
+    batchSize,
+    firstLoopAction,
+    continueOnFailure,
+}: {
+    name: string
+    items: string
+    batchSize?: number
+    firstLoopAction?: FlowAction
+    continueOnFailure?: boolean
+}): ProcessInBatchesAction {
+    return {
+        name,
+        displayName: 'Process in Batches',
+        type: FlowActionType.PROCESS_IN_BATCHES,
+        skip: false,
+        settings: {
+            items,
+            batchSize: batchSize ?? 10,
+            errorHandlingOptions: {
+                continueOnFailure: { value: continueOnFailure ?? false },
+                retryOnFailure: { value: false },
+            },
         },
         firstLoopAction,
         valid: true,
