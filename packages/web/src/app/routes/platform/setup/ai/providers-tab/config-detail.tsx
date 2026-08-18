@@ -27,16 +27,15 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi } from '@/features/platform-admin';
-
 import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
 
+import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
 import { ModelSelectionPanel } from './model-selection-panel';
 import { ProjectSelectionPanel } from './project-selection-panel';
 import { providerCredentials } from './provider-credentials';
-import { KeyStatusBadge } from './key-status';
 import { ProviderLogo } from './provider-logo';
 
 export function ConfigDetail({
@@ -185,7 +184,9 @@ export function ConfigDetail({
                 <Activity className="size-4 text-muted-foreground" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium leading-none">{t('Status')}</p>
+                <p className="text-sm font-medium leading-none">
+                  {t('Status')}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {config.statusReason ??
                     (config.statusUpdated
