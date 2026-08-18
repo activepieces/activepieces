@@ -1,6 +1,6 @@
 import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, AppInstance, FlowRunStatus, GetSystemHealthChecksResponse, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformService } from '../platform/platform.service'
@@ -21,7 +21,7 @@ function getPostHog(): PostHog {
     return posthogInstance
 }
 
-export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
+export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 5_000
 const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
@@ -84,7 +84,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+export function captureLicesneKeyEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
     getPostHog().capture({
         distinctId: licenseKey,
         event,
@@ -131,9 +131,10 @@ async function getMetadata() {
     }
 }
 
-export enum BillingEvents {
+export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
     CHAT_MESSAGE = 'chat_message',
+    PLATFORM_SETUP_REPORT = 'platform_setup_report',
     TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
 }
 
@@ -165,9 +166,36 @@ export type ChatMessageProperties = {
     toolsUsed: number
 }
 
+/**
+ * The setup report carries only what helps us diagnose a customer's problem and anticipate the
+ * blast radius of a change we are about to ship — the shape of a deployment (how many app replicas
+ * and workers, how big, how configured, what release) rather than anything about the people using
+ * it or the work it runs. Host identifiers are deliberately excluded: hostname and worker IP
+ * identify a machine without telling us anything we would act on.
+ *
+ * Before adding a field, check it against both halves of that test. "Would this let us answer a
+ * support question, or tell us who a change is about to break?" If neither, it does not belong here.
+ */
+export type SetupReportApp = Pick<AppInstance, 'cpuCores' | 'ramTotalBytes' | 'diskTotalBytes' | 'diskPercentage' | 'version' | 'eventLoopDelayMs'>
+
+export type SetupReportWorker = Pick<MachineInformation, 'totalCpuCores' | 'totalAvailableRamInBytes' | 'diskInfo' | 'workerProps'>
+
+export type SetupReportHealth = Pick<GetSystemHealthChecksResponse, 'database' | 'release'>
+
+export type SetupReportProperties = {
+    platformId: string
+    edition: ApEdition
+    reportedAt: string
+    apps?: SetupReportApp[]
+    workers?: SetupReportWorker[]
+    workersTotal?: number
+    health?: SetupReportHealth
+}
+
 export type BillingEventPayload =
-    | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
-    | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
-    | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+    | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
+    | { event: LicenseKeyPostHogEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+    | { event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT, properties: SetupReportProperties }
 
 type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload

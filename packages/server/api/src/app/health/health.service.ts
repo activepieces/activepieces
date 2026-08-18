@@ -41,6 +41,9 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
         return  workerHealthy && databaseHealthy
     },
+    getReleaseHealth: (workerVersions: Array<string | undefined>): ReleaseHealth => {
+        return buildReleaseHealth(log, workerVersions)
+    },
     getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
         const [workers, databaseHealthy, latestVersion] = await Promise.all([
             machineService(log).list(platformId),
