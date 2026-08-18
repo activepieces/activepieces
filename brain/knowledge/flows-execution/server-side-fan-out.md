@@ -81,10 +81,12 @@ it also served HTTP. Do not reintroduce a read inside `dispatchChild`: if a new 
   (approval, delay) resumed from the trigger instead: its BEGIN placeholder output stayed forever (an approval
   showed `approved: false`, the step stayed `PAUSED` on a run the UI reported as succeeded) and the post-batch
   step ran a second time, inside the child.
-- **A stalled job is not evidence the worker died.** `stalledInterval` is 30s, `maxStalledCount` 3, and this
-  job parses a multi-MB source on the event loop. Two dispatchers over one barrier is the normal case to
-  design for, not the exotic one — which is why every child is preceded by a compare-and-set claim on its
-  signal row rather than a "signals with no child yet" gap query.
+- **A stalled job is not evidence the worker died.** The `maxStalledCount: 3` in the repo is `job-broker.ts`'s,
+  not this queue's — `barrier-queue.ts` passes only `connection`, `concurrency` and `autorun`, so the barrier
+  worker runs on BullMQ's defaults: `stalledInterval` 30s and `maxStalledCount` **1**. One stall is therefore
+  terminal here, and this job parses a multi-MB source on the event loop. Two dispatchers over one barrier is
+  the normal case to design for, not the exotic one — which is why every child is preceded by a
+  compare-and-set claim on its signal row rather than a "signals with no child yet" gap query.
 - **A cancel must stop the dispatcher.** `dispatchChild` rejects (`ENTITY_NOT_FOUND`) when the barrier no
   longer resolves, and the dispatcher treats that as *stop, do not retry* — log, complete the job. Abort
   latency is up to four extra attempts, not one: the `cancelled` flag is read at task entry and
@@ -97,13 +99,40 @@ it also served HTTP. Do not reintroduce a read inside `dispatchChild`: if a new 
   the returned rows. Getting this wrong makes every claim look failed and dispatches nothing, silently.
 - **The dispatcher releases its claim before rethrowing, which makes "`dispatchChild` throws ⇒ no child
   exists" a load-bearing invariant.** A per-child failure nulls `refId` again so the retry can re-claim; only
-  an exhausted job marks the rest `NOT_DISPATCHED`. `dispatchChild` upholds its half by deleting the
-  `flow_run` row it inserted when `addToQueue` fails. Anything that throws *after* a successful `addToQueue`
-  breaks it: the child is queued and running, the claim is released, and the ~8-minute retry dispatches a
-  **second** child for the same batch — while the first child's completion signal is silently dropped,
-  because `receive({ refId })` no longer matches the row it nulled. `flowRunSideEffects.onStart` was exactly
-  that hole and is now wrapped in `tryCatch`. There is no unique index on
-  `flow_run (parentWaitpointId, dispatchIndex)` to backstop this, so keep the invariant in the code.
+  a job that has given up for good marks the *unclaimed* signals `NOT_DISPATCHED`. `dispatchChild` upholds its
+  half by deleting the `flow_run` row it inserted when `addToQueue` fails. Anything that throws *after* a
+  successful `addToQueue` breaks it: the child is queued and running, the claim is released, and the ~8-minute
+  retry dispatches a **second** child for the same batch — while the first child's completion signal is
+  silently dropped, because `receive({ refId })` no longer matches the row it nulled.
+  `flowRunSideEffects.onStart` was exactly that hole and is now wrapped in `tryCatch`. There is no unique
+  index on `flow_run (parentWaitpointId, dispatchIndex)` to backstop this, so keep the invariant in the code.
+- **Two words, two predicates: a signal is *claimed* when `refId` is non-null, and *undispatched* only when it
+  is `PENDING` **and** unclaimed.** `markUnclaimedNotDispatched` and `listUnclaimedSignals` therefore share one
+  where-clause (`unclaimedSignalWhere`), and `claimSignal` guards on `AND "status" = 'PENDING'` as well as
+  `refId IS NULL`. Do not widen any of them to "all `PENDING` rows". A dispatched signal stays `PENDING` with a
+  non-null `refId` until its child reaches a terminal state, and `QUEUED`/`RUNNING`/`PAUSED` are all
+  non-terminal — a batch body holding an approval keeps its signal `PENDING` for days. A sweep keyed on status
+  alone therefore condemns live children, and because `NOT_DISPATCHED` is in `UNFAVOURABLE_SIGNAL_STATUSES` and
+  leaves zero `PENDING` on a sealed barrier, evaluation releases at once, `completeAndDrainSignals` **deletes**
+  the signal rows, and each child reports into nothing — orphaned, uncancelled, while
+  `process-in-batches-executor` counts it under `notDispatched` and tells the user "N of M batches failed".
+  Two windows made this reachable in one attempt, not just across the ~2 h ladder: `Promise.all` rejects on the
+  first error while its siblings are still dispatching, and `moveToFailed` increments `attemptsMade` *before*
+  `emit('failed')`, so the give-up handler fires on the 5th attempt with those siblings mid-flight.
+- **"Gave up" is not "ran out of attempts" — `fanOutDispatchGaveUp` checks `UnrecoverableError` too.** A stall
+  bumps `stc`, not `atm`: past `maxStalledCount` the lua script parks a `defa` reason and the next pickup fails
+  the job as an `UnrecoverableError` *without running the processor*, `attemptsMade` untouched. An
+  `attemptsMade >= attempts` test alone therefore misses the likeliest death — a dispatcher whose process died
+  twice — and the barrier hangs to its deadline, exactly what the handler exists to avoid. This is also the
+  case with the *most* claimed signals, since the first stall redelivers the job to a second dispatcher while
+  the first may still be running, so both guards have to hold together.
+- **A dropped outcome is now loud.** `receive` logs a `warn` when no signal row matches, because that is the
+  one moment a child's result is discarded — a barrier released early, a swept row, or the double-dispatch hole
+  above. If that warning appears, the "throws ⇒ no child" invariant broke; reconciling claimed signals against
+  their `flow_run` rows is the fix, and `sweepOverdueDeadlines` is the periodic backstop in the meantime.
+- **The source-gone branch is theory; the give-up branch is the live one.** The stored source carries a 1-day
+  TTL and the whole retry ladder is ~2 h, so a dispatch can't outlive its own source. Both call the same sweep,
+  so both are guarded, but don't reason about behaviour from the source-gone path.
 - **Nothing bounds the dispatch window except the barrier deadline.** The old sandbox loop was bounded by
   `FLOW_TIMEOUT_SECONDS`; the parent now pauses before its children exist.
 - **The source key is deleted on release and on cancel**, and carries a 1-day TTL as a backstop. A dispatcher

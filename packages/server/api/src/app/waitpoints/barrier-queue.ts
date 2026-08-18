@@ -9,7 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { QueueName } from '../workers/job'
 import { BarrierJobData, BarrierJobName, BarrierQueueConfig, barrierQueueFactory } from './barrier-queue-factory'
 import { barrierService } from './barrier-service'
-import { handleFanOutDispatch, handleFanOutDispatchExhausted } from './fan-out-dispatcher-job'
+import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from './fan-out-dispatcher-job'
 
 let barrierWorker: Worker<BarrierJobData> | undefined = undefined
 
@@ -50,10 +50,11 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
             if (isNil(job) || job.name !== BarrierJobName.FAN_OUT_DISPATCH) {
                 return
             }
-            if (job.attemptsMade < (job.opts.attempts ?? 1)) {
+            const reason = fanOutDispatchGaveUp({ attemptsMade: job.attemptsMade, attempts: job.opts.attempts, error })
+            if (isNil(reason)) {
                 return
             }
-            handleFanOutDispatchExhausted({ data: job.data, error, log }).catch((handlerError: unknown) => {
+            handleFanOutDispatchGaveUp({ data: job.data, error, reason, log }).catch((handlerError: unknown) => {
                 exceptionHandler.handle(handlerError, log)
             })
         })
