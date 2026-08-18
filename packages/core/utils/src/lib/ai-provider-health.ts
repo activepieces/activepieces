@@ -49,12 +49,35 @@ async function observeResponse(response: Response): Promise<ProviderOutcomeSigna
     if (response.ok) {
         return { statusCode: response.status }
     }
+    const body = await readEnoughToClassify(response)
+    return { statusCode: response.status, ...(isNil(body) ? {} : { body }) }
+}
+
+async function readEnoughToClassify(response: Response): Promise<string | undefined> {
     try {
-        const body = await response.clone().text()
-        return { statusCode: response.status, body: body.slice(0, MAX_OBSERVED_BODY_LENGTH) }
+        const stream = response.clone().body
+        if (isNil(stream)) {
+            return undefined
+        }
+        const reader = stream.getReader()
+        const decoder = new TextDecoder()
+        let text = ''
+        try {
+            while (text.length < MAX_OBSERVED_BODY_LENGTH) {
+                const { done, value } = await reader.read()
+                if (done) {
+                    break
+                }
+                text += decoder.decode(value, { stream: true })
+            }
+        }
+        finally {
+            void reader.cancel().catch(() => undefined)
+        }
+        return text.slice(0, MAX_OBSERVED_BODY_LENGTH)
     }
     catch {
-        return { statusCode: response.status }
+        return undefined
     }
 }
 

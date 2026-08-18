@@ -140,6 +140,36 @@ describe('observedProviderFetch', () => {
         expect(signals[0].message).toContain('socket hang up')
     })
 
+    it('stops pulling a huge failure body once it has enough to classify', async () => {
+        const chunk = 'x'.repeat(500)
+        let pulled = 0
+        const stream = new ReadableStream<Uint8Array>({
+            pull(controller) {
+                pulled += 1
+                if (pulled > 200) {
+                    controller.close()
+                    return
+                }
+                controller.enqueue(new TextEncoder().encode(chunk))
+            },
+        })
+
+        const signals: ProviderOutcomeSignal[] = []
+        const original = globalThis.fetch
+        globalThis.fetch = vi.fn(async () => new Response(stream, { status: 500 })) as unknown as typeof globalThis.fetch
+        try {
+            const observed = observedProviderFetch((signal) => signals.push(signal))
+            await observed?.('https://api.openai.com/v1/models')
+            await new Promise((resolve) => setTimeout(resolve, 50))
+        }
+        finally {
+            globalThis.fetch = original
+        }
+
+        expect(signals[0].body).toHaveLength(2000)
+        expect(pulled).toBeLessThan(10)
+    })
+
     it('reports a retry sequence in the order the responses arrived', async () => {
         const failure = new Response('{"error":"overloaded"}', { status: 500 })
         const slowBody = new Response('{"error":"overloaded"}', { status: 500 })
