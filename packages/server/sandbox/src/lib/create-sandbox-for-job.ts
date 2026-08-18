@@ -5,7 +5,6 @@ import { cacheUtils } from './cache/cache-paths'
 import { sandboxCapacity } from './sandbox/capacity'
 import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
-import { pieceChildHeapMb } from './sandbox/node-args'
 import { createSandbox } from './sandbox/sandbox'
 import { Sandbox, SandboxMount } from './sandbox/types'
 import { SandboxSettings } from './types'
@@ -35,7 +34,7 @@ export function createSandboxForJob(params: {
         log,
         sandboxId,
         {
-            env: buildSandboxEnv({ settings, memoryLimitMb }),
+            env: buildSandboxEnv({ settings }),
             memoryLimitMb,
             cpuMsPerSec: 1000,
             timeLimitSeconds: settings.FLOW_TIMEOUT_SECONDS,
@@ -71,9 +70,8 @@ function parseMemoryLimit(memoryLimitKb: string): number {
     return Math.floor(kb / 1024)
 }
 
-function buildSandboxEnv({ settings, memoryLimitMb }: {
+function buildSandboxEnv({ settings }: {
     settings: SandboxSettings
-    memoryLimitMb: number
 }): Record<string, string> {
     // STRICT enables the engine's in-process ssrfGuard (best-effort dns + socket
     // guards only — there is no longer an egress proxy or kernel firewall). The hard
@@ -83,7 +81,6 @@ function buildSandboxEnv({ settings, memoryLimitMb }: {
         ...baseEnv({ settings, networkMode }),
         ...ssrfEnv(settings),
         ...propagatedEnv(settings),
-        AP_PIECE_MEMORY_LIMIT_MB: String(pieceChildHeapMb(memoryLimitMb)),
     }
 }
 

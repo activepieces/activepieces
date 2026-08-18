@@ -2,7 +2,6 @@ import { ChildProcess } from 'child_process'
 import path from 'path'
 import { describe, it, expect, afterEach } from 'vitest'
 import { simpleProcess } from '../../../src/lib/sandbox/fork'
-import { engineHeapMb, pieceChildHeapMb } from '../../../src/lib/sandbox/node-args'
 
 const fixturePath = path.resolve(__dirname, '../../fixtures/echo-env.js')
 const children: ChildProcess[] = []
@@ -40,21 +39,14 @@ describe('simpleProcess', () => {
 
         expect(msg.execArgv).toContain('--no-node-snapshot')
         expect(msg.execArgv).toContain('--expose-gc')
-        expect(msg.execArgv).toContain(`--max-old-space-size=${engineHeapMb(512)}`)
+        expect(msg.execArgv).toContain('--max-old-space-size=512')
         expect(msg.env.AP_BASE_CODE_DIRECTORY).toBe('/code-dir')
         expect(msg.env.SANDBOX_ID).toBe('sb-fork-1')
         expect(msg.env.CUSTOM_VAR).toBe('hello')
         expect(msg.env.AP_SANDBOX_WS_PORT).toBe('9999')
     }, 15000)
 
-    it('splits the memory budget between the engine and the piece child', () => {
-        for (const limit of [1024, 512, 300, 64]) {
-            expect(engineHeapMb(limit) + pieceChildHeapMb(limit)).toBeLessThanOrEqual(Math.max(limit, 2 * 128))
-            expect(pieceChildHeapMb(limit)).toBeGreaterThan(0)
-        }
-    })
-
-    it('passes a split memoryLimitMb to --max-old-space-size', async () => {
+    it('passes through integer memoryLimitMb to --max-old-space-size', async () => {
         const maker = simpleProcess(fixturePath, '/code')
 
         const child = await maker.create({
@@ -76,6 +68,6 @@ describe('simpleProcess', () => {
             setTimeout(() => reject(new Error('timeout waiting for child message')), 10000)
         })
 
-        expect(msg.execArgv).toContain(`--max-old-space-size=${engineHeapMb(300)}`)
+        expect(msg.execArgv).toContain('--max-old-space-size=300')
     }, 15000)
 })

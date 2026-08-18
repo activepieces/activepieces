@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
 import { isNil, tryCatchSync } from '@activepieces/core-utils'
-import { EngineGenericError } from '@activepieces/shared'
+import { EngineGenericError, PieceMemoryLimitError } from '@activepieces/shared'
 import { piecePath } from './piece-path'
 import { ChildMessage, CollectedHooks, ContextRequest, ParentMessage, PieceDescription, pieceProtocol } from './piece-protocol'
 
@@ -27,7 +27,7 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
     const entryPath = await piecePath.resolve(piece)
 
     return new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [...childNodeArgs(), childEntryPath()], {
+        const child = spawn(process.execPath, [...process.execArgv, childEntryPath()], {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
             serialization: 'advanced',
         })
@@ -59,7 +59,7 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
         })
 
         child.on('close', (code, signal) => {
-            settle(() => reject(new EngineGenericError('PieceProcessExitedError', withOutput(`Piece process exited with code ${code} and signal ${signal}`, output))))
+            settle(() => reject(toExitError({ code, signal, output })))
         })
 
         child.on('error', (error) => {
@@ -92,14 +92,29 @@ function toPieceDescription(value: unknown): PieceDescription {
     }
 }
 
-function withOutput(message: string, output: string): string {
-    return output.trim().length === 0 ? message : `${message}\n${output.trim()}`
+export function toExitError({ code, signal, output }: ExitParams): Error {
+    if (isOutOfMemory({ code, signal, output })) {
+        return new PieceMemoryLimitError(heapLimitMb(), output.trim())
+    }
+    return new EngineGenericError('PieceProcessExitedError', withOutput(`Piece process exited with code ${code} and signal ${signal}`, output))
 }
 
-function childNodeArgs(): string[] {
-    const heapLimitMb = process.env.AP_PIECE_MEMORY_LIMIT_MB
-    const inherited = process.execArgv.filter((arg) => !arg.startsWith('--max-old-space-size'))
-    return isNil(heapLimitMb) ? process.execArgv : [...inherited, `--max-old-space-size=${heapLimitMb}`]
+// Mirrors the engine-side signatures in sandbox.ts: V8 saying it ran out of heap, or aborting,
+// is unambiguous. A SIGKILL is ambiguous there because shutdown kills the engine the same way —
+// here it is not, since the only kill we issue happens after the call has already settled.
+function isOutOfMemory({ code, signal, output }: ExitParams): boolean {
+    return output.includes('JavaScript heap out of memory')
+        || code === 134
+        || signal === 'SIGABRT'
+        || signal === 'SIGKILL'
+}
+
+function heapLimitMb(): string | undefined {
+    return process.execArgv.find((arg) => arg.startsWith('--max-old-space-size='))?.split('=')[1]
+}
+
+function withOutput(message: string, output: string): string {
+    return output.trim().length === 0 ? message : `${message}\n${output.trim()}`
 }
 
 function childEntryPath(): string {
@@ -111,6 +126,12 @@ const descriptions = new Map<string, Promise<PieceDescription>>()
 type RunInChildProcessParams = {
     piece: PieceRef
     request: { type: 'describe' } | { type: 'call', path: string[], args: unknown[], context?: ContextRequest }
+}
+
+type ExitParams = {
+    code: number | null
+    signal: NodeJS.Signals | null
+    output: string
 }
 
 export type PieceRef = {
