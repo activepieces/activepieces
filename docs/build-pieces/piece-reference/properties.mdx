@@ -611,7 +611,7 @@ createAction({
 
 ### Sectioned cards
 
-`display: 'section'` groups related props into titled cards — for example a *Send to* card and a *Message* card. Unlike tabs and the filter builder, sectioned layouts **keep the collapsible _Advanced_ section** for props outside the cards: an ungrouped prop still honours `advanced: true`, while props inside a section are always essential. Give each group a `label` and `icon`, and use `width: 'half'` on members to pack two fields per row.
+`display: 'section'` groups related props into titled cards — for example a *Send to* card and a *Message* card. Unlike tabs and the filter builder, sectioned layouts **keep the collapsible _Advanced_ section** for props outside the cards: an ungrouped prop still honours `advanced: true` — unless it is a checkbox `reveals` target, which renders inline under its toggle instead. Props inside a section are always essential. Give each group a `label` and `icon`, and use `width: 'half'` on members to pack two fields per row.
 
 <SectionCardsPreview />
 

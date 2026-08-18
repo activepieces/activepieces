@@ -112,7 +112,7 @@ propertyGroups: [{ key, display, label?, description?, icon?, props: ['fieldA', 
 
 **Rules:**
 - Every prop named in a group must exist in `props`.
-- Only ungrouped props honour `advanced: true` — members of `tabs` and `section` groups are always essential; the flag is ignored on them.
+- Only ungrouped props honour `advanced: true` — members of `tabs` and `section` groups are always essential; the flag is ignored on them. In a sectioned layout, checkbox `reveals` targets are forced essential too: they render inline under their toggle, never in Advanced.
 - **One `builder` or `footer` group disables the Advanced section for the whole action/trigger** — every prop is forced essential and `advanced: true` stops working form-wide. Don't combine a filter builder with Advanced props.
 - Give `section` and `builder` groups a `label` and `icon` so cards/categories read clearly.
 
