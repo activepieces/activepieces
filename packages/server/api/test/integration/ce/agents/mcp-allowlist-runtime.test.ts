@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode } from '@activepieces/core-utils'
 import {
     AgentTool,
     AgentToolType,
@@ -40,11 +40,15 @@ describe('assertMcpEndpointsApproved — MCP endpoint allowlist enforcement', ()
             platform: { mcpServerEndpointAllowlist: ['mcp.acme.com'] },
         })
 
-        await expect(agentHelpers.assertMcpEndpointsApproved({
+        const error = await captureActivepiecesError(() => agentHelpers.assertMcpEndpointsApproved({
             platformId: ctx.platform.id,
             tools: [mcpTool('on-list', ON_LIST_URL), mcpTool('off-list', OFF_LIST_URL)],
             log: app.log,
-        })).rejects.toThrow(OFF_LIST_URL)
+        }))
+
+        expect(error.error.code).toBe(ErrorCode.VALIDATION)
+        expect(readMessage(error)).toContain(OFF_LIST_URL)
+        expect(readMessage(error)).not.toContain(ON_LIST_URL)
     })
 
     it('Allows exact and wildcard matches', async () => {
@@ -87,3 +91,24 @@ describe('assertMcpEndpointsApproved — MCP endpoint allowlist enforcement', ()
         })).resolves.toBeUndefined()
     })
 })
+
+async function captureActivepiecesError(run: () => Promise<unknown>): Promise<ActivepiecesError> {
+    try {
+        await run()
+    }
+    catch (error) {
+        if (error instanceof ActivepiecesError) {
+            return error
+        }
+        throw error
+    }
+    throw new Error('Expected ActivepiecesError to be thrown')
+}
+
+function readMessage(error: ActivepiecesError): string {
+    const params = error.error.params
+    if (params && typeof params === 'object' && 'message' in params && typeof params.message === 'string') {
+        return params.message
+    }
+    return ''
+}
