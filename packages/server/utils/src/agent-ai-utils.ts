@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeSignal, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -63,7 +63,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
     modelId: string
     metadata?: ChatModelMetadata
     webSearchEnabled?: boolean
-    onOutcome?: (signal: ProviderOutcomeSignal) => void
+    onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -108,7 +108,7 @@ function createEmbeddingModel({ provider, auth, config, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
-    onOutcome?: (signal: ProviderOutcomeSignal) => void
+    onOutcome?: ProviderOutcomeReporter
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
     const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {

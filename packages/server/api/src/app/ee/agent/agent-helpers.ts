@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeSignal, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
@@ -10,7 +10,6 @@ import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
-import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
@@ -177,11 +176,12 @@ async function resolveFastModel({ platformId, provider, scope, log }: { platform
     return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider) })).model
 }
 
-// The wrapper calls this synchronously on every request, so the write is dispatched and never
-// awaited — reporting is not allowed to slow a model call down or to be the reason one fails.
-function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): (signal: ProviderOutcomeSignal) => void {
-    return (signal) => {
-        rejectedPromiseHandler(aiProviderHealth(log).record({ platformId, providerId, signal }), log)
+function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
+    return async (signal) => {
+        const { error } = await tryCatch(() => aiProviderHealth(log).record({ platformId, providerId, signal }))
+        if (!isNil(error)) {
+            log.warn({ error, aiProvider: { id: providerId } }, '[agentHelpers#reportKeyOutcome] Could not record key status')
+        }
     }
 }
 

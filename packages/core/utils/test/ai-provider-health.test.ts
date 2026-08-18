@@ -132,10 +132,53 @@ describe('observedProviderFetch', () => {
         try {
             const observed = observedProviderFetch((signal) => signals.push(signal))
             await expect(observed?.('https://api.openai.com/v1/models')).rejects.toBe(boom)
+            await new Promise((resolve) => setImmediate(resolve))
         }
         finally {
             globalThis.fetch = original
         }
         expect(signals[0].message).toContain('socket hang up')
+    })
+
+    it('reports a retry sequence in the order the responses arrived', async () => {
+        const failure = new Response('{"error":"overloaded"}', { status: 500 })
+        const slowBody = new Response('{"error":"overloaded"}', { status: 500 })
+        vi.spyOn(slowBody, 'text').mockReturnValue(new Promise((resolve) => setTimeout(() => resolve('{"error":"overloaded"}'), 20)))
+        vi.spyOn(failure, 'clone').mockReturnValue(slowBody)
+        const responses = [failure, new Response('{}', { status: 200 })]
+
+        const signals: ProviderOutcomeSignal[] = []
+        const original = globalThis.fetch
+        globalThis.fetch = vi.fn(async () => responses.shift()!) as unknown as typeof globalThis.fetch
+        try {
+            const observed = observedProviderFetch((signal) => signals.push(signal))
+            await observed?.('https://api.openai.com/v1/chat/completions')
+            await observed?.('https://api.openai.com/v1/chat/completions')
+            await new Promise((resolve) => setTimeout(resolve, 60))
+        }
+        finally {
+            globalThis.fetch = original
+        }
+
+        expect(signals.map((signal) => signal.statusCode)).toEqual([500, 200])
+    })
+
+    it('keeps a slow reporter off the call path', async () => {
+        const signals: ProviderOutcomeSignal[] = []
+        const original = globalThis.fetch
+        globalThis.fetch = vi.fn(async () => new Response('{}', { status: 200 })) as unknown as typeof globalThis.fetch
+        try {
+            const observed = observedProviderFetch(async (signal) => {
+                await new Promise((resolve) => setTimeout(resolve, 50))
+                signals.push(signal)
+            })
+            await observed?.('https://api.openai.com/v1/models')
+            expect(signals).toEqual([])
+            await new Promise((resolve) => setTimeout(resolve, 90))
+        }
+        finally {
+            globalThis.fetch = original
+        }
+        expect(signals).toEqual([{ statusCode: 200 }])
     })
 })

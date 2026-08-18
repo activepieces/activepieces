@@ -1,4 +1,4 @@
-import { AIProviderName, observedProviderFetch, ProviderOutcomeSignal, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
 import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -98,9 +98,7 @@ export type LanguageModelOptions = {
     openRouterSettings?: OpenRouterChatSettings
     mistralViaOpenRouter?: boolean
     extraHeaders?: Record<string, string>
-    // Called once per HTTP request the model makes, including the SDK's own retries. Must not throw
-    // and must not block — reporting is never allowed to be why a model call failed.
-    onOutcome?: (signal: ProviderOutcomeSignal) => void
+    onOutcome?: ProviderOutcomeReporter
 }
 
 export type CreateLanguageModelParams = {

@@ -20,9 +20,13 @@ function stringifyBody(body: unknown): string {
 
 // Every AI SDK provider factory accepts a `fetch`, so wrapping it is the one place that sees the
 // health of the key behind every model call in a process — no call site has to remember to report.
-export function observedProviderFetch(onOutcome: ((signal: ProviderOutcomeSignal) => void) | undefined): typeof globalThis.fetch | undefined {
+export function observedProviderFetch(onOutcome: ProviderOutcomeReporter | undefined): typeof globalThis.fetch | undefined {
     if (isNil(onOutcome)) {
         return undefined
+    }
+    let reported: Promise<void> = Promise.resolve()
+    const report = (observe: () => Promise<ProviderOutcomeSignal>): void => {
+        reported = reported.then(observe).then(onOutcome, () => undefined)
     }
     return async (input, init) => {
         let response: Response
@@ -30,10 +34,10 @@ export function observedProviderFetch(onOutcome: ((signal: ProviderOutcomeSignal
             response = await fetch(input, init)
         }
         catch (error) {
-            onOutcome(toProviderOutcomeSignal(error))
+            report(async () => toProviderOutcomeSignal(error))
             throw error
         }
-        reportResponse({ response, onOutcome })
+        report(() => observeResponse(response))
         return response
     }
 }
@@ -41,18 +45,16 @@ export function observedProviderFetch(onOutcome: ((signal: ProviderOutcomeSignal
 // Reporting is observation, never a step the call waits on: the response is handed back before the
 // body is read, a streaming success is never touched, and a clone that cannot be read still reports
 // its status instead of surfacing an instrumentation error in place of the provider's answer.
-function reportResponse({ response, onOutcome }: { response: Response, onOutcome: (signal: ProviderOutcomeSignal) => void }): void {
+async function observeResponse(response: Response): Promise<ProviderOutcomeSignal> {
     if (response.ok) {
-        onOutcome({ statusCode: response.status })
-        return
+        return { statusCode: response.status }
     }
     try {
-        void response.clone().text()
-            .then((body) => onOutcome({ statusCode: response.status, body: body.slice(0, MAX_OBSERVED_BODY_LENGTH) }))
-            .catch(() => onOutcome({ statusCode: response.status }))
+        const body = await response.clone().text()
+        return { statusCode: response.status, body: body.slice(0, MAX_OBSERVED_BODY_LENGTH) }
     }
     catch {
-        onOutcome({ statusCode: response.status })
+        return { statusCode: response.status }
     }
 }
 
@@ -135,3 +137,5 @@ export type ProviderOutcomeSignal = {
     body?: string
     message?: string
 }
+
+export type ProviderOutcomeReporter = (signal: ProviderOutcomeSignal) => void | Promise<void>
