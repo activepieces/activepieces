@@ -1,5 +1,5 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch } from '@activepieces/core-utils'
+import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderKeyStatus, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -8,6 +8,7 @@ import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
 import { platformService } from '../platform/platform.service'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
+import { aiProviderHealth } from './ai-provider-health'
 import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
@@ -42,7 +43,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listModels({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderModel[]> {
         const aiProvider = await resolveEligibleRow({ platformId, provider, scope })
-        const models = await fetchModels({ aiProvider, platformId })
+        const models = await fetchModels({ aiProvider, platformId, log })
         return aiProvider.modelScope === 'selected'
             ? models.filter((model) => aiProvider.modelIds.includes(model.id))
             : models
@@ -50,7 +51,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listModelsForConfig({ platformId, configId }: { platformId: PlatformId, configId: string }): Promise<AIProviderModel[]> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId })
-        return fetchModels({ aiProvider, platformId })
+        return fetchModels({ aiProvider, platformId, log })
     },
 
     async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<AIProviderWithoutSensitiveData> {
@@ -60,6 +61,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 params: { message: 'aiProvider.activepiecesIsManaged' },
             })
         }
+        // The credentials were just proved against the provider, so the row is born active. Leaving
+        // that to a later call meant a brand-new key read as untested until something happened to
+        // use it, and validation runs before the row exists so it has no id to record against.
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
         const saved = await aiProviderRepo().save({
             id: apId(),
@@ -72,6 +76,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             modelIds: [],
             projectScope: 'all',
             projectIds: [],
+            status: 'active',
+            statusReason: null,
+            statusUpdated: new Date().toISOString(),
         })
         return toConfigResponse(saved)
     },
@@ -98,12 +105,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         const config = request.config ?? aiProvider.config
-        if (!isNil(request.auth)) {
-            await this.validateProviderCredentials(aiProvider.provider, request.auth, config)
-        }
-        else if (!isNil(request.config)) {
-            const auth = await decryptRowAuth({ aiProvider, platformId })
-            await this.validateProviderCredentials(aiProvider.provider, auth, config)
+        const revalidated = !isNil(request.auth) || !isNil(request.config)
+        if (revalidated) {
+            const auth = request.auth ?? await decryptRowAuth({ aiProvider, platformId })
+            const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, config, log))
+            // Replacing a key is the other moment we learn its health for free. Classify the raw
+            // provider error before it is wrapped, since the wrap drops the HTTP status, and record
+            // before rethrowing so a rejected replacement is visible rather than only a toast.
+            await recordKeyOutcome({ platformId, aiProvider, error, log })
+            if (!isNil(error)) {
+                throw toInvalidCredentialsError({ provider: aiProvider.provider, error, log })
+            }
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
@@ -140,7 +152,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return null
         }
         const auth = await decryptRowAuth({ aiProvider: chatProvider, platformId })
-        return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
+        return { id: chatProvider.id, provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
+    },
+
+    // The passive status only moves when something uses the key, so an admin who has just fixed
+    // their billing needs a way to ask now rather than wait for traffic.
+    async recheck({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AiProviderKeyStatus> {
+        const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
+        const auth = await decryptRowAuth({ aiProvider, platformId })
+        const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
+        const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal })
+        return recorded ?? aiProvider.status
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
@@ -150,30 +173,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
     },
     async validateProviderCredentials(provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig): Promise<void> {
-        const providerStrategy = aiProviders[provider]
-        try {
-            await providerStrategy.validateConnection(auth, config, log)
-        }
-        catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-            const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
-            log.error({ error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
-                params: {
-                    provider,
-                    message: includeHttpErrorInMessage
-                        ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
-                        : `Failed to validate credentials for ${providerStrategy.name}`,
-                    httpErrorResponse: errorMessage,
-                },
-            })
+        const { error } = await tryCatch(() => aiProviders[provider].validateConnection(auth, config, log))
+        if (!isNil(error)) {
+            throw toInvalidCredentialsError({ provider, error, log })
         }
     },
     async getConfigOrThrow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<GetProviderConfigResponse> {
         const aiProvider = await resolveEligibleRow({ platformId, provider, scope })
         const auth = await decryptRowAuth({ aiProvider, platformId })
-        return { provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
+        return { id: aiProvider.id, provider: aiProvider.provider, auth, config: aiProvider.config, platformId }
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         await ensureManagedProviderRow({ platformId })
@@ -228,6 +236,9 @@ function toConfigResponse(row: AIProviderSchema): AIProviderWithoutSensitiveData
         modelIds: row.modelIds,
         projectScope: row.projectScope,
         projectIds: row.projectIds,
+        status: row.status,
+        statusReason: row.statusReason,
+        statusUpdated: row.statusUpdated,
     }
 }
 
@@ -292,19 +303,50 @@ async function getRowByIdOrThrow({ platformId, configId }: { platformId: Platfor
     return aiProvider
 }
 
-async function fetchModels({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderModel[]> {
+async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderModel[]> {
     const { provider, config } = aiProvider
     const auth = await decryptRowAuth({ aiProvider, platformId })
     const cacheKey = getModelsCacheKey({ provider, auth, config })
     if (!modelsCache.has(cacheKey) || 'models' in config) {
-        const data = await aiProviders[provider].listModels(auth, config)
-        modelsCache.set(cacheKey, data.map(model => ({
+        // Listing is a real call on this key, so its outcome is the key's health. A cache hit is not
+        // — it proves nothing about the key right now, so it reports nothing.
+        const { data, error } = await tryCatch(() => aiProviders[provider].listModels(auth, config))
+        await recordKeyOutcome({ platformId, aiProvider, error, log })
+        if (!isNil(error)) {
+            throw error
+        }
+        modelsCache.set(cacheKey, (data ?? []).map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
         })))
     }
     return modelsCache.get(cacheKey)!
+}
+
+// Health reporting must never be the reason a call fails, so a failed report is swallowed.
+function toInvalidCredentialsError({ provider, error, log }: { provider: AIProviderName, error: unknown, log: FastifyBaseLogger }): ActivepiecesError {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
+    log.error({ error }, '[aiProviderService] Failed to validate provider credentials')
+    return new ActivepiecesError({
+        code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
+        params: {
+            provider,
+            message: includeHttpErrorInMessage
+                ? `Failed to validate credentials for ${aiProviders[provider].name}, ${errorMessage}`
+                : `Failed to validate credentials for ${aiProviders[provider].name}`,
+            httpErrorResponse: errorMessage,
+        },
+    })
+}
+
+async function recordKeyOutcome({ platformId, aiProvider, error, log }: { platformId: PlatformId, aiProvider: AIProviderSchema, error: unknown, log: FastifyBaseLogger }): Promise<void> {
+    const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
+    const { error: reportError } = await tryCatch(() => aiProviderHealth(log).record({ platformId, providerId: aiProvider.id, signal }))
+    if (!isNil(reportError)) {
+        log.warn({ error: reportError, aiProvider: { id: aiProvider.id } }, '[aiProviderService] Could not record key status')
+    }
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {
@@ -351,7 +393,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
     })
-    return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
+    return { id: savedAiProvider.id, provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config, platformId }
 }
 
 

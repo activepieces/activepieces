@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AiProviderKeyStatus, AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -50,6 +50,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).update(platformId, request.params.id, request.body)
+    })
+    app.post('/:id/recheck', RecheckAIProvider, async (request) => {
+        const status = await aiProviderService(app.log).recheck({
+            platformId: request.principal.platform.id,
+            providerId: request.params.id,
+        })
+        return { status }
     })
     app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -135,6 +142,20 @@ const UpdateAIProvider = {
             id: z.string(),
         }),
         body: UpdateAIProviderRequest,
+    },
+}
+
+const RecheckAIProvider = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        params: z.object({
+            id: z.string(),
+        }),
+        response: {
+            [StatusCodes.OK]: z.object({ status: AiProviderKeyStatus }),
+        },
     },
 }
 

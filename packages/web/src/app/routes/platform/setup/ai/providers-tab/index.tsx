@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils';
 import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
+import { KeyStatusBadge } from './key-status';
 import { ConnectProviderDialog } from './connect-provider-dialog';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
@@ -79,6 +80,10 @@ export function ProvidersTab() {
     });
   const { mutate: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
+      onSuccess: () => refetch(),
+    });
+  const { mutate: recheckProvider, isPending: isRechecking } =
+    aiProviderMutations.useRecheckAiProvider({
       onSuccess: () => refetch(),
     });
 
@@ -135,6 +140,8 @@ export function ProvidersTab() {
           info={activeInfo}
           projects={projects}
           isSaving={isSaving}
+          isRechecking={isRechecking}
+          onRecheck={() => recheckProvider(activeConfig.id)}
           onSave={(request) =>
             updateProvider({ providerId: activeConfig.id, request })
           }
@@ -364,6 +371,7 @@ function ConfigRow({
               {t('Chat')}
             </span>
           )}
+          <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>

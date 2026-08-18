@@ -1,4 +1,4 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, observedProviderFetch, ProviderOutcomeSignal, spreadIfDefined } from '@activepieces/core-utils'
 import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -12,29 +12,30 @@ import { LanguageModel } from 'ai'
 const MISTRAL_BASE_URL = 'https://api.mistral.ai/v1'
 
 export function createLanguageModel({ provider, auth, config, modelId, options = {} }: CreateLanguageModelParams): LanguageModel {
+    const fetch = observedProviderFetch(options.onOutcome)
     switch (provider) {
         case AIProviderName.OPENAI: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const client = createOpenAI({ apiKey })
+            const client = createOpenAI({ apiKey, ...spreadIfDefined('fetch', fetch) })
             return options.openaiResponsesModel ? client.responses(modelId) : client.chat(modelId)
         }
         case AIProviderName.ANTHROPIC: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createAnthropic({ apiKey })(modelId)
+            return createAnthropic({ apiKey, ...spreadIfDefined('fetch', fetch) })(modelId)
         }
         case AIProviderName.GOOGLE: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createGoogleGenerativeAI({ apiKey })(modelId)
+            return createGoogleGenerativeAI({ apiKey, ...spreadIfDefined('fetch', fetch) })(modelId)
         }
         case AIProviderName.AZURE: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const { resourceName, apiVersion } = config as AzureProviderConfig
-            return createAzure({ resourceName, apiKey, apiVersion }).chat(modelId)
+            return createAzure({ resourceName, apiKey, apiVersion, ...spreadIfDefined('fetch', fetch) }).chat(modelId)
         }
         case AIProviderName.BEDROCK: {
             const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
             const { region } = config as BedrockProviderConfig
-            return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, ...spreadIfDefined('fetch', fetch) })(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -43,19 +44,20 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders }),
+                ...spreadIfDefined('fetch', fetch),
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             if (options.mistralViaOpenRouter) {
-                return createOpenRouterChatModel({ apiKey, modelId, options })
+                return createOpenRouterChatModel({ apiKey, modelId, options, fetch })
             }
-            return createOpenAICompatible({ name: 'mistral', baseURL: MISTRAL_BASE_URL, apiKey }).chatModel(modelId)
+            return createOpenAICompatible({ name: 'mistral', baseURL: MISTRAL_BASE_URL, apiKey, ...spreadIfDefined('fetch', fetch) }).chatModel(modelId)
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouterChatModel({ apiKey, modelId, options })
+            return createOpenRouterChatModel({ apiKey, modelId, options, fetch })
         }
         case AIProviderName.CLOUDFLARE_GATEWAY:
             throw new Error('Cloudflare Gateway routing is caller-specific and is not handled by the shared language-model factory')
@@ -66,7 +68,8 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
     }
 }
 
-function createOpenRouterChatModel({ apiKey, modelId, options }: {
+function createOpenRouterChatModel({ apiKey, modelId, options, fetch }: {
+    fetch?: typeof globalThis.fetch
     apiKey: string
     modelId: string
     options: LanguageModelOptions
@@ -95,6 +98,9 @@ export type LanguageModelOptions = {
     openRouterSettings?: OpenRouterChatSettings
     mistralViaOpenRouter?: boolean
     extraHeaders?: Record<string, string>
+    // Called once per HTTP request the model makes, including the SDK's own retries. Must not throw
+    // and must not block — reporting is never allowed to be why a model call failed.
+    onOutcome?: (signal: ProviderOutcomeSignal) => void
 }
 
 export type CreateLanguageModelParams = {

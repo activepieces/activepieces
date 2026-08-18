@@ -1,4 +1,4 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum AIProviderModelType {
@@ -218,6 +218,9 @@ export const AIProviderWithoutSensitiveData = z.object({
     modelIds: z.array(z.string()),
     projectScope: AiProviderProjectScope,
     projectIds: z.array(z.string()),
+    status: AiProviderKeyStatus,
+    statusReason: z.string().nullable(),
+    statusUpdated: z.string().nullable(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
@@ -253,6 +256,7 @@ export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
 
 export const GetProviderConfigResponse = z.object({
+    id: z.string(),
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,

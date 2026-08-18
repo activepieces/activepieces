@@ -69,6 +69,12 @@ export const aiProviderMutations = {
       onError,
     });
   },
+  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
+      onSuccess,
+    });
+  },
   useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: ({
