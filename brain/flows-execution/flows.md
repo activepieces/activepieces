@@ -45,6 +45,14 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
 - **`transaction()` (`core/db/transaction.ts`) is a bare `dataSource.transaction()`** — it acquires a *new* connection, not a savepoint. Nesting it deadlocks, so check every caller before wrapping a service method that others may already call inside a transaction.
 - **Flows stuck in `DELETING` keep eating the active-flow limit.** Deletion is a durable BullMQ system job (`delete-flow-<flowId>`), not synchronous: `delete()` sets `operationStatus=DELETING` and enqueues, and the row plus `status=ENABLED` only go away when the job finishes. That job runs `sampleDataService.deleteForFlow`, whose `DELETE FROM file … metadata->>'flowId'=?` had no index — on the large prod `file` table it seq-scans, blows `statement_timeout`, exhausts its 2 attempts and lands **permanently** in the failed set. The flow is then hidden from the UI list (which filters `!=DELETING`) but still counted by the active-flows quota (`getUsage` counts `status=ENABLED`), so Publish silently shows the "Purchase Extra Active Flows" dialog instead of publishing — this is what breaks the `webhook-should-return-response` e2e monitor. Stuck flows are functionally dead (`preDelete` disables the trigger before the failing delete), so forcing their rows away is safe. Fixes on `fix/flow-delete-sample-data-timeout`: a partial expression index `idx_file_sample_data_flow_id` on `file (type, (metadata->>'flowId'))`, plus `operationStatus != DELETING` in the active-flow counts so the quota stops depending on delete-job success.
 
+- **`UPDATE_ACTION` preserves a container's children only when the type does not change.** Each branch of the
+  switch in `update-action.ts` re-reads the children off `stepToUpdate` behind a type guard
+  (`stepToUpdate.type === PROCESS_IN_BATCHES ? stepToUpdate.firstLoopAction : undefined`), so a loop → batch
+  conversion — both of which store their body in `firstLoopAction` — silently drops the body, and the same
+  holds for the router's `children`. Any "switch this step to X" affordance must therefore be a **wrap**
+  (`ADD_ACTION` the container, `MOVE_ACTION` the old step inside it, repoint its input) rather than one
+  `UPDATE_ACTION`, or it deletes the user's work with no undo path.
+
 ### Editions
 CE has full authoring/publishing/folders/forms. EE/Cloud add owner transfer, piece filtering, template sharing, and active-flow quota enforcement on publish/enable.
 
