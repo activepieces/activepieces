@@ -60,10 +60,39 @@ const getPublicIp = async (): Promise<IpMetadata> => {
 }
 
 const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | undefined): string => {
-    if (isNil(clientIpHeader)) {
+    if (isNil(clientIpHeader) || !forwardedHeaderIsTrustworthy(request)) {
         return request.ip
     }
-    return request.headers[clientIpHeader] as string
+    const forwarded = firstForwardedValue(request.headers[clientIpHeader])
+    return isNil(forwarded) || forwarded.length === 0 ? request.ip : forwarded
+}
+
+const forwardedHeaderIsTrustworthy = (request: FastifyRequest): boolean => {
+    if (system.getBoolean(AppSystemProp.TRUST_PROXY) === true) {
+        return true
+    }
+    return isPrivateAddress(request.socket.remoteAddress)
+}
+
+const isPrivateAddress = (address: string | undefined): boolean => {
+    if (isNil(address)) {
+        return false
+    }
+    const withoutZone = address.replace(/^::ffff:/, '').split('%')[0] ?? ''
+    if (withoutZone === '::1' || withoutZone.startsWith('fc') || withoutZone.startsWith('fd') || withoutZone.startsWith('fe80')) {
+        return true
+    }
+    const octets = withoutZone.split('.').map((part) => Number.parseInt(part, 10))
+    if (octets.length !== 4 || octets.some((octet) => Number.isNaN(octet))) {
+        return false
+    }
+    const [first, second] = octets as [number, number, number, number]
+    const isCarrierGradeNat = first === 100 && second >= 64 && second <= 127
+    return first === 127
+        || first === 10
+        || (first === 172 && second >= 16 && second <= 31)
+        || (first === 192 && second === 168)
+        || isCarrierGradeNat
 }
 
 const clientIp = (request: FastifyRequest): string => {
