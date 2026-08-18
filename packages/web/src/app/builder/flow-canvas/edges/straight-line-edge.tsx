@@ -52,7 +52,10 @@ export const ApStraightLineCanvasEdge = ({
           <ApAddButton
             edgeId={id}
             parentStepName={data.parentStepName}
-            stepLocationRelativeToParent={StepLocationRelativeToParent.AFTER}
+            stepLocationRelativeToParent={
+              data.stepLocationRelativeToParent ??
+              StepLocationRelativeToParent.AFTER
+            }
           ></ApAddButton>
         </foreignObject>
       )}

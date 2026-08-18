@@ -34,7 +34,10 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.edgeId);
+      const isOver = event.collisions?.[0]?.id === props.edgeId;
+      if (isOver !== isStepInsideDropZone) {
+        setIsStepInsideDropzone(isOver);
+      }
     },
     onDragEnd() {
       setIsStepInsideDropzone(false);
