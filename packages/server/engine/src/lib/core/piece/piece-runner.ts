@@ -27,7 +27,7 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
     const entryPath = await piecePath.resolve(piece)
 
     return new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [...process.execArgv, childEntryPath()], {
+        const child = spawn(process.execPath, [...childNodeArgs(), childEntryPath()], {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
             serialization: 'advanced',
         })
@@ -94,6 +94,12 @@ function toPieceDescription(value: unknown): PieceDescription {
 
 function withOutput(message: string, output: string): string {
     return output.trim().length === 0 ? message : `${message}\n${output.trim()}`
+}
+
+function childNodeArgs(): string[] {
+    const heapLimitMb = process.env.AP_PIECE_MEMORY_LIMIT_MB
+    const inherited = process.execArgv.filter((arg) => !arg.startsWith('--max-old-space-size'))
+    return isNil(heapLimitMb) ? process.execArgv : [...inherited, `--max-old-space-size=${heapLimitMb}`]
 }
 
 function childEntryPath(): string {

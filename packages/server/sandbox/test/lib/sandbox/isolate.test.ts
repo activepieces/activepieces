@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
 import path from 'path'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { engineHeapMb } from '../../../src/lib/sandbox/node-args'
 
 const { spawnMock, mkdirMock, execPromiseMock } = vi.hoisted(() => ({
     spawnMock: vi.fn(),
@@ -222,7 +223,7 @@ describe('isolateProcess', () => {
                 process.execPath,
                 '--no-node-snapshot',
                 '--expose-gc',
-                '--max-old-space-size=256',
+                `--max-old-space-size=${engineHeapMb(256)}`,
                 '/root/common/engine-main.js',
             ])
         })
