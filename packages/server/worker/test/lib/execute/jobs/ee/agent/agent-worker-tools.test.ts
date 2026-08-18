@@ -383,43 +383,55 @@ describe('agentWorkerTools', () => {
         })
     })
 
-    describe('shrinkLargeValue', () => {
-        it('truncates long strings with a marker and keeps short ones', () => {
-            const long = 'a'.repeat(5000)
-            const result = agentWorkerTools.shrinkLargeValue({ short: 'hi', long }, { maxStringLength: 2000, maxArrayItems: 20 }) as Record<string, string>
-            expect(result.short).toBe('hi')
-            expect(result.long.startsWith('a'.repeat(2000))).toBe(true)
-            expect(result.long).toContain('…[truncated 3000 chars]')
-        })
-
-        it('caps arrays and appends an overflow marker', () => {
-            const arr = Array.from({ length: 50 }, (_, i) => i)
-            const result = agentWorkerTools.shrinkLargeValue(arr, { maxStringLength: 2000, maxArrayItems: 20 }) as unknown[]
-            expect(result.length).toBe(21)
-            expect(result[20]).toBe('…and 30 more items')
-        })
-
-        it('preserves nested object structure', () => {
-            const input = { a: { b: { c: 'value' } }, list: [1, 2] }
-            const result = agentWorkerTools.shrinkLargeValue(input, { maxStringLength: 2000, maxArrayItems: 20 })
-            expect(result).toEqual(input)
-        })
-    })
-
     describe('truncateLargeResult', () => {
         it('returns small results unchanged', () => {
             const small = { ok: true, items: [1, 2, 3] }
             expect(agentWorkerTools.truncateLargeResult(small)).toBe(small)
         })
 
-        it('previews the first 5 items of a large top-level array', () => {
+        it('keeps every record readable rather than five whole ones', () => {
             const result = agentWorkerTools.truncateLargeResult({
-                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(300) })),
+                items: Array.from({ length: 40 }, (_, i) => ({ id: i, from: `sender-${i}@example.com`, text: 'x'.repeat(20_000) })),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
-            expect(text).toContain('[LARGE RESPONSE]')
-            expect(text).toContain('5000 items')
-            expect(text).toContain('Preview (5 of 5000 items)')
+
+            expect(text).not.toContain('hard-truncated')
+            for (let index = 0; index < 40; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
+        })
+
+        it('keeps the siblings of a short array', () => {
+            const result = agentWorkerTools.truncateLargeResult({
+                items: Array.from({ length: 4 }, (_, i) => ({ id: i, text: `row ${i}` })),
+                report: 'x'.repeat(400_000),
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('structure preserved')
+            expect(text).toContain('row 3')
+            expect(text).toContain('report')
+        })
+
+        it('clips harder rather than dropping records when the first rung will not fit', () => {
+            const result = agentWorkerTools.truncateLargeResult({
+                body: {
+                    result: {
+                        messages: Array.from({ length: 200 }, (_, i) => ({
+                            id: `msg-${i}`,
+                            from: `sender-${i}@example.com`,
+                            headers: Array.from({ length: 30 }, (_, h) => ({ name: `h-${h}`, value: 'v'.repeat(500) })),
+                        })),
+                    },
+                },
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('structure preserved')
+            for (let index = 0; index < 25; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
+            expect(text).toContain('more items')
         })
 
         it('structurally shrinks a large non-array object instead of discarding it', () => {

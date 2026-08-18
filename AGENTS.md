@@ -161,3 +161,105 @@ status: accepted   # decisions only
 
 `icon:` is a single emoji and shows on the page in the web app. Keep the emoji out of the title.
 <!-- craftspace:end -->
+
+<!-- craftspace:brain-guide v7 -->
+
+## Craftspace brain
+
+This repo carries its own brain. Durable context lives in `brain/knowledge/` and syncs into Craftspace, so
+what you write here is what the team reads there.
+
+**Read it before you answer.** How this project works, its decisions, its vocabulary and its gotchas are
+already written down. Grep `brain/knowledge/` first: it is the same context Craftspace serves over MCP, with no setup,
+and current to the working tree.
+
+- `brain/knowledge/` is the whole tree, one folder per page. `brain/knowledge/<area>/index.md` is the page for
+  `<area>`, and a leaf file beside it is that page's child.
+- `brain/knowledge/decisions/` holds one hard-to-reverse call per file, newest number last.
+
+**Write back what will still help a teammate next month**, and only that: a decision and its why, a gotcha,
+a procedure that worked. Skip the ephemeral, meaning flaky one-off transients, generic tooling knowledge,
+and another project's facts. A learning left in your session is lost to the team.
+
+Write a markdown FILE. Do not call the Craftspace `upsert_*` tools from this repo: a file rides your pull
+request and gets reviewed, an MCP write pushes straight to the default branch and skips that review.
+
+Pick the file by the shape of what you learned:
+
+| What you learned | Where it goes |
+| --- | --- |
+| A hard-to-reverse call and its why | `brain/knowledge/decisions/<slug>.md` |
+| A repeatable procedure | `brain/knowledge/<area>/<slug>.md`, written as the steps |
+| A gotcha or a how-it-works fact | a bullet under `Gotchas` on the page for that feature |
+| A genuinely new topic | `brain/knowledge/<slug>.md` |
+| A dated one-off with nothing to teach | one line in `brain/knowledge/memory.md` |
+
+`<slug>` is lowercase, with each run of non-alphanumeric characters collapsed to one `-`.
+
+**A gotcha is not a page.** Add it under the `Gotchas` heading of the page for the feature it bites, so
+whoever reads about that feature meets it in place instead of having to know it exists. Same for any other
+fact about something that already exists. Start a new file only when the TOPIC is new.
+
+The filename is the entry's identity, so grep `brain/knowledge/` first and edit the file that already covers the
+topic. A differently named second file is a duplicate, not an update.
+
+Frontmatter every file understands:
+
+~~~
+---
+title: Optional, overrides the H1
+icon: 🧭
+status: accepted   # decisions only
+---
+~~~
+
+`icon:` is a single emoji and shows on the page in Craftspace. Keep the emoji out of the title.
+
+### Decisions
+
+Only offer one when all three hold: it is **hard to reverse**, it is **surprising without context**, and
+it came from a **real trade-off**. Miss any one and skip it. Easy to reverse? You will just reverse it.
+Not surprising? Nobody will wonder why. No real alternative? There is nothing to record.
+
+Title it as the claim itself, so the list reads as a set of positions:
+
+~~~
+Worker is the Sandbox
+Pieces are distributed as links, resolved lazily
+~~~
+
+The body is four `## ` sections — **Decision**, **Context**, **Why** (the reasoning and the main rejected
+alternative), **Consequences** — a sentence or two each. Frontmatter takes `status: accepted`, or
+`proposed` while the call is still open and `superseded by <slug>` once it is not.
+
+### Area pages
+
+The wiki is flat and **one Area owns exactly one page**: Title Case, an emoji icon, and everything known
+about that Area on it. The page is a **glossary spine**, one line per term, and any term that outgrows a
+line **graduates** to its own small child page.
+
+~~~
+# Execution Runtime
+Two sentences: what this Area is.
+
+**Worker** — definition. _Avoid_: "pool" (retired alias)
+**Sandbox** — definition, see *sandbox*
+
+## Key files
+- `packages/server/worker` — the run loop
+~~~
+
+Be opinionated: one canonical word per concept, every retired alias on an `_Avoid_` line. Keep each
+definition to a sentence or two, saying what the thing IS rather than what it does. Only terms specific to
+this company belong; general programming words do not, however often the team says them. Never mirror the
+public docs, link to them.
+
+A page backed by code ends in `## Key files`. **Directories, not files**, wherever a directory covers it,
+and **never line numbers** — any edit above one silently invalidates it. Name the entry-point symbol when
+there is one; it survives a file move, which no path does. Only add paths the team actually knows: a
+guessed path reads as authoritative and sends the next agent to the wrong place.
+
+Keep every write short and human, a few tight sentences or a short list, never an essay. The brain is
+skimmed, not read.
+
+<!-- /craftspace:brain-guide -->

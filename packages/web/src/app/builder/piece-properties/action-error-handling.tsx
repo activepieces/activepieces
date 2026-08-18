@@ -33,10 +33,17 @@ const ActionErrorHandlingForm = React.memo(
     }
 
     return (
-      <div className={cn('flex flex-col mt-2', GAP_SIZE_FOR_STEP_SETTINGS)}>
-        <div className="text-xs font-semibold  tracking-wide text-muted-foreground flex items-center gap-1">
-          <ShieldAlert className="w-4 h-4" />
-          <span>{t('Error handling')}</span>
+      <div
+        className={cn(
+          'flex flex-col border-t border-border pt-4',
+          GAP_SIZE_FOR_STEP_SETTINGS,
+        )}
+      >
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <ShieldAlert className="size-4" />
+          <span className="text-[13px] font-semibold tracking-[-0.005em] text-muted-foreground">
+            {t('Error handling')}
+          </span>
         </div>
         {hideContinueOnFailure !== true && (
           <FormField
@@ -46,7 +53,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -56,7 +63,7 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Add Error Handler')}</span>
+                  <span>{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
@@ -75,7 +82,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -85,7 +92,7 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Retry on Failure')}</span>
+                  <span>{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t('Retries up to 4 times before failing the step.')}

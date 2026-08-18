@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import FormData from 'form-data';
 import { wordpressAuth } from '../..';
+import { createPostActionOutputSchema } from '../output-schemas';
 
 export const createWordPressPost = createAction({
   auth: wordpressAuth,
@@ -19,6 +20,7 @@ export const createWordPressPost = createAction({
   audience: 'both',
   aiMetadata: { description: 'Publishes a new blog post on a WordPress site via the REST API, with optional status (draft/publish/etc.), categories, tags, excerpt, featured image, and custom ACF fields. Choose this to add fresh content; for editing an existing post use Update Post. Requires a title and HTML content; not idempotent — each call creates a separate post.', idempotent: false },
   displayName: 'Create Post',
+  outputSchema: createPostActionOutputSchema,
   props: {
     title: Property.ShortText({
       description: 'Title of the post about to be added',
