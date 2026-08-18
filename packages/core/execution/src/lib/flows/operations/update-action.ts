@@ -63,6 +63,19 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
                 break
             }
 
+            case FlowActionType.PROCESS_IN_BATCHES: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.settings.sampleData : undefined
+                const firstLoopAction = stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.firstLoopAction : undefined
+                updatedAction = {
+                    ...baseProps,
+                    settings: { ...request.settings, sampleData: existingSampleData },
+                    type: FlowActionType.PROCESS_IN_BATCHES,
+                    firstLoopAction,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+
             case FlowActionType.ROUTER: {
                 const existingSampleData = stepToUpdate.type === FlowActionType.ROUTER ? stepToUpdate.settings.sampleData : undefined
                 const children = stepToUpdate.type === FlowActionType.ROUTER ? stepToUpdate.children : [null, null]
