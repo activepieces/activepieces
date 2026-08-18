@@ -10,8 +10,8 @@ const { mockTrackBillableUsage, mockResolveMessages, mockCountBillableToolCalls,
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    BillingEvents: { CHAT_MESSAGE: 'chat_message' },
-    captureBillingEvent: vi.fn(),
+    LicenseKeyPostHogEvents: { CHAT_MESSAGE: 'chat_message' },
+    captureLicesneKeyEvent: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/platform/billing-provider', () => ({

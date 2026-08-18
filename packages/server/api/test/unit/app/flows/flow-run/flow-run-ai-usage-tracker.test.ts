@@ -11,8 +11,8 @@ const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mo
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    BillingEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
-    captureBillingEvent: vi.fn(),
+    LicenseKeyPostHogEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
+    captureLicesneKeyEvent: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
