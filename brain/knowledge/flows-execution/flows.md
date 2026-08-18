@@ -79,6 +79,14 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
 
 - **An engine API client that throws `EngineGenericError` makes its executor's own `failStep` branch unreachable.** `utils.tryCatchAndThrowOnEngineError` returns USER-level `ExecutionError`s to the caller but **rethrows** ENGINE-level ones, so `const { error } = await tryCatchAndThrowOnEngineError(() => api.call())` followed by `if (error) return failStep(...)` is dead code for an ENGINE error: the run ends as `INTERNAL_ERROR`, which fails the worker job and pages oncall. `packages/server/engine/CLAUDE.md` says to use `EngineGenericError` for "failed API calls to the server", and that is right for the engine's own plumbing (progress, file store) and wrong for anything proxying a third party — OpenRouter returning 500 to the AI router is not our bug, and the docs promise a retryable FAILED step. Classify by whose fault it is, not by which layer threw. The AI router's client now throws a USER-level `AiRouterEvaluationError`. Nothing in lint or tsc catches this; only an executor test that asserts `steps.<name>.status === FAILED` does, which is how it was found.
 
+- **`UPDATE_ACTION` preserves a container's children only when the type does not change.** Each branch of the
+  switch in `update-action.ts` re-reads the children off `stepToUpdate` behind a type guard
+  (`stepToUpdate.type === PROCESS_IN_BATCHES ? stepToUpdate.firstLoopAction : undefined`), so a loop → batch
+  conversion — both of which store their body in `firstLoopAction` — silently drops the body, and the same
+  holds for the router's `children`. Any "switch this step to X" affordance must therefore be a **wrap**
+  (`ADD_ACTION` the container, `MOVE_ACTION` the old step inside it, repoint its input) rather than one
+  `UPDATE_ACTION`, or it deletes the user's work with no undo path.
+
 ### Editions
 CE has full authoring/publishing/folders/forms. EE/Cloud add owner transfer, piece filtering, template sharing, and active-flow quota enforcement on publish/enable.
 
