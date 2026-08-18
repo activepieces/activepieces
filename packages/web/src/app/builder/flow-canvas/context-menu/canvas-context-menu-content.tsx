@@ -1,7 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
   FlowOperationType,
+  flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -92,11 +94,14 @@ export const CanvasContextMenuContent = ({
   );
   const showPasteAfterLastStep =
     !readonly && contextMenuType === ContextMenuType.CANVAS;
-  const showPasteAsFirstLoopAction =
+  const showPasteInsideContainer =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
+    !isNil(firstSelectedStep) &&
+    sharedFlowCanvasUtils.isContainerStep(firstSelectedStep) &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+  const isBatchContainer =
+    firstSelectedStep?.type === FlowActionType.PROCESS_IN_BATCHES;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === FlowActionType.ROUTER &&
@@ -152,7 +157,7 @@ export const CanvasContextMenuContent = ({
     showCopyReference ||
     showDuplicate ||
     showSkip ||
-    showPasteAsFirstLoopAction ||
+    showPasteInsideContainer ||
     showPasteAsBranchChild ||
     showPasteAsCofBranchChild ||
     showPasteAfterCurrentStep ||
@@ -234,7 +239,7 @@ export const CanvasContextMenuContent = ({
             <Braces className="w-4 h-4"></Braces> {t('Copy reference')}
           </ContextMenuItem>
         )}
-        {(showPasteAsFirstLoopAction ||
+        {(showPasteInsideContainer ||
           showPasteAsBranchChild ||
           showPasteAsCofBranchChild ||
           showPasteAfterCurrentStep) && (
@@ -256,15 +261,16 @@ export const CanvasContextMenuContent = ({
           </ContextMenuItem>
         )}
 
-        {showPasteAsFirstLoopAction && (
+        {showPasteInsideContainer && (
           <ContextMenuItem
             onClick={() => {
               pasteNodes(
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
-                  stepLocationRelativeToParent:
-                    StepLocationRelativeToParent.INSIDE_LOOP,
+                  stepLocationRelativeToParent: isBatchContainer
+                    ? StepLocationRelativeToParent.INSIDE_BATCH
+                    : StepLocationRelativeToParent.INSIDE_LOOP,
                 },
                 applyOperation,
               );
@@ -272,7 +278,9 @@ export const CanvasContextMenuContent = ({
             className="flex items-center gap-2"
           >
             <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-            {t('Paste Inside Loop')}
+            {isBatchContainer
+              ? t('Paste Inside Batch')
+              : t('Paste Inside Loop')}
           </ContextMenuItem>
         )}
 
