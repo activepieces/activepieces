@@ -10,6 +10,7 @@ import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, {
 	sender?: string;
@@ -89,6 +90,7 @@ export const newEmailTrigger = createTrigger({
 	aiMetadata: {
 		description: 'Fires when a new message arrives in the mailbox Inbox, optionally narrowed to a specific sender and/or recipient address. Each fire represents one newly received email.',
 	},
+	outputSchema: newEmailTriggerOutputSchema,
 	props: {
 		sender: Property.ShortText({
 			displayName: 'From (Sender Email)',

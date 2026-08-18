@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
+import { findEmailActionOutputSchema } from '../output-schemas';
 
 export const findEmailAction = createAction({
 	auth: microsoftOutlookAuth,
@@ -13,6 +14,7 @@ export const findEmailAction = createAction({
 	description: 'Searches for emails using full-text search.',
 	audience: 'both',
 	aiMetadata: { description: 'Searches the Outlook mailbox for messages matching a full-text query (supports field syntax like from:, subject:, hasAttachments:), optionally scoped to one folder and capped by a max-results count. Use this to locate emails and obtain their message IDs for follow-up actions. Idempotent read-only lookup.', idempotent: true },
+	outputSchema: findEmailActionOutputSchema,
 	props: {
 		searchQuery: Property.ShortText({
 			displayName: 'Search Query',
