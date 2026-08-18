@@ -112,10 +112,6 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             if (!isNil(error)) {
                 throw toInvalidCredentialsError({ provider: aiProvider.provider, error, log })
             }
-            // Only a pair we are about to persist says anything about this row. A rejected
-            // replacement is discarded, leaving credentials this validation never touched — grading
-            // them by it would mark a healthy key rejected. recheck is what grades what is stored.
-            await recordKeyOutcome({ platformId, aiProvider, error: undefined, log })
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
@@ -138,6 +134,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         else {
             await aiProviderRepo().update(providerId, updates)
+        }
+
+        if (revalidated) {
+            await recordKeyOutcome({ platformId, aiProvider, error: undefined, log })
         }
     },
 
