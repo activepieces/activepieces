@@ -84,7 +84,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+export function captureLicesneKeyEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
     getPostHog().capture({
         distinctId: licenseKey,
         event,
@@ -131,7 +131,7 @@ async function getMetadata() {
     }
 }
 
-export enum BillingEvents {
+export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
     CHAT_MESSAGE = 'chat_message',
     PLATFORM_SETUP_REPORT = 'platform_setup_report',
@@ -193,9 +193,9 @@ export type SetupReportProperties = {
 }
 
 export type BillingEventPayload =
-    | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
-    | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
-    | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
-    | { event: BillingEvents.PLATFORM_SETUP_REPORT, properties: SetupReportProperties }
+    | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
+    | { event: LicenseKeyPostHogEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+    | { event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT, properties: SetupReportProperties }
 
 type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload

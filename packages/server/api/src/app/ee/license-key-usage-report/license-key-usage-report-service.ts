@@ -10,7 +10,7 @@ import { appMachineCache } from '../../helper/app-machine-cache'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
 import { system } from '../../helper/system/system'
-import { BILLING_EVENTS_FLUSH_BATCH_SIZE, BillingEvents, captureBillingEvent, flushBillingEvents, SetupReportApp, SetupReportHealth, SetupReportProperties, SetupReportWorker, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { BILLING_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, captureLicesneKeyEvent, flushBillingEvents, SetupReportApp, SetupReportHealth, SetupReportProperties, SetupReportWorker, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { WorkerMachine, workerMachineCache } from '../../workers/machine/machine-cache'
@@ -23,7 +23,7 @@ const EXECUTIONS_CHUNK_DELAY_MS = 1000
 const SETUP_REPORT_WORKERS_LIMIT = 50
 const WORKER_OFFLINE_AFTER_SECONDS = 60
 
-export const billingUsageReportService = (log: FastifyBaseLogger) => ({
+export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
     /**
      * Reports per-platform usage to PostHog (for billing/metering) from a single daily bulk pass — this
      * is NOT product telemetry, so it is intentionally not gated on AP_TELEMETRY_ENABLED. PostHog is the
@@ -47,10 +47,10 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
             const previousDayStartInclusive = utcMidnight(1)
             const previousDayEndExclusive = utcMidnight(0)
 
-            const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
-            const usersByPlatform = await queryUsersByPlatform(platformIds)
-            const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
-            const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform({
+            const activeFlowsByPlatform = await countActiveFlowsByPlatform(platformIds)
+            const usersByPlatform = await countUsersByPlatform(platformIds)
+            const teamProjectsByPlatform = await countTeamProjectsByPlatform(platformIds)
+            const dailyExecutionsByPlatform = await countDailyProductionRunsByPlatform({
                 platformIds,
                 dayStartInclusive: previousDayStartInclusive,
                 dayEndExclusive: previousDayEndExclusive,
@@ -64,9 +64,9 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
                     const activeFlows = activeFlowsByPlatform.get(platformId) ?? 0
                     const users = usersByPlatform.get(platformId) ?? 0
                     const teamProjects = teamProjectsByPlatform.get(platformId) ?? 0
-                    captureBillingEvent({
+                    captureLicesneKeyEvent({
                         licenseKey,
-                        event: BillingEvents.TOTAL_RUNS_PER_DAY,
+                        event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY,
                         properties: buildSnapshotBody({
                             platformId,
                             activeFlows,
@@ -76,9 +76,9 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
                             reportedAt,
                         }),
                     })
-                    captureBillingEvent({
+                    captureLicesneKeyEvent({
                         licenseKey,
-                        event: BillingEvents.PLATFORM_SETUP_REPORT,
+                        event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT,
                         properties: buildSetupReportBody({ platformId, edition, reportedAt, setupSource }),
                     })
                 }
@@ -95,7 +95,7 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const enabledFlowCountPerPlatform = await flowRepo()
         .createQueryBuilder('flow')
         .innerJoin('flow.project', 'project')
@@ -110,7 +110,7 @@ async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<st
     return toCountByPlatformId(enabledFlowCountPerPlatform)
 }
 
-async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const activeUserCountPerPlatform = await userRepo()
         .createQueryBuilder('user')
         .select('user.platformId', 'platformId')
@@ -123,7 +123,7 @@ async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, 
     return toCountByPlatformId(activeUserCountPerPlatform)
 }
 
-async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const teamProjectCountPerPlatform = await projectRepo()
         .createQueryBuilder('project')
         .select('project.platformId', 'platformId')
@@ -145,7 +145,7 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
  * cloud-wide; both trip the DB statement timeout. The projectIds are chunked so each aggregate stays
  * small and bounded. Projects are mapped back to platforms in app code.
  */
-async function queryDailyExecutionsByPlatform({ platformIds, dayStartInclusive, dayEndExclusive }: {
+async function countDailyProductionRunsByPlatform({ platformIds, dayStartInclusive, dayEndExclusive }: {
     platformIds: string[]
     dayStartInclusive: string
     dayEndExclusive: string

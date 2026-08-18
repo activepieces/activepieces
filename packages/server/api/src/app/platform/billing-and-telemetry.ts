@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { ConsumableFeatureId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { BillingEventPayload, captureBillingEvent } from '../helper/telemetry.utils'
+import { BillingEventPayload, captureLicesneKeyEvent } from '../helper/telemetry.utils'
 import { billingProvider, TrackAppSumoAiUsageParams, TrackCreditsParams, TrackFeatureParams } from './billing-provider'
 
 export async function trackBillingAndSendTelemetry({ log, licenseKey, credits, appSumo, telemetry }: TrackBillingAndSendTelemetryParams): Promise<void> {
@@ -13,7 +13,7 @@ export async function trackBillingAndSendTelemetry({ log, licenseKey, credits, a
     if (isNil(licenseKey) || licenseKey.length === 0 || isNil(telemetry)) {
         return
     }
-    captureBillingEvent({ licenseKey, ...telemetry })
+    captureLicesneKeyEvent({ licenseKey, ...telemetry })
 }
 
 type TrackBillingAndSendTelemetryParams = {
