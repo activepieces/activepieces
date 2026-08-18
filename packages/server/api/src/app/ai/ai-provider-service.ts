@@ -109,13 +109,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (revalidated) {
             const auth = request.auth ?? await decryptRowAuth({ aiProvider, platformId })
             const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, config, log))
-            // Replacing a key is the other moment we learn its health for free. Classify the raw
-            // provider error before it is wrapped, since the wrap drops the HTTP status, and record
-            // before rethrowing so a rejected replacement is visible rather than only a toast.
-            await recordKeyOutcome({ platformId, aiProvider, error, log })
             if (!isNil(error)) {
                 throw toInvalidCredentialsError({ provider: aiProvider.provider, error, log })
             }
+            // Only a pair we are about to persist says anything about this row. A rejected
+            // replacement is discarded, leaving credentials this validation never touched — grading
+            // them by it would mark a healthy key rejected. recheck is what grades what is stored.
+            await recordKeyOutcome({ platformId, aiProvider, error: undefined, log })
         }
 
         const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
