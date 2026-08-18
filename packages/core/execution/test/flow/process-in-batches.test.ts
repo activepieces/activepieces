@@ -250,6 +250,57 @@ describe('Process in Batches step', () => {
         })], withLoopInsideBatch)).toThrow()
     })
 
+    it('refuses a step in the body being retyped into a batch step', () => {
+        const withBody = applyAll([
+            addBatchStep(),
+            addCodeStep({ name: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH }),
+        ])
+
+        expect(() => applyAll([{
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+                name: 'step_2',
+                type: FlowActionType.PROCESS_IN_BATCHES,
+                displayName: 'Process in Batches',
+                valid: true,
+                settings: { items: '{{ trigger }}', batchSize: 10 },
+            },
+        }], withBody)).toThrow()
+    })
+
+    it('keeps the body when converting between a loop and a batch step', () => {
+        const withBody = applyAll([
+            addBatchStep(),
+            addCodeStep({ name: 'step_2', parentStep: 'step_1', stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH }),
+        ])
+
+        const asLoop = applyAll([{
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+                name: 'step_1',
+                type: FlowActionType.LOOP_ON_ITEMS,
+                displayName: 'Loop',
+                valid: true,
+                settings: { items: '{{ trigger }}' },
+            },
+        }], withBody)
+        const loopStep = flowStructureUtil.getActionOrThrow('step_1', asLoop.trigger)
+        expect(loopStep.type).toBe(FlowActionType.LOOP_ON_ITEMS)
+        expect(flowStructureUtil.getActionOrThrow('step_2', asLoop.trigger).name).toBe('step_2')
+
+        const backToBatch = applyAll([{
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+                name: 'step_1',
+                type: FlowActionType.PROCESS_IN_BATCHES,
+                displayName: 'Process in Batches',
+                valid: true,
+                settings: { items: '{{ trigger }}', batchSize: 10 },
+            },
+        }], asLoop)
+        expect(batchStepOf(backToBatch).firstLoopAction?.name).toBe('step_2')
+    })
+
     it('allows a batch step after another batch step, and inside a top-level loop', () => {
         const withBatch = applyAll([addBatchStep()])
         expect(() => applyAll([addBatchStep({

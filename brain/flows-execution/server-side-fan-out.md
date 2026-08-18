@@ -60,19 +60,28 @@ it also served HTTP. Do not reintroduce a read inside `dispatchChild`: if a new 
 ## Gotchas
 
 - **A batch step cannot be placed inside another batch step, and the guard is post-hoc rather than
-  positional.** `_addAction` applies the transform and *then* rejects if the result nests a batch **and the
-  input did not** (`FLOW_OPERATION_INVALID`). Written that way on purpose: it needs no reasoning about
-  `stepLocationRelativeToParent`, it catches every insertion shape — including nesting through an
-  intermediate loop or router, and a container pasted *with* a batch already inside it, since paste and
-  duplicate both route through `ADD_ACTION` — and the "input did not" clause means an existing flow that
-  somehow contains one is never invalidated, so the constraint is non-breaking by construction. The builder
-  hides the piece rather than letting the user hit the error (`pieceSelectorUtils.isInsideBatch` →
-  `excludeProcessInBatches`), but that is affordance only — `isInsideBatch` bails unless the operation is
-  `ADD_ACTION`, so replacing a step that already sits inside a batch region still offers the piece and the user
-  meets the error. The operation layer is the authority, which is what makes it hold for MCP `ap_add_step` too. The constraint is new — nothing in
-  `flow-version-validator-util.ts` (settings-only), the selector, or `add-action` forbade it before. The
-  trigger was visual: two nested batch regions on the canvas draw *exactly coincident* hairlines, not inset
-  ones, so nesting read as one box with two stray rules across it.
+  positional.** `flowOperations.apply` runs the operation and *then* rejects if the result nests a batch **and
+  the input did not** (`FLOW_OPERATION_INVALID`). Written that way on purpose: it needs no reasoning about
+  `stepLocationRelativeToParent`, it catches every insertion shape — including nesting through an intermediate
+  loop or router — and the "input did not" clause means an existing flow that somehow contains one is never
+  invalidated, so the constraint is non-breaking by construction and a grandfathered flow stays editable.
+- **The nesting guard belongs in `apply`, not in one operation.** It first shipped inside `_addAction`, which
+  covered more than it looked like it did — move, paste, duplicate and import all decompose into `ADD_ACTION`s
+  routed back through `apply`, so all four were caught. `UPDATE_ACTION` was not: it edits a step in place, so
+  retyping a body step to `PROCESS_IN_BATCHES` persisted a nested batch that came back `valid: true` and was
+  publishable. Nothing downstream catches that — `flow-version-validator-util.ts` validates settings, never
+  structure. The guard now wraps every operation in `apply`, which is the shape that stays closed as operations
+  are added; a per-operation copy is the same bug waiting on the next one that edits a step in place.
+- **`UPDATE_ACTION` must carry `firstLoopAction` across a loop/batch conversion.** Both `LOOP_ON_ITEMS` and
+  `PROCESS_IN_BATCHES` hold their body in `firstLoopAction`, but `_updateAction` reads existing state per
+  *requested* type; a check written as `stepToUpdate.type === <the requested type>` silently drops the whole body
+  when the user retypes a loop into a batch (or back). The check has to accept either container type. `sampleData`
+  is deliberately *not* carried across — the two settings shapes differ.
+- **The builder's `isInsideBatch` is affordance, not enforcement.** It hides the piece
+  (`pieceSelectorUtils.isInsideBatch` → `excludeProcessInBatches`) but returns `false` for anything that is not
+  `ADD_ACTION`, so replacing a step inside a batch region still offers Process in Batches and the user meets the
+  operation-layer error. The operation layer is the authority, which is what makes the constraint hold for MCP
+  `ap_add_step` and any API client too.
 - **A child run's entry step has to survive a pause.** A child starts at the batch body's entry step with the
   parent's steps seeded as SUCCEEDED, so the engine cannot walk from the trigger — the batch step itself would
   read as already done and the walk would fall through to the step *after* the batch. `entryStepName` arrives on
