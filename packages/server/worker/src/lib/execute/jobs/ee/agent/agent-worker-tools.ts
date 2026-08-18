@@ -1,5 +1,5 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { safeHttp } from '@activepieces/server-utils'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,15 +10,6 @@ const MAX_BATCH_SIZE = 100
 const MAX_CONFIGURED_TOOL_CALLS = 50
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
-// Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runAgentAction) and only a preview + fileId reaches here, so this only needs to keep
-// the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
-const MAX_RESULT_SIZE_BYTES = 128 * 1024
-const MIN_PREVIEW_ARRAY_LENGTH = 3
-const MAX_ARRAY_SEARCH_DEPTH = 6
-const CLIPPED_PREVIEW_ITEM_COUNT = 25
-const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
-const MAX_CLAMP_ATTEMPTS = 8
 const CARD_ERROR_MAX_LENGTH = 300
 const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
@@ -66,53 +57,23 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 }
 
 function truncateLargeResult(result: unknown): unknown {
-    const { data: serialized, error } = tryCatchSync(() => JSON.stringify(result))
-    if (error) {
-        return buildOversizeEnvelope({
-            result,
-            text: '[LARGE RESPONSE] The result could not be serialized (circular or invalid structure). Retry with a more specific filter or fetch only the fields you need.',
-        })
-    }
-    if (isNil(serialized)) return result
-    const byteSize = Buffer.byteLength(serialized, 'utf8')
-    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = largeResultUtils.byteSizeOf(result)
+    if (byteSize !== null && byteSize <= MAX_TOOL_RESULT_BYTES) return result
 
-    // Defense 1: preview a genuine multi-item array (never the MCP content wrapper).
-    // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).
-    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
-    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
-    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
-        return buildOversizeEnvelope({
+    const sizeNote = byteSize === null ? '' : ` The full response was ${Math.round(byteSize / 1024)}KB.`
+    const fitted = largeResultUtils.fitToBudget({
+        value: result,
+        maxBytes: MAX_TOOL_RESULT_BYTES,
+        wrap: (json) => buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
-        })
-    }
-
-    // The shrink above keeps every key and clips at a longer limit, so it wins whenever it fits.
-    // Once it cannot, the records are what was being asked about: keep more of them, clipped
-    // harder, rather than a prefix of the serialised object.
-    const records = findRecordArray(result)
-    if (!isNil(records)) {
-        const clipped = records.array
-            .slice(0, CLIPPED_PREVIEW_ITEM_COUNT)
-            .map((record) => shrinkLargeValue(record, { maxStringLength: 400, maxArrayItems: 4 }))
-        const envelope = buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE] ${records.totalCount} items (at ${records.path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${clipped.length} of ${records.totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
-        })
-        if (withinResultCap(envelope)) return envelope
-    }
-
-    // Defense 3b: unconditional hard-truncate backstop — guarantees the returned
-    // object always serializes to <= MAX_RESULT_SIZE_BYTES regardless of shape.
-    return clampEnvelopeToCap({
+            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]".\n\n${json}`,
+        }),
+    })
+    return fitted ?? buildOversizeEnvelope({
         result,
-        prefix: `[LARGE RESPONSE — hard-truncated to fit the context budget] The full response was ${Math.round(byteSize / 1024)}KB. Showing a truncated prefix only; retry with a more specific filter, request fewer items, or fetch only IDs/metadata.\n\n`,
-        body: shrunkSerialized,
+        text: `[LARGE RESPONSE] The response could not be included.${sizeNote} Retry with a more specific filter, request fewer items, or fetch only IDs/metadata.`,
     })
 }
-
-type RecordArray = { array: unknown[], path: string, totalCount: number }
 
 function buildOversizeEnvelope({ result, text }: { result: unknown, text: string }): { content: Array<{ type: 'text', text: string }> } {
     const meta = isObject(result) && isObject(result['_meta']) ? result['_meta'] : undefined
@@ -120,78 +81,6 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
         content: [{ type: 'text', text }],
         ...spreadIfDefined('_meta', meta),
     }
-}
-
-function withinResultCap(value: unknown): boolean {
-    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
-    return !isNil(serialized) && Buffer.byteLength(serialized, 'utf8') <= MAX_RESULT_SIZE_BYTES
-}
-
-function sliceToByteBudget({ value, maxBytes }: { value: string, maxBytes: number }): string {
-    if (maxBytes <= 0) return ''
-    if (Buffer.byteLength(value, 'utf8') <= maxBytes) return value
-    let end = Math.min(value.length, maxBytes)
-    while (end > 0 && Buffer.byteLength(value.slice(0, end), 'utf8') > maxBytes) {
-        end--
-    }
-    return value.slice(0, end)
-}
-
-function clampEnvelopeToCap({ result, prefix, body }: { result: unknown, prefix: string, body: string }): unknown {
-    let budget = MAX_RESULT_SIZE_BYTES - HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    for (let attempt = 0; attempt < MAX_CLAMP_ATTEMPTS && budget > 0; attempt++) {
-        const sliced = sliceToByteBudget({ value: body, maxBytes: budget })
-        const envelope = buildOversizeEnvelope({ result, text: `${prefix}${sliced}…[hard-truncated]` })
-        const { data: serialized } = tryCatchSync(() => JSON.stringify(envelope))
-        const size = isNil(serialized) ? Number.MAX_SAFE_INTEGER : Buffer.byteLength(serialized, 'utf8')
-        if (size <= MAX_RESULT_SIZE_BYTES) return envelope
-        budget -= (size - MAX_RESULT_SIZE_BYTES) + HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    }
-    return buildOversizeEnvelope({
-        result,
-        text: '[LARGE RESPONSE] The response was too large to include even after truncation. Retry with a more specific filter or fewer items.',
-    })
-}
-
-function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
-    if (typeof value === 'string') {
-        if (value.length <= limits.maxStringLength) return value
-        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
-    }
-    if (Array.isArray(value)) {
-        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
-        return value.length > limits.maxArrayItems
-            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
-            : kept
-    }
-    if (isObject(value)) {
-        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
-    }
-    return value
-}
-
-// Gmail nests its messages under a wrapper, so a depth-one search finds nothing and the whole
-// payload gets hard-truncated to a prefix instead.
-function findRecordArray(obj: unknown, path: string[] = [], seen = new WeakSet<object>()): RecordArray | null {
-    if (Array.isArray(obj)) {
-        // The MCP envelope `{ content: [{ type, text }] }` is not a data array — its single item
-        // holds the whole payload as a string, so previewing it emits the blob unchanged.
-        if (obj.length <= MIN_PREVIEW_ARRAY_LENGTH || looksLikeMcpContentParts(obj)) {
-            return null
-        }
-        return { array: obj, path: path.join('.') || 'root', totalCount: obj.length }
-    }
-    if (!isObject(obj) || path.length >= MAX_ARRAY_SEARCH_DEPTH || seen.has(obj)) {
-        return null
-    }
-    seen.add(obj)
-    return Object.entries(obj)
-        .map(([key, value]) => findRecordArray(value, [...path, key], seen))
-        .reduce<RecordArray | null>((best, found) => isNil(found) || (!isNil(best) && found.totalCount <= best.totalCount) ? best : found, null)
-}
-
-function looksLikeMcpContentParts(array: unknown[]): boolean {
-    return array.every((element) => isObject(element) && typeof element['type'] === 'string')
 }
 
 function normalizePieceName(piece: string): string {
@@ -1610,7 +1499,6 @@ export const agentWorkerTools = {
     extractResultText,
     extractUserFacingError,
     truncateLargeResult,
-    shrinkLargeValue,
     withToolTimeout,
     normalizePieceName,
     TOOL_EXECUTION_TIMEOUT_MS,

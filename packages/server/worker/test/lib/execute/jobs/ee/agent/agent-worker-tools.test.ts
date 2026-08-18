@@ -383,29 +383,6 @@ describe('agentWorkerTools', () => {
         })
     })
 
-    describe('shrinkLargeValue', () => {
-        it('truncates long strings with a marker and keeps short ones', () => {
-            const long = 'a'.repeat(5000)
-            const result = agentWorkerTools.shrinkLargeValue({ short: 'hi', long }, { maxStringLength: 2000, maxArrayItems: 20 }) as Record<string, string>
-            expect(result.short).toBe('hi')
-            expect(result.long.startsWith('a'.repeat(2000))).toBe(true)
-            expect(result.long).toContain('…[truncated 3000 chars]')
-        })
-
-        it('caps arrays and appends an overflow marker', () => {
-            const arr = Array.from({ length: 50 }, (_, i) => i)
-            const result = agentWorkerTools.shrinkLargeValue(arr, { maxStringLength: 2000, maxArrayItems: 20 }) as unknown[]
-            expect(result.length).toBe(21)
-            expect(result[20]).toBe('…and 30 more items')
-        })
-
-        it('preserves nested object structure', () => {
-            const input = { a: { b: { c: 'value' } }, list: [1, 2] }
-            const result = agentWorkerTools.shrinkLargeValue(input, { maxStringLength: 2000, maxArrayItems: 20 })
-            expect(result).toEqual(input)
-        })
-    })
-
     describe('truncateLargeResult', () => {
         it('returns small results unchanged', () => {
             const small = { ok: true, items: [1, 2, 3] }
@@ -419,12 +396,12 @@ describe('agentWorkerTools', () => {
             const text = result.content[0].text
 
             expect(text).not.toContain('hard-truncated')
-            for (let index = 0; index < 20; index++) {
+            for (let index = 0; index < 40; index++) {
                 expect(text).toContain(`sender-${index}@example.com`)
             }
         })
 
-        it('leaves a short array to the structural shrink, which keeps its siblings', () => {
+        it('keeps the siblings of a short array', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 items: Array.from({ length: 4 }, (_, i) => ({ id: i, text: `row ${i}` })),
                 report: 'x'.repeat(400_000),
@@ -436,7 +413,7 @@ describe('agentWorkerTools', () => {
             expect(text).toContain('report')
         })
 
-        it('falls to a clipped record list when even the shrink will not fit', () => {
+        it('clips harder rather than dropping records when the first rung will not fit', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 body: {
                     result: {
@@ -450,9 +427,11 @@ describe('agentWorkerTools', () => {
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
 
-            expect(text).toContain('values in each item were clipped')
-            expect(text).toContain('200 items (at body.result.messages)')
-            expect(text).toContain('sender-0@example.com')
+            expect(text).toContain('structure preserved')
+            for (let index = 0; index < 25; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
+            expect(text).toContain('more items')
         })
 
         it('structurally shrinks a large non-array object instead of discarding it', () => {
