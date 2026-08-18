@@ -1,9 +1,9 @@
-import { apId, chunk, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { apId, chunk, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, IsNull } from 'typeorm'
+import { EntityManager, FindOptionsWhere, IsNull, Not } from 'typeorm'
 import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -102,15 +102,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
     async listUnclaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<WaitpointSignal[]> {
         return signalRepo().find({
-            where: { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() },
+            where: unclaimedSignalWhere({ barrierId, projectId }),
             order: { sequence: 'ASC' },
         })
     },
 
     async claimSignal({ signalId, refId, projectId }: ClaimSignalParams): Promise<boolean> {
         const claimed = await signalRepo().query(
-            'UPDATE waitpoint_signal SET "refId" = $1, "updated" = now() WHERE "id" = $2 AND "projectId" = $3 AND "refId" IS NULL RETURNING "id"',
-            [refId, signalId, projectId],
+            'UPDATE waitpoint_signal SET "refId" = $1, "updated" = now() WHERE "id" = $2 AND "projectId" = $3 AND "refId" IS NULL AND "status" = $4 RETURNING "id"',
+            [refId, signalId, projectId, BarrierSignalStatus.PENDING],
         )
         return Array.isArray(claimed) && claimed.length > 0
     },
@@ -119,8 +119,12 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         await signalRepo().update({ id: signalId, refId, projectId }, { refId: null })
     },
 
-    async markRemainingNotDispatched({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
-        const result = await signalRepo().update({ waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING }, { status: BarrierSignalStatus.NOT_DISPATCHED })
+    async countClaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
+        return signalRepo().countBy({ waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: Not(IsNull()) })
+    },
+
+    async markUnclaimedNotDispatched({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
+        const result = await signalRepo().update(unclaimedSignalWhere({ barrierId, projectId }), { status: BarrierSignalStatus.NOT_DISPATCHED })
         return result.affected ?? 0
     },
 
@@ -130,8 +134,17 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         }
         const identity: SignalIdentity = isNil(signalId) ? { refId } : { id: signalId }
         const barrierIds = await updateSignalOutcome({ where: { ...identity, projectId }, status, result })
+        if (barrierIds.length === 0) {
+            log.warn({
+                ...spreadIfDefined('flowRun', isNil(refId) ? undefined : { id: refId }),
+                ...spreadIfDefined('signal', isNil(signalId) ? undefined : { id: signalId }),
+                project: { id: projectId },
+                outcome: status,
+            }, '[barrierService#receiveSignal] No signal row matched this outcome, so it is being dropped; the barrier was released or the row was never claimed by this ref')
+            return false
+        }
         await Promise.all(barrierIds.map((barrierId) => barrierQueue(log).enqueueEvaluation({ barrierId, projectId })))
-        return barrierIds.length > 0
+        return true
     },
 
     async recordDecision({ barrierId, signalId, projectId, status, result }: RecordDecisionParams): Promise<boolean> {
@@ -230,6 +243,10 @@ function buildPendingSignals({ barrierId, projectId, signalCount, labels, fanOut
         label: labels[index] ?? null,
         result: null,
     }))
+}
+
+function unclaimedSignalWhere({ barrierId, projectId }: BarrierScopeParams): FindOptionsWhere<WaitpointSignal> {
+    return { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() }
 }
 
 async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<BarrierSummary | null> {
