@@ -15,6 +15,7 @@ const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 // the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
+const MAX_ARRAY_SEARCH_DEPTH = 6
 const PREVIEW_ITEM_COUNT = 5
 const CLIPPED_PREVIEW_ITEM_COUNT = 25
 const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
@@ -78,27 +79,30 @@ function truncateLargeResult(result: unknown): unknown {
     if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
 
     // Defense 1: preview a genuine multi-item array (never the MCP content wrapper).
-    const topLevelArray = findTopLevelArray(result)
+    const topLevelArray = findRecordArray(result)
     if (topLevelArray) {
         const { array, path, totalCount } = topLevelArray
-        const previewEnvelope = buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — showing the first ${PREVIEW_ITEM_COUNT} in full. To see the rest, narrow with a filter/limit or page through with an offset/cursor.\n\nPreview (${PREVIEW_ITEM_COUNT} of ${totalCount} items):\n${JSON.stringify(array.slice(0, PREVIEW_ITEM_COUNT), null, 2)}`,
-        })
-        // Defense 2: only keep the preview if it actually fits; otherwise fall through.
-        if (withinResultCap(previewEnvelope)) return previewEnvelope
-
-        // Defense 2b: the records are individually large — a mailbox page carries whole bodies, so
-        // five of them can miss the cap on their own. Keep every record and clip each one instead,
-        // because a summarising task needs one line about all of them rather than all of two.
         const clipped = array
             .slice(0, CLIPPED_PREVIEW_ITEM_COUNT)
             .map((record) => shrinkLargeValue(record, { maxStringLength: 400, maxArrayItems: 4 }))
+        const shownClipped = Math.min(totalCount, CLIPPED_PREVIEW_ITEM_COUNT)
         const clippedEnvelope = buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${Math.min(totalCount, CLIPPED_PREVIEW_ITEM_COUNT)} of ${totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
+            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${shownClipped} of ${totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
         })
-        if (withinResultCap(clippedEnvelope)) return clippedEnvelope
+        const fullEnvelope = buildOversizeEnvelope({
+            result,
+            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — showing the first ${PREVIEW_ITEM_COUNT} in full. To see the rest, narrow with a filter/limit or page through with an offset/cursor.\n\nPreview (${PREVIEW_ITEM_COUNT} of ${totalCount} items):\n${JSON.stringify(array.slice(0, PREVIEW_ITEM_COUNT), null, 2)}`,
+        })
+
+        // More items with their long values clipped beats a handful in full whenever the handful
+        // would hide the rest: a task summarising an inbox needs a line about every message, and a
+        // clipped body still carries who sent it and what it was about.
+        const hidesMostItems = totalCount > PREVIEW_ITEM_COUNT
+        const ordered = hidesMostItems ? [clippedEnvelope, fullEnvelope] : [fullEnvelope, clippedEnvelope]
+        for (const envelope of ordered) {
+            if (withinResultCap(envelope)) return envelope
+        }
     }
 
     // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).
@@ -176,21 +180,25 @@ function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, max
     return value
 }
 
-function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
-    if (Array.isArray(obj) && obj.length > MIN_PREVIEW_ARRAY_LENGTH) {
-        return { array: obj, path: 'root', totalCount: obj.length }
+// Finds the biggest array of records anywhere in the payload, not just one level down. A piece
+// nests its rows as it likes: Gmail hands back messages below a wrapper, so a depth-one search
+// misses them and the whole result gets hard-truncated to a prefix instead of previewed.
+function findRecordArray(obj: unknown, depth = 0, path = 'root'): { array: unknown[], path: string, totalCount: number } | null {
+    if (Array.isArray(obj)) {
+        if (obj.length > MIN_PREVIEW_ARRAY_LENGTH && !looksLikeMcpContentParts(obj)) {
+            return { array: obj, path, totalCount: obj.length }
+        }
+        return null
     }
-    if (!isObject(obj)) return null
+    if (!isObject(obj) || depth >= MAX_ARRAY_SEARCH_DEPTH) return null
+    let best: { array: unknown[], path: string, totalCount: number } | null = null
     for (const key of Object.keys(obj)) {
-        const val = obj[key]
-        if (!Array.isArray(val) || val.length <= MIN_PREVIEW_ARRAY_LENGTH) continue
-        // The MCP envelope `{ content: [{ type, text }] }` is not a data array — its
-        // single item holds the entire payload as a string, so a 3-item "preview"
-        // would emit the whole blob unchanged. Skip it; the shrink path handles it.
-        if (looksLikeMcpContentParts(val)) continue
-        return { array: val, path: key, totalCount: val.length }
+        const found = findRecordArray(obj[key], depth + 1, depth === 0 ? key : `${path}.${key}`)
+        if (!isNil(found) && (isNil(best) || found.totalCount > best.totalCount)) {
+            best = found
+        }
     }
-    return null
+    return best
 }
 
 function looksLikeMcpContentParts(array: unknown[]): boolean {

@@ -412,14 +412,23 @@ describe('agentWorkerTools', () => {
             expect(agentWorkerTools.truncateLargeResult(small)).toBe(small)
         })
 
-        it('previews the first 5 items of a large top-level array', () => {
+        it('shows more items clipped rather than five in full when most would be hidden', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(300) })),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
             expect(text).toContain('[LARGE RESPONSE]')
             expect(text).toContain('5000 items')
-            expect(text).toContain('Preview (5 of 5000 items)')
+            expect(text).toContain('Items (25 of 5000, values clipped)')
+        })
+
+        it('still shows a short array in full when the bulk is elsewhere', () => {
+            const result = agentWorkerTools.truncateLargeResult({
+                items: Array.from({ length: 4 }, (_, i) => ({ id: i, text: `row ${i}` })),
+                report: 'x'.repeat(400_000),
+            }) as { content: Array<{ text: string }> }
+
+            expect(result.content[0].text).toContain('Preview (5 of 4 items)')
         })
 
         it('keeps every mailbox item, clipped, when five whole ones will not fit', () => {
@@ -439,6 +448,30 @@ describe('agentWorkerTools', () => {
             for (let index = 0; index < 12; index++) {
                 expect(text).toContain(`sender-${index}@example.com`)
                 expect(text).toContain(`Subject ${index}`)
+            }
+        })
+
+        it('finds the records when a piece nests them below a wrapper', () => {
+            // A depth-one search misses these, so the payload falls past both preview rungs and is
+            // hard-truncated to a JSON prefix that holds the first message and nothing else.
+            const result = agentWorkerTools.truncateLargeResult({
+                body: {
+                    result: {
+                        messages: Array.from({ length: 200 }, (_, i) => ({
+                            id: `msg-${i}`,
+                            from: `sender-${i}@example.com`,
+                            subject: `Subject ${i}`,
+                            raw: 'r'.repeat(20_000),
+                        })),
+                    },
+                },
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('values in each item were clipped')
+            expect(text).toContain('200 items (at body.result.messages)')
+            for (let index = 0; index < 25; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
             }
         })
 
