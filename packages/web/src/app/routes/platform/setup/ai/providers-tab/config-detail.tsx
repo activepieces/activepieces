@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
-import { aiProviderApi } from '@/features/platform-admin';
+import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
 import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
@@ -68,7 +68,7 @@ export function ConfigDetail({
     provider: config.provider,
   });
   const { data: models = [] } = useQuery({
-    queryKey: ['ai-provider-config-models', config.id],
+    queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
   });
