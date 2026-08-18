@@ -31,8 +31,8 @@ vi.mock('../../src/lib/helper/flow-run-progress-reporter', () => ({
 const { mockExecuteTrigger } = vi.hoisted(() => ({
     mockExecuteTrigger: vi.fn(),
 }))
-vi.mock('../../src/lib/helper/trigger-helper', () => ({
-    triggerHelper: {
+vi.mock('../../src/lib/core/piece/trigger-runner', () => ({
+    triggerRunner: {
         executeTrigger: mockExecuteTrigger,
         executeOnStart: vi.fn().mockResolvedValue(undefined),
     },

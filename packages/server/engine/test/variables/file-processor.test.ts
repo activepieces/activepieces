@@ -1,13 +1,15 @@
 import { buffer as readableToBuffer } from 'node:stream/consumers'
+import { isNil } from '@activepieces/core-utils'
 import { ApFile, ApStreamingFile, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { materializeFile, readFileSource } from '../../src/lib/variables/processors/file'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 
 const HELLO_TXT_DATA_URL = 'data:text/plain;base64,aGVsbG8='
 const FILE_URL = 'https://example.com/report.csv'
 
-async function resolveStreamingFile(input: unknown, required = true): Promise<{ processedInput: Record<string, unknown>, errors: Record<string, unknown> }> {
+async function processFile(input: unknown, { streaming = true, required = true } = {}): Promise<{ processedInput: Record<string, unknown>, errors: Record<string, unknown> }> {
     const props = {
-        file: Property.File({ displayName: 'File', required, streaming: true }),
+        file: Property.File({ displayName: 'File', required, streaming }),
     }
     return propsProcessor.applyProcessorsAndValidators(
         { file: input },
@@ -18,9 +20,37 @@ async function resolveStreamingFile(input: unknown, required = true): Promise<{ 
     )
 }
 
+async function materializeProcessed(input: unknown, { streaming = true, required = true } = {}): Promise<ApStreamingFile | ApFile | null> {
+    const { processedInput } = await processFile(input, { streaming, required })
+    const source = readFileSource(processedInput.file)
+    if (isNil(source)) {
+        throw new Error('Expected a file source marker')
+    }
+    return materializeFile(source)
+}
+
+async function resolveStreamingFile(input: unknown, required = true): Promise<ApStreamingFile> {
+    const file = await materializeProcessed(input, { required })
+    if (isNil(file) || !('body' in file)) {
+        throw new Error('Expected a streaming file')
+    }
+    return file
+}
+
 describe('File Processor', () => {
     afterEach(() => {
         vi.unstubAllGlobals()
+    })
+
+    it('keeps the file unresolved in the engine process, carrying only its source', async () => {
+        const fetchSpy = vi.fn()
+        vi.stubGlobal('fetch', fetchSpy)
+
+        const { processedInput, errors } = await processFile(FILE_URL)
+
+        expect(errors).toEqual({})
+        expect(fetchSpy).not.toHaveBeenCalled()
+        expect(readFileSource(processedInput.file)).toEqual({ source: FILE_URL, streaming: true })
     })
 
     it('resolves a streaming URL input to a lazy body, deriving size and name from headers', async () => {
@@ -28,10 +58,8 @@ describe('File Processor', () => {
             headers: { 'content-type': 'text/csv', 'content-length': '11' },
         })))
 
-        const { processedInput, errors } = await resolveStreamingFile(FILE_URL)
+        const file = await resolveStreamingFile(FILE_URL)
 
-        expect(errors).toEqual({})
-        const file: ApStreamingFile = processedInput.file
         expect(file.filename).toBe('report.csv')
         expect(file.extension).toBe('csv')
         expect(file.size).toBe(11)
@@ -43,9 +71,8 @@ describe('File Processor', () => {
             headers: { 'content-type': 'text/csv', 'content-length': '5', 'content-encoding': 'gzip' },
         })))
 
-        const { processedInput } = await resolveStreamingFile(FILE_URL)
+        const file = await resolveStreamingFile(FILE_URL)
 
-        const file: ApStreamingFile = processedInput.file
         expect(file.size).toBeUndefined()
     })
 
@@ -54,9 +81,8 @@ describe('File Processor', () => {
             headers: { 'content-disposition': 'attachment; filename="archive."', 'content-length': '4' },
         })))
 
-        const { processedInput } = await resolveStreamingFile(FILE_URL)
+        const file = await resolveStreamingFile(FILE_URL)
 
-        const file: ApStreamingFile = processedInput.file
         expect(file.filename).toBe('archive.')
         expect(file.extension).toBeUndefined()
     })
@@ -64,9 +90,7 @@ describe('File Processor', () => {
     it('resolves to null when the URL responds with a non-ok status', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })))
 
-        const { processedInput } = await resolveStreamingFile(FILE_URL, false)
-
-        expect(processedInput.file).toBeNull()
+        expect(await materializeProcessed(FILE_URL, { required: false })).toBeNull()
     })
 
     it('cancels the response body when the URL responds with a non-ok status', async () => {
@@ -74,50 +98,13 @@ describe('File Processor', () => {
         const cancelSpy = vi.spyOn(response.body!, 'cancel')
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response))
 
-        const { processedInput } = await resolveStreamingFile(FILE_URL, false)
-
-        expect(processedInput.file).toBeNull()
+        expect(await materializeProcessed(FILE_URL, { required: false })).toBeNull()
         expect(cancelSpy).toHaveBeenCalled()
     })
 
-    it('destroys an opened streaming body when a sibling property fails validation', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('hello world', {
-            headers: { 'content-type': 'text/csv', 'content-length': '11' },
-        })))
-
-        const props = {
-            file: Property.File({ displayName: 'File', required: true, streaming: true }),
-            count: Property.Number({ displayName: 'Count', required: true }),
-        }
-
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-            { file: FILE_URL, count: 'not-a-number' },
-            props,
-            PieceAuth.None(),
-            false,
-            {},
-        )
-
-        expect(Object.keys(errors)).toContain('count')
-        const file: ApStreamingFile = processedInput.file
-        expect(file.body.destroyed).toBe(true)
-    })
-
     it('resolves a streaming file property to a lazy body without buffering', async () => {
-        const props = {
-            file: Property.File({ displayName: 'File', required: true, streaming: true }),
-        }
+        const file = await resolveStreamingFile(HELLO_TXT_DATA_URL)
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-            { file: HELLO_TXT_DATA_URL },
-            props,
-            PieceAuth.None(),
-            false,
-            {},
-        )
-
-        expect(errors).toEqual({})
-        const file: ApStreamingFile = processedInput.file
         expect(file.filename).toBe('unknown.txt')
         expect(file.extension).toBe('txt')
         expect(file.size).toBe(5)
@@ -125,21 +112,9 @@ describe('File Processor', () => {
     })
 
     it('still resolves a plain file property to a buffered ApFile', async () => {
-        const props = {
-            file: Property.File({ displayName: 'File', required: true }),
-        }
+        const file = await materializeProcessed(HELLO_TXT_DATA_URL, { streaming: false })
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(
-            { file: HELLO_TXT_DATA_URL },
-            props,
-            PieceAuth.None(),
-            false,
-            {},
-        )
-
-        expect(errors).toEqual({})
-        const file: ApFile = processedInput.file
         expect(file).toBeInstanceOf(ApFile)
-        expect(file.data.toString()).toBe('hello')
+        expect(file instanceof ApFile && file.data.toString()).toBe('hello')
     })
 })

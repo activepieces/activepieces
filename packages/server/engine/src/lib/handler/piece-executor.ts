@@ -1,11 +1,11 @@
-import { isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineRunApi } from '../api/engine-run-api'
+import { pieceRunner } from '../core/piece/piece-runner'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
-import { pieceLoader } from '../helper/piece-loader'
 import { createFileUploader } from '../piece-context/file-uploader'
 import { createFlowsContext } from '../piece-context/flows'
 import { createContextStore } from '../piece-context/store'
@@ -44,21 +44,35 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             throw new EngineGenericError('ActionNameNotSetError', 'Action name is not set')
         }
 
-        const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
+        const piece = {
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
-            actionName: action.settings.actionName,
             devPieces: constants.devPieces,
-        })
+        }
+        const description = await pieceRunner.describe(piece)
+        const { metadata } = description
+        const pieceAction = metadata.actions[action.settings.actionName]
+        if (isNil(pieceAction)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'step',
+                    entityId: action.settings.actionName,
+                    message: `Action not found for piece ${piece.pieceName}@${piece.pieceVersion}`,
+                    extra: { pieceName: piece.pieceName, pieceVersion: piece.pieceVersion },
+                },
+            })
+        }
+        const contextVersion = metadata.contextInfo?.version
 
-        const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion: piece.getContextInfo?.().version, pieceName: action.settings.pieceName }).resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver({ contextVersion, pieceName: action.settings.pieceName }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth, action.settings.propertySettings)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, metadata.auth, pieceAction.requireAuth, action.settings.propertySettings)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors, null, 2))
         }
@@ -123,7 +137,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 target: 'actions',
                 hookResponse: params.hookResponse,
-                contextVersion: piece.getContextInfo?.().version,
+                contextVersion,
                 pieceName: action.settings.pieceName,
             }),
             run: {
@@ -139,12 +153,16 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             },
         }
         const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
-            contextVersion: piece.getContextInfo?.().version,
+            contextVersion,
             context,
         })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
-        const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
-        const output = await runMethodToExecute(backwardCompatibleContext)
+        const hasTestMethod = description.hasPath(['actions', action.settings.actionName, 'test'])
+        const output = await pieceRunner.call({
+            piece,
+            path: ['actions', action.settings.actionName, (testSingleStepMode && hasTestMethod) ? 'test' : 'run'],
+            args: [backwardCompatibleContext],
+        })
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)

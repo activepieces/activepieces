@@ -1,0 +1,28 @@
+---
+status: accepted
+---
+
+# The engine never imports a piece, a fresh child process does
+
+## Decision
+
+Nothing in the engine process may `import()` a piece package. A piece is loaded only inside a child process spawned per call and killed when that call returns (`packages/server/engine/src/lib/core/piece/piece-child.ts`, shipped as its own esbuild entry `piece-child.js`). The parent talks to it with exactly two requests — `describe` (piece metadata as JSON plus the list of paths that are functions) and `call` (`['actions', 'send_http', 'run']` and its arguments) — over `piece-runner.ts`.
+
+## Context
+
+The engine is long-lived and served many operations, each `import()`ing pieces into the same process. Resident piece modules (and their duplicated `@activepieces/shared` copies) never came back — measured as hundreds of MB of a single engine heap. Loading a piece to read its metadata, or just to discover an auth `validate` hook does not exist, cost the same permanent memory as running it.
+
+## Why
+
+Process exit is the only reliable way to free a required module graph; a cache or a `delete require.cache` does not free native handles or the transitive graph. Everything the engine needs about a piece is data (props, auth, trigger type, `contextInfo`), so it can cross a process boundary — only *behaviour* has to run where the piece is loaded. Rejected: keeping metadata loading in-process and isolating only `run` (metadata loading is what most operations do, so the leak would remain), and a persistent piece process per version (it re-creates the leak with extra lifecycle).
+
+The child is a real bundled engine entry, not an inline `--eval` script, because file materialization must live with the engine's own file processor: `ApStreamingFile.body` is a `Readable` and cannot be structured-cloned.
+
+## Consequences
+
+- Context functions the piece calls (`store`, `files`, `connections`, `tags`, `run.stop`) stay in the parent: `piece-protocol.ts` swaps them for `{__apFn:id}` markers and the child RPCs back. Anything crossing must be structured-cloneable.
+- `describe` costs one extra spawn per piece per engine process (memoized by `name@version`), so a 10-step flow on one piece is 11 spawns, not 20.
+- `fileProcessor` returns a `__apFileSource` marker and the child calls `materializeFile`, so nothing is fetched until the piece actually runs — a validation failure now opens zero connections. The cost: an unreachable file URL fails *in the child when the step runs* rather than in the parent's prop validation (same message, later stage), because you cannot check a remote file without fetching it.
+- Piece metadata reaches the engine JSON-round-tripped, so any *function* on a property (dropdown `options`, dynamic `props`) is addressable only by path, never callable in-process.
+- The child is a second esbuild entry, so anything that builds it (including `vitest.config.ts`, which builds it for tests) must reuse the same `alias` map as `esbuild.config.mjs` — miss it and tests bundle `@activepieces/*` from `dist` while production bundles from `src`, so a green suite proves nothing about the shipped child.
+- The child inherits no in-process guards the parent installs (e.g. the SSRF monkeypatches in `network/ssrf-guard.ts`). Whatever must apply to piece code has to be installed in `src/piece-child.ts`.

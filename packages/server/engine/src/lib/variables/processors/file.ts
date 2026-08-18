@@ -1,27 +1,52 @@
 import { Readable } from 'node:stream'
 import { isBase64, isNil, isString } from '@activepieces/core-utils'
 import { ApFile, ApStreamingFile, PropertyType } from '@activepieces/pieces-framework'
+import * as z from 'zod/mini'
 import { ProcessorFn } from './types'
 
-export const fileProcessor: ProcessorFn = async (property, urlOrBase64) => {
-    if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
+export const fileProcessor: ProcessorFn = (property, urlOrBase64) => {
+    if (isNil(urlOrBase64) || !isString(urlOrBase64) || !isSupportedSource(urlOrBase64)) {
         return null
     }
-    const streaming = property.type === PropertyType.FILE && property.streaming === true
+    return {
+        [FILE_SOURCE_MARKER]: {
+            source: urlOrBase64,
+            streaming: property.type === PropertyType.FILE && property.streaming === true,
+        },
+    }
+}
+
+export const materializeFile = async ({ source, streaming }: FileSource): Promise<ApFile | ApStreamingFile | null> => {
     try {
         if (streaming) {
-            return await handleStreamingFile(urlOrBase64)
+            return await handleStreamingFile(source)
         }
-        const file = handleBase64File(urlOrBase64)
+        const file = handleBase64File(source)
         if (!isNil(file)) {
             return file
         }
-        return await handleUrlFile(urlOrBase64)
+        return await handleUrlFile(source)
     }
     catch (e) {
         console.error(e)
         return null
     }
+}
+
+export const readFileSource = (value: unknown): FileSource | undefined => {
+    if (value === null || typeof value !== 'object') {
+        return undefined
+    }
+    const record: Record<string, unknown> = { ...value }
+    const keys = Object.keys(record)
+    if (keys.length !== 1 || keys[0] !== FILE_SOURCE_MARKER) {
+        return undefined
+    }
+    return FileSource.safeParse(record[FILE_SOURCE_MARKER]).data
+}
+
+function isSupportedSource(propertyValue: string): boolean {
+    return !isNil(parseBase64File(propertyValue)) || URL.canParse(propertyValue)
 }
 
 function parseBase64File(propertyValue: string): { extension: string, buffer: Buffer } | null {
@@ -141,6 +166,14 @@ function mimeExtension(mimeType: string): string | null {
     const normalized = mimeType.split(';')[0].trim().toLowerCase()
     return MIME_EXTENSIONS[normalized] ?? null
 }
+
+export const FileSource = z.object({
+    source: z.string(),
+    streaming: z.boolean(),
+})
+export type FileSource = z.infer<typeof FileSource>
+
+const FILE_SOURCE_MARKER = '__apFileSource'
 
 const MIME_EXTENSIONS: Record<string, string> = {
     'application/json': 'json',
