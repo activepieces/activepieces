@@ -34,6 +34,8 @@ export type RunState = {
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
   setLoopIndex: (stepName: string, index: number) => void;
+  batchesIndexes: Record<string, number>;
+  setBatchIndex: (params: { stepName: string; index: number }) => void;
   selectFailedStep: () => void;
   addActionTestListener: ({
     runId,
@@ -75,6 +77,13 @@ export const createRunState = (
   return {
     revertSampleDataLocallyCallbacks: {},
     run: initialState.run,
+    batchesIndexes: {},
+    setBatchIndex: ({ stepName, index }) =>
+      set((state) => ({
+        batchesIndexes: { ...state.batchesIndexes, [stepName]: index },
+        userManuallySelectedStepDuringRun:
+          state.userManuallySelectedStepDuringRun || !isNil(state.run),
+      })),
     loopsIndexes:
       initialState.run && initialState.run.steps
         ? flowRunUtils.pinLoopsToIterationsWithFailedStep(initialState.run, {})
@@ -93,6 +102,7 @@ export const createRunState = (
         );
         return {
           loopsIndexes,
+          batchesIndexes: isNewRun ? {} : state.batchesIndexes,
           run,
           flowVersion,
           readonly: true,
@@ -120,6 +130,7 @@ export const createRunState = (
         run: null,
         readonly: !userHasPermissionToEditFlow,
         loopsIndexes: {},
+        batchesIndexes: {},
         selectedBranchIndex: null,
         userManuallySelectedStepDuringRun: false,
         isStepDataPanelOpen: false,
