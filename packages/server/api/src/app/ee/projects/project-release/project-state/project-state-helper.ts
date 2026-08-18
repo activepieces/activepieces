@@ -1,5 +1,5 @@
-import { isNil } from '@activepieces/core-utils'
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, PopulatedFlow } from '@activepieces/shared'
+import { isEmpty, isNil } from '@activepieces/core-utils'
+import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { projectService } from '../../../../project/project-service'
@@ -22,14 +22,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
     ): Promise<PopulatedFlow> {
         const project = await projectService(log).getOneOrThrow(projectId)
 
-        const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
-            const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
-            const isNotEmptyTrigger = !isNil(step.settings?.input)
-            if (oldStep?.settings?.input?.auth && isNotEmptyTrigger) {
-                step.settings.input.auth = oldStep.settings.input.auth
-            }
-            return step
-        })
+        const newFlowVersion = mergeDestinationAuth({ destinationVersion: originalFlow.version, incomingVersion: newFlow.version })
         const updatedFlow = await flowService(log).update({
             id: originalFlow.id,
             projectId,
@@ -106,6 +99,24 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         await flowService(log).delete({ id: flowId, projectId, emitEvents: false })
     },
 })
+
+export function mergeDestinationAuth({ destinationVersion, incomingVersion }: MergeDestinationAuthParams): FlowVersion {
+    return flowStructureUtil.transferFlow(incomingVersion, (step) => {
+        const destinationStep = flowStructureUtil.getStep(step.name, destinationVersion.trigger)
+        const destinationAuth = destinationStep?.settings?.input?.auth
+        const samePiece = destinationStep?.settings?.pieceName === step.settings?.pieceName
+        const incomingInput = step.settings?.input
+        if (!isEmpty(destinationAuth) && samePiece && !isNil(incomingInput) && isEmpty(incomingInput.auth)) {
+            incomingInput.auth = destinationAuth
+        }
+        return step
+    })
+}
+
+type MergeDestinationAuthParams = {
+    destinationVersion: FlowVersion
+    incomingVersion: FlowVersion
+}
 
 type RepublishFlowParams = {
     flow: PopulatedFlow
