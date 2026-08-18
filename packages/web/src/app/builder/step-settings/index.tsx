@@ -41,6 +41,7 @@ import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { ProcessInBatchesSettings } from './process-in-batches-settings';
 import { RouterSettings } from './router-settings';
 import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
@@ -182,6 +183,11 @@ const StepSettingsContainer = () => {
       >
         {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
           <LoopsSettings readonly={readonly}></LoopsSettings>
+        )}
+        {modifiedStep.type === FlowActionType.PROCESS_IN_BATCHES && (
+          <ProcessInBatchesSettings
+            readonly={readonly}
+          ></ProcessInBatchesSettings>
         )}
         {modifiedStep.type === FlowActionType.CODE && (
           <CodeSettings readonly={readonly}></CodeSettings>

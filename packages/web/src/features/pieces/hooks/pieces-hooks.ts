@@ -87,6 +87,7 @@ type UsePiecesSearchProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
   shouldCaptureEvent: boolean;
+  excludeProcessInBatches?: boolean;
 };
 
 export const piecesHooks = {
@@ -232,7 +233,11 @@ export const piecesHooks = {
       };
     }
     const piecesMetadataWithoutEmptySuggestions =
-      filterOutPiecesWithNoSuggestions(metadata);
+      filterOutPiecesWithNoSuggestions(metadata).filter(
+        (stepMetadata) =>
+          !props.excludeProcessInBatches ||
+          stepMetadata.type !== FlowActionType.PROCESS_IN_BATCHES,
+      );
 
     const pinnedPieces = getPinnedPieces(
       piecesMetadataWithoutEmptySuggestions,
@@ -538,6 +543,9 @@ const getExploreTabContent = (
   const loopPiece = queryResult.find(
     (piece) => piece.type === FlowActionType.LOOP_ON_ITEMS,
   );
+  const processInBatchesPiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.PROCESS_IN_BATCHES,
+  );
 
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
@@ -552,6 +560,13 @@ const getExploreTabContent = (
   }
   if (loopPiece) {
     hightlightedPiecesCategory.metadata.splice(5, 0, loopPiece);
+  }
+  if (processInBatchesPiece) {
+    hightlightedPiecesCategory.metadata.splice(
+      loopPiece ? 6 : 5,
+      0,
+      processInBatchesPiece,
+    );
   }
   if (pinnedPieces.length > 0) {
     hightlightedPiecesCategory.metadata = [
