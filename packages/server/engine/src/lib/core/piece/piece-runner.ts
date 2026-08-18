@@ -27,7 +27,7 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
     const entryPath = await piecePath.resolve(piece)
 
     return new Promise((resolve, reject) => {
-        const child = spawn(process.execPath, [childEntryPath()], {
+        const child = spawn(process.execPath, [...process.execArgv, childEntryPath()], {
             stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
             serialization: 'advanced',
         })
