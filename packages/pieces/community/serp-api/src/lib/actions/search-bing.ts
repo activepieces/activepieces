@@ -12,7 +12,7 @@ export const searchBing = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Runs a Bing web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use as an alternative web engine to cross-check or supplement Google web results. Paginate with Count (results per page) and First (offset of the first result). Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search the web with Bing and get ranked organic results for a query. Use as an alternative web search engine to cross-check or supplement Google web results. Paginate with Count (results per page) and First (offset of the first result).',
     idempotent: true,
   },
   outputSchema: searchBingOutputSchema,

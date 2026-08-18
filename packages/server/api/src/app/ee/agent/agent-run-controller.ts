@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -48,6 +48,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, scope: agentHelpers.providerScopeFor({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -129,19 +130,15 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
 }
 
 const RUNS_PER_MINUTE = 60
-const MAX_INSTRUCTION_LENGTH = 51_200
-const MAX_TOOLS = 100
 const BUILT_IN_TOOL_PREFIX = 'ap_'
-const MAX_OUTPUT_FIELDS = 50
-const MAX_STEP_BUDGET = 1_000
 
 const StartAgentRunRequest = z.object({
-    instruction: z.string().min(1).max(MAX_INSTRUCTION_LENGTH),
+    instruction: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     flowRunId: ApId,
     waitpointId: ApId,
-    tools: z.array(AgentTool).max(MAX_TOOLS).optional(),
-    structuredOutput: z.array(AgentOutputField).max(MAX_OUTPUT_FIELDS).optional(),
-    maxSteps: z.number().int().positive().max(MAX_STEP_BUDGET).optional(),
+    tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).optional(),
+    structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).optional(),
+    maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).optional(),
     modelName: z.string().optional(),
     provider: z.enum(AIProviderName).optional(),
 })

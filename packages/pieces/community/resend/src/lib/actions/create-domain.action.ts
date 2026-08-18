@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { createDomainOutputSchema } from '../output-schemas';
 
 export const createDomain = createAction({
   name: 'create_domain',
   auth: resendAuth,
   displayName: 'Create Domain',
+  outputSchema: createDomainOutputSchema,
   description: 'Add a sending domain to your Resend account and get the DNS records to verify it',
   audience: 'both',
   aiMetadata: { description: 'Registers a new sending domain on the Resend account and returns the DNS records that must be added to verify it. Use this as the first step in setting up a custom sending domain before triggering verification. Not idempotent — each call attempts to create a new domain entry.', idempotent: false },
