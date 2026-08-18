@@ -1,9 +1,8 @@
 import { Timer } from 'lucide-react';
-import { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { useStepOutputInRun } from '@/app/builder/run-details/use-batch-logs';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
@@ -23,19 +22,11 @@ const StepNodeRunDurationAndPieceName = ({
   stepName: string;
   pieceDisplayName: string;
 }) => {
-  const [run, loopIndexes, flowVersion, canvasOrientation] =
-    useBuilderStateContext((state) => [
-      state.run,
-      state.loopsIndexes,
-      state.flowVersion,
-      state.canvasOrientation,
-    ]);
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   const isHorizontal = canvasOrientation === 'horizontal';
-  const selectedStepOutput = useMemo(() => {
-    return run && run.steps
-      ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
-      : null;
-  }, [run, stepName, loopIndexes, flowVersion.trigger]);
+  const { stepOutput: selectedStepOutput } = useStepOutputInRun(stepName);
 
   return (
     <div
