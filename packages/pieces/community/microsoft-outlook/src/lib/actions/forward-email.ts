@@ -48,7 +48,7 @@ export const forwardEmailAction = createAction({
 			attachments: message.attachments,
 		};
 
-		const response = await client
+		await client
 			.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}/forward`)
 			.post({
 				message:messagePayload,
@@ -57,8 +57,7 @@ export const forwardEmailAction = createAction({
 		return {
 			success: true,
 			message: 'Email forwarded successfully.',
-			messageId: response.id,
-			...response,
+			messageId,
 		};
 	},
 });

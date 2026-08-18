@@ -63,9 +63,9 @@ export const createDraftEmailAction = createAction({
 	},
 	async run(context) {
 		const recipients = context.propsValue.recipients as string[];
-		const ccRecipients = context.propsValue.ccRecipients as string[];
-		const bccRecipients = context.propsValue.bccRecipients as string[];
-		const attachments = context.propsValue.attachments as Array<{ file: ApFile; fileName: string }>;
+		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
+		const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
+		const attachments = (context.propsValue.attachments ?? []) as Array<{ file: ApFile; fileName: string }>;
 
 		const { subject, body, bodyFormat } = context.propsValue;
 

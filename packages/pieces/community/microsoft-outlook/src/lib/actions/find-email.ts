@@ -40,9 +40,8 @@ export const findEmailAction = createAction({
 		const baseUrl = folderId ? `${outlookCommon.mailboxPrefix(context.auth)}/mailFolders/${folderId}/messages` : `${outlookCommon.mailboxPrefix(context.auth)}/messages`;
 		const searchParam = `$search="${searchQuery}"`;
 		const topParam = top ? `$top=${Math.min(Math.max(top, 1), 1000)}` : '$top=25';
-		const selectParam = ['id', 'subject', 'from', 'toRecipients', 'receivedDateTime'].join(',');
 
-		const queryParams = [searchParam, topParam, selectParam].filter(Boolean).join('&');
+		const queryParams = [searchParam, topParam].filter(Boolean).join('&');
 		const url = `${baseUrl}?${queryParams}`;
 
 		const headers: Record<string, string> = {
