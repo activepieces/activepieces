@@ -298,7 +298,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         projectId,
         flowVersionId,
         parentRunId,
-        parentWaitpointId,
         failParentOnFailure,
         platformId,
         stepNameToTest,
@@ -308,7 +307,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersionId,
             parentRunId,
-            parentWaitpointId,
             flowId,
             failParentOnFailure,
             stepNameToTest,
@@ -340,7 +338,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return newFlowRun
     },
 
-    async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, parentWaitpointId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
+    async createQuotaExceededRun({ flowVersion, payload, projectId, environment, parentRunId, failParentOnFailure, triggeredBy, shouldExecuteTriggerOnRetry }: CreateQuotaExceededRunParams): Promise<FlowRun> {
         const now = new Date().toISOString()
         const logsFileId = apId()
         await persistQuotaExceededTriggerLog({ log, flowVersion, projectId, payload, logsFileId, shouldExecuteTriggerOnRetry })
@@ -351,7 +349,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             environment,
             parentRunId,
-            parentWaitpointId,
             failParentOnFailure: failParentOnFailure ?? true,
             status: FlowRunStatus.QUOTA_EXCEEDED,
             created: now,
@@ -418,7 +415,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId,
                 environment: RunEnvironment.PRODUCTION,
                 parentRunId: undefined,
-                parentWaitpointId: undefined,
                 failParentOnFailure: undefined,
                 triggeredBy,
                 shouldExecuteTriggerOnRetry: false,
@@ -431,7 +427,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             environment: RunEnvironment.PRODUCTION,
             parentRunId: undefined,
-            parentWaitpointId: undefined,
             failParentOnFailure: undefined,
             stepNameToTest: undefined,
             triggeredBy,
@@ -781,7 +776,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         flowVersionId: params.flowVersionId,
         environment: params.environment,
         parentRunId: params.parentRunId,
-        parentWaitpointId: params.parentWaitpointId,
         failParentOnFailure: params.failParentOnFailure ?? true,
         status: FlowRunStatus.QUEUED,
         stepNameToTest: params.stepNameToTest,
@@ -810,7 +804,6 @@ type CreateParams = {
     flowVersionId: FlowVersionId
     triggeredBy?: string
     parentRunId?: FlowRunId
-    parentWaitpointId?: ApId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     flowId: FlowId
@@ -869,7 +862,6 @@ type CreateQuotaExceededRunParams = {
     projectId: ProjectId
     environment: RunEnvironment
     parentRunId?: FlowRunId
-    parentWaitpointId?: ApId
     failParentOnFailure: boolean | undefined
     triggeredBy?: string
     shouldExecuteTriggerOnRetry: boolean
@@ -892,7 +884,6 @@ type StartParams = {
     flowVersionId: FlowVersionId
     projectId: ProjectId
     parentRunId?: FlowRunId
-    parentWaitpointId?: ApId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
     executeTrigger: boolean
