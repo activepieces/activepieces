@@ -4,6 +4,8 @@ import {
   FlowActionType,
   FlowRun,
   FlowRunStatus,
+  flowStructureUtil,
+  FlowTrigger,
   isFailedState,
   StepOutput,
   StepOutputStatus,
@@ -237,6 +239,11 @@ export const flowRunUtils = {
           Icon: CircleAlert,
         };
     }
+  },
+  hasBatchStep({ trigger }: { trigger: FlowTrigger }): boolean {
+    return flowStructureUtil
+      .getAllSteps(trigger)
+      .some((step) => step.type === FlowActionType.PROCESS_IN_BATCHES);
   },
   getStatusLabelOverride(status: FlowRunStatus): string | null {
     if (status === FlowRunStatus.QUOTA_EXCEEDED) {

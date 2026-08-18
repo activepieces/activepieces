@@ -3,7 +3,6 @@ import {
   FlowAction,
   FlowActionType,
   FlowOperationType,
-  FlowRun,
   flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowVersion,
@@ -17,7 +16,6 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import { flowRunUtils } from '@/features/flow-runs';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/route-utils';
 
 import { batchRegionUtils } from './batch-region';
@@ -778,24 +776,7 @@ const doesSelectionRectangleExist = () => {
     ) !== null
   );
 };
-const getStepStatus = (
-  stepName: string | undefined,
-  run: FlowRun | null,
-  loopIndexes: Record<string, number>,
-) => {
-  if (isNil(run) || isNil(stepName) || isNil(run.steps)) {
-    return undefined;
-  }
-  const stepOutput = flowRunUtils.extractStepOutput(
-    stepName,
-    loopIndexes,
-    run.steps,
-  );
-  return stepOutput?.status;
-};
-
 export const flowCanvasUtils = {
-  getStepStatus,
   createFlowGraph({
     version,
     notes,
