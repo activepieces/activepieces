@@ -11,8 +11,8 @@ import { PieceDescription } from '../core/piece/piece-protocol'
 import { pieceRunner } from '../core/piece/piece-runner'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { testExecutionContext } from '../handler/context/test-execution-context'
+import { buildRuntime } from '../handler/piece-executor'
 import { dynamicPropKeys } from '../helper/dynamic-prop-keys'
-import { createFlowsContext } from '../piece-context/flows'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 
@@ -60,31 +60,19 @@ async function executeProps(operation: ExecutePropsOptions): Promise<ExecuteProp
             unresolvedInput: operation.input,
             executionState,
         })
-        const context = {
-            searchValue: operation.searchValue,
-            server: {
-                token: constants.engineToken,
-                apiUrl: constants.internalApiUrl,
-                publicUrl: operation.publicApiUrl,
+        const { result } = await pieceRunner.call({
+            piece,
+            path,
+            context: {
+                kind: 'props',
+                runtime: buildRuntime({ constants, pieceName: piece.pieceName, contextVersion }),
+                stepName: operation.actionOrTriggerName,
+                resolvedInput,
+                searchValue: operation.searchValue,
             },
-            project: {
-                id: constants.projectId,
-                externalId: constants.externalProjectId,
-            },
-            flows: createFlowsContext(constants),
-            step: {
-                name: operation.actionOrTriggerName,
-            },
-            connections: utils.createConnectionManager({
-                projectId: constants.projectId,
-                engineToken: constants.engineToken,
-                apiUrl: constants.internalApiUrl,
-                target: 'properties',
-                contextVersion,
-                pieceName: piece.pieceName,
-            }),
-        }
-        return pieceRunner.call({ piece, path, args: [resolvedInput, context] })
+        })
+        return result
+
     })
 
     if (error) {

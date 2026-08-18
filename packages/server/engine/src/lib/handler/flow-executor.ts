@@ -49,7 +49,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerRunner.executeOnStart(trigger, constants, input.triggerPayload)
+            await triggerRunner.executeOnStart({ trigger, constants, payload: input.triggerPayload })
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,

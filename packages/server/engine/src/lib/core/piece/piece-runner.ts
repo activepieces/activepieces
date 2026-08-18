@@ -1,9 +1,9 @@
 import { spawn } from 'node:child_process'
 import path from 'node:path'
-import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { EngineGenericError } from '@activepieces/shared'
 import { piecePath } from './piece-path'
-import { Callback, ChildMessage, ParentMessage, PieceDescription, pieceProtocol } from './piece-protocol'
+import { ChildMessage, CollectedHooks, ContextRequest, ParentMessage, PieceDescription, pieceProtocol } from './piece-protocol'
 
 export const pieceRunner = {
     describe: async (piece: PieceRef): Promise<PieceDescription> => {
@@ -12,21 +12,19 @@ export const pieceRunner = {
         if (!isNil(cached)) {
             return cached
         }
-        const description = runInChildProcess({ piece, request: { type: 'describe' } }).then(toPieceDescription)
+        const description = runInChildProcess({ piece, request: { type: 'describe' } }).then(({ result }) => toPieceDescription(result))
         descriptions.set(cacheKey, description)
         description.catch(() => descriptions.delete(cacheKey))
         return description
     },
 
-    call: async ({ piece, path: methodPath, args }: CallParams): Promise<unknown> => {
-        return runInChildProcess({ piece, request: { type: 'call', path: methodPath, args } })
+    call: async ({ piece, path: methodPath, args = [], context }: CallParams): Promise<CallResult> => {
+        return runInChildProcess({ piece, request: { type: 'call', path: methodPath, args, context } })
     },
 }
 
-async function runInChildProcess({ piece, request }: RunInChildProcessParams): Promise<unknown> {
+async function runInChildProcess({ piece, request }: RunInChildProcessParams): Promise<CallResult> {
     const entryPath = await piecePath.resolve(piece)
-    const callbacks = new Map<string, Callback>()
-    const inFlight = new Set<Promise<unknown>>()
 
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, [childEntryPath()], {
@@ -35,7 +33,6 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
         })
         let settled = false
         let output = ''
-        let completion: CompletionMessage | undefined = undefined
 
         const settle = (apply: () => void): void => {
             if (settled) {
@@ -44,14 +41,6 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
             settled = true
             child.kill()
             apply()
-        }
-
-        const complete = (message: CompletionMessage): void => {
-            settle(() => message.success ? resolve(message.result) : reject(pieceProtocol.deserializeError(message.error)))
-        }
-
-        const send = (message: ParentMessage): void => {
-            tryCatchSync(() => child.send(message))
         }
 
         child.stdout?.on('data', (data: Buffer) => {
@@ -63,37 +52,13 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
             console.error(data.toString().trimEnd())
         })
 
-        const invokeCallback = async ({ id, fnId, args }: { id: string, fnId: string, args: unknown[] }): Promise<void> => {
-            const callback = callbacks.get(fnId)
-            if (isNil(callback)) {
-                send({ type: 'reply', id, error: { message: `Unknown callback ${fnId}` } })
-                return
-            }
-            const { data, error } = await tryCatch(async () => pieceProtocol.encode({ value: await callback(...args), callbacks }))
-            send({ type: 'reply', id, value: data, error: isNil(error) ? undefined : pieceProtocol.serializeError(error) })
-        }
-
-        const handleMessage = async (message: ChildMessage): Promise<void> => {
-            if (message.type === 'invoke') {
-                const call = invokeCallback(message)
-                inFlight.add(call)
-                await call.finally(() => inFlight.delete(call))
-                return
-            }
-            completion = message
-            await Promise.allSettled(inFlight)
-            complete(message)
-        }
-
         child.on('message', (message: ChildMessage) => {
-            handleMessage(message).catch((error: Error) => settle(() => reject(error)))
+            settle(() => message.success
+                ? resolve({ result: message.result, hooks: message.hooks })
+                : reject(pieceProtocol.deserializeError(message.error)))
         })
 
         child.on('close', (code, signal) => {
-            if (!isNil(completion)) {
-                complete(completion)
-                return
-            }
             settle(() => reject(new EngineGenericError('PieceProcessExitedError', withOutput(`Piece process exited with code ${code} and signal ${signal}`, output))))
         })
 
@@ -101,10 +66,11 @@ async function runInChildProcess({ piece, request }: RunInChildProcessParams): P
             settle(() => reject(new EngineGenericError('PieceProcessError', withOutput(error.message, output))))
         })
 
+        const identity = { piecePath: entryPath, pieceName: piece.pieceName, pieceVersion: piece.pieceVersion }
         const { error: sendError } = tryCatchSync(() => {
             const message: ParentMessage = request.type === 'describe'
-                ? { type: 'describe', piecePath: entryPath, pieceName: piece.pieceName, pieceVersion: piece.pieceVersion }
-                : { type: 'call', piecePath: entryPath, pieceName: piece.pieceName, pieceVersion: piece.pieceVersion, path: request.path, args: request.args.map((value) => pieceProtocol.encode({ value, callbacks })) }
+                ? { ...identity, type: 'describe' }
+                : { ...identity, type: 'call', path: request.path, args: request.args, context: request.context }
             child.send(message)
         })
         if (sendError) {
@@ -136,11 +102,9 @@ function childEntryPath(): string {
 
 const descriptions = new Map<string, Promise<PieceDescription>>()
 
-type CompletionMessage = Extract<ChildMessage, { type: 'done' }>
-
 type RunInChildProcessParams = {
     piece: PieceRef
-    request: { type: 'describe' } | { type: 'call', path: string[], args: unknown[] }
+    request: { type: 'describe' } | { type: 'call', path: string[], args: unknown[], context?: ContextRequest }
 }
 
 export type PieceRef = {
@@ -152,5 +116,11 @@ export type PieceRef = {
 export type CallParams = {
     piece: PieceRef
     path: string[]
-    args: unknown[]
+    args?: unknown[]
+    context?: ContextRequest
+}
+
+export type CallResult = {
+    result: unknown
+    hooks?: CollectedHooks
 }

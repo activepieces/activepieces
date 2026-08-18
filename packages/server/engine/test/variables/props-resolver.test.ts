@@ -3,7 +3,6 @@ import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepiec
 import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
-import { materializeFile, readFileSource } from '../../src/lib/variables/processors/file'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
 import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
@@ -14,18 +13,6 @@ const propsResolverService = createPropsResolver({
     contextVersion: LATEST_CONTEXT_VERSION,
     stepNames: ['trigger', 'step_1', 'step_2', 'step_3', 'step_4', 'step_5', 'step_6', 'step_7', 'step_8'],
 })
-
-const materializeProcessedFile = async (value: unknown): Promise<ApFile> => {
-    const source = readFileSource(value)
-    if (source === undefined) {
-        throw new Error('Expected a file source marker')
-    }
-    const file = await materializeFile(source)
-    if (!(file instanceof ApFile)) {
-        throw new Error('Expected a buffered ApFile')
-    }
-    return file
-}
 
 const buildExecutionState = async (): Promise<FlowExecutorContext> => {
     let state = await FlowExecutorContext.empty().upsertStep(
@@ -641,10 +628,10 @@ describe('Props resolver', () => {
             }),
         }
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
-        expect(processedInput.base64).toBeNull()
-        expect(await materializeProcessedFile(processedInput.base64WithMime)).toEqual(
-            new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
-        )
+        expect(processedInput).toEqual({
+            base64: null,
+            base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
+        })
         expect(errors).toEqual({
             'base64': [
                 'Expected file url or base64 with mimeType, received: iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
@@ -674,9 +661,9 @@ describe('Props resolver', () => {
         }
 
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
-        const document = await materializeProcessedFile(processedInput.documents[0].file)
-        expect(document.extension).toBe('svg')
-        expect(document.filename).toBe('logo.svg')
+        expect(processedInput.documents[0].file).toBeDefined()
+        expect(processedInput.documents[0].file.extension).toBe('svg')
+        expect(processedInput.documents[0].file.filename).toBe('logo.svg')
         expect(errors).toEqual({})
     })
 
@@ -727,9 +714,9 @@ describe('Props resolver', () => {
 
         }
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
-        const file = await materializeProcessedFile(processedInput.file)
-        expect(file.extension).toBe('svg')
-        expect(file.filename).toBe('logo.svg')
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('svg')
+        expect(processedInput.file.filename).toBe('logo.svg')
         expect(errors).toEqual({})
     })
 
@@ -756,9 +743,9 @@ describe('Props resolver', () => {
         }
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, {})
 
-        const file = await materializeProcessedFile(processedInput.file)
-        expect(file.extension).toBe('html')
-        expect(file.filename).toBe('unknown.html')
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('html')
+        expect(processedInput.file.filename).toBe('unknown.html')
         expect(processedInput.nullFile).toBeNull()
         expect(processedInput.nullOptionalFile).toBeNull()
 
