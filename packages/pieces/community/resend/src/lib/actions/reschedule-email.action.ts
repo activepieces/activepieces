@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { rescheduleEmailOutputSchema } from '../output-schemas';
 
 export const rescheduleEmail = createAction({
   name: 'reschedule_email',
   auth: resendAuth,
   displayName: 'Reschedule Email',
+  outputSchema: rescheduleEmailOutputSchema,
   description: 'Update the send time of a scheduled email',
   audience: 'both',
   aiMetadata: { description: 'Changes the future send time of an already scheduled email, identified by its Resend email ID. Use this to move a pending send to a new time without cancelling and recreating it. Idempotent when called with the same target time; requires an ISO 8601 date-time and only works while the email is still scheduled.', idempotent: true },

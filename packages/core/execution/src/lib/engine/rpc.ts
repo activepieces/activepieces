@@ -41,6 +41,7 @@ export function createRpcClient<T extends Contract>(
 export function createRpcServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
     socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
@@ -49,6 +50,7 @@ export function createRpcServer<T extends Contract>(
             ack(result)
         }
         catch (error) {
+            log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
             ack({ __rpcError: error instanceof Error ? error.message : String(error) })
         }
     })
@@ -78,4 +80,8 @@ export function createNotifyServer<T extends Contract>(
 
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
     return typeof value === 'object' && value !== null && '__rpcError' in value
+}
+
+type RpcLog = {
+    error(obj: unknown, msg: string): void
 }
