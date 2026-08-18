@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, nextObservedAt, observedAtToIso, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch } from '@activepieces/core-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderKeyStatus, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -62,8 +62,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
         await this.validateProviderCredentials(request.provider, request.auth, request.config)
-        const saved = await aiProviderRepo().save({
-            id: apId(),
+        const configId = apId()
+        await aiProviderRepo().insert({
+            id: configId,
             auth: await encryptUtils.encryptObject(request.auth),
             config: request.config,
             provider: request.provider,
@@ -75,7 +76,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             projectIds: [],
             ...provedHealthy(),
         })
-        return toConfigResponse(saved)
+        return toConfigResponse(await getRowByIdOrThrow({ platformId, configId }))
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -338,8 +339,8 @@ function toInvalidCredentialsError({ provider, error, log }: { provider: AIProvi
     })
 }
 
-function provedHealthy(): Pick<AIProviderSchema, 'status' | 'statusReason' | 'statusUpdated'> {
-    return { status: 'active', statusReason: null, statusUpdated: observedAtToIso(nextObservedAt()) }
+function provedHealthy(): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: () => string } {
+    return { status: 'active', statusReason: null, statusUpdated: () => 'now()' }
 }
 
 async function recordKeyFailure({ platformId, aiProvider, error, log }: { platformId: PlatformId, aiProvider: AIProviderSchema, error: unknown, log: FastifyBaseLogger }): Promise<void> {

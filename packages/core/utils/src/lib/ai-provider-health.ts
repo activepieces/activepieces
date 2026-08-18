@@ -41,12 +41,6 @@ export function nextObservedAt(): number {
     return lastObservedAt
 }
 
-export function observedAtToIso(observedAt: number): string {
-    const whole = Math.floor(observedAt)
-    const micros = Math.min(999, Math.round((observedAt - whole) * 1000))
-    return `${new Date(whole).toISOString().slice(0, -1)}${String(micros).padStart(3, '0')}Z`
-}
-
 function report({ observed, onOutcome }: { observed: Promise<ProviderOutcomeSignal>, onOutcome: ProviderOutcomeReporter }): void {
     void observed.then(onOutcome).catch(() => undefined)
 }

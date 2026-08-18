@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { classifyProviderOutcome, nextObservedAt, observedAtToIso, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
+import { classifyProviderOutcome, nextObservedAt, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
 
 describe('classifyProviderOutcome', () => {
     it('reads a 2xx as a working key', () => {
@@ -240,18 +240,10 @@ describe('nextObservedAt', () => {
             const second = nextObservedAt()
 
             expect(second).toBeGreaterThan(first)
-            expect(observedAtToIso(second)).not.toBe(observedAtToIso(first))
         }
         finally {
             clock.mockRestore()
         }
     })
 
-    it('keeps the microseconds that postgres can store', () => {
-        const iso = observedAtToIso(1787088827101.004)
-
-        expect(iso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/)
-        expect(iso.endsWith('004Z')).toBe(true)
-        expect(observedAtToIso(1787088827101).endsWith('000Z')).toBe(true)
-    })
 })
