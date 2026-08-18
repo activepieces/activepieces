@@ -77,6 +77,7 @@ function createOpenRouterChatModel({ apiKey, modelId, options, fetch }: {
     return createOpenRouter({
         apiKey,
         ...spreadIfDefined('headers', options.extraHeaders),
+        ...spreadIfDefined('fetch', fetch),
     }).chat(modelId, options.openRouterSettings) as LanguageModel
 }
 
