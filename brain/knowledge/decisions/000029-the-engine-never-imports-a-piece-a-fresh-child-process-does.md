@@ -10,7 +10,7 @@ Nothing in the engine process may `import()` a piece package. A piece is loaded 
 
 ## Context
 
-The engine is long-lived and served many operations, each `import()`ing pieces into the same process. Resident piece modules (and their duplicated `@activepieces/shared` copies) never came back — measured as hundreds of MB of a single engine heap. Loading a piece to read its metadata, or just to discover an auth `validate` hook does not exist, cost the same permanent memory as running it.
+The engine is long-lived and served many operations, each `import()`ing pieces into the same process. Resident piece modules (and their duplicated `@activepieces/shared` copies) never came back — measured as hundreds of MB of a single engine heap. Loading a piece to read its metadata, or just to discover an auth `validate` hook does not exist, cost the same permanent memory as running it. Measured after the change with `smoke-test/verify-memory.sh` (webhook → data-mapper → return-response, 2000 runs): the engine ends **28 MB below** its warm baseline, i.e. V8 gives the heap back because nothing from the pieces stays resident.
 
 ## Why
 
