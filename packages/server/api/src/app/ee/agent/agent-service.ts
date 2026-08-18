@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -39,11 +39,13 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<Agent>> {
-        const readableProjectIds = await resolveReadableProjectIds({ platformId, userId, projectId, log })
+    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+        const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
+        const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
             return paginationHelper.createPage([], null)
         }
+        const projectById = new Map(readableProjects.map((project) => [project.id, project]))
 
         const { nextCursor, previousCursor } = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
@@ -59,7 +61,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         const { data, cursor: newCursor } = await paginator.paginate(
             visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) }),
         )
-        return paginationHelper.createPage(data, newCursor)
+        return paginationHelper.createPage(data.map((agent) => toSummary(agent, projectById.get(agent.projectId))), newCursor)
     },
 
     async getOneOrThrow({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -69,6 +71,20 @@ export const agentService = (log: FastifyBaseLogger) => ({
             throw agentNotFound(id)
         }
         return agent
+    },
+
+    async getOneOrThrowByPlatform({ id, platformId, userId }: GetByPlatformParams): Promise<Agent> {
+        const readableProjectIds = (await resolveReadableProjects({ platformId, userId, log })).map((project) => project.id)
+        if (readableProjectIds.length === 0) {
+            throw agentNotFound(id)
+        }
+        const agent = await visibleAgents({ userId, isProjectAdmin: false })
+            .andWhere({ id, projectId: In(readableProjectIds) })
+            .getOne()
+        if (isNil(agent)) {
+            throw agentNotFound(id)
+        }
+        return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
     },
 
     async update({ id, projectId, userId, request }: UpdateParams): Promise<Agent> {
@@ -200,7 +216,7 @@ async function listUsersWithProjectAccess({ projectId, log }: { projectId: Proje
     return [...new Set([...members, project.ownerId])]
 }
 
-async function resolveReadableProjectIds({ platformId, userId, projectId, log }: ResolveProjectsParams): Promise<ProjectId[]> {
+async function resolveReadableProjects({ platformId, userId, projectId, log }: ResolveProjectsParams): Promise<Project[]> {
     const users = userService(log)
     const user = await users.getOneOrFail({ id: userId })
     const isPrivileged = users.isUserPrivileged(user)
@@ -211,8 +227,17 @@ async function resolveReadableProjectIds({ platformId, userId, projectId, log }:
 
     return projects
         .filter((project) => isPrivileged || project.ownerId === userId || permittedProjectIds.includes(project.id))
-        .map((project) => project.id)
-        .filter((id) => isNil(projectId) || id === projectId)
+        .filter((project) => isNil(projectId) || project.id === projectId)
+}
+
+function toSummary(agent: Agent, project?: Project): AgentSummary {
+    return {
+        ...omit(agent, ['draft', 'published']),
+        projectDisplayName: project?.displayName ?? '',
+        projectIsPrivate: project?.type === ProjectType.PERSONAL,
+        toolCount: agent.draft.tools.length,
+        toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
+    }
 }
 
 function withoutToolSecrets(agent: Agent): Agent {
@@ -263,6 +288,12 @@ type ListParams = {
 type GetParams = {
     id: ApId
     projectId: ProjectId
+    userId: UserId
+}
+
+type GetByPlatformParams = {
+    id: string
+    platformId: PlatformId
     userId: UserId
 }
 

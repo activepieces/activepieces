@@ -5,6 +5,7 @@ import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet,
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
+import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
 import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
@@ -35,7 +36,6 @@ const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 const DISCOVERY_ONLY_NEUTRALIZED_TOOLS = new Set(['ap_execute_action', 'ap_run_code'])
 
 // The only chat tools an unattended run keeps: reading the public web needs no one present.
-export const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 const DELIVERY_MAX_ATTEMPTS = 5
 
 export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForgetJobResult> = {
@@ -59,6 +59,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let turnWallClockTimer: NodeJS.Timeout | undefined
         let cancelCheckInterval: NodeJS.Timeout | undefined
         let heartbeatInterval: NodeJS.Timeout | undefined
+        let runProvider: string | undefined
+        let runModelId: string | undefined
         let answer: AgentResult | undefined
         const structured: { output?: Record<string, unknown> } = {}
 
@@ -93,6 +95,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
 
             const provider = config.provider as AIProviderName
+            runProvider = provider
+            runModelId = config.modelId
             source = config.source
             const aiTools = config.aiTools
             // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
@@ -143,7 +147,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 }
             }
 
-            cancelCheckInterval = source === AgentRunSource.CHAT
+            cancelCheckInterval = source !== AgentRunSource.FLOW_STEP
                 ? setInterval(() => {
                     checkCancelled().catch(() => {})
                 }, 3_000)
@@ -351,13 +355,17 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
-            log.error({ error: err, conversation: { id: conversationId } }, '[executeAgentRun] Agent job failed')
+            log.error({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
             const isCreditError = isCreditExhaustedError(errorMessage)
             const errorCode = isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined
+            // "User not found" is OpenRouter refusing a key, and reads like a missing account.
+            const attributed = isNil(runProvider) || isCreditError || isTransientFailureText(errorMessage)
+                ? errorMessage
+                : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
-                : errorMessage
+                : attributed
             const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
@@ -496,7 +504,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     }
 
     const waitForApproval = async ({ gateId, timeoutMs }: { gateId: string, timeoutMs?: number }): Promise<GateDecision> => {
-        if (source !== AgentRunSource.CHAT) {
+        if (source === AgentRunSource.FLOW_STEP) {
             return { outcome: 'declined' }
         }
         // Auto-resolve in dry-run (playground) and discovery-only (eval): there's no UI to click
@@ -621,10 +629,6 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         })
         : {}
 
-    const allTools = { ...localTools, ...displayTools, ...crossProjectTools, ...webTools, ...thinkingTools, ...phaseTools, ...buildPlanTools, ...emailTools, ...(mcpTools as Record<string, typeof localTools[keyof typeof localTools]>) }
-    if (source === AgentRunSource.CHAT) {
-        return allTools
-    }
     // Listed, not subtracted. Everything else in the chat set assumes someone is reading and can
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
@@ -645,10 +649,24 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const completionTool = structuredOutput.length === 0
         ? {}
         : agentWorkerTools.createStructuredOutputTool({ fields: structuredOutput, capture: captureStructured })
-    const unattendedWebTools: ToolSet = Object.fromEntries(
-        Object.entries(webTools).filter(([name]) => UNATTENDED_WEB_TOOLS.includes(name)),
-    )
-    return { ...configuredTools, ...configuredFlowToolSet, ...knowledgeBaseTools, ...unattendedWebTools, ...completionTool }
+    return agentToolPolicy.selectToolsForSource({
+        source,
+        groups: {
+            local: localTools,
+            display: displayTools,
+            crossProject: crossProjectTools,
+            web: webTools,
+            thinking: thinkingTools,
+            phase: phaseTools,
+            buildPlan: buildPlanTools,
+            email: emailTools,
+            mcp: mcpTools as ToolSet,
+            configuredPiece: configuredTools,
+            configuredFlow: configuredFlowToolSet,
+            knowledgeBase: knowledgeBaseTools,
+            completion: completionTool,
+        },
+    })
 }
 
 async function streamChunksToClient({ result, ctx, userId, conversationId, runId, log, abortSignal, onStreamIdle }: {
