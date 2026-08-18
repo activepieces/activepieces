@@ -537,9 +537,9 @@ Every property accepts a few optional hints that fine-tune how it renders. They 
 | `placeholder` | text inputs | Grey hint text shown inside an empty field (e.g. `you@example.com`). |
 | `width: 'half'` | any prop inside a group | Renders two fields side-by-side instead of full-width. |
 | `icon` | any prop | A named icon shown beside the field in the filter builder. |
-| `advanced: false` | non-required props | Forces a normally-optional field to stay **outside** the collapsible *Advanced* section. |
+| `advanced: true` | any prop | Moves the field into the collapsible *Advanced* section. Props render in the main form by default. |
 
-Non-required properties are collapsed into an **Advanced** section by default. Set `advanced: false` to promote an important optional field (like a message body) back into the main form, or `advanced: true` to push a field into Advanced.
+Every property renders in the main form by default, required or not. Set `advanced: true` on a secondary option to tuck it into the collapsible **Advanced** section — `advanced: false` is the default and has no effect. Avoid the flag on required props: the section starts collapsed, so a mandatory field hidden there only surfaces as a validation error.
 
 **Half-width fields**
 
@@ -606,12 +606,12 @@ createAction({
 ```
 
 <Tip>
-  A filter row is shown when its value is set, so there's nothing extra to persist. Give filters short `placeholder` hints and an `icon` so each row reads clearly.
+  A filter row is shown when its value is set, so there's nothing extra to persist. Give filters short `placeholder` hints and an `icon` so each row reads clearly. Note that a `builder` or `footer` group also switches off the *Advanced* section for the whole step — every prop lives in the builder.
 </Tip>
 
 ### Sectioned cards
 
-`display: 'section'` groups related props into titled cards — for example a *Send to* card and a *Message* card. Unlike tabs and the filter builder, sectioned layouts **keep the collapsible _Advanced_ section**: any prop you don't place in a section still follows the normal essential/advanced rule, so secondary options stay tucked away. Give each group a `label` and `icon`, and use `width: 'half'` on members to pack two fields per row.
+`display: 'section'` groups related props into titled cards — for example a *Send to* card and a *Message* card. Unlike tabs and the filter builder, sectioned layouts **keep the collapsible _Advanced_ section** for props outside the cards: an ungrouped prop still honours `advanced: true` — unless it is a checkbox `reveals` target, which renders inline under its toggle instead. Props inside a section are always essential. Give each group a `label` and `icon`, and use `width: 'half'` on members to pack two fields per row.
 
 <SectionCardsPreview />
 
@@ -626,8 +626,8 @@ createAction({
     chat_id: Property.ShortText({ displayName: 'Chat Id', required: true, placeholder: '@channelusername or 123456789' }),
     format: Property.StaticDropdown({ displayName: 'Format', required: false, display: 'cards', options: { options: [/* Markdown / HTML / Plain */] } }),
     message: Property.RichText({ displayName: 'Message', required: true, formatProperty: 'format' }),
-    // props left out of every group collapse into Advanced as usual
-    disable_notification: Property.Checkbox({ displayName: 'Disable notification', required: false }),
+    // ungrouped props can opt into Advanced with advanced: true
+    disable_notification: Property.Checkbox({ displayName: 'Disable notification', required: false, advanced: true }),
   },
 });
 ```
