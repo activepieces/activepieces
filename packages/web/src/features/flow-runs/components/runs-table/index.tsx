@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   FlowRetryStrategy,
   FlowRun,
@@ -31,6 +31,7 @@ import {
   DataTableFilters,
 } from '@/components/custom/data-table';
 import { getDefaultRange } from '@/components/custom/date-time-picker-range';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { MessageTooltip } from '@/components/custom/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -81,6 +82,9 @@ export const RunsTable = () => {
   >([]);
   const [failedRetryDialogOpen, setFailedRetryDialogOpen] = useState(false);
   const [errorDialogRun, setErrorDialogRun] = useState<FlowRun | null>(null);
+  const [pendingBatchRetry, setPendingBatchRetry] = useState<{
+    resetSelection: () => void;
+  } | null>(null);
 
   const [hasSeededDefaultRange, setHasSeededDefaultRange] = useState(() =>
     searchParams.has('createdAfter'),
@@ -269,6 +273,59 @@ export const RunsTable = () => {
     },
   });
 
+  const selectionHasBatchStep = useMemo(() => {
+    const batchFlowIds = new Set(
+      (flows ?? [])
+        .filter((flow) =>
+          flowRunUtils.hasBatchStep({ trigger: flow.version.trigger }),
+        )
+        .map((flow) => flow.id),
+    );
+    if (batchFlowIds.size === 0) {
+      return false;
+    }
+    if (selectedAll) {
+      const flowIdFilter = searchParams.getAll('flowId');
+      return (
+        flowIdFilter.length === 0 ||
+        flowIdFilter.some((flowId) => batchFlowIds.has(flowId))
+      );
+    }
+    const selectedIds = new Set(selectedRows.map((row) => row.id));
+    return (data?.data ?? []).some(
+      (run) => selectedIds.has(run.id) && batchFlowIds.has(run.flowId),
+    );
+  }, [flows, selectedAll, selectedRows, searchParams, data]);
+
+  const retryFromFailedStep = useCallback(
+    (resetSelection: () => void) => {
+      retryRuns.mutate({
+        projectId,
+        flowRunIds: selectedAll ? undefined : selectedRows.map((row) => row.id),
+        strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+        excludeFlowRunIds: selectedAll ? Array.from(excludedRows) : undefined,
+        status: searchParams.getAll('status') as FlowRunStatus[],
+        flowId: searchParams.getAll('flowId'),
+        createdAfter: searchParams.get('createdAfter') || undefined,
+        createdBefore: searchParams.get('createdBefore') || undefined,
+        failedStepName: searchParams.get('failedStepName') || undefined,
+        failedStepMessage: searchParams.get('failedStepMessage') || undefined,
+      });
+      resetSelection();
+      setSelectedRows([]);
+      setSelectedAll(false);
+      setExcludedRows(new Set());
+    },
+    [
+      retryRuns,
+      projectId,
+      selectedAll,
+      selectedRows,
+      excludedRows,
+      searchParams,
+    ],
+  );
+
   const archiveRuns = flowRunMutations.useBulkArchiveRuns({
     onSuccess: () => {
       refetch();
@@ -352,17 +409,22 @@ export const RunsTable = () => {
                   message={t('Only paused or queued runs can be cancelled')}
                   isDisabled={allCancellable}
                 >
-                  <Button
-                    disabled={isDisabled}
-                    variant="ghost"
-                    size="sm"
-                    loading={cancelRuns.isPending}
-                    onClick={() => {
+                  <ConfirmationDeleteDialog
+                    title={t('Cancel runs')}
+                    message={t(
+                      'Are you sure you want to cancel the selected runs?',
+                    )}
+                    warning={t(
+                      'Any batches these runs already dispatched keep running to completion, and anything those batches are themselves waiting on — an approval or a delay — is not reached either.',
+                    )}
+                    buttonText={t('Confirm')}
+                    entityName={t('Runs')}
+                    mutationFn={async () => {
                       const runIds = selectedRows.map((row) => row.id);
                       const status = searchParams.getAll(
                         'status',
                       ) as FlowRunStatus[];
-                      cancelRuns.mutate({
+                      await cancelRuns.mutateAsync({
                         projectId,
                         flowRunIds: selectedAll ? undefined : runIds,
                         excludeFlowRunIds: selectedAll
@@ -388,17 +450,24 @@ export const RunsTable = () => {
                       resetSelection();
                     }}
                   >
-                    <X className="h-3 w-4 mr-1" />
-                    {selectedRows.length > 0
-                      ? `${t('Cancel')} ${
-                          selectedAll
-                            ? excludedRows.size > 0
-                              ? `${t('all except')} ${excludedRows.size}`
-                              : t('all')
-                            : `(${selectedRows.length})`
-                        }`
-                      : t('Cancel')}
-                  </Button>
+                    <Button
+                      disabled={isDisabled}
+                      variant="ghost"
+                      size="sm"
+                      loading={cancelRuns.isPending}
+                    >
+                      <X className="h-3 w-4 mr-1" />
+                      {selectedRows.length > 0
+                        ? `${t('Cancel')} ${
+                            selectedAll
+                              ? excludedRows.size > 0
+                                ? `${t('all except')} ${excludedRows.size}`
+                                : t('all')
+                              : `(${selectedRows.length})`
+                          }`
+                        : t('Cancel')}
+                    </Button>
+                  </ConfirmationDeleteDialog>
                 </MessageTooltip>
               </PermissionNeededTooltip>
             </div>
@@ -492,32 +561,11 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            const runIds = selectedRows.map((row) => row.id);
-                            retryRuns.mutate({
-                              projectId,
-                              flowRunIds: selectedAll ? undefined : runIds,
-                              strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                              excludeFlowRunIds: selectedAll
-                                ? Array.from(excludedRows)
-                                : undefined,
-                              status: searchParams.getAll(
-                                'status',
-                              ) as FlowRunStatus[],
-                              flowId: searchParams.getAll('flowId'),
-                              createdAfter:
-                                searchParams.get('createdAfter') || undefined,
-                              createdBefore:
-                                searchParams.get('createdBefore') || undefined,
-                              failedStepName:
-                                searchParams.get('failedStepName') || undefined,
-                              failedStepMessage:
-                                searchParams.get('failedStepMessage') ||
-                                undefined,
-                            });
-                            resetSelection();
-                            setSelectedRows([]);
-                            setSelectedAll(false);
-                            setExcludedRows(new Set());
+                            if (selectionHasBatchStep) {
+                              setPendingBatchRetry({ resetSelection });
+                              return;
+                            }
+                            retryFromFailedStep(resetSelection);
                           }}
                           className="cursor-pointer"
                         >
@@ -544,6 +592,8 @@ export const RunsTable = () => {
       selectedAll,
       excludedRows,
       cancelRuns,
+      selectionHasBatchStep,
+      retryFromFailedStep,
     ],
   );
 
@@ -608,6 +658,34 @@ export const RunsTable = () => {
         open={failedRetryDialogOpen}
         onOpenChange={setFailedRetryDialogOpen}
         failedRuns={failedRetryRuns}
+      />
+      <ConfirmationDeleteDialog
+        open={!isNil(pendingBatchRetry)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingBatchRetry(null);
+          }
+        }}
+        title={t('Retry from failed step')}
+        message={t('Are you sure you want to retry from the failed step?')}
+        warning={
+          <>
+            {t(
+              'This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.',
+            )}
+            {!selectedAll &&
+              ` ${t('batchRetryRunCount', {
+                count: selectedRows.length,
+              })}`}
+          </>
+        }
+        buttonText={t('Retry')}
+        entityName={t('Runs')}
+        mutationFn={async () => {
+          if (!isNil(pendingBatchRetry)) {
+            retryFromFailedStep(pendingBatchRetry.resetSelection);
+          }
+        }}
       />
       <FailedStepDialog
         run={errorDialogRun}
