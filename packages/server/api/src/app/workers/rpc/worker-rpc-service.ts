@@ -107,7 +107,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async submitPayloads(input) {
-            const { flowVersionId, projectId, payloads, httpRequestId, streamStepProgress, environment, parentRunId, failParentOnFailure } = input
+            const { flowVersionId, projectId, payloads, httpRequestId, streamStepProgress, environment, parentRunId, parentWaitpointId, failParentOnFailure } = input
 
             const flowVersion = await flowVersionService(log).getOne(flowVersionId)
             if (!flowVersion) {
@@ -132,6 +132,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                             projectId,
                             environment,
                             parentRunId,
+                            parentWaitpointId,
                             failParentOnFailure,
                             shouldExecuteTriggerOnRetry: false,
                         })
@@ -148,6 +149,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                             streamStepProgress,
                             executeTrigger: false,
                             parentRunId,
+                            parentWaitpointId,
                             failParentOnFailure,
                         }),
                 ),
