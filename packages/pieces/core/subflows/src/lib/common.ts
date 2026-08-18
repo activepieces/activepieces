@@ -1,4 +1,4 @@
-import { DISPATCH_KEY_HEADER, FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PieceAuth, PopulatedFlow, Property } from "@activepieces/pieces-framework";
+import { FAIL_PARENT_ON_FAILURE_HEADER, FlowStatus, FlowTriggerType, isNil, PARENT_RUN_ID_HEADER, PieceAuth, PopulatedFlow, Property } from "@activepieces/pieces-framework";
 import { FlowsContext, ListFlowsContextParams } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
@@ -116,7 +116,6 @@ export async function dispatchToSubflow({
     data,
     callbackUrl,
     retries,
-    dispatchKey,
 }: DispatchToSubflowParams): Promise<unknown> {
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
@@ -125,7 +124,6 @@ export async function dispatchToSubflow({
             'Content-Type': 'application/json',
             [PARENT_RUN_ID_HEADER]: parentRunId,
             [FAIL_PARENT_ON_FAILURE_HEADER]: failParentOnFailure ? 'true' : 'false',
-            ...(isNil(dispatchKey) ? {} : { [DISPATCH_KEY_HEADER]: dispatchKey }),
         },
         body: {
             data,
@@ -149,5 +147,4 @@ type DispatchToSubflowParams = {
     data: unknown;
     callbackUrl?: string;
     retries?: number;
-    dispatchKey?: string;
 }

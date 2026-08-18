@@ -141,3 +141,58 @@ it also served HTTP. Do not reintroduce a read inside `dispatchChild`: if a new 
   assert the barrier guard while passing `entryStepName: 'step_1'` was in fact tripping the entry-step
   validation and never reached the barrier at all. Assert the `ErrorCode` in these tests; the guards in this
   path throw deliberately different ones (`VALIDATION` for the target, `ENTITY_NOT_FOUND` for the barrier).
+- **Design-time item counts are free, but only for whole-field mentions off the last test run.**
+  `processInBatchesUtils.resolveItemsCount` (web `step-settings/process-in-batches-utils.ts`) powers the
+  batch plan summary's "items" stat and is the reusable hook for any "your list is huge" nudge, on the loop
+  step included. It costs nothing at any size — it walks the mention path and reads `.length`, never the
+  elements, and `outputSampleData` is already in the builder store from one fetch per flow load, so no
+  request and no parse. Its two blind spots are structural: it returns `null` unless `settings.items` is a
+  single whole-field mention (`{{ step.body.rows }}` — any formula or concatenation is unresolvable), and
+  the number it reports is the **test payload's** length, not production's, which is why the panel labels it
+  "Based on your last test run". A user who tests with 10 rows and runs 50 000 sees no warning; a hard limit
+  needs server-side validation, not this. The loop step's own >10 000-item warning
+  (`LargeListWarning` in `step-settings/loops-settings.tsx`) rides on it, and **suppresses itself when the
+  loop already sits inside a batch region** — a batch cannot nest in a batch, so the selector hides the piece
+  there and the nudge would be unfollowable. `pieceSelectorUtils.isInsideBatch` cannot answer that question:
+  it is keyed to a `PieceSelectorOperation` and returns false unless the operation is `ADD_ACTION`. For an
+  *existing* step, walk `getAllSteps` and ask `flowStructureUtil.isChildOf(batchStep, stepName)` —
+  `findPathToStep` is the wrong tool, it follows `nextAction` and so matches earlier siblings, not just ancestors.
+- **The run view renders one DOM node per loop iteration, unvirtualized.**
+  `run-details/loop-iteration-input.tsx` maps every iteration to a `<button>` inside a `<Tooltip>` in a
+  120px scroll box, and `getIterationStatus` walks each iteration's step outputs. Fine at 20 rounds, ~20 000
+  components at 10 000 — cap the dots before pointing anyone at a wide loop.
+- **Replacing a loop with a batch throws its body away, and the two containers bind different names, so
+  "just keep `firstLoopAction`" is the wrong fix.** `_updateAction` (core-execution
+  `operations/update-action.ts`) carries `firstLoopAction` over only when the *old* step already had the
+  same type, so a loop→batch replace silently drops every step in the body. Preserving it flat is worse
+  than dropping it: a loop body reads `{{ loop_1.item }}` (one element), while a batch child is seeded with
+  `{{ batch_1.items }}` — the whole chunk as an array (`fan-out-dispatcher-job.ts` → `batchStepOutput`), so
+  every mention in the kept body would resolve to `undefined` with no error. The equivalent conversion is to
+  keep the body *inside a new loop over `{{ batch.items }}`* and remap the old container's name to that
+  loop's — the same "batches side by side, items one at a time within a batch" shape the nudge is selling.
+  `addActionUtils` already has the reference-remapping half (`remapStepReferences`, used by `clone`).
+- **The nested-batch guard lives in `_addAction` only, so `UPDATE_ACTION` can still nest one.** Replacing a
+  step that sits inside a batch region with a batch — or converting a loop whose body holds one — produces
+  nesting that no operation rejects. Adding the same post-hoc `hasNestedBatch(after) && !hasNestedBatch(before)`
+  check to `_updateAction` is only half the job: the builder applies operations optimistically through the
+  same `flowOperations.apply` inside a zustand `set`, so a throw there surfaces as an unhandled exception,
+  not a toast. The selector has to stop offering the piece first (`pieceSelectorUtils.isInsideBatch` returns
+  false for anything that is not `ADD_ACTION`).
+- **Only the dispatcher can produce a child — caller-facing attribution was tried and removed.** Three
+  things have to line up for a child to release its barrier: a signal row whose `refId` is that child's run id
+  (bound by the compare-and-set `barrierService.claimSignal`), a `parentWaitpointId`, and a `dispatchIndex`.
+  `flowRunService.dispatchChild` sets all three. An `ap-parent-waitpoint-id` webhook header once set only the
+  middle one, and it was **deleted** rather than completed. Why it was wrong: the webhook controller is
+  `securityAccess.public()` and the header was only format-checked, while `parentWaitpointId IS NULL` is what
+  the runs list, `countByStatus`, the bulk-retry filter, platform analytics and the **billing usage report**
+  key on — so any caller holding a webhook URL could run flows that executed normally but appeared on no
+  surface and in no metered count, and the run still could not release anything because no signal bound its
+  id. It existed only for the deleted `Fan Out to Subflows` piece action (`dispatch-to-subflows.ts`, removed in
+  `988ff56413`), which ran in the engine sandbox and had no channel into run creation but the public webhook —
+  header attribution and a caller-supplied dispatch key are what a piece can do instead of a transaction.
+  If a caller-facing producer is ever wanted again, the sanctioned shape already exists: the per-signal
+  capability URL handed out at barrier creation (`toSignalLink` →
+  `POST /v1/flow-runs/:id/signals/:signalId/confirm` → `receive({ signalId })`). The caller completes a signal
+  the server pre-allocated for it and creates no run at all, which is also why the resume routes and the
+  confirm page refuse `isFanIn` waitpoints: external parties get per-signal capability, never barrier-level
+  control.
