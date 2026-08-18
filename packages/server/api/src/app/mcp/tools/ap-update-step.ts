@@ -16,6 +16,7 @@ const updateStepInput = z.object({
     actionName: z.string().optional(),
     pieceVersion: z.union([z.literal('latest'), ExactVersionType]).optional(),
     loopItems: z.string().optional(),
+    batchSize: z.coerce.number().int().min(1).optional(),
     skip: z.boolean().optional(),
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
@@ -36,16 +37,17 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. Pass the plain id, not a template.'),
             actionName: z.string().optional().describe('For PIECE steps: the action to perform. Use ap_research_pieces to get valid values.'),
             pieceVersion: z.union([z.literal('latest'), ExactVersionType]).optional().describe('For PIECE steps: move the step to another version of its piece. Pass "latest" or an exact version like "1.2.3". Inputs the new version no longer has are dropped, so pass the adjusted input in the same call.'),
-            loopItems: z.string().optional().describe('For LOOP steps: expression for the items to iterate over'),
+            loopItems: z.string().optional().describe('For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: expression for the list'),
+            batchSize: z.coerce.number().int().min(1).optional().describe('For PROCESS_IN_BATCHES steps: how many items each batch carries'),
             skip: z.boolean().optional().describe('Whether to skip this step during execution'),
             sourceCode: z.string().optional().describe('For CODE steps only: the JavaScript/TypeScript source code. Must export a `code` function: `export const code = async (inputs) => { ... }`.'),
             packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
-            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. The flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with ap_add_step using stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step.'),
-            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure.'),
+            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE/PROCESS_IN_BATCHES steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. On CODE/PIECE steps the flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with ap_add_step using stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step. A PROCESS_IN_BATCHES step grows no branches: the flow simply carries on with the batch summary.'),
+            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure. Not supported on PROCESS_IN_BATCHES — a retry re-dispatches every batch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth: rawAuth, actionName, pieceVersion: requestedPieceVersion, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth: rawAuth, actionName, pieceVersion: requestedPieceVersion, loopItems, batchSize, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
             const auth = mcpUtils.normalizeAuth(rawAuth)
 
             const [flow, project] = await Promise.all([
@@ -116,12 +118,18 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             }
             const pieceVersionChanged = updatedSettings.pieceVersion !== currentSettings.pieceVersion
             if (rewritten.loopItems !== undefined) {
-                if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+                if (step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES) {
                     updatedSettings.items = rewritten.loopItems
                 }
                 else {
-                    return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS steps, but "${stepName}" is type ${step.type}.` }] }
+                    return { content: [{ type: 'text', text: `❌ loopItems can only be set on LOOP_ON_ITEMS or PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }] }
                 }
+            }
+            if (batchSize !== undefined) {
+                if (step.type !== FlowActionType.PROCESS_IN_BATCHES) {
+                    return { content: [{ type: 'text', text: `❌ batchSize can only be set on PROCESS_IN_BATCHES steps, but "${stepName}" is type ${step.type}.` }] }
+                }
+                updatedSettings.batchSize = batchSize
             }
             if (sourceCode !== undefined || packageJson !== undefined) {
                 if (step.type !== FlowActionType.CODE) {
@@ -139,8 +147,9 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             }
 
             if (continueOnFailure !== undefined || retryOnFailure !== undefined) {
-                if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
-                    return { content: [{ type: 'text', text: `❌ continueOnFailure/retryOnFailure can only be set on CODE or PIECE steps, but "${stepName}" is type ${step.type}.` }] }
+                const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType: step.type, stepLabel: `"${stepName}"`, continueOnFailure, retryOnFailure })
+                if (errorHandlingError) {
+                    return errorHandlingError
                 }
                 const currentErrorHandling = (currentSettings.errorHandlingOptions as { continueOnFailure?: { value?: boolean }, retryOnFailure?: { value?: boolean } }) ?? {}
                 updatedSettings.errorHandlingOptions = mcpUtils.buildErrorHandlingOptions({
