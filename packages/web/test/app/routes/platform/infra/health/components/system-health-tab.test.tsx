@@ -62,7 +62,7 @@ describe('SystemHealthTab version row', () => {
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
 
-  const render = (current: string) => {
+  const readTabText = (current: string) => {
     systemHealthMock.data = buildHealth(current);
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -81,20 +81,20 @@ describe('SystemHealthTab version row', () => {
   });
 
   it('renders the release from the health payload, never the cached flag', () => {
-    const text = render(versions.running);
+    const text = readTabText(versions.running);
 
     expect(text).toContain(`Current ${versions.running}`);
     expect(text).not.toContain(`Current ${versions.staleFlag}`);
   });
 
   it('passes when the payload release matches the latest release', () => {
-    const text = render(versions.running);
+    const text = readTabText(versions.running);
 
     expect(text).not.toContain('Needs attention');
   });
 
   it('needs attention when the payload release is behind the latest release', () => {
-    const text = render(versions.staleFlag);
+    const text = readTabText(versions.staleFlag);
 
     expect(text).toContain(`Current ${versions.staleFlag}`);
     expect(text).toContain('Needs attention');
