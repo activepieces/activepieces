@@ -1381,6 +1381,9 @@
       "@activepieces/piece-toggl-track": [
         "packages/pieces/community/toggl-track/src/index.ts"
       ],
+      "@activepieces/piece-tokportal": [
+        "packages/pieces/community/tokportal/src/index.ts"
+      ],
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"
       ],
