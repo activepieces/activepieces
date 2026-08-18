@@ -575,7 +575,7 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(24)
+            expect(Object.keys(responseBody).length).toBe(25)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.mcpServerEndpointAllowlist).toBeNull()
             expect(responseBody.ownerId).toBe(mockOwner.id)

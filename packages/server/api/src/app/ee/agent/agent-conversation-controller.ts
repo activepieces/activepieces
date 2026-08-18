@@ -164,6 +164,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             })
         }
 
+        await agentHelpers.assertMcpEndpointsApproved({ platformId, tools: agentConfig?.tools, log })
         await agentHelpers.assertRunProviderConfigured({ platformId, log, ...spreadIfDefined('provider', agentConfig?.provider ?? undefined) })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 

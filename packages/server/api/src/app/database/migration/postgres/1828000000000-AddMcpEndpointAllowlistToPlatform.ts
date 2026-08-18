@@ -1,10 +1,10 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddMcpEndpointAllowlistToPlatform1816000000000 implements Migration {
-    name = 'AddMcpEndpointAllowlistToPlatform1816000000000'
+export class AddMcpEndpointAllowlistToPlatform1828000000000 implements Migration {
+    name = 'AddMcpEndpointAllowlistToPlatform1828000000000'
     breaking = false
-    release = '0.86.4'
+    release = '0.88.1'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

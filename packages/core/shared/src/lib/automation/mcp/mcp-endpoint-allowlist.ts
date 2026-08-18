@@ -25,14 +25,9 @@ function matchesEntry(host: string, entry: string): boolean {
     return host === normalizedEntry
 }
 
-// The `+` (not `*`) before the TLD deliberately blocks whole-TLD wildcards like
-// `*.com`/`*.pl`: approving an entire public suffix would gut the allowlist. Don't
-// relax it — that footgun is the point.
 const HOSTNAME_PATTERN = /^(\*\.)?([a-z0-9-]+\.)+[a-z]{2,}$/i
 
 export const mcpEndpointAllowlistUtil = {
-    // Empty/unset allowlist is the opt-in passthrough: every endpoint is allowed
-    // so existing installs and existing agents keep working until an admin curates a list.
     isServerUrlApproved({ serverUrl, allowlist }: IsServerUrlApprovedParams): boolean {
         if (isNil(allowlist) || allowlist.length === 0) {
             return true

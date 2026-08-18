@@ -39,6 +39,10 @@ describe('mcpEndpointAllowlistUtil.isServerUrlApproved', () => {
         expect(isServerUrlApproved({ serverUrl: 'https://mcp.acme.com:8443/sse', allowlist: ['mcp.acme.com'] })).toBe(true)
     })
 
+    it('matches the real host, not credentials that impersonate an approved one', () => {
+        expect(isServerUrlApproved({ serverUrl: 'https://mcp.acme.com@evil.example.com/sse', allowlist: ['mcp.acme.com'] })).toBe(false)
+    })
+
     it('rejects an invalid or non-http url when a list is configured', () => {
         expect(isServerUrlApproved({ serverUrl: 'not a url', allowlist: ['mcp.acme.com'] })).toBe(false)
         expect(isServerUrlApproved({ serverUrl: 'ftp://mcp.acme.com/sse', allowlist: ['mcp.acme.com'] })).toBe(false)
