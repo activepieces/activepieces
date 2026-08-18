@@ -142,7 +142,6 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     environment: data.runEnvironment,
                     streamStepProgress: StreamStepProgress.NONE,
                     parentRunId: data.parentRunId,
-                    parentWaitpointId: data.parentWaitpointId,
                     failParentOnFailure: data.failParentOnFailure,
                 })
             }
