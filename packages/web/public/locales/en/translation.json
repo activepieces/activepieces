@@ -2569,5 +2569,7 @@
   "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.": "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.",
   "items {from}–{to}": "items {from}–{to}",
   "Still running": "Still running",
-  "Logs expired": "Logs expired"
+  "Logs expired": "Logs expired",
+  "This batch has no logs": "This batch has no logs",
+  "This step ran more than 100 batches, so the summary does not record what happened to each one.": "This step ran more than 100 batches, so the summary does not record what happened to each one."
 }

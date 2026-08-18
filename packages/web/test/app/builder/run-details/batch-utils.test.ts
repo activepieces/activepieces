@@ -104,6 +104,17 @@ describe('batchUtils.childState', () => {
     ).toBe('neverStarted');
   });
 
+  it('does not claim a batch never started when the summary omitted its signals', () => {
+    expect(
+      batchUtils.childState({
+        output: { ...pausedOutput, signalsTruncated: true },
+        batchIndex: 2,
+        child: null,
+      }),
+    ).toBe('outcomeUnknown');
+    expect(batchUtils.missingLogsCopy('outcomeUnknown')).not.toBeNull();
+  });
+
   it('separates a straggler from a run whose logs are gone', () => {
     expect(
       batchUtils.childState({
@@ -247,6 +258,9 @@ describe('batchUtils.batchStatusBadge', () => {
       'secondary',
     );
     expect(batchUtils.batchStatusBadge('logsExpired').variant).toBe('secondary');
+    expect(batchUtils.batchStatusBadge('outcomeUnknown').variant).toBe(
+      'secondary',
+    );
   });
 
   it('reuses the run status vocabulary for batches that have a run', () => {
