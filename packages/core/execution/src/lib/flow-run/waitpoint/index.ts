@@ -54,6 +54,7 @@ export const CreateBarrierRequest = z.object({
     policy: BarrierPolicy.optional(),
     fanOut: BarrierFanOutSource.optional(),
     signals: z.array(z.object({ label: z.string().optional() })).optional(),
+    timeoutSeconds: z.number().int().positive().optional(),
 })
 export type CreateBarrierRequest = z.infer<typeof CreateBarrierRequest>
 
