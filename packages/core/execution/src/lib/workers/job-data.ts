@@ -38,14 +38,18 @@ export const JOB_PRIORITY = {
 const TESTING_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
 const ASYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 const SYNC_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'high'
+const FAN_IN_CHILD_EXECUTE_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const RATE_LIMIT_PRIORITY: keyof typeof JOB_PRIORITY = 'lowest'
 
-function getExecuteFlowPriority(environment: RunEnvironment, workerHandlerId: string | undefined | null): keyof typeof JOB_PRIORITY {
-    switch (environment) {
+function getExecuteFlowPriority(job: ExecuteFlowJobData): keyof typeof JOB_PRIORITY {
+    switch (job.environment) {
         case RunEnvironment.TESTING:
             return TESTING_EXECUTE_FLOW_PRIORITY
         case RunEnvironment.PRODUCTION:
-            return isNil(workerHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
+            if (!isNil(job.parentWaitpointId)) {
+                return FAN_IN_CHILD_EXECUTE_FLOW_PRIORITY
+            }
+            return isNil(job.workerHandlerId) ? ASYNC_EXECUTE_FLOW_PRIORITY : SYNC_EXECUTE_FLOW_PRIORITY
     }
 }
 
@@ -58,7 +62,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EVENT_DESTINATION:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
-            return getExecuteFlowPriority(job.environment, job.workerHandlerId)
+            return getExecuteFlowPriority(job)
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
@@ -141,6 +145,7 @@ const ExecuteFlowJobDataCommon = z.object({
     stepNameToTest: z.string().optional(),
     sampleData: z.record(z.string(), z.unknown()).optional(),
     logsFileId: z.string(),
+    parentWaitpointId: z.string().optional(),
 })
 
 export const BeginExecuteFlowJobData = ExecuteFlowJobDataCommon.extend({
@@ -171,6 +176,7 @@ export const WebhookJobData = z.object({
     execute: z.boolean(),
     jobType: z.literal(WorkerJobType.EXECUTE_WEBHOOK),
     parentRunId: z.string().optional(),
+    parentWaitpointId: z.string().optional(),
     failParentOnFailure: z.boolean().optional(),
 })
 export type WebhookJobData = z.infer<typeof WebhookJobData>

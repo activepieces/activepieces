@@ -412,6 +412,7 @@ import { AddAgentConversationSource1819000000000 } from './migration/postgres/18
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
 import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
 import { AddWaitpointSignals1821000000000 } from './migration/postgres/1821000000000-AddWaitpointSignals'
+import { AddBarrierChildAttribution1822000000000 } from './migration/postgres/1822000000000-AddBarrierChildAttribution'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -839,6 +840,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationSource1819000000000,
         AddAuditEventPlatformIdCreatedIdIndex1820000000000,
         AddWaitpointSignals1821000000000,
+        AddBarrierChildAttribution1822000000000,
     ]
     return migrations
 }

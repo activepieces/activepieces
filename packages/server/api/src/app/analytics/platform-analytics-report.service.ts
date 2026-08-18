@@ -64,6 +64,7 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
         .addSelect('COUNT(*)', 'runs')
         .where('flow_run.projectId IN (:...projectIds)', { projectIds })
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .andWhere('flow_run.parentWaitpointId IS NULL')
         .groupBy('flow_run.flowId')
         .addGroupBy('DATE_TRUNC(\'day\', flow_run.created)')
 
