@@ -25,18 +25,34 @@ export function observedProviderFetch(onOutcome: ((signal: ProviderOutcomeSignal
         return undefined
     }
     return async (input, init) => {
+        let response: Response
         try {
-            const response = await fetch(input, init)
-            // Clone before reading: the SDK still needs the body, and a streaming success must not be
-            // touched at all. A 2xx is enough to say the key authenticated.
-            const body = response.ok ? undefined : await response.clone().text()
-            onOutcome({ statusCode: response.status, ...(isNil(body) ? {} : { body }) })
-            return response
+            response = await fetch(input, init)
         }
         catch (error) {
             onOutcome(toProviderOutcomeSignal(error))
             throw error
         }
+        reportResponse({ response, onOutcome })
+        return response
+    }
+}
+
+// Reporting is observation, never a step the call waits on: the response is handed back before the
+// body is read, a streaming success is never touched, and a clone that cannot be read still reports
+// its status instead of surfacing an instrumentation error in place of the provider's answer.
+function reportResponse({ response, onOutcome }: { response: Response, onOutcome: (signal: ProviderOutcomeSignal) => void }): void {
+    if (response.ok) {
+        onOutcome({ statusCode: response.status })
+        return
+    }
+    try {
+        void response.clone().text()
+            .then((body) => onOutcome({ statusCode: response.status, body: body.slice(0, MAX_OBSERVED_BODY_LENGTH) }))
+            .catch(() => onOutcome({ statusCode: response.status }))
+    }
+    catch {
+        onOutcome({ statusCode: response.status })
     }
 }
 
@@ -97,6 +113,7 @@ function isNil<T>(value: T | null | undefined): value is null | undefined {
     return value === null || value === undefined
 }
 
+const MAX_OBSERVED_BODY_LENGTH = 2000
 const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i

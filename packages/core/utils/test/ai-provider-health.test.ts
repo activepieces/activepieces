@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { classifyProviderOutcome } from '../src/lib/ai-provider-health'
+import { describe, expect, it, vi } from 'vitest'
+import { classifyProviderOutcome, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
 
 describe('classifyProviderOutcome', () => {
     it('reads a 2xx as a working key', () => {
@@ -78,5 +78,64 @@ describe('classifyProviderOutcome', () => {
             expect(classifyProviderOutcome({})).toBe('no_change')
             expect(classifyProviderOutcome({ message: '' })).toBe('no_change')
         })
+    })
+})
+
+describe('observedProviderFetch', () => {
+    const withFetch = async (impl: () => Promise<Response>): Promise<ProviderOutcomeSignal[]> => {
+        const signals: ProviderOutcomeSignal[] = []
+        const original = globalThis.fetch
+        globalThis.fetch = vi.fn(impl) as unknown as typeof globalThis.fetch
+        try {
+            const observed = observedProviderFetch((signal) => signals.push(signal))
+            expect(observed).toBeDefined()
+            await observed?.('https://api.openai.com/v1/models')
+            await new Promise((resolve) => setImmediate(resolve))
+        }
+        finally {
+            globalThis.fetch = original
+        }
+        return signals
+    }
+
+    it('returns the provider response even when the body cannot be read', async () => {
+        const response = new Response('nope', { status: 401 })
+        vi.spyOn(response, 'clone').mockImplementation(() => {
+            throw new Error('body already disturbed')
+        })
+        const signals = await withFetch(async () => response)
+        expect(signals).toEqual([{ statusCode: 401 }])
+    })
+
+    it('never reads the body of a streaming success', async () => {
+        const response = new Response('hello', { status: 200 })
+        const clone = vi.spyOn(response, 'clone')
+        const signals = await withFetch(async () => response)
+        expect(clone).not.toHaveBeenCalled()
+        expect(signals).toEqual([{ statusCode: 200 }])
+        expect(await response.text()).toBe('hello')
+    })
+
+    it('caps how much of a failure body it keeps', async () => {
+        const signals = await withFetch(async () => new Response('x'.repeat(5000), { status: 429 }))
+        expect(signals[0].statusCode).toBe(429)
+        expect(signals[0].body).toHaveLength(2000)
+    })
+
+    it('reports a transport failure and rethrows it untouched', async () => {
+        const boom = new Error('socket hang up')
+        const signals: ProviderOutcomeSignal[] = []
+        const original = globalThis.fetch
+        globalThis.fetch = vi.fn(async () => {
+            throw boom
+        }) as unknown as typeof globalThis.fetch
+        try {
+            const observed = observedProviderFetch((signal) => signals.push(signal))
+            await expect(observed?.('https://api.openai.com/v1/models')).rejects.toBe(boom)
+        }
+        finally {
+            globalThis.fetch = original
+        }
+        expect(signals[0].message).toContain('socket hang up')
     })
 })
