@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, ProjectScopedMcpServer, RouterExecutionType, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
+import { BranchExecutionType, DEFAULT_BATCH_SIZE, FlowActionType, FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolDefinition, ProjectScopedMcpServer, RouterExecutionType, StepLocationRelativeToParent, UpdateActionRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -11,7 +11,7 @@ const addStepInput = z.object({
     parentStepName: z.string(),
     stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [StepLocationRelativeToParent, ...StepLocationRelativeToParent[]]),
     branchIndex: z.number().optional(),
-    stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]),
+    stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.PROCESS_IN_BATCHES, FlowActionType.ROUTER]),
     displayName: z.string(),
     pieceName: z.string().optional(),
     actionName: z.string().optional(),
@@ -20,6 +20,7 @@ const addStepInput = z.object({
     sourceCode: z.string().optional(),
     packageJson: z.string().optional(),
     loopItems: z.string().optional(),
+    batchSize: z.coerce.number().int().min(1).optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
 })
@@ -32,9 +33,9 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             parentStepName: z.string().describe('The step name to insert after/into (e.g. "trigger", "step_1"). Use ap_flow_structure to get valid values.'),
-            stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BRANCH = first action inside a router branch, INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH = first action inside the On success / On failure branch of a continue-on-failure step (set continueOnFailure on the parent first).'),
+            stepLocationRelativeToParent: z.enum(Object.values(StepLocationRelativeToParent) as [string, ...string[]]).describe('Where to place the step: AFTER = after the parent, INSIDE_LOOP = first action inside a loop, INSIDE_BATCH = first action inside the body of an existing PROCESS_IN_BATCHES step, INSIDE_BRANCH = first action inside a router branch, INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH = first action inside the On success / On failure branch of a continue-on-failure step (set continueOnFailure on the parent first).'),
             branchIndex: z.number().optional().describe('Branch index (required when stepLocationRelativeToParent is INSIDE_BRANCH)'),
-            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.ROUTER]).describe('The type of step to add. Prefer PIECE over CODE — only use CODE when no piece fits and the logic can\'t be done with an inline formula expression (in a free-text/value input) or a router condition.'),
+            stepType: z.enum([FlowActionType.CODE, FlowActionType.PIECE, FlowActionType.LOOP_ON_ITEMS, FlowActionType.PROCESS_IN_BATCHES, FlowActionType.ROUTER]).describe('The type of step to add. PROCESS_IN_BATCHES splits loopItems into batches of batchSize and runs its body once per batch, in parallel, then continues with a summary. Prefer PIECE over CODE — only use CODE when no piece fits and the logic can\'t be done with an inline formula expression (in a free-text/value input) or a router condition.'),
             displayName: z.string().describe('Display name for the step'),
             pieceName: z.string().optional().describe('For PIECE steps: the piece name (e.g. "@activepieces/piece-gmail"). Use ap_research_pieces to get valid values.'),
             actionName: z.string().optional().describe('For PIECE steps: the action name within the piece. Use ap_research_pieces with includeActions=true to get valid values.'),
@@ -42,13 +43,19 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
             auth: z.string().optional().describe('Connection externalId from ap_list_connections. Auto-wrapped as {{connections[\'externalId\']}}.'),
             sourceCode: z.string().optional().describe('For CODE steps: JavaScript/TypeScript source. Must export a `code` function.'),
             packageJson: z.string().optional().describe('For CODE steps: package.json as JSON string. Defaults to "{}".'),
-            loopItems: z.string().optional().describe('For LOOP steps: expression for items to iterate (e.g. "{{step_1[\'output\'].items}}").'),
-            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. Defaults to false. When true the flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step.'),
-            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure. Defaults to false.'),
+            loopItems: z.string().optional().describe('For LOOP_ON_ITEMS and PROCESS_IN_BATCHES steps: expression for the list (e.g. "{{step_1[\'output\'].items}}").'),
+            batchSize: z.coerce.number().int().min(1).optional().describe('For PROCESS_IN_BATCHES steps: how many items each batch carries. Defaults to 10.'),
+            continueOnFailure: z.boolean().optional().describe('For CODE/PIECE/PROCESS_IN_BATCHES steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. Defaults to false. On CODE/PIECE steps the flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step. A PROCESS_IN_BATCHES step grows no branches: the flow simply carries on with the batch summary.'),
+            retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure. Defaults to false. Not supported on PROCESS_IN_BATCHES — a retry re-dispatches every batch.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, actionName, input, auth, sourceCode, packageJson, loopItems, continueOnFailure, retryOnFailure } = addStepInput.parse(args)
+            const { flowId, parentStepName, stepLocationRelativeToParent, branchIndex, stepType, displayName, pieceName, actionName, input, auth, sourceCode, packageJson, loopItems, batchSize, continueOnFailure, retryOnFailure } = addStepInput.parse(args)
+
+            const errorHandlingError = mcpUtils.validateErrorHandlingSupport({ stepType, stepLabel: `"${displayName}"`, continueOnFailure, retryOnFailure })
+            if (errorHandlingError) {
+                return errorHandlingError
+            }
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -137,6 +144,19 @@ export const apAddStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogge
                         valid: false,
                         settings: {
                             items: rewritten.loopItems ?? '',
+                        },
+                    }
+                    break
+                case FlowActionType.PROCESS_IN_BATCHES:
+                    skeletonAction = {
+                        type: FlowActionType.PROCESS_IN_BATCHES,
+                        name: stepName,
+                        displayName,
+                        valid: false,
+                        settings: {
+                            items: rewritten.loopItems ?? '',
+                            batchSize: batchSize ?? DEFAULT_BATCH_SIZE,
+                            errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure, retryOnFailure }),
                         },
                     }
                     break
