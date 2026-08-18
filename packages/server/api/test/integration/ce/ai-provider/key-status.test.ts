@@ -101,7 +101,7 @@ describe('AI provider key status', () => {
         expect((await statusOf(second.json().id)).status).toBe('active')
     })
 
-    it('records a rejected replacement key rather than only failing the request', async () => {
+    it('leaves the status alone when a replacement key is rejected and discarded', async () => {
         const key = await azureKey('replaced')
         await db.update('ai_provider', key.id, { status: 'active' })
 
@@ -112,7 +112,23 @@ describe('AI provider key status', () => {
         })
 
         expect(response?.statusCode).not.toBe(StatusCodes.OK)
-        expect((await statusOf(key.id)).status).toBe('rejected')
+        expect((await statusOf(key.id)).status).toBe('active')
+    })
+
+    it('records a replacement key that works', async () => {
+        const key = await azureKey('accepted')
+        await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401' })
+
+        mockSendRequest.mockResolvedValue({ body: { data: [{ id: 'gpt-4o', model: 'gpt-4o', status: 'succeeded' }] } })
+        const response = await ctx.post(`/v1/ai-providers/${key.id}`, {
+            displayName: 'accepted',
+            auth: { apiKey: 'working' },
+        })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        const recorded = await statusOf(key.id)
+        expect(recorded.status).toBe('active')
+        expect(recorded.statusReason).toBeNull()
     })
 
     it('turns a rejected secret into rejected, then back to active once it works', async () => {
