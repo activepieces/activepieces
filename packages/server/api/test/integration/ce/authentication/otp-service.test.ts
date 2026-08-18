@@ -2,6 +2,7 @@ import { OtpType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { distributedStore } from '../../../../src/app/database/redis-connections'
 import { createMockUserIdentity } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -11,6 +12,12 @@ const EMAIL = 'otp.budget@example.com'
 const MAX_ATTEMPTS = 5
 const MAX_ATTEMPTS_PER_IDENTITY = 10
 
+async function issuedCode(): Promise<string> {
+    const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
+    const code = await distributedStore.get<string>(`otp-pending-code:${identity!.id}:${OtpType.EMAIL_LOGIN}`)
+    return code!
+}
+
 async function seedIdentityWithCode(): Promise<string> {
     const identity = createMockUserIdentity({ email: EMAIL, verified: true })
     await databaseConnection().getRepository('user_identity').save(identity)
@@ -19,11 +26,7 @@ async function seedIdentityWithCode(): Promise<string> {
         email: EMAIL,
         type: OtpType.EMAIL_LOGIN,
     })
-    const otp = await databaseConnection().getRepository('otp').findOneBy({
-        identityId: identity.id,
-        type: OtpType.EMAIL_LOGIN,
-    })
-    return otp!.value
+    return issuedCode()
 }
 
 async function currentOtp() {
@@ -58,15 +61,15 @@ async function sendCode(): Promise<void> {
 
 async function burnOneCodeWithWrongGuesses(): Promise<void> {
     await sendCode()
-    const otp = await currentOtp()
+    const code = await issuedCode()
     for (let guess = 0; guess < MAX_ATTEMPTS; guess++) {
-        await confirmCode(wrongVersionOf(otp!.value))
+        await confirmCode(wrongVersionOf(code))
     }
 }
 
 async function freshCorrectCode(): Promise<string> {
     await sendCode()
-    return (await currentOtp())!.value
+    return issuedCode()
 }
 
 async function backdateCode(minutesAgo: number): Promise<Date> {
@@ -93,10 +96,12 @@ beforeEach(async () => {
 describe('otpService#createAndSend', () => {
     it('re-sends the code already in flight instead of minting a second one', async () => {
         const issued = await seedIdentityWithCode()
+        const storedBefore = (await currentOtp())!.value
 
         await sendCode()
 
-        expect((await currentOtp())!.value).toBe(issued)
+        expect(await issuedCode()).toBe(issued)
+        expect((await currentOtp())!.value).toBe(storedBefore)
     })
 
     it('mints a fresh code once the one in flight has expired', async () => {
@@ -105,11 +110,53 @@ describe('otpService#createAndSend', () => {
 
         await sendCode()
 
-        expect((await currentOtp())!.value).not.toBe(issued)
+        expect(await issuedCode()).not.toBe(issued)
+    })
+})
+
+describe('otpService#createAndSend at rest', () => {
+    it('never stores the code a person receives', async () => {
+        const issued = await seedIdentityWithCode()
+
+        const stored = (await currentOtp())!.value
+
+        expect(stored).not.toBe(issued)
+        expect(stored).toMatch(/^[0-9a-f]{64}$/)
+    })
+
+    it('hands out one code when two requests race, and that code works', async () => {
+        const identity = createMockUserIdentity({ email: EMAIL, verified: true })
+        await databaseConnection().getRepository('user_identity').save(identity)
+
+        await Promise.all([sendCode(), sendCode(), sendCode()])
+
+        const delivered = await issuedCode()
+        expect(await confirmCode(delivered)).toBe(true)
+    })
+
+    it('accepts the code it sent even though the row holds a digest', async () => {
+        const issued = await seedIdentityWithCode()
+
+        expect(await confirmCode(issued)).toBe(true)
+    })
+
+    it('refuses the digest itself, offered as if it were the code', async () => {
+        await seedIdentityWithCode()
+        const stored = (await currentOtp())!.value
+
+        expect(await confirmCode(stored)).toBe(false)
     })
 })
 
 describe('otpService#confirm', () => {
+    it('throws an expired code away rather than leaving it to linger', async () => {
+        const value = await seedIdentityWithCode()
+        await backdateCode(11)
+
+        expect(await confirmCode(value)).toBe(false)
+        expect(await currentOtp()).toBeNull()
+    })
+
     it('accepts the correct code and consumes it', async () => {
         const value = await seedIdentityWithCode()
 
