@@ -407,7 +407,7 @@ function displayNameOf(provider: AIProviderName): string | undefined {
 }
 
 function defaultNameOf(provider: AIProviderName): string {
-  return t('{name} configuration', {
+  return t('{name} key', {
     name: displayNameOf(provider) ?? provider,
   });
 }

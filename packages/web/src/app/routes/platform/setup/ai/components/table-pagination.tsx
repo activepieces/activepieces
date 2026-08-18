@@ -2,17 +2,20 @@ import { t } from 'i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function TablePagination({
   page,
   pageSize,
   total,
   onPageChange,
+  className,
 }: {
   page: number;
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }) {
   if (total <= pageSize) {
     return null;
@@ -20,7 +23,7 @@ export function TablePagination({
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className={cn('flex items-center justify-between gap-4', className)}>
       <span className="text-xs text-muted-foreground tabular-nums">
         {t('Showing {from}–{to} of {total}', {
           from: page * pageSize + 1,

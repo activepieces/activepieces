@@ -23,8 +23,8 @@ export function ManualModelList({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex max-w-md items-center gap-2">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
+      <div className="flex max-w-xs items-center gap-2 p-3">
         <Input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -42,13 +42,13 @@ export function ManualModelList({
         </Button>
       </div>
       {modelIds.length === 0 ? (
-        <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <p className="border-t border-border/60 p-4 text-sm text-muted-foreground">
           {t(
             'This provider cannot list models automatically — add the model ids you want to expose.',
           )}
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 border-t border-border/60 p-3">
           {modelIds.map((modelId) => (
             <span
               key={modelId}

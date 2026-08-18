@@ -88,8 +88,8 @@ export function ProjectSelectionPanel({
   ];
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border/60">
+      <div className="flex flex-wrap items-center gap-2 p-3">
         <InputWithIcon
           icon={<Search className="size-4 shrink-0 text-muted-foreground" />}
           value={search}
@@ -98,7 +98,7 @@ export function ProjectSelectionPanel({
             setPage(0);
           }}
           placeholder={t('Search {count} projects', { count: projects.length })}
-          className="w-64"
+          className="max-w-xs grow-0"
         />
         <SelectedOnlyButton
           pressed={showSelectedOnly}
@@ -108,22 +108,7 @@ export function ProjectSelectionPanel({
           }}
         />
       </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span className="tabular-nums">
-          {t('{selected} of {total} selected', {
-            selected: selectedIds.length,
-            total: projects.length,
-          })}
-        </span>
-        <button
-          type="button"
-          className="transition-colors hover:text-foreground"
-          onClick={() => onChange([])}
-        >
-          {t('Clear')}
-        </button>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-border/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
+      <div className="border-t border-border/60 [&_tbody_tr:last-child]:border-b-0 [&_thead]:border-t-0">
         <DataTable
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
@@ -146,6 +131,7 @@ export function ProjectSelectionPanel({
         pageSize={PAGE_SIZE}
         total={filtered.length}
         onPageChange={setPage}
+        className="border-t border-border/60 p-3"
       />
     </div>
   );

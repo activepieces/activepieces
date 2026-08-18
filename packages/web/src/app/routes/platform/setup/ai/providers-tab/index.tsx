@@ -168,9 +168,7 @@ export function ProvidersTab() {
                 ? t(
                     'Connect a provider to turn on chat, agents, and AI steps across your platform.',
                   )
-                : t(
-                    'Each configuration is one API key with its own models and projects.',
-                  )
+                : t('Each key has its own models and project access.')
             }
           />
           {allowWrite && (
@@ -180,7 +178,7 @@ export function ProvidersTab() {
               onClick={() => openConnect()}
             >
               <Plus className="size-4" />
-              {t('Add configuration')}
+              {t('Add key')}
             </Button>
           )}
         </div>
@@ -283,13 +281,13 @@ function ProviderGroup({
         {allowWrite && (
           <Button variant="ghost" size="sm" onClick={onAdd}>
             <Plus className="size-4" />
-            {t('Add configuration')}
+            {t('Add key')}
           </Button>
         )}
       </div>
       <div className="border-t border-border/60 px-5 pb-1 pt-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          {t('Configurations')}
+          {t('Keys')}
         </p>
       </div>
       <div className="pb-1">
@@ -404,7 +402,7 @@ function ConfigRow({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onOpen}>
                 <Settings2 className="size-4" />
-                {t('Configure')}
+                {t('Edit')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteOpen(true)}
@@ -419,9 +417,7 @@ function ConfigRow({
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
             title={t('Delete {name}', { name: config.name })}
-            message={t(
-              'Steps and agents using this configuration will stop working.',
-            )}
+            message={t('Steps and agents using this key will stop working.')}
             entityName={config.name}
             mutationFn={async () => {
               await onDelete();

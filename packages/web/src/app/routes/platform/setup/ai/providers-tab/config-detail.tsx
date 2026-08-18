@@ -139,7 +139,7 @@ export function ConfigDetail({
       <section className="flex flex-col gap-3">
         <SectionHeader
           title={t('General')}
-          description={t('How this configuration is labelled and authorised.')}
+          description={t('How this key is labelled and authorised.')}
         />
         <div className="flex flex-col divide-y divide-border/60 rounded-xl border border-border/60">
           <div className="flex flex-col gap-1.5 p-4">
@@ -181,7 +181,7 @@ export function ConfigDetail({
             count={enabledModelCount}
             description={
               manualModels
-                ? t('Model ids exposed through this configuration.')
+                ? t('Model ids exposed through this key.')
                 : t('Which of this key’s models the platform may use.')
             }
           />
@@ -229,7 +229,7 @@ export function ConfigDetail({
                     'Every project except these — new projects get access automatically.',
                   )
                 : draft.projectScope === 'selected'
-                ? t('Only these projects can use this configuration.')
+                ? t('Only these projects can use this key.')
                 : t('Every project on this platform can use it.')
             }
           />
@@ -266,12 +266,12 @@ export function ConfigDetail({
       <section className="flex flex-col gap-3">
         <SectionHeader
           title={t('Danger zone')}
-          description={t('Irreversible actions for this configuration.')}
+          description={t('Irreversible actions for this key.')}
         />
         <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/30 p-4">
           <div className="min-w-0">
             <p className="text-sm font-medium leading-none">
-              {t('Delete this configuration')}
+              {t('Delete this key')}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {t('Steps and agents using it will stop working.')}
@@ -291,9 +291,7 @@ export function ConfigDetail({
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t('Delete {name}', { name: config.name })}
-          message={t(
-            'Steps and agents using this configuration will stop working.',
-          )}
+          message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
           mutationFn={async () => onDelete()}
         />
