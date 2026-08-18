@@ -65,6 +65,7 @@ export const CORE_STEP_METADATA: Record<
 export const CORE_ACTIONS_METADATA = [
   CORE_STEP_METADATA[FlowActionType.CODE],
   CORE_STEP_METADATA[FlowActionType.LOOP_ON_ITEMS],
+  CORE_STEP_METADATA[FlowActionType.PROCESS_IN_BATCHES],
   CORE_STEP_METADATA[FlowActionType.ROUTER],
 ] as const;
 
