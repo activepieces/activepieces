@@ -19,6 +19,7 @@ import {
   Template,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
+  WebsocketClientEvent,
 } from '@activepieces/shared';
 import {
   QueryClient,
@@ -27,6 +28,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -405,6 +407,11 @@ export const flowHooks = {
     isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
+    useEffect(() => {
+      return () => {
+        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
+      };
+    }, [socket]);
     return useMutation<void>({
       mutationFn: () =>
         flowRunsApi.subscribeToTestFlowOrManualRun(

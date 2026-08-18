@@ -4,7 +4,6 @@ import {
   FlowRunStatus,
   FlowVersionState,
   WebsocketClientEvent,
-  RunEnvironment,
   isFlowRunStateTerminal,
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -56,10 +55,10 @@ const useListenToExistingRun = () => {
       }
       const flowRun = await flowRunsApi.getPopulated(run.id);
       setRun(flowRun, flowVersion);
+      return flowRun;
     },
     enabled:
       !isNil(run) &&
-      run.environment === RunEnvironment.PRODUCTION &&
       !isFlowRunStateTerminal({
         status: run.status,
         ignoreInternalError: false,
