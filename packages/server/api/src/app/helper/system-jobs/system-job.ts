@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -45,10 +45,28 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         systemJobWorker = new Worker(
             SYSTEM_JOB_QUEUE,
             async (job) => {
-                log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
+                const jobLogger = createLogger({
+                    event: 'system-job.execute',
+                    job: { id: job.id, type: job.name },
+                })
+                return wideEvent.run({
+                    logger: jobLogger,
+                    fn: async () => {
+                        try {
+                            log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
 
-                const jobHandler = systemJobHandlers.getJobHandler(job.name)
-                await jobHandler(job.data)
+                            const jobHandler = systemJobHandlers.getJobHandler(job.name)
+                            await jobHandler(job.data)
+                        }
+                        catch (error) {
+                            wideEvent.error(error)
+                            throw error
+                        }
+                        finally {
+                            jobLogger.emit()
+                        }
+                    },
+                })
             },
             {
                 connection: await redisConnections.create(),
