@@ -16,6 +16,8 @@ import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-met
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
+const HASHED_OTP_VERSION = 1
+
 export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): UserIdentity => {
     return {
         id: userIdentity?.id ?? apId(),
@@ -368,13 +370,14 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
         attempts: otp?.attempts ?? 0,
+        version: otp?.version ?? 0,
     }
 }
 
 export const createMockOtpWithCode = async (otp?: Partial<OtpModel>): Promise<MockOtpWithCode> => {
     const code = otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString()
     const value = await encryptUtils.hmacString(code)
-    return { otp: createMockOtp({ ...otp, value }), code }
+    return { otp: createMockOtp({ ...otp, value, version: HASHED_OTP_VERSION }), code }
 }
 
 export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
