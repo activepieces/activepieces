@@ -149,6 +149,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async recheck({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AiProviderKeyStatus> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
+        if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            return aiProvider.status
+        }
         const auth = await decryptRowAuth({ aiProvider, platformId })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)

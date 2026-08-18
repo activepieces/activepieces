@@ -108,6 +108,9 @@ function classifyByStatus({ statusCode, haystack }: { statusCode: number, haysta
     if (statusCode === 402) {
         return 'out_of_credits'
     }
+    if (statusCode === 429 && RATE_LIMIT_BODY_PATTERN.test(haystack)) {
+        return 'no_change'
+    }
     if (BILLING_BODY_PATTERN.test(haystack)) {
         return 'out_of_credits'
     }
@@ -132,7 +135,9 @@ const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i
 
-const BILLING_BODY_PATTERN = /insufficient_quota|credit[_ ]balance|billing_hard_limit_reached|billing|quota|\bcredits?\b|out of funds|payment required/i
+const BILLING_BODY_PATTERN = /insufficient_quota|credit[_ ]balance|billing_hard_limit_reached|billing|\bcredits?\b|out of funds|payment required/i
+
+const RATE_LIMIT_BODY_PATTERN = /per minute|per day|per_minute|per_day|requests? per|tokens? per|rate.?limit|resource_exhausted|\brpm\b|\btpm\b/i
 
 const MODEL_NOT_FOUND_PATTERN = /model|deployment|engine/i
 

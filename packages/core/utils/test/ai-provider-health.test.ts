@@ -45,6 +45,14 @@ describe('classifyProviderOutcome', () => {
         expect(outcome).toBe('no_change')
     })
 
+    it('reads a Gemini per-minute quota as load, not as billing', () => {
+        const outcome = classifyProviderOutcome({
+            statusCode: 429,
+            body: '{"error":{"code":429,"message":"Quota exceeded for quota metric \'Generate Content API requests per minute\' and limit \'GenerateRequestsPerMinutePerProjectPerModel\'","status":"RESOURCE_EXHAUSTED"}}',
+        })
+        expect(outcome).toBe('no_change')
+    })
+
     it('leaves the status alone when only one model is missing', () => {
         const outcome = classifyProviderOutcome({
             statusCode: 404,

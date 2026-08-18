@@ -247,6 +247,21 @@ describe('AI provider key status', () => {
             expect((await statusOf(key.id)).status).toBe('active')
         })
 
+        it('will not claim the managed key is healthy, because it checks nothing', async () => {
+            const managed = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
+            })
+            await db.update('ai_provider', managed.id, { status: 'out_of_credits', statusReason: 'HTTP 402: no credits left' })
+
+            const response = await ctx.post(`/v1/ai-providers/${managed.id}/recheck`, {})
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().status).toBe('out_of_credits')
+            expect((await statusOf(managed.id)).status).toBe('out_of_credits')
+        })
+
         it('forbids a non-admin member', async () => {
             const key = await azureKey('guarded')
             const memberCtx = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.VIEWER })
