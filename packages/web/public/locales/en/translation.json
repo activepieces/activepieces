@@ -2511,5 +2511,18 @@
   "The step fails as soon as one batch fails, like any other step.": "The step fails as soon as one batch fails, like any other step.",
   "The step succeeds anyway and reports which batches failed in its output.": "The step succeeds anyway and reports which batches failed in its output.",
   "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own.": "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own.",
-  "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own. Leave empty to wait up to your deployment limit of {days} days.": "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own. Leave empty to wait up to your deployment limit of {days} days."
+  "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own. Leave empty to wait up to your deployment limit of {days} days.": "The step stops waiting after this. Whether it fails or carries on with what finished follows If a batch fails above — either way the unfinished batches keep running on their own. Leave empty to wait up to your deployment limit of {days} days.",
+  "Failed to dispatch": "Failed to dispatch",
+  "Never started": "Never started",
+  "This batch never started": "This batch never started",
+  "It was never picked up by a worker, so it has no logs of its own.": "It was never picked up by a worker, so it has no logs of its own.",
+  "This batch failed to dispatch": "This batch failed to dispatch",
+  "It was never handed to a worker, so it has no logs of its own.": "It was never handed to a worker, so it has no logs of its own.",
+  "This batch is still running": "This batch is still running",
+  "The parent finished without it, and its writes may still land.": "The parent finished without it, and its writes may still land.",
+  "Logs no longer available": "Logs no longer available",
+  "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.": "This batch ran, but its logs are past the retention window. The summary on the step above is what remains.",
+  "items {from}–{to}": "items {from}–{to}",
+  "Still running": "Still running",
+  "Logs expired": "Logs expired"
 }
