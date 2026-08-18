@@ -108,7 +108,7 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
     }
     const pending = PendingBatches.safeParse(pausedOutput?.output).data ?? NOTHING_PENDING
     const summary: BatchStepSummary = { ...pending, ...released.data }
-    const unsuccessful = summary.failed + summary.rejected + summary.notDispatched
+    const unsuccessful = summary.failed + summary.rejected + summary.canceled + summary.notDispatched
     const continueOnFailure = action.settings.errorHandlingOptions?.continueOnFailure?.value ?? false
 
     if (!continueOnFailure && (unsuccessful > 0 || summary.timedOut)) {
@@ -118,7 +118,7 @@ async function resumeWithSummary({ action, executionState, constants }: ExecuteP
             stepOutput: stepOutput.setOutput(summary),
             error: summary.timedOut
                 ? userError({ name: 'ProcessInBatchesTimedOut', message: `Process in Batches timed out with ${summary.stillRunning} batches still running.` })
-                : userError({ name: 'ProcessInBatchesBatchFailed', message: `${unsuccessful} of ${summary.total} batches failed.` }),
+                : userError({ name: 'ProcessInBatchesBatchFailed', message: `${unsuccessful} of ${summary.total} batches did not succeed.` }),
             durationMs: performance.now() - stepStartTime,
         })
     }

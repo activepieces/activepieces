@@ -166,6 +166,15 @@ run id. The loop *rail* presentation reuses fine; the data path underneath it do
   dispatch is progressive (5 in flight) and a `NOT_DISPATCHED` signal never produces a row. Any live counter
   must render its own incompleteness ("30 of 412 dispatched") rather than imply a breakdown. The dividing
   line for a UI is finished vs mid-flight, not `total` ≶ 100.
+- **The batch step's own pass/fail verdict is a second, hand-written tally of the summary — keep it in step
+  with `UNFAVOURABLE_SIGNAL_STATUSES`.** `resumeWithSummary` (`process-in-batches-executor.ts`) sums
+  `failed + rejected + canceled + notDispatched` into `unsuccessful` and fails the step unless
+  `continueOnFailure` is on. That list must mirror `UNFAVOURABLE_SIGNAL_STATUSES` in `core-execution`, which
+  the release predicate already uses — they drifted once (`canceled` omitted), and the miss is invisible in
+  the common case because a canceled *parent* never resumes. It only shows when a single child is canceled on
+  its own while the barrier stays pending: the barrier releases with `canceled > 0` and the step used to pass
+  as clean. `stillRunning` deliberately stays out of the tally — an early policy release is a success shape,
+  which is why `timedOut` is checked separately.
 - **A UI-side `COUNT` over a barrier's children is fine — the `EXISTS` gotcha below is about the release
   loop, not about reads.** `GROUP BY status` on one barrier is an index-only scan of at most
   `AP_MAX_BARRIER_SIGNALS` tuples on `idx_run_parent_waitpoint_id`, once per poll. But

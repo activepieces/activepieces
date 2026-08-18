@@ -407,6 +407,20 @@ describe('process in batches executor', () => {
         expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
     })
 
+    it('fails the step when a batch was canceled, even with continue on failure off', async () => {
+        const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
+
+        const result = await flowExecutor.execute({
+            action,
+            executionState: await pausedStateFor({ stepName: 'batches', totalItems: 1, batchSize: 1 }),
+            constants: generateMockEngineConstants({
+                resumePayload: releasedSummary({ total: 1, succeeded: 0, canceled: 1 }),
+            }),
+        })
+
+        expect(result.verdict.status).toEqual(FlowRunStatus.FAILED)
+    })
+
     it('fails the step when the deadline fired, even with no failed batch', async () => {
         const action = buildProcessInBatchesAction({ name: 'batches', items: '{{ [1] }}', batchSize: 1 })
 
