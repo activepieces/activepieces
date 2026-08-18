@@ -7,6 +7,7 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { BatchChildContextStrip } from '../../run-details/batch-child-context-strip';
 
 import { FlowApprovalBanner } from './flow-approval-banner';
 import { PublishFlowReminderWidget } from './publish-flow-reminder-widget';
@@ -36,7 +37,12 @@ const BuilderBanner = ({ lockedBy, takeOver }: BuilderBannerProps) => {
     );
   }
   if (!isNil(run)) {
-    return <RunInfoWidget />;
+    return (
+      <>
+        <BatchChildContextStrip />
+        <RunInfoWidget />
+      </>
+    );
   }
   return (
     <>
