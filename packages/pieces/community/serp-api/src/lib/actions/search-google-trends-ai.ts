@@ -12,7 +12,7 @@ export const searchGoogleTrendsAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Queries Google Trends via SerpApi for search interest in a keyword. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related/rising queries. Choose the data type: "TIMESERIES" (interest over time), "GEO_MAP" (interest by region), "RELATED_TOPICS", or "RELATED_QUERIES" — the response key matches the chosen data type (e.g. `interest_over_time`). Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Look up Google Trends data for how search interest in a keyword or topic changes over time and by region. Use to gauge a topic\'s popularity trajectory, compare geographic interest, or find related and rising queries. Choose the data type: "TIMESERIES" (interest over time), "GEO_MAP" (interest by region), "RELATED_TOPICS", or "RELATED_QUERIES".',
     idempotent: true,
   },
   outputSchema: searchGoogleTrendsAiOutputSchema,

@@ -33,6 +33,8 @@ import { pieceToolRunner } from './tools/piece-tool-runner'
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
+const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
+const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
@@ -54,7 +56,7 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
     conversationId: string
     runId?: string
     updates: Record<string, unknown>
-}) {
+}): Promise<boolean> {
     const builder = agentHelpers.conversationRepo()
         .createQueryBuilder()
         .update()
@@ -63,7 +65,9 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
     if (!isNil(runId)) {
         builder.andWhere('("activeRunId" IS NULL OR "activeRunId" = :runId)', { runId })
     }
-    return builder.execute()
+    const result = await builder.returning('id').execute()
+    const updatedRows: unknown[] = result.raw ?? []
+    return updatedRows.length > 0
 }
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
@@ -164,6 +168,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
         const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
+        // A saved agent answers from its own instructions, so one person's remembered preferences
+        // must not change how it behaves for everyone else who talks to it.
+        const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
@@ -171,7 +178,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUserEmail] = isFlowStep
+        const [scopedMcpCredentials, runMemory, runUserEmail] = !carriesChatContext
             ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, '']
             : await Promise.all([
                 agentMcp.getCredentials({ platformId, userId, log }),
@@ -221,8 +228,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             .update()
             .set({ status: AgentConversationStatus.STREAMING })
             .where('id = :id AND status != :streaming', { id: conversationId, streaming: AgentConversationStatus.STREAMING })
+            .returning('id')
             .execute()
-        if (lockResult.affected === 0) {
+        const lockedRows: unknown[] = lockResult.raw ?? []
+        if (lockedRows.length === 0) {
             log.warn({ conversation: { id: conversationId } }, '[agentRpc#getAgentConfig] Concurrent run rejected (conversation already STREAMING)')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -235,10 +244,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
 
         const selectedModel = modelName ?? conversation.modelName ?? null
-        const tier = agentHelpers.resolveTier({ tierId: isFlowStep ? null : selectedModel })
-        // Chat picks a tier and the tier picks the model. A flow step names the model itself, so
-        // running anything else would quietly ignore what the builder shows.
-        const resolvedModelId = isFlowStep && !isNil(modelName)
+        // The tier resolver finds no tier for a concrete model id and silently returns the default,
+        // so a source that names its own model must never be routed through it.
+        const tier = agentHelpers.resolveTier({ tierId: carriesChatContext ? selectedModel : null })
+        const resolvedModelId = !carriesChatContext && !isNil(modelName)
             ? modelName
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
@@ -429,8 +438,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             }, '[agentRpc#saveAgentMessages] Refused shrinking save — kept incrementally-persisted history')
         }
 
-        const saveResult = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
-        const saveLanded = saveResult.affected !== 0
+        const saveLanded = await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates })
         if (!saveLanded) {
             log.warn({ conversation: { id: input.conversationId }, run: { id: input.runId } }, 'saveAgentMessages: no row updated — conversation deleted or superseded by a newer run; skipping analytics and usage tracking')
         }
@@ -525,8 +533,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a configured piece tool' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
         }
         const { projectId, platformId } = conversation
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider) })
@@ -550,8 +558,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can search a knowledge base' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to search a knowledge base' } })
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
@@ -579,8 +587,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
         const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can run a flow tool' } })
+        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a flow tool' } })
         }
         const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId })
         if (isNil(flow)) {
@@ -592,7 +600,15 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse> {
-        const chatOnlyTool = input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName)
+        if (ATTENDED_STATE_TOOLS.includes(input.toolName) && input.source === AgentRunSource.FLOW_STEP) {
+            log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected an attended-only tool for an unattended run — the worker should not have called it')
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: `Tool "${input.toolName}" is only available to attended runs` },
+            })
+        }
+        const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
+            && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
         if (chatOnlyTool && input.source !== AgentRunSource.CHAT) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
@@ -686,7 +702,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
             userId: input.userId,
             conversationId: input.conversationId,
-            confinedToProjectId: input.source === AgentRunSource.FLOW_STEP ? await confinedProjectFor({ conversationId: input.conversationId }) : null,
+            confinedToProjectId: input.source === AgentRunSource.CHAT ? null : await confinedProjectFor({ conversationId: input.conversationId }),
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -848,7 +864,7 @@ async function loadOrStartConversation({ conversationId, platformId, userId, sou
 async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string> {
     const conversation = isNil(conversationId) ? null : await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation?.projectId)) {
-        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'A flow-step run must be confined to a project' } })
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run must be confined to a project' } })
     }
     return conversation.projectId
 }

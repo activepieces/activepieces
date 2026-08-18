@@ -31,6 +31,7 @@ export function ChatBottomBar({
   onInputChange,
   selectedModel,
   onModelChange,
+  hideModelSelector,
   lastAssistantMessage,
   lastMessageId,
   placeholder,
@@ -130,10 +131,12 @@ export function ChatBottomBar({
               : placeholder ?? t('Reply...')
           }
           rightActions={
-            <ChatModelSelector
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+            hideModelSelector === true ? null : (
+              <ChatModelSelector
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            )
           }
         />
       </div>
@@ -208,6 +211,7 @@ type ChatBottomBarProps = {
   onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
+  hideModelSelector?: boolean;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;
