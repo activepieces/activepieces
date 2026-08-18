@@ -176,7 +176,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             email: userIdentity.email,
-            otp,
             identityId: userIdentity.id,
             type,
         }, 'Sending OTP email')
