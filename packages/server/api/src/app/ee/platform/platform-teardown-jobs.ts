@@ -102,12 +102,13 @@ async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessPa
             },
         }))
         if (!isNil(error)) {
+            await flowRepo().update({ id: flow.id }, { status: FlowStatus.DISABLED })
             log.warn({
                 error,
                 flow: { id: flow.id },
                 project: { id: flow.projectId },
                 platform: { id: platformId },
-            }, '[stopPlatformExecution] Skipping trigger disable; platform teardown proceeding')
+            }, '[stopPlatformExecution] Trigger disable failed; forced status=DISABLED to close the webhook gate before teardown proceeds')
         }
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
