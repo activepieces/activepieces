@@ -10889,6 +10889,7 @@
       "name": "tests-e2e",
       "version": "0.0.1",
       "devDependencies": {
+        "@faker-js/faker": "8.2.0",
         "@playwright/test": "1.54.1",
         "checkly": "6.9.10",
         "dotenv": "17.2.3",
