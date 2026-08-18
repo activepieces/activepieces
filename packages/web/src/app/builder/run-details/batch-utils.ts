@@ -56,6 +56,9 @@ function childState({
       ? 'logsExpired'
       : 'stillRunning';
   }
+  if (output.signalsTruncated) {
+    return 'outcomeUnknown';
+  }
   return failedToDispatchAt({ output, batchIndex })
     ? 'failedToDispatch'
     : 'neverStarted';
@@ -154,9 +157,11 @@ function batchStatusBadge(
         label: t('Failed to dispatch'),
       };
     case 'stillRunning':
-      return { variant: 'accent', Icon: Timer, label: t('Still running') };
+      return { variant: 'info', Icon: Timer, label: t('Still running') };
     case 'neverStarted':
       return { variant: 'secondary', Icon: Minus, label: t('Never started') };
+    case 'outcomeUnknown':
+      return { variant: 'secondary', Icon: Minus, label: t('Unknown') };
     case 'logsExpired':
       return { variant: 'secondary', Icon: Archive, label: t('Logs expired') };
     default: {
@@ -167,7 +172,7 @@ function batchStatusBadge(
             ? 'success'
             : variant === 'error'
             ? 'destructive'
-            : 'accent',
+            : 'info',
         Icon,
         label:
           flowRunUtils.getStatusLabelOverride(status) ??
@@ -217,6 +222,13 @@ function missingLogsCopy(
         title: t('This batch is still running'),
         description: t(
           'The parent finished without it, and its writes may still land.',
+        ),
+      };
+    case 'outcomeUnknown':
+      return {
+        title: t('This batch has no logs'),
+        description: t(
+          'This step ran more than 100 batches, so the summary does not record what happened to each one.',
         ),
       };
     case 'logsExpired':
@@ -276,6 +288,7 @@ const BatchStepRunOutput = z.object({
       }),
     )
     .optional(),
+  signalsTruncated: z.boolean().optional(),
 });
 
 export const batchUtils = {
@@ -314,6 +327,7 @@ export type BatchChild = {
 export type BatchChildState =
   | 'neverStarted'
   | 'failedToDispatch'
+  | 'outcomeUnknown'
   | 'stillRunning'
   | 'logsExpired';
 
@@ -336,7 +350,7 @@ export type BatchJumpTarget =
   | { kind: 'index'; dispatchIndex: number };
 
 export type BatchStatusBadge = {
-  variant: 'success' | 'destructive' | 'accent' | 'secondary';
+  variant: 'success' | 'destructive' | 'info' | 'secondary';
   Icon: LucideIcon;
   label: string;
 };
