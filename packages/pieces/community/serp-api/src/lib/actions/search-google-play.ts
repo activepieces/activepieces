@@ -12,7 +12,7 @@ export const searchGooglePlay = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches the Google Play store via SerpApi for a query within a chosen store section, returning results in `organic_results` (title, developer, rating, link). Use to discover Android apps, games, movies, or books. Set Store to "apps" (default), "games", "movies", or "books". For iOS apps use Search Apple App Store instead. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search the Google Play store for Android apps, games, movies, or books matching a query. Use to discover Android apps or other Play content; set Store to "apps" (default), "games", "movies", or "books". For iOS apps use Search Apple App Store instead.',
     idempotent: true,
   },
   outputSchema: searchGooglePlayOutputSchema,

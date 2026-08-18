@@ -50,6 +50,8 @@ const seedDevUser = async (): Promise<void> => {
         identityId: response.id,
         name: 'dev\'s Platform',
         invalidatePreviousTokens: true,
+        isFirstPlatform: true,
+        callerTokenVersion: undefined,
     })
 
     log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user and platform created')

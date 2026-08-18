@@ -15,6 +15,8 @@ export const OtpModel = z.object({
     identityId: ApId,
     value: z.string(),
     state: z.nativeEnum(OtpState),
+    attempts: z.number(),
+    version: z.number(),
 })
 
 export type OtpModel = z.infer<typeof OtpModel>

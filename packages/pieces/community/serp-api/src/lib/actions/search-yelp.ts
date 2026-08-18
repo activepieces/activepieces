@@ -12,7 +12,7 @@ export const searchYelp = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Yelp via SerpApi for businesses matching a description in a location, returning results in `organic_results` (name, rating, review count, category, price level, link). Use to find rated local businesses or read review summaries. Both what to search (Find Description) and where (Find Location) are required. Read-only and idempotent; requires those two fields and a SerpApi API key.',
+      'Search Yelp for local businesses matching a description in a location: restaurants, shops, and services with ratings, review counts, categories, and price levels. Use to find well-rated businesses nearby or in a named city. Both what to search (Find Description) and where (Find Location) are required.',
     idempotent: true,
   },
   outputSchema: searchYelpOutputSchema,
