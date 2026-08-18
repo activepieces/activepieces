@@ -16,12 +16,14 @@ import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-met
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
+const HASHED_OTP_VERSION = 1
+
 export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): UserIdentity => {
     return {
         id: userIdentity?.id ?? apId(),
         created: userIdentity?.created ?? faker.date.recent().toISOString(),
         updated: userIdentity?.updated ?? faker.date.recent().toISOString(),
-        email: (userIdentity?.email ?? faker.internet.email()).toLowerCase().trim(),
+        email: (userIdentity?.email ?? `${apId()}@example.com`).toLowerCase().trim(),
         firstName: userIdentity?.firstName ?? faker.person.firstName(),
         lastName: userIdentity?.lastName ?? faker.person.lastName(),
         tokenVersion: userIdentity?.tokenVersion ?? undefined,
@@ -176,6 +178,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
         workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
         billedTeamProjectsLimit: platformPlan?.billedTeamProjectsLimit === undefined ? 0 : platformPlan.billedTeamProjectsLimit,
         usersLimit: platformPlan?.usersLimit ?? null,
@@ -366,7 +369,15 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         value:
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+        attempts: otp?.attempts ?? 0,
+        version: otp?.version ?? 0,
     }
+}
+
+export const createMockOtpWithCode = async (otp?: Partial<OtpModel>): Promise<MockOtpWithCode> => {
+    const code = otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString()
+    const value = await encryptUtils.hmacString(code)
+    return { otp: createMockOtp({ ...otp, value, version: HASHED_OTP_VERSION }), code }
 }
 
 export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
@@ -702,6 +713,11 @@ export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Prom
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
+}
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
 }
 
 type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
