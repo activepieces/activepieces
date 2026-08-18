@@ -73,6 +73,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             name: 'cloudflare',
             baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
             headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+            ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
         }).chatModel(actualModelId)
     }
     return createLanguageModel({
