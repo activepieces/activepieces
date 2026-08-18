@@ -16,14 +16,26 @@ Each child is preceded by a **compare-and-set claim** on its own signal row:
 
 ```sql
 UPDATE waitpoint_signal SET "refId" = $childRunId
- WHERE id = $signalId AND "refId" IS NULL RETURNING id
+ WHERE id = $signalId AND "refId" IS NULL AND "status" = 'PENDING' RETURNING id
 ```
 
-No row returned → another dispatcher owns that batch → skip it. `flowRunService.dispatchChild` stays an
-in-process service method; its HTTP wrapper (`POST /v1/flow-runs/dispatch`) is deleted, and it now
-**rejects** an unresolvable barrier instead of warning and dispatching unattributed. The dispatcher treats
-that rejection as *stop, do not retry*. Its failure handler marks the undispatched signals `NOT_DISPATCHED`,
-so the barrier releases in minutes with a truthful summary rather than waiting out its deadline.
+No row returned → another dispatcher owns that batch, or it has already been written off → skip it.
+`flowRunService.dispatchChild` stays an in-process service method; its HTTP wrapper
+(`POST /v1/flow-runs/dispatch`) is deleted, and it now **rejects** an unresolvable barrier instead of warning
+and dispatching unattributed. The dispatcher treats that rejection as *stop, do not retry*.
+
+When dispatch gives up for good, its handler marks the **unclaimed** signals `NOT_DISPATCHED` — `PENDING`
+*and* `refId IS NULL`, the ones for which no child exists. Claimed signals are left alone: their children are
+live, and the barrier releases when those report. So a partial fan-out yields a truthful mixed summary rather
+than releasing early on a lie. Two things this depends on:
+
+- **"Gives up" is not just retry exhaustion.** A stall bumps `stc`, not `atm`, so a job that stalls past
+  `maxStalledCount` is failed as an `UnrecoverableError` on its next pickup with `attemptsMade` untouched.
+  The handler fires on `attemptsMade >= attempts` **or** an `UnrecoverableError`. Keyed on the attempt count
+  alone it would miss the likeliest death — a dispatcher whose process died twice — and hang the barrier to
+  its deadline.
+- **It is not fast.** The retry ladder is `2^(n-1) x 8 min` over five attempts, so roughly **two hours** pass
+  before the handler runs. Faster than the multi-day deadline, but not minutes.
 
 This supersedes the previous decision on this page, which dispatched through a dedicated engine-facing
 endpoint driven by a loop in the parent's sandbox.
@@ -41,9 +53,12 @@ items from a re-executed flow prefix.
 - **Nothing re-resolves the items, so nothing can disagree about them** — the digest is gone.
 - **The dispatcher's resume point is a claim, not a gap query.** "Signals with no child run yet" is a
   read-then-write with nothing enforcing it, and with the unique index gone there is no index standing behind
-  it. Two live dispatchers are not hypothetical: `stalledInterval` is 30s and `maxStalledCount` 3, and this
-  job parses a multi-MB source on the worker's event loop — a stall past 30s redelivers it to a second worker
-  while the first is still running. A stalled job is not evidence the worker died.
+  it. Two live dispatchers are not hypothetical: `stalledInterval` is 30s and the barrier queue inherits
+  BullMQ's default `maxStalledCount` of **1** (the `maxStalledCount: 3` in the repo is `job-broker.ts`'s, a
+  different queue), and this job parses a multi-MB source on the worker's event loop — a stall past 30s
+  redelivers it to a second worker while the first is still running. A stalled job is not evidence the worker
+  died. It also means `refId` is the *only* record of which batches already have a child, so any bulk write
+  over the signal rows has to respect it.
 - **The guarantee moves from an index on the hottest table to a single-row update on a narrow one.**
 - **A cancel now actually cancels.** `cancelSingleRun` deletes the run's waitpoints, so a cancelled barrier
   stops resolving and the dispatcher aborts within one child. Without the rejection, children kept being

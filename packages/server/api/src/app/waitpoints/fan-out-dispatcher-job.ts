@@ -1,5 +1,6 @@
 import { apId, isNil, tryCatch } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { UnrecoverableError } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { distributedStore } from '../database/redis-connections'
@@ -18,8 +19,8 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
 
     const source = await distributedStore.get<BarrierFanOutPayload>(barrierSourceKey(data.barrierId))
     if (isNil(source)) {
-        const notDispatchedCount = await barrierService(log).markRemainingNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
-        log.warn({ fanIn: { barrierId: data.barrierId, notDispatchedCount } }, '[fanOutDispatcher] The stored source is gone, releasing the barrier with an undispatched verdict')
+        const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
+        log.warn({ fanIn: { barrierId: data.barrierId, notDispatchedCount } }, '[fanOutDispatcher] The stored source is gone, marking the unclaimed signals undispatched so the barrier can settle')
         await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
         return
     }
@@ -75,9 +76,20 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
     await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
 }
 
-export async function handleFanOutDispatchExhausted({ data, error, log }: HandleFanOutDispatchExhaustedParams): Promise<void> {
-    const notDispatchedCount = await barrierService(log).markRemainingNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
-    log.error({ error, fanIn: { barrierId: data.barrierId, notDispatchedCount } }, '[fanOutDispatcher] Dispatch exhausted its attempts, marking the rest undispatched so the barrier releases now instead of at its deadline')
+export function fanOutDispatchGaveUp({ attemptsMade, attempts, error }: FanOutDispatchGaveUpParams): GiveUpReason | null {
+    if (error instanceof UnrecoverableError) {
+        return 'unrecoverable'
+    }
+    if (attemptsMade >= (attempts ?? 1)) {
+        return 'exhausted'
+    }
+    return null
+}
+
+export async function handleFanOutDispatchGaveUp({ data, error, reason, log }: HandleFanOutDispatchGaveUpParams): Promise<void> {
+    const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
+    const claimedCount = await barrierService(log).countClaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
+    log.error({ error, fanIn: { barrierId: data.barrierId, giveUpReason: reason, notDispatchedCount, claimedCount } }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
     await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
 }
 
@@ -101,8 +113,17 @@ type HandleFanOutDispatchParams = {
     log: FastifyBaseLogger
 }
 
-type HandleFanOutDispatchExhaustedParams = {
+type HandleFanOutDispatchGaveUpParams = {
     data: BarrierJobData
     error: Error
+    reason: GiveUpReason
     log: FastifyBaseLogger
 }
+
+type FanOutDispatchGaveUpParams = {
+    attemptsMade: number
+    attempts?: number
+    error: Error
+}
+
+export type GiveUpReason = 'exhausted' | 'unrecoverable'

@@ -1,12 +1,13 @@
 import { apId, isNil } from '@activepieces/core-utils'
 import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
+import { UnrecoverableError } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
-import { handleFanOutDispatch, handleFanOutDispatchExhausted } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
+import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
@@ -79,6 +80,15 @@ async function receive({ signalId, status, result }: { signalId: string, status:
 
 async function evaluate(barrierId: string) {
     return barrierService(app.log).evaluate({ barrierId, projectId: ctx.project.id })
+}
+
+async function giveUp(barrierId: string) {
+    return handleFanOutDispatchGaveUp({
+        data: { barrierId, projectId: ctx.project.id },
+        error: new Error('worker died'),
+        reason: 'exhausted',
+        log: app.log,
+    })
 }
 
 async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
@@ -626,14 +636,56 @@ describe('fan-out dispatch', () => {
 
     it('marks the rest undispatched when dispatch exhausts its attempts, so the barrier releases now', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
-        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
 
-        await handleFanOutDispatchExhausted({ data: { barrierId: barrier.id, projectId: ctx.project.id }, error: new Error('worker died'), log: app.log })
-        await barrierService(app.log).evaluate({ barrierId: barrier.id, projectId: ctx.project.id })
+            await giveUp(barrier.id)
+            await evaluate(barrier.id)
 
-        const summary = await readSummary(barrier.id)
-        expect(summary.notDispatched).toBe(4)
-        expect(summary.total).toBe(4)
+            const summary = await readSummary(barrier.id)
+            expect(summary.notDispatched).toBe(4)
+            expect(summary.total).toBe(4)
+        })
+    })
+
+    it('spares the signals whose children are already live when dispatch gives up', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        await withBarrierQueuePaused(async () => {
+            const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
+            const signals = await barrierService(app.log).listUnclaimedSignals({ barrierId: barrier.id, projectId: ctx.project.id })
+            const claimedRefIds = [apId(), apId()]
+            expect(await barrierService(app.log).claimSignal({ signalId: signals[0].id, refId: claimedRefIds[0], projectId: ctx.project.id })).toBe(true)
+            expect(await barrierService(app.log).claimSignal({ signalId: signals[1].id, refId: claimedRefIds[1], projectId: ctx.project.id })).toBe(true)
+
+            await giveUp(barrier.id)
+            await evaluate(barrier.id)
+
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.PENDING)
+            const afterGiveUp = await listSignals(barrier.id)
+            expect(afterGiveUp.filter((signal) => signal.status === BarrierSignalStatus.PENDING).map((signal) => signal.refId).sort()).toEqual([...claimedRefIds].sort())
+            expect(afterGiveUp.filter((signal) => signal.status === BarrierSignalStatus.NOT_DISPATCHED)).toHaveLength(2)
+
+            expect(await barrierService(app.log).claimSignal({ signalId: signals[2].id, refId: apId(), projectId: ctx.project.id })).toBe(false)
+            expect(await barrierService(app.log).listUnclaimedSignals({ barrierId: barrier.id, projectId: ctx.project.id })).toHaveLength(0)
+
+            await receive({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
+            await evaluate(barrier.id)
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.PENDING)
+
+            await receive({ signalId: signals[1].id, status: BarrierSignalStatus.SUCCEEDED })
+            await evaluate(barrier.id)
+
+            const summary = await readSummary(barrier.id)
+            expect(summary).toMatchObject({ total: 4, succeeded: 2, notDispatched: 2, stillRunning: 0 })
+        })
+    })
+
+    it('gives up on an unrecoverable failure and on the last attempt, but not mid-ladder', async () => {
+        expect(fanOutDispatchGaveUp({ attemptsMade: 1, attempts: 5, error: new Error('boom') })).toBeNull()
+        expect(fanOutDispatchGaveUp({ attemptsMade: 4, attempts: 5, error: new Error('boom') })).toBeNull()
+        expect(fanOutDispatchGaveUp({ attemptsMade: 5, attempts: 5, error: new Error('boom') })).toBe('exhausted')
+        expect(fanOutDispatchGaveUp({ attemptsMade: 1, attempts: 5, error: new UnrecoverableError('job stalled more than allowable limit') })).toBe('unrecoverable')
+        expect(fanOutDispatchGaveUp({ attemptsMade: 1, attempts: undefined, error: new Error('boom') })).toBe('exhausted')
     })
 
     it('clamps the batch size so a wide source cannot exceed the signal cap', async () => {
