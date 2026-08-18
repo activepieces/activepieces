@@ -3,10 +3,11 @@ import { common } from '../common';
 import { isNil } from '@activepieces/pieces-framework';
 
 export const countUniques = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'countUniques',
   displayName: 'Count Uniques',
   description: 'Counts the number of unique values for multiple fields',
+  aiMetadata: { description: 'Counts how many distinct entries an array contains, comparing whole entries when Fields is left empty or only the chosen object keys when Fields is supplied. Use for cardinality or de-duplication checks; prefer Calculate Sum, Calculate Average, or Find Min and Max for numeric aggregation. Values need not be numeric, but in field mode any entry that is not an object, or an object holding none of the chosen keys, collapses into one shared bucket; read-only and idempotent.', idempotent: true },
   props: {
     note: common.note,
     values: Property.Array({

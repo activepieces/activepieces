@@ -46,6 +46,9 @@ Variables marked ❗ are required for a self-hosted production deployment.
   <Card title="Pieces & flows" icon="puzzle-piece" href="#pieces-&-flows">
     Piece syncing, polling, publish behavior.
   </Card>
+  <Card title="Tool search" icon="magnifying-glass" href="#tool-search">
+    Semantic action discovery for AI agents.
+  </Card>
 </CardGroup>
 
 ---
@@ -165,6 +168,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
 | `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` | Step inputs larger than this (KB) are replaced with a placeholder in the run log; the step still receives the full value at runtime. | `2` |
@@ -193,6 +197,22 @@ S3-compatible bucket.
 | `AP_S3_USE_IRSA` | Use IAM Roles for Service Accounts (IRSA) to authenticate to S3. When `true`, the access key variables are not required. | `None` |
 
 ---
+
+### Sign-up protection
+
+Controls on who may create an account. Both default to the safe behaviour with
+no configuration: disposable addresses are refused, and no challenge is served
+until you supply Turnstile keys.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_ALLOW_DISPOSABLE_EMAILS` | Accept addresses from throwaway email providers. | `false` |
+| `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
+| `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
+
+The challenge is only served when **both** Turnstile variables are set. With
+either missing, the sign-in page renders no widget and the server verifies
+nothing, so a self-hosted instance needs no Cloudflare account.
 
 ### Email (SMTP)
 
@@ -237,4 +257,17 @@ flow-authoring defaults.
 | `AP_PIECES_SYNC_MODE` | `OFFICIAL_AUTO` syncs piece metadata automatically from the cloud; `NONE` disables syncing. | `OFFICIAL_AUTO` |
 | `AP_TRIGGER_DEFAULT_POLL_INTERVAL` | Minutes between checks for new data on pieces with scheduled triggers (e.g. new Google Contacts). | `5` |
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Automatically enable a flow when a new version is published. | `true` |
+| `AP_ENFORCE_CONNECTION_PIECE_BINDING` | Reject a step's connection at runtime unless the connection was created for the same piece as the step. | `false` |
 | `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES` | Load translations for dev pieces (configured via `AP_DEV_PIECES`). Affects development mode only. | `false` |
+
+---
+
+### Tool search
+
+Semantic discovery of piece actions and triggers for AI agents connected
+through the MCP server. See [Tool Search](/mcp/tool-search) for how it works.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_TOOL_SEARCH_ENABLED` | Registers the `ap_search_actions` and `ap_search_triggers` MCP tools. Read live, so flipping it takes effect without a restart. | `false` |
+| `AP_OPENAI_API_KEY` | OpenAI API key that funds tool-search embeddings (indexing and queries). When unset, the platform's OpenAI [AI provider](/admin-guide/guides/setup-ai-providers) is used instead; with neither, tool search serves keyword matches rather than semantic ones. | `None` |

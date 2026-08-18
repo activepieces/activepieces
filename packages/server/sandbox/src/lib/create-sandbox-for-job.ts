@@ -92,6 +92,7 @@ function baseEnv({ settings, networkMode }: { settings: SandboxSettings, network
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
         AP_NETWORK_MODE: networkMode,
+        ...(settings.ENFORCE_CONNECTION_PIECE_BINDING ? { AP_ENFORCE_CONNECTION_PIECE_BINDING: 'true' } : {}),
     }
 }
 

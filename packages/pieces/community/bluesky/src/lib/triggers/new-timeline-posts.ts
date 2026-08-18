@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
+import { newTimelinePostsTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
@@ -120,6 +121,7 @@ export const newTimelinePosts = createTrigger({
     }
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newTimelinePostsTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);

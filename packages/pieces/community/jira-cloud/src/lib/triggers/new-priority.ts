@@ -23,6 +23,9 @@ export const newPriority = createTrigger({
     id: '1',
   },
   async onEnable(context) {
+    if (context.isRepublish && !isNil(await context.store.get('priorityIds'))) {
+      return;
+    }
     const priorities = await getPriorities({ auth: context.auth });
     const ids = priorities.map((p) => p.id).filter(Boolean);
     await context.store.put('priorityIds', JSON.stringify(ids));

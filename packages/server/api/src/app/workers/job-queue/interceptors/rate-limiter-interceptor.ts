@@ -2,28 +2,22 @@ import { isNil, PlatformId, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration } from '@activepieces/server-utils'
 import { ApEdition, ExecuteFlowJobData, JOB_PRIORITY, JobData, PlanName, RATE_LIMIT_PRIORITY, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { getConcurrencyPoolSetKey, getPlatformPlanNameKey } from '../../../database/redis/keys'
+import { getConcurrencyPoolSetKey, getPlatformPlanNameKey, PLATFORM_PLAN_NAME_TTL_SECONDS } from '../../../database/redis/keys'
 import { distributedStore, redisConnections } from '../../../database/redis-connections'
 import { concurrencyPoolService } from '../../../ee/platform/concurrency-pool/concurrency-pool.service'
 import { workerGroupService } from '../../../ee/platform/platform-plan/worker-group.service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
+import { platformService } from '../../../platform/platform.service'
 import { projectWorkerGroupService } from '../../../project/project-worker-group.service'
 import { workerCapacity } from '../../machine/worker-capacity'
 import { InterceptorResult, InterceptorVerdict, JobInterceptor } from '../job-interceptor'
 
 const RATE_LIMIT_WORKER_JOB_TYPES = [WorkerJobType.EXECUTE_FLOW]
 
-const PLAN_CONCURRENT_JOBS_LIMITS: Record<string, number> = {
-    [PlanName.STANDARD]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER1]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER2]: 5,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER3]: 10,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER4]: 15,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER5]: 20,
-    [PlanName.APPSUMO_ACTIVEPIECES_TIER6]: 25,
-    [PlanName.ENTERPRISE]: 30,
-}
+const FREE_CONCURRENT_JOBS_LIMIT = 5
+const SELF_SERVE_CONCURRENT_JOBS_LIMIT = 15
+const ENTERPRISE_CONCURRENT_JOBS_LIMIT = 30
 
 function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
     if (!system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)) {
@@ -40,16 +34,37 @@ function shouldContinue(jobData: JobData): jobData is ExecuteFlowJobData {
 }
 
 
-async function getMaxConcurrentJobsForPlatformPlan({ platformId }: { platformId: PlatformId }): Promise<number> {
+async function getMaxConcurrentJobsForPlatformPlan({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<number> {
     if (system.getEdition() !== ApEdition.CLOUD) {
         return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
     }
-    const platformPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
-    if (!isNil(platformPlanName)) {
-        const limit = PLAN_CONCURRENT_JOBS_LIMITS[platformPlanName]
-        if (!isNil(limit)) return limit
+    const cachedPlanName = await distributedStore.get<string>(getPlatformPlanNameKey(platformId))
+    if (!isNil(cachedPlanName)) {
+        return concurrencyLimitForCloudPlan(cachedPlanName)
     }
-    return system.getNumberOrThrow(AppSystemProp.DEFAULT_CONCURRENT_JOBS_LIMIT)
+    const { data: platform } = await tryCatch(() => platformService(log).getOneWithPlan(platformId))
+    const planName = platform?.plan.plan ?? null
+    if (!isNil(planName)) {
+        await distributedStore.put(getPlatformPlanNameKey(platformId), planName, PLATFORM_PLAN_NAME_TTL_SECONDS)
+    }
+    return concurrencyLimitForCloudPlan(planName)
+}
+
+function concurrencyLimitForCloudPlan(planName: string | null): number {
+    switch (planName ?? PlanName.FREE) {
+        case PlanName.FREE:
+            return FREE_CONCURRENT_JOBS_LIMIT
+        case PlanName.APPSUMO:
+        case PlanName.FREE_LEGACY:
+        case PlanName.PLUS:
+        case PlanName.PLUS_ANNUAL:
+        case PlanName.PLUS_CHAT:
+        case PlanName.TEAM:
+        case PlanName.TEAM_ANNUAL:
+            return SELF_SERVE_CONCURRENT_JOBS_LIMIT
+        default:
+            return ENTERPRISE_CONCURRENT_JOBS_LIMIT
+    }
 }
 
 async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { poolId: string | null, platformId: PlatformId, projectId: string, log: FastifyBaseLogger }): Promise<number> {
@@ -60,7 +75,7 @@ async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { po
             return value
         }
     }
-    const planLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId })
+    const planLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId, log })
     // When worker groups are enabled, an unassigned-limit project is capped by the physical capacity
     // of the pool its runs actually route to (group pool if it has live workers, else shared).
     const { data: workerGroupsEnabled } = await tryCatch(() => workerGroupService(log).isWorkerGroupsEnabled({ platformId }))

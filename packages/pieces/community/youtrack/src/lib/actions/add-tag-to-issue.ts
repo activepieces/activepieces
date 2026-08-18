@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, tagDropdown, flattenObject, youtrackApiCall } from '../common';
+import { addTagToIssueActionOutputSchema } from '../output-schemas';
 
 export const addTagToIssueAction = createAction({
   auth: youtrackAuth,
   name: 'add_tag_to_issue',
+  outputSchema: addTagToIssueActionOutputSchema,
   displayName: 'Add Tag to Issue',
   description: 'Adds an existing tag to an issue.',
   audience: 'both',

@@ -17,7 +17,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
     }) {
         const stepStartTime = performance.now()
         const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
-            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
+            constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<LoopOnActionResolvedSettings>({
                 unresolvedInput: {
                     items: action.settings.items,
                 },
@@ -72,6 +72,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             }
 
             newExecutionContext = newExecutionContext.setCurrentPath(newExecutionContext.currentPath.removeLast())
+            stepOutput = newExecutionContext.getLoopStepOutput({ stepName: action.name }) ?? stepOutput
 
             if (newExecutionContext.verdict.status !== FlowRunStatus.RUNNING) {
                 return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))

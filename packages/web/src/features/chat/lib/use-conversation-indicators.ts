@@ -1,7 +1,7 @@
 import {
-  ChatAgentEventType,
-  ChatConversation,
-  ChatConversationStatus,
+  AgentEventType,
+  AgentConversation,
+  AgentConversationStatus,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ export function useConversationIndicators({
   conversations,
   activeId,
 }: {
-  conversations: ChatConversation[];
+  conversations: AgentConversation[];
   activeId: string | null;
 }) {
   const socket = useSocket();
@@ -73,20 +73,20 @@ export function useConversationIndicators({
       const convId = event.conversationId;
       if (!convId) return;
       switch (event.type) {
-        case ChatAgentEventType.FINISHED:
-        case ChatAgentEventType.ERROR:
+        case AgentEventType.FINISHED:
+        case AgentEventType.ERROR:
           knownStreaming.delete(convId);
           invalidateList();
           break;
-        case ChatAgentEventType.ACTION_PREVIEW:
-        case ChatAgentEventType.ACTION_RECEIPT:
+        case AgentEventType.ACTION_PREVIEW:
+        case AgentEventType.ACTION_RECEIPT:
           void queryClient.invalidateQueries({
             queryKey: ['chat-pending-gate', convId],
           });
           invalidateList();
           break;
-        case ChatAgentEventType.CHUNK:
-        case ChatAgentEventType.TITLE_UPDATE:
+        case AgentEventType.CHUNK:
+        case AgentEventType.TITLE_UPDATE:
           if (!knownStreaming.has(convId)) {
             knownStreaming.add(convId);
             invalidateList();
@@ -113,7 +113,7 @@ export function useConversationIndicators({
   const streamingIds = useMemo(
     () =>
       conversations
-        .filter((c) => c.status === ChatConversationStatus.STREAMING)
+        .filter((c) => c.status === AgentConversationStatus.STREAMING)
         .map((c) => c.id),
     [conversations],
   );
@@ -135,8 +135,8 @@ export function useConversationIndicators({
   }, [streamingIds, gateQueries]);
 
   const getIndicator = useCallback(
-    (conv: ChatConversation): ConversationIndicatorState | null => {
-      if (conv.status === ChatConversationStatus.STREAMING) {
+    (conv: AgentConversation): ConversationIndicatorState | null => {
+      if (conv.status === AgentConversationStatus.STREAMING) {
         return waitingSet.has(conv.id) ? 'waiting' : 'working';
       }
       if (conv.id !== activeId) {

@@ -4,6 +4,7 @@ import {
   PiecePropValueSchema,
   OAuth2PropertyValue,
   AppConnectionValueForAuthProperty,
+  isNil,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -14,13 +15,14 @@ import {
 } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
+import { newFollowerTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof pinterestAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth }) => {
+  items: async ({ auth, lastItemId }) => {
     let bookmark: string | undefined = undefined;
     let followers: any[] = [];
     let pageCount = 0;
@@ -56,6 +58,12 @@ const polling: Polling<
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
       } catch (error) {
+        // Returning a partial read would store the newest follower as lastItem,
+        // so next poll finds it on page one and treats the unread rest as seen.
+        // isNil, not truthiness: an empty username is still a real checkpoint.
+        if (!isNil(lastItemId)) {
+          throw error;
+        }
         console.error('Error fetching followers:', error);
         break;
       }
@@ -72,6 +80,7 @@ const polling: Polling<
 export const newFollower = createTrigger({
   auth: pinterestAuth,
   name: 'newFollower',
+  outputSchema: newFollowerTriggerOutputSchema,
   displayName: 'New Follower',
   description: 'Triggers when a user gains a new follower.',
   aiMetadata: {

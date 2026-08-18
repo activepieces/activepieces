@@ -1,4 +1,4 @@
-import { ChatConversation } from '@activepieces/shared';
+import { AgentConversation } from '@activepieces/shared';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -30,12 +30,14 @@ export function ConversationList({
   selectedId,
   className,
   mobile = false,
+  agentId,
 }: {
   onSelect?: (id: string) => void;
   onNewChat?: () => void;
   selectedId?: string | null;
   className?: string;
   mobile?: boolean;
+  agentId?: string;
 }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -47,8 +49,12 @@ export function ConversationList({
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
     useQuery({
-      queryKey: ['chat-conversations'],
-      queryFn: () => chatApi.listConversations({ limit: 100 }),
+      queryKey: ['chat-conversations', agentId ?? 'chat'],
+      queryFn: () =>
+        chatApi.listConversations({
+          limit: 100,
+          ...(agentId === undefined ? {} : { agentId }),
+        }),
     });
 
   const selectedIdRef = useRef(selectedId);
@@ -58,7 +64,7 @@ export function ConversationList({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
+        queryKey: ['chat-conversations', agentId ?? 'chat'],
       });
       if (selectedIdRef.current === deletedId) {
         onNewChat?.();
@@ -99,9 +105,9 @@ export function ConversationList({
     const yesterdayStr = y.toDateString();
 
     const groups: {
-      today: ChatConversation[];
-      yesterday: ChatConversation[];
-      older: ChatConversation[];
+      today: AgentConversation[];
+      yesterday: AgentConversation[];
+      older: AgentConversation[];
     } = {
       today: [],
       yesterday: [],
@@ -116,7 +122,7 @@ export function ConversationList({
     return groups;
   }, [conversations]);
 
-  const handleClick = (conv: ChatConversation) => {
+  const handleClick = (conv: AgentConversation) => {
     markRead(conv.id);
     onSelect?.(conv.id);
   };
@@ -130,7 +136,7 @@ export function ConversationList({
     setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }));
   };
 
-  const renderGroup = (label: string, items: ChatConversation[]) => {
+  const renderGroup = (label: string, items: AgentConversation[]) => {
     if (items.length === 0) return null;
     const isCollapsed = collapsed[label];
     return (
@@ -279,19 +285,21 @@ export function ConversationList({
           <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
         )}
       </div>
-      <div className="shrink-0 border-t px-2 py-2">
-        <button
-          type="button"
-          className={cn(
-            'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
-            mobile && 'px-3 py-2.5 text-sm',
-          )}
-          onClick={() => setSettingsOpen(true)}
-        >
-          <Settings size={mobile ? 16 : 14} />
-          {t('Settings')}
-        </button>
-      </div>
+      {agentId === undefined && (
+        <div className="shrink-0 border-t px-2 py-2">
+          <button
+            type="button"
+            className={cn(
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              mobile && 'px-3 py-2.5 text-sm',
+            )}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings size={mobile ? 16 : 14} />
+            {t('Settings')}
+          </button>
+        </div>
+      )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
           <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">

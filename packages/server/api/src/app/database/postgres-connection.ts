@@ -406,7 +406,18 @@ import { AddActiveFlowsLimitToProjectPlan1814000000000 } from './migration/postg
 import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgres/1815000000000-AddSampleDataFlowIdIndexToFile'
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
+import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
 import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
+import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
+import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
+import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
+import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
+import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
+import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
+import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
+import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
+import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -828,7 +839,18 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
+        AddAutumnBillingColumnsToPlatformPlan1818000000000,
         AddFieldPosition1818000000000,
+        DropPieceTags1819000000000,
+        AddAgentConversationSource1819000000000,
+        AddAuditEventPlatformIdCreatedIdIndex1820000000000,
+        AddAgentConversationFlowStepRetentionIndex1821000000000,
+        RenameChatTablesToAgent1822000000000,
+        AddRenamedChatTableCompatViews1823000000000,
+        AddAttemptsToOtp1824000000000,
+        AddAgentTable1825000000000,
+        AddAgentIdToAgentConversation1826000000000,
+        AddVersionToOtp1827000000000,
     ]
     return migrations
 }

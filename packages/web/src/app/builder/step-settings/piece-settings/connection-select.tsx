@@ -44,7 +44,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { appConnectionsQueries } from '@/features/connections';
+import {
+  appConnectionsQueries,
+  appConnectionUtils,
+} from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import {
   useAuthorization,
@@ -294,12 +297,21 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                     {connections &&
                       connections.data &&
                       connections.data?.map((connection) => {
+                        const accountIdentifier =
+                          appConnectionUtils.getConnectionAccountIdentifier(
+                            connection,
+                          );
+                        const rowStatus =
+                          connection.status !== AppConnectionStatus.ACTIVE
+                            ? getConnectionStatusDisplay(connection.status)
+                            : null;
                         return (
                           <SelectItem
                             value={addBrackets(connection.externalId)}
                             key={connection.externalId}
+                            className="*:[span]:last:w-full"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full min-w-0">
                               {connection.usingSecretManager && (
                                 <Key size={16} className="shrink-0" />
                               )}
@@ -307,7 +319,30 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 AppConnectionScope.PLATFORM && (
                                 <Globe size={16} className="shrink-0" />
                               )}
-                              {connection.displayName}
+                              <span className="truncate min-w-0">
+                                {connection.displayName}
+                              </span>
+                              {accountIdentifier && (
+                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-muted-foreground">
+                                  {accountIdentifier}
+                                </span>
+                              )}
+                              {rowStatus && (
+                                <span
+                                  className={cn(
+                                    'flex items-center gap-1 text-xs text-muted-foreground shrink-0',
+                                    { 'ml-auto': !accountIdentifier },
+                                  )}
+                                >
+                                  <rowStatus.Icon
+                                    className={cn(
+                                      'size-3.5 shrink-0',
+                                      rowStatus.iconClassName,
+                                    )}
+                                  />
+                                  {rowStatus.label}
+                                </span>
+                              )}
                             </div>
                           </SelectItem>
                         );

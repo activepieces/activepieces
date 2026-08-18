@@ -17,6 +17,7 @@ type StripeWebhookPayload = {
   };
 };
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCanceledSubscription = createTrigger({
   auth: stripeAuth,
   name: 'canceled_subscription',
@@ -35,6 +36,7 @@ export const stripeCanceledSubscription = createTrigger({
     }),
   },
 
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MlPf9LkdIwHu7ixB6VIYRyX',
     object: 'subscription',

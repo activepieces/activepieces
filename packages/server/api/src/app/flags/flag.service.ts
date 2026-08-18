@@ -4,6 +4,7 @@ import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { turnstile } from '../authentication/lib/turnstile'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -94,30 +95,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CAN_BUY_AI_CREDITS,
-                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
-                value: system.getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_BILLING_PAGE,
-                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -306,6 +283,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SMTP_CONFIGURED,
                 value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TURNSTILE_SITE_KEY,
+                value: turnstile.siteKey() ?? null,
                 created,
                 updated,
             },

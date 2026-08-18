@@ -23,10 +23,11 @@ import { AIProviderName } from '@activepieces/pieces-framework';
 import { aiProps } from '../../common/props';
 
 export const generateImageAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'generateImage',
   displayName: 'Generate Image',
   description: 'Create unique, high-quality images from simple text descriptions using AI.',
+  aiMetadata: { description: 'Generates an image from a text prompt with an image-capable model and writes it out as a flow file; when Input Images are attached and the model supports editing, it edits, varies, or merges those images instead of generating from scratch. Pick it for any image creation or edit step; use askAi or run_agent when you need text output. Requires a prompt plus an image-capable provider/model, and input images fail on a model that cannot accept them; not idempotent, as each call generates and stores a new image file.', idempotent: false },
   props: {
     provider: aiProps({ modelType: 'image' }).provider,
     model: aiProps({ modelType: 'image' }).model,
@@ -73,7 +74,7 @@ export const generateImageAction = createAction({
                       { label: 'Standard', value: 'standard' },
                       { label: 'HD', value: 'hd' },
                     ]
-                    : modelId === 'gpt-image-1'
+                    : isGptImageModel({ modelId })
                       ? [
                         { label: 'High', value: 'high' },
                         { label: 'Medium', value: 'medium' },
@@ -95,7 +96,7 @@ export const generateImageAction = createAction({
                       { label: '1792x1024', value: '1792x1024' },
                       { label: '1024x1792', value: '1024x1792' },
                     ]
-                    : modelId === 'gpt-image-1'
+                    : isGptImageModel({ modelId })
                       ? [
                         { label: '1024x1024', value: '1024x1024' },
                         { label: '1536x1024', value: '1536x1024' },
@@ -112,7 +113,7 @@ export const generateImageAction = createAction({
             }),
           };
 
-          if (modelId === 'gpt-image-1') {
+          if (isGptImageModel({ modelId })) {
             options = {
               ...options,
               background: Property.StaticDropdown({
@@ -379,3 +380,7 @@ const assertImageGenerationSuccess = (
     throw new Error('No image generated');
   }
 };
+
+function isGptImageModel({ modelId }: { modelId: string }): boolean {
+  return modelId.startsWith('gpt-image');
+}

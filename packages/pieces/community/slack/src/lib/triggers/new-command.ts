@@ -3,10 +3,11 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../auth';
 import { parseCommand } from '../common/utils';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { newCommandTriggerOutputSchema } from '../output-schemas';
 
 export const newCommand = createTrigger({
   auth: slackAuth,
@@ -19,6 +20,7 @@ export const newCommand = createTrigger({
       'Fires when a channel or group message addressed to the bot contains one of the configured commands (e.g., "@bot help" or "@bot ocr"). Can be optionally filtered to specific channels, and bot messages can be ignored. The event payload includes the original message plus a parsed_command object with the recognized command and its arguments.',
   },
   props: {
+    webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
     user: userId(true),
     commands: Property.Array({
@@ -60,6 +62,7 @@ export const newCommand = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newCommandTriggerOutputSchema,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
