@@ -1,10 +1,10 @@
 import { isNil, tryCatch, unique } from '@activepieces/core-utils'
-import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
+import { FileType, Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { fileRepo } from '../../file/file.service'
+import { fileRepo, isPlatformScopedFileType } from '../../file/file.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
 import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
@@ -56,7 +56,9 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         await signingKeyRepo().delete({ platformId })
 
-        await fileRepo().delete({ platformId })
+        for (const type of Object.values(FileType).filter(isPlatformScopedFileType)) {
+            await fileRepo().delete({ platformId, type })
+        }
         await projectRoleRepo().delete({ platformId })
         await userInvitationRepo().delete({ platformId })
         await mcpOAuthTokenRepo().delete({ platformId })

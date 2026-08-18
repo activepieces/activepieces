@@ -382,6 +382,33 @@ function isExecutionDataFileThatExpires(type: FileType) {
     }
 }
 
+export function isPlatformScopedFileType(type: FileType): boolean {
+    switch (type) {
+        case FileType.PLATFORM_ASSET:
+        case FileType.USER_PROFILE_PICTURE:
+        case FileType.PACKAGE_ARCHIVE:
+            return true
+        case FileType.UNKNOWN:
+        case FileType.FLOW_RUN_LOG:
+        case FileType.FLOW_RUN_LOG_SLICE:
+        case FileType.FLOW_STEP_FILE:
+        case FileType.SAMPLE_DATA:
+        case FileType.SAMPLE_DATA_INPUT:
+        case FileType.TRIGGER_PAYLOAD:
+        case FileType.TRIGGER_EVENT_FILE:
+        case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
+        case FileType.WEBHOOK_PAYLOAD:
+        case FileType.KNOWLEDGE_BASE:
+        case FileType.FLOW_BUNDLE:
+            return false
+        default: {
+            const exhaustive: never = type
+            throw new Error(`isPlatformScopedFileType: unhandled FileType ${exhaustive}`)
+        }
+    }
+}
+
 type SaveParams = {
     fileId?: FileId | undefined
     projectId?: ProjectId
