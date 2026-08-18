@@ -4,7 +4,7 @@ const {
     mockGetRawMany,
     mockQueryBuilder,
     mockExceptionHandle,
-    mockCaptureBillingEvent,
+    mockCaptureLicenseKeyEvent,
     mockFlushBillingEvents,
     mockAppMachineList,
     mockWorkerMachineFind,
@@ -27,7 +27,7 @@ const {
         mockGetRawMany,
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
-        mockCaptureBillingEvent: vi.fn(),
+        mockCaptureLicenseKeyEvent: vi.fn(),
         mockFlushBillingEvents: vi.fn().mockResolvedValue(undefined),
         mockAppMachineList: vi.fn().mockResolvedValue([]),
         mockWorkerMachineFind: vi.fn().mockResolvedValue([]),
@@ -113,10 +113,10 @@ vi.mock('../../../../../src/app/helper/sleep', () => ({
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    captureBillingEvent: mockCaptureBillingEvent,
+    captureLicesneKeyEvent: mockCaptureLicenseKeyEvent,
     flushBillingEvents: mockFlushBillingEvents,
     BILLING_EVENTS_FLUSH_BATCH_SIZE: 2,
-    BillingEvents: {
+    LicenseKeyPostHogEvents: {
         AI_USAGE_PER_RUN: 'ai_usage_per_run',
         CHAT_MESSAGE: 'chat_message',
         PLATFORM_SETUP_REPORT: 'platform_setup_report',
@@ -149,7 +149,7 @@ vi.mock('../../../../../src/app/health/health.service', () => ({
     })),
 }))
 
-import { billingUsageReportService } from '../../../../../src/app/ee/billing-usage-report/billing-usage-report-service'
+import { licenseKeyUsageReportService } from '../../../../../src/app/ee/license-key-usage-report/license-key-usage-report-service'
 
 const mockLog = {
     info: vi.fn(),
@@ -161,7 +161,7 @@ const mockLog = {
     trace: vi.fn(),
     silent: vi.fn(),
     level: 'info',
-} as unknown as Parameters<typeof billingUsageReportService>[0]
+} as unknown as Parameters<typeof licenseKeyUsageReportService>[0]
 
 // License keys are queried first (and gate the rest); the scoped count queries run afterwards in
 // declaration order: active flows, users, team projects, then per-day executions — which itself runs
@@ -184,11 +184,11 @@ const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects 
 }
 
 const capturesOf = (event: string) =>
-    mockCaptureBillingEvent.mock.calls
+    mockCaptureLicenseKeyEvent.mock.calls
         .map((call) => call[0])
         .filter((capture) => capture.event === event)
 
-describe('billingUsageReportService', () => {
+describe('licenseKeyUsageReportService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetRawMany.mockReset().mockResolvedValue([])
@@ -206,10 +206,10 @@ describe('billingUsageReportService', () => {
         it('should emit a TOTAL_RUNS_PER_DAY billing event per licensed platform keyed by its license key', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('total_runs_per_day')).toHaveLength(1)
-            expect(mockCaptureBillingEvent).toHaveBeenCalledWith(
+            expect(mockCaptureLicenseKeyEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
                     licenseKey: 'key-123',
                     event: 'total_runs_per_day',
@@ -220,10 +220,10 @@ describe('billingUsageReportService', () => {
         it('should skip the heavy aggregate queries and send nothing when no platform has a license key', async () => {
             mockQueries({ licenseKeys: [] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(mockGetRawMany).toHaveBeenCalledTimes(1)
-            expect(mockCaptureBillingEvent).not.toHaveBeenCalled()
+            expect(mockCaptureLicenseKeyEvent).not.toHaveBeenCalled()
         })
 
         it('should build the event properties with per-day executions and no key_value field', async () => {
@@ -239,7 +239,7 @@ describe('billingUsageReportService', () => {
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const properties = capturesOf('total_runs_per_day')[0].properties
             expect(properties).toEqual(expect.objectContaining({
@@ -275,7 +275,7 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             // Events are emitted in platform insertion order: platform-1 then platform-2.
             const [first, second] = capturesOf('total_runs_per_day')
@@ -292,7 +292,7 @@ describe('billingUsageReportService', () => {
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const properties = capturesOf('total_runs_per_day')[0].properties
             expect(properties).toEqual(expect.objectContaining({
@@ -307,10 +307,10 @@ describe('billingUsageReportService', () => {
         it('should flush captured billing events after emitting so nothing is left buffered/dropped', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(mockFlushBillingEvents).toHaveBeenCalledTimes(1)
-            const lastCaptureOrder = Math.max(...mockCaptureBillingEvent.mock.invocationCallOrder)
+            const lastCaptureOrder = Math.max(...mockCaptureLicenseKeyEvent.mock.invocationCallOrder)
             const flushOrder = mockFlushBillingEvents.mock.invocationCallOrder[0]
             expect(flushOrder).toBeGreaterThan(lastCaptureOrder)
         })
@@ -324,7 +324,7 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('total_runs_per_day')).toHaveLength(3)
             expect(capturesOf('platform_setup_report')).toHaveLength(3)
@@ -335,7 +335,7 @@ describe('billingUsageReportService', () => {
             mockFlushBillingEvents.mockRejectedValueOnce(new Error('posthog flush failed'))
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('total_runs_per_day')).toHaveLength(1)
             expect(mockExceptionHandle).not.toHaveBeenCalled()
@@ -344,7 +344,7 @@ describe('billingUsageReportService', () => {
         it('should emit a PLATFORM_SETUP_REPORT event alongside the usage event, keyed by the same license key', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const setupReports = capturesOf('platform_setup_report')
             expect(setupReports).toHaveLength(1)
@@ -364,7 +364,7 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const usageStamps = capturesOf('total_runs_per_day').map((capture) => capture.properties.reported_at)
             const setupStamps = capturesOf('platform_setup_report').map((capture) => capture.properties.reportedAt)
@@ -375,7 +375,7 @@ describe('billingUsageReportService', () => {
             mockAppMachineList.mockResolvedValue([appInstance()])
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const { apps } = capturesOf('platform_setup_report')[0].properties
             expect(apps).toEqual([{
@@ -393,7 +393,7 @@ describe('billingUsageReportService', () => {
             mockWorkerMachineFind.mockResolvedValue([workerMachine()])
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const { workers, workersTotal } = capturesOf('platform_setup_report')[0].properties
             expect(workersTotal).toBe(1)
@@ -418,7 +418,7 @@ describe('billingUsageReportService', () => {
             mockWorkerMachineFind.mockResolvedValue([workerMachine(), workerMachine({ id: 'worker-2', updated: staleUpdated })])
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('platform_setup_report')[0].properties.workersTotal).toBe(1)
         })
@@ -429,7 +429,7 @@ describe('billingUsageReportService', () => {
             )
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const { workers, workersTotal } = capturesOf('platform_setup_report')[0].properties
             expect(workers).toHaveLength(50)
@@ -444,7 +444,7 @@ describe('billingUsageReportService', () => {
             })
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('platform_setup_report')[0].properties.health).toEqual({
                 database: false,
@@ -460,7 +460,7 @@ describe('billingUsageReportService', () => {
             mockWorkerMachineFind.mockResolvedValue([workerMachine()])
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('platform_setup_report')[0].properties).toEqual({
                 platformId: 'platform-1',
@@ -485,7 +485,7 @@ describe('billingUsageReportService', () => {
                 .mockResolvedValueOnce([])
                 .mockResolvedValueOnce([{ platformId: 'platform-1', workerGroupId: 'group-1' }])
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const { workers, workersTotal, apps, health } = capturesOf('platform_setup_report')[0].properties
             expect(workersTotal).toBe(1)
@@ -505,7 +505,7 @@ describe('billingUsageReportService', () => {
                 .mockResolvedValueOnce([])
                 .mockResolvedValueOnce([{ platformId: 'platform-1', workerGroupId: 'group-1' }])
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             const { workers, workersTotal } = capturesOf('platform_setup_report')[0].properties
             expect(workers).toEqual([])
@@ -522,7 +522,7 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('platform_setup_report')).toHaveLength(3)
             expect(mockAppMachineList).toHaveBeenCalledTimes(1)
@@ -534,7 +534,7 @@ describe('billingUsageReportService', () => {
             mockWorkerMachineFind.mockRejectedValue(new Error('redis is down'))
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('total_runs_per_day')).toHaveLength(1)
             expect(capturesOf('platform_setup_report')[0].properties).toEqual({
@@ -548,7 +548,7 @@ describe('billingUsageReportService', () => {
         it('should send no setup report when no platform has a license key', async () => {
             mockQueries({ licenseKeys: [] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(capturesOf('platform_setup_report')).toHaveLength(0)
         })
