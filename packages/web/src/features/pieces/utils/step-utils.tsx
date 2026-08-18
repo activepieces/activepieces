@@ -40,6 +40,15 @@ export const CORE_STEP_METADATA: Record<
     description: 'Iterate over a list of items',
     type: FlowActionType.LOOP_ON_ITEMS as const,
   },
+  [FlowActionType.PROCESS_IN_BATCHES]: {
+    displayName: t('Process in Batches'),
+    logoUrl:
+      'https://cdn.activepieces.com/pieces/new-core/process-in-batches.svg',
+    description: t(
+      "Split a list into batches and run them in parallel. Batches don't finish in order.",
+    ),
+    type: FlowActionType.PROCESS_IN_BATCHES as const,
+  },
   [FlowActionType.ROUTER]: {
     displayName: t('Router'),
     logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
@@ -85,6 +94,7 @@ export const stepUtils = {
     switch (step.type) {
       case FlowActionType.ROUTER:
       case FlowActionType.LOOP_ON_ITEMS:
+      case FlowActionType.PROCESS_IN_BATCHES:
       case FlowActionType.CODE:
       case FlowTriggerType.EMPTY:
         return {

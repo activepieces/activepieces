@@ -2485,5 +2485,7 @@
   "Contact a platform admin to get more credits.": "Contact a platform admin to get more credits.",
   "You've reached your credits limit.": "You've reached your credits limit.",
   "You've reached your credits limit. Contact a platform admin to get more credits.": "You've reached your credits limit. Contact a platform admin to get more credits.",
-  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits."
+  "You've used {percentage}% of your credits.": "You've used {percentage}% of your credits.",
+  "Process in Batches": "Process in Batches",
+  "Split a list into batches and run them in parallel. Batches don't finish in order.": "Split a list into batches and run them in parallel. Batches don't finish in order."
 }

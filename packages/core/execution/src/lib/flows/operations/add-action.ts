@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { isNil } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { FlowAction, FlowActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { FlowAction, FlowActionType, LoopOnItemsAction, ProcessInBatchesAction, RouterAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -40,6 +40,13 @@ function createAction(request: UpdateActionRequest, {
             action = {
                 ...baseProperties,
                 type: FlowActionType.LOOP_ON_ITEMS,
+                settings: request.settings,
+            }
+            break
+        case FlowActionType.PROCESS_IN_BATCHES:
+            action = {
+                ...baseProperties,
+                type: FlowActionType.PROCESS_IN_BATCHES,
                 settings: request.settings,
             }
             break
@@ -83,6 +90,29 @@ function handleLoopOnItems(parentStep: LoopOnItemsAction, request: AddActionRequ
                 code: ErrorCode.FLOW_OPERATION_INVALID,
                 params: {
                     message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
+                },
+            })
+    }
+    return parentStep
+}
+
+function handleProcessInBatches(parentStep: ProcessInBatchesAction, request: AddActionRequest): Step {
+    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BATCH) {
+        parentStep.firstLoopAction = createAction(request.action, {
+            nextAction: parentStep.firstLoopAction,
+        })
+    }
+    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+        parentStep.nextAction = createAction(request.action, {
+            nextAction: parentStep.nextAction,
+        })
+    }
+    else {
+        throw new ActivepiecesError(
+            {
+                code: ErrorCode.FLOW_OPERATION_INVALID,
+                params: {
+                    message: `Process in batches step parent ${request.stepLocationRelativeToParent} not found`,
                 },
             })
     }
@@ -135,7 +165,27 @@ function handleContinueOnFailureBranches(parentStep: Step, request: AddActionReq
     return parentStep
 }
 
+function hasNestedBatch(flowVersion: FlowVersion): boolean {
+    return flowStructureUtil.getAllSteps(flowVersion.trigger)
+        .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
+        .some((batch) => flowStructureUtil.getAllChildSteps(batch)
+            .some((child) => child.name !== batch.name && child.type === FlowActionType.PROCESS_IN_BATCHES))
+}
+
 function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
+    const updated = addActionToFlow(flowVersion, request)
+    if (hasNestedBatch(updated) && !hasNestedBatch(flowVersion)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: 'A Process in Batches step cannot be placed inside another Process in Batches step',
+            },
+        })
+    }
+    return updated
+}
+
+function addActionToFlow(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep: Step) => {
         if (parentStep.name !== request.parentStep) {
             return parentStep
@@ -149,6 +199,8 @@ function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVe
         switch (parentStep.type) {
             case FlowActionType.LOOP_ON_ITEMS:
                 return handleLoopOnItems(parentStep, request)
+            case FlowActionType.PROCESS_IN_BATCHES:
+                return handleProcessInBatches(parentStep, request)
             case FlowActionType.ROUTER:
                 return handleRouter(parentStep, request)
             default: {
