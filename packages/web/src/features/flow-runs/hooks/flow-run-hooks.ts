@@ -21,7 +21,6 @@ import {
   useInfiniteQuery,
   useMutation,
   useQuery,
-  keepPreviousData,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
@@ -161,7 +160,6 @@ export const flowRunQueries = {
       queryKey: flowRunKeys.detail(childRunId ?? ''),
       queryFn: () => flowRunsApi.getPopulated(childRunId!),
       enabled: !isNil(childRunId),
-      placeholderData: keepPreviousData,
       refetchInterval: (query) =>
         isNil(query.state.data) ||
         isFlowRunStateTerminal({

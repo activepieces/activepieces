@@ -104,10 +104,9 @@ export function enclosingBatchStepName({
 }): string | null {
   return (
     flowStructureUtil
-      .findPathToStep(trigger, stepName)
+      .getAllSteps(trigger)
       .filter((step) => step.type === FlowActionType.PROCESS_IN_BATCHES)
-      .filter((step) => flowStructureUtil.isChildOf(step, stepName))
-      .at(-1)?.name ?? null
+      .find((step) => flowStructureUtil.isChildOf(step, stepName))?.name ?? null
   );
 }
 
