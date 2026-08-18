@@ -3,6 +3,7 @@ import { isNil } from '@activepieces/core-utils';
 import { ResourceLockWidget } from '@/components/custom/resource-lock-widget';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { BatchChildContextStrip } from '../../run-details/batch-child-context-strip';
 
 import { PublishFlowReminderWidget } from './publish-flow-reminder-widget';
 import { RunInfoWidget } from './run-info-widget';
@@ -23,7 +24,12 @@ const BuilderBanner = () => {
     );
   }
   if (!isNil(run)) {
-    return <RunInfoWidget />;
+    return (
+      <>
+        <BatchChildContextStrip />
+        <RunInfoWidget />
+      </>
+    );
   }
   return (
     <>
