@@ -456,6 +456,7 @@ import { AddPlatformTierFastAndConversationTier1864000000000 } from './migration
 import { AddAuditLogRetentionDaysToPlatform1865000000000 } from './migration/postgres/1865000000000-AddAuditLogRetentionDaysToPlatform'
 import { AddAiSpecificModelsVisibleToPlatformConfiguration1866000000000 } from './migration/postgres/1866000000000-AddAiSpecificModelsVisibleToPlatformConfiguration'
 import { AddAgentTask1867000000000 } from './migration/postgres/1867000000000-AddAgentTask'
+import { AddBarrierChildAttribution1867000000000 } from './migration/postgres/1867000000000-AddBarrierChildAttribution'
 import { AddProviderConfigIdToAgentConversation1868000000000 } from './migration/postgres/1868000000000-AddProviderConfigIdToAgentConversation'
 import { DropChatRolloutUserTable1870000000000 } from './migration/postgres/1870000000000-DropChatRolloutUserTable'
 import { AddAgentConversationProviderConfigIdIndex1869000000000 } from './migration/postgres/background/1869000000000-AddAgentConversationProviderConfigIdIndex'
@@ -937,6 +938,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTask1867000000000,
         AddProviderConfigIdToAgentConversation1868000000000,
         DropChatRolloutUserTable1870000000000,
+        AddBarrierChildAttribution1867000000000,
     ]
     return migrations
 }
