@@ -44,8 +44,8 @@ import { cn } from '@/lib/utils';
 import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
-import { KeyStatusBadge } from './key-status';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { KeyStatusBadge } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
