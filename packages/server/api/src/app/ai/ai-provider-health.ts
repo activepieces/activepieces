@@ -7,34 +7,39 @@ const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 const MAX_REASON_LENGTH = 300
 
-// A healthy key under load would otherwise write on every model call, including the AI SDK's own
-// retries. A status *change* always lands; an unchanged one refreshes at most this often, which is
-// all "last checked" needs. One statement, so there is no read-then-write race between processes.
 const REFRESH_UNCHANGED_AFTER_MINUTES = 15
 
 export const aiProviderHealth = (log: FastifyBaseLogger) => ({
-    async record({ platformId, providerId, signal }: RecordParams): Promise<AiProviderKeyStatus | null> {
+    async record({ platformId, providerId, signal, throttled = true }: RecordParams): Promise<AiProviderKeyStatus | null> {
         const status = classifyProviderOutcome(signal)
         if (status === 'no_change') {
             return null
         }
         const reason = status === 'active' ? null : buildReason(signal)
-        await aiProviderRepo().createQueryBuilder()
+        const observedAtMs = signal.observedAt ?? Date.now()
+        const observedAt = new Date(observedAtMs).toISOString()
+        const refreshBefore = throttled ? new Date(observedAtMs - REFRESH_UNCHANGED_AFTER_MINUTES * 60_000).toISOString() : observedAt
+        const updateResult = await aiProviderRepo().createQueryBuilder()
             .update()
-            .set({ status, statusReason: reason, statusUpdated: () => 'NOW()' })
+            .set({ status, statusReason: reason, statusUpdated: observedAt })
             .where('id = :providerId AND "platformId" = :platformId', { providerId, platformId })
-            .andWhere('(status <> :status OR "statusUpdated" IS NULL OR "statusUpdated" < NOW() - make_interval(mins => :refreshAfterMinutes))', {
-                status,
-                refreshAfterMinutes: REFRESH_UNCHANGED_AFTER_MINUTES,
-            })
+            .andWhere('("statusUpdated" IS NULL OR "statusUpdated" <= :observedAt)', { observedAt })
+            .andWhere('(status <> :status OR "statusUpdated" IS NULL OR "statusUpdated" < :refreshBefore)', { status, refreshBefore })
+            .returning(['status'])
             .execute()
-        log.debug({ platform: { id: platformId }, aiProvider: { id: providerId, status } }, '[aiProviderHealth#record] Key status observed')
-        return status
+
+        const applied = Array.isArray(updateResult.raw) && updateResult.raw.length > 0
+        log.debug({ platform: { id: platformId }, aiProvider: { id: providerId, status }, applied }, '[aiProviderHealth#record] Key status observed')
+        return applied ? status : null
     },
 })
 
+function printable(text: string | undefined): string | undefined {
+    return isNil(text) ? undefined : text.replace(/[\u0000-\u001f\u007f]/g, ' ')
+}
+
 function buildReason({ statusCode, body, message }: ProviderOutcomeSignal): string | null {
-    const detail = message ?? body
+    const detail = printable(message ?? body)
     if (isNil(detail) || detail.trim().length === 0) {
         return isNil(statusCode) ? null : `HTTP ${statusCode}`
     }
@@ -46,4 +51,5 @@ type RecordParams = {
     platformId: PlatformId
     providerId: string
     signal: ProviderOutcomeSignal
+    throttled?: boolean
 }

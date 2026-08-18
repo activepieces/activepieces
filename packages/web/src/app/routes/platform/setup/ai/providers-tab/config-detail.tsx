@@ -73,6 +73,15 @@ export function ConfigDetail({
     enabled: !manualModels,
   });
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const statusDetail = [
+    config.statusReason,
+    config.statusUpdated &&
+      t('Last checked {when}', {
+        when: formatUtils.formatDateTime(new Date(config.statusUpdated)),
+      }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const enabledModelCount =
     !manualModels && draft.modelScope === 'all'
       ? models.length
@@ -187,16 +196,11 @@ export function ConfigDetail({
                 <p className="text-sm font-medium leading-none">
                   {t('Status')}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {config.statusReason ??
-                    (config.statusUpdated
-                      ? t('Last checked {when}', {
-                          when: formatUtils.formatDateTime(
-                            new Date(config.statusUpdated),
-                          ),
-                        })
-                      : '')}
-                </p>
+                {statusDetail && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {statusDetail}
+                  </p>
+                )}
               </div>
             </div>
             <Button

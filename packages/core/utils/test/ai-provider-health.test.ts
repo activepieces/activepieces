@@ -104,7 +104,7 @@ describe('observedProviderFetch', () => {
             throw new Error('body already disturbed')
         })
         const signals = await withFetch(async () => response)
-        expect(signals).toEqual([{ statusCode: 401 }])
+        expect(signals).toMatchObject([{ statusCode: 401 }])
     })
 
     it('never reads the body of a streaming success', async () => {
@@ -112,7 +112,7 @@ describe('observedProviderFetch', () => {
         const clone = vi.spyOn(response, 'clone')
         const signals = await withFetch(async () => response)
         expect(clone).not.toHaveBeenCalled()
-        expect(signals).toEqual([{ statusCode: 200 }])
+        expect(signals).toMatchObject([{ statusCode: 200 }])
         expect(await response.text()).toBe('hello')
     })
 
@@ -170,27 +170,38 @@ describe('observedProviderFetch', () => {
         expect(pulled).toBeLessThan(10)
     })
 
-    it('reports a retry sequence in the order the responses arrived', async () => {
+    it('stamps an observation when it arrived, so a slow failure cannot look newer than the retry that succeeded', async () => {
         const failure = new Response('{"error":"overloaded"}', { status: 500 })
-        const slowBody = new Response('{"error":"overloaded"}', { status: 500 })
-        vi.spyOn(slowBody, 'text').mockReturnValue(new Promise((resolve) => setTimeout(() => resolve('{"error":"overloaded"}'), 20)))
-        vi.spyOn(failure, 'clone').mockReturnValue(slowBody)
+        const slowClone = new Response(new ReadableStream<Uint8Array>({
+            async pull(controller) {
+                await new Promise((resolve) => setTimeout(resolve, 40))
+                controller.enqueue(new TextEncoder().encode('{"error":"overloaded"}'))
+                controller.close()
+            },
+        }), { status: 500 })
+        vi.spyOn(failure, 'clone').mockReturnValue(slowClone)
         const responses = [failure, new Response('{}', { status: 200 })]
 
         const signals: ProviderOutcomeSignal[] = []
         const original = globalThis.fetch
-        globalThis.fetch = vi.fn(async () => responses.shift()!) as unknown as typeof globalThis.fetch
+        globalThis.fetch = vi.fn(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 5))
+            return responses.shift()!
+        }) as unknown as typeof globalThis.fetch
         try {
             const observed = observedProviderFetch((signal) => signals.push(signal))
             await observed?.('https://api.openai.com/v1/chat/completions')
             await observed?.('https://api.openai.com/v1/chat/completions')
-            await new Promise((resolve) => setTimeout(resolve, 60))
+            await new Promise((resolve) => setTimeout(resolve, 120))
         }
         finally {
             globalThis.fetch = original
         }
 
-        expect(signals.map((signal) => signal.statusCode)).toEqual([500, 200])
+        expect(signals.map((signal) => signal.statusCode)).toEqual([200, 500])
+        const failed = signals.find((signal) => signal.statusCode === 500)
+        const succeeded = signals.find((signal) => signal.statusCode === 200)
+        expect(failed?.observedAt).toBeLessThan(succeeded?.observedAt ?? 0)
     })
 
     it('keeps a slow reporter off the call path', async () => {
@@ -209,6 +220,6 @@ describe('observedProviderFetch', () => {
         finally {
             globalThis.fetch = original
         }
-        expect(signals).toEqual([{ statusCode: 200 }])
+        expect(signals).toMatchObject([{ statusCode: 200 }])
     })
 })

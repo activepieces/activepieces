@@ -3,6 +3,7 @@ import { DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
+import { aiProviderHealth } from '../../../../src/app/ai/ai-provider-health'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
@@ -131,7 +132,7 @@ describe('AI provider key status', () => {
         expect(recorded.statusReason).toBeNull()
     })
 
-    it('turns a rejected secret into rejected, then back to active once it works', async () => {
+    it('turns a rejected secret into rejected, then back to active once an admin rechecks it', async () => {
         const key = await azureKey('rotated')
 
         mockSendRequest.mockRejectedValueOnce(httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } }))
@@ -143,11 +144,23 @@ describe('AI provider key status', () => {
         expect(rejected.statusUpdated).not.toBeNull()
 
         mockSendRequest.mockResolvedValueOnce({ body: { data: [{ id: 'gpt-4o', model: 'gpt-4o', status: 'succeeded' }] } })
-        await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
+        await ctx.post(`/v1/ai-providers/${key.id}/recheck`, {})
 
         const recovered = await statusOf(key.id)
         expect(recovered.status).toBe('active')
         expect(recovered.statusReason).toBeNull()
+    })
+
+    it('does not let a model listing that never spent the key clear a real failure', async () => {
+        const key = await azureKey('listing-proves-nothing')
+        await db.update('ai_provider', key.id, { status: 'out_of_credits', statusReason: 'HTTP 429: insufficient_quota' })
+
+        mockSendRequest.mockResolvedValue({ body: { data: [{ id: 'gpt-4o', model: 'gpt-4o', status: 'succeeded' }] } })
+        await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
+
+        const unchanged = await statusOf(key.id)
+        expect(unchanged.status).toBe('out_of_credits')
+        expect(unchanged.statusReason).toContain('429')
     })
 
     it('reads the provider billing as out of credits, not as an outage', async () => {
@@ -184,17 +197,41 @@ describe('AI provider key status', () => {
     it('does not refresh an unchanged status inside the throttle window', async () => {
         const key = await azureKey('steady')
 
-        mockSendRequest.mockResolvedValue({ body: { data: [{ id: 'gpt-4o', model: 'gpt-4o', status: 'succeeded' }] } })
+        mockSendRequest.mockRejectedValueOnce(httpFailure(503, { error: { message: 'Service Unavailable' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
         const first = await statusOf(key.id)
+        expect(first.status).toBe('unreachable')
 
-        // A second call on a different resource name, so the model cache cannot short-circuit it.
-        await db.update('ai_provider', key.id, { config: { resourceName: 'steady-2' } })
+        mockSendRequest.mockRejectedValueOnce(httpFailure(503, { error: { message: 'Service Unavailable' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
         const second = await statusOf(key.id)
 
-        expect(second.status).toBe('active')
+        expect(second.status).toBe('unreachable')
         expect(String(second.statusUpdated)).toBe(String(first.statusUpdated))
+    })
+
+    it('keeps the newest observation, whatever order the observations arrive in', async () => {
+        const key = await azureKey('raced')
+        await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401: old failure' })
+        const health = aiProviderHealth(app!.log)
+        const observedAt = Date.now()
+
+        const recovered = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 200, observedAt },
+        })
+        const stale = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key', observedAt: observedAt - 5000 },
+        })
+
+        expect(recovered).toBe('active')
+        expect(stale).toBeNull()
+        const row = await statusOf(key.id)
+        expect(row.status).toBe('active')
+        expect(row.statusReason).toBeNull()
     })
 
     describe('POST /:id/recheck', () => {

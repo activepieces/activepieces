@@ -1,10 +1,6 @@
 import { z } from 'zod'
 import { formatPieceError } from './friendly-piece-error'
 
-// Provider failures arrive as axios errors, fetch errors, AI SDK APICallErrors and plain Errors.
-// formatPieceError already normalises all of those into { status, responseBody, message }, which is
-// exactly the signal the classifier wants — so narrow through it rather than adding a second
-// extractor that would drift from it.
 export function toProviderOutcomeSignal(error: unknown): ProviderOutcomeSignal {
     const formatted = formatPieceError(error)
     return {
@@ -18,15 +14,9 @@ function stringifyBody(body: unknown): string {
     return typeof body === 'string' ? body : JSON.stringify(body)
 }
 
-// Every AI SDK provider factory accepts a `fetch`, so wrapping it is the one place that sees the
-// health of the key behind every model call in a process — no call site has to remember to report.
 export function observedProviderFetch(onOutcome: ProviderOutcomeReporter | undefined): typeof globalThis.fetch | undefined {
     if (isNil(onOutcome)) {
         return undefined
-    }
-    let reported: Promise<void> = Promise.resolve()
-    const report = (observe: () => Promise<ProviderOutcomeSignal>): void => {
-        reported = reported.then(observe).then(onOutcome, () => undefined)
     }
     return async (input, init) => {
         let response: Response
@@ -34,17 +24,21 @@ export function observedProviderFetch(onOutcome: ProviderOutcomeReporter | undef
             response = await fetch(input, init)
         }
         catch (error) {
-            report(async () => toProviderOutcomeSignal(error))
+            const observedAt = Date.now()
+            report({ observed: Promise.resolve({ ...toProviderOutcomeSignal(error), observedAt }), onOutcome })
             throw error
         }
-        report(() => observeResponse(response))
+        const observedAt = Date.now()
+        const observed = observeResponse(response)
+        report({ observed: observed.then((signal) => ({ ...signal, observedAt })), onOutcome })
         return response
     }
 }
 
-// Reporting is observation, never a step the call waits on: the response is handed back before the
-// body is read, a streaming success is never touched, and a clone that cannot be read still reports
-// its status instead of surfacing an instrumentation error in place of the provider's answer.
+function report({ observed, onOutcome }: { observed: Promise<ProviderOutcomeSignal>, onOutcome: ProviderOutcomeReporter }): void {
+    void observed.then(onOutcome).catch(() => undefined)
+}
+
 async function observeResponse(response: Response): Promise<ProviderOutcomeSignal> {
     if (response.ok) {
         return { statusCode: response.status }
@@ -114,23 +108,18 @@ function classifyByStatus({ statusCode, haystack }: { statusCode: number, haysta
     if (statusCode === 402) {
         return 'out_of_credits'
     }
-    // Providers disagree on which code carries a billing failure — OpenAI bills through 429,
-    // Anthropic through 400 — so the body decides before the status does.
     if (BILLING_BODY_PATTERN.test(haystack)) {
         return 'out_of_credits'
     }
-    // A bare 429 is load, not health, and the SDK has already retried it.
     if (statusCode === 429) {
         return 'no_change'
     }
-    // One unavailable model id says nothing about the key that reached it.
     if (statusCode === 404) {
         return MODEL_NOT_FOUND_PATTERN.test(haystack) ? 'no_change' : 'unreachable'
     }
     if (statusCode === 408 || statusCode >= 500) {
         return 'unreachable'
     }
-    // 400/422 and friends are the caller's fault, not the key's.
     return 'no_change'
 }
 
@@ -143,9 +132,6 @@ const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
 const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i
 
-// OpenAI bills through a 429 insufficient_quota, Anthropic through a 400 whose message reads
-// "your credit balance is too low" — so match both the machine codes and the prose, and neither
-// carries a 402, which is why a status-only rule is not enough here.
 const BILLING_BODY_PATTERN = /insufficient_quota|credit[_ ]balance|billing_hard_limit_reached|billing|quota|\bcredits?\b|out of funds|payment required/i
 
 const MODEL_NOT_FOUND_PATTERN = /model|deployment|engine/i
@@ -159,6 +145,7 @@ export type ProviderOutcomeSignal = {
     statusCode?: number
     body?: string
     message?: string
+    observedAt?: number
 }
 
 export type ProviderOutcomeReporter = (signal: ProviderOutcomeSignal) => void | Promise<void>

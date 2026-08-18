@@ -13,8 +13,6 @@ export class AddAiProviderStatus1829000000000 implements Migration {
             ADD COLUMN IF NOT EXISTS "statusReason" character varying,
             ADD COLUMN IF NOT EXISTS "statusUpdated" TIMESTAMP WITH TIME ZONE
         `)
-        // A key only exists because its credentials were validated when it was added, so 'active' is
-        // a fact rather than a guess, and the first failing call flips it.
         await queryRunner.query(`
             UPDATE "ai_provider" SET "status" = 'active' WHERE "status" IS NULL
         `)
