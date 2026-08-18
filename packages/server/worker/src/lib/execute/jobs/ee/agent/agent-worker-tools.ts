@@ -16,7 +16,6 @@ const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
 const MAX_RESULT_SIZE_BYTES = 128 * 1024
 const MIN_PREVIEW_ARRAY_LENGTH = 3
 const MAX_ARRAY_SEARCH_DEPTH = 6
-const PREVIEW_ITEM_COUNT = 5
 const CLIPPED_PREVIEW_ITEM_COUNT = 25
 const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
 const MAX_CLAMP_ATTEMPTS = 8
@@ -79,32 +78,6 @@ function truncateLargeResult(result: unknown): unknown {
     if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
 
     // Defense 1: preview a genuine multi-item array (never the MCP content wrapper).
-    const topLevelArray = findRecordArray(result)
-    if (topLevelArray) {
-        const { array, path, totalCount } = topLevelArray
-        const clipped = array
-            .slice(0, CLIPPED_PREVIEW_ITEM_COUNT)
-            .map((record) => shrinkLargeValue(record, { maxStringLength: 400, maxArrayItems: 4 }))
-        const shownClipped = Math.min(totalCount, CLIPPED_PREVIEW_ITEM_COUNT)
-        const clippedEnvelope = buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${shownClipped} of ${totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
-        })
-        const fullEnvelope = buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — showing the first ${PREVIEW_ITEM_COUNT} in full. To see the rest, narrow with a filter/limit or page through with an offset/cursor.\n\nPreview (${PREVIEW_ITEM_COUNT} of ${totalCount} items):\n${JSON.stringify(array.slice(0, PREVIEW_ITEM_COUNT), null, 2)}`,
-        })
-
-        // More items with their long values clipped beats a handful in full whenever the handful
-        // would hide the rest: a task summarising an inbox needs a line about every message, and a
-        // clipped body still carries who sent it and what it was about.
-        const hidesMostItems = totalCount > PREVIEW_ITEM_COUNT
-        const ordered = hidesMostItems ? [clippedEnvelope, fullEnvelope] : [fullEnvelope, clippedEnvelope]
-        for (const envelope of ordered) {
-            if (withinResultCap(envelope)) return envelope
-        }
-    }
-
     // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).
     const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
     const shrunkSerialized = JSON.stringify(shrunk, null, 2)
@@ -115,6 +88,21 @@ function truncateLargeResult(result: unknown): unknown {
         })
     }
 
+    // The shrink above keeps every key and clips at a longer limit, so it wins whenever it fits.
+    // Once it cannot, the records are what was being asked about: keep more of them, clipped
+    // harder, rather than a prefix of the serialised object.
+    const records = findRecordArray(result)
+    if (!isNil(records)) {
+        const clipped = records.array
+            .slice(0, CLIPPED_PREVIEW_ITEM_COUNT)
+            .map((record) => shrinkLargeValue(record, { maxStringLength: 400, maxArrayItems: 4 }))
+        const envelope = buildOversizeEnvelope({
+            result,
+            text: `[LARGE RESPONSE] ${records.totalCount} items (at ${records.path}), ${Math.round(byteSize / 1024)}KB total — long values in each item were clipped so more items fit. Values marked "…[truncated]" are shortened, not missing.\n\nItems (${clipped.length} of ${records.totalCount}, values clipped):\n${JSON.stringify(clipped, null, 2)}`,
+        })
+        if (withinResultCap(envelope)) return envelope
+    }
+
     // Defense 3b: unconditional hard-truncate backstop — guarantees the returned
     // object always serializes to <= MAX_RESULT_SIZE_BYTES regardless of shape.
     return clampEnvelopeToCap({
@@ -123,6 +111,8 @@ function truncateLargeResult(result: unknown): unknown {
         body: shrunkSerialized,
     })
 }
+
+type RecordArray = { array: unknown[], path: string, totalCount: number }
 
 function buildOversizeEnvelope({ result, text }: { result: unknown, text: string }): { content: Array<{ type: 'text', text: string }> } {
     const meta = isObject(result) && isObject(result['_meta']) ? result['_meta'] : undefined
@@ -180,25 +170,24 @@ function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, max
     return value
 }
 
-// Finds the biggest array of records anywhere in the payload, not just one level down. A piece
-// nests its rows as it likes: Gmail hands back messages below a wrapper, so a depth-one search
-// misses them and the whole result gets hard-truncated to a prefix instead of previewed.
-function findRecordArray(obj: unknown, depth = 0, path = 'root'): { array: unknown[], path: string, totalCount: number } | null {
+// Gmail nests its messages under a wrapper, so a depth-one search finds nothing and the whole
+// payload gets hard-truncated to a prefix instead.
+function findRecordArray(obj: unknown, path: string[] = [], seen = new WeakSet<object>()): RecordArray | null {
     if (Array.isArray(obj)) {
-        if (obj.length > MIN_PREVIEW_ARRAY_LENGTH && !looksLikeMcpContentParts(obj)) {
-            return { array: obj, path, totalCount: obj.length }
+        // The MCP envelope `{ content: [{ type, text }] }` is not a data array — its single item
+        // holds the whole payload as a string, so previewing it emits the blob unchanged.
+        if (obj.length <= MIN_PREVIEW_ARRAY_LENGTH || looksLikeMcpContentParts(obj)) {
+            return null
         }
+        return { array: obj, path: path.join('.') || 'root', totalCount: obj.length }
+    }
+    if (!isObject(obj) || path.length >= MAX_ARRAY_SEARCH_DEPTH || seen.has(obj)) {
         return null
     }
-    if (!isObject(obj) || depth >= MAX_ARRAY_SEARCH_DEPTH) return null
-    let best: { array: unknown[], path: string, totalCount: number } | null = null
-    for (const key of Object.keys(obj)) {
-        const found = findRecordArray(obj[key], depth + 1, depth === 0 ? key : `${path}.${key}`)
-        if (!isNil(found) && (isNil(best) || found.totalCount > best.totalCount)) {
-            best = found
-        }
-    }
-    return best
+    seen.add(obj)
+    return Object.entries(obj)
+        .map(([key, value]) => findRecordArray(value, [...path, key], seen))
+        .reduce<RecordArray | null>((best, found) => isNil(found) || (!isNil(best) && found.totalCount <= best.totalCount) ? best : found, null)
 }
 
 function looksLikeMcpContentParts(array: unknown[]): boolean {

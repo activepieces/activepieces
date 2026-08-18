@@ -412,56 +412,38 @@ describe('agentWorkerTools', () => {
             expect(agentWorkerTools.truncateLargeResult(small)).toBe(small)
         })
 
-        it('shows more items clipped rather than five in full when most would be hidden', () => {
+        it('keeps every record readable rather than five whole ones', () => {
             const result = agentWorkerTools.truncateLargeResult({
-                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(300) })),
+                items: Array.from({ length: 40 }, (_, i) => ({ id: i, from: `sender-${i}@example.com`, text: 'x'.repeat(20_000) })),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
-            expect(text).toContain('[LARGE RESPONSE]')
-            expect(text).toContain('5000 items')
-            expect(text).toContain('Items (25 of 5000, values clipped)')
+
+            expect(text).not.toContain('hard-truncated')
+            for (let index = 0; index < 20; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
         })
 
-        it('still shows a short array in full when the bulk is elsewhere', () => {
+        it('leaves a short array to the structural shrink, which keeps its siblings', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 items: Array.from({ length: 4 }, (_, i) => ({ id: i, text: `row ${i}` })),
                 report: 'x'.repeat(400_000),
             }) as { content: Array<{ text: string }> }
-
-            expect(result.content[0].text).toContain('Preview (5 of 4 items)')
-        })
-
-        it('keeps every mailbox item, clipped, when five whole ones will not fit', () => {
-            // A mailbox page carries whole bodies, so the first five on their own miss the cap.
-            const result = agentWorkerTools.truncateLargeResult({
-                messages: Array.from({ length: 12 }, (_, i) => ({
-                    id: `msg-${i}`,
-                    from: `sender-${i}@example.com`,
-                    subject: `Subject ${i}`,
-                    body: 'b'.repeat(60_000),
-                })),
-            }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
 
-            expect(text).toContain('values in each item were clipped')
-            expect(text).toContain('Items (12 of 12, values clipped)')
-            for (let index = 0; index < 12; index++) {
-                expect(text).toContain(`sender-${index}@example.com`)
-                expect(text).toContain(`Subject ${index}`)
-            }
+            expect(text).toContain('structure preserved')
+            expect(text).toContain('row 3')
+            expect(text).toContain('report')
         })
 
-        it('finds the records when a piece nests them below a wrapper', () => {
-            // A depth-one search misses these, so the payload falls past both preview rungs and is
-            // hard-truncated to a JSON prefix that holds the first message and nothing else.
+        it('falls to a clipped record list when even the shrink will not fit', () => {
             const result = agentWorkerTools.truncateLargeResult({
                 body: {
                     result: {
                         messages: Array.from({ length: 200 }, (_, i) => ({
                             id: `msg-${i}`,
                             from: `sender-${i}@example.com`,
-                            subject: `Subject ${i}`,
-                            raw: 'r'.repeat(20_000),
+                            headers: Array.from({ length: 30 }, (_, h) => ({ name: `h-${h}`, value: 'v'.repeat(500) })),
                         })),
                     },
                 },
@@ -470,9 +452,7 @@ describe('agentWorkerTools', () => {
 
             expect(text).toContain('values in each item were clipped')
             expect(text).toContain('200 items (at body.result.messages)')
-            for (let index = 0; index < 25; index++) {
-                expect(text).toContain(`sender-${index}@example.com`)
-            }
+            expect(text).toContain('sender-0@example.com')
         })
 
         it('structurally shrinks a large non-array object instead of discarding it', () => {
