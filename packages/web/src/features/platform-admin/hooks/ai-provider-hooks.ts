@@ -16,6 +16,10 @@ export const aiProviderKeys = {
   configs: ['ai-provider-configs'] as const,
   forProject: (projectId: string | null) =>
     ['ai-providers', projectId] as const,
+  configModels: (configId?: string) =>
+    (configId === undefined
+      ? ['ai-provider-config-models']
+      : ['ai-provider-config-models', configId]) as const,
 };
 
 export const aiProviderQueries = {

@@ -1,5 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Bot,
@@ -34,6 +35,7 @@ import {
 } from '@/components/ui/tooltip';
 import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from '@/features/agents';
 import {
+  aiProviderKeys,
   aiProviderMutations,
   aiProviderQueries,
 } from '@/features/platform-admin';
@@ -58,6 +60,7 @@ export function ProvidersTab() {
     AIProviderName | undefined
   >(undefined);
 
+  const queryClient = useQueryClient();
   const { data: providers, refetch } = aiProviderQueries.useAiProviderConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
@@ -103,7 +106,12 @@ export function ProvidersTab() {
     setDialogOpen(true);
   };
   const onConnected = async (createdId?: string) => {
-    await refetch();
+    await Promise.all([
+      refetch(),
+      queryClient.invalidateQueries({
+        queryKey: aiProviderKeys.configModels(),
+      }),
+    ]);
     if (createdId) {
       openConfig(createdId);
     }
