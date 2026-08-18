@@ -12,7 +12,7 @@ export const searchGoogleScholar = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Scholar via SerpApi for academic papers and citations matching a query, returning results in `organic_results` (title, authors, publication, year, cited-by count, PDF/resource links). Use to research literature, find citations, or gather academic sources. Use `as_ylo`/`as_yhi` to restrict by publication year. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google Scholar for academic papers, scholarly articles, and citations matching a query. Use to research literature, find citations, or gather academic sources. Restrict by publication year with `as_ylo`/`as_yhi`.',
     idempotent: true,
   },
   outputSchema: searchGoogleScholarOutputSchema,

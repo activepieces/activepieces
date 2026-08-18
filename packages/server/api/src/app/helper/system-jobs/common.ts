@@ -14,13 +14,7 @@ export enum SystemJobName {
     BILLING_USAGE_REPORT = 'billing-usage-report',
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
-    BUNDLE_PIECE = 'bundle-piece',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
-}
-
-type BundlePieceSystemJobData = {
-    name: string
-    version: string
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -61,7 +55,6 @@ type SystemJobDataMap = {
     [SystemJobName.BILLING_USAGE_REPORT]: Record<string, never>
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
-    [SystemJobName.BUNDLE_PIECE]: BundlePieceSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
 }
 

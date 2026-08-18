@@ -40,7 +40,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
     
                 if (!smtpEmailSender(log).isSmtpConfigured()) {
-                    log.error({ emailSubject }, '[smtpEmailSender#send] SMTP is not configured')
+                    log.error({ template: { name: templateData.name } }, '[smtpEmailSender#send] SMTP is not configured')
                     return
                 }
     
@@ -53,7 +53,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 log.info({
                     emails,
                     platform: { id: platformId },
-                    templateData,
+                    template: { name: templateData.name },
                 }, '[smtpEmailSender#send] sending email')
                 await smtpClient.sendMail({
                     from: `${senderName} <${senderEmail}>`,
@@ -138,6 +138,7 @@ const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<s
         'scim-user-welcome': 'Welcome! Your account has been created 🎉',
         'chat-notification': vars.subject,
         'platform-deleted': 'Your platform has been deleted',
+        'login-code': `${vars.code} is your sign-in code`,
     }
 
     return templateToSubject[templateName]
