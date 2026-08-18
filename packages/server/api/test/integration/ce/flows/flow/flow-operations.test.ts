@@ -10,7 +10,11 @@ import {
     PieceType,
     PopulatedFlow,
     StepLocationRelativeToParent,
+    TriggerStrategy,
+    TriggerTestStrategy,
+    WebhookHandshakeStrategy,
 } from '@activepieces/shared'
+import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../../helpers/db'
@@ -301,6 +305,212 @@ describe('Flow Operations API', () => {
             expect(body.version.trigger.nextAction).toBeDefined()
             expect(body.version.trigger.nextAction.type).toBe(FlowActionType.CODE)
             expect(body.version.trigger.nextAction.displayName).toBe('Code Step')
+        })
+    })
+
+    describeWithAuth('POST /v1/flows/:id PROCESS_IN_BATCHES', () => app!, (setup) => {
+        it('adds a batch step, defaults its batch size and nests a step in its body', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const addBatchResponse = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.PROCESS_IN_BATCHES,
+                        displayName: 'Process in Batches',
+                        name: 'step_1',
+                        settings: { items: '{{ trigger }}' },
+                        valid: true,
+                    },
+                },
+            })
+
+            expect(addBatchResponse?.statusCode).toBe(StatusCodes.OK)
+            const batchStep = addBatchResponse?.json().version.trigger.nextAction
+            expect(batchStep.type).toBe(FlowActionType.PROCESS_IN_BATCHES)
+            expect(batchStep.settings.batchSize).toBe(10)
+            expect(batchStep.valid).toBe(true)
+
+            const addInsideResponse = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'step_1',
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BATCH,
+                    action: {
+                        type: FlowActionType.CODE,
+                        displayName: 'Code Step',
+                        name: 'step_2',
+                        settings: {
+                            input: {},
+                            sourceCode: {
+                                code: 'export const code = async () => { return true; }',
+                                packageJson: '{}',
+                            },
+                        },
+                        valid: true,
+                    },
+                },
+            })
+
+            expect(addInsideResponse?.statusCode).toBe(StatusCodes.OK)
+            expect(addInsideResponse?.json().version.trigger.nextAction.firstLoopAction.name).toBe('step_2')
+
+            const updateResponse = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: {
+                    type: FlowActionType.PROCESS_IN_BATCHES,
+                    displayName: 'Process in Batches',
+                    name: 'step_1',
+                    settings: { items: '{{ trigger }}', batchSize: 25 },
+                    valid: true,
+                },
+            })
+
+            expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
+            const updatedStep = updateResponse?.json().version.trigger.nextAction
+            expect(updatedStep.settings.batchSize).toBe(25)
+            expect(updatedStep.firstLoopAction.name).toBe('step_2')
+            expect(updatedStep.valid).toBe(true)
+        })
+
+        it('marks the step invalid when its items expression is empty', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.PROCESS_IN_BATCHES,
+                        displayName: 'Process in Batches',
+                        name: 'step_1',
+                        settings: { items: '', batchSize: 10 },
+                        valid: true,
+                    },
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().version.trigger.nextAction.valid).toBe(false)
+        })
+
+        it('publishes a flow containing a batch step', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                name: '@activepieces/piece-schedule',
+                version: '0.1.5',
+                triggers: {
+                    every_hour: {
+                        name: 'every_hour',
+                        displayName: 'Every Hour',
+                        description: 'Triggers the current flow every hour',
+                        requireAuth: true,
+                        props: {},
+                        type: TriggerStrategy.WEBHOOK,
+                        handshakeConfiguration: { strategy: WebhookHandshakeStrategy.NONE },
+                        renewConfiguration: { strategy: WebhookRenewStrategy.NONE },
+                        sampleData: {},
+                        testStrategy: TriggerTestStrategy.TEST_FUNCTION,
+                    },
+                },
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+            })
+            await db.save('piece_metadata', mockPiece)
+
+            const mockFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+            await db.save('flow', mockFlow)
+
+            const mockFlowVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: ctx.user.id,
+                state: FlowVersionState.DRAFT,
+                valid: true,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    settings: {
+                        pieceName: '@activepieces/piece-schedule',
+                        pieceVersion: '0.1.5',
+                        input: {},
+                        triggerName: 'every_hour',
+                        propertySettings: {},
+                    },
+                    valid: true,
+                    name: 'trigger',
+                    displayName: 'Schedule',
+                    lastUpdatedDate: new Date().toISOString(),
+                    nextAction: {
+                        type: FlowActionType.PROCESS_IN_BATCHES,
+                        name: 'step_1',
+                        displayName: 'Process in Batches',
+                        valid: true,
+                        lastUpdatedDate: new Date().toISOString(),
+                        settings: { items: '{{ trigger }}', batchSize: 10 },
+                        firstLoopAction: {
+                            type: FlowActionType.CODE,
+                            name: 'step_2',
+                            displayName: 'Code Step',
+                            valid: true,
+                            lastUpdatedDate: new Date().toISOString(),
+                            settings: {
+                                input: {},
+                                sourceCode: { code: 'export const code = async () => true', packageJson: '{}' },
+                            },
+                        },
+                    },
+                },
+            })
+            await db.save('flow_version', mockFlowVersion)
+
+            const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                type: FlowOperationType.LOCK_AND_PUBLISH,
+                request: {},
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body: PopulatedFlow = response?.json()
+            expect(body.publishedVersionId).toBe(mockFlowVersion.id)
+            expect(body.version.state).toBe(FlowVersionState.LOCKED)
+        })
+
+        it('rejects a batch size below one at the API boundary', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.PROCESS_IN_BATCHES,
+                        displayName: 'Process in Batches',
+                        name: 'step_1',
+                        settings: { items: '{{ trigger }}', batchSize: 0 },
+                        valid: true,
+                    },
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
     })
 

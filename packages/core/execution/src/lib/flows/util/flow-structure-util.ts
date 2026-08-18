@@ -20,6 +20,7 @@ function isStepAction(step: Step): step is FlowAction {
     return step.type === FlowActionType.CODE
         || step.type === FlowActionType.PIECE
         || step.type === FlowActionType.LOOP_ON_ITEMS
+        || step.type === FlowActionType.PROCESS_IN_BATCHES
         || step.type === FlowActionType.ROUTER
 }
 
@@ -82,7 +83,8 @@ function transferStep<T extends Step>(
 ): Step {
     const updatedStep = transferFunction(step as T)
     switch (updatedStep.type) {
-        case FlowActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS:
+        case FlowActionType.PROCESS_IN_BATCHES: {
             const { firstLoopAction } = updatedStep
             if (firstLoopAction) {
                 updatedStep.firstLoopAction = transferStep(

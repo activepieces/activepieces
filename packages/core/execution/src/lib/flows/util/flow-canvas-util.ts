@@ -1,4 +1,4 @@
-import { CodeAction, FlowAction, FlowActionType, PieceAction } from '../actions/action'
+import { CodeAction, FlowAction, FlowActionType, LoopOnItemsAction, PieceAction, ProcessInBatchesAction } from '../actions/action'
 import { FlowTrigger } from '../triggers/trigger'
 import { flowStructureUtil } from './flow-structure-util'
 
@@ -25,7 +25,7 @@ function getFlowBoundingBox(step: Step | FlowAction | null | undefined, forBranc
     let withChildMaxX = FLOW_CANVAS_STEP_WIDTH
     let withChildHeight = FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_VSPACE
 
-    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+    if (isContainerStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childWidth = childBoundingBox.maxX - childBoundingBox.minX
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
@@ -74,7 +74,7 @@ function buildPositions({ step, offsetX, offsetY, positions }: {
 
     positions.set(step.name, { x: offsetX + FLOW_CANVAS_STEP_WIDTH / 2, y: offsetY })
 
-    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+    if (isContainerStep(step)) {
         const childBoundingBox = getFlowBoundingBox(step.firstLoopAction, true)
         const childLeft = -childBoundingBox.minX + FLOW_CANVAS_STEP_WIDTH / 2
         const childRight = childBoundingBox.maxX - FLOW_CANVAS_STEP_WIDTH / 2
@@ -169,6 +169,10 @@ function positionBranchedChildren({ children, offsetX, offsetY, positions }: {
     return FLOW_CANVAS_STEP_HEIGHT + FLOW_CANVAS_ROUTER_VOFFSET + maxChildHeight + FLOW_CANVAS_ARC + FLOW_CANVAS_VSPACE
 }
 
+function isContainerStep(step: Step | FlowAction): step is LoopOnItemsAction | ProcessInBatchesAction {
+    return step.type === FlowActionType.LOOP_ON_ITEMS || step.type === FlowActionType.PROCESS_IN_BATCHES
+}
+
 function hasContinueOnFailureBranches(step: Step | FlowAction): step is CodeAction | PieceAction {
     if (step.type !== FlowActionType.CODE && step.type !== FlowActionType.PIECE) {
         return false
@@ -205,6 +209,7 @@ export const flowCanvasUtils = {
         buildPositions({ step: trigger, offsetX: 0, offsetY: 0, positions })
         return positions
     },
+    isContainerStep,
     hasContinueOnFailureBranches,
     getContinueOnFailureBranchPair,
     getStepBranchRelativeTo,
