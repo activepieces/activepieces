@@ -390,7 +390,6 @@ const ConfigurePanel = ({
   icon,
   color,
   displayName,
-  needsModel,
   defaults,
   onCollapse,
 }: {
@@ -398,7 +397,6 @@ const ConfigurePanel = ({
   icon: AgentIcon;
   color: ColorName;
   displayName: string;
-  needsModel: boolean;
   defaults: ConfigureAgentInput;
   onCollapse: () => void;
 }) => {
@@ -409,6 +407,12 @@ const ConfigurePanel = ({
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agentId });
+
+  const values = form.watch();
+  const formNeedsModel =
+    isNil(values.draft?.modelName) || isNil(values.draft?.provider);
+  // The model selector fills itself in on mount, which react-hook-form counts as the user editing.
+  const hasChanges = JSON.stringify(values) !== JSON.stringify(defaults);
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
@@ -463,7 +467,7 @@ const ConfigurePanel = ({
                 className="gap-2"
               >
                 {t('Configure')}
-                {needsModel && (
+                {formNeedsModel && (
                   <span className="size-[7px] rounded-full bg-destructive" />
                 )}
               </TabsTrigger>
@@ -477,7 +481,7 @@ const ConfigurePanel = ({
         <ScrollArea className="min-h-0 grow">
           <div className="flex flex-col gap-5 p-[18px]">
             {tab === 'configure' ? (
-              <ConfigureFields form={form} needsModel={needsModel} />
+              <ConfigureFields form={form} needsModel={formNeedsModel} />
             ) : (
               <SettingsFields form={form} />
             )}
@@ -493,7 +497,7 @@ const ConfigurePanel = ({
           <Button
             type="submit"
             loading={updateAgent.isPending}
-            disabled={!form.formState.isDirty}
+            disabled={!hasChanges}
             className="h-[38px] rounded-lg px-[18px]"
           >
             {t('Save changes')}
@@ -660,7 +664,6 @@ const AgentEditorContent = () => {
             icon={agent.icon}
             color={agent.color}
             displayName={agent.displayName}
-            needsModel={needsModel}
             defaults={{
               displayName: agent.displayName,
               description: agent.description ?? '',
