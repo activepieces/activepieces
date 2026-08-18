@@ -143,6 +143,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
+    async exists({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<boolean> {
+        const rows = await aiProviderRepo().findBy({ platformId, provider })
+        return rows.some((row) => rowAllowsScope({ row, scope }))
+    },
+
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
         await aiProviderRepo().delete({
             platformId,
@@ -273,7 +278,9 @@ async function resolveEligibleRow({ platformId, provider, scope }: { platformId:
                 entityId: provider,
                 entityType: 'AIProvider',
             },
-        })
+        }, scope.type === 'platform'
+            ? `the ${provider} AI provider is not configured on this platform`
+            : `no ${provider} AI provider key is available to this project`)
     }
     return winner
 }
