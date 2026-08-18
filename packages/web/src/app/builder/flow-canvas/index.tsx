@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   FlowActionType,
+  flowCanvasUtils as sharedFlowCanvasUtils,
   flowStructureUtil,
   FlowTriggerType,
   FlowVersion,
@@ -16,7 +17,6 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
-  getNodesBounds,
   CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -88,7 +88,6 @@ export const FlowCanvas = React.memo(
     const graphKey = `${createGraphKey(
       flowVersion,
       notes,
-      selectedStep ?? '',
     )}-${canvasOrientation}`;
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph({
@@ -159,7 +158,7 @@ export const FlowCanvas = React.memo(
         .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
-          step.type === FlowActionType.LOOP_ON_ITEMS ||
+          sharedFlowCanvasUtils.isContainerStep(step) ||
           flowStructureUtil.isBranchedAction(step) ||
           flowStructureUtil.hasContinueOnFailureBranches(step)
         ) {
@@ -184,19 +183,12 @@ export const FlowCanvas = React.memo(
     const translateExtent = useMemo(() => {
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight + 100;
-      const nodes = graph.nodes;
-      const graphRectangle = getNodesBounds(nodes);
-      const start = {
-        x: graphRectangle.x - windowWidth,
-        y: graphRectangle.y - windowHeight,
-      };
-      const end = {
-        x: graphRectangle.x + graphRectangle.width + windowWidth,
-        y: graphRectangle.y + graphRectangle.height + windowHeight,
-      };
+      const positions = graph.nodes.map((node) => node.position);
+      const xs = positions.map((position) => position.x);
+      const ys = positions.map((position) => position.y);
       const extent: CoordinateExtent = [
-        [start.x, start.y],
-        [end.x, end.y],
+        [Math.min(...xs) - windowWidth, Math.min(...ys) - windowHeight],
+        [Math.max(...xs) + windowWidth, Math.max(...ys) + windowHeight],
       ];
       return extent;
     }, [graphKey]);
@@ -267,6 +259,7 @@ FlowCanvas.displayName = 'FlowCanvas';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
+    case FlowActionType.PROCESS_IN_BATCHES:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
     case FlowActionType.ROUTER:
     case FlowActionType.AI_ROUTER:
@@ -299,11 +292,7 @@ const getChildrenKey = (step: Step) => {
     }
   }
 };
-const createGraphKey = (
-  flowVersion: FlowVersion,
-  notes: Note[],
-  selectedStep: string,
-) => {
+const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
@@ -323,5 +312,5 @@ const createGraphKey = (
   const notesGraphKey = notes
     .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
-  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}-${selectedStep}`;
+  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}`;
 };
