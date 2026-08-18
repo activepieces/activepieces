@@ -24,13 +24,16 @@ async function createConversation(
 async function listConversations({
   cursor,
   limit = 20,
+  agentId,
 }: {
   cursor?: string;
   limit?: number;
+  agentId?: string;
 }): Promise<SeekPage<AgentConversation>> {
   return api.get<SeekPage<AgentConversation>>('/v1/agents/conversations', {
     limit,
     cursor,
+    ...(agentId === undefined ? {} : { agentId }),
   });
 }
 

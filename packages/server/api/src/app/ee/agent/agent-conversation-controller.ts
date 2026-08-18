@@ -1,10 +1,9 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversationStatus, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentRunSource, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
-import { aiProviderService } from '../../ai/ai-provider-service'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -12,6 +11,7 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
+import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
@@ -36,6 +36,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             userId: request.principal.id,
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
+            ...spreadIfDefined('agentId', request.query.agentId),
         })
     })
 
@@ -150,7 +151,20 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             await agentApprovalGate.clearPendingGate({ conversationId })
         }
 
-        await assertChatProviderConfigured({ platformId, log })
+        const agent = isNil(conversation.agentId)
+            ? null
+            : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
+        const agentConfig = agent?.published ?? agent?.draft ?? null
+        // resolveRunProvider and the assertion below both fall through to the platform's chat
+        // provider when no provider is named. An agent answers on its own model or it does not run.
+        if (!isNil(agent) && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Pick a model for this agent before talking to it' },
+            })
+        }
+
+        await agentHelpers.assertRunProviderConfigured({ platformId, log, ...spreadIfDefined('provider', agentConfig?.provider ?? undefined) })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
@@ -165,8 +179,16 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: conversation.modelName ?? null,
+                modelName: isNil(agent) ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
                 files,
+                ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...(isNil(agentConfig) ? {} : {
+                    tools: agentConfig.tools,
+                    structuredOutput: agentConfig.structuredOutput,
+                    maxSteps: agentConfig.maxSteps,
+                    ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                    promptOverride: { system: agentConfig.instructions },
+                }),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')
@@ -279,16 +301,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
 }
 
-async function assertChatProviderConfigured({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
-    const provider = await aiProviderService(log).getChatProviderName({ platformId })
-    if (isNil(provider)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: platformId, entityType: 'ChatAiProvider' },
-        })
-    }
-}
-
 const CHAT_MESSAGES_PER_WINDOW = 40
 const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
 
@@ -330,6 +342,7 @@ const ListConversationsRoute = {
         querystring: z.object({
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
+            agentId: z.string().optional(),
         }),
     },
 }

@@ -64,7 +64,12 @@ const Agent = z.object({
     published: Nullable(AgentConfig),
 })
 
-const AgentSummary = Agent.omit({ draft: true, published: true })
+const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
+    toolCount: z.number(),
+    toolPieceNames: z.array(z.string()),
+    projectDisplayName: z.string(),
+    projectIsPrivate: z.boolean(),
+})
 
 const CreateAgentRequest = z.object({
     projectId: ApId,

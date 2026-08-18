@@ -416,6 +416,8 @@ import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/18220
 import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
 import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
+import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
+import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -847,6 +849,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddRenamedChatTableCompatViews1823000000000,
         AddAttemptsToOtp1824000000000,
         AddAgentTable1825000000000,
+        AddAgentIdToAgentConversation1826000000000,
+        AddVersionToOtp1827000000000,
     ]
     return migrations
 }
