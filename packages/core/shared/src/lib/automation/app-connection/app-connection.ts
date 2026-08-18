@@ -149,14 +149,13 @@ export const AppConnectionOwners = z.object({
 })
 
 export type AppConnectionOwners = z.infer<typeof AppConnectionOwners>
-/**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
 export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string)=>{
     let resolvedScope = value
     if (!props) {
         return resolvedScope
     }
     Object.entries(props).forEach(([key, value]) => {
-        resolvedScope = resolvedScope.replace(`{${key}}`, String(value))
+        resolvedScope = resolvedScope.replaceAll(`{${key}}`, () => String(value))
     })
     return resolvedScope
 }
