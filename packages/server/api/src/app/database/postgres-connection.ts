@@ -441,6 +441,7 @@ import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migr
 import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
 import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 import { AddWaitpointDeadLetteredAt1851000000000 } from './migration/postgres/1851000000000-AddWaitpointDeadLetteredAt'
+import { AddBarrierChildAttribution1852000000000 } from './migration/postgres/1852000000000-AddBarrierChildAttribution'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -897,6 +898,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         NullOrphanFolderReferences1846000000000,
         AddAgentConversationAiCredits1850000000000,
         AddWaitpointDeadLetteredAt1851000000000,
+        AddBarrierChildAttribution1852000000000,
     ]
     return migrations
 }
