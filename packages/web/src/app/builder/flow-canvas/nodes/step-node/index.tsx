@@ -152,7 +152,7 @@ const ApStepCanvasNode = React.memo(
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
         <LoopIterationInput stepName={step.name} />
-        <ApStepNodeStatusInRun stepName={step.name} />
+        <ApStepNodeStatusInRun stepName={step.name} stepType={step.type} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />
         <div
