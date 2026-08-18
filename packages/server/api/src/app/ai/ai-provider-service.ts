@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, nextObservedAt, observedAtToIso, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch } from '@activepieces/core-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderKeyStatus, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -339,7 +339,7 @@ function toInvalidCredentialsError({ provider, error, log }: { provider: AIProvi
 }
 
 function provedHealthy(): Pick<AIProviderSchema, 'status' | 'statusReason' | 'statusUpdated'> {
-    return { status: 'active', statusReason: null, statusUpdated: new Date().toISOString() }
+    return { status: 'active', statusReason: null, statusUpdated: observedAtToIso(nextObservedAt()) }
 }
 
 async function recordKeyFailure({ platformId, aiProvider, error, log }: { platformId: PlatformId, aiProvider: AIProviderSchema, error: unknown, log: FastifyBaseLogger }): Promise<void> {

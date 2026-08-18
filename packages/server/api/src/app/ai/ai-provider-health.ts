@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, classifyProviderOutcome, isNil, PlatformId, ProviderOutcomeSignal } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, classifyProviderOutcome, isNil, nextObservedAt, observedAtToIso, PlatformId, ProviderOutcomeSignal } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -16,14 +16,14 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
             return null
         }
         const reason = status === 'active' ? null : buildReason(signal)
-        const observedAtMs = signal.observedAt ?? Date.now()
-        const observedAt = new Date(observedAtMs).toISOString()
-        const refreshBefore = throttled ? new Date(observedAtMs - REFRESH_UNCHANGED_AFTER_MINUTES * 60_000).toISOString() : observedAt
+        const observedAtMs = signal.observedAt ?? nextObservedAt()
+        const observedAt = observedAtToIso(observedAtMs)
+        const refreshBefore = throttled ? observedAtToIso(observedAtMs - REFRESH_UNCHANGED_AFTER_MINUTES * 60_000) : observedAt
         const updateResult = await aiProviderRepo().createQueryBuilder()
             .update()
             .set({ status, statusReason: reason, statusUpdated: observedAt })
             .where('id = :providerId AND "platformId" = :platformId', { providerId, platformId })
-            .andWhere('("statusUpdated" IS NULL OR "statusUpdated" <= :observedAt)', { observedAt })
+            .andWhere('("statusUpdated" IS NULL OR "statusUpdated" < :observedAt)', { observedAt })
             .andWhere('(status <> :status OR "statusUpdated" IS NULL OR "statusUpdated" < :refreshBefore)', { status, refreshBefore })
             .returning(['status'])
             .execute()

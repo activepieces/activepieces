@@ -24,15 +24,27 @@ export function observedProviderFetch(onOutcome: ProviderOutcomeReporter | undef
             response = await fetch(input, init)
         }
         catch (error) {
-            const observedAt = Date.now()
+            const observedAt = nextObservedAt()
             report({ observed: Promise.resolve({ ...toProviderOutcomeSignal(error), observedAt }), onOutcome })
             throw error
         }
-        const observedAt = Date.now()
+        const observedAt = nextObservedAt()
         const observed = observeResponse(response)
         report({ observed: observed.then((signal) => ({ ...signal, observedAt })), onOutcome })
         return response
     }
+}
+
+export function nextObservedAt(): number {
+    const now = Date.now()
+    lastObservedAt = now > lastObservedAt ? now : lastObservedAt + MICROSECOND
+    return lastObservedAt
+}
+
+export function observedAtToIso(observedAt: number): string {
+    const whole = Math.floor(observedAt)
+    const micros = Math.min(999, Math.round((observedAt - whole) * 1000))
+    return `${new Date(whole).toISOString().slice(0, -1)}${String(micros).padStart(3, '0')}Z`
 }
 
 function report({ observed, onOutcome }: { observed: Promise<ProviderOutcomeSignal>, onOutcome: ProviderOutcomeReporter }): void {
@@ -129,6 +141,10 @@ function classifyByStatus({ statusCode, haystack }: { statusCode: number, haysta
 function isNil<T>(value: T | null | undefined): value is null | undefined {
     return value === null || value === undefined
 }
+
+const MICROSECOND = 0.001
+
+let lastObservedAt = 0
 
 const MAX_OBSERVED_BODY_LENGTH = 2000
 const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
