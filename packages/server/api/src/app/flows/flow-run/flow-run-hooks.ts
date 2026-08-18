@@ -1,5 +1,5 @@
-import { isManualPieceTrigger, isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ConsumableFeatureId, FlowRun, FlowRunStatus, FlowTriggerType, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, ConsumableFeatureId, FlowRun, FlowRunStatus, isFailedState, isFlowRunStateTerminal, RunEnvironment, WebsocketClientEvent } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
@@ -9,6 +9,7 @@ import { billingProvider, CreditUsageSource, toFlowRunCreditProperties } from '.
 import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowRunAiUsageTracker } from './flow-run-ai-usage-tracker'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
@@ -20,9 +21,7 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
             return
         }
         const flowVersion = await flowVersionService(log).getOne(flowRun.flowVersionId)
-        const isPieceTrigger = !isNil(flowVersion) && flowVersion.trigger.type === FlowTriggerType.PIECE && !isNil(flowVersion.trigger.settings.triggerName) 
-        const isManualTrigger = isPieceTrigger && isManualPieceTrigger({ pieceName: flowVersion.trigger.settings.pieceName, triggerName: flowVersion.trigger.settings.triggerName })
-        if (flowRun.environment === RunEnvironment.TESTING || isManualTrigger) {
+        if (streamStepProgressUtils.isStreamedToBuilder({ flowRun, flowVersion })) {
             websocketService.to(flowRun.projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, {
                 flowRun,
             })
