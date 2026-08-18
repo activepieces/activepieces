@@ -5,11 +5,12 @@ icon: 🪓
 
 # Server-side fan-out
 
-**Status: the dispatcher ships; its only caller does not yet.** The dispatch loop that creates a batch step's
-children runs in a **worker job on the app**, not in the parent's engine sandbox. The loop, the claim and the
-barrier plumbing below are live and covered by tests that drive them directly; the `PROCESS_IN_BATCHES` step
-that calls them arrives with the batch-step layer, so read every `PROCESS_IN_BATCHES` mention below as the
-contract the dispatcher already honours rather than a step you can add to a flow today. See decision
+**Status: shipped end to end on the server; not yet offerable in the builder.** The dispatch loop that
+creates a batch step's children runs in a **worker job on the app**, not in the parent's engine sandbox.
+`PROCESS_IN_BATCHES` is its caller and executes for real — the loop, the claim and the barrier plumbing below
+are covered by an end-to-end test that drives a flow through them. The step is still absent from the step
+picker until its settings UI lands, so it is reachable through the API rather than something you can add to a
+flow in the builder today. See decision
 [000029](../decisions/000029-batch-children-dispatch-from-a-server-side-worker-job.md) for why, and
 [000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) for the barrier it dispatches
 against.

@@ -5,9 +5,6 @@ status: accepted
 # Batch children dispatch from a server-side worker job, not from the engine
 
 ## Decision
-The dispatcher and its contract ship ahead of the step that calls them; `PROCESS_IN_BATCHES` below is that
-contract's consumer, and it arrives with the batch-step layer.
-
 `PROCESS_IN_BATCHES` makes **one** call — `POST /v1/waitpoints` with the barrier and its source handed over
 — and pauses. The source is stored out of band in `distributedStore` under a barrier-keyed key; the job
 carries only that key. A dedicated **fan-out dispatcher job** on the barrier queue then creates the children.

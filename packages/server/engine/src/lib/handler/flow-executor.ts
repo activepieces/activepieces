@@ -11,17 +11,19 @@ import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-
 import { FlowExecutorContext } from './context/flow-execution-context'
 import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
+import { processInBatchesExecutor } from './process-in-batches-executor'
 import { routerExecuter } from './router-executor'
 
-let executors: Partial<Record<FlowActionType, BaseExecutor<FlowAction>>> | null = null
+let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
 
 // ponytail: lazy because router-executor imports this module back; a module-level
 // const would hit the circular import in TDZ depending on bundle order.
-function getExecutors(): Partial<Record<FlowActionType, BaseExecutor<FlowAction>>> {
+function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
     executors ??= {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
+        [FlowActionType.PROCESS_IN_BATCHES]: processInBatchesExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
     }
     return executors
