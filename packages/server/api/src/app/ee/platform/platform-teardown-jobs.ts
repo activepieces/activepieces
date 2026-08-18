@@ -17,6 +17,7 @@ import { PieceMetadataEntity } from '../../pieces/metadata/piece-metadata-entity
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { ToolSearchIndexEntity } from '../../tool-search/tool-search-index.entity'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { userRepo } from '../../user/user-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
 import { VariableEntity } from '../../variable/variable.entity'
@@ -40,7 +41,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
         const { platformId } = data
 
-        await cutOffPlatformAccess({ platformId, log })
+        await beginPlatformTeardown({ platformId, log })
 
         const flows = await listFlowsByPlatform(platformId)
         await drainFlows({ flows, log })
@@ -78,13 +79,13 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     },
 })
 
-export async function cutOffPlatformAccess({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
+export async function beginPlatformTeardown({ platformId, log }: BeginPlatformTeardownParams): Promise<void> {
     await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
     await apiKeyService.deleteAllByPlatformId({ platformId })
     await stopPlatformExecution({ platformId, log })
 }
 
-async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
+async function stopPlatformExecution({ platformId, log }: BeginPlatformTeardownParams): Promise<void> {
     const flows = await listFlowsByPlatform(platformId)
     for (const flow of flows) {
         if (flow.status === FlowStatus.DISABLED || isNil(flow.publishedVersionId)) {
@@ -101,14 +102,21 @@ async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessPa
                 request: { status: FlowStatus.DISABLED },
             },
         }))
-        if (!isNil(error)) {
-            log.warn({
-                error,
-                flow: { id: flow.id },
-                project: { id: flow.projectId },
-                platform: { id: platformId },
-            }, '[stopPlatformExecution] Skipping trigger disable; platform teardown proceeding')
+        if (isNil(error)) {
+            continue
         }
+        log.warn({
+            error,
+            flow: { id: flow.id },
+            project: { id: flow.projectId },
+            platform: { id: platformId },
+        }, '[stopPlatformExecution] Trigger disable failed; forcing trigger-source removal so no new webhooks admit runs')
+        await tryCatch(async () => triggerSourceService(log).disable({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            simulate: false,
+            ignoreError: true,
+        }))
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
@@ -160,7 +168,7 @@ type DrainFlowsParams = {
     log: FastifyBaseLogger
 }
 
-type CutOffPlatformAccessParams = {
+type BeginPlatformTeardownParams = {
     platformId: string
     log: FastifyBaseLogger
 }
