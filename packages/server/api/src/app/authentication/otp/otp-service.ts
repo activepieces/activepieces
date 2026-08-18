@@ -15,6 +15,7 @@ const OTP_EXPIRATION_MS: Record<OtpType, number> = {
     [OtpType.PASSWORD_RESET]: 10 * 60 * 1000,
     [OtpType.EMAIL_LOGIN]: 10 * 60 * 1000,
 }
+const HASHED_OTP_VERSION = 1
 const MAX_ATTEMPTS = 5
 const MAX_ATTEMPTS_PER_IDENTITY = 10
 const IDENTITY_BUDGET_WINDOW_SECONDS = 60 * 60
@@ -51,6 +52,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     value: await encryptUtils.hmacString(freshCode),
                     state: OtpState.PENDING,
                     attempts: 0,
+                    version: HASHED_OTP_VERSION,
                 }
                 await repo().upsert(newOtp, ['identityId', 'type'])
                 await cacheCode({ identityId, type, code: freshCode })
@@ -88,7 +90,7 @@ export const otpService = (log: FastifyBaseLogger) => ({
                     return false
                 }
                 const otpIsPending = otp.state === OtpState.PENDING
-                const otpMatches = encryptUtils.digestsMatch(otp.value, await encryptUtils.hmacString(value))
+                const otpMatches = encryptUtils.digestsMatch(otp.value, await comparableValue({ otp, value }))
                 if (otpMatches && otpIsPending) {
                     await repo().delete({ id: otp.id })
                     await forgetCachedCode({ identityId, type })
@@ -105,6 +107,11 @@ export const otpService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function comparableValue({ otp, value }: ComparableValueParams): Promise<string> {
+    const writtenBeforeHashing = otp.version < HASHED_OTP_VERSION
+    return writtenBeforeHashing ? value : encryptUtils.hmacString(value)
+}
 
 async function countAttempt(otpId: string): Promise<void> {
     await repo().query('UPDATE "otp" SET "attempts" = "attempts" + 1 WHERE "id" = $1', [otpId])
@@ -180,6 +187,11 @@ type CountGuessOnIdentityParams = IdentityBudgetParams & {
 
 type CacheCodeParams = IdentityBudgetParams & {
     code: string
+}
+
+type ComparableValueParams = {
+    otp: OtpModel
+    value: string
 }
 
 type IdentityGuessBudget = {
