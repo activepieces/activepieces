@@ -79,11 +79,30 @@ export const createRunState = (
     run: initialState.run,
     batchesIndexes: {},
     setBatchIndex: ({ stepName, index }) =>
-      set((state) => ({
-        batchesIndexes: { ...state.batchesIndexes, [stepName]: index },
-        userManuallySelectedStepDuringRun:
-          state.userManuallySelectedStepDuringRun || !isNil(state.run),
-      })),
+      set((state) => {
+        if (state.batchesIndexes[stepName] === index) {
+          return state;
+        }
+        const loopNamesInBatch = flowStructureUtil
+          .getAllChildSteps(
+            flowStructureUtil.getStepOrThrow(
+              stepName,
+              state.flowVersion.trigger,
+            ),
+          )
+          .filter((step) => step.type === FlowActionType.LOOP_ON_ITEMS)
+          .map((step) => step.name);
+        return {
+          batchesIndexes: { ...state.batchesIndexes, [stepName]: index },
+          loopsIndexes: Object.fromEntries(
+            Object.entries(state.loopsIndexes).filter(
+              ([loopName]) => !loopNamesInBatch.includes(loopName),
+            ),
+          ),
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun || !isNil(state.run),
+        };
+      }),
     loopsIndexes:
       initialState.run && initialState.run.steps
         ? flowRunUtils.pinLoopsToIterationsWithFailedStep(initialState.run, {})
