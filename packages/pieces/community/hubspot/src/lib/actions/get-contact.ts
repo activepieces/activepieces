@@ -5,6 +5,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getContactAction = createAction({
 	auth: hubspotAuth,
@@ -13,6 +14,7 @@ export const getContactAction = createAction({
 	description: 'Gets a contact.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single contact by its HubSpot contact ID, returning default and any requested additional properties. Use when you already have the contact ID; to look one up by email instead, use a search-based action. Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		contactId: Property.ShortText({
 			displayName: 'Contact ID',

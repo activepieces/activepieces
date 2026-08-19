@@ -14,6 +14,7 @@ import {
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { newEmailSubscriptionsTimelineTriggerOutputSchema } from '../output-schemas';
 
 type SubscriptionTimeLineResponse = {
 	hasMore: boolean;
@@ -64,6 +65,7 @@ export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 		description:
 			'Fires when a new email-subscription timeline event is recorded for the HubSpot portal. Each event represents one subscription change (such as a bounce, unsubscribe, or opt-in) for a recipient, including the change type, source, and the underlying event that caused it. Polls the portal-wide email subscription timeline by timestamp.',
 	},
+	outputSchema: newEmailSubscriptionsTimelineTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {},
 	async onEnable(context) {

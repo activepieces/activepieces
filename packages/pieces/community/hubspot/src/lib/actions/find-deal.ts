@@ -5,6 +5,7 @@ import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { FilterOperatorEnum } from '../common/types';
 import { Client } from '@hubspot/api-client';
+import { dealSearchOutputSchema } from '../output-schemas';
 
 export const findDealAction = createAction({
 	auth: hubspotAuth,
@@ -13,6 +14,7 @@ export const findDealAction = createAction({
 	description: 'Finds a deal by searching.',
 	audience: 'both',
 	aiMetadata: { description: 'Search HubSpot deals by one or two property/value pairs (matched with equality) and return the matching deals. Read-only and repeatable. Use this to look up an existing deal before updating or associating it; pick a create action instead when no matching deal should exist.', idempotent: true },
+	outputSchema: dealSearchOutputSchema,
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

@@ -13,6 +13,7 @@ import { chunk } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 type Props = {
 	propertyName?: string | string[];
@@ -142,6 +143,7 @@ export const newCompanyPropertyChangeTrigger = createTrigger({
 			true,
 		),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);
