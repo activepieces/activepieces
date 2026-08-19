@@ -39,6 +39,10 @@ function isSkippedOnEmptyItems({
   );
 }
 
+function isDispatchComplete(output: BatchStepRunOutput | null): boolean {
+  return headerState(output).kind === 'finished';
+}
+
 function childState({
   output,
   batchIndex,
@@ -295,6 +299,7 @@ export const batchUtils = {
   parseStepOutput,
   batchCount,
   isSkippedOnEmptyItems,
+  isDispatchComplete,
   childState,
   headerState,
   itemRange,

@@ -47,6 +47,8 @@ import { formatUtils } from '@/lib/format-utils';
 type SelectedRow = {
   id: string;
   status: FlowRunStatus;
+  flowId: string;
+  flowVersionId: string;
 };
 
 type RunsTableColumnsProps = {
@@ -91,6 +93,8 @@ export const runsTableColumns = ({
               const currentPageRows = table.getRowModel().rows.map((row) => ({
                 id: row.original.id,
                 status: row.original.status,
+                flowId: row.original.flowId,
+                flowVersionId: row.original.flowVersionId,
               }));
 
               setSelectedRows((prev) => {
@@ -127,6 +131,8 @@ export const runsTableColumns = ({
                       .rows.map((row) => ({
                         id: row.original.id,
                         status: row.original.status,
+                        flowId: row.original.flowId,
+                        flowVersionId: row.original.flowVersionId,
                       }));
                     setSelectedRows(currentPageRows);
                     setSelectedAll(false);
@@ -143,6 +149,8 @@ export const runsTableColumns = ({
                       const allRows = data.data.map((row) => ({
                         id: row.id,
                         status: row.status,
+                        flowId: row.flowId,
+                        flowVersionId: row.flowVersionId,
                       }));
                       setSelectedRows(allRows);
                       setSelectedAll(true);
@@ -188,6 +196,8 @@ export const runsTableColumns = ({
                     {
                       id: row.original.id,
                       status: row.original.status,
+                      flowId: row.original.flowId,
+                      flowVersionId: row.original.flowVersionId,
                     },
                   ]);
                 } else {
