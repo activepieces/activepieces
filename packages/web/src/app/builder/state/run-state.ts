@@ -9,6 +9,7 @@ import {
   FlowVersion,
   LoopStepOutput,
   SampleDataFileType,
+  StepOutput,
   StepRunResponse,
   TestStepProgressEvent,
   WebsocketClientEvent,
@@ -33,7 +34,11 @@ export type RunState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   clearRun: (userHasPermissionToEditFlow: boolean) => void;
   loopsIndexes: Record<string, number>;
-  setLoopIndex: (stepName: string, index: number) => void;
+  setLoopIndex: (params: {
+    stepName: string;
+    index: number;
+    steps: Record<string, StepOutput>;
+  }) => void;
   batchesIndexes: Record<string, number>;
   setBatchIndex: (params: { stepName: string; index: number }) => void;
   selectFailedStep: () => void;
@@ -154,7 +159,7 @@ export const createRunState = (
         userManuallySelectedStepDuringRun: false,
         isStepDataPanelOpen: false,
       }),
-    setLoopIndex: (stepName: string, index: number) => {
+    setLoopIndex: ({ stepName, index, steps }) => {
       set((state) => {
         const parentLoop = flowStructureUtil.getStepOrThrow(
           stepName,
@@ -178,7 +183,7 @@ export const createRunState = (
           const childLoopOutput = flowRunUtils.extractStepOutput(
             childLoop.name,
             loopsIndexes,
-            state.run?.steps ?? {},
+            steps,
           ) as LoopStepOutput | undefined;
 
           if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {
