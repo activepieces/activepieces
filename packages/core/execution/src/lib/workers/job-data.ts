@@ -302,6 +302,7 @@ export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof Us
 export enum AgentRunSource {
     CHAT = 'CHAT',
     FLOW_STEP = 'FLOW_STEP',
+    AGENT = 'AGENT',
 }
 
 export const AgentPromptOverride = z.object({
