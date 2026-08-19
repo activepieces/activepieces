@@ -49,6 +49,9 @@ guard never saw.
 - The delete guard reads `flow_version.agentIds`, which is only authoritative because the run refuses
   any agent the running step's own stored input does not name. Those two rules hold each other up;
   changing one without the other reopens the hole.
-- The run check is per step, not per flow. `agentIds` flattens every step's reference, so a flow-wide
-  check would let one agent step name a sibling's agent and run its tools under its own prompt. The
-  step therefore sends its name and the server reads that step's stored `agentId`.
+- The run check is per step, not per flow, and the step comes from the waitpoint the answer will
+  resume rather than from the request. `agentIds` flattens every step's reference, so a flow-wide check
+  would let one agent step name a sibling's agent and run its tools under its own prompt; and a step
+  name taken from the body would let anything holding the engine token pick the step it is validated
+  against. The waitpoint is the one identity the caller cannot restate, because it is also where the
+  answer goes.

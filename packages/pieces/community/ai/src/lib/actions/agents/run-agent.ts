@@ -138,7 +138,7 @@ export const runAgent = createAction({
         instruction: context.propsValue.prompt,
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
-        ...(agentId ? { agentId, stepName: context.step.name } : {
+        ...(agentId ? { agentId } : {
           ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
           ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
           tools: toolsWithoutResolvedAuth(context.propsValue.agentTools ?? []),

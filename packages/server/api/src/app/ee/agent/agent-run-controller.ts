@@ -8,6 +8,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { waitpointService } from '../../flows/flow-run/waitpoint/waitpoint-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { extractMcpTriggerInput, mcpPropertyToZod } from '../../mcp/mcp-server-builder'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
@@ -20,7 +21,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, flowRunId, waitpointId, agentId, stepName, tools: inlineTools } = request.body
+        const { instruction, flowRunId, waitpointId, agentId, tools: inlineTools } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -35,7 +36,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(agentId) && (inlineTools?.length ?? 0) > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
         }
-        const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, stepName: stepName ?? '', log: request.log })
+        const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, waitpointId, log: request.log })
         const { tools, structuredOutput, maxSteps, modelName, provider } = linked ?? request.body
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
@@ -95,19 +96,23 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-// Every step input is interpolated before it reaches here, so the id in the request is whatever a
-// template resolved to. Compared against the step's own stored value rather than the flow's whole
-// set, or a step could name an agent that belongs to a sibling step, or supply one from a payload.
-async function resolvePublishedAgent({ projectId, externalId, flowRunId, stepName, log }: {
+// Step inputs are interpolated before they reach here, so the id in the request is whatever a
+// template resolved to. The step it has to match is taken from the waitpoint the answer will resume,
+// never from the request: nothing the caller sends decides which step's agent it gets.
+async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpointId, log }: {
     projectId: string
     externalId: string
     flowRunId: string
-    stepName: string
+    waitpointId: string
     log: FastifyBaseLogger
 }): Promise<AgentConfig> {
     const flowRun = await flowRunService(log).getOneOrThrow({ id: flowRunId, projectId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    if (isNil(waitpoint)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That waitpoint does not belong to this run, so there is no step to run an agent for' } })
+    }
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
-    const step = flowStructureUtil.getStep(stepName, flowVersion.trigger)
+    const step = flowStructureUtil.getStep(waitpoint.stepName, flowVersion.trigger)
     if (isNil(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
     }
@@ -167,14 +172,12 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
 
 const RUNS_PER_MINUTE = 60
 const BUILT_IN_TOOL_PREFIX = 'ap_'
-const MAX_STEP_NAME_LENGTH = 200
 
 const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     flowRunId: ApId,
     waitpointId: ApId,
     agentId: z.optional(ApId),
-    stepName: z.optional(z.string().max(MAX_STEP_NAME_LENGTH)),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).optional(),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).optional(),
