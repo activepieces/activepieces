@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -47,17 +47,32 @@ async function createAgent(ctx: TestContext, draft: Record<string, unknown> = {}
     return response.json()
 }
 
+// A linked run is only allowed to use an agent the stored flow version names, so the fixture has to
+// be a real flow run over a real version rather than a loose id.
+async function flowRunNaming({ ctx, agentIds }: { ctx: TestContext, agentIds: string[] }): Promise<string> {
+    const flow = createMockFlow({ projectId: ctx.project.id })
+    await db.save('flow', flow)
+    const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, agentIds })
+    await db.save('flow_version', version)
+    const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id })
+    await db.save('flow_run', flowRun)
+    return flowRun.id
+}
+
 async function startRun(ctx: TestContext, body: Record<string, unknown>) {
     const engineToken = await accessTokenManager(app.log).generateEngineToken({
         jobId: apId(),
         projectId: ctx.project.id,
         platformId: ctx.platform.id,
     })
+    const flowRunId = typeof body.agentId === 'string'
+        ? await flowRunNaming({ ctx, agentIds: [body.agentId] })
+        : apId()
     return app.inject({
         method: 'POST',
         url: RUNS_URL,
         headers: { authorization: `Bearer ${engineToken}` },
-        body: { instruction: 'clear my inbox', flowRunId: apId(), waitpointId: apId(), ...body },
+        body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), ...body },
     })
 }
 
@@ -145,10 +160,34 @@ describe('a flow step that links a saved agent', () => {
         expect(inlineRun.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 
+    it('refuses an agent the running flow version never named, so a payload cannot choose one', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id,
+        })
+        const flowRunId = await flowRunNaming({ ctx, agentIds: [] })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), agentId: agent.externalId },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('did not name that agent')
+    })
 })
 
-describe('deleting an agent a flow still runs', () => {
-    async function publishedFlowRunning({ ctx, externalId, published }: { ctx: TestContext, externalId: string, published: boolean }) {
+describe('deleting an agent a flow still uses', () => {
+    async function flowUsingAgent({ ctx, externalId, published, supersededBy }: {
+        ctx: TestContext
+        externalId: string
+        published: boolean
+        supersededBy?: string[]
+    }) {
         const flow = createMockFlow({ projectId: ctx.project.id })
         await db.save('flow', flow)
         const version = createMockFlowVersion({
@@ -156,17 +195,27 @@ describe('deleting an agent a flow still runs', () => {
             updatedBy: ctx.user.id,
             displayName: 'Nightly inbox sweep',
             agentIds: [externalId],
+            created: '2026-08-01T00:00:00.000Z',
         })
         await db.save('flow_version', version)
         if (published) {
             await db.update('flow', flow.id, { publishedVersionId: version.id })
         }
+        if (supersededBy) {
+            await db.save('flow_version', createMockFlowVersion({
+                flowId: flow.id,
+                updatedBy: ctx.user.id,
+                displayName: 'Nightly inbox sweep',
+                agentIds: supersededBy,
+                created: '2026-08-02T00:00:00.000Z',
+            }))
+        }
     }
 
-    it('is refused, and names the flow', async () => {
+    it('is refused when a published flow runs it, and names the flow', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await publishedFlowRunning({ ctx, externalId: agent.externalId, published: true })
+        await flowUsingAgent({ ctx, externalId: agent.externalId, published: true })
 
         const response = await ctx.delete(`/v1/agents/${agent.id}`)
 
@@ -174,21 +223,42 @@ describe('deleting an agent a flow still runs', () => {
         expect(JSON.stringify(response.json())).toContain('Nightly inbox sweep')
     })
 
-    it('goes through when only a draft references it, because no run is live yet', async () => {
+    it('is refused for a published version even when a newer draft dropped the step', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await publishedFlowRunning({ ctx, externalId: agent.externalId, published: false })
+        await flowUsingAgent({ ctx, externalId: agent.externalId, published: true, supersededBy: [] })
+
+        const response = await ctx.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('Nightly inbox sweep')
+    })
+
+    it('is refused while a draft still uses it, so publishing later cannot break it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await flowUsingAgent({ ctx, externalId: agent.externalId, published: false })
+
+        const response = await ctx.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('goes through once the step is gone, even though old versions still mention it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await flowUsingAgent({ ctx, externalId: agent.externalId, published: false, supersededBy: [] })
 
         const response = await ctx.delete(`/v1/agents/${agent.id}`)
 
         expect([StatusCodes.OK, StatusCodes.NO_CONTENT]).toContain(response.statusCode)
     })
 
-    it('ignores a published flow in another project', async () => {
+    it('ignores a flow in another project', async () => {
         const ctx = await context()
         const other = await context()
         const agent = await createAgent(ctx)
-        await publishedFlowRunning({ ctx: other, externalId: agent.externalId, published: true })
+        await flowUsingAgent({ ctx: other, externalId: agent.externalId, published: true })
 
         const response = await ctx.delete(`/v1/agents/${agent.id}`)
 

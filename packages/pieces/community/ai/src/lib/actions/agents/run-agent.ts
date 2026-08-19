@@ -123,7 +123,7 @@ export const runAgent = createAction({
       return result;
     }
 
-    const agentId = context.propsValue.agentId || undefined;
+    const { agentId } = context.propsValue;
 
     const waitpoint = await context.run.createWaitpoint({
       type: 'WEBHOOK',
