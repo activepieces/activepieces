@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { createBroadcastOutputSchema } from '../output-schemas';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendProps } from '../common/props';
@@ -7,6 +8,7 @@ export const createBroadcast = createAction({
   name: 'create_broadcast',
   auth: resendAuth,
   displayName: 'Create Broadcast',
+  outputSchema: createBroadcastOutputSchema,
   description: 'Create a new broadcast email to send to an audience',
   audience: 'both',
   aiMetadata: { description: 'Creates a draft broadcast email (subject and body) targeting a Resend audience and returns its ID. Use this to prepare a campaign; it only creates the draft and does not deliver anything — pair it with Send Broadcast to actually send. Requires the audience ID and a sender on a verified domain. Not idempotent — each call creates a new broadcast.', idempotent: false },

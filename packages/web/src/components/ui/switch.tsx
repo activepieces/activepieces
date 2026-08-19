@@ -48,7 +48,8 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          'pointer-events-none flex items-center justify-center bg-background dark:bg-foreground shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+          'pointer-events-none flex items-center justify-center bg-background dark:bg-foreground ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+          'shadow-[0_1px_2px_rgba(15,23,42,0.18)]',
           variant === 'square' ? 'rounded-sm' : 'rounded-full',
           THUMB_SIZE_CLASSES[size],
         )}
@@ -65,14 +66,14 @@ function Switch({
 
 const SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
   sm: 'h-4 w-8',
-  default: 'h-5 w-10',
+  default: 'h-[18px] w-8',
   lg: 'h-7 w-14',
   xl: 'h-8 w-16',
 };
 
 const THUMB_SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
   sm: 'h-3 w-3 data-[state=checked]:translate-x-4',
-  default: 'h-4 w-4 data-[state=checked]:translate-x-5',
+  default: 'h-3.5 w-3.5 data-[state=checked]:translate-x-3.5',
   lg: 'h-5 w-5 data-[state=checked]:translate-x-6',
   xl: 'h-6 w-6 data-[state=checked]:translate-x-7',
 };

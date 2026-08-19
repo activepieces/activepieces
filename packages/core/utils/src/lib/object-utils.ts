@@ -47,6 +47,24 @@ export function deleteProps<T extends Record<string, unknown>, K extends keyof T
     return newObj
 }
 
+export function cloneResolvedValue(value: unknown): unknown {
+    switch (typeof value) {
+        case 'string':
+        case 'number':
+        case 'boolean':
+            return value
+        case 'object': {
+            if (value === null) {
+                return null
+            }
+            const serialized = JSON.stringify(value)
+            return isNil(serialized) ? undefined : JSON.parse(serialized)
+        }
+        default:
+            return undefined
+    }
+}
+
 export function sanitizeObjectForPostgresql<T>(input: T): T {
     return applyFunctionToValuesSync<T>(input, (str) => {
         if (isString(str)) {

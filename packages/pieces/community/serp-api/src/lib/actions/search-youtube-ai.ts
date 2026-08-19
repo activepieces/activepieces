@@ -12,7 +12,7 @@ export const searchYoutubeAi = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches YouTube via SerpApi for videos matching a query and returns them in `video_results`. Use to find video content on a topic, discover channels, or research what is being published. For news pick Search Google News, for general web Search Google. Read-only and idempotent; requires the search query and a SerpApi API key.',
+      'Search YouTube for videos about a topic or query. Use to find videos, discover channels, look up video content, or research what is being published about a subject. For news articles pick Search Google News.',
     idempotent: true,
   },
   outputSchema: searchYoutubeAiOutputSchema,
