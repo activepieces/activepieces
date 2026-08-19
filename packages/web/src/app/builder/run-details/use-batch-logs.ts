@@ -92,7 +92,7 @@ export const useStepOutputInRun = (stepName: string | undefined) => {
     }
     return flowRunUtils.extractStepOutput(stepName, loopsIndexes, steps);
   }, [steps, stepName, loopsIndexes]);
-  return { stepOutput, batchLogs };
+  return { stepOutput, batchLogs, steps };
 };
 
 export function enclosingBatchStepName({

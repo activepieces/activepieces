@@ -26,7 +26,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     state.setLoopIndex,
     state.loopsIndexes[stepName] ?? 0,
   ]);
-  const { stepOutput } = useStepOutputInRun(stepName);
+  const { stepOutput, steps } = useStepOutputInRun(stepName);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -60,7 +60,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
       1,
       Math.min(parseInt(value) ?? 1, totalIterations),
     );
-    setLoopIndex(stepName, parsedValue - 1);
+    setLoopIndex({ stepName, index: parsedValue - 1, steps: steps ?? {} });
   }
 
   if (totalIterations === 0) {
@@ -126,7 +126,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setLoopIndex(stepName, index);
+                      setLoopIndex({ stepName, index, steps: steps ?? {} });
                     }}
                     className={cn(
                       'size-2.5 shrink-0 rounded-full border border-background transition-transform hover:scale-125',
