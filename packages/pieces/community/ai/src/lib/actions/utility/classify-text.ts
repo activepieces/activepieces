@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/pieces-framework';
+import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
 
 export const classifyText = createAction({
   audience: 'both',
@@ -12,6 +12,7 @@ export const classifyText = createAction({
   aiMetadata: { description: 'Assigns exactly one label from a caller-supplied Categories list to a block of text using a text model, and errors if the model answers with anything outside that list. Pick it for routing or branching where the outcomes are known up front; use extractStructuredData for multiple typed fields, summarizeText to shorten text, or askAi when the answer is not one of a fixed set. Requires the text plus a non-empty Categories array matched by exact string, so keep labels short; read-only and idempotent.', idempotent: true },
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
+    configuration: aiProps({ modelType: 'text' }).configuration,
     model: aiProps({ modelType: 'text' }).model,
     text: Property.LongText({
       displayName: 'Text to Classify',
@@ -31,6 +32,7 @@ export const classifyText = createAction({
 
     const model = await createAIModel({
       provider: provider as AIProviderName,
+      ...spreadIfDefined('configId', context.propsValue.configuration),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

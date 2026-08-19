@@ -2468,5 +2468,7 @@
   "Fill these in and you can start talking to this agent.": "Fill these in and you can start talking to this agent.",
   "What the agent should do, and how to decide.": "What the agent should do, and how to decide.",
   "Finish setting up": "Finish setting up",
-  "The model that answers, and the provider behind it.": "The model that answers, and the provider behind it."
+  "The model that answers, and the provider behind it.": "The model that answers, and the provider behind it.",
+  "Automatic": "Automatic",
+  "Could not save this key": "Could not save this key"
 }

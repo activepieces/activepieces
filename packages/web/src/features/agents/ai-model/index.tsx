@@ -34,8 +34,13 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
 type AIModelSelectorProps = {
   defaultProvider?: AIProviderName;
   defaultModel?: string;
+  defaultConfigId?: string;
   disabled?: boolean;
-  onChange: (value: { provider?: string; model?: string }) => void;
+  onChange: (value: {
+    provider?: string;
+    model?: string;
+    configId?: string;
+  }) => void;
 };
 
 const ACTIVEPIECES_PROVIDER_CONFIG = {
@@ -50,22 +55,30 @@ const ALL_PROVIDERS = [...SUPPORTED_AI_PROVIDERS, ACTIVEPIECES_PROVIDER_CONFIG];
 export function AIModelSelector({
   defaultProvider,
   defaultModel,
+  defaultConfigId,
   disabled = false,
   onChange,
 }: AIModelSelectorProps) {
   const [providerOpen, setProviderOpen] = React.useState(false);
   const [modelOpen, setModelOpen] = React.useState(false);
+  const [configOpen, setConfigOpen] = React.useState(false);
   const [selectedProvider, setSelectedProvider] = React.useState<
     AIProviderName | undefined
   >(defaultProvider);
   const [selectedModel, setSelectedModel] = React.useState<string | undefined>(
     defaultModel,
   );
+  const [selectedConfigId, setSelectedConfigId] = React.useState<
+    string | undefined
+  >(defaultConfigId);
 
   const { data: providers = [], isLoading: providersLoading } =
     aiModelHooks.useListProviders();
   const { data: models = [], isLoading: modelsLoading } =
-    aiModelHooks.useGetModelsForProvider(selectedProvider);
+    aiModelHooks.useGetModelsForProvider(selectedProvider, selectedConfigId);
+
+  const providerKeys =
+    providers.find((p) => p.provider === selectedProvider)?.keys ?? [];
 
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
@@ -112,9 +125,20 @@ export function AIModelSelector({
     ) {
       const firstModel = models[0].id;
       setSelectedModel(firstModel);
-      onChange({ provider: selectedProvider, model: firstModel });
+      onChange({
+        provider: selectedProvider,
+        model: firstModel,
+        configId: selectedConfigId,
+      });
     }
-  }, [models, modelsLoading, selectedProvider, selectedModel, onChange]);
+  }, [
+    models,
+    modelsLoading,
+    selectedProvider,
+    selectedModel,
+    selectedConfigId,
+    onChange,
+  ]);
 
   React.useEffect(() => {
     if (
@@ -125,21 +149,44 @@ export function AIModelSelector({
     ) {
       const fallback = models[0]?.id;
       setSelectedModel(fallback);
-      onChange({ provider: selectedProvider, model: fallback });
+      onChange({
+        provider: selectedProvider,
+        model: fallback,
+        configId: selectedConfigId,
+      });
     }
-  }, [models, selectedModel, selectedProvider, onChange, defaultModel]);
+  }, [
+    models,
+    selectedModel,
+    selectedProvider,
+    selectedConfigId,
+    onChange,
+    defaultModel,
+  ]);
 
   const handleProviderChange = (provider: AIProviderName) => {
     setSelectedProvider(provider);
     setSelectedModel(undefined);
-    onChange({ provider, model: undefined });
+    setSelectedConfigId(undefined);
+    onChange({ provider, model: undefined, configId: undefined });
     setProviderOpen(false);
   };
 
   const handleModelChange = (modelId: string) => {
     setSelectedModel(modelId);
-    onChange({ provider: selectedProvider, model: modelId });
+    onChange({
+      provider: selectedProvider,
+      model: modelId,
+      configId: selectedConfigId,
+    });
     setModelOpen(false);
+  };
+
+  const handleConfigChange = (configId?: string) => {
+    setSelectedConfigId(configId);
+    setSelectedModel(undefined);
+    onChange({ provider: selectedProvider, model: undefined, configId });
+    setConfigOpen(false);
   };
 
   return (
@@ -295,6 +342,70 @@ export function AIModelSelector({
           </PopoverContent>
         </Popover>
       </div>
+
+      {providerKeys.length > 1 && (
+        <Popover open={configOpen} onOpenChange={setConfigOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={configOpen}
+              className="w-full justify-between h-auto"
+              disabled={disabled}
+            >
+              <span
+                className={cn('truncate', {
+                  'text-muted-foreground': !selectedConfigId,
+                })}
+              >
+                {providerKeys.find((key) => key.id === selectedConfigId)
+                  ?.name ?? t('Automatic')}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="p-0 w-[var(--radix-popover-trigger-width)]"
+            align="start"
+          >
+            <Command>
+              <CommandGroup className="max-h-64 overflow-auto">
+                <CommandItem
+                  value="automatic"
+                  onSelect={() => handleConfigChange(undefined)}
+                  className="cursor-pointer"
+                >
+                  <span className="flex-1">{t('Automatic')}</span>
+                  <Check
+                    className={cn(
+                      'ml-auto h-4 w-4',
+                      !selectedConfigId ? 'opacity-100' : 'opacity-0',
+                    )}
+                  />
+                </CommandItem>
+                {providerKeys.map((key) => (
+                  <CommandItem
+                    key={key.id}
+                    value={key.id}
+                    onSelect={() => handleConfigChange(key.id)}
+                    className="cursor-pointer"
+                  >
+                    <span className="flex-1">{key.name}</span>
+                    <Check
+                      className={cn(
+                        'ml-auto h-4 w-4',
+                        selectedConfigId === key.id
+                          ? 'opacity-100'
+                          : 'opacity-0',
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      )}
 
       {selectedProvider && (
         <p className="text-xs text-muted-foreground">

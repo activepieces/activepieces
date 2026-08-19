@@ -61,10 +61,10 @@ export const aiModelHooks = {
     });
   },
 
-  useGetModelsForProvider: (provider?: AIProviderName) => {
+  useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {
     const projectId = authenticationSession.getProjectId();
     return useQuery({
-      queryKey: ['ai-models', provider, projectId],
+      queryKey: ['ai-models', provider, configId, projectId],
       enabled: !isNil(provider) && !isNil(projectId),
       queryFn: async () => {
         if (isNil(provider) || isNil(projectId)) return [];
@@ -72,6 +72,7 @@ export const aiModelHooks = {
         const allModels = await aiProviderApi.listModelsForProvider(
           provider,
           projectId,
+          configId,
         );
 
         return getAllowedModelsForProvider(provider, allModels, 'text');

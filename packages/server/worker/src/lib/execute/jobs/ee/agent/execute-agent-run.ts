@@ -89,6 +89,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
                 ...spreadIfDefined('provider', data.provider),
+                ...spreadIfDefined('providerConfigId', data.providerConfigId),
                 ...spreadIfDefined('projectId', projectId),
                 ...spreadIfDefined('promptOverride', promptOverride),
                 ...spreadIfDefined('dryRun', dryRun),
@@ -184,6 +185,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const allTools = buildToolSet({
                 provider,
+                providerConfigId: config.providerConfigId,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
@@ -460,9 +462,10 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
+    providerConfigId: string
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: AgentPhase }
@@ -633,7 +636,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId }),
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
@@ -643,7 +646,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider }),
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
         log,
     })
     const completionTool = structuredOutput.length === 0

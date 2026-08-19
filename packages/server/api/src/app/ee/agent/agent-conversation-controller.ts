@@ -176,6 +176,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             log,
             scope: agentHelpers.providerScopeFor({ projectId: runProjectId }),
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
+            ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
@@ -199,6 +200,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                     structuredOutput: agentConfig.structuredOutput,
                     maxSteps: agentConfig.maxSteps,
                     ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                    ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
                     promptOverride: { system: agentConfig.instructions },
                 }),
             },
