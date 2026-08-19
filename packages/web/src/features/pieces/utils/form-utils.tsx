@@ -105,7 +105,7 @@ function parseDynamicValue({
 }: {
   property: PieceProperty;
   value: unknown;
-}): unknown[] | boolean | undefined {
+}): unknown[] | boolean | string | number | undefined {
   const parsed = parseToJsonIfPossible(value);
   switch (property.type) {
     case PropertyType.MULTI_SELECT_DROPDOWN:
@@ -113,6 +113,12 @@ function parseDynamicValue({
       return Array.isArray(parsed) ? parsed : undefined;
     case PropertyType.CHECKBOX:
       return typeof parsed === 'boolean' ? parsed : undefined;
+    case PropertyType.DROPDOWN:
+    case PropertyType.STATIC_DROPDOWN:
+      if (typeof value === 'string' || typeof value === 'number') {
+        return value;
+      }
+      return undefined;
     default:
       return undefined;
   }

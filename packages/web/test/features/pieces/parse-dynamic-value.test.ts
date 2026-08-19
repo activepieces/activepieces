@@ -14,6 +14,17 @@ const checkbox = Property.Checkbox({
   required: false,
 });
 const shortText = Property.ShortText({ displayName: 'Text', required: false });
+const dropdown = Property.Dropdown({
+  displayName: 'Dropdown',
+  required: true,
+  refreshers: [],
+  options: async () => ({ options: [{ label: 'Option 1', value: 'opt1' }] }),
+});
+const staticDropdown = Property.StaticDropdown({
+  displayName: 'Static Dropdown',
+  required: true,
+  options: { options: [{ label: 'Option 1', value: 'opt1' }] },
+});
 
 describe('formUtils.parseDynamicValue', () => {
   it.each([
@@ -21,6 +32,9 @@ describe('formUtils.parseDynamicValue', () => {
     ['[]', multiSelect, []],
     ['true', checkbox, true],
     ['false', checkbox, false],
+    ['{{ variables.channel }}', dropdown, '{{ variables.channel }}'],
+    ['opt1', staticDropdown, 'opt1'],
+    [123, staticDropdown, 123],
   ])('restores %s', (value, property, expected) => {
     expect(formUtils.parseDynamicValue({ property, value })).toEqual(expected);
   });
@@ -31,6 +45,8 @@ describe('formUtils.parseDynamicValue', () => {
     ['{"not":"an array"}', multiSelect],
     ['1', checkbox],
     ['["year","day"]', shortText],
+    [null, dropdown],
+    [undefined, staticDropdown],
   ])('has nothing unambiguous to restore in %s', (value, property) => {
     expect(formUtils.parseDynamicValue({ property, value })).toBeUndefined();
   });
