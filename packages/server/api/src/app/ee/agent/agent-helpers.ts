@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AgentMcpTool, AgentTool, AgentToolType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, mcpEndpointAllowlistUtil, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,6 +9,7 @@ import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
+import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
@@ -78,6 +79,24 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
         }, 'no AI provider on this platform is enabled for chat')
     }
     return chatProvider
+}
+
+async function assertMcpEndpointsApproved({ platformId, tools, log }: { platformId: string, tools: AgentTool[] | undefined, log: FastifyBaseLogger }): Promise<void> {
+    const mcpTools = (tools ?? []).filter((tool): tool is AgentMcpTool => tool.type === AgentToolType.MCP)
+    if (mcpTools.length === 0) {
+        return
+    }
+    const platform = await platformService(log).getOneOrThrow(platformId)
+    const rejected = unique(mcpTools
+        .filter((tool) => !mcpEndpointAllowlistUtil.isServerUrlApproved({ serverUrl: tool.serverUrl, allowlist: platform.mcpServerEndpointAllowlist }))
+        .map((tool) => tool.serverUrl))
+    if (rejected.length === 0) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `These MCP server endpoints are not on the list approved by your platform admin: ${rejected.join(', ')}` },
+    })
 }
 
 async function assertRunProviderConfigured({ platformId, provider, log }: { platformId: string, provider?: AIProviderName | null, log: FastifyBaseLogger }): Promise<void> {
@@ -275,6 +294,7 @@ export const agentHelpers = {
     getUserProjects,
     resolveChatProvider,
     assertRunProviderConfigured,
+    assertMcpEndpointsApproved,
     resolveTier,
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,

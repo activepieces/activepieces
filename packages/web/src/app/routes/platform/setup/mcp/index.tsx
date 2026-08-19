@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { McpEndpointAllowlist } from './mcp-endpoint-allowlist';
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage() {
@@ -56,6 +57,9 @@ export default function PlatformMcpPage() {
             <TabsList>
               <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
               <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
+              <TabsTrigger value="approved-endpoints">
+                {t('Approved endpoints')}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
@@ -108,6 +112,14 @@ export default function PlatformMcpPage() {
                   }
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent
+              value="approved-endpoints"
+              className="mt-4 pb-6"
+              tabIndex={-1}
+            >
+              <McpEndpointAllowlist />
             </TabsContent>
           </Tabs>
         )}

@@ -7,7 +7,7 @@ icon: 🏢
 A **Platform** is the top-level tenant namespace in Activepieces. Every install has at least one. It owns branding (logo, colors, favicon), auth settings (email auth toggle, allowed auth domains, federated SSO), and a `PlatformPlan` that governs feature flags and limits. On Cloud a user can own many platforms; on CE/EE there's typically one. Available in all editions.
 
 ### Entities & services
-- `platform` entity: `ownerId`, `name`, `primaryColor`, `themeColors` (jsonb, null = derived from primaryColor), logo/favicon URLs, `cloudAuthEnabled`, `allowedAuthDomains`, `emailAuthEnabled`, `federatedAuthProviders` (jsonb OAuth2 + SAML), `pinnedPieces`, `pieceSelectorConfig` (jsonb, null = default tabs).
+- `platform` entity: `ownerId`, `name`, `primaryColor`, `themeColors` (jsonb, null = derived from primaryColor), logo/favicon URLs, `cloudAuthEnabled`, `allowedAuthDomains`, `emailAuthEnabled`, `federatedAuthProviders` (jsonb OAuth2 + SAML), `pinnedPieces`, `pieceSelectorConfig` (jsonb, null = default tabs), `mcpServerEndpointAllowlist` (jsonb, null/`[]` = any external MCP endpoint allowed — see [AI Agents](../ai-intelligence/ai-agents.md)).
 - `platformService`: `create`, `update`, `getOneWithPlanAndUsageOrThrow`, `getOneWithPlanOrThrow` (flags only, used in auth guards), `listPlatformsForIdentityWithAtleastProject` (platform-switcher), `getOldestPlatform` (CE single-platform resolution).
 
 ### Endpoints

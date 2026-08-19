@@ -213,6 +213,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
         ssoDomainVerification: platform?.ssoDomainVerification ?? null,
+        mcpServerEndpointAllowlist: platform?.mcpServerEndpointAllowlist ?? null,
     }
 }
 
