@@ -55,3 +55,10 @@ guard never saw.
   name taken from the body would let anything holding the engine token pick the step it is validated
   against. The waitpoint is the one identity the caller cannot restate, because it is also where the
   answer goes.
+- What the run check does **not** defend against: a party that can already run code in the project.
+  An engine token is scoped to a project, not to a run, and the sibling endpoint that creates
+  waitpoints takes `flowRunId` and `stepName` from its body outright, so naming another pending
+  waitpoint of the same project is within the engine trust model as it stands. That grants nothing new,
+  because the same party can put any agent's externalId on a step of their own — flow save does not
+  validate that the author may use the agent it references. Both routes need the same fix, and it is
+  authoring-time validation, not a further run-time check.
