@@ -7,6 +7,7 @@ import { Logger } from 'pino'
 import { workerSettings } from '../../config/worker-settings'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 import { bunRunner } from './bun-runner'
+import { dependencyGuard } from './dependency-guard'
 
 const tracer = trace.getTracer('code-builder')
 
@@ -34,13 +35,13 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
+const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
+
 const INVALID_ARTIFACT_TEMPLATE = `
     exports.code = async (params) => {
-      throw new Error(\`\${ERROR_MESSAGE}\`);
+      throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
     };
     `
-
-const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
 export const codeBuilder = (log: Logger) => ({
     getCodesFolder({
@@ -144,10 +145,9 @@ function getPackageJson(packageJson: string): string {
     const { data: parsedPackageJson, error: parseError } = tryCatchSync(() => JSON.parse(packageJson))
     const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
     return JSON.stringify({
-        ...packageJsonObject,
         dependencies: {
             '@types/node': '18.17.1',
-            ...(packageJsonObject?.['dependencies'] ?? {}),
+            ...dependencyGuard.sanitize(packageJsonObject?.['dependencies']),
         },
     })
 }
@@ -175,15 +175,12 @@ async function compileCode({ path, code }: CompileCodeParams, log: Logger): Prom
 }
 
 async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorHasStdout =
-        typeof error === 'object' && error && 'stdout' in error
-    const stdoutError = errorHasStdout ? error.stdout : undefined
-    const genericError = `${error ?? 'error compiling'}`
-    const errorMessage = `Compilation Error ${stdoutError ?? genericError}`
+    const reason = error instanceof Error ? error.message : 'error compiling'
+    const errorMessage = `Compilation Error ${reason}`
 
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
-        errorMessage,
+        () => JSON.stringify(errorMessage),
     )
 
     await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')

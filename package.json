@@ -2,6 +2,9 @@
   "name": "activepieces",
   "version": "0.82.0",
   "packageManager": "bun@1.3.3",
+  "redisMemoryServer": {
+    "version": "7.4.6"
+  },
   "scripts": {
     "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "turbo run serve --filter=web",
