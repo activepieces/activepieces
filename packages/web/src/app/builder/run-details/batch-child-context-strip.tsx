@@ -31,7 +31,7 @@ const BatchChildContextStrip = () => {
   )}`;
 
   return (
-    <div className="flex min-w-0 items-center gap-2 px-1 pb-2 text-xs text-muted-foreground">
+    <div className="flex min-w-0 items-center gap-2 px-1 pb-2 text-xs text-gray-11">
       <CornerLeftUp className="size-3.5 shrink-0" />
       <span className="shrink-0">
         {isNil(batchStepDisplayName)
@@ -43,7 +43,7 @@ const BatchChildContextStrip = () => {
       </span>
       <TextWithTooltip tooltipMessage={parentRunLabel}>
         <Link
-          className="truncate text-primary underline"
+          className="truncate text-accent-11 underline"
           to={authenticationSession.appendProjectRoutePrefix(
             `/runs/${run.parentRunId}`,
           )}
