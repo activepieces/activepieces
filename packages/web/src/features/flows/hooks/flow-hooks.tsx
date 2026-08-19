@@ -19,11 +19,10 @@ import {
   TelemetryEventName,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
-  WebsocketClientEvent,
 } from '@activepieces/shared';
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -359,21 +358,24 @@ export const flowHooks = {
     isForManualTrigger: boolean;
   }) => {
     const socket = useSocket();
+    const abortRef = useRef<AbortController>(undefined);
     useEffect(() => {
       return () => {
-        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
+        abortRef.current?.abort();
       };
     }, [socket]);
     return useMutation<void>({
-      mutationFn: () =>
-        flowRunsApi.subscribeToTestFlowOrManualRun(
+      mutationFn: () => {
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+        return flowRunsApi.subscribeToTestFlowOrManualRun({
           socket,
-          {
-            flowVersionId,
-          },
-          onUpdateRun,
+          request: { flowVersionId },
+          onUpdate: onUpdateRun,
           isForManualTrigger,
-        ),
+          signal: abortRef.current.signal,
+        });
+      },
     });
   },
 

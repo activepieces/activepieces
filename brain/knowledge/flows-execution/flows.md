@@ -57,6 +57,26 @@ Flows are the core automation primitive: a versioned directed graph of trigger +
   (`ADD_ACTION` the container, `MOVE_ACTION` the old step inside it, repoint its input) rather than one
   `UPDATE_ACTION`, or it deletes the user's work with no undo path.
 
+- **The test-run socket subscription registers its progress listener *after* an `await`, so the builder's
+  unmount cleanup cannot cancel it.** `subscribeToTestFlowOrManualRun` (`features/flow-runs/api/flow-runs-api.ts`)
+  emits, awaits `getInitialRun` (a promise resolved by `TEST_FLOW_RUN_STARTED` / `MANUAL_TRIGGER_RUN_STARTED`),
+  and only then calls `socket.on(UPDATE_RUN_PROGRESS, …)`. Leave the builder inside that window and the
+  `socket.removeAllListeners(UPDATE_RUN_PROGRESS)` cleanup in `useTestFlowOrStartManualTrigger` removes
+  nothing, then the resolved promise installs the listener post-unmount; it survives until the run reports a
+  `finishTime` or the next builder unmount fires the same shotgun. The pending `getInitialRun` listener leaks
+  the same way and is never cleaned at all if the run never starts. Not user-visible: the socket is
+  module-level and outlives the route, but each `BuilderStateProvider` mount owns its store via `useRef`, so
+  the late `setRun` writes into an orphaned store nothing renders. Fixed by threading an `AbortSignal` from the
+  hook's unmount effect through both helpers: `getInitialRun` `off`s its started-event listener on abort and
+  simply never resolves, the subscribe helper bails on `signal.aborted` before `onUpdate` and `off`s the
+  progress listener on abort, and `mutationFn` aborts the previous controller first so a second Test Flow
+  click closes the first subscription instead of leaving it to expire on its own `finishTime`. The hook's
+  `removeAllListeners` is gone; the one in `useSwitchToDraft` (`flow-canvas/hooks.tsx`) stays because it has no
+  handle on the subscription — it is a shotgun that would silently unsubscribe any future second subscriber to
+  that event, so give the next one a handle rather than adding a third `removeAllListeners`. The same
+  register-after-await shape is still live in `chat-drawer.tsx`'s `listenToTestRun`, which registers
+  `TEST_FLOW_RUN_STARTED` with no unmount cleanup at all.
+
 ### Editions
 CE has full authoring/publishing/folders/forms. EE/Cloud add owner transfer, piece filtering, template sharing, and active-flow quota enforcement on publish/enable.
 
