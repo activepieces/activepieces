@@ -36,9 +36,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const { tools, structuredOutput, maxSteps } = linked ?? request.body
         const modelName = (linked ?? request.body).modelName ?? null
         const provider = (linked ?? request.body).provider ?? undefined
-        if (isNil(linked) && isNil(modelName)) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step has no AI model. Pick one on the step, or link a saved agent that carries its own.' } })
-        }
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
         const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)

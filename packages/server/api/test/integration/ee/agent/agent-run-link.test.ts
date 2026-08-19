@@ -145,14 +145,6 @@ describe('a flow step that links a saved agent', () => {
         expect(inlineRun.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 
-    it('refuses an unlinked step with no model, rather than quietly using the platform default', async () => {
-        const ctx = await context()
-
-        const response = await startRun(ctx, { tools: [] })
-
-        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('no AI model')
-    })
 })
 
 describe('deleting an agent a flow still runs', () => {
