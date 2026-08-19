@@ -117,7 +117,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.137.0",
+      "version": "0.138.1",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -7678,6 +7678,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/ringcentral": {
+      "name": "@activepieces/piece-ringcentral",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/robolly": {
       "name": "@activepieces/piece-robolly",
       "version": "0.1.7",
@@ -10782,6 +10796,7 @@
       },
       "devDependencies": {
         "@types/node": "24.11.0",
+        "esbuild": "0.28.1",
         "form-data": "4.0.6",
         "vitest": "3.2.6",
       },
@@ -10889,6 +10904,7 @@
       "name": "tests-e2e",
       "version": "0.0.1",
       "devDependencies": {
+        "@faker-js/faker": "8.2.0",
         "@playwright/test": "1.54.1",
         "checkly": "6.9.10",
         "dotenv": "17.2.3",
@@ -12173,6 +12189,8 @@
     "@activepieces/piece-retune": ["@activepieces/piece-retune@workspace:packages/pieces/community/retune"],
 
     "@activepieces/piece-returning-ai": ["@activepieces/piece-returning-ai@workspace:packages/pieces/community/returning-ai"],
+
+    "@activepieces/piece-ringcentral": ["@activepieces/piece-ringcentral@workspace:packages/pieces/community/ringcentral"],
 
     "@activepieces/piece-robolly": ["@activepieces/piece-robolly@workspace:packages/pieces/community/robolly"],
 

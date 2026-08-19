@@ -36,6 +36,11 @@ export const OtpEntity = new EntitySchema<OtpSchema>({
             nullable: false,
             default: 0,
         },
+        version: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
     },
     indices: [
         {
