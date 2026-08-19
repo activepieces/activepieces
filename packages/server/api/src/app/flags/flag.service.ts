@@ -4,6 +4,7 @@ import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { turnstile } from '../authentication/lib/turnstile'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -282,6 +283,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SMTP_CONFIGURED,
                 value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TURNSTILE_SITE_KEY,
+                value: turnstile.siteKey() ?? null,
                 created,
                 updated,
             },

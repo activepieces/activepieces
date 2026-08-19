@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { ActionClassification, AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, PropertyGroup, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -173,10 +173,12 @@ const Action = z.object({
     description: z.string(),
     requireAuth: z.boolean(),
     props: z.unknown(),
+    propertyGroups: z.optional(z.array(PropertyGroup)),
     errorHandlingOptions: z.optional(ErrorHandlingOptionsParam),
     outputSchema: z.optional(z.custom<OutputSchema>()),
     aiMetadata: z.optional(AiMetadata),
     audience: z.optional(Audience),
+    classification: z.optional(ActionClassification),
 })
 
 const Trigger = Action.omit({ audience: true }).extend({

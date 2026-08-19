@@ -39,6 +39,15 @@ Read the full source code, package.json, and input mappings of a CODE step. Retu
 Use this tool when you need to read or edit a CODE step's full source. `ap_flow_structure` truncates code for overview purposes, so always call `ap_read_step_code` before modifying a code step.
 </Tip>
 
+### ap_read_step_settings
+
+Read the full untruncated settings of any step, including the trigger: piece input, action/trigger name, loop items, router branches, and error handling options. Use this to see a step's current configuration before updating it — `ap_flow_structure` truncates piece input.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `flowId` | string | Yes | The flow ID |
+| `stepName` | string | Yes | The step name (e.g., `trigger`, `step_1`). Use `ap_flow_structure` to get valid values. |
+
 ### ap_validate_flow
 
 Validate a flow for structural issues without publishing. Checks step validity, template references, and empty branches.
@@ -57,6 +66,34 @@ Research available pieces. Use `pieceNames` for bulk exact lookup (always return
 | `searchQuery` | string | No | Filter pieces by name |
 | `includeActions` | boolean | No | Include action details (only applies to searchQuery mode) |
 | `includeTriggers` | boolean | No | Include trigger details (only applies to searchQuery mode) |
+
+### ap_search_actions
+
+Find piece actions by describing the task in natural language (e.g. *"send a message to a Slack channel"*). Returns the most relevant actions ranked by semantic similarity, or an empty list when nothing in the catalog matches — the tool does not force a match. Each result includes the piece name, action name, a one-line description, whether the action needs a connection, and a `connected` flag indicating whether the project already has a connection for that piece.
+
+Available when [tool search](/mcp/tool-search) is enabled on the instance.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | Yes | Natural-language description of the task to accomplish |
+| `limit` | number | No | Max matches to return (default 5, max 20) |
+| `pieceName` | string | No | Restrict results to a single piece (e.g. `slack`). Omit to search the whole catalog. |
+
+<Tip>
+This is the discovery step of the run-action workflow: take a result's `pieceName` + `actionName` to `ap_get_piece_props` for the input schema, then execute with `ap_run_action`.
+</Tip>
+
+### ap_search_triggers
+
+Find piece triggers (the event that starts a flow) by describing when the flow should run (e.g. *"when a new row is added to a Google Sheet"*). Same behavior and result shape as `ap_search_actions`, returning trigger names instead of action names.
+
+Available when [tool search](/mcp/tool-search) is enabled on the instance.
+
+| Input | Type | Required | Description |
+|-------|------|----------|-------------|
+| `query` | string | Yes | Natural-language description of the event that should start the flow |
+| `limit` | number | No | Max matches to return (default 5, max 20) |
+| `pieceName` | string | No | Restrict results to a single piece. Omit to search the whole catalog. |
 
 ### ap_get_piece_props
 

@@ -35,7 +35,10 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {
@@ -47,6 +50,7 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
+    [AppSystemProp.ALLOW_DISPOSABLE_EMAILS]: booleanValidator,
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
@@ -74,6 +78,8 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.TURNSTILE_SECRET_KEY]: stringValidator,
+    [AppSystemProp.TURNSTILE_SITE_KEY]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
@@ -91,6 +97,7 @@ const systemPropValidators: {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
+    [AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX]: numberValidator,
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: stringValidator,
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,

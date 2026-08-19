@@ -9,7 +9,16 @@ test('should handle webhook with return response', async ({ page }) => {
 
   // Sign in
   await page.goto(`${baseUrl}/sign-in`);
-  await page.getByTestId('sign-in-email').fill(email);
+  const passwordEmail = page.getByTestId('sign-in-email');
+  const usePassword = page
+    .getByTestId('auth-use-password')
+    .or(page.getByRole('button', { name: 'Use password' }));
+  await passwordEmail.or(usePassword).first().waitFor({ timeout: 30000 });
+  if (await usePassword.count()) {
+    await usePassword.first().click();
+    await passwordEmail.waitFor();
+  }
+  await passwordEmail.fill(email);
   await page.getByTestId('sign-in-password').fill(password);
   await page.getByTestId('sign-in-button').click();
 

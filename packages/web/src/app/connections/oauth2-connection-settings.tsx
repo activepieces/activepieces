@@ -6,8 +6,10 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
+  ApErrorParams,
   ApFlagId,
   AppConnectionType,
+  ErrorCode,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
@@ -39,6 +41,7 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
@@ -329,12 +332,20 @@ async function openPopup({
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
   } catch (error: unknown) {
-    form.setError('request.value.client_id', {
+    const apError = api.isError(error)
+      ? (error.response?.data as ApErrorParams | undefined)
+      : undefined;
+    form.setError('request.value.code', {
       type: 'manual',
       message:
-        error instanceof Error
-          ? error.message
-          : 'Failed to initiate OAuth2 authentication',
+        apError?.code === ErrorCode.INVALID_APP_CONNECTION
+          ? t('Connection failed with error {msg}', {
+              msg: apError.params.error,
+            })
+          : api.extractServerErrorMessage(
+              error,
+              'Failed to initiate OAuth2 authentication',
+            ),
     });
     setLoading(false);
     return;
