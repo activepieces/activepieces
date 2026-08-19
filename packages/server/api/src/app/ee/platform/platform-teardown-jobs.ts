@@ -111,12 +111,20 @@ async function stopPlatformExecution({ platformId, log }: BeginPlatformTeardownP
             project: { id: flow.projectId },
             platform: { id: platformId },
         }, '[stopPlatformExecution] Trigger disable failed; forcing trigger-source removal so no new webhooks admit runs')
-        await tryCatch(async () => triggerSourceService(log).disable({
+        const { error: fallbackError } = await tryCatch(async () => triggerSourceService(log).disable({
             flowId: flow.id,
             projectId: flow.projectId,
             simulate: false,
             ignoreError: true,
         }))
+        if (!isNil(fallbackError)) {
+            log.warn({
+                error: fallbackError,
+                flow: { id: flow.id },
+                project: { id: flow.projectId },
+                platform: { id: platformId },
+            }, '[stopPlatformExecution] Fallback trigger-source disable also failed; teardown will continue and drainFlows will hard-delete the flow row anyway')
+        }
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
