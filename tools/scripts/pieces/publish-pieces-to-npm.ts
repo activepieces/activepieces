@@ -20,10 +20,6 @@ const main = async () => {
   const failedPaths: string[] = []
 
   for (const chunk of piecesSourceChunks) {
-    // One piece's failed publish must not block the rest of the release — a single
-    // rejected publish (e.g. an npm permission error on one new package) would otherwise
-    // strand every other piece queued in the same run. Collect failures, publish the
-    // rest, and fail the run at the end so alerting still fires.
     const results = await Promise.allSettled(chunk.map((path) => publishNpmPackage(path)))
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
@@ -36,8 +32,6 @@ const main = async () => {
 
   if (failedPaths.length > 0) {
     console.error(`[publishPieces] ${failedPaths.length}/${piecesSource.length} piece(s) failed to publish:\n  ${failedPaths.join('\n  ')}`)
-    // exitCode instead of process.exit(): an immediate exit can truncate the summary
-    // above when stderr is a pipe (CI); this lets pending writes flush before exiting.
     process.exitCode = 1
   }
 }
