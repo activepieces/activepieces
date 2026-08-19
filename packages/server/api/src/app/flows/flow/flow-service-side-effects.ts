@@ -1,6 +1,7 @@
-import { isNil } from '@activepieces/core-utils'
-import { FileType, Flow, FlowStatus, FlowVersion } from '@activepieces/shared'
+import { isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ApplicationEventName, FileType, Flow, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { applicationEvents, MetaInformation } from '../../helper/application-events'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { sampleDataService } from '../step-run/sample-data.service'
 
@@ -62,7 +63,72 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
             fileType: FileType.SAMPLE_DATA_INPUT,
         })
     },
+
+    onCreated({ flow, ...meta }: FlowEventParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow,
+            },
+        })
+    },
+
+    onOperationApplied({ flow, previousVersion, previousStatus, operation, ...meta }: OnOperationAppliedParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                flow: {
+                    id: flow.id,
+                    externalId: flow.externalId,
+                    created: flow.created,
+                    updated: flow.updated,
+                },
+                request: operation,
+                flowVersion: previousVersion,
+            },
+        })
+        for (const action of lifecycleActions({ operation, previousStatus, newStatus: flow.status })) {
+            applicationEvents(log).sendUserEvent(meta, {
+                action,
+                data: {
+                    flow,
+                    flowVersion: flow.version,
+                },
+            })
+        }
+    },
+
+    onDeleted({ flow, ...meta }: FlowEventParams): void {
+        applicationEvents(log).sendUserEvent(meta, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
+
+    onDisabledByWorker({ flow, projectId, platformId }: OnDisabledByWorkerParams): void {
+        applicationEvents(log).sendWorkerEvent({
+            projectId,
+            platformId,
+            action: ApplicationEventName.FLOW_DEACTIVATED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+    },
 })
+
+function lifecycleActions({ operation, previousStatus, newStatus }: LifecycleActionsParams): ApplicationEventName[] {
+    const published = operation.type === FlowOperationType.LOCK_AND_PUBLISH
+    const changedStatus = (published || operation.type === FlowOperationType.CHANGE_STATUS) && newStatus !== previousStatus
+    return [
+        ...(published ? [ApplicationEventName.FLOW_PUBLISHED] : []),
+        ...(changedStatus ? [newStatus === FlowStatus.ENABLED ? ApplicationEventName.FLOW_ACTIVATED : ApplicationEventName.FLOW_DEACTIVATED] : []),
+    ]
+}
 
 type PreUpdateStatusParams = {
     flowToUpdate: Flow
@@ -75,4 +141,26 @@ type PreUpdateStatusParams = {
 
 type PreDeleteParams = {
     flowToDelete: Flow
+}
+
+type FlowEventParams = MetaInformation & {
+    flow: PopulatedFlow
+}
+
+type OnOperationAppliedParams = FlowEventParams & {
+    previousVersion: FlowVersion
+    previousStatus: FlowStatus
+    operation: FlowOperationRequest
+}
+
+type OnDisabledByWorkerParams = {
+    flow: PopulatedFlow
+    projectId: ProjectId
+    platformId: PlatformId
+}
+
+type LifecycleActionsParams = {
+    operation: FlowOperationRequest
+    previousStatus: FlowStatus
+    newStatus: FlowStatus
 }

@@ -122,13 +122,14 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         })
 
         const { byProject } = await billingProvider.get(log).getCreditUsage({ platformId, startDate, endDate })
-        const creditsByProjectId = new Map(byProject.map((entry) => [entry.projectId, entry.creditsUsed]))
+        const usageByProjectId = new Map(byProject.map((entry) => [entry.projectId, entry]))
 
         return {
             data: projectsPage.data.map((project): ProjectCreditUsage => ({
                 projectId: project.id,
                 projectName: project.displayName,
-                creditsUsed: creditsByProjectId.get(project.id) ?? 0,
+                creditsUsed: usageByProjectId.get(project.id)?.creditsUsed ?? 0,
+                aiCreditsUsed: usageByProjectId.get(project.id)?.aiCreditsUsed ?? 0,
             })),
             next: projectsPage.next,
             previous: projectsPage.previous,

@@ -428,6 +428,56 @@ function filterBy(
   return res;
 }
 
+function siblingRowIds(
+  nodes: DataSelectorTreeNode[],
+  parentId: string | undefined,
+): string[] {
+  const occurrences = new Map<string, number>();
+  return nodes.map((node) => {
+    const seen = occurrences.get(node.key) ?? 0;
+    occurrences.set(node.key, seen + 1);
+    const segment = encodeURIComponent(node.key);
+    const localId = seen === 0 ? segment : `${segment}#${seen}`;
+    return isNil(parentId) ? localId : `${parentId}/${localId}`;
+  });
+}
+
+function flattenVisibleRows({
+  nodes,
+  searchActive,
+  overrides,
+  parentId,
+  depth = 0,
+}: {
+  nodes: DataSelectorTreeNode[];
+  searchActive: boolean;
+  overrides: ReadonlyMap<string, boolean>;
+  parentId?: string;
+  depth?: number;
+}): DataSelectorRow[] {
+  const ids = siblingRowIds(nodes, parentId);
+  return nodes.flatMap((node, index) => {
+    const id = ids[index];
+    const children = node.children ?? [];
+    const hasChildren = children.length > 0;
+    const expandedByDefault = searchActive || depth === 0;
+    const expanded = hasChildren && (overrides.get(id) ?? expandedByDefault);
+    const row: DataSelectorRow = { id, node, depth, expanded };
+    return expanded
+      ? [
+          row,
+          ...flattenVisibleRows({
+            nodes: children,
+            searchActive,
+            overrides,
+            parentId: id,
+            depth: depth + 1,
+          }),
+        ]
+      : [row];
+  });
+}
+
 export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
@@ -435,4 +485,12 @@ export const dataSelectorUtils = {
     node.data.type === 'test',
   traverseStep,
   filterBy,
+  flattenVisibleRows,
+};
+
+export type DataSelectorRow = {
+  id: string;
+  node: DataSelectorTreeNode;
+  depth: number;
+  expanded: boolean;
 };

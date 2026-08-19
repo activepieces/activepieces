@@ -2,6 +2,7 @@ import { AgentPromptOverride, AgentRunSource } from '@activepieces/core-executio
 import { BaseModelSchema, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { formErrors } from '../../form-errors'
+import { MAX_AGENT_TEXT_LENGTH } from './agent'
 
 const MAX_FILE_BINARY_SIZE = 10 * 1024 * 1024
 const MAX_FILE_BASE64_CHARS = Math.ceil(MAX_FILE_BINARY_SIZE * 4 / 3)
@@ -201,6 +202,7 @@ export const AgentConversation = z.object({
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
+    agentId: Nullable(z.string()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
@@ -216,6 +218,7 @@ export type AgentConversation = z.infer<typeof AgentConversation>
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    agentId: z.optional(z.string()),
 })
 export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversationRequest>
 
@@ -260,7 +263,7 @@ export const InstructAgentMemoryRequest = z.object({
 export type InstructAgentMemoryRequest = z.infer<typeof InstructAgentMemoryRequest>
 
 export const SendAgentMessageRequest = z.object({
-    content: z.string().max(51200),
+    content: z.string().max(MAX_AGENT_TEXT_LENGTH),
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
 }).refine(
@@ -278,8 +281,8 @@ export type SetAgentMessageFeedbackRequest = z.infer<typeof SetAgentMessageFeedb
 
 export const SimulateAgentRequest = z.object({
     platformId: z.string(),
-    userMessage: z.string().min(1).max(51200).optional(),
-    userMessages: z.array(z.string().min(1).max(51200)).min(1).optional(),
+    userMessage: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH).optional(),
+    userMessages: z.array(z.string().min(1).max(MAX_AGENT_TEXT_LENGTH)).min(1).optional(),
     promptOverride: AgentPromptOverride.optional(),
 }).refine(
     (val) => val.userMessage !== undefined || (val.userMessages !== undefined && val.userMessages.length > 0),
@@ -363,6 +366,7 @@ export type BatchProgressData = {
 export type AgentAllowedMimeType = typeof CHAT_ALLOWED_MIME_TYPES[number]
 export { CHAT_ALLOWED_MIME_TYPES }
 
+export * from './agent'
 export { agentToolClassification } from './tool-classification'
 export { agentToolPhases, type AgentPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
