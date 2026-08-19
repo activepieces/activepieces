@@ -47,5 +47,8 @@ guard never saw.
 - Until publish-side validation lands, publishing a draft whose agent was deleted succeeds, and the
   failure surfaces on the next run rather than at publish time.
 - The delete guard reads `flow_version.agentIds`, which is only authoritative because the run refuses
-  an agent the stored version does not name. Those two rules hold each other up; changing one without
-  the other reopens the hole.
+  any agent the running step's own stored input does not name. Those two rules hold each other up;
+  changing one without the other reopens the hole.
+- The run check is per step, not per flow. `agentIds` flattens every step's reference, so a flow-wide
+  check would let one agent step name a sibling's agent and run its tools under its own prompt. The
+  step therefore sends its name and the server reads that step's stored `agentId`.
