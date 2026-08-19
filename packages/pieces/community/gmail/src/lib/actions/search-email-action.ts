@@ -9,6 +9,7 @@ import { gmailSearchMailActionOutputSchema } from '../output-schemas';
 export const gmailSearchMailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_search_mail',
+  classification: 'SEARCH',
   displayName: 'Find Email',
   description:
     'Find emails using advanced search criteria. If no filters are provided, the latest emails are returned.',
