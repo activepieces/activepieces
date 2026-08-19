@@ -36,7 +36,9 @@ const main = async () => {
 
   if (failedPaths.length > 0) {
     console.error(`[publishPieces] ${failedPaths.length}/${piecesSource.length} piece(s) failed to publish:\n  ${failedPaths.join('\n  ')}`)
-    process.exit(1)
+    // exitCode instead of process.exit(): an immediate exit can truncate the summary
+    // above when stderr is a pipe (CI); this lets pending writes flush before exiting.
+    process.exitCode = 1
   }
 }
 
