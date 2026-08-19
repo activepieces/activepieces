@@ -9,7 +9,7 @@ function toolSet(...names: string[]): ToolSet {
 
 const GROUPS: AgentToolGroups = {
     local: toolSet('ap_select_project', 'ap_deselect_project'),
-    display: toolSet('ap_show_connection_picker', 'ap_show_questions', 'ap_show_quick_replies'),
+    display: toolSet('ap_show_connection_picker', 'ap_show_connection_required', 'ap_show_mcp_reconnect', 'ap_show_project_picker', 'ap_show_questions', 'ap_show_quick_replies'),
     crossProject: toolSet('ap_discover_action_auth', 'ap_revalidate_connection', 'ap_execute_action'),
     web: toolSet('ap_fetch_url', 'ap_web_search', 'ap_scrape_url', 'ap_generate_image'),
     thinking: toolSet('ap_update_thinking_status'),
@@ -52,17 +52,21 @@ describe('what an agent conversation may reach', () => {
     it('reaches the prompts and the web set, because someone is reading', () => {
         const names = namesFor(AgentRunSource.AGENT)
 
-        expect(names).toContain('ap_show_connection_picker')
         expect(names).toContain('ap_show_questions')
+        expect(names).toContain('ap_show_quick_replies')
         expect(names).toContain('ap_generate_image')
         expect(names).toContain('ap_update_thinking_status')
     })
 
-    it('reaches connection discovery, which is what fills the connection card', () => {
+    it('never offers to change a connection or project its owner pinned', () => {
         const names = namesFor(AgentRunSource.AGENT)
 
-        expect(names).toContain('ap_discover_action_auth')
-        expect(names).toContain('ap_revalidate_connection')
+        expect(names).not.toContain('ap_show_connection_picker')
+        expect(names).not.toContain('ap_show_connection_required')
+        expect(names).not.toContain('ap_show_mcp_reconnect')
+        expect(names).not.toContain('ap_show_project_picker')
+        expect(names).not.toContain('ap_discover_action_auth')
+        expect(names).not.toContain('ap_revalidate_connection')
     })
 
     it('never reaches the platform assistant surface', () => {
