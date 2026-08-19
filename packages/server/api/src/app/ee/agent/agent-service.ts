@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, FlowVersion, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -148,32 +148,45 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agentRepo().findOneBy({ projectId, externalId })
     },
 
+    // Checked inside the delete statement, not before it: read it separately and a flow publishing
+    // concurrently commits its reference in the gap. One statement leaves only its own duration.
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const publishedFlows = await findPublishedFlowsRunningAgent({ projectId, externalId: agent.externalId })
-        if (publishedFlows.length > 0) {
+        const blocking = publishedFlowsRunningAgent({ projectId, externalId: agent.externalId })
+        const deleted = await agentRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
+            .execute()
+
+        const deletedRows: unknown[] = deleted.raw ?? []
+        if (deletedRows.length === 0) {
+            const names = (await blocking.getRawMany<{ displayName: string }>()).map((row) => `"${row.displayName}"`)
+            if (names.length === 0) {
+                throw agentNotFound(id)
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
-                params: { message: `"${agent.displayName}" is still run by ${publishedFlows.map((name) => `"${name}"`).join(', ')}. The reference is live, so deleting it would break their next run — remove the step or point it elsewhere first.` },
+                params: { message: `"${agent.displayName}" is still run by ${names.join(', ')}. The reference is live, so deleting it would break their next run — remove the step or point it elsewhere first.` },
             })
         }
-        await agentRepo().delete({ id, projectId })
         return agent
     },
 })
 
 // Published versions, not flowService.list, which filters on the latest draft: a flow whose
 // published version still runs the agent is exactly the one a delete would break.
-async function findPublishedFlowsRunningAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
-    const versions = await flowVersionRepo()
-        .createQueryBuilder('flow_version')
-        .select('flow_version."displayName"', 'displayName')
-        .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
-        .where('flow."projectId" = :projectId', { projectId })
-        .andWhere('flow_version.id = flow."publishedVersionId"')
-        .andWhere('flow_version."agentIds" && :externalIds', { externalIds: [externalId] })
-        .getRawMany<{ displayName: string }>()
-    return versions.map((version) => version.displayName)
+function publishedFlowsRunningAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): SelectQueryBuilder<FlowVersion> {
+    return flowVersionRepo()
+        .createQueryBuilder('blocking_version')
+        .select('blocking_version."displayName"', 'displayName')
+        .innerJoin('flow', 'blocking_flow', 'blocking_flow.id = blocking_version."flowId"')
+        .where('blocking_flow."projectId" = :projectId', { projectId })
+        .andWhere('blocking_version.id = blocking_flow."publishedVersionId"')
+        .andWhere('blocking_version."agentIds" && :externalIds', { externalIds: [externalId] })
 }
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
