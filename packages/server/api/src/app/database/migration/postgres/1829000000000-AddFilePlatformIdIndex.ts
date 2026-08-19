@@ -13,20 +13,22 @@ export class AddFilePlatformIdIndex1829000000000 implements Migration {
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite()) {
             await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_file_platform_id"
+                CREATE INDEX IF NOT EXISTS "idx_file_platform_id_null_project"
                 ON "file" ("platformId")
+                WHERE "projectId" IS NULL
             `)
         }
         else {
             await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_file_platform_id"
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_file_platform_id_null_project"
                 ON "file" ("platformId")
+                WHERE "projectId" IS NULL
             `)
         }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_file_platform_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_file_platform_id_null_project"')
     }
 }
 
