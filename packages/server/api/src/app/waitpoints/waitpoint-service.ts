@@ -48,17 +48,17 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
         const inserted = waitpoint.id === id
-        if (!inserted) {
-            log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
-            return { inserted, waitpoint }
+        if (inserted) {
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
         }
-
-        log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
+        else {
+            log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        }
         if (!isNil(params.resumeDateTime)) {
             await waitpointTimeoutJob.schedule({
                 flowRunId: params.flowRunId,
                 projectId: params.projectId,
-                waitpointId: id,
+                waitpointId: waitpoint.id,
                 resumeDateTime: params.resumeDateTime,
                 log,
             })

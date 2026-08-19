@@ -248,10 +248,12 @@ type SendStatus =
   | { type: 'error'; message: string };
 
 export function useAgentChat({
+  agentId,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
 }: {
+  agentId?: string;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
@@ -600,12 +602,13 @@ export function useAgentChat({
       const conv = await chatApi.createConversation({
         title: title ?? null,
         modelName: modelName ?? null,
+        ...(agentId === undefined ? {} : { agentId }),
       });
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
     },
-    [],
+    [agentId],
   );
 
   const sendMessage = useCallback(

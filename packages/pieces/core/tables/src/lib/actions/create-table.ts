@@ -8,7 +8,7 @@ export const createTable = createAction({
   name: 'tables-create-table',
   displayName: 'Create Table',
   description: 'Create a new table, optionally with fields.',
-  aiMetadata: { description: 'Creates a new Activepieces Table in the current project, optionally defining its columns up front - each field takes a name plus a type of text, number, date, or single select, with single-select choices supplied as one comma-separated string. Pick this when a flow needs somewhere to store data that does not exist yet. Only those four column types are supported; not idempotent, since each call creates another table and repeating it with the same name yields duplicates.', idempotent: false },
+  aiMetadata: { description: 'Creates a new Activepieces Table in the current project, optionally defining its columns up front - each field takes a name plus a type of text, number, date, date & time, or single select, with single-select choices supplied as one comma-separated string. Date and date & time both hold an ISO-8601 UTC timestamp; date & time additionally shows the time of day. Pick this when a flow needs somewhere to store data that does not exist yet. Only those five column types are supported; not idempotent, since each call creates another table and repeating it with the same name yields duplicates.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     name: Property.ShortText({
@@ -33,6 +33,7 @@ export const createTable = createAction({
               { label: 'Text', value: FieldType.TEXT },
               { label: 'Number', value: FieldType.NUMBER },
               { label: 'Date', value: FieldType.DATE },
+              { label: 'Date & Time', value: FieldType.DATETIME },
               { label: 'Single Select', value: FieldType.STATIC_DROPDOWN },
             ],
           },

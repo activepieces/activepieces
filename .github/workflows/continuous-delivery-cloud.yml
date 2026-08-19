@@ -125,6 +125,16 @@ jobs:
             echo "image_tag=release-candidate" >> $GITHUB_OUTPUT
           fi
 
+      - name: Deploy App to canary
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+
+      - name: Deploy Workers to canary
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
+
       - name: Deploy App to production
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app.yml --skip-push; exit"'
@@ -149,6 +159,17 @@ jobs:
           git checkout -b "$BRANCH" "$SHA"
           git push origin "$BRANCH" --force
           echo "Created $BRANCH at $SHA"
+
+      - name: Notify on-call channel
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          IMAGE_TAG: ${{ steps.image.outputs.image_tag }}
+          DEPLOY_KIND: ${{ github.event_name == 'workflow_dispatch' && 'hotfix' || 'scheduled promotion' }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"🚀 **Cloud production deployed** ($DEPLOY_KIND)\\n\\n**Version:** \`$IMAGE_TAG\`\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/latest\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "$WEBHOOK"
 
   # Run smoke test after scheduled promotion
   smoke-test:
