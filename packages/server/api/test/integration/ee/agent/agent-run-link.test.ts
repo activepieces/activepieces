@@ -1,5 +1,5 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, ColorName } from '@activepieces/shared'
+import { AgentIcon, ColorName, FlowActionType, FlowTriggerType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -47,12 +47,38 @@ async function createAgent(ctx: TestContext, draft: Record<string, unknown> = {}
     return response.json()
 }
 
-// A linked run is only allowed to use an agent the stored flow version names, so the fixture has to
-// be a real flow run over a real version rather than a loose id.
+// A linked run may only use the agent its own step stored, so the fixture is a real flow run over a
+// version whose step carries the id — not just the flattened agentIds the delete guard reads.
+const AGENT_STEP_NAME = 'step_1'
+
 async function flowRunNaming({ ctx, agentIds }: { ctx: TestContext, agentIds: string[] }): Promise<string> {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
-    const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, agentIds })
+    const version = createMockFlowVersion({
+        flowId: flow.id,
+        updatedBy: ctx.user.id,
+        agentIds,
+        trigger: {
+            name: 'trigger',
+            type: FlowTriggerType.EMPTY,
+            valid: true,
+            displayName: 'Select Trigger',
+            settings: {},
+            nextAction: {
+                name: AGENT_STEP_NAME,
+                type: FlowActionType.PIECE,
+                valid: true,
+                displayName: 'Ask an agent',
+                settings: {
+                    input: { agentId: agentIds[0], prompt: 'clear my inbox' },
+                    pieceName: '@activepieces/piece-ai',
+                    pieceVersion: '0.7.0',
+                    actionName: 'run_agent',
+                    propertySettings: {},
+                },
+            },
+        } as never,
+    })
     await db.save('flow_version', version)
     const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id })
     await db.save('flow_run', flowRun)
@@ -72,7 +98,7 @@ async function startRun(ctx: TestContext, body: Record<string, unknown>) {
         method: 'POST',
         url: RUNS_URL,
         headers: { authorization: `Bearer ${engineToken}` },
-        body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), ...body },
+        body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), stepName: AGENT_STEP_NAME, ...body },
     })
 }
 
@@ -173,7 +199,29 @@ describe('a flow step that links a saved agent', () => {
             method: 'POST',
             url: RUNS_URL,
             headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), agentId: agent.externalId },
+            body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), stepName: AGENT_STEP_NAME, agentId: agent.externalId },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('did not name that agent')
+    })
+
+    it('refuses an agent that belongs to a sibling step, not the one running', async () => {
+        const ctx = await context()
+        const mine = await createAgent(ctx)
+        const siblings = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${mine.id}/publish`)
+        await ctx.post(`/v1/agents/${siblings.id}/publish`)
+        const engineToken = await accessTokenManager(app.log).generateEngineToken({
+            jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id,
+        })
+        const flowRunId = await flowRunNaming({ ctx, agentIds: [mine.externalId, siblings.externalId] })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: RUNS_URL,
+            headers: { authorization: `Bearer ${engineToken}` },
+            body: { instruction: 'clear my inbox', flowRunId, waitpointId: apId(), stepName: AGENT_STEP_NAME, agentId: siblings.externalId },
         })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
