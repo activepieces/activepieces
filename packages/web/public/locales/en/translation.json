@@ -2594,9 +2594,10 @@
   "Split {items} items, {size} each": "Split {items} items, {size} each",
   "Cancel runs": "Cancel runs",
   "Are you sure you want to cancel the selected runs?": "Are you sure you want to cancel the selected runs?",
-  "Any batches these runs already dispatched keep running to completion, and anything those batches are themselves waiting on — an approval or a delay — is not reached either.": "Any batches these runs already dispatched keep running to completion, and anything those batches are themselves waiting on — an approval or a delay — is not reached either.",
   "Retry from failed step": "Retry from failed step",
   "Are you sure you want to retry from the failed step?": "Are you sure you want to retry from the failed step?",
   "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.": "This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.",
-  "batchRetryRunCount": "{count, plural, =1 {1 run will be retried.} other {# runs will be retried.}}"
+  "batchRetryRunCount": "{count, plural, =1 {1 run will be retried.} other {# runs will be retried.}}",
+  "If any of these runs processes items in batches, cancelling also cancels the batches it dispatched — queued batches never start, and any batch waiting on an approval or a delay is dropped. Batches already executing run to completion.": "If any of these runs processes items in batches, cancelling also cancels the batches it dispatched — queued batches never start, and any batch waiting on an approval or a delay is dropped. Batches already executing run to completion.",
+  "If any of these runs processes items in batches, the batches that already succeeded run again — anything they wrote to external systems happens twice.": "If any of these runs processes items in batches, the batches that already succeeded run again — anything they wrote to external systems happens twice."
 }

@@ -45,6 +45,7 @@ import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import {
   DEFAULT_DATE_PRESET,
   flowRunMutations,
+  flowRunQueries,
 } from '@/features/flow-runs/hooks/flow-run-hooks';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { flowHooks } from '@/features/flows/hooks/flow-hooks';
@@ -68,6 +69,8 @@ import { RunsStatusChart } from './runs-status-chart';
 type SelectedRow = {
   id: string;
   status: FlowRunStatus;
+  flowId: string;
+  flowVersionId: string;
 };
 export const RunsTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -273,29 +276,11 @@ export const RunsTable = () => {
     },
   });
 
-  const selectionHasBatchStep = useMemo(() => {
-    const batchFlowIds = new Set(
-      (flows ?? [])
-        .filter((flow) =>
-          flowRunUtils.hasBatchStep({ trigger: flow.version.trigger }),
-        )
-        .map((flow) => flow.id),
-    );
-    if (batchFlowIds.size === 0) {
-      return false;
-    }
-    if (selectedAll) {
-      const flowIdFilter = searchParams.getAll('flowId');
-      return (
-        flowIdFilter.length === 0 ||
-        flowIdFilter.some((flowId) => batchFlowIds.has(flowId))
-      );
-    }
-    const selectedIds = new Set(selectedRows.map((row) => row.id));
-    return (data?.data ?? []).some(
-      (run) => selectedIds.has(run.id) && batchFlowIds.has(run.flowId),
-    );
-  }, [flows, selectedAll, selectedRows, searchParams, data]);
+  const selectionMayProcessInBatches = flowRunQueries.useMayProcessInBatches({
+    runs: selectedRows,
+    hasUnknownRuns: selectedAll,
+    enabled: selectedRows.length > 0,
+  });
 
   const retryFromFailedStep = useCallback(
     (resetSelection: () => void) => {
@@ -414,9 +399,13 @@ export const RunsTable = () => {
                     message={t(
                       'Are you sure you want to cancel the selected runs?',
                     )}
-                    warning={t(
-                      'Any batches these runs already dispatched keep running to completion, and anything those batches are themselves waiting on — an approval or a delay — is not reached either.',
-                    )}
+                    warning={
+                      selectionMayProcessInBatches
+                        ? t(
+                            'If any of these runs processes items in batches, cancelling also cancels the batches it dispatched — queued batches never start, and any batch waiting on an approval or a delay is dropped. Batches already executing run to completion.',
+                          )
+                        : undefined
+                    }
                     buttonText={t('Confirm')}
                     entityName={t('Runs')}
                     mutationFn={async () => {
@@ -561,7 +550,7 @@ export const RunsTable = () => {
                         <DropdownMenuItem
                           disabled={!userHasPermissionToRetryRun || !allFailed}
                           onClick={() => {
-                            if (selectionHasBatchStep) {
+                            if (selectionMayProcessInBatches) {
                               setPendingBatchRetry({ resetSelection });
                               return;
                             }
@@ -592,7 +581,7 @@ export const RunsTable = () => {
       selectedAll,
       excludedRows,
       cancelRuns,
-      selectionHasBatchStep,
+      selectionMayProcessInBatches,
       retryFromFailedStep,
     ],
   );
@@ -671,7 +660,7 @@ export const RunsTable = () => {
         warning={
           <>
             {t(
-              'This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.',
+              'If any of these runs processes items in batches, the batches that already succeeded run again — anything they wrote to external systems happens twice.',
             )}
             {!selectedAll &&
               ` ${t('batchRetryRunCount', {

@@ -6,6 +6,7 @@ import {
   FlowRunStatus,
   flowStructureUtil,
   FlowTrigger,
+  FlowVersion,
   isFailedState,
   StepOutput,
   StepOutputStatus,
@@ -245,6 +246,22 @@ export const flowRunUtils = {
       .getAllSteps(trigger)
       .some((step) => step.type === FlowActionType.PROCESS_IN_BATCHES);
   },
+  mayProcessInBatches({
+    versions,
+    hasUnknownRuns,
+  }: {
+    versions: (FlowVersion | undefined)[];
+    hasUnknownRuns: boolean;
+  }): boolean {
+    if (hasUnknownRuns) {
+      return true;
+    }
+    return versions.some(
+      (version) =>
+        isNil(version) ||
+        flowRunUtils.hasBatchStep({ trigger: version.trigger }),
+    );
+  },
   getStatusLabelOverride(status: FlowRunStatus): string | null {
     if (status === FlowRunStatus.QUOTA_EXCEEDED) {
       return t('Out of credits');
@@ -252,3 +269,5 @@ export const flowRunUtils = {
     return null;
   },
 };
+
+export const MAX_BATCH_VERSION_LOOKUPS = 10;
