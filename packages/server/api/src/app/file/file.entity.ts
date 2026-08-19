@@ -60,12 +60,9 @@ export const FileEntity = new EntitySchema<FileSchema>({
             columns: ['type', 'created'],
         },
         {
-            // Real index is partial: ON file(platformId) WHERE projectId IS NULL,
-            // created in 1829000000000-AddFilePlatformIdIndex. EntitySchema can't
-            // express the WHERE, so synchronize:false stops migration:generate dropping it.
             name: 'idx_file_platform_id_null_project',
             columns: ['platformId'],
-            synchronize: false,
+            where: '"projectId" IS NULL',
         },
         {
             // Real index is a partial expression index on (type, (metadata->>'flowId')),
