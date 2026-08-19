@@ -125,6 +125,7 @@ export function emptyBillingOverview({ startDate, endDate, unavailable = false }
         nextBillingAmount: 0,
         cancelAt: null,
         trialEndsAt: null,
+        planInterval: null,
         planName: null,
         scheduledPlanName: null,
         billingPortalAvailable: false,
@@ -142,6 +143,7 @@ export enum CreditUsageSource {
     FLOW_RUN = 'flow_run',
     AI = 'ai',
     CHAT = 'chat',
+    AGENT_DRAFT = 'agent_draft',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -179,6 +181,10 @@ export type FlowRunCreditConsumptionProperties = CreditConsumptionPropertiesBase
     environment: string
 }
 
+export type AgentDraftCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
+    provider: string | null
+}
+
 export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties & {
     messages: number
     toolCalls: number
@@ -212,8 +218,10 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
+    { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
     { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
     { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
 )
@@ -231,6 +239,7 @@ export type CreditUsageByProjectParams = {
 export type ProjectCreditsAggregate = {
     projectId: string
     creditsUsed: number
+    aiCreditsUsed: number
 }
 
 export type CreditUsage = {
@@ -288,6 +297,7 @@ export type BillingInfo = {
     scheduledPlanName: string | null
     billingPortalAvailable: boolean
     creditsResetInterval: string | null
+    planInterval: string | null
 }
 
 export type BillingOverview = BillingInfo & {

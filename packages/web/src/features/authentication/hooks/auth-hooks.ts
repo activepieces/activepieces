@@ -1,11 +1,14 @@
 import {
   AuthenticationResponse,
+  CompleteSignUpRequest,
   CreateOtpRequestBody,
+  RequestEmailCodeRequest,
   ResetPasswordRequestBody,
   SignInRequest,
   SignUpRequest,
   UserIdentity,
   VerifyEmailRequestBody,
+  VerifyEmailCodeRequest,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 
@@ -35,6 +38,53 @@ export const authMutations = {
   }) => {
     return useMutation<AuthenticationResponse, HttpError, SignUpRequest>({
       mutationFn: authenticationApi.signUp,
+      onSuccess,
+      onError,
+    });
+  },
+  useRequestEmailCode: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError: (error: HttpError) => void;
+  }) => {
+    return useMutation<void, HttpError, RequestEmailCodeRequest>({
+      mutationFn: authenticationApi.requestEmailCode,
+      onSuccess,
+      onError,
+    });
+  },
+  useCompleteSignUp: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (data: AuthenticationResponse) => void;
+    onError: (error: HttpError) => void;
+  }) => {
+    return useMutation<
+      AuthenticationResponse,
+      HttpError,
+      CompleteSignUpRequest
+    >({
+      mutationFn: authenticationApi.completeSignUp,
+      onSuccess,
+      onError,
+    });
+  },
+  useVerifyEmailCode: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: (data: AuthenticationResponse) => void;
+    onError: (error: HttpError) => void;
+  }) => {
+    return useMutation<
+      AuthenticationResponse,
+      HttpError,
+      VerifyEmailCodeRequest
+    >({
+      mutationFn: authenticationApi.verifyEmailCode,
       onSuccess,
       onError,
     });

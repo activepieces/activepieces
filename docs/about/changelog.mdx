@@ -4,6 +4,39 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="August 2026" description="AI-Ready Pieces: Tool Search, AI Metadata & Audience">
+
+### AI-ready pieces: tool search, AI metadata, and audience
+
+The piece catalog is now built for AI agents as much as for humans. An agent connected
+through the [MCP server](/mcp/overview) can find the right action across hundreds of
+pieces by describing the task — then inspect its schema and run it.
+
+**Tool search**
+
+- **Search by task, not by name**: the new `ap_search_actions` and `ap_search_triggers`
+  MCP tools take a plain-language description (*"send a message to a Slack channel"*)
+  and return the most relevant actions or triggers, ranked by semantic similarity.
+  See [Tool Search](/mcp/tool-search).
+- **Honest no-match**: results below a relevance threshold are dropped rather than
+  padded, so agents don't grab a wrong tool when nothing fits.
+- **Self-host ready**: turn it on with `AP_TOOL_SEARCH_ENABLED`; semantic ranking uses
+  an OpenAI key, with a keyword fallback when none is configured.
+
+**AI metadata & audience**
+
+- **Agent-oriented descriptions**: actions and triggers across the catalog carry
+  `aiMetadata` — a description written for agents plus an idempotency declaration for
+  safe retries. See [AI Metadata](/build-pieces/piece-reference/ai-metadata).
+- **Audience targeting**: actions can target humans, agents, or both — the visual
+  builder shows the human view while agents discover the AI view, so agent-only
+  atomic actions don't clutter the piece selector.
+- **Output schemas**: pieces can declare a labelled, formatted presentation of their
+  step output, driving the builder's data selector and output viewer.
+  See [Output Schema](/build-pieces/piece-reference/output-schema).
+
+</Update>
+
 <Update label="June 2026" description="Production Setup: Lightweight Workers, Bundled Pieces & Predictable Scaling">
 
 ### Production setup: lightweight workers, bundled pieces, and predictable scaling

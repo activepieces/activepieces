@@ -1,4 +1,5 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   exchangeAppJwtForInstallationToken,
   signGithubAppJwt,
@@ -51,7 +52,18 @@ export const githubAppAuth = PieceAuth.CustomAuth({
   },
 });
 
-export const githubAuth = [githubOAuth2Auth, githubAppAuth];
+export const githubPatAuth = PieceAuth.SecretText({
+  displayName: 'Personal Access Token',
+  description:
+    'Authenticate with a GitHub personal access token (classic or fine-grained). Generate one at Settings → Developer settings → Personal access tokens. Grant it the scopes/permissions required by the actions and triggers you intend to run (e.g. `repo` and `admin:repo_hook` for a classic token).',
+  required: true,
+  validate: async ({ auth }) => {
+    const login = await tryGetAuthenticatedLogin(auth);
+    return login.ok ? { valid: true } : { valid: false, error: login.error };
+  },
+});
+
+export const githubAuth = [githubOAuth2Auth, githubAppAuth, githubPatAuth];
 
 function trySignJwt({
   appId,
@@ -67,6 +79,27 @@ function trySignJwt({
     return {
       ok: false,
       error: `Could not sign JWT with provided App ID / Client ID and private key: ${message}. Verify the private key is a valid PEM-encoded RSA key.`,
+    };
+  }
+}
+
+async function tryGetAuthenticatedLogin(
+  token: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await httpClient.sendRequest<{ login: string }>({
+      method: HttpMethod.GET,
+      url: 'https://api.github.com/user',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      error: `Could not authenticate with the provided token: ${message}. Verify the token is valid and has not expired.`,
     };
   }
 }

@@ -6,6 +6,7 @@ import { gmailListLabelsActionOutputSchema } from '../output-schemas';
 export const gmailListLabelsAction = createAction({
   auth: gmailAuth,
   name: 'gmail_list_labels',
+  classification: 'SEARCH',
   displayName: 'List Labels',
   description: 'List all labels in the mailbox.',
   audience: 'ai',

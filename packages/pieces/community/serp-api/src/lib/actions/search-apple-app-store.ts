@@ -12,7 +12,7 @@ export const searchAppleAppStore = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches the Apple App Store via SerpApi for iOS apps matching a term, returning results in `organic_results` (app name, developer, rating, price, link). Use to discover iOS apps or look up an app by name. For Android apps use Search Google Play instead. Read-only and idempotent; requires the search term and a SerpApi API key.',
+      'Search the Apple App Store for iOS apps matching a name or keyword. Use to discover iOS apps, look up a specific app, or check an app\'s developer, rating, and price. For Android apps use Search Google Play instead.',
     idempotent: true,
   },
   outputSchema: searchAppleAppStoreOutputSchema,
