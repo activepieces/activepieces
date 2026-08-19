@@ -1,11 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { listAudiencesOutputSchema } from '../output-schemas';
 
 export const listAudiences = createAction({
   name: 'list_audiences',
   auth: resendAuth,
   displayName: 'List Audiences',
+  outputSchema: listAudiencesOutputSchema,
   description: 'Retrieve all contact audiences in your Resend account',
   audience: 'both',
   aiMetadata: { description: 'Retrieves all contact audiences (mailing lists) in the connected Resend account, including each audience\'s ID and name. Use this to discover an audience ID needed by contact and broadcast actions (e.g. Create Contact, List Contacts, Create Broadcast). Read-only and idempotent.', idempotent: true },

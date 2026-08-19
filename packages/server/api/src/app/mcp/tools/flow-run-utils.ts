@@ -1,4 +1,5 @@
-import { formatPieceError, isNil, isObject, tryCatch, tryCatchSync, tryParseFriendlyPieceError } from '@activepieces/core-utils'
+import { FlowId, formatPieceError, isNil, isObject, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -24,9 +25,10 @@ type PieceActionRunResult = {
     errorSummary?: string
 }
 
-export async function executeFlowTest({ flowId, projectId, stepName, triggerTestData, log }: {
-    flowId: string
-    projectId: string
+export async function executeFlowTest({ flowId, projectId, userId, stepName, triggerTestData, log }: {
+    flowId: FlowId
+    projectId: ProjectId
+    userId?: UserId
     stepName?: string
     triggerTestData?: Record<string, unknown>
     log: FastifyBaseLogger
@@ -70,7 +72,8 @@ export async function executeFlowTest({ flowId, projectId, stepName, triggerTest
         const updatedFlow = await flowService(log).update({
             id: flow.id,
             projectId,
-            userId: null,
+            userId,
+            previousFlow: flow,
             platformId: project.platformId,
             operation: {
                 type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,
@@ -444,6 +447,25 @@ async function maybeOffloadLargeResult({ outcome, actionName, displayName, offlo
     return { content: [{ type: 'text', text }] }
 }
 
+// The output is stringified into the tool result here, so this is the last place it can be trimmed
+// with its shape intact. Past this point it is one long string, and a consumer that has to shorten
+// it can only cut a prefix — which is how a five-email search arrived as 2KB of DKIM headers.
+function serializeOutput({ payload, summary }: { payload: unknown, summary: string }): string {
+    if (payload === undefined) return `${summary}(no output)`
+    const { data: inline } = tryCatchSync(() => typeof payload === 'string' ? payload : JSON.stringify(payload))
+    const size = isNil(inline) ? undefined : Buffer.byteLength(inline, 'utf8')
+    if (!isNil(inline) && size !== undefined && size <= MAX_TOOL_RESULT_BYTES) {
+        return `${summary}${inline}`
+    }
+    const sizeNote = size === undefined ? '' : ` The full output was ${Math.round(size / 1024)}KB.`
+    const fitted = largeResultUtils.fitToBudget({
+        value: payload,
+        maxBytes: MAX_TOOL_RESULT_BYTES,
+        wrap: (json) => `${summary}${json}\n\n(Long values above end with "…[truncated]" — shortened, not missing. Every field and record is still listed.${sizeNote} Ask for fewer items or a narrower filter to see a shortened value in full.)`,
+    })
+    return fitted ?? `${summary}The output was too large to include.${sizeNote} Retry with a narrower filter or fewer items.`
+}
+
 function formatPieceActionRunResult({ outcome, runId, displayName, actionName }: {
     outcome: ActionRunResult
     runId: string
@@ -454,14 +476,11 @@ function formatPieceActionRunResult({ outcome, runId, displayName, actionName }:
         const { payload, statusNote } = actionName === 'custom_api_call'
             ? slimCustomApiCallOutput(outcome.output)
             : { payload: outcome.output, statusNote: '' }
-        const outStr = payload === undefined
-            ? '(no output)'
-            : typeof payload === 'string' ? payload : JSON.stringify(payload)
-        const base = `✅ ${displayName} completed (run ${runId})${statusNote}.\n\n${outStr}`
+        const text = serializeOutput({ payload, summary: `✅ ${displayName} completed (run ${runId})${statusNote}.\n\n` })
         if (looksEmpty(payload)) {
-            return { text: `${base}\n\n${emptyResultNote(actionName)}` }
+            return { text: `${text}\n\n${emptyResultNote(actionName)}` }
         }
-        return { text: base }
+        return { text }
     }
     const summary = isNil(outcome.errorMessage) ? 'The step failed without an error message.' : summarizeActionError(outcome.errorMessage)
     return {

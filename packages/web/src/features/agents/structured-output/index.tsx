@@ -1,7 +1,6 @@
 import { AgentOutputFieldType, AgentOutputField } from '@activepieces/shared';
 import { t } from 'i18next';
 import { X } from 'lucide-react';
-import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +12,10 @@ export const AgentStructuredOutput = ({
   structuredOutputField,
   disabled,
 }: {
-  structuredOutputField: ControllerRenderProps;
+  structuredOutputField: {
+    value: unknown;
+    onChange: (value: AgentOutputField[]) => void;
+  };
   disabled: boolean;
 }) => {
   const value = structuredOutputField.value;

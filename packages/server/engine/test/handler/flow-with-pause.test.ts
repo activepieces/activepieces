@@ -3,13 +3,9 @@ import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
+import { EngineApiStub, startEngineApiStub } from '../helpers/engine-api-stub'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
-vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
-    waitpointClient: {
-        create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
-    },
-}))
 
 
 const simplePauseFlow = buildPieceAction({
@@ -65,12 +61,23 @@ const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
 })
 
 describe('flow with pause', () => {
+    let engineApi: EngineApiStub
+
+    beforeEach(async () => {
+        engineApi = await startEngineApiStub({
+            'POST /v1/waitpoints': { id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' },
+        })
+    })
+
+    afterEach(async () => {
+        await engineApi.close()
+    })
 
     it('should pause and resume successfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url, stepNames: ['loop'] }),
         })
         expect(pauseResult.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
@@ -90,6 +97,7 @@ describe('flow with pause', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 stepNames: ['loop'],
                 resumePayload: {
                     queryParams: {
@@ -119,12 +127,13 @@ describe('flow with pause', () => {
         const pauseResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
         })
         const resumeResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
             executionState: pauseResult1,
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -143,6 +152,7 @@ describe('flow with pause', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -163,18 +173,19 @@ describe('flow with pause', () => {
         const pauseResult = await flowExecutor.execute({
             action: simplePauseFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
         })
         expect(pauseResult.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
         })
-        const currentState = await pauseResult.currentState()
-        expect(Object.keys(currentState).length).toBe(1)
+        expect(await pauseResult.getStepView('approval')).toBeDefined()
+        expect(await pauseResult.getStepView('echo_step')).toBeUndefined()
 
         const resumeResult = await flowExecutor.execute({
             action: simplePauseFlow,
             executionState: pauseResult,
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -187,15 +198,13 @@ describe('flow with pause', () => {
         expect(resumeResult.verdict).toStrictEqual({
             status: FlowRunStatus.RUNNING,
         })
-        expect(await resumeResult.currentState()).toEqual({
-            'approval': {
-                output: { approved: true },
-                error: undefined,
-            },
-            echo_step: {
-                output: {},
-                error: undefined,
-            },
+        expect(await resumeResult.getStepView('approval')).toEqual({
+            output: { approved: true },
+            error: undefined,
+        })
+        expect(await resumeResult.getStepView('echo_step')).toEqual({
+            output: {},
+            error: undefined,
         })
     })
 
@@ -239,7 +248,7 @@ describe('flow with pause', () => {
         const result = await flowExecutor.execute({
             action: routerWithTwoPauseActions,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants(),
+            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
         })
 
         expect(result.verdict).toStrictEqual({
