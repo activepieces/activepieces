@@ -10,7 +10,7 @@ export const downloadAttachmentAction = createAction({
 	name: 'downloadAttachment',
 	displayName: 'Download Attachment',
 	description: 'Download attachments from a specific email message.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Fetches all file attachments from a specific Outlook message (by message ID) and writes them to storage for downstream steps. Use this after locating a message to retrieve its attached files. Requires a valid message ID; idempotent since it only reads.', idempotent: true },
 	outputSchema: downloadAttachmentActionOutputSchema,
 	props: {
