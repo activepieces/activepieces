@@ -3,6 +3,7 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { safeHttp } from '@activepieces/server-utils'
 import { AppConnectionType, CloudOAuth2ConnectionValue } from '@activepieces/shared'
+import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../../helper/system/system'
 import {
@@ -66,7 +67,12 @@ export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudO
             }
         }
         catch (e: unknown) {
-            log.error(e)
+            log.error({
+                piece: { name: pieceName },
+                claimResponse: isAxiosError(e)
+                    ? { status: e.response?.status, body: e.response?.data }
+                    : { message: e instanceof Error ? e.message : String(e) },
+            }, 'Cloud OAuth2 claim failed')
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,
                 params: {
