@@ -142,12 +142,19 @@ async function baseSchemaFor({ propertyName, property, resolvedInput, resolveDyn
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.RICH_TEXT:
         case PropertyType.MARKDOWN:
         case PropertyType.DATE_TIME:
         case PropertyType.FILE:
         case PropertyType.COLOR:
         case PropertyType.CUSTOM:
             return z.string()
+        case PropertyType.DATE_RANGE:
+            return z.object({
+                preset: z.string().optional(),
+                after: z.string().optional(),
+                before: z.string().optional(),
+            })
         case PropertyType.DROPDOWN:
         case PropertyType.STATIC_DROPDOWN:
             return z.union([z.string(), z.number(), z.object({}).loose()])

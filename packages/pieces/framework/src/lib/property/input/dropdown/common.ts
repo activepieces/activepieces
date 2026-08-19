@@ -4,11 +4,15 @@ import * as z from "zod/mini";
 export const DropdownOption = z.object({
     label: z.string(),
     value: z.unknown(),
+    description: z.optional(z.string()),
+    icon: z.optional(z.string()),
 })
 
 export type DropdownOption<T> = {
     label: string;
     value: T;
+    description?: string;
+    icon?: string;
 }
 
 export const DropdownState = z.object({

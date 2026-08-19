@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { listEmailsOutputSchema } from '../output-schemas';
 
 interface EmailRecord {
   id: string;
@@ -19,6 +20,7 @@ export const listEmails = createAction({
   name: 'list_emails',
   auth: resendAuth,
   displayName: 'List Sent Emails',
+  outputSchema: listEmailsOutputSchema,
   description: 'Retrieve a list of emails sent from your Resend account',
   audience: 'both',
   aiMetadata: { description: 'Retrieves the list of emails sent from the connected Resend account, including their IDs, recipients, subjects, and latest delivery event. Use this to discover email IDs (e.g. to feed Get Email Status, Cancel Scheduled Email, or Reschedule Email) or to audit recent sends. Read-only and idempotent.', idempotent: true },

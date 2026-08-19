@@ -12,7 +12,7 @@ export const searchGoogleJobs = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Google Jobs via SerpApi for job listings matching a query, returning results in `jobs_results` (title, company, location, posted date, schedule, apply links). Use to find open positions for a role. Narrow with a free-text Location, and set Listing Type to "1" for work-from-home roles. Paginate with the next page token from a prior response. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Google Jobs for job listings, job openings, and vacancies matching a role, title, or keyword. Use to find open positions or job postings, optionally narrowed with a free-text Location; set Listing Type to "1" for remote / work-from-home roles. Paginate with the next page token from a prior response.',
     idempotent: true,
   },
   outputSchema: searchGoogleJobsOutputSchema,

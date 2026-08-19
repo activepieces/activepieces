@@ -97,6 +97,7 @@ import { githubStarRepositoryAction } from './lib/actions/ai/star-repository';
 import { githubUnstarRepositoryAction } from './lib/actions/ai/unstar-repository';
 import { githubListStarredRepositoriesAction } from './lib/actions/ai/list-starred-repositories';
 import { githubCheckRepositoryStarredAction } from './lib/actions/ai/check-repository-starred';
+import { githubTriggerWorkflowDispatchAction } from './lib/actions/trigger-workflow-dispatch';
 
 import { githubAuth } from './lib/auth';
 
@@ -127,6 +128,7 @@ export const github = createPiece({
     githubFindIssueAction,
     githubFindUserAction,
     githubCreateGistAction,
+    githubTriggerWorkflowDispatchAction,
     // AI agent atomics (audience: 'ai')
     githubCreateIssueAiAction,
     githubGetIssueAiAction,

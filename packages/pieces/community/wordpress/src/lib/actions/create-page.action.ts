@@ -7,6 +7,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { wordpressAuth } from '../..';
+import { createPageActionOutputSchema } from '../output-schemas';
 
 export const createWordPressPage = createAction({
   auth: wordpressAuth,
@@ -15,6 +16,7 @@ export const createWordPressPage = createAction({
   audience: 'both',
   aiMetadata: { description: 'Publishes a new static page (not a blog post) on a WordPress site via the REST API, with optional status, slug, excerpt, and comment settings. Choose this for standalone pages like About or Contact rather than dated posts. Requires a title and HTML content; not idempotent — each call creates a separate page.', idempotent: false },
   displayName: 'Create Page',
+  outputSchema: createPageActionOutputSchema,
   props: {
     title: Property.ShortText({
       description: 'Title of the page about to be added',
