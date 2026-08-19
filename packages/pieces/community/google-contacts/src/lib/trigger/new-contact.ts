@@ -10,6 +10,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import { googleContactsAuth } from '../auth';
+import { newOrUpdatedContactOutputSchema } from '../output-schemas';
 import { people as googlePeople } from '@googleapis/people';
 import { OAuth2Client } from 'google-auth-library';
 import dayjs from 'dayjs';
@@ -91,6 +92,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
     description: 'Fires when a contact in the authenticated Google Contacts account is newly created or has been modified since the last poll. Each event represents one person record with its current fields; deleted contacts are excluded.',
   },
   props: {},
+  outputSchema: newOrUpdatedContactOutputSchema,
   sampleData: {
     resourceName: 'people/c4278485694217203807',
     etag: '%EiMBAgMFBgcICQoLDA0ODxATFBUWGSEiIyQlJicuNDU3PT4/QBoEAQIFByIMZFVwNlJPNEVKUzg9',

@@ -1,16 +1,17 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { Repository } from 'typeorm'
 import { aiProviderService } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { AgentConversationEntity } from './agent-conversation-entity'
+import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
@@ -24,14 +25,14 @@ export function isEvalConversationId(id: string): boolean {
     return id.startsWith(EVAL_CONVERSATION_ID_PREFIX)
 }
 
-const conversationRepo = repoFactory(AgentConversationEntity)
+const conversationRepo: () => Repository<AgentConversationWithRelations> = repoFactory(AgentConversationEntity)
 const userMemoryRepo = repoFactory(UserMemoryEntity)
 
 const MAX_MEMORIES = 50
 const MAX_MEMORY_LENGTH = 280
 const MAX_INSTRUCTIONS_LENGTH = 4000
 
-async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }) {
+async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }): Promise<AgentConversation> {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
     if (isNil(conversation)) {
         throw new ActivepiecesError({
@@ -74,9 +75,29 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityId: platformId, entityType: 'ChatAiProvider' },
-        })
+        }, 'no AI provider on this platform is enabled for chat')
     }
     return chatProvider
+}
+
+async function assertRunProviderConfigured({ platformId, provider, log }: { platformId: string, provider?: AIProviderName | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(provider)) {
+        const chatProvider = await aiProviderService(log).getChatProviderName({ platformId })
+        if (isNil(chatProvider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: platformId, entityType: 'ChatAiProvider' },
+            }, 'no AI provider on this platform is enabled for chat')
+        }
+        return
+    }
+    const configured = await aiProviderService(log).exists({ platformId, provider })
+    if (!configured) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: 'AIProvider' },
+        }, `the ${provider} AI provider is not configured on this platform`)
+    }
 }
 
 function findTier({ tierId }: { tierId: string | null }) {
@@ -120,14 +141,23 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
+async function resolveTierModel({ platformId, tierId, provider, log }: { platformId: string, tierId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
-    return agentAiUtils.createChatModel({
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
+    return {
+        model: agentAiUtils.createChatModel({
+            provider: providerConfig.provider,
+            auth: providerConfig.auth,
+            config: providerConfig.config,
+            modelId,
+        }),
+        modelId,
         provider: providerConfig.provider,
-        auth: providerConfig.auth,
-        config: providerConfig.config,
-        modelId: resolveFastModelId({ provider: providerConfig.provider }),
-    })
+    }
+}
+
+async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, log, ...spreadIfDefined('provider', provider) })).model
 }
 
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
@@ -244,11 +274,13 @@ export const agentHelpers = {
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
+    assertRunProviderConfigured,
     resolveTier,
     resolveModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
     resolveFastModel,
+    resolveTierModel,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,

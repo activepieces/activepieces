@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import { googleContactsCommon } from '../common';
 import { googleContactsAuth } from '../auth';
+import { updateContactOutputSchema } from '../output-schemas';
 
 export const googleContactsUpdateContactAction = createAction({
   auth: googleContactsAuth,
@@ -19,6 +20,7 @@ export const googleContactsUpdateContactAction = createAction({
   audience: 'both',
   aiMetadata: { description: 'Updates fields (name, email, phone, company, job title) on an existing Google Contacts person identified by its resourceName (people/{id}). Use when an agent needs to modify a known contact; requires both the resourceName and the current etag, and a field mask listing which fields to update — the call is rejected if the contact changed since the etag was fetched. Repeating the same update with the same etag/values is safe and yields the same result.', idempotent: true },
   displayName: 'Update Contact',
+  outputSchema: updateContactOutputSchema,
   props: {
     resourceName: Property.ShortText({
       displayName: 'Resource Name',

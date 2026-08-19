@@ -18,7 +18,7 @@ export const CurrentSubscriptionCard = ({
   onExplorePlans,
 }: CurrentSubscriptionCardProps) => {
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
-  const isYearly = info.plan.plan?.endsWith('_annual') ?? false;
+  const isYearly = billingUtils.isYearlyPlan(info);
 
   if (isPaid) {
     return (

@@ -121,7 +121,8 @@
                   "group": "MCP Server",
                   "pages": [
                      "mcp/overview",
-                     "mcp/tools"
+                     "mcp/tools",
+                     "mcp/tool-search"
                   ]
                },
                {
@@ -376,6 +377,7 @@
                      "build-pieces/piece-reference/examples",
                      "build-pieces/piece-reference/custom-api-calls",
                      "build-pieces/piece-reference/output-schema",
+                     "build-pieces/piece-reference/ai-metadata",
                      "build-pieces/piece-reference/i18n"
                   ]
                },

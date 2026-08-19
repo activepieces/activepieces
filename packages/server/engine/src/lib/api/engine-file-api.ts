@@ -2,15 +2,9 @@ import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
-import fetchRetry from 'fetch-retry'
+import { retryFetch } from './retry-fetch'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
-
-const RETRY_CONFIG = {
-    retries: 3,
-    retryDelay: 3000,
-    retryOn: [408, 429, 500, 502, 503, 504],
-} as const
 
 const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
@@ -33,15 +27,13 @@ export const engineFileApi = {
             return resolveUploadReadUrl(fileId, response)
         }
 
-        const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
 
-        const initial = await fetchWithRetry(putUrl, {
+        const initial = await retryFetch(putUrl, {
             method: 'PUT',
             body: data,
             headers,
             redirect: 'manual',
-            ...RETRY_CONFIG,
         })
 
         if (initial.status >= 300 && initial.status < 400) {
@@ -49,12 +41,11 @@ export const engineFileApi = {
             if (!location) {
                 throw new EngineGenericError('EngineFileUploadError', 'Server returned a redirect without a Location header')
             }
-            const s3Response = await fetchWithRetry(location, {
+            const s3Response = await retryFetch(location, {
                 method: 'PUT',
                 body: data,
                 headers: stripApHeaders(headers),
                 redirect: 'follow',
-                ...RETRY_CONFIG,
             })
             if (!s3Response.ok) {
                 throw new EngineGenericError(
@@ -72,11 +63,9 @@ export const engineFileApi = {
         return resolveUploadReadUrl(fileId, initial)
     },
     async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
-        const fetchWithRetry = fetchRetry(global.fetch)
-        const response = await fetchWithRetry(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
+        const response = await retryFetch(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
             method: 'GET',
             redirect: 'follow',
-            ...RETRY_CONFIG,
         })
         if (!response.ok) {
             // A gone file (deleted/expired trigger payload or run log) never recovers on retry and is a

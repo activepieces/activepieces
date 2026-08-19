@@ -10,6 +10,7 @@ import { createDraftReplyActionOutputSchema } from '../output-schemas';
 export const gmailCreateDraftReplyAction = createAction({
   auth: gmailAuth,
   name: 'create_draft_reply',
+  classification: 'WRITE',
   description: 'Creates a draft reply to an existing email.',
   audience: 'human',
   aiMetadata: {

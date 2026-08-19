@@ -158,13 +158,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
-            const results = await Promise.all(pieces.map((piece) =>
+            await Promise.all(pieces.map((piece) =>
                 pieceRepos().delete({ name: piece.name, version: piece.version }),
             ))
-            const anyDeleted = results.some((result) => !isNil(result.affected) && result.affected > 0)
-            if (anyDeleted) {
-                await pieceCache(log).invalidate()
-            }
+            await pieceCache(log).invalidate()
         },
 
         async delete({ id, platformId }: DeleteParams): Promise<void> {
