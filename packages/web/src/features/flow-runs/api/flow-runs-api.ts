@@ -51,23 +51,28 @@ export const flowRunsApi = {
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
   },
-  async subscribeToTestFlowOrManualRun(
-    socket: Socket,
-    request: TestFlowRunRequestBody,
-    onUpdate: (response: UpdateRunProgressRequest) => void,
-    isForManualTrigger: boolean,
-  ): Promise<void> {
+  async subscribeToTestFlowOrManualRun({
+    socket,
+    request,
+    onUpdate,
+    isForManualTrigger,
+    signal,
+  }: SubscribeToTestFlowOrManualRunParams): Promise<void> {
     socket.emit(
       isForManualTrigger
         ? WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED
         : WebsocketServerEvent.TEST_FLOW_RUN,
       request,
     );
-    const initialRun = await getInitialRun(
+    const initialRun = await getInitialRun({
       socket,
-      request.flowVersionId,
-      isForManualTrigger,
-    );
+      flowVersionId: request.flowVersionId,
+      forManualTrigger: isForManualTrigger,
+      signal,
+    });
+    if (signal.aborted) {
+      return;
+    }
     onUpdate({
       flowRun: initialRun,
     });
@@ -86,6 +91,15 @@ export const flowRunsApi = {
       WebsocketClientEvent.UPDATE_RUN_PROGRESS,
       handleUpdateRunProgress,
     );
+    signal.addEventListener(
+      'abort',
+      () =>
+        socket.off(
+          WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+          handleUpdateRunProgress,
+        ),
+      { once: true },
+    );
   },
   async testStep(params: TestStepParams): Promise<{ runId: string }> {
     const { request } = params;
@@ -96,31 +110,42 @@ export const flowRunsApi = {
     return { runId: stepRun.id };
   },
 };
-function getInitialRun(
-  socket: Socket,
-  flowVersionId: string,
-  forManualTrigger: boolean,
-): Promise<FlowRun> {
+function getInitialRun({
+  socket,
+  flowVersionId,
+  forManualTrigger,
+  signal,
+}: GetInitialRunParams): Promise<FlowRun> {
+  const startedEvent = forManualTrigger
+    ? WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED
+    : WebsocketClientEvent.TEST_FLOW_RUN_STARTED;
   return new Promise<FlowRun>((resolve) => {
     const onRunStarted = (run: FlowRun) => {
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-      if (forManualTrigger) {
-        socket.off(
-          WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
-          onRunStarted,
-        );
-      } else {
-        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      }
+      socket.off(startedEvent, onRunStarted);
       resolve(run);
     };
-
-    if (forManualTrigger) {
-      socket.on(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED, onRunStarted);
-    } else {
-      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    }
+    socket.on(startedEvent, onRunStarted);
+    signal.addEventListener(
+      'abort',
+      () => socket.off(startedEvent, onRunStarted),
+      { once: true },
+    );
   });
 }
+
+type SubscribeToTestFlowOrManualRunParams = {
+  socket: Socket;
+  request: TestFlowRunRequestBody;
+  onUpdate: (response: UpdateRunProgressRequest) => void;
+  isForManualTrigger: boolean;
+  signal: AbortSignal;
+};
+type GetInitialRunParams = {
+  socket: Socket;
+  flowVersionId: string;
+  forManualTrigger: boolean;
+  signal: AbortSignal;
+};
