@@ -5,11 +5,13 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { sendEmailOutputSchema } from '../output-schemas';
 
 export const sendEmail = createAction({
   auth: resendAuth,
   name: 'send_email',
   displayName: 'Send Email',
+  outputSchema: sendEmailOutputSchema,
   description: 'Send a text or HTML email',
   audience: 'both',
   aiMetadata: { description: 'Sends a single transactional email (plain text or HTML) to one or more recipients via Resend. Use this for one-off messages; the sender address must be on a domain you have verified in Resend. Not idempotent — each call sends a new email.', idempotent: false },

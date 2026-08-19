@@ -355,6 +355,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         projectId,
         platformId,
         userId,
+        previousFlow: flow,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
