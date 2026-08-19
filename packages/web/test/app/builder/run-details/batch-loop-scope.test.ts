@@ -8,8 +8,10 @@ import {
   FlowTriggerType,
   FlowVersionState,
   LoopOnItemsAction,
+  LoopStepOutput,
   PopulatedFlow,
   ProcessInBatchesAction,
+  StepOutput,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
@@ -31,6 +33,23 @@ const createCodeAction = (name: string): CodeAction => ({
     input: {},
     errorHandlingOptions: {},
   },
+});
+
+const createLoopOutput = (
+  iterations: Record<string, StepOutput>[],
+): LoopStepOutput =>
+  LoopStepOutput.init({ input: {} }).setIterations(iterations);
+
+const createChildRunSteps = (
+  innerIterationsPerOuterIteration: number[],
+): Record<string, StepOutput> => ({
+  loop_in_batch: createLoopOutput(
+    innerIterationsPerOuterIteration.map((innerIterations) => ({
+      loop_in_batch_inner: createLoopOutput(
+        Array.from({ length: innerIterations }, () => ({})),
+      ),
+    })),
+  ),
 });
 
 const createLoopAction = ({
@@ -112,12 +131,14 @@ function buildFlow(): PopulatedFlow {
         lastUpdatedDate: now,
         nextAction: createLoopAction({
           name: 'loop_outside',
-          firstLoopAction: createCodeAction('code_outside'),
-          nextAction: createBatchAction({
+          firstLoopAction: createBatchAction({
             name: 'batches',
             firstLoopAction: createLoopAction({
               name: 'loop_in_batch',
-              firstLoopAction: createCodeAction('code_in_batch'),
+              firstLoopAction: createLoopAction({
+                name: 'loop_in_batch_inner',
+                firstLoopAction: createCodeAction('code_in_batch'),
+              }),
             }),
           }),
         }),
@@ -144,8 +165,16 @@ function createStore(): BuilderStore {
 describe('setBatchIndex', () => {
   it('resets loop indexes inside the batch and keeps the ones outside it', () => {
     const store = createStore();
-    store.getState().setLoopIndex('loop_outside', 3);
-    store.getState().setLoopIndex('loop_in_batch', 2);
+    store.getState().setLoopIndex({
+      stepName: 'loop_outside',
+      index: 3,
+      steps: {},
+    });
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch',
+      index: 2,
+      steps: {},
+    });
 
     store.getState().setBatchIndex({ stepName: 'batches', index: 1 });
 
@@ -157,10 +186,69 @@ describe('setBatchIndex', () => {
   it('keeps the loop index when the selected batch does not change', () => {
     const store = createStore();
     store.getState().setBatchIndex({ stepName: 'batches', index: 1 });
-    store.getState().setLoopIndex('loop_in_batch', 2);
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch',
+      index: 2,
+      steps: {},
+    });
 
     store.getState().setBatchIndex({ stepName: 'batches', index: 1 });
 
     expect(store.getState().loopsIndexes.loop_in_batch).toBe(2);
+  });
+});
+
+describe('setLoopIndex', () => {
+  it('keeps a nested loop index when the batch child run still has that iteration', () => {
+    const store = createStore();
+    const steps = createChildRunSteps([3, 4]);
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch_inner',
+      index: 2,
+      steps,
+    });
+
+    store.getState().setLoopIndex({ stepName: 'loop_in_batch', index: 1, steps });
+
+    expect(store.getState().loopsIndexes.loop_in_batch).toBe(1);
+    expect(store.getState().loopsIndexes.loop_in_batch_inner).toBe(2);
+  });
+
+  it('clamps a nested loop index to the last iteration of the newly selected one', () => {
+    const store = createStore();
+    const steps = createChildRunSteps([3, 2]);
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch_inner',
+      index: 2,
+      steps,
+    });
+
+    store.getState().setLoopIndex({ stepName: 'loop_in_batch', index: 1, steps });
+
+    expect(store.getState().loopsIndexes.loop_in_batch_inner).toBe(1);
+  });
+
+  it('resets in-batch loop indexes when a loop enclosing the batch changes iteration', () => {
+    const store = createStore();
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch',
+      index: 1,
+      steps: createChildRunSteps([3, 4]),
+    });
+    store.getState().setLoopIndex({
+      stepName: 'loop_in_batch_inner',
+      index: 2,
+      steps: createChildRunSteps([3, 4]),
+    });
+
+    store.getState().setLoopIndex({
+      stepName: 'loop_outside',
+      index: 1,
+      steps: { loop_outside: createLoopOutput([{}, {}]) },
+    });
+
+    expect(store.getState().loopsIndexes.loop_outside).toBe(1);
+    expect(store.getState().loopsIndexes.loop_in_batch).toBe(0);
+    expect(store.getState().loopsIndexes.loop_in_batch_inner).toBe(0);
   });
 });
