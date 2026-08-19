@@ -5,6 +5,7 @@ import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAg
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -143,12 +144,37 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
+    async getOneByExternalId({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<Agent | null> {
+        return agentRepo().findOneBy({ projectId, externalId })
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
+        const publishedFlows = await findPublishedFlowsRunningAgent({ projectId, externalId: agent.externalId })
+        if (publishedFlows.length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `"${agent.displayName}" is still run by ${publishedFlows.map((name) => `"${name}"`).join(', ')}. The reference is live, so deleting it would break their next run — remove the step or point it elsewhere first.` },
+            })
+        }
         await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+// Published versions, not flowService.list, which filters on the latest draft: a flow whose
+// published version still runs the agent is exactly the one a delete would break.
+async function findPublishedFlowsRunningAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
+    const versions = await flowVersionRepo()
+        .createQueryBuilder('flow_version')
+        .select('flow_version."displayName"', 'displayName')
+        .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
+        .where('flow."projectId" = :projectId', { projectId })
+        .andWhere('flow_version.id = flow."publishedVersionId"')
+        .andWhere('flow_version."agentIds" && :externalIds', { externalIds: [externalId] })
+        .getRawMany<{ displayName: string }>()
+    return versions.map((version) => version.displayName)
+}
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()

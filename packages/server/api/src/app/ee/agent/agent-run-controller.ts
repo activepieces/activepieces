@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,12 +11,13 @@ import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provi
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
+import { agentService } from './agent-service'
 
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, provider, flowRunId, waitpointId, tools, structuredOutput, maxSteps } = request.body
+        const { instruction, flowRunId, waitpointId, agentId, tools: inlineTools } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -27,6 +28,16 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const { allowed, count } = await agentHelpers.incrementAndCheckLimit({ key: `flow-agent-runs:${projectId}`, limit: RUNS_PER_MINUTE, ttlSeconds: 60 })
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
+        }
+        if (!isNil(agentId) && (inlineTools?.length ?? 0) > 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
+        }
+        const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, log: request.log })
+        const { tools, structuredOutput, maxSteps } = linked ?? request.body
+        const modelName = (linked ?? request.body).modelName ?? null
+        const provider = (linked ?? request.body).provider ?? undefined
+        if (isNil(linked) && isNil(modelName)) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step has no AI model. Pick one on the step, or link a saved agent that carries its own.' } })
         }
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
@@ -68,7 +79,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 platformId: platform.id,
                 userId: ownerId,
                 userMessage: instruction,
-                modelName: modelName ?? null,
+                modelName,
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
                 waitpointId,
@@ -77,12 +88,28 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 structuredOutput,
                 maxSteps,
                 provider,
+                ...(isNil(linked) ? {} : { promptOverride: { system: linked.instructions } }),
             },
         })
 
         log.info({ project: { id: projectId } }, '[agentRunController] Enqueued flow-step agent run')
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
+}
+
+async function resolvePublishedAgent({ projectId, externalId, log }: {
+    projectId: string
+    externalId: string
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    const agent = await agentService(log).getOneByExternalId({ projectId, externalId })
+    if (isNil(agent)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The agent this step runs is not in this project. Pick an agent that lives here, or create one.' } })
+    }
+    if (isNil(agent.published)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Publish "${agent.displayName}" before a flow can run it: a flow runs the published version, so there is nothing to run yet.` } })
+    }
+    return agent.published
 }
 
 async function resolveFlowTools({ projectId, flowToolRequests, log }: {
@@ -136,6 +163,7 @@ const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     flowRunId: ApId,
     waitpointId: ApId,
+    agentId: z.optional(ApId),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).optional(),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).optional(),

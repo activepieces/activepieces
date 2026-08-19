@@ -1,3 +1,4 @@
+import { AgentPieceProps } from '@activepieces/core-piece-types'
 import { isNil } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
@@ -237,8 +238,8 @@ function extractConnectionIdsFromAuth(auth: string): string[] {
 
 function extractAgentIds(flowVersion: FlowVersion): string[] {
     const getExternalAgentId = (action: Step) => {
-        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
-            return action.settings.input.agentId
+        if (isAgentPiece(action) && AgentPieceProps.AGENT_ID in action.settings.input) {
+            return action.settings.input[AgentPieceProps.AGENT_ID]
         }
         return null
     }
