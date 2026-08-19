@@ -21,7 +21,7 @@ const BatchLogsPanel = ({ batchLogs }: { batchLogs: BatchLogs }) => {
     <EmptyStatePanel title={copy.title} description={copy.description}>
       {!isNil(batchLogs.childRunId) && (
         <Link
-          className="text-xs text-primary underline"
+          className="text-xs text-accent-11 underline"
           to={authenticationSession.appendProjectRoutePrefix(
             `/runs/${batchLogs.childRunId}`,
           )}
@@ -48,12 +48,12 @@ const EmptyStatePanel = ({
       <ClosePanelButton />
     </div>
     <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-      <div className="flex items-center justify-center size-12 rounded-full bg-muted text-muted-foreground">
+      <div className="flex items-center justify-center size-12 rounded-full bg-gray-3 text-gray-11">
         <Info className="size-6" />
       </div>
       <div className="flex flex-col gap-1.5 max-w-[280px]">
-        <span className="text-sm font-medium text-foreground">{title}</span>
-        <span className="text-xs text-muted-foreground leading-relaxed">
+        <span className="text-sm font-medium text-gray-12">{title}</span>
+        <span className="text-xs text-gray-11 leading-relaxed">
           {description}
         </span>
       </div>

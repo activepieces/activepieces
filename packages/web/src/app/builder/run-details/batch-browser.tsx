@@ -62,7 +62,7 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
       <BatchProgress header={header} output={output} />
       <BatchStatTiles header={header} />
       <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-        <Search className="size-3.5 shrink-0 text-muted-foreground" />
+        <Search className="size-3.5 shrink-0 text-gray-11" />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -85,12 +85,12 @@ export const BatchBrowser = ({ stepName }: { stepName: string }) => {
         </Badge>
       </div>
       {jumpTarget.kind === 'invalid' && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {t('Search by batch number')}
         </span>
       )}
       {jumpTarget.kind === 'outOfRange' && (
-        <span className="text-xs text-destructive">
+        <span className="text-xs text-danger-11">
           {t('Only {total} batches', {
             total: formatUtils.formatNumber(jumpTarget.total),
           })}
@@ -132,7 +132,7 @@ export const BatchBreadcrumb = ({ stepName }: { stepName: string }) => {
     return <></>;
   }
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-11">
       <CornerLeftUp className="size-3.5 shrink-0" />
       <span>
         {t('Reading Batch {number} of {total}', {
@@ -145,7 +145,7 @@ export const BatchBreadcrumb = ({ stepName }: { stepName: string }) => {
       </span>
       <button
         type="button"
-        className="ml-auto shrink-0 text-primary underline"
+        className="ml-auto shrink-0 text-accent-11 underline"
         onClick={() => selectStepByName(batchStepName)}
       >
         {t('Browse batches')}
@@ -165,7 +165,7 @@ const BatchProgress = ({
     <div
       className={cn(
         'h-2 rounded-full',
-        header.kind === 'finished' ? 'bg-muted' : 'animate-pulse bg-primary/30',
+        header.kind === 'finished' ? 'bg-gray-3' : 'animate-pulse bg-accent-5',
       )}
       style={
         header.kind === 'finished'
@@ -173,14 +173,14 @@ const BatchProgress = ({
           : undefined
       }
     />
-    <span className="text-xs text-muted-foreground">
+    <span className="text-xs text-gray-11">
       {t('Split {items} items, {size} each', {
         items: formatUtils.formatNumber(output.totalItems),
         size: formatUtils.formatNumber(output.batchSize),
       })}
     </span>
     {header.kind === 'finished' && header.timedOut && (
-      <span className="text-xs text-warning-700 dark:text-warning-300">
+      <span className="text-xs text-warning-11">
         {t('Stopped waiting after the timeout, with {running} still running', {
           running: formatUtils.formatNumber(header.running),
         })}
@@ -206,7 +206,7 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
     {
       label: t('Expected'),
       value: header.total,
-      tone: 'text-foreground',
+      tone: 'text-gray-12',
       dot: null,
     },
     {
@@ -218,13 +218,13 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
     {
       label: t('Failed'),
       value: header.failed,
-      tone: 'text-destructive-700 dark:text-destructive-300',
+      tone: 'text-danger-11',
       dot: 'bg-destructive',
     },
     {
       label: t('Running'),
       value: header.running,
-      tone: 'text-primary',
+      tone: 'text-accent-11',
       dot: 'bg-primary',
     },
   ];
@@ -233,12 +233,12 @@ const BatchStatTiles = ({ header }: { header: BatchHeaderState }) => {
       {tiles.map((tile) => (
         <div
           key={tile.label}
-          className="flex flex-col gap-1 rounded-lg border bg-background p-2"
+          className="flex flex-col gap-1 rounded-lg border bg-gray-1 p-2"
         >
           <span className={cn('text-lg font-semibold leading-none', tile.tone)}>
             {formatUtils.formatNumber(tile.value)}
           </span>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-xs text-gray-11">
             {!isNil(tile.dot) && (
               <i className={cn('size-1.5 shrink-0 rounded-full', tile.dot)} />
             )}
@@ -303,7 +303,7 @@ const BatchList = ({
   if (isError) {
     return (
       <div className="flex flex-col items-start gap-2 rounded-lg border p-4">
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-gray-11">
           {t('Error, please try again.')}
         </span>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -343,7 +343,7 @@ const BatchList = ({
           <div className="flex h-full items-center px-2">
             <Button
               className="w-full"
-              variant="accent"
+              variant="secondary"
               size="sm"
               onClick={() => fetchNextPage()}
               loading={isFetchingNextPage}
@@ -382,7 +382,7 @@ const JumpedBatch = ({
   }
   if (isNil(run) && !isFinished) {
     return (
-      <div className="rounded-lg border p-4 text-xs text-muted-foreground">
+      <div className="rounded-lg border p-4 text-xs text-gray-11">
         {t('Batch {number} not found', {
           number: formatUtils.formatNumber(dispatchIndex + 1),
         })}
@@ -432,8 +432,8 @@ const BatchRow = ({
       type="button"
       onClick={() => onSelect(dispatchIndex)}
       className={cn(
-        'flex h-full w-full items-center gap-2 border-b px-2 text-left last:border-b-0 hover:bg-accent',
-        isSelected && 'border-primary/20 bg-primary/8 hover:bg-primary/8',
+        'flex h-full w-full items-center gap-2 border-b px-2 text-left last:border-b-0 hover:bg-gray-4',
+        isSelected && 'border-accent-6 bg-accent-3 hover:bg-accent-3',
       )}
     >
       <span className="w-[60px] shrink-0 text-xs font-semibold">
@@ -441,10 +441,10 @@ const BatchRow = ({
           number: formatUtils.formatNumber(dispatchIndex + 1),
         })}
       </span>
-      <span className="grow truncate font-mono text-xs text-muted-foreground">
+      <span className="grow truncate font-mono text-xs text-gray-11">
         {batchUtils.itemRangeLabel({ output, dispatchIndex })}
       </span>
-      <span className="w-[52px] shrink-0 text-right text-xs text-muted-foreground">
+      <span className="w-[52px] shrink-0 text-right text-xs text-gray-11">
         {runDuration(run) ?? '—'}
       </span>
       <StatusBadge badge={badge} />
@@ -484,11 +484,11 @@ const BatchDetail = ({
             number: formatUtils.formatNumber(dispatchIndex + 1),
           })}
         </span>
-        <span className="font-mono text-xs text-muted-foreground">
+        <span className="font-mono text-xs text-gray-11">
           {batchUtils.itemRangeLabel({ output, dispatchIndex })}
         </span>
         {!isNil(duration) && (
-          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+          <span className="ml-auto shrink-0 text-xs text-gray-11">
             {t('took {duration}', { duration })}
           </span>
         )}
@@ -496,18 +496,18 @@ const BatchDetail = ({
       {!isNil(missingCopy) && (
         <div className="flex flex-col gap-0.5">
           <span className="text-xs font-medium">{missingCopy.title}</span>
-          <span className="text-xs leading-relaxed text-muted-foreground">
+          <span className="text-xs leading-relaxed text-gray-11">
             {missingCopy.description}
           </span>
         </div>
       )}
       {!isNil(run?.failedStep) && (
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs font-medium text-destructive-700 dark:text-destructive-300">
+          <span className="text-xs font-medium text-danger-11">
             {run.failedStep.displayName}
           </span>
           {!isNil(failure) && (
-            <span className="whitespace-pre-wrap wrap-break-word text-xs leading-relaxed text-muted-foreground">
+            <span className="whitespace-pre-wrap wrap-break-word text-xs leading-relaxed text-gray-11">
               {failure}
             </span>
           )}
@@ -537,9 +537,9 @@ function progressGradient({
 }): string {
   let cursor = 0;
   const stops = [
-    { color: 'hsl(var(--success))', value: succeeded },
-    { color: 'hsl(var(--destructive))', value: failed },
-    { color: 'hsl(var(--primary))', value: running },
+    { color: 'var(--success-9)', value: succeeded },
+    { color: 'var(--danger-9)', value: failed },
+    { color: 'var(--accent-9)', value: running },
   ].flatMap(({ color, value }) => {
     if (value === 0) {
       return [];
