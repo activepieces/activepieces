@@ -513,11 +513,6 @@ describe('flow operation invariants', () => {
         it('does not re-report a start time when a run entered at a step resumes', async () => {
             mockSendUpdate.mockClear()
             mockDownload.mockReset()
-            mockCreateWaitpoint.mockReset()
-            mockCreateWaitpoint.mockResolvedValue({
-                id: 'wp-after-batch',
-                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
-            })
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
                     executionState: {
@@ -560,11 +555,6 @@ describe('flow operation invariants', () => {
             // batch runs inside the child.
             mockDownload.mockReset()
             mockSendUpdate.mockClear()
-            mockCreateWaitpoint.mockReset()
-            mockCreateWaitpoint.mockResolvedValue({
-                id: 'wp-after-batch',
-                resumeUrl: 'http://localhost:4200/api/v1/flow-runs/run-1/waitpoints/wp-after-batch',
-            })
 
             mockDownload.mockResolvedValue(
                 new TextEncoder().encode(JSON.stringify({
