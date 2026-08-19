@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
-import { createMockOtp, mockBasicUser } from '../../../helpers/mocks'
+import { createMockOtpWithCode, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -26,7 +26,7 @@ describe('Enterprise Local Authn API', () => {
                     verified: false,
                 },
             })
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.PENDING,
@@ -35,7 +35,7 @@ describe('Enterprise Local Authn API', () => {
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
-                otp: mockOtp.value,
+                otp: mockCode,
             }
 
             // act
@@ -52,7 +52,7 @@ describe('Enterprise Local Authn API', () => {
             const userIdentity = await db.findOneBy('user_identity', { id: mockUserIdentity.id })
             expect(userIdentity?.verified).toBe(true)
             const otp = await db.findOneBy('otp', { id: mockOtp.id })
-            expect(otp?.state).toBe(OtpState.CONFIRMED)
+            expect(otp).toBeNull()
         })
 
         it('Fails if OTP is wrong', async () => {
@@ -65,7 +65,7 @@ describe('Enterprise Local Authn API', () => {
                 },
             })
             const correctOtp = '123456'
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 value: correctOtp,
@@ -105,17 +105,17 @@ describe('Enterprise Local Authn API', () => {
                 },
             })
 
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
-                updated: dayjs().subtract(31, 'minutes').toISOString(),
+                updated: dayjs().subtract(25, 'hours').toISOString(),
                 state: OtpState.PENDING,
             })
             await db.save('otp', mockOtp)
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
-                otp: mockOtp.value,
+                otp: mockCode,
             }
 
             // act
@@ -144,7 +144,7 @@ describe('Enterprise Local Authn API', () => {
                 },
             })
 
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 state: OtpState.CONFIRMED,
@@ -153,7 +153,7 @@ describe('Enterprise Local Authn API', () => {
 
             const mockVerifyEmailRequest = {
                 identityId: mockUserIdentity.id,
-                otp: mockOtp.value,
+                otp: mockCode,
             }
 
             // act
@@ -179,7 +179,7 @@ describe('Enterprise Local Authn API', () => {
                 userIdentity: {                },
             })
 
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.PASSWORD_RESET,
                 state: OtpState.PENDING,
@@ -188,7 +188,7 @@ describe('Enterprise Local Authn API', () => {
 
             const mockResetPasswordRequest = {
                 identityId: mockUserIdentity.id,
-                otp: mockOtp.value,
+                otp: mockCode,
                 newPassword: 'newPassword',
             }
 
@@ -213,7 +213,7 @@ describe('Enterprise Local Authn API', () => {
             })
 
             const correctOtp = '123456'
-            const mockOtp = createMockOtp({
+            const { otp: mockOtp, code: mockCode } = await createMockOtpWithCode({
                 identityId: mockUserIdentity.id,
                 type: OtpType.PASSWORD_RESET,
                 value: correctOtp,

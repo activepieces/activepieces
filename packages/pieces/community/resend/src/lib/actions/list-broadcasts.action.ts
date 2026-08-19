@@ -1,4 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
+import { listBroadcastsOutputSchema } from '../output-schemas';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 
@@ -20,6 +21,7 @@ export const listBroadcasts = createAction({
   name: 'list_broadcasts',
   auth: resendAuth,
   displayName: 'List Broadcasts',
+  outputSchema: listBroadcastsOutputSchema,
   description: 'Retrieve all broadcasts in your Resend account',
   audience: 'both',
   aiMetadata: { description: 'Retrieves all broadcast campaigns in the connected Resend account, including each broadcast\'s ID, name, audience, subject, and status (draft, scheduled, sent). Use this to find a broadcast ID (e.g. for Send Broadcast or Delete Broadcast) or to check campaign status. Read-only and idempotent.', idempotent: true },

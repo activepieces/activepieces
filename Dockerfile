@@ -10,11 +10,11 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     REDISMS_VERSION=7.4.2
 
-# Install all system dependencies in a single layer with cache mounts.
+# Install all system dependencies in a single layer. No apt cache mounts: docker-clean in the
+# node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
+# against rotated bullseye-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
         python3 \
@@ -28,14 +28,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         ca-certificates \
         iptables \
-        libcap2
+        libcap2 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Download, extract, and clean up bun in a single layer so the zip never ships
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
     elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
     fi && \
     unzip bun.zip && \
     mv bun-*/bun /usr/local/bin/bun && \
@@ -48,7 +49,6 @@ RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
     npm@11.11.0 \
-    pm2@6.0.10 \
     esbuild@0.25.0
 
 # Install isolated-vm globally (needed for sandboxes)
