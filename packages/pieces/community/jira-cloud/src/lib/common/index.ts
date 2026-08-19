@@ -207,6 +207,10 @@ export function getPollingLookbackWindowStartEpochMilliSeconds(lastFetchEpochMS:
 	return Math.max(0, lastFetchEpochMS - POLLING_LOOKBACK_MS);
 }
 
+export function floorToJqlMinuteEpochMilliSeconds(epochMilliSeconds: number): number {
+	return Math.floor(epochMilliSeconds / 60000) * 60000;
+}
+
 export function toPollingCheckpointSafeEpochMilliSeconds({
 	epochMilliSeconds,
 	lastFetchEpochMS,
@@ -261,6 +265,7 @@ export async function filterUnseenPollingItems<T>({
 	getId,
 	getEpochMilliSeconds,
 	pruneBeforeEpochMilliSeconds,
+	suppressEmitAtOrBelowEpochMilliSeconds,
 }: {
 	store: Store;
 	storeKey: string;
@@ -268,15 +273,24 @@ export async function filterUnseenPollingItems<T>({
 	getId: (item: T) => string;
 	getEpochMilliSeconds: (item: T) => number;
 	pruneBeforeEpochMilliSeconds: number;
+	suppressEmitAtOrBelowEpochMilliSeconds?: number;
 }): Promise<T[]> {
-	const seenEntries = (await store.get<Record<string, number>>(storeKey)) ?? {};
+	const existingSeenEntries = await store.get<Record<string, number>>(storeKey);
+	const isFirstRunSinceUpgrade = isNil(existingSeenEntries);
+	const seenEntries = existingSeenEntries ?? {};
 
 	const unseenItems = items.filter((item) => {
 		const previouslyEmittedEpochMilliSeconds = seenEntries[getId(item)];
-		return (
+		const isUnseen =
 			isNil(previouslyEmittedEpochMilliSeconds) ||
-			getEpochMilliSeconds(item) > previouslyEmittedEpochMilliSeconds
-		);
+			getEpochMilliSeconds(item) > previouslyEmittedEpochMilliSeconds;
+		if (!isUnseen) {
+			return false;
+		}
+		if (isFirstRunSinceUpgrade && !isNil(suppressEmitAtOrBelowEpochMilliSeconds)) {
+			return getEpochMilliSeconds(item) > suppressEmitAtOrBelowEpochMilliSeconds;
+		}
+		return true;
 	});
 
 	const mergedEntries = { ...seenEntries };

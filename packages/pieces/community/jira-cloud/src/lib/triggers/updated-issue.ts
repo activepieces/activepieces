@@ -12,6 +12,7 @@ import { JiraAuth, jiraCloudAuth } from '../../auth';
 import {
   fetchAllIssuesByJql,
   filterUnseenPollingItems,
+  floorToJqlMinuteEpochMilliSeconds,
   formatJqlDateTime,
   getJiraProfileTimeZone,
   getPollingLookbackWindowStartEpochMilliSeconds,
@@ -47,7 +48,8 @@ const polling: Polling<   JiraAuth,
       items: issues,
       getId: (issue) => issue.id,
       getEpochMilliSeconds: (issue) => Date.parse(issue.fields.updated),
-      pruneBeforeEpochMilliSeconds: sinceEpochMilliSeconds,
+      pruneBeforeEpochMilliSeconds: floorToJqlMinuteEpochMilliSeconds(sinceEpochMilliSeconds),
+      suppressEmitAtOrBelowEpochMilliSeconds: lastFetchEpochMS,
     });
 
     return unseenIssues.map((issue) => ({
