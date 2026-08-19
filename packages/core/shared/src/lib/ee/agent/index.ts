@@ -202,6 +202,7 @@ export const AgentConversation = z.object({
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
+    agentId: Nullable(z.string()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
@@ -217,6 +218,7 @@ export type AgentConversation = z.infer<typeof AgentConversation>
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
+    agentId: z.optional(z.string()),
 })
 export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversationRequest>
 

@@ -6,6 +6,7 @@ import { passwordHasher } from '../../../../src/app/authentication/lib/password-
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { distributedStore } from '../../../../src/app/database/redis-connections'
 import { passwordlessAuthService } from '../../../../src/app/authentication/passwordless-auth.service'
 import { platformService } from '../../../../src/app/platform/platform.service'
 import { createMockPlatform } from '../../../helpers/mocks'
@@ -45,7 +46,7 @@ async function storedIdentity(email: string) {
     return databaseConnection().getRepository('user_identity').findOneBy({ email })
 }
 
-async function storedOtp(email: string) {
+async function storedOtpRow(email: string) {
     const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email })
     if (identity === null) {
         return null
@@ -54,6 +55,15 @@ async function storedOtp(email: string) {
         identityId: identity.id,
         type: OtpType.EMAIL_LOGIN,
     })
+}
+
+async function storedOtp(email: string) {
+    const row = await storedOtpRow(email)
+    if (row === null) {
+        return null
+    }
+    const delivered = await distributedStore.get<string>(`otp-pending-code:${row.identityId}:${OtpType.EMAIL_LOGIN}`)
+    return { ...row, value: delivered ?? row.value }
 }
 
 beforeAll(async () => {
@@ -87,6 +97,7 @@ describe('Passwordless Authentication API', () => {
             expect(otp?.value).toMatch(/^[0-9]{6}$/)
             expect(otp?.state).toBe(OtpState.PENDING)
             expect(otp?.attempts).toBe(0)
+            expect((await storedOtpRow(EMAIL))?.value).toMatch(/^[0-9a-f]{64}$/)
         })
 
         it('seeds the name from the email local part until the name step runs', async () => {

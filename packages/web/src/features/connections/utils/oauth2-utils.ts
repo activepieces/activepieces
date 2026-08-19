@@ -76,7 +76,7 @@ function getCode(redirectUrl: string): Promise<string> {
         redirectUrl.startsWith(event.origin) &&
         event.data['code']
       ) {
-        resolve(decodeURIComponent(event.data.code));
+        resolve(event.data.code);
         closeOAuth2Popup();
         window.removeEventListener('message', handler);
       }
