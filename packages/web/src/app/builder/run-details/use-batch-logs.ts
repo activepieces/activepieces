@@ -40,6 +40,7 @@ export const useBatchStepRun = (batchStepName: string | null) => {
       barrierId,
       dispatchIndex: current,
       enabled: total > 0,
+      isDispatchComplete: batchUtils.isDispatchComplete(output),
     });
 
   const selectedChild = toBatchChildren(selectedPage?.data)[0] ?? null;

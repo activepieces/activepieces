@@ -33,7 +33,10 @@ const ApStepNodeStatusInRun = ({
     return (
       <StepNodeBadgeContainer>
         <div
-          className={flowRunUtils.getStatusContainerClassName('default', true)}
+          className={flowRunUtils.getStatusContainerClassName({
+            variant: 'default',
+            withPaddingAndAnimation: true,
+          })}
         >
           <RouteOff className="size-3" />
           <div>{t('Skipped')}</div>

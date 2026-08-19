@@ -50,6 +50,10 @@ function isSkippedWithoutBatches({
   return !isNil(output) && isNil(output.barrierId) && batchCount(output) === 0;
 }
 
+function isDispatchComplete(output: BatchStepRunOutput | null): boolean {
+  return headerState(output).kind === 'finished';
+}
+
 function missingLogsReason({
   output,
   dispatchIndex,
@@ -325,6 +329,7 @@ export const batchUtils = {
   parseStepOutput,
   batchCount,
   isSkippedWithoutBatches,
+  isDispatchComplete,
   missingLogsReason,
   headerState,
   itemRange,

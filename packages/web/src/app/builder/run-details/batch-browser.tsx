@@ -274,6 +274,7 @@ const BatchList = ({
     limit: BATCH_PAGE_SIZE,
     statuses: failedOnly ? FAILED_BATCH_STATUSES : undefined,
     enabled: true,
+    isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
 
   const rows: BatchListItem[] = useMemo(() => {
@@ -373,6 +374,7 @@ const JumpedBatch = ({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
+    isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
   const run = data?.data[0] ?? null;
 
@@ -462,6 +464,7 @@ const BatchDetail = ({
     barrierId: output.barrierId,
     dispatchIndex,
     enabled: true,
+    isDispatchComplete: batchUtils.isDispatchComplete(output),
   });
   const run = data?.data[0] ?? null;
   const state = batchUtils.missingLogsReason({

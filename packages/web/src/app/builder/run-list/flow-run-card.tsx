@@ -11,7 +11,6 @@ import { Eye, Repeat, Timer } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -30,7 +29,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
-import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
+import {
+  flowRunMutations,
+  flowRunQueries,
+} from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -56,9 +58,10 @@ const FlowRunCard = React.memo(
       useState<boolean>(false);
     const [isBatchRetryDialogOpen, setIsBatchRetryDialogOpen] =
       useState<boolean>(false);
-    const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-    const hasBatchStep = flowRunUtils.hasBatchStep({
-      trigger: flowVersion.trigger,
+    const mayProcessInBatches = flowRunQueries.useMayProcessInBatches({
+      runs: [{ flowId: run.flowId, flowVersionId: run.flowVersionId }],
+      hasUnknownRuns: false,
+      enabled: isRetryDropdownOpen && isFailedState(run.status),
     });
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
@@ -210,7 +213,7 @@ const FlowRunCard = React.memo(
                         if (isRetryingRun) {
                           return;
                         }
-                        if (hasBatchStep) {
+                        if (mayProcessInBatches) {
                           setIsBatchRetryDialogOpen(true);
                           return;
                         }
