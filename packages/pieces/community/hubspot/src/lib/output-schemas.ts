@@ -274,6 +274,19 @@ export const newBlogArticleTriggerOutputSchema: OutputSchema = {
 	],
 };
 
+export const customObjectSearchOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'total', label: 'Total Matches', format: 'number' },
+		{
+			key: 'results',
+			label: 'Records',
+			listItems: crmObjectFields,
+			description: 'No labelKey is set: which property best labels a record varies per custom object type.',
+		},
+		{ key: 'paging', label: 'Paging', children: pagingFields },
+	],
+};
+
 export const uploadFileOutputSchema: OutputSchema = {
 	fields: [
 		{ key: 'id', label: 'File ID' },
