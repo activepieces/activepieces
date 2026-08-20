@@ -6,7 +6,7 @@ import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { AgentEvent } from './agent-events'
-import { AgentPromptOverride, AgentRunSource } from './job-data'
+import { AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
 import { ConsumeJobRequest, ConsumeJobResponse, WorkerMachineHealthcheckRequest } from './index'
 
 export type SubmitPayloadsRequest = {
@@ -98,6 +98,11 @@ export type WorkerToApiContract = {
     executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
     executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
     sendAgentEmail(input: SendAgentEmailRequest): Promise<SendAgentEmailResponse>
+    getPersonalizationConfig(input: GetPersonalizationConfigRequest): Promise<PersonalizationConfigResponse>
+    getPersonalizationPrefillConfig(input: GetPersonalizationPrefillConfigRequest): Promise<PersonalizationPrefillConfigResponse>
+    savePersonalizationResult(input: SavePersonalizationResultRequest): Promise<void>
+    savePersonalizationPrefill(input: SavePersonalizationPrefillRequest): Promise<void>
+    sendPersonalizationProgress(input: SendPersonalizationProgressRequest): Promise<void>
 }
 
 export type SendAgentEventRequest = {
@@ -294,4 +299,60 @@ export type PrewarmDataResponse = {
 
 export type ApiToWorkerContract = {
     flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void
+}
+
+export type GetPersonalizationConfigRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+}
+
+export type PersonalizationConfigResponse = {
+    claimed: boolean
+    provider: string | null
+    auth: Record<string, unknown> | null
+    providerConfig: Record<string, unknown>
+    modelId: string | null
+    fastModelId: string | null
+    user: { firstName: string, lastName: string, email: string } | null
+    platformName: string | null
+    website: string | null
+    companyText: string | null
+    role: string | null
+    companyProfile: unknown
+    webSearch: ResolvedAiToolConfig | null
+}
+
+export type GetPersonalizationPrefillConfigRequest = {
+    platformId: string
+    userId: string
+}
+
+export type PersonalizationPrefillConfigResponse = {
+    email: string | null
+    apolloApiKey: string | null
+}
+
+export type SavePersonalizationResultRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    status: 'READY' | 'FAILED'
+    profile: unknown
+    useCases: unknown
+}
+
+export type SavePersonalizationPrefillRequest = {
+    platformId: string
+    userId: string
+    role: string | null
+    confidence: 'low' | 'medium' | 'high' | null
+}
+
+export type SendPersonalizationProgressRequest = {
+    platformId: string
+    userId: string
+    scope: PersonalizationScope
+    phase: string
+    message: string
 }
