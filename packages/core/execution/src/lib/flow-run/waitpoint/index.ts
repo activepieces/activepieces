@@ -42,8 +42,17 @@ export const BarrierPolicy = z.object({
 })
 export type BarrierPolicy = z.infer<typeof BarrierPolicy>
 
+export const BarrierFanOutSource = z.object({
+    entryStepName: z.string(),
+    batchSize: z.number().int().positive(),
+    items: z.array(z.unknown()),
+    seedSteps: z.record(z.string(), z.unknown()),
+})
+export type BarrierFanOutSource = z.infer<typeof BarrierFanOutSource>
+
 export const CreateBarrierRequest = z.object({
     policy: BarrierPolicy.optional(),
+    fanOut: BarrierFanOutSource.optional(),
     signals: z.array(z.object({ label: z.string().optional() })).optional(),
 })
 export type CreateBarrierRequest = z.infer<typeof CreateBarrierRequest>
@@ -64,6 +73,7 @@ export type CreateWaitpointRequest = z.infer<typeof CreateWaitpointRequest>
 
 export const BarrierCreatedState = z.object({
     signalCount: z.number().int().nonnegative(),
+    batchSize: z.number().int().positive(),
     signals: z.array(z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),

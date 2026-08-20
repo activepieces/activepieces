@@ -97,7 +97,7 @@ all, purely because child rows appear later than the dispatch that created them.
   them by design. `dispatchIndex` exists because attribution can legitimately be dropped while the run is
   still a child: it is the "started mid-graph" flag retry refuses on, and the ordering key for listing one
   barrier's children.
-- **Accepted cost: ~30k row writes per 10 000-signal barrier** — insert, receive, delete — on top of the
+- **Accepted cost: ~40k row writes per 10 000-signal barrier** — insert, claim, receive, delete — on top of the
   children themselves. Bounded, on a narrow table, and gone the moment the barrier resolves.
 - **A returning approver still sees a bare "already responded".** Signals die with the release, so there is
   nothing left to tell them what they decided. Decision 000009's gap stays open.

@@ -14,6 +14,8 @@ import {
     StreamStepProgress,
 } from '@activepieces/shared'
 import type { BeginExecuteFlowOperation, FlowAction, FlowVersion, ResumeExecuteFlowOperation } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import dayjs from 'dayjs'
 import { describe, expect, it, vi } from 'vitest'
 
 const { mockSendUpdate, mockBackup } = vi.hoisted(() => ({
@@ -143,6 +145,33 @@ function makeFlowVersionWithTwoApprovals(): FlowVersion {
             type: FlowTriggerType.EMPTY,
             settings: {},
             nextAction: step1,
+        },
+    }
+}
+
+function makeFlowVersionWithContainerBody(): FlowVersion {
+    const loopAction = (name: string, items: unknown): FlowAction => ({
+        name,
+        displayName: name,
+        type: FlowActionType.LOOP_ON_ITEMS,
+        skip: false,
+        valid: true,
+        settings: { items },
+    })
+    const container: FlowAction = {
+        ...loopAction('step_1', []),
+        firstLoopAction: loopAction('step_2', [1, 2]),
+        nextAction: loopAction('step_3', []),
+    }
+    return {
+        ...makeFlowVersion(),
+        trigger: {
+            name: 'trigger_1',
+            valid: true,
+            displayName: 'Test Trigger',
+            type: FlowTriggerType.EMPTY,
+            settings: {},
+            nextAction: container,
         },
     }
 }
@@ -452,6 +481,108 @@ describe('flow operation invariants', () => {
             await flowOperation.execute(operation)
 
             expect(engineApi.requestsFor('/v1/waitpoints')).toHaveLength(0)
+        })
+
+        it('reports a start time for a run entered at a step, so a batch child is not left without one', async () => {
+            // Only executeFromTrigger ever passes a startTime to the progress reporter, and a run carrying an
+            // entryStepName skips it entirely — which left every barrier child with flow_run.startTime NULL
+            // and no derivable duration. BEGIN reports it; RESUME must not, or a child that pauses and
+            // resumes would overwrite its own start with the resume time.
+            mockSendUpdate.mockClear()
+
+            await flowOperation.execute(makeBeginOperation({
+                flowVersion: makeFlowVersionWithContainerBody(),
+                entryStepName: 'step_2',
+            }))
+
+            const started = mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))
+            expect(started).toHaveLength(1)
+            expect(dayjs(started[0][0].startTime).isValid()).toBe(true)
+        })
+
+        it('does not re-report a start time when a run entered at a step resumes', async () => {
+            mockSendUpdate.mockClear()
+            mockDownload.mockReset()
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            step_1: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                            step_2: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                        },
+                        tags: [],
+                        entryStepName: 'step_2',
+                    },
+                })),
+            )
+
+            await flowOperation.execute(makeResumeOperation({
+                flowVersion: makeFlowVersionWithContainerBody(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }))
+
+            expect(mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))).toHaveLength(0)
+        })
+
+        it('resumes a run entered mid-graph from its entry step instead of walking the flow from the trigger', async () => {
+            // A child run dispatched into a container's body starts at that body's entry step, with the
+            // parent's steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state
+            // log, so a resume re-enters the body. Without it the engine walks from the trigger: the
+            // paused body step is never re-entered (its BEGIN placeholder output sticks), and the step
+            // *after* the container runs inside the child.
+            mockDownload.mockReset()
+            mockSendUpdate.mockClear()
+
+            mockDownload.mockResolvedValue(
+                new TextEncoder().encode(JSON.stringify({
+                    executionState: {
+                        steps: {
+                            step_1: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                            step_2: {
+                                type: FlowActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.PAUSED,
+                                input: {},
+                                output: { item: null, index: 0, iterations: [] },
+                            },
+                        },
+                        tags: [],
+                        entryStepName: 'step_2',
+                    },
+                })),
+            )
+
+            const operation: ResumeExecuteFlowOperation = {
+                ...makeResumeOperation(),
+                flowVersion: makeFlowVersionWithContainerBody(),
+                resumePayload: {
+                    type: 'inline',
+                    value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
+                },
+            }
+
+            await flowOperation.execute(operation)
+
+            const finalCtx = mockSendUpdate.mock.calls[mockSendUpdate.mock.calls.length - 1][0].flowExecutorContext
+            expect(finalCtx.steps.step_2.output.iterations).toHaveLength(2)
+            expect(finalCtx.steps.step_3).toBeUndefined()
         })
     })
 
