@@ -6,6 +6,7 @@ import { gmailListDraftsActionOutputSchema } from '../output-schemas';
 export const gmailListDraftsAction = createAction({
   auth: gmailAuth,
   name: 'gmail_list_drafts',
+  classification: 'SEARCH',
   displayName: 'List Drafts',
   description: 'List draft emails in the mailbox.',
   audience: 'ai',
