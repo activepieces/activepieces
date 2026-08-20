@@ -285,7 +285,7 @@ function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt
 }
 
 function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
-    const logger = wideEvent.current()
+    const logger = wideEvent.capture()
     if (isNil(logger)) {
         return undefined
     }

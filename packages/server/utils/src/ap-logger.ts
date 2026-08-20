@@ -35,7 +35,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                     wide.info(message ?? 'log', { ...bindings, ...fields })
                 }
                 else {
-                    log.info({ msg: message, ...bindings, ...fields })
+                    log.info({ msg: message, ...wideEvent.correlation(), ...bindings, ...fields })
                 }
             }
             catch {
@@ -50,7 +50,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                     wide.warn(message ?? 'log', { ...bindings, ...fields })
                 }
                 else {
-                    log.warn({ msg: message, ...bindings, ...fields })
+                    log.warn({ msg: message, ...wideEvent.correlation(), ...bindings, ...fields })
                 }
             }
             catch {
@@ -68,10 +68,10 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...wideEvent.correlation(), ...bindings, ...fields })
                     }
                     else {
-                        log.error({ msg: message, ...bindings, ...fields })
+                        log.error({ msg: message, ...wideEvent.correlation(), ...bindings, ...fields })
                     }
                 }
             }
@@ -88,10 +88,10 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...wideEvent.correlation(), ...bindings, ...fields })
                     }
                     else {
-                        log.error({ msg: message, ...bindings, ...fields })
+                        log.error({ msg: message, ...wideEvent.correlation(), ...bindings, ...fields })
                     }
                 }
             }

@@ -39,6 +39,7 @@ vi.mock('../src/wide-event', () => ({
             }
             : undefined,
         set: spies.wideSetSpy,
+        correlation: () => ({}),
     },
 }))
 
