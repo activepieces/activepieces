@@ -7,9 +7,13 @@ import { Migration } from '../../migration'
 // transaction = false because CREATE INDEX CONCURRENTLY is illegal inside a
 // transaction block. The column adds are instant (defaults on modern Postgres)
 // and each statement runs autocommit.
+//
+// breaking = true because down() restores the UNIQUE (platformId, provider) index
+// that up() drops so a platform can hold several keys per provider: once a second
+// key exists the old shape no longer fits the data, so the rollback is one-way.
 export class AddAiProviderScopes1829000000000 implements Migration {
     name = 'AddAiProviderScopes1829000000000'
-    breaking = false
+    breaking = true
     release = '0.87.1'
     transaction = false
 
@@ -24,15 +28,14 @@ export class AddAiProviderScopes1829000000000 implements Migration {
             ADD COLUMN IF NOT EXISTS "projectScope" character varying NOT NULL DEFAULT 'all',
             ADD COLUMN IF NOT EXISTS "projectIds" character varying array NOT NULL DEFAULT '{}'
         `)
-        await queryRunner.query(`
-            ALTER TABLE "ai_provider"
-            ALTER COLUMN "modelIds" DROP DEFAULT,
-            ALTER COLUMN "projectIds" DROP DEFAULT
-        `)
         if (isPGlite()) {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_ai_provider_platform_id_provider"
                 ON "ai_provider" ("platformId", "provider")
+            `)
+            await queryRunner.query(`
+                CREATE UNIQUE INDEX IF NOT EXISTS "idx_ai_provider_platform_id_managed"
+                ON "ai_provider" ("platformId") WHERE "provider" = 'activepieces'
             `)
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "idx_ai_provider_project_ids_gin"
@@ -50,6 +53,11 @@ export class AddAiProviderScopes1829000000000 implements Migration {
                       ON "ai_provider" ("platformId", "provider")`,
             })
             await createIndexConcurrently(queryRunner, {
+                name: 'idx_ai_provider_platform_id_managed',
+                ddl: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_platform_id_managed"
+                      ON "ai_provider" ("platformId") WHERE "provider" = 'activepieces'`,
+            })
+            await createIndexConcurrently(queryRunner, {
                 name: 'idx_ai_provider_project_ids_gin',
                 ddl: `CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_ai_provider_project_ids_gin"
                       ON "ai_provider" USING GIN ("projectIds")`,
@@ -62,6 +70,9 @@ export class AddAiProviderScopes1829000000000 implements Migration {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX IF EXISTS "idx_ai_provider_project_ids_gin"
+        `)
+        await queryRunner.query(`
+            DROP INDEX IF EXISTS "idx_ai_provider_platform_id_managed"
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider"
