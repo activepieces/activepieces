@@ -110,7 +110,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb }: SpawnDenoPa
     ], {
         cwd,
         env: {
-            PATH: process.env.PATH ?? '',
+            PATH: process.env['PATH'] ?? '',
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -118,10 +118,10 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb }: SpawnDenoPa
 }
 
 function resolveDenoPath(): string {
-    if (process.env.AP_DENO_PATH === undefined) {
+    if (process.env['AP_DENO_PATH'] === undefined) {
         throw new Error('AP_DENO_PATH is not set: point it at the deno binary to run the code sandbox')
     }
-    return process.env.AP_DENO_PATH
+    return process.env['AP_DENO_PATH']
 }
 
 function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermission[], tmpDir: string }): string[] {
@@ -214,6 +214,12 @@ type SpawnDenoParams = {
 type NodeApis = {
     childProcess: typeof import('node:child_process')
     os: typeof import('node:os')
+}
+
+type BuildErrorParams = {
+    message: string
+    stdout: string
+    stderr: string
 }
 
 type DenoResultMessage = {
