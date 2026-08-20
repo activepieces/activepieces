@@ -33,10 +33,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
         const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
+        const chatEnabledProviders = new Set(eligible.filter((row) => row.enabledForChat === true).map((row) => row.provider))
         return rankRows(eligible).reduce<ProjectAIProvider[]>((acc, row) => (
             acc.some((entry) => entry.provider === row.provider)
                 ? acc
-                : [...acc, { provider: row.provider, name: row.displayName, enabledForChat: row.enabledForChat ?? false }]
+                : [...acc, { provider: row.provider, name: row.displayName, enabledForChat: chatEnabledProviders.has(row.provider) }]
         ), [])
     },
 
