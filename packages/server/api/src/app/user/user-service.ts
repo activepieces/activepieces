@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, PlatformRole, ProjectType, User, UserIdentity, UserIdentityProvider, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -114,7 +114,7 @@ export const userService = (log: FastifyBaseLogger) => ({
     async countActiveByPlatformId({ platformId, entityManager }: CountActiveByPlatformIdParams): Promise<number> {
         return userRepo(entityManager).countBy({ platformId, status: UserStatus.ACTIVE })
     },
-    async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
+    async list({ platformId, externalId, excludeProvider, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: UserEntity,
@@ -124,10 +124,14 @@ export const userService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const { data, cursor } = await paginator.paginate(userRepo().createQueryBuilder('user').where({
+        const query = userRepo().createQueryBuilder('user').where({
             platformId,
             ...spreadIfDefined('externalId', externalId),
-        }))
+        })
+        if (!isNil(excludeProvider)) {
+            query.innerJoin('user.identity', 'identity', 'identity.provider != :excludeProvider', { excludeProvider })
+        }
+        const { data, cursor } = await paginator.paginate(query)
 
         const usersWithMetaInformation = await Promise.all(data.map(this.getMetaInformation))
         return paginationHelper.createPage<UserWithMetaInformation>(usersWithMetaInformation, cursor)
@@ -310,6 +314,7 @@ type DeleteParams = {
 type ListParams = {
     platformId: PlatformId
     externalId?: string
+    excludeProvider?: UserIdentityProvider
     cursorRequest: Cursor
     limit?: number
 }

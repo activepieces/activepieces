@@ -3,12 +3,15 @@ import { CreateScimGroupRequest, DefaultProjectRole, parseScimFilter, ProjectTyp
 
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { In } from 'typeorm'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { userIdentityHelper } from '../../helper/user-identity-helper'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { userRepo, userService } from '../../user/user-service'
 import { platformProjectService } from '../projects/platform-project-service'
 import { ProjectMemberEntity } from '../projects/project-members/project-member.entity'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -33,36 +36,14 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
             type: ProjectType.TEAM,
         })
 
-        const members: ScimGroupMember[] = []
-        if (!isNil(request.members) && request.members.length > 0) {
-            const users = await Promise.all(
-                request.members.map(async (member) => {
-                    await addMemberToProject({
-                        userId: member.value,
-                        projectId: project.id,
-                        platformId,
-                        log,
-                    })
-                    const user = await userService(log).get({ id: member.value })
-                    if (!isNil(user)) {
-                        const identity = await userService(log).getMetaInformation({ id: user.id })
-                        return {
-                            value: user.id,
-                            display: identity.email,
-                            $ref: `/scim/v2/Users/${user.id}`,
-                        }
-                    }
-                    return null
-                }),
-            )
+        await addMembersToProject({
+            userIds: (request.members ?? []).map((member) => member.value),
+            projectId: project.id,
+            platformId,
+            log,
+        })
 
-            for (const user of users) {
-                if (user) {
-                    members.push(user)
-                }
-            }
-        }
-
+        const members = await getProjectMembers(project.id, platformId, log)
         return toScimGroupResource(project.id, project.displayName, project.externalId ?? undefined, members, project.created, project.updated)
     },
 
@@ -199,16 +180,12 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
 
             if (op === 'add' && operation.path === 'members') {
                 const memberValues = operation.value as ScimGroupMember[]
-                await Promise.all(
-                    memberValues.map(member =>
-                        addMemberToProject({
-                            userId: member.value,
-                            projectId,
-                            platformId,
-                            log,
-                        }),
-                    ),
-                )
+                await addMembersToProject({
+                    userIds: memberValues.map((member) => member.value),
+                    projectId,
+                    platformId,
+                    log,
+                })
             }
             else if (op === 'remove' && !isNil(operation.path) && operation.path.startsWith('members')) {
                 const match = operation.path.match(/members\[value\s+eq\s+"([^"]+)"\]/i)
@@ -218,6 +195,7 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
                         userId,
                         projectId,
                         platformId,
+                        log,
                     })
                 }
             }
@@ -278,7 +256,34 @@ export const scimGroupService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function addMemberToProject(params: {
+async function addMembersToProject(params: {
+    userIds: string[]
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const { userIds, projectId, platformId, log } = params
+    if (userIds.length === 0) {
+        return
+    }
+
+    const users = await userRepo().find({
+        where: { id: In(userIds), platformId, status: UserStatus.ACTIVE },
+        relations: { identity: true },
+    })
+
+    const role = system.get<DefaultProjectRole>(AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE) ?? DefaultProjectRole.EDITOR
+
+    await Promise.all(users
+        .filter((user) => !userIdentityHelper(log).isEmbeddedIdentity(user.identity))
+        .map((user) => projectMemberService(log).upsert({
+            userId: user.id,
+            projectId,
+            projectRoleName: role,
+        })))
+}
+
+async function removeMemberFromProject(params: {
     userId: string
     projectId: string
     platformId: string
@@ -287,25 +292,12 @@ async function addMemberToProject(params: {
     const { userId, projectId, platformId, log } = params
 
     const user = await userService(log).get({ id: userId })
-    if (isNil(user) || user.platformId !== platformId || user.status !== UserStatus.ACTIVE) {
-        return
+    if (!isNil(user)) {
+        const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+        if (userIdentityHelper(log).isEmbeddedIdentity(identity)) {
+            return
+        }
     }
-
-    const role = system.get<DefaultProjectRole>(AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE) ?? DefaultProjectRole.EDITOR
-
-    await projectMemberService(log).upsert({
-        userId,
-        projectId,
-        projectRoleName: role,
-    })
-}
-
-async function removeMemberFromProject(params: {
-    userId: string
-    projectId: string
-    platformId: string
-}): Promise<void> {
-    const { userId, projectId, platformId } = params
 
     const member = await projectMemberRepo().findOneBy({
         userId,
@@ -322,17 +314,22 @@ async function getProjectMembers(projectId: string, platformId: string, log: Fas
     const members = await projectMemberRepo().find({
         where: { projectId, platformId },
     })
+    if (members.length === 0) {
+        return []
+    }
 
-    return Promise.all(
-        members.map(async (member) => {
-            const userMeta = await userService(log).getMetaInformation({ id: member.userId })
-            return {
-                value: member.userId,
-                display: userMeta.email,
-                $ref: `/scim/v2/Users/${member.userId}`,
-            }
-        }),
-    )
+    const memberUsers = await userRepo().find({
+        where: { id: In(members.map((member) => member.userId)), platformId },
+        relations: { identity: true },
+    })
+
+    return memberUsers
+        .filter((user) => !userIdentityHelper(log).isEmbeddedIdentity(user.identity))
+        .map((user) => ({
+            value: user.id,
+            display: user.identity.email,
+            $ref: `/scim/v2/Users/${user.id}`,
+        }))
 }
 
 function toScimGroupResource(
@@ -367,48 +364,32 @@ function toScimGroupResource(
 async function replaceMembers(params: {
     projectId: string
     platformId: string
-    newMembers: ScimGroupMember[]
+    newMembers: ScimGroupMember[] | undefined
     log: FastifyBaseLogger
 }): Promise<ScimGroupMember[]> {
     const { projectId, platformId, newMembers, log } = params
-    const members: ScimGroupMember[] = []
 
-    let membersToDelete = await projectMemberRepo().find({
-        where: { projectId, platformId },
+    const requestedMembers = newMembers ?? []
+    const requestedMemberIds = new Set(requestedMembers.map((member) => member.value))
+    const visibleMembers = await getProjectMembers(projectId, platformId, log)
+    const membersToDelete = visibleMembers.filter((member) => !requestedMemberIds.has(member.value))
+
+    await addMembersToProject({
+        userIds: requestedMembers.map((member) => member.value),
+        projectId,
+        platformId,
+        log,
     })
 
-    if (!isNil(newMembers) && newMembers.length > 0) {
-        const results = await Promise.all(newMembers.map(async (member) => {
-            membersToDelete = membersToDelete.filter(m => m.userId !== member.value)
-            await addMemberToProject({
+    await Promise.all(
+        membersToDelete.map(async (member) =>
+            removeMemberFromProject({
                 userId: member.value,
                 projectId,
                 platformId,
                 log,
-            })
-            const user = await userService(log).get({ id: member.value })
-            if (!isNil(user)) {
-                const identity = await userService(log).getMetaInformation({ id: user.id })
-                return {
-                    value: user.id,
-                    display: identity.email,
-                    $ref: `/scim/v2/Users/${user.id}`,
-                }
-            }
-            return null
-        }))
-        for (const member of results) {
-            if (member) {
-                members.push(member)
-            }
-        }
-    }
-
-    await Promise.all(
-        membersToDelete.map(member =>
-            projectMemberService(log).delete(projectId, member.id),
-        ),
+            })),
     )
 
-    return members
+    return getProjectMembers(projectId, platformId, log)
 }
