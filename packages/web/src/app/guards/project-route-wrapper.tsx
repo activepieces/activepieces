@@ -5,6 +5,7 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { projectCollectionUtils } from '@/features/projects';
+import { errorReporting } from '@/lib/error-reporting';
 import {
   FROM_QUERY_PARAM,
   useDefaultRedirectPath,
@@ -27,6 +28,10 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     projectCollectionUtils.useHasAccessToProject(projectIdFromParams);
 
   if (!hasAccessToProject) {
+    errorReporting.report({
+      error: new Error(`Denied access to project ${projectIdFromParams}`),
+      source: 'invalid-project-access',
+    });
     toast.error(t('Invalid Access'), {
       description: t(
         'You tried to access a project that you do not have access to.',

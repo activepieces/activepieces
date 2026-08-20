@@ -150,4 +150,5 @@ export type FrontendErrorSource =
   | 'route-error'
   | 'window-error'
   | 'unhandled-rejection'
-  | 'chunk-preload';
+  | 'chunk-preload'
+  | 'invalid-project-access';
