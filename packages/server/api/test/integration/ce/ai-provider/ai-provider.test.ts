@@ -232,7 +232,10 @@ describe('AI Providers API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             for (const entry of response?.json()) {
-                expect(Object.keys(entry).sort()).toEqual(['enabledForChat', 'name', 'provider'])
+                expect(Object.keys(entry).sort()).toEqual(['enabledForChat', 'keys', 'name', 'provider'])
+                for (const key of entry.keys) {
+                    expect(Object.keys(key).sort()).toEqual(['id', 'name'])
+                }
             }
         })
 
