@@ -125,6 +125,8 @@ async function stopPlatformExecution({ platformId, log }: BeginPlatformTeardownP
                 platform: { id: platformId },
             }, '[stopPlatformExecution] Fallback trigger-source disable also failed; teardown will continue and drainFlows will hard-delete the flow row anyway')
         }
+        await flowRepo().update({ id: flow.id }, { status: FlowStatus.DISABLED })
+        await flowExecutionCache(log).invalidate(flow.id)
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
