@@ -16,6 +16,8 @@ async function makeSandboxRoot(): Promise<Root> {
     await mkdir(join(root, ENGINE_SOURCE_DIR), { recursive: true })
     await writeFile(join(root, ENGINE_SOURCE_DIR, 'main.js'), 'engine-bundle', 'utf8')
     await writeFile(join(root, ENGINE_SOURCE_DIR, 'main.js.map'), '{}', 'utf8')
+    await writeFile(join(root, ENGINE_SOURCE_DIR, 'piece-child.js'), 'piece-child-bundle', 'utf8')
+    await writeFile(join(root, ENGINE_SOURCE_DIR, 'piece-child.js.map'), '{}', 'utf8')
     const target = join(root, 'cache', 'common')
     await mkdir(target, { recursive: true })
     process.chdir(root)
@@ -51,6 +53,7 @@ describe('engineInstaller', () => {
         expect(second.cacheHit).toBe(true)
         expect(third.cacheHit).toBe(true)
         expect(await readFile(join(target, 'main.js'), 'utf8')).toBe('engine-bundle')
+        expect(await readFile(join(target, 'piece-child.js'), 'utf8')).toBe('piece-child-bundle')
     })
 
     it('is not invalidated by another container writing the shared cache.json', async () => {

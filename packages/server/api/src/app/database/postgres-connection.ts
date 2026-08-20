@@ -418,7 +418,8 @@ import { AddAttemptsToOtp1824000000000 } from './migration/postgres/182400000000
 import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
 import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
 import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
-import { AddAiProviderScopes1828000000000 } from './migration/postgres/1828000000000-AddAiProviderScopes'
+import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
+import { AddAiProviderScopes1829000000000 } from './migration/postgres/1829000000000-AddAiProviderScopes'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -852,7 +853,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentTable1825000000000,
         AddAgentIdToAgentConversation1826000000000,
         AddVersionToOtp1827000000000,
-        AddAiProviderScopes1828000000000,
+        DropChatbot1828000000000,
+        AddAiProviderScopes1829000000000,
     ]
     return migrations
 }
