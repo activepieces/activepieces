@@ -3,6 +3,7 @@ import {
     flowOperations,
     FlowOperationType,
     FlowStatus,
+    flowStructureUtil,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
@@ -826,6 +827,100 @@ describe('Flow Operations API', () => {
             const body = response?.json()
             expect(body.data).toHaveLength(1)
             expect(body.data[0].id).toBe(mockFlowVersion.id)
+        })
+    })
+
+    describeWithAuth('POST /v1/flows/:id expectedVersionUpdated', () => app!, (setup) => {
+        function addCodeAction({ stepName }: { stepName: string }): unknown {
+            return {
+                type: FlowOperationType.ADD_ACTION,
+                request: {
+                    parentStep: 'trigger',
+                    action: {
+                        type: FlowActionType.CODE,
+                        displayName: `Step ${stepName}`,
+                        name: stepName,
+                        settings: {
+                            input: {},
+                            sourceCode: {
+                                code: 'export const code = async () => { return true; }',
+                                packageJson: '{}',
+                            },
+                        },
+                        valid: true,
+                        skip: false,
+                    },
+                },
+            }
+        }
+
+        function stepNames(flow: PopulatedFlow): string[] {
+            return flowStructureUtil.getAllSteps(flow.version.trigger)
+                .map((step) => step.name)
+                .filter((name) => name !== 'trigger')
+        }
+
+        it('rejects a stale write with 409 FLOW_VERSION_CONFLICT and applies nothing', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'conflict flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            expect(createResponse?.statusCode).toBe(StatusCodes.CREATED)
+            const flow: PopulatedFlow = createResponse!.json()
+
+            const staleToken = flow.version.updated
+
+            const firstWrite = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_a' }), { headers: { 'x-expected-version-updated': staleToken } })
+            expect(firstWrite?.statusCode).toBe(StatusCodes.OK)
+
+            const staleWrite = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_b' }), { headers: { 'x-expected-version-updated': staleToken } })
+            expect(staleWrite?.statusCode).toBe(StatusCodes.CONFLICT)
+            const errorBody = staleWrite!.json()
+            expect(errorBody.code).toBe('FLOW_VERSION_CONFLICT')
+            expect(errorBody.params.actualVersionUpdated).not.toBe(staleToken)
+
+            const reload = await ctx.get(`/v1/flows/${flow.id}`, {})
+            expect(stepNames(reload!.json())).toEqual(['step_a'])
+        })
+
+        it('accepts a write carrying the current version updated stamp', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'fresh token flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse!.json()
+
+            const first = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_a' }), { headers: { 'x-expected-version-updated': flow.version.updated } })
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            const afterFirst: PopulatedFlow = first!.json()
+
+            const second = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_b' }), { headers: { 'x-expected-version-updated': afterFirst.version.updated } })
+            expect(second?.statusCode).toBe(StatusCodes.OK)
+
+            const reload = await ctx.get(`/v1/flows/${flow.id}`, {})
+            expect(stepNames(reload!.json()).sort()).toEqual(['step_a', 'step_b'])
+        })
+
+        it('keeps legacy last-write-wins behavior when the field is absent', async () => {
+            const ctx = await setup()
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'legacy flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse!.json()
+
+            const first = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_a' }))
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+            const second = await ctx.post(`/v1/flows/${flow.id}`, addCodeAction({ stepName: 'step_b' }))
+            expect(second?.statusCode).toBe(StatusCodes.OK)
+
+            const reload = await ctx.get(`/v1/flows/${flow.id}`, {})
+            expect(stepNames(reload!.json()).sort()).toEqual(['step_a', 'step_b'])
         })
     })
 })

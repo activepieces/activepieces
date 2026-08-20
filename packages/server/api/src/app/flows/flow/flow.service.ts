@@ -327,10 +327,27 @@ export const flowService = (log: FastifyBaseLogger) => ({
         projectId,
         platformId,
         operation,
+        expectedVersionUpdated,
         previousFlow,
         ip,
         emitEvents = true,
     }: UpdateParams): Promise<PopulatedFlow> {
+        if (!isNil(expectedVersionUpdated)) {
+            const latestVersion = previousFlow?.version ?? await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: id,
+                versionId: undefined,
+                projectId,
+            })
+            const actualVersionUpdated = new Date(latestVersion.updated).toISOString()
+            if (actualVersionUpdated !== expectedVersionUpdated) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_VERSION_CONFLICT,
+                    params: {
+                        actualVersionUpdated,
+                    },
+                })
+            }
+        }
         const flowBeforeOperation = emitEvents
             ? previousFlow ?? await this.getOnePopulatedOrThrow({ id, projectId })
             : undefined
@@ -845,6 +862,7 @@ type UpdateParams = EventEmissionParams & {
     userId?: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
+    expectedVersionUpdated?: string
     platformId: PlatformId
     previousFlow?: PopulatedFlow
 }
