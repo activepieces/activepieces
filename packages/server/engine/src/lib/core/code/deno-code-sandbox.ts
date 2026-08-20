@@ -8,7 +8,7 @@ import { CodeSandbox } from './code-sandbox-common'
 export { DenoPermission } from '@activepieces/core-utils'
 
 export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
-    const sandbox: CodeSandbox = {
+    return {
         async runCodeModule({ codeFilePath, inputs }) {
             // Deno compares permission paths after resolving symlinks (e.g. macOS
             // /var -> /private/var), so the grant must be on the real path.
@@ -40,28 +40,5 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 cwd: tmpdir(),
             })
         },
-
-        async createScriptSession({ scriptContext, functions }) {
-            const context: Record<string, unknown> = { ...scriptContext }
-            let disposed = false
-            return {
-                run: async (script: string) => {
-                    if (disposed) {
-                        throw new Error('Script session has been disposed')
-                    }
-                    return sandbox.runScript({ script, scriptContext: context, functions })
-                },
-                setGlobal: async (key: string, value: unknown, noOverwrite = true) => {
-                    if (noOverwrite && (key in context || key in functions)) {
-                        return
-                    }
-                    context[key] = value
-                },
-                dispose: () => {
-                    disposed = true
-                },
-            }
-        },
     }
-    return sandbox
 }

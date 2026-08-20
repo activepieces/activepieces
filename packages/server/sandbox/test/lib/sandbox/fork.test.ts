@@ -37,7 +37,6 @@ describe('simpleProcess', () => {
             setTimeout(() => reject(new Error('timeout waiting for child message')), 10000)
         })
 
-        expect(msg.execArgv).toContain('--no-node-snapshot')
         expect(msg.execArgv).toContain('--expose-gc')
         expect(msg.execArgv).toContain('--max-old-space-size=512')
         expect(msg.env.AP_BASE_CODE_DIRECTORY).toBe('/code-dir')

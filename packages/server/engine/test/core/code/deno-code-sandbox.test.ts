@@ -117,32 +117,6 @@ describe('denoCodeSandbox permission boundary', () => {
         })
     })
 
-    describe('createScriptSession', () => {
-        it('shares one context across runs, honors noOverwrite, survives a failed run, blocks network', async () => {
-            const session = await denoCodeSandbox.createScriptSession({
-                scriptContext: { base: 40 },
-                functions: { double: (n: number) => n * 2 },
-            })
-            try {
-                expect(await session.run('base + 2')).toBe(42)
-                expect(await session.run('double(base)')).toBe(80)
-
-                await session.setGlobal('step_1', { out: 5 })
-                expect(await session.run('step_1.out + base')).toBe(45)
-
-                await session.setGlobal('base', 100)
-                expect(await session.run('base')).toBe(40)
-
-                await expect(session.run('missingVar.foo')).rejects.toThrow(/missingVar/)
-                expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
-
-                await expect(session.run(`fetch('https://example.com')`)).rejects.toThrow(PERMISSION_DENIED)
-            }
-            finally {
-                session.dispose()
-            }
-        })
-    })
 })
 
 describe('denoCodeSandbox permission profiles', () => {

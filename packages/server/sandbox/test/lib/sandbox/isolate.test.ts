@@ -220,7 +220,6 @@ describe('isolateProcess', () => {
                 '--run',
                 '--',
                 process.execPath,
-                '--no-node-snapshot',
                 '--expose-gc',
                 '--max-old-space-size=256',
                 '/root/common/engine-main.js',

@@ -55,7 +55,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 let runMs = 0
                 // Break the engine timeline into its two worker-observable phases:
                 //   sandboxStart = fork the engine child + Node boot + parse main.js (V8-cached) +
-                //                  isolated-vm init + socket connect handshake.
+                //                  socket connect handshake.
                 //   sandboxRun   = send the operation + the engine runs the flow steps + returns.
                 // executionMs wraps both (total), so the report shows execution = start + run.
                 const result = await wideEvent.timed({

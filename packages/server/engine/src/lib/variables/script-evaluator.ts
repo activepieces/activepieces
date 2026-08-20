@@ -1,22 +1,9 @@
-import { isNil } from '@activepieces/core-utils'
-
 import { initCodeSandbox } from '../core/code/code-sandbox'
-import { createSharedScriptSession, SharedScriptSession } from '../core/code/shared-script-session'
 import { utils } from '../utils'
 
 export const scriptEvaluator = {
-    initSession(): SharedScriptSession {
-        return createSharedScriptSession(async () => ({
-            scriptContext: {},
-            functions: { flattenNestedKeys },
-        }))
-    },
-    async evaluate({ script, scriptContext, scriptSession }: EvaluateParams): Promise<unknown> {
+    async evaluate({ script, scriptContext }: EvaluateParams): Promise<unknown> {
         const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
-            if (!isNil(scriptSession)) {
-                const session = await scriptSession.get()
-                return await session.run(script) ?? ''
-            }
             const codeSandbox = await initCodeSandbox()
             const scriptResult = await codeSandbox.runScript({
                 script,
@@ -54,5 +41,4 @@ function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
 type EvaluateParams = {
     script: string
     scriptContext?: Record<string, unknown>
-    scriptSession?: SharedScriptSession
 }
