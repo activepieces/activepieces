@@ -162,6 +162,7 @@ async function queryDailyExecutionsByPlatform({ platformIds, dayStartInclusive, 
             .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
             .andWhere('flow_run.created >= :dayStartInclusive', { dayStartInclusive })
             .andWhere('flow_run.created < :dayEndExclusive', { dayEndExclusive })
+            .andWhere('flow_run.parentWaitpointId IS NULL')
             .groupBy('flow_run.projectId')
             .addGroupBy('to_char(flow_run.created AT TIME ZONE \'UTC\', \'YYYY-MM-DD\')')
             .getRawMany<{ projectId: string, runDay: string, runCount: string }>()

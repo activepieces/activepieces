@@ -1,5 +1,5 @@
 import { apId, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
-import { FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
+import { BarrierSignalStatus, FlowRun, FlowRunStatus, isFlowRunStateTerminal, RunTimeline } from '@activepieces/shared'
 import { Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
@@ -8,6 +8,7 @@ import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
+import { barrierService } from '../../waitpoints/barrier-service'
 import { resumeService } from '../../waitpoints/resume-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
@@ -70,6 +71,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('failedStep', runMetadata.failedStep),
                                     ...spreadIfDefined('stepNameToTest', runMetadata.stepNameToTest),
                                     ...spreadIfDefined('parentRunId', runMetadata.parentRunId),
+                                    ...spreadIfDefined('parentWaitpointId', runMetadata.parentWaitpointId),
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
                                     ...spreadIfDefined('updated', runMetadata.updated),
@@ -100,7 +102,15 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
-                            if (shouldMarkParentAsFailed) {
+                            if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
+                                await barrierService(log).receive({
+                                    refId: savedFlowRun.id,
+                                    projectId: savedFlowRun.projectId,
+                                    status: toSignalStatus(savedFlowRun.status),
+                                    result: { runId: savedFlowRun.id, status: savedFlowRun.status },
+                                })
+                            }
+                            else if (shouldMarkParentAsFailed) {
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
@@ -228,6 +238,16 @@ export async function markParentRunAsFailed({
             resumePayload: result.waitpoint.resumePayload,
         })
     }
+}
+
+function toSignalStatus(status: FlowRunStatus): BarrierSignalStatus {
+    if (status === FlowRunStatus.SUCCEEDED) {
+        return BarrierSignalStatus.SUCCEEDED
+    }
+    if (status === FlowRunStatus.CANCELED) {
+        return BarrierSignalStatus.CANCELED
+    }
+    return BarrierSignalStatus.FAILED
 }
 
 type BuildTimelineParams = {
