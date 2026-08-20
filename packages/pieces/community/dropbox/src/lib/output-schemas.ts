@@ -47,7 +47,7 @@ export const downloadFileOutputSchema: OutputSchema = {
 
 export const listFolderOutputSchema: OutputSchema = {
   fields: [
-    { key: 'entries', label: 'Entries', labelKey: 'name', listItems: fileFields },
+    { key: 'entries', label: 'Entries', labelKey: 'name', listItems: entryFields },
     { key: 'has_more', label: 'Has More', format: 'boolean' },
     { key: 'cursor', label: 'Cursor' },
   ],
@@ -59,7 +59,7 @@ export const searchOutputSchema: OutputSchema = {
       key: 'matches',
       label: 'Matches',
       labelKey: 'metadata.metadata.name',
-      listItems: fileFields.map((field) => ({
+      listItems: entryFields.map((field) => ({
         ...field,
         value: `metadata.metadata.${field.value ?? field.key}`,
       })),
