@@ -63,6 +63,7 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: String,
             array: true,
             nullable: false,
+            default: '{}',
         },
         projectScope: {
             type: String,
@@ -73,12 +74,19 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: String,
             array: true,
             nullable: false,
+            default: '{}',
         },
     },
     indices: [
         {
             name: 'idx_ai_provider_platform_id_provider',
             columns: ['platformId', 'provider'],
+        },
+        {
+            name: 'idx_ai_provider_platform_id_managed',
+            columns: ['platformId'],
+            where: `provider = '${AIProviderName.ACTIVEPIECES}'`,
+            unique: true,
         },
         {
             name: 'idx_ai_provider_project_ids_gin',
