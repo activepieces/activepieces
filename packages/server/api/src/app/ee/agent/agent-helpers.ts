@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConfig, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -270,7 +270,19 @@ async function saveUserMemory({ platformId, userId, instructions, memories, base
     })
 }
 
+function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfigFields {
+    return {
+        tools: config.tools,
+        structuredOutput: config.structuredOutput,
+        maxSteps: config.maxSteps,
+        modelName: config.modelName ?? null,
+        ...spreadIfDefined('provider', config.provider ?? undefined),
+        promptOverride: { system: config.instructions },
+    }
+}
+
 export const agentHelpers = {
+    jobFieldsFromConfig,
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
@@ -291,4 +303,13 @@ export const agentHelpers = {
     capMemories,
     mergeMemories,
     saveUserMemory,
+}
+
+type AgentJobConfigFields = {
+    tools: AgentConfig['tools']
+    structuredOutput: AgentConfig['structuredOutput']
+    maxSteps: number
+    modelName: string | null
+    provider?: AIProviderName
+    promptOverride: { system: string }
 }

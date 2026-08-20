@@ -1,22 +1,27 @@
+import { flowStructureUtil } from '@activepieces/core-execution'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
-import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowRunService } from '../../flows/flow-run/flow-run-service'
+import { waitpointService } from '../../flows/flow-run/waitpoint/waitpoint-service'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { extractMcpTriggerInput, mcpPropertyToZod } from '../../mcp/mcp-server-builder'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
+import { agentService } from './agent-service'
 
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, modelName, provider, flowRunId, waitpointId, tools, structuredOutput, maxSteps } = request.body
+        const { instruction, flowRunId, waitpointId, agentId, tools: inlineTools } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -28,6 +33,11 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
+        if (!isNil(agentId) && (inlineTools?.length ?? 0) > 0) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
+        }
+        const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, waitpointId, log: request.log })
+        const { tools, structuredOutput, maxSteps, modelName, provider } = linked ?? request.body
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
         const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
@@ -68,21 +78,46 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 platformId: platform.id,
                 userId: ownerId,
                 userMessage: instruction,
-                modelName: modelName ?? null,
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
                 waitpointId,
-                tools: supportedTools,
                 flowTools,
-                structuredOutput,
-                maxSteps,
-                provider,
+                ...(isNil(linked)
+                    ? { tools: supportedTools, structuredOutput, maxSteps, modelName: modelName ?? null, provider: provider ?? undefined }
+                    : { ...agentHelpers.jobFieldsFromConfig({ config: linked }), tools: supportedTools }),
             },
         })
 
         log.info({ project: { id: projectId } }, '[agentRunController] Enqueued flow-step agent run')
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
+}
+
+async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpointId, log }: {
+    projectId: string
+    externalId: string
+    flowRunId: string
+    waitpointId: string
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    const flowRun = await flowRunService(log).getOneOrThrow({ id: flowRunId, projectId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    if (isNil(waitpoint)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That waitpoint does not belong to this run, so there is no step to run an agent for' } })
+    }
+    const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
+    const step = flowStructureUtil.getStep(waitpoint.stepName, flowVersion.trigger)
+    if (isNil(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
+    }
+    const agent = await agentService(log).getOneByExternalId({ projectId, externalId })
+    if (isNil(agent)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The agent this step runs is not in this project. Pick an agent that lives here, or create one.' } })
+    }
+    if (isNil(agent.published)) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Publish "${agent.displayName}" before a flow can run it: a flow runs the published version, so there is nothing to run yet.` } })
+    }
+    return agent.published
 }
 
 async function resolveFlowTools({ projectId, flowToolRequests, log }: {
@@ -136,6 +171,7 @@ const StartAgentRunRequest = z.object({
     instruction: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     flowRunId: ApId,
     waitpointId: ApId,
+    agentId: z.optional(ApId),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).optional(),
     structuredOutput: z.array(AgentOutputField).max(MAX_AGENT_OUTPUT_FIELDS).optional(),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).optional(),

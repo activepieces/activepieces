@@ -179,16 +179,11 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: isNil(agent) ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
                 files,
                 ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
-                ...(isNil(agentConfig) ? {} : {
-                    tools: agentConfig.tools,
-                    structuredOutput: agentConfig.structuredOutput,
-                    maxSteps: agentConfig.maxSteps,
-                    ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
-                    promptOverride: { system: agentConfig.instructions },
-                }),
+                ...(isNil(agentConfig)
+                    ? { modelName: conversation.modelName ?? null }
+                    : agentHelpers.jobFieldsFromConfig({ config: agentConfig })),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')

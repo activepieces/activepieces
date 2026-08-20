@@ -69,6 +69,11 @@ export const runAgent = createAction({
   aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
+    [AgentPieceProps.AGENT_ID]: Property.ShortText({
+      displayName: 'Agent',
+      description: 'Run a saved agent. Its instructions, tools and model come from the agent itself, so improving it improves every flow that uses it.',
+      required: false,
+    }),
     [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
       description: 'Describe what you want the assistant to do.',
@@ -118,8 +123,7 @@ export const runAgent = createAction({
       return result;
     }
 
-    const agentTools = context.propsValue.agentTools ?? [];
-    const tools = toolsWithoutResolvedAuth(agentTools);
+    const { agentId } = context.propsValue;
 
     const waitpoint = await context.run.createWaitpoint({
       type: 'WEBHOOK',
@@ -134,11 +138,13 @@ export const runAgent = createAction({
         instruction: context.propsValue.prompt,
         flowRunId: context.run.id,
         waitpointId: waitpoint.id,
-        ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
-        ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
-        tools,
-        structuredOutput: context.propsValue.structuredOutput ?? [],
-        ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),
+        ...(agentId ? { agentId } : {
+          ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
+          ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
+          tools: toolsWithoutResolvedAuth(context.propsValue.agentTools ?? []),
+          structuredOutput: context.propsValue.structuredOutput ?? [],
+          ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),
+        }),
       },
     });
 

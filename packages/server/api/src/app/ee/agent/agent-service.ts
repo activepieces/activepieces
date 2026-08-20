@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, FlowVersion, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -132,23 +133,81 @@ export const agentService = (log: FastifyBaseLogger) => ({
     },
 
     async unpublish({ id, projectId, userId }: GetParams): Promise<Agent> {
-        await this.getOneOrThrow({ id, projectId, userId })
-        await agentRepo()
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
+        const unpublished = await agentRepo()
             .createQueryBuilder()
             .update()
             .set({ published: null })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
             .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
             .execute()
+
+        const unpublishedRows: unknown[] = unpublished.raw ?? []
+        if (unpublishedRows.length === 0) {
+            throw await stillUsedByFlows({ agent, blocking, verb: 'unpublishing it' })
+        }
         return this.getOneOrThrow({ id, projectId, userId })
+    },
+
+    async getOneByExternalId({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<Agent | null> {
+        return agentRepo().findOneBy({ projectId, externalId })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        await agentRepo().delete({ id, projectId })
+        const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
+        const deleted = await agentRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
+            .execute()
+
+        const deletedRows: unknown[] = deleted.raw ?? []
+        if (deletedRows.length === 0) {
+            throw await stillUsedByFlows({ agent, blocking, verb: 'deleting it' })
+        }
         return agent
     },
 })
+
+async function stillUsedByFlows({ agent, blocking, verb }: {
+    agent: Agent
+    blocking: SelectQueryBuilder<FlowVersion>
+    verb: string
+}): Promise<ActivepiecesError> {
+    const names = unique((await blocking.getRawMany<{ displayName: string }>()).map((row) => `"${row.displayName}"`))
+    if (names.length === 0) {
+        return agentNotFound(agent.id)
+    }
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `"${agent.displayName}" is still used by ${names.join(', ')}. The reference is live, so ${verb} would break their next run — remove the step or point it elsewhere first.` },
+    })
+}
+
+function flowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): SelectQueryBuilder<FlowVersion> {
+    const latestVersion = flowVersionRepo()
+        .createQueryBuilder('latest')
+        .select('latest.id')
+        .where('latest."flowId" = blocking_flow.id')
+        .orderBy('latest.created', 'DESC')
+        .addOrderBy('latest.id', 'DESC')
+        .limit(1)
+    return flowVersionRepo()
+        .createQueryBuilder('blocking_version')
+        .select('blocking_version."displayName"', 'displayName')
+        .innerJoin('flow', 'blocking_flow', 'blocking_flow.id = blocking_version."flowId"')
+        .where('blocking_flow."projectId" = :projectId', { projectId })
+        .andWhere(`(blocking_version.id = blocking_flow."publishedVersionId" OR blocking_version.id = (${latestVersion.getQuery()}))`)
+        .andWhere('blocking_version."agentIds" && :externalIds', { externalIds: [externalId] })
+}
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
