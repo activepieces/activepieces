@@ -32,6 +32,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 type CreatePieceSetDialogProps = {
   onCreated: () => void;
+  isEnabled: boolean;
 };
 
 const CreatePieceSetForm = ({
@@ -99,12 +100,13 @@ const CreatePieceSetForm = ({
 
 export const CreatePieceSetDialog = ({
   onCreated,
+  isEnabled,
 }: CreatePieceSetDialogProps) => {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={!isEnabled}>
           <Plus className="size-4 mr-1" />
           {t('New Piece Set')}
         </Button>

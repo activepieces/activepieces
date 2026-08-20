@@ -29,6 +29,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { pieceSetMutations, pieceSetQueries } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { CreatePieceSetDialog } from './create-piece-set-dialog';
 import { DuplicatePieceSetDialog } from './duplicate-piece-set-dialog';
@@ -36,6 +37,8 @@ import { EditPieceSetDialog } from './edit-piece-set-dialog';
 
 export const PieceSetsTab = () => {
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const [duplicatingSet, setDuplicatingSet] = useState<PieceSet | null>(null);
   const [editingSet, setEditingSet] = useState<PieceSet | null>(null);
@@ -189,7 +192,11 @@ export const PieceSetsTab = () => {
         isLoading={isLoading}
         clientFiltering={true}
         toolbarButtons={[
-          <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,
+          <CreatePieceSetDialog
+            key="create"
+            onCreated={() => refetch()}
+            isEnabled={isEnabled}
+          />,
         ]}
       />
       {duplicatingSet && (
