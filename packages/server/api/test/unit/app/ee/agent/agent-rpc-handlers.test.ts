@@ -9,7 +9,7 @@ vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
     flowRunService: () => ({ getOneOrThrow: mockGetFlowRun }),
 }))
 
-vi.mock('../../../../../src/app/flows/flow-run/waitpoint/resume-service', () => ({
+vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
