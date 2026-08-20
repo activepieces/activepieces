@@ -6,7 +6,7 @@ status: accepted
 
 ## Decision
 
-`agentService.delete` refuses while any flow in the project references the agent from its published
+`agentService.delete` and `agentService.unpublish` both refuse while any flow in the project references the agent from its published
 version or its current draft, and the check runs inside the `DELETE` statement rather than before it.
 That is as far as the delete side goes. The remaining window — a flow edit that commits the reference
 after the delete's statement snapshot — is accepted, not closed, and the complete fix belongs on the
@@ -44,6 +44,8 @@ guard never saw.
 
 - Deleting an agent that a draft still mentions is refused, so removing the step comes first. Old
   superseded versions never block, or an agent would be undeletable forever.
+- `unpublish` carries the same guard as `delete`, because it produces the same outcome for a linked
+  flow: the next run is refused. Guarding only the destructive path would have been a speed bump.
 - Until publish-side validation lands, publishing a draft whose agent was deleted succeeds, and the
   failure surfaces on the next run rather than at publish time.
 - The guard reads `flow_version.agentIds`, and that is only trustworthy because a run refuses any

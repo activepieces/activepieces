@@ -344,6 +344,18 @@ describe('deleting an agent a flow still uses', () => {
         expect([StatusCodes.OK, StatusCodes.NO_CONTENT]).toContain(response.statusCode)
     })
 
+    it('refuses unpublishing it too, since that breaks the next run exactly as much', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        await flowUsingAgent({ ctx, externalId: agent.externalId, published: true })
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/unpublish`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('Nightly inbox sweep')
+    })
+
     it('ignores a flow in another project', async () => {
         const ctx = await context()
         const other = await context()

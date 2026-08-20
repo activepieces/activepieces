@@ -133,14 +133,23 @@ export const agentService = (log: FastifyBaseLogger) => ({
     },
 
     async unpublish({ id, projectId, userId }: GetParams): Promise<Agent> {
-        await this.getOneOrThrow({ id, projectId, userId })
-        await agentRepo()
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
+        const unpublished = await agentRepo()
             .createQueryBuilder()
             .update()
             .set({ published: null })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
             .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
             .execute()
+
+        const unpublishedRows: unknown[] = unpublished.raw ?? []
+        if (unpublishedRows.length === 0) {
+            throw await stillUsedByFlows({ agent, blocking, verb: 'unpublishing it' })
+        }
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -162,18 +171,26 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
         const deletedRows: unknown[] = deleted.raw ?? []
         if (deletedRows.length === 0) {
-            const names = unique((await blocking.getRawMany<{ displayName: string }>()).map((row) => `"${row.displayName}"`))
-            if (names.length === 0) {
-                throw agentNotFound(id)
-            }
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `"${agent.displayName}" is still used by ${names.join(', ')}. The reference is live, so deleting it would break their next run — remove the step or point it elsewhere first.` },
-            })
+            throw await stillUsedByFlows({ agent, blocking, verb: 'deleting it' })
         }
         return agent
     },
 })
+
+async function stillUsedByFlows({ agent, blocking, verb }: {
+    agent: Agent
+    blocking: SelectQueryBuilder<FlowVersion>
+    verb: string
+}): Promise<ActivepiecesError> {
+    const names = unique((await blocking.getRawMany<{ displayName: string }>()).map((row) => `"${row.displayName}"`))
+    if (names.length === 0) {
+        return agentNotFound(agent.id)
+    }
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `"${agent.displayName}" is still used by ${names.join(', ')}. The reference is live, so ${verb} would break their next run — remove the step or point it elsewhere first.` },
+    })
+}
 
 function flowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): SelectQueryBuilder<FlowVersion> {
     const latestVersion = flowVersionRepo()
