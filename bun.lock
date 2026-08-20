@@ -7360,6 +7360,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/quickbooks-desktop-conductor": {
+      "name": "@activepieces/piece-quickbooks-desktop-conductor",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/quickbooks-sandbox": {
       "name": "@activepieces/piece-quickbooks-sandbox",
       "version": "0.1.0",
@@ -12141,6 +12154,8 @@
     "@activepieces/piece-quickbase": ["@activepieces/piece-quickbase@workspace:packages/pieces/community/quickbase"],
 
     "@activepieces/piece-quickbooks": ["@activepieces/piece-quickbooks@workspace:packages/pieces/community/quickbooks"],
+
+    "@activepieces/piece-quickbooks-desktop-conductor": ["@activepieces/piece-quickbooks-desktop-conductor@workspace:packages/pieces/community/quickbooks-desktop-conductor"],
 
     "@activepieces/piece-quickbooks-sandbox": ["@activepieces/piece-quickbooks-sandbox@workspace:packages/pieces/community/quickbooks-sandbox"],
 
