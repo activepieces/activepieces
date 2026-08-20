@@ -1,6 +1,6 @@
 import { readFile, realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { deno, DenoPermission } from '@activepieces/core-utils'
 import { CodeSandbox } from './code-sandbox-common'
@@ -17,12 +17,11 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
             return deno.run({
                 body: `
-    ${buildRequireShim({ requireBase: pathToFileURL(codeFilePath).href })}
-    const inputs = ${JSON.stringify(inputs)};
-    const exportsObj = Object.create(null);
-    const module = { exports: exportsObj };
-    new Function('exports', 'module', 'require', ${JSON.stringify(source)})(exportsObj, module, require);
-    const result = await module.exports.code(inputs);
+    const { createRequire } = await import('node:module');
+    const require = createRequire(${JSON.stringify(pathToFileURL(codeFilePath).href)});
+    const module = { exports: Object.create(null) };
+    new Function('exports', 'module', 'require', ${JSON.stringify(source)})(module.exports, module, require);
+    const result = await module.exports.code(${JSON.stringify(inputs)});
 `,
                 permissions,
                 cwd: stepDir,
@@ -34,12 +33,8 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
 
             return deno.run({
                 body: `
-    ${buildRequireShim({ requireBase: pathToFileURL(join(tmpdir(), 'script.js')).href })}
     Object.assign(globalThis, ${JSON.stringify(scriptContext)});
-    let result = (0, eval)(${JSON.stringify(`${serializedFunctions}\n${script}`)});
-    if (result instanceof Promise) {
-        result = await result;
-    }
+    const result = await (0, eval)(${JSON.stringify(`${serializedFunctions}\n${script}`)});
 `,
                 permissions: [],
                 cwd: tmpdir(),
@@ -69,10 +64,4 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
         },
     }
     return sandbox
-}
-
-function buildRequireShim({ requireBase }: { requireBase: string }): string {
-    return `const { createRequire } = await import('node:module');
-    const require = createRequire(${JSON.stringify(requireBase)});
-    globalThis.require = require;`
 }
