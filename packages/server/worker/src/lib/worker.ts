@@ -185,6 +185,17 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     if (!Number.isInteger(rawConcurrency) || rawConcurrency < 1) {
         logger.warn({ rawConcurrency }, 'Invalid AP_WORKER_CONCURRENCY value, falling back to 1')
     }
+    // Reading the cgroup is the only await before the runtime is installed, and a disconnect during
+    // it clears `polling`, so a reconnect can start a newer generation while this one is suspended.
+    // Deriving the ceiling without publishing it keeps an abandoned generation from touching
+    // anything: it bails out here, having neither aborted the newer runtime nor overwritten the
+    // ceiling the newer generation already applied.
+    const engineHeapCeilingKb = await sandboxConfig.deriveEngineHeapCeilingKb({ concurrency })
+    if (connectionGeneration !== generation) {
+        logger.info({ generation, connectionGeneration }, 'Reconnected while sizing the engine heap, abandoning this generation')
+        return
+    }
+    sandboxConfig.applyEngineHeapCeiling(engineHeapCeilingKb)
     // Bring up a fresh runtime on every (re)connect — a prior connection's in-flight job is killed
     // along with its box (usually already done by the disconnect handler), so it fails fast and is
     // retried instead of lingering on a reused box. Reusing the box made the next generation's poll
