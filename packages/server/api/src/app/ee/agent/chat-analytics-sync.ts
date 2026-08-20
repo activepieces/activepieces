@@ -144,7 +144,7 @@ async function resolveLookups({ conversations, log }: {
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
         Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
             chatProviderCacheKey(conversation),
-            await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }), log }),
+            await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
         ])),
     ])
 
@@ -217,7 +217,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }), log })
+    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })
 

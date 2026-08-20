@@ -21,7 +21,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
 
         const provider = await agentHelpers.resolveChatProviderName({
             platformId: conversation.platformId,
-            scope: agentHelpers.providerScopeFor({ projectId: conversation.projectId ?? null }),
+            projectId: conversation.projectId ?? null,
             log,
         })
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })

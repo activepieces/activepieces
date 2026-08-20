@@ -62,8 +62,17 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
-function providerScopeFor({ projectId }: { projectId: string | null }): ProviderScope {
-    return isNil(projectId) ? { type: 'platform' } : { type: 'project', projectId }
+// A run always resolves its credential inside a project. Coercing a missing project to platform
+// scope would make every key on the platform eligible, ignoring the project restrictions their
+// owner set, so a run with nowhere to happen is refused instead.
+function runScopeOrThrow({ projectId }: { projectId: string | null }): ProviderScope {
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'project', entityType: 'Project' },
+        }, 'this chat belongs to no project, so no AI provider key can be resolved for it')
+    }
+    return { type: 'project', projectId }
 }
 
 // The project a chat turn runs in: the conversation's own if the user still reaches it, else the
@@ -187,8 +196,14 @@ async function resolveEmbeddingModel({ platformId, provider, providerConfigId, s
     })
 }
 
-async function resolveChatProviderName({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope }))
+// Analytics and billing label a turn with the provider that served it. A conversation with no
+// project has no key to name, and guessing platform-wide would report a credential the run was
+// never allowed to use, so the provider stays unknown.
+async function resolveChatProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    if (isNil(projectId)) {
+        return null
+    }
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'project', projectId } }))
     return result.error ? null : result.data
 }
 
@@ -298,7 +313,7 @@ export const agentHelpers = {
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,
-    providerScopeFor,
+    runScopeOrThrow,
     selectRunProject,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,

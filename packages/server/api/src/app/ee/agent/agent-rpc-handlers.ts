@@ -119,7 +119,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // it then adopted. A flow step reads its own conversation's project rather than the
         // selection above, which narrows to what the owner can still see in chat.
         const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
-        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: agentHelpers.providerScopeFor({ projectId: runProjectId }), ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }), ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
             ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })

@@ -250,19 +250,26 @@ async function ensureManagedProviderRow({ platformId }: { platformId: PlatformId
         return
     }
     const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
-    await aiProviderRepo().save({
-        id: apId(),
-        auth: await encryptUtils.encryptObject({}),
-        config: {},
-        provider: AIProviderName.ACTIVEPIECES,
-        displayName: 'Activepieces',
-        platformId,
-        enabledForChat: !hasChatProvider,
-        modelScope: 'all',
-        modelIds: [],
-        projectScope: 'all',
-        projectIds: [],
-    })
+    // Two concurrent readers both miss the existsBy above, so the row is inserted with
+    // ON CONFLICT DO NOTHING and idx_ai_provider_platform_id_managed - a partial unique
+    // index on (platformId) WHERE provider = 'activepieces' - decides which one lands.
+    await aiProviderRepo().createQueryBuilder()
+        .insert()
+        .values({
+            id: apId(),
+            auth: await encryptUtils.encryptObject({}),
+            config: {},
+            provider: AIProviderName.ACTIVEPIECES,
+            displayName: 'Activepieces',
+            platformId,
+            enabledForChat: !hasChatProvider,
+            modelScope: 'all',
+            modelIds: [],
+            projectScope: 'all',
+            projectIds: [],
+        })
+        .orIgnore()
+        .execute()
 }
 
 async function listVisibleRows({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<AIProviderSchema[]> {

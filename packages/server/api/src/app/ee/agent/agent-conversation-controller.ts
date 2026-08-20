@@ -174,7 +174,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await agentHelpers.assertRunProviderConfigured({
             platformId,
             log,
-            scope: agentHelpers.providerScopeFor({ projectId: runProjectId }),
+            scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }),
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
             ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })
