@@ -2,11 +2,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendProps } from '../common/props';
+import { updateContactOutputSchema } from '../output-schemas';
 
 export const updateContact = createAction({
   name: 'update_contact',
   auth: resendAuth,
   displayName: 'Update Contact',
+  outputSchema: updateContactOutputSchema,
   description: 'Update the name or subscription status of a contact in an audience',
   audience: 'both',
   aiMetadata: { description: 'Updates an existing contact\'s first name, last name, or subscribed/unsubscribed status within an audience, identified by audience ID and contact ID. Use this to change details or toggle subscription for a known contact. Idempotent — repeating with the same values leaves the contact in the same state.', idempotent: true },

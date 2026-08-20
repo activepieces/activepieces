@@ -1,7 +1,7 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
-import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
@@ -10,14 +10,6 @@ const MAX_BATCH_SIZE = 100
 const MAX_CONFIGURED_TOOL_CALLS = 50
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
-// Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runAgentAction) and only a preview + fileId reaches here, so this only needs to keep
-// the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
-const MAX_RESULT_SIZE_BYTES = 128 * 1024
-const MIN_PREVIEW_ARRAY_LENGTH = 3
-const PREVIEW_ITEM_COUNT = 5
-const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
-const MAX_CLAMP_ATTEMPTS = 8
 const CARD_ERROR_MAX_LENGTH = 300
 const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
@@ -65,45 +57,21 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 }
 
 function truncateLargeResult(result: unknown): unknown {
-    const { data: serialized, error } = tryCatchSync(() => JSON.stringify(result))
-    if (error) {
-        return buildOversizeEnvelope({
-            result,
-            text: '[LARGE RESPONSE] The result could not be serialized (circular or invalid structure). Retry with a more specific filter or fetch only the fields you need.',
-        })
-    }
-    if (isNil(serialized)) return result
-    const byteSize = Buffer.byteLength(serialized, 'utf8')
-    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = largeResultUtils.byteSizeOf(result)
+    if (byteSize !== null && byteSize <= MAX_TOOL_RESULT_BYTES) return result
 
-    // Defense 1: preview a genuine multi-item array (never the MCP content wrapper).
-    const topLevelArray = findTopLevelArray(result)
-    if (topLevelArray) {
-        const { array, path, totalCount } = topLevelArray
-        const previewEnvelope = buildOversizeEnvelope({
+    const sizeNote = byteSize === null ? '' : ` The full response was ${Math.round(byteSize / 1024)}KB.`
+    const fitted = largeResultUtils.fitToBudget({
+        value: result,
+        maxBytes: MAX_TOOL_RESULT_BYTES,
+        wrap: (json) => buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — showing the first ${PREVIEW_ITEM_COUNT} in full. To see the rest, narrow with a filter/limit or page through with an offset/cursor.\n\nPreview (${PREVIEW_ITEM_COUNT} of ${totalCount} items):\n${JSON.stringify(array.slice(0, PREVIEW_ITEM_COUNT), null, 2)}`,
-        })
-        // Defense 2: only keep the preview if it actually fits; otherwise fall through.
-        if (withinResultCap(previewEnvelope)) return previewEnvelope
-    }
-
-    // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).
-    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
-    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
-    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
-        return buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
-        })
-    }
-
-    // Defense 3b: unconditional hard-truncate backstop — guarantees the returned
-    // object always serializes to <= MAX_RESULT_SIZE_BYTES regardless of shape.
-    return clampEnvelopeToCap({
+            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]".\n\n${json}`,
+        }),
+    })
+    return fitted ?? buildOversizeEnvelope({
         result,
-        prefix: `[LARGE RESPONSE — hard-truncated to fit the context budget] The full response was ${Math.round(byteSize / 1024)}KB. Showing a truncated prefix only; retry with a more specific filter, request fewer items, or fetch only IDs/metadata.\n\n`,
-        body: shrunkSerialized,
+        text: `[LARGE RESPONSE] The response could not be included.${sizeNote} Retry with a more specific filter, request fewer items, or fetch only IDs/metadata.`,
     })
 }
 
@@ -113,75 +81,6 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
         content: [{ type: 'text', text }],
         ...spreadIfDefined('_meta', meta),
     }
-}
-
-function withinResultCap(value: unknown): boolean {
-    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
-    return !isNil(serialized) && Buffer.byteLength(serialized, 'utf8') <= MAX_RESULT_SIZE_BYTES
-}
-
-function sliceToByteBudget({ value, maxBytes }: { value: string, maxBytes: number }): string {
-    if (maxBytes <= 0) return ''
-    if (Buffer.byteLength(value, 'utf8') <= maxBytes) return value
-    let end = Math.min(value.length, maxBytes)
-    while (end > 0 && Buffer.byteLength(value.slice(0, end), 'utf8') > maxBytes) {
-        end--
-    }
-    return value.slice(0, end)
-}
-
-function clampEnvelopeToCap({ result, prefix, body }: { result: unknown, prefix: string, body: string }): unknown {
-    let budget = MAX_RESULT_SIZE_BYTES - HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    for (let attempt = 0; attempt < MAX_CLAMP_ATTEMPTS && budget > 0; attempt++) {
-        const sliced = sliceToByteBudget({ value: body, maxBytes: budget })
-        const envelope = buildOversizeEnvelope({ result, text: `${prefix}${sliced}…[hard-truncated]` })
-        const { data: serialized } = tryCatchSync(() => JSON.stringify(envelope))
-        const size = isNil(serialized) ? Number.MAX_SAFE_INTEGER : Buffer.byteLength(serialized, 'utf8')
-        if (size <= MAX_RESULT_SIZE_BYTES) return envelope
-        budget -= (size - MAX_RESULT_SIZE_BYTES) + HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    }
-    return buildOversizeEnvelope({
-        result,
-        text: '[LARGE RESPONSE] The response was too large to include even after truncation. Retry with a more specific filter or fewer items.',
-    })
-}
-
-function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
-    if (typeof value === 'string') {
-        if (value.length <= limits.maxStringLength) return value
-        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
-    }
-    if (Array.isArray(value)) {
-        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
-        return value.length > limits.maxArrayItems
-            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
-            : kept
-    }
-    if (isObject(value)) {
-        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
-    }
-    return value
-}
-
-function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
-    if (Array.isArray(obj) && obj.length > MIN_PREVIEW_ARRAY_LENGTH) {
-        return { array: obj, path: 'root', totalCount: obj.length }
-    }
-    if (!isObject(obj)) return null
-    for (const key of Object.keys(obj)) {
-        const val = obj[key]
-        if (!Array.isArray(val) || val.length <= MIN_PREVIEW_ARRAY_LENGTH) continue
-        // The MCP envelope `{ content: [{ type, text }] }` is not a data array — its
-        // single item holds the entire payload as a string, so a 3-item "preview"
-        // would emit the whole blob unchanged. Skip it; the shrink path handles it.
-        if (looksLikeMcpContentParts(val)) continue
-        return { array: val, path: key, totalCount: val.length }
-    }
-    return null
-}
-
-function looksLikeMcpContentParts(array: unknown[]): boolean {
-    return array.every((element) => isObject(element) && typeof element['type'] === 'string')
 }
 
 function normalizePieceName(piece: string): string {
@@ -1476,6 +1375,75 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
     ]))
 }
 
+function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+    tools: AgentKnowledgeBaseTool[]
+    runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools
+        .filter((configured) => configured.sourceType === KnowledgeBaseSourceType.FILE)
+        .map((configured) => [
+            configured.toolName,
+            tool({
+                description: `Search the "${configured.sourceName}" knowledge base file for relevant information. Use this when you need facts, policies, or content from this document.`,
+                inputSchema: z.object({
+                    query: z.string().describe('The search query to find relevant information'),
+                }),
+                execute: async ({ query }) => {
+                    callsMade += 1
+                    if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                        log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredKnowledgeBaseTool] Refused, this run has already searched enough')
+                        return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
+                    }
+                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    if (error) {
+                        log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
+                        return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
+                    }
+                    return truncateLargeResult(data.result)
+                },
+            }),
+        ]))
+}
+
+const jsonSchema7Shape = z.custom<JSONSchema7>()
+
+function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+    tools: ResolvedAgentFlowTool[]
+    runFlowTool: (input: { toolName: string, flowId: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: configured.description,
+            inputSchema: jsonSchema(jsonSchema7Shape.parse(configured.inputSchema)),
+            execute: async (toolInput) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, returnsResponse: configured.returnsResponse, toolInput }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That flow failed: ${String(error)}`
+                        : `That flow was called but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
+                    return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
@@ -1524,12 +1492,13 @@ export const agentWorkerTools = {
     createPhaseTools,
     createBuildPlanTools,
     createConfiguredPieceTools,
+    createConfiguredFlowTools,
+    createConfiguredKnowledgeBaseTools,
     createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
     truncateLargeResult,
-    shrinkLargeValue,
     withToolTimeout,
     normalizePieceName,
     TOOL_EXECUTION_TIMEOUT_MS,

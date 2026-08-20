@@ -3,17 +3,15 @@ import {
   Property,
   PieceAuth,
   ArraySubProps,
+  ExecutionType,
 } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AgentToolType } from '@activepieces/pieces-framework';
-import { AgentOutputField, AgentPieceProps, AgentTaskStatus, AgentTool, TASK_COMPLETION_TOOL_NAME, AIProviderName, AgentProviderModel, ExecutionToolStatus, AgentKnowledgeBaseTool, KnowledgeBaseSourceType, normalizeToolOutputToExecuteResponse, spreadIfDefined, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
-import { hasToolCall, stepCountIs, streamText } from 'ai';
-import { agentOutputBuilder } from './agent-output-builder';
-import { createAIModel, createEmbeddingModel } from '../../common/ai-sdk';
-import { inspect } from 'util';
-import { agentUtils } from './utils';
-import { constructAgentTools } from './tools';
-import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
+import { AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
+
+// Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
+// budget, or it fires mid-run and throws away an answer that was still coming.
+const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000;
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -68,7 +66,7 @@ export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
   description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
-  aiMetadata: { description: 'Runs an agent loop where the model reasons over your prompt and calls the tools you attach (piece actions, sub-flows, MCP servers, knowledge bases, optional web search), iterating until the task completes or Max Steps is reached. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Requires a prompt, an AI Model and a Max Steps cap; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
+  aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.PROMPT]: Property.LongText({
@@ -84,6 +82,12 @@ export const runAgent = createAction({
       displayName: 'Agent Tools',
       required: false,
       properties: agentToolArrayItems,
+    }),
+    [AgentPieceProps.MAX_STEPS]: Property.Number({
+      displayName: 'Max steps',
+      description: 'The number of iterations the agent can do',
+      required: true,
+      defaultValue: 20,
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
@@ -104,244 +108,57 @@ export const runAgent = createAction({
         }),
       },
     }),
-    [AgentPieceProps.MAX_STEPS]: Property.Number({
-      displayName: 'Max steps',
-      description: 'The number of iterations the agent can do',
-      required: true,
-      defaultValue: 20,
-    }),
-    [AgentPieceProps.WEB_SEARCH]: Property.Checkbox({
-      displayName: 'Web Search',
-      required: false,
-      defaultValue: false,
-      description:
-        'Whether to use web search to find information for the AI to use.',
-    }),
-    [AgentPieceProps.WEB_SEARCH_OPTIONS]: buildWebSearchOptionsProperty(
-      (propsValue) => {
-        const aiProviderModel = propsValue['aiProviderModel'] as AgentProviderModel | undefined;
-        return { provider: aiProviderModel?.provider, model: aiProviderModel?.model };
-      },
-      ['webSearch', 'aiProviderModel'],
-      { showIncludeSources: false },
-    ),
   },
   async run(context) {
-    const { prompt, maxSteps, aiProviderModel } = context.propsValue;
-    const agentProviderModel = aiProviderModel as AgentProviderModel
-    const provider = agentProviderModel.provider as AIProviderName;
-    const webSearchEnabled = !!(context.propsValue.webSearch);
-    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
-
-    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
-      provider,
-      model: agentProviderModel.model,
-      webSearchEnabled,
-      webSearchOptions,
-    });
-
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider,
-      model: agentProviderModel.model,
-    });
-    const model = await createAIModel({
-      modelId: agentProviderModel.model,
-      provider,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
-    });
-    const outputBuilder = agentOutputBuilder(prompt);
-    const hasStructuredOutput =
-      !isNil(context.propsValue.structuredOutput) &&
-      context.propsValue.structuredOutput.length > 0;
-    const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined;
-    const agentTools = context.propsValue.agentTools as AgentTool[];
-
-    const hasKnowledgeBaseTools = agentTools.some(t => t.type === AgentToolType.KNOWLEDGE_BASE);
-    const kbFileTools = agentTools.filter(
-      (t): t is AgentKnowledgeBaseTool => t.type === AgentToolType.KNOWLEDGE_BASE && t.sourceType === KnowledgeBaseSourceType.FILE,
-    );
-    const hasKbFileTools = kbFileTools.length > 0;
-    let embeddingConfig;
-    if (hasKbFileTools) {
-      try {
-        const result = await createEmbeddingModel({
-          provider: agentProviderModel.provider as AIProviderName,
-          engineToken: context.server.token,
-          apiUrl: context.server.apiUrl,
-        });
-        embeddingConfig = { model: result.model, providerOptions: result.providerOptions };
+    if (context.executionType === ExecutionType.RESUME) {
+      const result = context.resumePayload?.body as AgentResult | undefined;
+      if (isNil(result)) {
+        throw new Error('The agent did not report a result before this step timed out');
       }
-      catch (err) {
-        outputBuilder.addMarkdown(`\n\n**Warning:** Could not create embedding model for knowledge base search: ${err instanceof Error ? err.message : 'Unknown error'}\n\n`);
-      }
+      return result;
     }
 
-    const { mcpClients, tools, toolKeyToAgentTool } = await constructAgentTools({
-      context,
-      agentTools,
-      model,
-      outputBuilder,
-      structuredOutput,
-      embeddingConfig,
+    const agentTools = context.propsValue.agentTools ?? [];
+    const tools = toolsWithoutResolvedAuth(agentTools);
+
+    const waitpoint = await context.run.createWaitpoint({
+      type: 'WEBHOOK',
+      resumeDateTime: new Date(Date.now() + AGENT_STEP_TIMEOUT_MS).toUTCString(),
     });
-    outputBuilder.setToolMap(toolKeyToAgentTool);
 
-    const allTools = webSearchTools
-      ? { ...webSearchTools, ...tools }
-      : tools;
+    await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${context.server.apiUrl}v1/agents/runs`,
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.server.token },
+      body: {
+        instruction: context.propsValue.prompt,
+        flowRunId: context.run.id,
+        waitpointId: waitpoint.id,
+        ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
+        ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
+        tools,
+        structuredOutput: context.propsValue.structuredOutput ?? [],
+        ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),
+      },
+    });
 
-    const errors: { type: string; message: string; details?: unknown }[] = [];
-
-    try {
-      const prompts = agentUtils.getPrompts(prompt, { hasKnowledgeBaseTools });
-      const stream = streamText({
-        model: model,
-        system: prompts.system,
-        prompt: prompts.prompt,
-        tools: allTools,
-        stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-        providerOptions,
-        onFinish: async () => {
-          await Promise.all(mcpClients.map(async (client) => client.close()));
-        },
-      });
-
-      for await (const chunk of stream.fullStream) {
-        try {
-          switch (chunk.type) {
-            case 'text-delta': {
-              outputBuilder.addMarkdown(chunk.text);
-              break;
-            }
-            case 'reasoning-delta': {
-              if ('text' in chunk && typeof chunk.text === 'string') {
-                outputBuilder.addMarkdown(chunk.text);
-              } else if ('delta' in chunk && typeof chunk.delta === 'string') {
-                outputBuilder.addMarkdown(chunk.delta);
-              }
-              break;
-            }
-            case 'tool-call': {
-              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
-              }
-              outputBuilder.startToolCall({
-                toolName: chunk.toolName,
-                toolCallId: chunk.toolCallId,
-                input: chunk.input as Record<string, unknown>,
-              });
-              break;
-            }
-            case 'tool-result': {
-              if (agentUtils.isTaskCompletionToolCall(chunk.toolName)) {
-                continue;
-              }
-              const rawOutput = chunk.output;
-              const toolOutput = normalizeToolOutputToExecuteResponse(rawOutput);
-              
-              if (toolOutput['status'] === ExecutionToolStatus.FAILED && toolOutput['errorMessage']) {
-                outputBuilder.addMarkdown(
-                  `\n\n**Error:** ${JSON.stringify(toolOutput['errorMessage'])}\n\n`
-                );
-              }
-              
-              outputBuilder.finishToolCall({
-                toolCallId: chunk.toolCallId,
-                output: toolOutput,
-              });
-              break;
-            }
-            case 'tool-error': {
-              errors.push({
-                type: 'tool-error',
-                message: `Tool ${chunk.toolName} failed`,
-                details: chunk.error,
-              });
-              outputBuilder.failToolCall({
-                toolCallId: chunk.toolCallId,
-              });
-              break;
-            }
-            case 'error': {
-              errors.push({
-                type: 'stream-error',
-                message: 'Error during streaming',
-                details: inspect(chunk.error),
-              });
-              break;
-            }
-            case 'start':
-            case 'start-step':
-            case 'tool-input-start':
-            case 'tool-input-delta':
-            case 'tool-input-end':
-            case 'finish-step':
-            case 'finish':
-              break;
-            default:
-              break;
-          }
-          await context.output.update({ data: outputBuilder.build() });
-        } catch (innerError) {
-          let detailsStr: string;
-          try {
-            detailsStr = typeof innerError === 'object' && innerError !== null && 'message' in innerError
-              ? `${(innerError as Error).message}${(innerError as Error).stack ? `\n${(innerError as Error).stack}` : ''}`
-              : inspect(innerError);
-          } catch {
-            detailsStr = String(innerError);
-          }
-          errors.push({
-            type: 'chunk-processing-error',
-            message: `Error processing chunk (type=${chunk.type})`,
-            details: detailsStr,
-          });
-        }
-      }
-
-      if (!outputBuilder.hasTextContent()) {
-        try {
-          const accumulatedText = await stream.text;
-          if (accumulatedText?.trim()) {
-            outputBuilder.addMarkdown(accumulatedText);
-            await context.output.update({ data: outputBuilder.build() });
-          }
-        } catch {
-          // ignore
-        }
-      }
-
-      if (errors.length > 0) {
-        const errorSummary = errors.map(e => {
-          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
-          return `${e.type}: ${e.message}${detail}`;
-        }).join('\n');
-        outputBuilder.addMarkdown(`\n\n**Errors encountered:**\n${errorSummary}`);
-        outputBuilder.fail({ message: 'Agent completed with errors' });
-        await context.output.update({ data: outputBuilder.build() });
-      } else {
-        outputBuilder.setStatus(AgentTaskStatus.COMPLETED)
-      }
-
-    } catch (error) {
-      let errorMessage = `Agent failed unexpectedly: ${inspect(error)}`;
-      if (errors.length > 0) {
-        const collectedErrors = errors.map(e => {
-          const detail = e.details != null ? `\n  ${String(e.details)}` : '';
-          return `${e.type}: ${e.message}${detail}`;
-        }).join('\n');
-        errorMessage += `\n\nCollected stream errors:\n${collectedErrors}`;
-      }
-      outputBuilder.fail({ message: errorMessage });
-      await context.output.update({ data: outputBuilder.build() });
-      await Promise.all(mcpClients.map(async (client) => client.close()));
-    }
-
-    return outputBuilder.build();
-  }
+    context.run.waitForWaitpoint(waitpoint.id);
+    return {};
+  },
 });
+
+// The engine resolves {{connections[...]}} in every step input, so a connection pinned on a tool
+// arrives here as the decrypted credential rather than its id. The server wants the id and rebuilds
+// the reference itself, so anything that is not an id is dropped rather than sent.
+function toolsWithoutResolvedAuth(tools: unknown[]): unknown[] {
+  return tools.map((tool) => {
+    const piece = (tool as { pieceMetadata?: { predefinedInput?: { auth?: unknown } } }).pieceMetadata;
+    const auth = piece?.predefinedInput?.auth;
+    if (isNil(auth) || typeof auth === 'string') {
+      return tool;
+    }
+    throw new Error(
+      'This agent step pins a connection in a form the server cannot accept yet. Remove the pinned connection from the tool, or wait for the update that stores it by reference.',
+    );
+  });
+}

@@ -4,6 +4,7 @@ import {
   mailboxDropdown,
   copyEmail as copyImapEmail,
 } from '../common';
+import { copyEmailActionOutputSchema } from '../output-schemas';
 
 const props = {
   sourceMailbox: mailboxDropdown({
@@ -28,6 +29,7 @@ export const copyEmail = createAction({
   name: 'copy_email',
   displayName: 'Copy Email',
   description: 'Copy an email to another mailbox',
+  outputSchema: copyEmailActionOutputSchema,
   audience: 'both',
   aiMetadata: { description: 'Copies an email (by message UID) from a source IMAP folder into a target folder, leaving the original in place. Use to duplicate a message into another mailbox without removing it from the source. Requires the source folder, target folder, and the UID; not idempotent since each call appends another copy with a new UID.', idempotent: false },
   props,

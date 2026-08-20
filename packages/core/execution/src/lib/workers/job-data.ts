@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -8,7 +8,7 @@ import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
-import { AgentPieceTool } from '../agents/tools'
+import { AgentTool } from '../agents/tools'
 import { AgentOutputField } from '../agents'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
@@ -297,6 +297,7 @@ export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof Us
 export enum AgentRunSource {
     CHAT = 'CHAT',
     FLOW_STEP = 'FLOW_STEP',
+    AGENT = 'AGENT',
 }
 
 export const AgentPromptOverride = z.object({
@@ -306,6 +307,15 @@ export const AgentPromptOverride = z.object({
     guides: z.record(z.string(), z.string()).optional(),
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
+
+export const ResolvedAgentFlowTool = z.object({
+    toolName: z.string(),
+    flowId: z.string(),
+    description: z.string(),
+    inputSchema: z.record(z.string(), z.unknown()),
+    returnsResponse: z.boolean(),
+})
+export type ResolvedAgentFlowTool = z.infer<typeof ResolvedAgentFlowTool>
 
 export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
@@ -319,8 +329,11 @@ export const ExecuteAgentRunJobData = z.object({
     source: z.enum(AgentRunSource).optional(),
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
-    tools: z.array(AgentPieceTool).optional(),
+    tools: z.array(AgentTool).optional(),
+    flowTools: z.array(ResolvedAgentFlowTool).optional(),
     structuredOutput: z.array(AgentOutputField).optional(),
+    maxSteps: z.number().int().positive().optional(),
+    provider: z.enum(AIProviderName).optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),

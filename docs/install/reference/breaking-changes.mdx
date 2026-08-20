@@ -4,10 +4,89 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## Unreleased
+
+### What has changed?
+
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
+
+Two changes to the MCP OAuth endpoints:
+
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
+
+#### What you need to do
+
+Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
+
+Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
+
+If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
+
+#### Agent steps move from the flow engine to the server
+
+An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
+
+The step's inputs and its output shape are unchanged, so anything reading the step's result or its structured output keeps working. Sub-flow, MCP server, knowledge base and piece action tools all run on the new path.
+
+Two differences are worth knowing before you upgrade:
+
+- **Web search is no longer a step setting.** It follows what the platform has configured rather than a per-step toggle. A step that had it switched on keeps working; the stored value is ignored.
+- **Max steps is honoured up to a ceiling.** The value you set still applies, but the server caps a single run at 50 turns. A step configured above that runs 50.
+
+#### What you need to do
+
+Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
+
+#### The container no longer bundles PM2 — crashes exit the container
+
+The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
+
+#### What you need to do
+
+Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+#### Table record filters compare date columns chronologically
+
+The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
+
+This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
+
+#### What you need to do
+
+Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
+
+#### Emailed sign-in codes allow ten wrong guesses per account per hour
+
+The six-digit login code already allowed five wrong guesses, but that budget lived on the code itself, and the fifth wrong guess threw the code away — so asking for a new code handed out five fresh guesses immediately, with no ceiling on how often that could repeat. A six-digit code is only a million possibilities, so unlimited retries reduce it to a matter of hours.
+
+Wrong guesses are now counted per account over a rolling hour, independently of how many codes get sent. Entering the right code clears the counter, so someone who fumbles a few digits and then succeeds is unaffected.
+
+Two consequences worth knowing. Someone who spends ten wrong guesses on an account within an hour cannot sign in **with an emailed code** until the hour is up; password and Google sign-in are unaffected. And because the counter is keyed on the account rather than the caller, anyone who knows an address can spend that budget on the owner's behalf — a temporary nuisance for the owner, and the trade the cap is worth making.
+
+#### What you need to do
+
+Nothing. The limit applies out of the box and needs no configuration. If your support team sees a report of "the code keeps saying it's wrong", have them check whether the account has burned its hourly budget, and point the user at password or Google sign-in in the meantime.
+
+#### One-time codes are no longer stored in a readable form
+
+The `otp` table used to hold the six-digit sign-in code as plain text, so anyone who could read the database — a replica, a backup, a support query — could sign in as any account for the ten minutes that code was alive, without a password. Codes are now stored as a digest keyed with a server-held secret, so reading the table no longer yields anything you can sign in with. The code itself is held only long enough to re-send it if the person asks for it again.
+
+A code found to be expired is thrown away when it is next presented, rather than sitting in the table until the same person happens to request another one.
+
+#### What you need to do
+
+Nothing, and no new configuration: the key is derived from a secret your instance already has. Codes written by an older build are recorded as such and keep working until they expire, so a sign-in already underway when you deploy still completes, an email verification link still opens, and a rolling deploy where both builds are serving at once behaves the same.
+
+Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
+
 
 ## 0.87.0
 
 ### What has changed?
+
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
 
 #### Plans and credits are now managed by our billing service
 
@@ -25,6 +104,7 @@ When a platform has no credits left, new production runs are recorded with the `
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
 ### Do you need to take action?
+- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
 - Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
 - Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.

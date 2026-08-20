@@ -1,6 +1,7 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/pieces-framework';
+import { updatedRecordTriggerOutputSchema } from '../output-schemas';
 
 export const updatedRecordTrigger = createTrigger({
     name: 'updatedRecord',
@@ -14,6 +15,7 @@ export const updatedRecordTrigger = createTrigger({
         table_id: tablesCommon.table_id,
     },
     sampleData: {},
+    outputSchema: updatedRecordTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const tableExternalId = context.propsValue.table_id;

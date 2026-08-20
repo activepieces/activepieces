@@ -13,6 +13,7 @@ import {
 } from '@/components/prompt-kit/chat-container';
 import { ScrollButton } from '@/components/prompt-kit/scroll-button';
 import { Button } from '@/components/ui/button';
+import { ChatCreditsAlert } from '@/features/billing';
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import {
   ChatStoreProvider,
@@ -30,13 +31,16 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
-import { CreditsBanner } from './components/credits-banner';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  agentId,
+  emptyState,
+  footerNote,
+  placeholder,
   conversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -52,6 +56,10 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
+        agentId={agentId}
+        emptyState={emptyState}
+        footerNote={footerNote}
+        placeholder={placeholder}
         conversationId={conversationId}
         onTitleUpdate={onTitleUpdate}
         onConversationCreated={onConversationCreated}
@@ -62,6 +70,10 @@ export function AIChatBox({
 
 function ChatBoxContent({
   incognito,
+  agentId,
+  emptyState,
+  footerNote,
+  placeholder,
   conversationId: initialConversationId,
   onTitleUpdate,
   onConversationCreated,
@@ -84,6 +96,7 @@ function ChatBoxContent({
     setConversationId,
     setModelName,
   } = useAgentChat({
+    ...(agentId === undefined ? {} : { agentId }),
     onTitleUpdate,
     onConversationCreated,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
@@ -153,7 +166,7 @@ function ChatBoxContent({
     chatStoreSelectors.hasBlockingCard({ state: s, lastAssistantMessage }),
   );
 
-  const showBanner = credits.creditsExhausted || credits.creditsWarning;
+  const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
 
@@ -176,12 +189,14 @@ function ChatBoxContent({
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
-            <EmptyState
-              onSuggestionClick={(text) => void handleSend(text)}
-              incognito={incognito}
-              showFlowCards={!hasConversations}
-              hasInput={hasInput}
-            />
+            {emptyState ?? (
+              <EmptyState
+                onSuggestionClick={(text) => void handleSend(text)}
+                incognito={incognito}
+                showFlowCards={!hasConversations}
+                hasInput={hasInput}
+              />
+            )}
           </div>
         ) : (
           <motion.div
@@ -294,19 +309,26 @@ function ChatBoxContent({
             onModelChange={setModelName}
             lastAssistantMessage={lastAssistantMessage}
             lastMessageId={lastMessage?.id}
+            hideModelSelector={agentId !== undefined}
             placeholder={
-              isEmpty ? t('Ask, build, or run a task...') : undefined
+              placeholder ??
+              (isEmpty ? t('Ask, build, or run a task...') : undefined)
             }
             banner={
               showBanner && !hasBlockingCard ? (
-                <CreditsBanner
+                <ChatCreditsAlert
                   creditsExhausted={credits.creditsExhausted}
-                  creditsWarning={credits.creditsWarning}
+                  creditsPercentUsed={credits.creditsPercentUsed}
                   onDismiss={credits.dismissCreditsWarning}
                 />
               ) : null
             }
           />
+          {footerNote !== undefined && (
+            <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
+              {footerNote}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -343,6 +365,10 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  agentId?: string;
+  emptyState?: React.ReactNode;
+  footerNote?: string;
+  placeholder?: string;
   conversationId?: string | null;
   onConversationCreated?: (conversationId: string) => void;
   onTitleUpdate?: (title: string) => void;

@@ -4,11 +4,12 @@ import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { ManagePlanDialog } from '@/features/billing';
+import { CreditsUsageAlert, ManagePlanDialog } from '@/features/billing';
 import { projectHooks } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,13 @@ export function ProjectDashboardLayout({
       icon: CompassIcon,
       hasPermission: true,
     },
+    {
+      to: '/agents',
+      label: t('Agents'),
+      show: !isEmbedded,
+      icon: BotIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
@@ -135,6 +143,7 @@ function ProjectDashboardLayoutInner({
             {!hideHeader && (
               <ProjectDashboardLayoutHeader key={currentProjectId} />
             )}
+            <CreditsUsageAlert />
             <div className="flex-1 overflow-auto">{children}</div>
           </div>
         </div>

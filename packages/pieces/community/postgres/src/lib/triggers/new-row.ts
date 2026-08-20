@@ -1,9 +1,9 @@
 
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { postgresAuth } from '../..';
-import { pgClient } from '../common';
+import { pgClient, postgresCommon } from '../common';
 import format from 'pg-format';
 import dayjs from 'dayjs';
 
@@ -79,89 +79,10 @@ export const newRow = createTrigger({
         description: Property.MarkDown({
             value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.`,
         }),
-        table: Property.Dropdown({
-            auth: postgresAuth,
-            displayName: 'Table name',
-            required: true,
-            refreshers: ['auth'],
-            refreshOnSearch: false,
-            options: async ({ auth }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first',
-                    };
-                }
-                const client = await pgClient(auth)
-                try {
-                    const result = await client.query(
-                        `SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'`
-                    );
-                    const options = result.rows.map(row => ({
-                        label: `${row.table_schema}.${row.table_name}`,
-                        value: {
-                            table_schema: row.table_schema,
-                            table_name: row.table_name,
-                        },
-                    }));
-                    return {
-                        disabled: false,
-                        options,
-                    };
-                } finally {
-                    await client.end();
-                }
-            }
-        }),
-        order_by: Property.Dropdown({
-            auth: postgresAuth,
+        table: postgresCommon.table,
+        order_by: postgresCommon.column({
             displayName: 'Column to order by',
             description: 'Use something like a created timestamp or an auto-incrementing ID.',
-            required: true,
-            refreshers: ['table'],
-            refreshOnSearch: false,
-            options: async ({ auth, table }) => {
-                if (!auth) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please authenticate first',
-                    };
-                }
-                if (!table) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please select a table',
-                    };
-                }
-                const client = await pgClient(auth)
-                try {
-                    const { table_name, table_schema } = table as { table_schema: string, table_name: string };
-                    const query = `
-                    SELECT column_name
-                    FROM information_schema.columns
-                    WHERE table_schema = $1
-                    AND table_name = $2
-                `;
-                    const params = [table_schema, table_name];
-                    const result = await client.query(query, params);
-
-                    const options = result.rows.map(f => {
-                        return {
-                            label: f.column_name,
-                            value: f.column_name,
-                        };
-                    })
-                    return {
-                        disabled: false,
-                        options,
-                    };
-                } finally {
-                    await client.end();
-                }
-            }
         }),
         order_direction: Property.StaticDropdown<OrderDirection>({
             displayName: 'Order Direction',
