@@ -1,6 +1,7 @@
 import { isNil, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -55,7 +56,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         await signingKeyRepo().delete({ platformId })
 
-        await fileRepo().delete({ platformId })
+        await fileRepo().delete({ platformId, projectId: IsNull() })
         await projectRoleRepo().delete({ platformId })
         await userInvitationRepo().delete({ platformId })
         await mcpOAuthTokenRepo().delete({ platformId })

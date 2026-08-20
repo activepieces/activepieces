@@ -8,6 +8,7 @@ import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
+import { packageDependencies } from './package-dependencies'
 
 const TS_CONFIG_CONTENT = `
 {
@@ -146,11 +147,11 @@ function getPackageJson(packageJson: string, getSettings: () => SandboxSettings)
     }
     const { data: parsedPackageJson, error: parseError } = tryCatchSync(() => JSON.parse(packageJson))
     const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
+    const requestedDependencies = packageDependencies.sanitize(packageJsonObject?.['dependencies'])
     return JSON.stringify({
-        ...packageJsonObject,
         dependencies: {
             '@types/node': '18.17.1',
-            ...(packageJsonObject?.['dependencies'] ?? {}),
+            ...requestedDependencies,
         },
     })
 }
