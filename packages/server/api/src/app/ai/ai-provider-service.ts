@@ -39,7 +39,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return {
                 provider,
                 name: aiProviders[provider].name,
-                enabledForChat: rows[0].enabledForChat ?? false,
+                enabledForChat: rows.some((row) => row.enabledForChat === true),
                 keys: rows.map((row) => ({ id: row.id, name: row.displayName })),
             }
         })
