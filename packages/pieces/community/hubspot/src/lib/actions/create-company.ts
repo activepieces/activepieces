@@ -4,6 +4,7 @@ import { getDefaultPropertiesForObject, standardObjectDynamicProperties, standar
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createCompanyAction = createAction({
 	auth: hubspotAuth,
@@ -12,6 +13,7 @@ export const createCompanyAction = createAction({
 	description: 'Creates a company in Hubspot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot company record from the supplied properties (name, domain, industry, etc.). Always inserts a new company even if one with the same domain already exists, so it is not idempotent; to change an existing record use Update Company, and to locate one first use a find action.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.COMPANY, []),
 		markdown: Property.MarkDown({

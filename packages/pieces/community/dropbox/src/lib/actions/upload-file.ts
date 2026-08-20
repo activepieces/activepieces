@@ -7,6 +7,7 @@ import {
   streamUtils,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { uploadedFileOutputSchema } from '../output-schemas';
 
 const CONTENT_API_URL = 'https://content.dropboxapi.com/2';
 const SINGLE_REQUEST_LIMIT = 150 * 1024 * 1024;
@@ -19,6 +20,7 @@ export const dropboxUploadFile = createAction({
   audience: 'both',
   aiMetadata: { description: 'Uploads a file (provided as a URL or base64 file object) to the given Dropbox path in add mode. Files over 150 MB are uploaded in chunks automatically. Use to store binary or arbitrary file content; prefer the create-text-file action when the source is plain text. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },
   displayName: 'Upload file',
+  outputSchema: uploadedFileOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',

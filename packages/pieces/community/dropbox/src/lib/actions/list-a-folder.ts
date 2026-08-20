@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { listFolderOutputSchema } from '../output-schemas';
 
 export const dropboxListAFolder = createAction({
   auth: dropboxAuth,
@@ -13,6 +14,7 @@ export const dropboxListAFolder = createAction({
   audience: 'both',
   aiMetadata: { description: 'Lists the files and subfolders within the given Dropbox folder path (use an empty string for the root), optionally recursing into all subfolders. Use to enumerate folder contents and discover item paths/IDs. Read-only; safe to repeat and returns the same listing for unchanged folders.', idempotent: true },
   displayName: 'List a folder',
+  outputSchema: listFolderOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',
