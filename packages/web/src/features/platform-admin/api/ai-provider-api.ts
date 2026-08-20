@@ -27,13 +27,16 @@ export const aiProviderApi = {
       `/v1/ai-providers/configs/${configId}/models`,
     );
   },
-  upsert(request: CreateAIProviderRequest): Promise<void> {
-    return api.post('/v1/ai-providers', request);
+  upsert(request: CreateAIProviderRequest) {
+    return api.post<AIProviderWithoutSensitiveData>(
+      '/v1/ai-providers',
+      request,
+    );
   },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {
     return api.post(`/v1/ai-providers/${providerId}`, request);
   },
-  delete(provider: string): Promise<void> {
-    return api.delete(`/v1/ai-providers/${provider}`);
+  delete(providerId: string): Promise<void> {
+    return api.delete(`/v1/ai-providers/${providerId}`);
   },
 };
