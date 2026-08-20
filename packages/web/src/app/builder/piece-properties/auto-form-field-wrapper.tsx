@@ -176,6 +176,9 @@ export function getValueForInputOnDynamicToggleChange(
       ) {
         return currentValue;
       }
+      if (currentValue === null) {
+        return '';
+      }
       return JSON.stringify(currentValue);
     }
     case PropertyExecutionType.MANUAL: {
