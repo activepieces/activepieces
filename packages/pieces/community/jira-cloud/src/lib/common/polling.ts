@@ -6,13 +6,42 @@ import { JiraSearchResponse } from './types';
 
 const LOOKBACK_MS = 15 * 60 * 1000;
 const MAX_RESULTS = 1000;
+const MAX_PAGES = 10;
 const MAX_LEDGER_ENTRIES = 2000;
 const TEST_ITEMS_LIMIT = 5;
 const STATE_STORE_KEY = 'pollingState';
-const ORDER_BY_PATTERN = /\s+order\s+by\s+[\s\S]+$/i;
 
 function toRelativeJqlDate({ sinceEpochMS, now }: { sinceEpochMS: number; now: number }): string {
 	return `-${Math.max(Math.ceil((now - sinceEpochMS) / 60_000) + 1, 1)}m`;
+}
+
+function stripTrailingOrderBy(jql: string): string {
+	let quote: '"' | "'" | null = null;
+	let orderByIndex = -1;
+
+	for (let index = 0; index < jql.length && orderByIndex === -1; index++) {
+		const char = jql[index];
+
+		if (quote) {
+			if (char === '\\') {
+				index += 1;
+			} else if (char === quote) {
+				quote = null;
+			}
+			continue;
+		}
+
+		if (char === '"' || char === "'") {
+			quote = char;
+			continue;
+		}
+
+		if (/\s/.test(char) && /^\s+order\s+by\b/i.test(jql.slice(index))) {
+			orderByIndex = index;
+		}
+	}
+
+	return (orderByIndex === -1 ? jql : jql.slice(0, orderByIndex)).trim();
 }
 
 async function composeJql({
@@ -26,7 +55,7 @@ async function composeJql({
 	since: string | null;
 	direction: 'ASC' | 'DESC';
 }): Promise<string> {
-	const userJql = isNil(propsValue.jql) ? '' : propsValue.jql.replace(ORDER_BY_PATTERN, '').trim();
+	const userJql = isNil(propsValue.jql) ? '' : stripTrailingOrderBy(propsValue.jql);
 	const scope =
 		userJql.length === 0
 			? null
@@ -42,20 +71,37 @@ async function fetchIssues({
 	auth,
 	jql,
 	maxResults,
+	maxPages = 1,
 }: {
 	auth: JiraAuth;
 	jql: string;
 	maxResults: number;
+	maxPages?: number;
 }): Promise<{ items: PollingItem[]; truncated: boolean }> {
-	const response: JiraSearchResponse = await searchIssuesByJql({
-		auth,
-		jql,
-		maxResults,
-		sanitizeJql: false,
-	});
-	const issues = response.issues ?? [];
+	const issues: JiraSearchResponse['issues'] = [];
+	let nextPageToken: string | undefined;
+	let truncated = false;
 
-	return { items: toItems(issues), truncated: issues.length >= maxResults };
+	for (let page = 0; page < maxPages; page++) {
+		const response: JiraSearchResponse = await searchIssuesByJql({
+			auth,
+			jql,
+			maxResults,
+			sanitizeJql: false,
+			nextPageToken,
+		});
+		issues.push(...(response.issues ?? []));
+		nextPageToken = response.nextPageToken;
+
+		if (isNil(nextPageToken)) {
+			break;
+		}
+		if (page === maxPages - 1) {
+			truncated = true;
+		}
+	}
+
+	return { items: toItems(issues), truncated };
 }
 
 function toItems(issues: JiraSearchResponse['issues']): PollingItem[] {
@@ -125,6 +171,7 @@ export const jiraPolling = {
 				direction: 'ASC',
 			}),
 			maxResults: MAX_RESULTS,
+			maxPages: MAX_PAGES,
 		});
 
 		const alreadyEmitted = new Set(state.entries.map(([key]) => key));
