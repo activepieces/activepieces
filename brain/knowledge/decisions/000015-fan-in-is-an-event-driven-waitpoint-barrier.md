@@ -61,6 +61,26 @@ all, purely because child rows appear later than the dispatch that created them.
   `shouldReleaseBarrier({ policy, sealed, counts })` takes counts rather than issuing its own queries, so one
   `GROUP BY status` replaces up to three round-trips and the policy matrix is unit-testable without a
   database.
+- **Identity is path-keyed, and that needed no new column.** The engine sends `loop_1:3/loop_2:0/approval`
+  in the existing `stepName` field, which is only ever an identity key inside `waitpoint-service`. Which
+  fixes a live bug on the way past: a delay or approval **inside a loop** used to reuse one waitpoint row
+  across every iteration, so iteration 2 found iteration 1's COMPLETED row in `createForPause`'s
+  pre-completed check and skipped its pause entirely.
+- **Two per-run waitpoint reads stopped being sound and were fixed here.** `getByFlowRunId` became
+  `findPreCompletedByFlowRunId` — **null when any PENDING row exists for the run**, else the newest COMPLETED
+  one — because per-iteration rows mean a run can hold a COMPLETED leftover *and* an open PENDING pause at
+  once, and both callers delete the row they find and enqueue a resume. `findNonFanInByFlowRunId` became
+  `findNonBarrierByFlowRunId` and prefers PENDING, newest first. `findPendingByVersion` is **still** unsound
+  for parallel branches; nothing here creates that case.
+- **The resume guards moved to the entry point rather than becoming a flag.** `resumeFromWaitpoint`
+  **refuses barriers, always** — by addressed waitpoint type, or, on the by-run legacy routes, by "does this
+  run hold any PENDING barrier". Every unscoped route goes through it, so there is no `false` to forget and
+  no parameter to default wrong. What the guard is *not* is structural: `releaseBarrier` and
+  `releaseBarrierWithoutLock` are ordinary public members of `resumeService`, one `if` away from the guard
+  they skip. `flow-runs-queue`'s pre-completed recovery calls the unlocked variant from outside the module,
+  so a module-private `releaseBarrier` would not have worked as written. Treated as acceptable because the
+  reachable surface — the HTTP routes — is closed; if a third caller appears, make the boundary real rather
+  than adding a second convention.
 - **An external actor never addresses the waitpoint.** Their link carries a **signal id** on
   `/v1/flow-runs/:id/signals/:signalId/confirm` — in the path, not the query string, because `resumePayload`
   is built from `{ body, headers, queryParams }` and persisted with the run. The link must never carry

@@ -30,7 +30,7 @@ export async function buildContext({ piece, request }: BuildContextParams): Prom
 }
 
 async function buildActionContext({ piece, request, hooks, pending }: ActionParams): Promise<unknown> {
-    const { runtime, stepName, actionName } = request
+    const { runtime, stepName, actionName, waitpointKey } = request
     const action = piece.getAction(actionName)
     if (isNil(action)) {
         throw new EngineGenericError('ActionNotFoundError', `Action not found, actionName=${actionName}`)
@@ -74,7 +74,7 @@ async function buildActionContext({ piece, request, hooks, pending }: ActionPara
             respond: (request?: StopHookParams) => {
                 hooks.hookResponse = { ...hooks.hookResponse, type: 'respond', response: request ?? { response: {} } }
             },
-            createWaitpoint: createWaitpointHook({ runtime, stepName, hooks, pending }),
+            createWaitpoint: createWaitpointHook({ runtime, stepName: waitpointKey, hooks, pending }),
             waitForWaitpoint: () => {
                 assertCanSuspend(runtime)
                 hooks.hookResponse = { ...hooks.hookResponse, type: 'paused' }
