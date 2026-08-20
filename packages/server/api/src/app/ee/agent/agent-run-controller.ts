@@ -78,16 +78,13 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 platformId: platform.id,
                 userId: ownerId,
                 userMessage: instruction,
-                modelName: modelName ?? null,
                 source: AgentRunSource.FLOW_STEP,
                 flowRunId,
                 waitpointId,
-                tools: supportedTools,
                 flowTools,
-                structuredOutput,
-                maxSteps,
-                provider: provider ?? undefined,
-                ...(isNil(linked) ? {} : { promptOverride: { system: linked.instructions } }),
+                ...(isNil(linked)
+                    ? { tools: supportedTools, structuredOutput, maxSteps, modelName: modelName ?? null, provider: provider ?? undefined }
+                    : { ...agentHelpers.jobFieldsFromConfig({ config: linked }), tools: supportedTools }),
             },
         })
 
@@ -96,9 +93,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-// Step inputs are interpolated before they reach here, so the id in the request is whatever a
-// template resolved to. The step it has to match is taken from the waitpoint the answer will resume,
-// never from the request: nothing the caller sends decides which step's agent it gets.
 async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpointId, log }: {
     projectId: string
     externalId: string

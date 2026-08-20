@@ -81,7 +81,7 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
       displayName: 'AI Model',
-      required: false,
+      required: true,
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',

@@ -2,7 +2,7 @@
 status: accepted
 ---
 
-# A dangling agent reference is caught when a flow publishes, not when the agent is deleted
+# Deleting an agent is refused while a live flow version references it
 
 ## Decision
 
@@ -46,15 +46,11 @@ guard never saw.
   superseded versions never block, or an agent would be undeletable forever.
 - Until publish-side validation lands, publishing a draft whose agent was deleted succeeds, and the
   failure surfaces on the next run rather than at publish time.
-- The delete guard reads `flow_version.agentIds`, which is only authoritative because the run refuses
-  any agent the running step's own stored input does not name. Those two rules hold each other up;
-  changing one without the other reopens the hole.
-- The run check is per step, not per flow, and the step comes from the waitpoint the answer will
-  resume rather than from the request. `agentIds` flattens every step's reference, so a flow-wide check
-  would let one agent step name a sibling's agent and run its tools under its own prompt; and a step
-  name taken from the body would let anything holding the engine token pick the step it is validated
-  against. The waitpoint is the one identity the caller cannot restate, because it is also where the
-  answer goes.
+- The guard reads `flow_version.agentIds`, and that is only trustworthy because a run refuses any
+  agent the running step's own stored input does not name. The two rules hold each other up.
+- The run check is per step, and the step comes from the waitpoint being resumed rather than from the
+  request, since `agentIds` flattens every step's reference and a body-supplied step name is caller
+  controlled. It is a narrowing, not a boundary: see the note below.
 - What the run check does **not** defend against: a party that can already run code in the project.
   An engine token is scoped to a project, not to a run, and the sibling endpoint that creates
   waitpoints takes `flowRunId` and `stepName` from its body outright, so naming another pending

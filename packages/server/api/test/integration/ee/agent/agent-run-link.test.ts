@@ -48,8 +48,6 @@ async function createAgent(ctx: TestContext, draft: Record<string, unknown> = {}
     return response.json()
 }
 
-// A linked run may only use the agent its own step stored, so the fixture is a real flow run over a
-// version whose step carries the id — not just the flattened agentIds the delete guard reads.
 const AGENT_STEP_NAME = 'step_1'
 
 function agentStep({ name, agentId, nextAction }: { name: string, agentId?: string, nextAction?: unknown }) {
@@ -129,7 +127,9 @@ describe('a flow step that links a saved agent', () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         await ctx.post(`/v1/agents/${agent.id}/publish`)
-        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, instructions: 'Half-written change.' } })
+        // The draft now names a provider this platform does not have, so a resolver reading the
+        // draft would fail to find it while the published copy still runs.
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, provider: AIProviderName.ANTHROPIC, modelName: 'claude-x' } })
 
         const response = await startRun(ctx, { agentId: agent.externalId })
 

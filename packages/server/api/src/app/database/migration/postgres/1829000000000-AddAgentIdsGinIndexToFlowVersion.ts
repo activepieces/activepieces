@@ -13,24 +13,31 @@ export class AddAgentIdsGinIndexToFlowVersion1829000000000 implements Migration 
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (isPGlite()) {
             await queryRunner.query(`
-                CREATE INDEX IF NOT EXISTS "idx_flow_version_agent_ids_gin"
+                CREATE INDEX IF NOT EXISTS "${INDEX_NAME}"
                 ON "flow_version" USING gin ("agentIds")
             `)
         }
         else {
+            const invalid = await queryRunner.query(`
+                SELECT 1 FROM pg_class c
+                JOIN pg_index i ON i.indexrelid = c.oid
+                WHERE c.relname = '${INDEX_NAME}' AND NOT i.indisvalid
+            `)
+            if (invalid.length > 0) {
+                await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "${INDEX_NAME}"`)
+            }
             await queryRunner.query(`
-                CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_flow_version_agent_ids_gin"
+                CREATE INDEX CONCURRENTLY IF NOT EXISTS "${INDEX_NAME}"
                 ON "flow_version" USING gin ("agentIds")
             `)
         }
     }
 
-    // No CONCURRENTLY here: TypeORM's revert path always wraps down() in a
-    // transaction (the per-migration transaction flag only applies to up()),
-    // and concurrent index drops are illegal inside a transaction.
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_version_agent_ids_gin"')
+        await queryRunner.query(`DROP INDEX IF EXISTS "${INDEX_NAME}"`)
     }
 }
+
+const INDEX_NAME = 'idx_flow_version_agent_ids_gin'
 
 const isPGlite = (): boolean => system.get(AppSystemProp.DB_TYPE) === DatabaseType.PGLITE

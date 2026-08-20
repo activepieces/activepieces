@@ -148,8 +148,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agentRepo().findOneBy({ projectId, externalId })
     },
 
-    // Checked inside the delete statement, not before it: read it separately and a flow publishing
-    // concurrently commits its reference in the gap. One statement leaves only its own duration.
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
@@ -177,9 +175,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
     },
 })
 
-// What runs now, plus what is one click from running. A draft has to carry the reference before it
-// can be published, so refusing while it does removes the publish-during-delete interleaving
-// rather than racing it. Superseded history is ignored, or an agent stays undeletable forever.
 function flowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): SelectQueryBuilder<FlowVersion> {
     const latestVersion = flowVersionRepo()
         .createQueryBuilder('latest')

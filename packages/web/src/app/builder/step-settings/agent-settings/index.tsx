@@ -62,7 +62,11 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const properties = (({ auth: _auth, ...rest }) => rest)(selectedAction.props);
+  const properties = (({
+    auth: _auth,
+    [AgentPieceProps.AGENT_ID]: _agentId,
+    ...rest
+  }) => rest)(selectedAction.props);
 
   return (
     <div className="w-full">
@@ -135,8 +139,9 @@ const selectAgentFormComponentForProperty = (
       );
     }
     case AgentPieceProps.AI_PROVIDER_MODEL: {
-      const provider = (field.value as AgentProviderModel).provider;
-      const model = (field.value as AgentProviderModel).model;
+      const providerModel = field.value as AgentProviderModel | undefined;
+      const provider = providerModel?.provider;
+      const model = providerModel?.model;
       return (
         <AIModelSelector
           defaultModel={model}

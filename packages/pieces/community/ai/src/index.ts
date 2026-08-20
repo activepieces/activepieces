@@ -12,7 +12,7 @@ import { runAgent } from "./lib/actions/agents/run-agent";
 export const ai = createPiece({
   displayName: "AI",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.78.2',
+  minimumSupportedRelease: '0.88.1',
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,
