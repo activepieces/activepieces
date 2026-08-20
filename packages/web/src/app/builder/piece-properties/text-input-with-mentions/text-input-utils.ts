@@ -296,28 +296,36 @@ const removeIntroplationBrackets = (text: string) => {
   return text;
 };
 
+const pureAccessorRegex =
+  /^[\p{L}_$][\p{L}\p{N}_$]*(?:\.[\p{L}\p{N}_$]+|\[\s*(?:'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|\d+)\s*\])*$/u;
+
 function parseStepAndNameFromMention(mention: string) {
-  const mentionWithoutInterpolationBrackets =
-    removeIntroplationBrackets(mention);
-  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(
-    mentionWithoutInterpolationBrackets,
-  );
+  const expression = removeIntroplationBrackets(mention);
+  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(expression);
   if (isValid) {
     return {
       stepName,
       path: arrayPath ?? [],
+      expression,
+      isPureAccessor: true,
     };
   }
-  const keys = keysWithinPath(mentionWithoutInterpolationBrackets);
+  const keys = pureAccessorRegex.test(expression)
+    ? keysWithinPath(expression)
+    : [];
   if (keys.length === 0) {
     return {
       stepName: null,
       path: [],
+      expression,
+      isPureAccessor: false,
     };
   }
   return {
     stepName: keys[0],
     path: keys.slice(1),
+    expression,
+    isPureAccessor: true,
   };
 }
 
@@ -327,7 +335,16 @@ function parseLabelFromMention(
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
   variableByName?: Map<string, string>,
 ) {
-  const { stepName, path } = parseStepAndNameFromMention(mention);
+  const { stepName, path, expression, isPureAccessor } =
+    parseStepAndNameFromMention(mention);
+  if (!isPureAccessor) {
+    return {
+      displayText: expression,
+      serverValue: mention,
+      logoUrl: undefined,
+      isVariable: expression.startsWith('variables'),
+    };
+  }
   if (stepName === 'variables') {
     const name = path[0] ?? '';
     const displayName = variableByName?.get(name) ?? name;
