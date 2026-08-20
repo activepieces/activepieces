@@ -76,7 +76,7 @@ function buildOptions({ outfile, entry = 'src/main.ts' }) {
         '@activepieces/core-formula': path.resolve(__dirname, '../../core/formula/src'),
         '@activepieces/core-execution': path.resolve(__dirname, '../../core/execution/src'),
     },
-    external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
+    external: ['isolated-vm', 'utf-8-validate', 'bufferutil', 'deno/bin.cjs'],
     plugins: [zodLocaleTrim, rebuildLogger(outfile)],
   };
 }
