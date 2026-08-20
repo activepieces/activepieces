@@ -22,16 +22,37 @@ async function listProviders(ctx: {
   return body;
 }
 
-type AIPropsParams<T extends AIModelType> = {
-  modelType: T;
-  allowedProviders?: AIProviderName[];
-};
+function toProviderName(value: string): AIProviderName | undefined {
+  return Object.values(AIProviderName).find((provider) => provider === value);
+}
+
+function resolveSelection(value: unknown): AIProviderSelection | undefined {
+  if (typeof value === 'string') {
+    const provider = toProviderName(value);
+    return isNil(provider) ? undefined : { provider };
+  }
+  if (typeof value !== 'object' || isNil(value) || !('provider' in value)) {
+    return undefined;
+  }
+  const provider =
+    typeof value.provider === 'string'
+      ? toProviderName(value.provider)
+      : undefined;
+  if (isNil(provider)) {
+    return undefined;
+  }
+  const configId =
+    'configId' in value && typeof value.configId === 'string'
+      ? value.configId
+      : undefined;
+  return { provider, ...(isNil(configId) ? {} : { configId }) };
+}
 
 export const aiProps = <T extends AIModelType>({
   modelType,
   allowedProviders,
 }: AIPropsParams<T>) => ({
-  provider: Property.Dropdown<string, true>({
+  provider: Property.Dropdown<AIProviderSelection, true>({
     auth: PieceAuth.None(),
     displayName: 'Provider',
     required: true,
@@ -48,44 +69,15 @@ export const aiProps = <T extends AIModelType>({
               ? allowedProviders.includes(provider.provider)
               : true
           )
-          .map(provider => ({
-            label: provider.name,
-            value: provider.provider,
-          })),
-      };
-    },
-  }),
-
-  configuration: Property.Dropdown<string, false>({
-    auth: PieceAuth.None(),
-    displayName: 'Configuration',
-    description:
-      'Which key of this provider to use. Leave empty to use the one your admin scoped to this project.',
-    required: false,
-    refreshers: ['provider'],
-    options: async (propsValue, ctx) => {
-      const provider = propsValue['provider'] as string;
-
-      if (isNil(provider)) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'Select AI Provider',
-        };
-      }
-
-      const supportedProviders = await listProviders(ctx);
-      const keys =
-        supportedProviders.find(entry => entry.provider === provider)?.keys ??
-        [];
-
-      return {
-        placeholder: 'Automatic',
-        disabled: false,
-        options: keys.map(key => ({
-          label: key.name,
-          value: key.id,
-        })),
+          .flatMap(provider =>
+            provider.keys.map(key => ({
+              label:
+                provider.keys.length > 1
+                  ? `${provider.name}: ${key.name}`
+                  : provider.name,
+              value: { provider: provider.provider, configId: key.id },
+            }))
+          ),
       };
     },
   }),
@@ -94,12 +86,11 @@ export const aiProps = <T extends AIModelType>({
     auth: PieceAuth.None(),
     displayName: 'Model',
     required: true,
-    refreshers: ['provider', 'configuration'],
+    refreshers: ['provider'],
     options: async (propsValue, ctx) => {
-      const provider = propsValue['provider'] as string
-      const configuration = propsValue['configuration'] as string | undefined
+      const selection = resolveSelection(propsValue['provider'])
 
-      if (isNil(provider)) {
+      if (isNil(selection)) {
         return {
           disabled: true,
           options: [],
@@ -107,6 +98,7 @@ export const aiProps = <T extends AIModelType>({
         };
       }
 
+      const { provider, configId } = selection;
       const { body: allModels } =
         await httpClient.sendRequest<AIProviderModel[]>({
           method: HttpMethod.GET,
@@ -114,7 +106,7 @@ export const aiProps = <T extends AIModelType>({
           headers: {
             Authorization: `Bearer ${ctx.server.token}`,
           },
-          ...(isNil(configuration) ? {} : { queryParams: { configId: configuration } }),
+          ...(isNil(configId) ? {} : { queryParams: { configId } }),
         });
 
       return {
@@ -131,3 +123,26 @@ export const aiProps = <T extends AIModelType>({
     },
   }),
 });
+
+function resolveSelectionOrThrow(value: unknown): AIProviderSelection {
+  const selection = resolveSelection(value);
+  if (isNil(selection)) {
+    throw new Error('Pick an AI provider for this step');
+  }
+  return selection;
+}
+
+export const aiProviderSelection = {
+  resolve: resolveSelection,
+  resolveOrThrow: resolveSelectionOrThrow,
+};
+
+export type AIProviderSelection = {
+  provider: AIProviderName;
+  configId?: string;
+};
+
+type AIPropsParams<T extends AIModelType> = {
+  modelType: T;
+  allowedProviders?: AIProviderName[];
+};

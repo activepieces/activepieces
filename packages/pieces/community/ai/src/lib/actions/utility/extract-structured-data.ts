@@ -3,8 +3,8 @@ import { createAIModel } from '../../common/ai-sdk';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';
-import { aiProps } from '../../common/props';
-import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
+import { aiProps, aiProviderSelection } from '../../common/props';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
   audience: 'both',
@@ -14,7 +14,6 @@ export const extractStructuredData = createAction({
 	aiMetadata: { description: 'Pulls typed fields out of unstructured input (text, images or PDFs) against a schema supplied either in simple mode, a list of field definitions, or advanced mode, a raw JSON Schema. Pick it when you need specific named values from documents such as invoices, receipts or emails; use classifyText for a single label, summarizeText for prose condensation, or askAi for open-ended analysis. At least one of Text or Files is required or the step throws; read-only and idempotent.', idempotent: true },
 	props: {
 		provider: aiProps({ modelType: 'text' }).provider,
-		configuration: aiProps({ modelType: 'text' }).configuration,
 		model: aiProps({ modelType: 'text' }).model,
 		text: Property.LongText({
 			displayName: 'Text',
@@ -128,7 +127,7 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
+		const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
 		const modelId = context.propsValue.model;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
@@ -141,8 +140,8 @@ export const extractStructuredData = createAction({
 		}
 
 		const model = await createAIModel({
-			provider: provider as AIProviderName,
-			...spreadIfDefined('configId', context.propsValue.configuration),
+			provider,
+			...spreadIfDefined('configId', configId),
 			modelId,
 			engineToken: context.server.token,
 			apiUrl: context.server.apiUrl,

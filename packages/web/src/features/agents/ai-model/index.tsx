@@ -61,7 +61,6 @@ export function AIModelSelector({
 }: AIModelSelectorProps) {
   const [providerOpen, setProviderOpen] = React.useState(false);
   const [modelOpen, setModelOpen] = React.useState(false);
-  const [configOpen, setConfigOpen] = React.useState(false);
   const [selectedProvider, setSelectedProvider] = React.useState<
     AIProviderName | undefined
   >(defaultProvider);
@@ -77,44 +76,43 @@ export function AIModelSelector({
   const { data: models = [], isLoading: modelsLoading } =
     aiModelHooks.useGetModelsForProvider(selectedProvider, selectedConfigId);
 
-  const providerKeys =
-    providers.find((p) => p.provider === selectedProvider)?.keys ?? [];
-
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
   }, []);
 
-  const getProviderName = React.useCallback(
-    (providerName: string) => {
-      return (
-        providers.find((p) => p.provider === providerName)?.name ?? providerName
+  const providerKeyOptions = React.useMemo(() => {
+    return [...providers]
+      .sort((a, b) => {
+        if (a.provider === AIProviderName.ACTIVEPIECES) return -1;
+        if (b.provider === AIProviderName.ACTIVEPIECES) return 1;
+        return 0;
+      })
+      .flatMap((entry) =>
+        entry.keys.map((key) => ({
+          provider: entry.provider,
+          configId: key.id,
+          label:
+            entry.keys.length > 1 ? `${entry.name}: ${key.name}` : entry.name,
+        })),
       );
-    },
-    [providers],
-  );
-
-  const activepiecesProvider = React.useMemo(
-    () => providers.find((p) => p.provider === AIProviderName.ACTIVEPIECES),
-    [providers],
-  );
-
-  const sortedProviders = React.useMemo(() => {
-    return [...providers].sort((a, b) => {
-      if (a.provider === AIProviderName.ACTIVEPIECES) return -1;
-      if (b.provider === AIProviderName.ACTIVEPIECES) return 1;
-      return 0;
-    });
   }, [providers]);
 
+  const selectedOptionLabel = providerKeyOptions.find(
+    (option) =>
+      option.provider === selectedProvider &&
+      option.configId === selectedConfigId,
+  )?.label;
+
   React.useEffect(() => {
-    if (!selectedProvider && !providersLoading && providers.length > 0) {
+    if (!selectedProvider && !providersLoading && providerKeyOptions.length) {
       const preferred =
-        activepiecesProvider?.provider || providers[0]?.provider;
-      if (preferred) {
-        setSelectedProvider(preferred as AIProviderName);
-      }
+        providerKeyOptions.find(
+          (option) => option.provider === AIProviderName.ACTIVEPIECES,
+        ) ?? providerKeyOptions[0];
+      setSelectedProvider(preferred.provider);
+      setSelectedConfigId(preferred.configId);
     }
-  }, [providers, providersLoading, selectedProvider, activepiecesProvider]);
+  }, [providerKeyOptions, providersLoading, selectedProvider]);
 
   React.useEffect(() => {
     if (
@@ -164,11 +162,11 @@ export function AIModelSelector({
     defaultModel,
   ]);
 
-  const handleProviderChange = (provider: AIProviderName) => {
+  const handleProviderChange = (provider: AIProviderName, configId: string) => {
     setSelectedProvider(provider);
+    setSelectedConfigId(configId);
     setSelectedModel(undefined);
-    setSelectedConfigId(undefined);
-    onChange({ provider, model: undefined, configId: undefined });
+    onChange({ provider, model: undefined, configId });
     setProviderOpen(false);
   };
 
@@ -180,13 +178,6 @@ export function AIModelSelector({
       configId: selectedConfigId,
     });
     setModelOpen(false);
-  };
-
-  const handleConfigChange = (configId?: string) => {
-    setSelectedConfigId(configId);
-    setSelectedModel(undefined);
-    onChange({ provider: selectedProvider, model: undefined, configId });
-    setConfigOpen(false);
   };
 
   return (
@@ -218,7 +209,7 @@ export function AIModelSelector({
                     />
                   )}
                   <span className="truncate">
-                    {getProviderName(selectedProvider)}
+                    {selectedOptionLabel ?? selectedProvider}
                   </span>
                 </div>
               ) : (
@@ -239,29 +230,29 @@ export function AIModelSelector({
               <CommandInput placeholder={t('Search providers...')} />
               <CommandEmpty>{t('No provider found.')}</CommandEmpty>
               <CommandGroup className="max-h-64 overflow-auto">
-                {sortedProviders.map((provider) => (
+                {providerKeyOptions.map((option) => (
                   <CommandItem
-                    key={provider.provider}
-                    value={provider.provider}
+                    key={option.configId}
+                    value={option.label}
                     onSelect={() =>
-                      handleProviderChange(provider.provider as AIProviderName)
+                      handleProviderChange(option.provider, option.configId)
                     }
                     className="cursor-pointer"
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      {getProviderLogo(provider.provider) && (
+                      {getProviderLogo(option.provider) && (
                         <img
-                          src={getProviderLogo(provider.provider)}
-                          alt={provider.provider}
+                          src={getProviderLogo(option.provider)}
+                          alt={option.provider}
                           className="h-4 w-4 object-contain"
                         />
                       )}
-                      <span>{provider.name}</span>
+                      <span>{option.label}</span>
                     </div>
                     <Check
                       className={cn(
                         'ml-auto h-4 w-4',
-                        selectedProvider === provider.provider
+                        selectedConfigId === option.configId
                           ? 'opacity-100'
                           : 'opacity-0',
                       )}
@@ -342,70 +333,6 @@ export function AIModelSelector({
           </PopoverContent>
         </Popover>
       </div>
-
-      {providerKeys.length > 1 && (
-        <Popover open={configOpen} onOpenChange={setConfigOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={configOpen}
-              className="w-full justify-between h-auto"
-              disabled={disabled}
-            >
-              <span
-                className={cn('truncate', {
-                  'text-muted-foreground': !selectedConfigId,
-                })}
-              >
-                {providerKeys.find((key) => key.id === selectedConfigId)
-                  ?.name ?? t('Automatic')}
-              </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="p-0 w-[var(--radix-popover-trigger-width)]"
-            align="start"
-          >
-            <Command>
-              <CommandGroup className="max-h-64 overflow-auto">
-                <CommandItem
-                  value="automatic"
-                  onSelect={() => handleConfigChange(undefined)}
-                  className="cursor-pointer"
-                >
-                  <span className="flex-1">{t('Automatic')}</span>
-                  <Check
-                    className={cn(
-                      'ml-auto h-4 w-4',
-                      !selectedConfigId ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                </CommandItem>
-                {providerKeys.map((key) => (
-                  <CommandItem
-                    key={key.id}
-                    value={key.id}
-                    onSelect={() => handleConfigChange(key.id)}
-                    className="cursor-pointer"
-                  >
-                    <span className="flex-1">{key.name}</span>
-                    <Check
-                      className={cn(
-                        'ml-auto h-4 w-4',
-                        selectedConfigId === key.id
-                          ? 'opacity-100'
-                          : 'opacity-0',
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      )}
 
       {selectedProvider && (
         <p className="text-xs text-muted-foreground">
