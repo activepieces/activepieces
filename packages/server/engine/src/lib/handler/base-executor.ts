@@ -1,4 +1,5 @@
 import { isNil, isString } from '@activepieces/core-utils'
+import { failureOutputOf } from '@activepieces/pieces-framework'
 import { BaseStepOutput, FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
 import { utils } from '../utils'
 import { EngineConstants } from './context/engine-constants'
@@ -6,7 +7,9 @@ import { FlowExecutorContext } from './context/flow-execution-context'
 
 export async function failStep({ action, executionState, stepOutput, error, durationMs }: FailStepParams): Promise<FlowExecutorContext> {
     const message = isString(error) ? error : utils.formatError(error)
-    const failed = stepOutput.setStatus(StepOutputStatus.FAILED).setErrorMessage(message)
+    const failureOutput = failureOutputOf(error)
+    const base = failureOutput === undefined ? stepOutput : stepOutput.setOutput(failureOutput)
+    const failed = base.setStatus(StepOutputStatus.FAILED).setErrorMessage(message)
     const withDuration = isNil(durationMs) ? failed : failed.setDuration(durationMs)
     return (await executionState.upsertStep(action.name, withDuration)).setVerdict({
         status: FlowRunStatus.FAILED,

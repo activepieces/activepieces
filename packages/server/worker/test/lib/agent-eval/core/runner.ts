@@ -8,6 +8,7 @@ import { evalPrompts } from './prompts'
 import { replayExecutor, ReplayExecutor } from './replay-executor'
 import { EvalReportEntry } from './report'
 import { transcriptAssertions } from './transcript-assertions'
+import { createAgentUsageCollector } from '../../../../src/lib/execute/jobs/ee/agent/agent-usage'
 import { agentWorkerTools } from '../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 import { AgentTurnResult, runAgentTurn } from '../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
@@ -136,6 +137,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
             },
         },
         stopWhen: [isLoopFinished(), ...TERMINAL_DISPLAY_TOOLS.map(hasToolCall)],
+        usageCollector: createAgentUsageCollector(),
     }))
 
     if (!result) {

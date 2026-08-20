@@ -1,8 +1,8 @@
-import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, AgentToolType, ContentBlockType, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ToolCallStatus, ToolCallType } from '@activepieces/shared'
+import { AgentResult, AgentStepBlock, AgentTaskStatus, AgentTool, AgentToolType, AgentUsage, ContentBlockType, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, ToolCallStatus, ToolCallType } from '@activepieces/shared'
 
 const MAX_RESULT_LENGTH = 262_144
 
-export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOutput, failure, stillRunning }: {
+export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOutput, failure, stillRunning, usage }: {
     prompt: string
     uiParts: PersistedAgentPart[]
     timestamp: string
@@ -10,18 +10,20 @@ export function stepResultFrom({ prompt, uiParts, timestamp, tools, structuredOu
     structuredOutput?: Record<string, unknown>
     failure?: string
     stillRunning?: boolean
+    usage?: AgentUsage
 }): AgentResult {
     const configured = new Map(tools.map((tool) => [tool.toolName, tool]))
     const steps = withinBudget(uiParts.flatMap((part) => toStepBlocks({ part, timestamp, configured })))
     const anyToolFailed = uiParts.some((part) => part.type === PersistedAgentPartType.TOOL_CALL && part.status === PersistedToolCallStatus.ERROR)
     if (failure === undefined) {
-        return { prompt, steps, status: stillRunning === true ? AgentTaskStatus.IN_PROGRESS : (anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED), ...(structuredOutput === undefined ? {} : { structuredOutput }) }
+        return { prompt, steps, status: stillRunning === true ? AgentTaskStatus.IN_PROGRESS : (anyToolFailed ? AgentTaskStatus.FAILED : AgentTaskStatus.COMPLETED), ...(structuredOutput === undefined ? {} : { structuredOutput }), ...(usage === undefined ? {} : { usage }) }
     }
     return {
         prompt,
         steps: [...steps, { type: ContentBlockType.MARKDOWN, markdown: failure }],
         status: AgentTaskStatus.FAILED,
         ...(structuredOutput === undefined ? {} : { structuredOutput }),
+        ...(usage === undefined ? {} : { usage }),
     }
 }
 

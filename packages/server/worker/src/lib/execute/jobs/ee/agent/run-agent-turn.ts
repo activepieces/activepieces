@@ -2,6 +2,7 @@ import { AIProviderName, isObject, spreadIfDefined, tryCatch, tryCatchSync } fro
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, PersistedAgentPart } from '@activepieces/shared'
 import { generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
+import { AgentUsageCollector } from './agent-usage'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -37,7 +38,7 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling, usageCollector }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -110,13 +111,14 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         repairToolCall: async ({ toolCall, error }) => {
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
             const { data: repaired } = await tryCatch(async () => {
-                const { text } = await generateText({
+                const result = await generateText({
                     model,
                     abortSignal,
                     telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                     prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
-                return { ...toolCall, input: text }
+                usageCollector.record({ provider, model: result.response.modelId || requestedModelId(model), usage: result.usage })
+                return { ...toolCall, input: result.text }
             })
             return repaired ?? null
         },
@@ -140,7 +142,9 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                 log.warn({ tool: { name: toolCall.toolName, durationMs: toolExecutionMs }, error: toolOutput.error }, 'Tool call failed')
             }
         },
-        onStepEnd: ({ content, response }) => {
+        onStepEnd: ({ content, response, usage: stepUsage, model: stepModel }) => {
+            // response.modelId is the served id; stepModel.modelId the requested (possibly an alias). Pricing needs the served id.
+            usageCollector.record({ provider: stepModel.provider, model: response.modelId || stepModel.modelId, usage: stepUsage })
             uiParts.push(...agentAiUtils.buildStepParts({ content: content as ContentPartLike[] }))
             // Persist the LLM history incrementally (not just UI parts): a turn preempted or
             // cancelled mid-flight must leave its assistant + tool messages behind so the next
@@ -176,6 +180,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             if (shouldRetryStream({ producedVisibleOutput, streamRetries })) {
                 streamRetries++
                 log.warn({ streamRetries, error: streamError }, 'Chat stream failed before any visible output — retrying the turn')
+                usageCollector.markIncomplete()
                 streamError = null
                 await delayWithJitter(STREAM_RETRY_BASE_DELAY_MS)
                 continue
@@ -231,6 +236,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
         log.warn({ emptyContinuations, finishReason }, 'Chat step produced no visible output — auto-continuing')
         accumulatedResponseMessages.push(...sanitizedTail)
         llmMessages = [...llmMessages, ...sanitizedTail, { role: 'user', content: EMPTY_OUTPUT_NUDGE }]
+    }
+
+    if (abortSignal.aborted || streamError !== null) {
+        usageCollector.markIncomplete()
     }
 
     return {
@@ -387,6 +396,10 @@ type AgentTurnLogger = {
     error: (obj: Record<string, unknown>, msg: string) => void
 }
 
+export function requestedModelId(model: LanguageModel): string {
+    return typeof model === 'string' ? model : model.modelId
+}
+
 export type AgentTurnToolCall = {
     toolName: string
     toolCallId: string
@@ -415,6 +428,8 @@ export type RunAgentTurnParams = {
     sinks?: AgentTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
     stepCeiling?: number
+    // Owned by the caller so a throw from the turn cannot discard usage already recorded.
+    usageCollector: AgentUsageCollector
 }
 
 export type AgentTurnResult = {

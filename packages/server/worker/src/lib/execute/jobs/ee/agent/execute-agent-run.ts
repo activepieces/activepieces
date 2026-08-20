@@ -6,8 +6,9 @@ import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '.
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
+import { AgentUsageCollector, createAgentUsageCollector } from './agent-usage'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { delayWithJitter, isTransientFailureText, requestedModelId, runAgentTurn } from './run-agent-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -62,6 +63,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         let runProvider: string | undefined
         let runModelId: string | undefined
         let answer: AgentResult | undefined
+        // The collector outlives the turn so a throw from inside it cannot discard usage already recorded.
+        const usageCollector = createAgentUsageCollector()
+        let turnCompleted = false
         const structured: { output?: Record<string, unknown> } = {}
 
         let progressSequence = 0
@@ -202,7 +206,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const thinkingStartTime = Date.now()
 
             const autoTitlePromise = generateTitleIfFirstTurn({
-                model, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal,
+                model, provider, userMessage, previousUiMessages: config.previousUiMessages as unknown[], log, conversationId, abortSignal: abortController.signal, usageCollector,
             })
 
             const turn = await agentMcpClient.withStepMcpTools({
@@ -228,6 +232,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         phaseState,
                         abortSignal: abortController.signal,
                         log,
+                        usageCollector,
                         sinks: {
                             drainStream: (result) => streamChunksToClient({
                                 result, ctx, userId, conversationId, runId, log,
@@ -263,6 +268,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 },
             })
 
+            turnCompleted = true
             const { uiParts, accumulatedResponseMessages, streamError, truncatedAfterRetries, budgetExceeded, continuations, usage, totalInputTokens, totalOutputTokens } = turn
 
             if (abortController.signal.aborted) {
@@ -289,7 +295,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' })
+                const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: 'The agent run was stopped before it finished', ...spreadIfDefined('usage', usageCollector.snapshot()) })
                 reportFinal(stoppedResult)
                 await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stoppedResult, source, log })
                 await sendEventWithRetry({
@@ -330,7 +336,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }), ...spreadIfDefined('usage', usageCollector.snapshot()) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -366,7 +372,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
                 : attributed
-            const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })
+            if (!turnCompleted) {
+                usageCollector.markIncomplete()
+            }
+            const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage, ...spreadIfDefined('usage', usageCollector.snapshot()) })
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
@@ -773,26 +782,29 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
     await flushChunks()
 }
 
-async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
+async function generateTitleIfFirstTurn({ model, provider, userMessage, previousUiMessages, log, conversationId, abortSignal, usageCollector }: {
     model: ReturnType<typeof agentAiUtils.createChatModel>
+    provider: AIProviderName
     userMessage: string
     previousUiMessages: unknown[]
     log: JobContext['log']
     conversationId: string
     abortSignal?: AbortSignal
+    usageCollector: AgentUsageCollector
 }): Promise<string | undefined> {
     // getAgentConfig includes the just-saved user message, so length 1 = first turn
     const isFirstTurn = previousUiMessages.length === 1
     if (!isFirstTurn) return undefined
 
     const { data: generatedTitle } = await tryCatch(async () => {
-        const { text } = await generateText({
+        const result = await generateText({
             model,
             abortSignal,
             telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-title' }),
             prompt: `Generate a concise 3-6 word title for this conversation. Return ONLY the title, nothing else.\n\nUser: ${userMessage}`,
         })
-        return sanitizeGeneratedTitle(text)
+        usageCollector.record({ provider, model: result.response.modelId || requestedModelId(model), usage: result.usage })
+        return sanitizeGeneratedTitle(result.text)
     })
 
     if (!generatedTitle) {

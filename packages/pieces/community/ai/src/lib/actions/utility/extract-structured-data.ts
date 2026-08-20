@@ -1,9 +1,10 @@
-import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ApFile, attachFailureOutput, createAction, failureOutputOf, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';
 import { aiProps } from '../../common/props';
+import { usageFromGeneration } from '../../common/usage';
 import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
@@ -263,9 +264,14 @@ export const extractStructuredData = createAction({
 				messages,
 			});
 
+			const usage = usageFromGeneration({ provider, requestedModel: modelId, result });
+
 			const toolCalls = result.toolCalls;
 			if (!toolCalls || toolCalls.length === 0) {
-				throw new Error('No structured data could be extracted from the input.');
+				throw attachFailureOutput(
+					new Error('No structured data could be extracted from the input.'),
+					usage ? { usage } : undefined,
+				);
 			}
 
 			const extractedData = toolCalls[0].input;
@@ -282,7 +288,10 @@ export const extractStructuredData = createAction({
 			return extractedData;
 
 		} catch (error) {
-			throw new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			throw attachFailureOutput(
+				new Error(`Failed to extract structured data: ${error instanceof Error ? error.message : 'Unknown error'}`),
+				failureOutputOf(error),
+			);
 		}
 	},
 });

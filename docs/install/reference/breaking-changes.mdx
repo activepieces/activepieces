@@ -8,6 +8,19 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The AI piece's text actions return objects instead of raw strings
+
+Version 1.0.0 of the `ai` piece (`@activepieces/piece-ai`) changes the output shape of three actions so every AI step can report the token usage it consumed:
+
+- Ask AI and Summarize Text return `{ text, usage? }` instead of a raw string.
+- Classify Text returns `{ category, usage? }` instead of the raw label.
+
+The `usage` report carries one entry per LLM call — the served model id and its token counts — plus summed totals, and an `incomplete` flag when the totals are a lower bound. Extract Structured Data's success output is unchanged, since its keys belong to your schema; a failed extraction now reports the usage it billed on the failed step instead of nothing.
+
+#### What you need to do
+
+Nothing on upgrade. Flows pin the exact piece version they were built with, so existing steps keep the 0.6.0 string outputs until you upgrade the step in the builder. When you do, change references from `{{step['output']}}` to `{{step['output'].text}}` — or `{{step['output'].category}}` for Classify Text — including router conditions that branch on a classified label.
+
 #### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
 Two changes to the MCP OAuth endpoints:

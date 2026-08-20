@@ -1,7 +1,26 @@
-import { describe, expect, it } from 'vitest'
+import { AgentRunSource, WorkerJobType } from '@activepieces/shared'
+import { describe, expect, it, vi } from 'vitest'
 import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
-import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { executeAgentRunJob } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
+import { decideLoopAction, runAgentTurn, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+
+vi.mock('../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn')>()
+    return { ...actual, runAgentTurn: vi.fn() }
+})
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@activepieces/server-utils')>()
+    return {
+        ...actual,
+        agentAiUtils: {
+            ...actual.agentAiUtils,
+            createChatModel: vi.fn(() => ({}) as never),
+            supportsWebSearch: () => false,
+        },
+    }
+})
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
@@ -78,6 +97,31 @@ describe('stepResultFrom', () => {
 
         expect(result.steps.length).toBeLessThan(many.length)
         expect(JSON.stringify(result.steps.at(-1))).toContain('not shown here')
+    })
+})
+
+describe('stepResultFrom — token usage reaches the persisted output', () => {
+    const text = (value: string) => ({ type: 'text' as const, text: value })
+    const at = '2026-08-05T00:00:00.000Z'
+    const usage = {
+        version: 1 as const,
+        calls: [{ provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', inputTokens: 100, outputTokens: 20 }],
+        totals: { inputTokens: 100, outputTokens: 20 },
+    }
+
+    it('embeds the usage report on a completed run', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [text('done')], timestamp: at, usage })
+        expect(result.usage).toEqual(usage)
+    })
+
+    it('embeds the usage report on a failed run — those tokens were billed too', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [text('half')], timestamp: at, failure: 'ran out of room', usage })
+        expect(result.usage).toEqual(usage)
+    })
+
+    it('omits the field entirely when no usage was collected', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [text('done')], timestamp: at })
+        expect('usage' in result).toBe(false)
     })
 })
 
@@ -161,6 +205,122 @@ describe('stepResultFrom — a partial transcript is not a finished one', () => 
         const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: '2026-08-07T00:00:00.000Z', stillRunning: true })
 
         expect(result.status).toBe('IN_PROGRESS')
+    })
+})
+
+describe('executeAgentRunJob — a stream error must not drop the billed usage', () => {
+    const expectedUsage = {
+        version: 1 as const,
+        calls: [{ provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', inputTokens: 100, outputTokens: 20 }],
+        totals: { inputTokens: 100, outputTokens: 20 },
+        incomplete: true,
+    }
+
+    const makeCtx = () => {
+        const log: Record<string, ReturnType<typeof vi.fn>> = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
+        log.child = vi.fn(() => log)
+        const apiClient = {
+            getAgentConfig: vi.fn().mockResolvedValue({
+                provider: 'anthropic',
+                auth: {},
+                providerConfig: {},
+                modelId: 'claude-sonnet-4-5-20250929',
+                fastModelId: 'claude-haiku-4-5',
+                systemPrompt: 'system',
+                messages: [],
+                allMessages: [],
+                previousUiMessages: [],
+                tier: { id: 'standard', thinkingBudget: 0, modelId: 'claude-sonnet-4-5-20250929' },
+                mcpCredentials: null,
+                projects: [],
+                guides: {},
+                aiTools: {},
+                emailEnabled: false,
+                userEmail: 'user@example.com',
+                source: AgentRunSource.FLOW_STEP,
+            }),
+            sendAgentEvent: vi.fn().mockResolvedValue(undefined),
+            heartbeatAgentConversation: vi.fn().mockResolvedValue(undefined),
+            executeAgentTool: vi.fn().mockResolvedValue({ result: null }),
+            saveAgentMessages: vi.fn().mockResolvedValue(undefined),
+            updateAgentProgress: vi.fn().mockResolvedValue(undefined),
+            updateFlowStepProgress: vi.fn().mockResolvedValue(undefined),
+            resumeFlowStep: vi.fn().mockResolvedValue(undefined),
+            updateProjectContext: vi.fn().mockResolvedValue(undefined),
+        }
+        const ctx = { apiClient, log } as unknown as Parameters<typeof executeAgentRunJob.execute>[0]
+        return { ctx, apiClient }
+    }
+
+    const jobData = {
+        schemaVersion: 1,
+        jobType: WorkerJobType.EXECUTE_AGENT_RUN,
+        conversationId: 'conv-1',
+        runId: 'run-1',
+        projectId: null,
+        platformId: 'platform-1',
+        userId: 'user-1',
+        userMessage: 'do the thing',
+        source: AgentRunSource.FLOW_STEP,
+        flowRunId: 'flow-run-1',
+        waitpointId: 'waitpoint-1',
+        modelName: null,
+    } as Parameters<typeof executeAgentRunJob.execute>[1]
+
+    it('embeds the collected usage in the failed step output handed back to the flow', async () => {
+        vi.mocked(runAgentTurn).mockImplementation(async (params) => {
+            params.usageCollector.record({
+                provider: 'anthropic',
+                model: 'claude-sonnet-4-5-20250929',
+                usage: { inputTokens: 100, outputTokens: 20 },
+            })
+            params.usageCollector.markIncomplete()
+            return {
+                accumulatedResponseMessages: [],
+                uiParts: [],
+                usage: undefined,
+                finishReason: 'error',
+                truncatedAfterRetries: false,
+                budgetExceeded: false,
+                streamError: new Error('the provider dropped the stream'),
+                continuations: 0,
+                totalInputTokens: 100,
+                totalOutputTokens: 20,
+                toolCalls: [],
+            }
+        })
+        const { ctx, apiClient } = makeCtx()
+
+        await expect(executeAgentRunJob.execute(ctx, jobData)).rejects.toThrow('the provider dropped the stream')
+
+        expect(apiClient.resumeFlowStep).toHaveBeenCalledTimes(1)
+        const { output } = apiClient.resumeFlowStep.mock.calls[0][0] as { output: { status: string, usage?: unknown } }
+        expect(output.status).toBe('FAILED')
+        expect(output.usage).toEqual(expectedUsage)
+    })
+
+    it('keeps usage recorded before runAgentTurn threw, flagged incomplete (the collector outlives the turn)', async () => {
+        vi.mocked(runAgentTurn).mockImplementation(async (params) => {
+            params.usageCollector.record({
+                provider: 'anthropic',
+                model: 'claude-sonnet-4-5-20250929',
+                usage: { inputTokens: 100, outputTokens: 20 },
+            })
+            throw new Error('drainStream exploded mid-step')
+        })
+        const { ctx, apiClient } = makeCtx()
+
+        await expect(executeAgentRunJob.execute(ctx, jobData)).rejects.toThrow('drainStream exploded mid-step')
+
+        expect(apiClient.resumeFlowStep).toHaveBeenCalledTimes(1)
+        const { output } = apiClient.resumeFlowStep.mock.calls[0][0] as { output: { status: string, usage?: { totals: unknown, incomplete?: boolean } } }
+        expect(output.status).toBe('FAILED')
+        expect(output.usage).toEqual({
+            version: 1,
+            calls: [{ provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', inputTokens: 100, outputTokens: 20 }],
+            totals: { inputTokens: 100, outputTokens: 20 },
+            incomplete: true,
+        })
     })
 })
 

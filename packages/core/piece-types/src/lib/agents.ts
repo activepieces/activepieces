@@ -296,4 +296,44 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     structuredOutput?: unknown
+    usage?: AgentUsage
+}
+
+export type AgentUsageLlmCall = {
+    provider?: string
+    model: string
+    inputTokens: number
+    outputTokens: number
+    cachedInputTokens?: number
+    cacheWriteTokens?: number
+    reasoningTokens?: number
+}
+
+export type AgentUsage = {
+    version: 1
+    calls: AgentUsageLlmCall[]
+    totals: { inputTokens: number, outputTokens: number }
+    incomplete?: boolean
+}
+
+export const FAILURE_OUTPUT_KEY = '__apFailureOutput'
+
+export function attachFailureOutput<T>(error: T, output: unknown): T {
+    if (output === undefined || typeof error !== 'object' || error === null || !Object.isExtensible(error)) {
+        return error
+    }
+    Object.defineProperty(error, FAILURE_OUTPUT_KEY, {
+        value: output,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+    })
+    return error
+}
+
+export function failureOutputOf(error: unknown): unknown {
+    if (typeof error !== 'object' || error === null) {
+        return undefined
+    }
+    return Object.getOwnPropertyDescriptor(error, FAILURE_OUTPUT_KEY)?.value
 }

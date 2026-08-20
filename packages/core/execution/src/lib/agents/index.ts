@@ -1,4 +1,5 @@
 import { AgentOutputFieldType, AgentTaskStatus, ContentBlockType, ToolCallStatus, ToolCallType } from '@activepieces/core-piece-types'
+import type { AgentUsage } from '@activepieces/core-piece-types'
 import { Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 export * from './tools'
@@ -9,12 +10,14 @@ export {
     AgentOutputFieldType,
     AgentPieceProps,
     AgentTaskStatus,
+    attachFailureOutput,
     ContentBlockType,
     ExecutionToolStatus,
+    failureOutputOf,
     ToolCallStatus,
     ToolCallType,
 } from '@activepieces/core-piece-types'
-export type { AgentProviderModel } from '@activepieces/core-piece-types'
+export type { AgentProviderModel, AgentUsage, AgentUsageLlmCall } from '@activepieces/core-piece-types'
 
 export const AgentOutputField = z.object({
     displayName: z.string(),
@@ -28,6 +31,7 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     structuredOutput?: unknown
+    usage?: AgentUsage
 }
 
 export const MarkdownContentBlock = z.object({

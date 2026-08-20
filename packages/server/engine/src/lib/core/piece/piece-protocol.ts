@@ -1,5 +1,5 @@
 import { isNil, isObject } from '@activepieces/core-utils'
-import { ContextVersion, PieceMetadata } from '@activepieces/pieces-framework'
+import { attachFailureOutput, ContextVersion, FAILURE_OUTPUT_KEY, failureOutputOf, PieceMetadata } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, ExecutionType, PropertySettings, ResumePayload, ScheduleOptions } from '@activepieces/shared'
 import { HookResponse } from '../../utils'
 
@@ -37,17 +37,18 @@ export const pieceProtocol = {
             name: error.name === 'Error' ? error.constructor.name : error.name,
             stack: error.stack,
             type: error instanceof ExecutionError ? error.type : undefined,
+            [FAILURE_OUTPUT_KEY]: readJsonSafe(() => failureOutputOf(error)).data,
         }
     },
 
-    deserializeError: ({ message, name, stack, type, ...details }: SerializedError): Error => {
+    deserializeError: ({ message, name, stack, type, [FAILURE_OUTPUT_KEY]: failureOutput, ...details }: SerializedError): Error => {
         if (!isNil(type)) {
-            return new ExecutionError(name ?? 'ExecutionError', message, type)
+            return attachFailureOutput(new ExecutionError(name ?? 'ExecutionError', message, type), failureOutput)
         }
         const error = Object.assign(new Error(message), details)
         error.name = name ?? error.name
         error.stack = stack ?? error.stack
-        return error
+        return attachFailureOutput(error, failureOutput)
     },
 }
 
@@ -57,7 +58,11 @@ function isThenable(value: unknown): boolean {
 
 function readJsonSafe(read: () => unknown): { data: unknown } {
     try {
-        return { data: JSON.parse(JSON.stringify(read())) }
+        const value = read()
+        if (value === undefined) {
+            return { data: undefined }
+        }
+        return { data: JSON.parse(JSON.stringify(value)) }
     }
     catch {
         return { data: undefined }

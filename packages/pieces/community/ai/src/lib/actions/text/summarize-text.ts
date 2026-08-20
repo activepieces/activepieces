@@ -3,6 +3,7 @@ import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { aiProps } from '../../common/props';
+import { usageFromGeneration } from '../../common/usage';
 
 export const summarizeText = createAction({
   audience: 'both',
@@ -60,6 +61,8 @@ export const summarizeText = createAction({
       }
     });
 
-    return response.text ?? '';
+    const usage = usageFromGeneration({ provider, requestedModel: modelId, result: response });
+
+    return { text: response.text ?? '', ...(usage ? { usage } : {}) };
   },
 });

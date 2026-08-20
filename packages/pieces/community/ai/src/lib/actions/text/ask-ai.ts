@@ -6,6 +6,7 @@ import { ModelMessage, generateText, stepCountIs } from 'ai';
 import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
 import { aiProps } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
+import { usageFromGeneration } from '../../common/usage';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
@@ -127,10 +128,12 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
+    const usage = usageFromGeneration({ provider, requestedModel: modelId, result: response });
+
     const includeSources = webSearchTools && webSearchOptions.includeSources;
     if (includeSources) {
-      return { text: response.text, sources: response.sources };
+      return { text: response.text, sources: response.sources, ...(usage ? { usage } : {}) };
     }
-    return response.text;
+    return { text: response.text, ...(usage ? { usage } : {}) };
   },
 });

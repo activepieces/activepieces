@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { attachFailureOutput, createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
+import { usageFromGeneration } from '../../common/usage';
 import { AIProviderName } from '@activepieces/pieces-framework';
 
 export const classifyText = createAction({
@@ -47,13 +48,15 @@ export const classifyText = createAction({
       Text to classify: "${context.propsValue.text}"`,
     });
     const result = response.text.trim();
+    const usage = usageFromGeneration({ provider, requestedModel: modelId, result: response });
 
     if (!categories.includes(result)) {
-      throw new Error(
-        'Unable to classify the text into the provided categories.'
+      throw attachFailureOutput(
+        new Error('Unable to classify the text into the provided categories.'),
+        usage ? { usage } : undefined,
       );
     }
 
-    return result;
+    return { category: result, ...(usage ? { usage } : {}) };
   },
 });
