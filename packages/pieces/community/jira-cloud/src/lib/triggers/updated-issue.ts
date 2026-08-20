@@ -3,36 +3,8 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import {
-  Polling,
-  DedupeStrategy,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
-import dayjs from 'dayjs';
-
-const polling: Polling<   JiraAuth,
-  { jql?: string; sanitizeJql?: boolean }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { jql, sanitizeJql } = propsValue;
-    const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
-      lastFetchEpochMS
-    ).format('YYYY-MM-DD HH:mm')}'`;
-    const response = await searchIssuesByJql({
-      auth,
-      jql: searchQuery,
-      maxResults: 50,
-      sanitizeJql: sanitizeJql ?? false,
-    });
-    return response.issues.map((issue: any) => ({
-      epochMilliSeconds: Date.parse(issue.fields.updated),
-      data: issue,
-    }));
-  },
-};
+import { jiraCloudAuth } from '../../auth';
+import { jiraPolling } from '../common/polling';
 
 export const updatedIssue = createTrigger({
   name: 'updated_issue',
@@ -58,15 +30,15 @@ export const updatedIssue = createTrigger({
   },
   sampleData: {},
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await jiraPolling.onEnable({ context });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await jiraPolling.poll({ context });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await jiraPolling.test({ context });
   },
 });
