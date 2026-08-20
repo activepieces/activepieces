@@ -11,6 +11,8 @@ export const GmailProps = {
       'Optional filteration, leave empty to filter based on the email sender',
     required: false,
     defaultValue: '',
+    icon: 'user',
+    placeholder: 'sender@example.com',
   }),
   to: Property.ShortText({
     displayName: 'Email recipient',
@@ -18,18 +20,22 @@ export const GmailProps = {
       'Optional filteration, leave empty to filter based on the email recipient',
     required: false,
     defaultValue: '',
+    icon: 'send',
+    placeholder: 'recipient@example.com',
   }),
   subject: Property.ShortText({
     displayName: 'Email subject',
     description: 'The email subject',
     required: false,
     defaultValue: '',
+    icon: 'type',
   }),
   category: Property.StaticDropdown({
     displayName: 'Category',
     description:
       'Optional filteration, leave unselected to filter based on the email category',
     required: false,
+    icon: 'inbox',
     options: {
       disabled: false,
       options: [
@@ -56,6 +62,7 @@ export const GmailProps = {
         'Optional filteration, leave unselected to filter based on the email label',
       required: overrides.required,
       defaultValue: '',
+      icon: 'tag',
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -89,6 +96,7 @@ export const GmailProps = {
     description:
       'Select a message from the list or enter a message ID manually.',
     required: true,
+    icon: 'inbox',
     auth: gmailAuth,
     refreshers: [],
     options: async ({ auth }) => {

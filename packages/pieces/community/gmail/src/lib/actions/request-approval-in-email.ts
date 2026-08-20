@@ -25,32 +25,46 @@ export const requestApprovalInEmail = createAction({
       'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'text',
+      props: ['subject', 'body'],
+    },
+    {
+      key: 'recipients',
+      display: 'section',
+      label: 'Recipients',
+      icon: 'users',
+      props: ['receiver', 'cc', 'bcc'],
+    },
+  ],
   props: {
     receiver: Property.ShortText({
       displayName: 'Receiver Email (To)',
-      description:
-        'The email address of the recipient who will receive the approval request.',
+      description: 'Recipient of the approval request.',
       required: true,
+      icon: 'send',
     }),
 
     cc: Property.Array({
       displayName: 'CC Email',
-      description:
-        'The email addresses of the recipients who will receive a carbon copy of the approval request.',
+      description: 'Recipients copied on the approval request.',
       required: false,
     }),
     bcc: Property.Array({
       displayName: 'BCC Email',
-      description:
-        'The email addresses of the recipients who will receive a blind carbon copy of the approval request.',
+      description: 'Recipients blind-copied on the approval request.',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the approval request email.',
+      description: 'Subject of the approval request email.',
       required: true,
     }),
-    body: Property.ShortText({
+    body: Property.LongText({
       displayName: 'Body',
       description: 'Body for the email you want to send',
       required: true,
@@ -59,21 +73,26 @@ export const requestApprovalInEmail = createAction({
       displayName: 'Reply-To Email',
       description: 'Email address to set as the "Reply-To" header',
       required: false,
+      advanced: true,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
       required: false,
+      advanced: true,
     }),
     from: Property.ShortText({
       displayName: 'Sender Email',
       description:
         "The address must be listed in your GMail account's settings",
       required: false,
+      advanced: true,
     }),
     in_reply_to: Property.ShortText({
       displayName: 'In reply to',
       description: 'Reply to this Message-ID',
       required: false,
+      advanced: true,
+      placeholder: '<CADk3RXhc9EbAOb@mail.gmail.com>',
     }),
   },
   outputSchema: requestApprovalInMailActionOutputSchema,

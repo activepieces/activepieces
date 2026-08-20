@@ -19,6 +19,22 @@ export const gmailCreateDraftReplyAction = createAction({
     idempotent: false,
   },
   displayName: 'Create Draft Reply',
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'reply',
+      props: ['message_id', 'reply_type'],
+    },
+    {
+      key: 'reply',
+      display: 'section',
+      label: 'Draft Reply',
+      icon: 'text',
+      props: ['body_type', 'body', 'include_original_message'],
+    },
+  ],
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
@@ -27,16 +43,21 @@ export const gmailCreateDraftReplyAction = createAction({
         'Choose whether to reply to sender only or to all recipients',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'To sender only',
+            icon: 'reply',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'To all recipients',
+            icon: 'reply-all',
           },
         ],
       },
@@ -45,16 +66,21 @@ export const gmailCreateDraftReplyAction = createAction({
       displayName: 'Body Type',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Plain text',
             value: 'plain_text',
+            description: 'Simple, unformatted text',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Rich, styled content',
+            icon: 'code',
           },
         ],
       },
@@ -74,16 +100,20 @@ export const gmailCreateDraftReplyAction = createAction({
       displayName: 'Sender Name',
       description: 'Optional sender name to display',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
       description: 'Optional file to attach to your draft reply',
       required: false,
+      advanced: true,
+      icon: 'paperclip',
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
       description: 'Custom name for the attachment',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: createDraftReplyActionOutputSchema,
