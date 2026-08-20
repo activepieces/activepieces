@@ -518,6 +518,30 @@ describe('AI Providers API', () => {
             expect(chatRows[0].id).not.toBe(first.id)
         })
 
+        it('reports a provider as chat-enabled even when the chat key is not the ranking winner', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Chat key, ranked last',
+                config: customConfig('https://chat.example.com'),
+                enabledForChat: true,
+                created: '2026-08-01T00:00:00.000Z',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Newer key, ranked first',
+                config: customConfig('https://newer.example.com'),
+                created: '2026-08-10T00:00:00.000Z',
+            })
+
+            const response = await engineGet('/api/v1/ai-providers', ctx.project.id)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const customRow = response?.json().find((p: { provider: string }) => p.provider === AIProviderName.CUSTOM)
+            expect(customRow.enabledForChat).toBe(true)
+        })
+
         it('lists a specific key models through the admin configuration route', async () => {
             const olderModels = [
                 { modelId: 'older-model', modelName: 'Older model', modelType: AIProviderModelType.TEXT },
