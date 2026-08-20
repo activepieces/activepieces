@@ -952,6 +952,9 @@
       "@activepieces/piece-pandadoc": [
         "packages/pieces/community/pandadoc/src/index.ts"
       ],
+      "@activepieces/piece-pangolinfo": [
+        "packages/pieces/community/pangolinfo/src/index.ts"
+      ],
       "@activepieces/piece-paperform": [
         "packages/pieces/community/paperform/src/index.ts"
       ],

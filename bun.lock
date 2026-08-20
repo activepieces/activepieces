@@ -6639,6 +6639,17 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/pangolinfo": {
+      "name": "@activepieces/piece-pangolinfo",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/paperform": {
       "name": "@activepieces/piece-paperform",
       "version": "0.1.7",
@@ -12029,6 +12040,8 @@
     "@activepieces/piece-pagerduty": ["@activepieces/piece-pagerduty@workspace:packages/pieces/community/pagerduty"],
 
     "@activepieces/piece-pandadoc": ["@activepieces/piece-pandadoc@workspace:packages/pieces/community/pandadoc"],
+
+    "@activepieces/piece-pangolinfo": ["@activepieces/piece-pangolinfo@workspace:packages/pieces/community/pangolinfo"],
 
     "@activepieces/piece-paperform": ["@activepieces/piece-paperform@workspace:packages/pieces/community/paperform"],
 
