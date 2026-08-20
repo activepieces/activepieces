@@ -2,9 +2,9 @@ import { performance } from 'node:perf_hooks'
 import { isNil } from '@activepieces/core-utils'
 import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { triggerRunner } from '../core/piece/trigger-runner'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
-import { triggerHelper } from '../helper/trigger-helper'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
@@ -49,7 +49,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await triggerRunner.executeOnStart({ trigger, constants, payload: input.triggerPayload })
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,

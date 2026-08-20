@@ -7,8 +7,8 @@ import { Migration } from '../../migration'
 // transaction = false because CREATE INDEX CONCURRENTLY is illegal inside a
 // transaction block. The column adds are instant (defaults on modern Postgres)
 // and each statement runs autocommit.
-export class AddAiProviderScopes1828000000000 implements Migration {
-    name = 'AddAiProviderScopes1828000000000'
+export class AddAiProviderScopes1829000000000 implements Migration {
+    name = 'AddAiProviderScopes1829000000000'
     breaking = false
     release = '0.87.1'
     transaction = false
