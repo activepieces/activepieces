@@ -11,12 +11,17 @@ import { ActivateLicenseDialog } from './activate-license-dialog';
 export const LicenseKey = ({
   platform,
   isSelfHosted = false,
+  isTrialKey = false,
 }: {
   platform: PlatformWithoutSensitiveData;
   isSelfHosted?: boolean;
+  isTrialKey?: boolean;
 }) => {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
+  const activateLabel = isTrialKey
+    ? t('Activate trial key')
+    : t('Activate license key');
 
   return (
     <>
@@ -33,14 +38,13 @@ export const LicenseKey = ({
         className="w-full"
         onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
       >
-        {platform.plan.licenseKey
-          ? t('Update license key')
-          : t('Activate license key')}
+        {platform.plan.licenseKey ? t('Update license key') : activateLabel}
       </AnimatedIconButton>
 
       <ActivateLicenseDialog
         isOpen={isActivateLicenseKeyDialogOpen}
         onOpenChange={setIsActivateLicenseKeyDialogOpen}
+        isTrialKey={isTrialKey}
       />
     </>
   );
