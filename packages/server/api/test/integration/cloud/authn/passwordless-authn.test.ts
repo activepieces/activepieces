@@ -1,16 +1,17 @@
 import { apId } from '@activepieces/core-utils'
-import { OtpState, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
+import { turnstile } from '../../../../src/app/authentication/lib/turnstile'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
-import { passwordlessAuthService } from '../../../../src/app/authentication/passwordless-auth.service'
-import { platformService } from '../../../../src/app/platform/platform.service'
-import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+process.env.AP_TURNSTILE_SITE_KEY = 'test-site-key'
+process.env.AP_TURNSTILE_SECRET_KEY = 'test-secret-key'
 
 let app: FastifyInstance | null = null
 
@@ -67,6 +68,7 @@ async function storedOtp(email: string) {
 }
 
 beforeAll(async () => {
+    vi.spyOn(turnstile, 'assertSolved').mockResolvedValue(undefined)
     app = await setupTestEnvironment()
 })
 
@@ -249,9 +251,9 @@ describe('Passwordless Authentication API', () => {
             expect(identity?.firstName).toBe('Ahmad')
             expect(identity?.lastName).toBe('Bin Tash')
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
-            expect(platform?.name).toBe("Ahmad's Platform")
+            expect(platform?.name).toBe('Ahmad\'s Platform')
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
-            expect(project?.displayName).toBe("Ahmad's Project")
+            expect(project?.displayName).toBe('Ahmad\'s Project')
         })
 
         it('consumes one code exactly once, even when two confirmations race it', async () => {
