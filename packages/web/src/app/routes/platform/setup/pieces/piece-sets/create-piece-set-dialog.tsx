@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const formSchema = CreatePieceSetRequestBody;
 
@@ -32,7 +33,6 @@ type FormValues = z.infer<typeof formSchema>;
 
 type CreatePieceSetDialogProps = {
   onCreated: () => void;
-  isEnabled: boolean;
 };
 
 const CreatePieceSetForm = ({
@@ -100,8 +100,9 @@ const CreatePieceSetForm = ({
 
 export const CreatePieceSetDialog = ({
   onCreated,
-  isEnabled,
 }: CreatePieceSetDialogProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
