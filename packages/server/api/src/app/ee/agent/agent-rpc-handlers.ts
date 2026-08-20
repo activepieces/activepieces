@@ -82,9 +82,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // must not change how it behaves for everyone else who talks to it.
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT
 
-        const [conversation, providerConfig, userProjects, enabledAiTools] = await Promise.all([
+        const [conversation, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
-            agentHelpers.resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', input.provider) }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
@@ -105,11 +104,25 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             ? userProjects.filter((p) => p.id === conversation.projectId)
             : userProjects
 
-        const attachmentProjectId = (conversation.projectId && scopedProjects.some((p) => p.id === conversation.projectId))
+        const validCandidateProjectId = conversation.projectId && scopedProjects.some((p) => p.id === conversation.projectId)
             ? conversation.projectId
-            : scopedProjects[0]?.id
-        const attachmentRefs = files && files.length > 0 && !isNil(attachmentProjectId)
-            ? await persistAgentAttachments({ files, projectId: attachmentProjectId, platformId, log })
+            : null
+        // Default to the user's first project when none is chosen so the agent never hits a cold
+        // "No project selected" on the first data tool. The chat MCP server resolves its project
+        // from conversation.projectId per request, so persist it below (the user can switch via the
+        // dropdown / ap_select_project, which overwrites this).
+        const selectedProjectId = agentHelpers.selectRunProject({ conversationProjectId: conversation.projectId ?? null, projects: scopedProjects })
+
+        // Settled before the provider is resolved: the turn runs inside this project, so the
+        // credential has to be chosen for it. Resolving earlier, while the project was still
+        // unknown, is what let a projectless conversation pick a key scoped away from the project
+        // it then adopted. A flow step reads its own conversation's project rather than the
+        // selection above, which narrows to what the owner can still see in chat.
+        const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
+        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }), ...spreadIfDefined('provider', input.provider) })
+
+        const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
+            ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })
             : []
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
@@ -136,15 +149,6 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const candidateProjectId = conversation.projectId ?? null
-        const validCandidateProjectId = candidateProjectId && scopedProjects.some((p) => p.id === candidateProjectId)
-            ? candidateProjectId
-            : null
-        // Default to the user's first project when none is chosen so the agent never hits a cold
-        // "No project selected" on the first data tool. The chat MCP server resolves its project
-        // from conversation.projectId per request, so persist it (the user can switch via the
-        // dropdown / ap_select_project, which overwrites this).
-        const selectedProjectId = validCandidateProjectId ?? scopedProjects[0]?.id ?? null
         if (!dryRun && isNil(validCandidateProjectId) && !isNil(selectedProjectId)) {
             await agentHelpers.conversationRepo().update(conversationId, { projectId: selectedProjectId })
         }
@@ -443,7 +447,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
         }
         const { projectId, platformId } = conversation
-        const model = await agentHelpers.resolveFastModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider) })
         const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
             model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
@@ -469,7 +473,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const { projectId, platformId } = conversation
         await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
-        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, log, ...spreadIfDefined('provider', input.provider) })
+        const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider) })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
             projectId,
