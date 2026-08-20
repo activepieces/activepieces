@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
 import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
-import { aiProps } from '../../common/props';
+import { aiProps, aiProviderSelection } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
@@ -46,14 +46,14 @@ export const askAI = createAction({
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
       (propsValue) => ({
-        provider: propsValue['provider'] as string | undefined,
+        provider: aiProviderSelection.resolve(propsValue['provider'])?.provider,
         model: propsValue['model'] as string | undefined,
       }),
       ['webSearch', 'provider', 'model'],
     ),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
     const storage = context.store;
     const webSearchEnabled = !!context.propsValue.webSearch;
@@ -67,11 +67,12 @@ export const askAI = createAction({
     });
 
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
+      provider,
       model: modelId,
     });
     const model = await createAIModel({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

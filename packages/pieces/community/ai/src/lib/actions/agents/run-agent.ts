@@ -136,6 +136,7 @@ export const runAgent = createAction({
         waitpointId: waitpoint.id,
         ...spreadIfDefined('modelName', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.model),
         ...spreadIfDefined('provider', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.provider),
+        ...spreadIfDefined('providerConfigId', (context.propsValue.aiProviderModel as AgentProviderModel | undefined)?.configId),
         tools,
         structuredOutput: context.propsValue.structuredOutput ?? [],
         ...spreadIfDefined('maxSteps', context.propsValue.maxSteps),

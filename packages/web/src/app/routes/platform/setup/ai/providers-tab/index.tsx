@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -83,6 +84,14 @@ export function ProvidersTab() {
   const { mutate: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
       onSuccess: () => refetch(),
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ?? data?.message ?? 'Could not save this key',
+          ),
+        );
+      },
     });
 
   const openConfig = (id: string) => {

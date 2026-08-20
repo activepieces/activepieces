@@ -1,8 +1,8 @@
-import { AIProviderName } from '@activepieces/pieces-framework';
+import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
-import { aiProps } from '../../common/props';
+import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const summarizeText = createAction({
   audience: 'both',
@@ -30,11 +30,12 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

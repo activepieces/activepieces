@@ -17,10 +17,10 @@ import {
 import { generateImage } from 'ai';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/pieces-framework';
-import { getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
+import { getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
 import { AIProviderName } from '@activepieces/pieces-framework';
-import { aiProps } from '../../common/props';
+import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const generateImageAction = createAction({
   audience: 'both',
@@ -53,7 +53,7 @@ export const generateImageAction = createAction({
       auth: PieceAuth.None(),
       refreshers: ['provider', 'model'],
       props: async (propsValue): Promise<InputPropertyMap> => {
-        const rawProvider = propsValue['provider'] as unknown as string;
+        const rawProvider = aiProviderSelection.resolve(propsValue['provider'])?.provider;
         const rawModel = propsValue['model'] as unknown as string;
         const { provider: effectiveProvider, model: effectiveModel } = getEffectiveProviderAndModel({
           provider: rawProvider,
@@ -140,7 +140,7 @@ export const generateImageAction = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
 
     const inputImages = collectInputImages({
@@ -149,7 +149,8 @@ export const generateImageAction = createAction({
     });
 
     const image = await getGeneratedImage({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
@@ -206,6 +207,7 @@ const extractImageFiles = (value: unknown): ApFile[] => {
 
 const getGeneratedImage = async ({
   provider,
+  configId,
   modelId,
   engineToken,
   apiUrl,
@@ -217,6 +219,7 @@ const getGeneratedImage = async ({
   advancedOptions,
 }: {
   provider: AIProviderName;
+  configId?: string;
   modelId: string;
   engineToken: string;
   apiUrl: string;
@@ -229,6 +232,7 @@ const getGeneratedImage = async ({
 }): Promise<GeneratedFile> => {
   const model = await createAIModel({
     provider,
+    ...spreadIfDefined('configId', configId),
     modelId,
     engineToken,
     apiUrl,
