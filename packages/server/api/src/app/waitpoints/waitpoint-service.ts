@@ -1,13 +1,11 @@
 import { apId, isNil } from '@activepieces/core-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
-import { SystemJobName } from '../helper/system-jobs/common'
-import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -57,16 +55,12 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
         }
         if (!isNil(params.resumeDateTime)) {
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
-                    jobId: `resume-delay-${params.flowRunId}`,
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(params.resumeDateTime),
-                },
+            await waitpointTimeoutJob.schedule({
+                flowRunId: params.flowRunId,
+                projectId: params.projectId,
+                waitpointId: waitpoint.id,
+                resumeDateTime: params.resumeDateTime,
+                log,
             })
         }
         return { inserted, waitpoint }
@@ -121,6 +115,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
                 return false
             }
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
@@ -150,14 +145,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async findPreCompletedByFlowRunId({ flowRunId }: FindPreCompletedByFlowRunIdParams): Promise<Waitpoint | null> {
-        const stillOpen = await waitpointRepo().existsBy({ flowRunId, status: WaitpointStatus.PENDING })
-        if (stillOpen) {
-            return null
-        }
-        return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+        const latest = await waitpointRepo().findOne({
+            where: { flowRunId },
             order: { created: 'DESC' },
         })
+        if (isNil(latest) || latest.status !== WaitpointStatus.COMPLETED) {
+            return null
+        }
+        return latest
     },
 
     async hasPendingBarrier({ flowRunId, projectId }: HasPendingBarrierParams): Promise<boolean> {
@@ -179,12 +174,20 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 
     async delete({ id, projectId }: DeleteWaitpointParams): Promise<void> {
+        const waitpoint = await waitpointRepo().findOneBy({ id, projectId })
         await waitpointRepo().delete({ id, projectId })
+        if (!isNil(waitpoint)) {
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId: waitpoint.flowRunId, log })
+        }
         log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
     },
 
     async deleteByFlowRunId(flowRunId: string): Promise<void> {
+        const waitpoints = await waitpointRepo().findBy({ flowRunId })
         await waitpointRepo().delete({ flowRunId })
+        for (const waitpoint of waitpoints) {
+            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
+        }
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })

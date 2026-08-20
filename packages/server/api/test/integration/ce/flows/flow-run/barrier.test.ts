@@ -1,10 +1,13 @@
-import { apId } from '@activepieces/core-utils'
-import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
+import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
+import { sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
@@ -74,6 +77,16 @@ async function receive({ signalId, status, result }: { signalId: string, status:
 
 async function evaluate(barrierId: string) {
     return barrierService(app.log).evaluate({ barrierId, projectId: ctx.project.id })
+}
+
+async function waitFor(condition: () => Promise<boolean>): Promise<void> {
+    for (let attempt = 0; attempt < 100; attempt++) {
+        if (await condition()) {
+            return
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    throw new Error('Timed out waiting for the barrier to settle')
 }
 
 async function readStatus(barrierId: string): Promise<WaitpointStatus> {
@@ -285,5 +298,186 @@ describe('resume guards', () => {
         })
 
         expect(stale).toBe(false)
+    })
+})
+
+describe('barrier deadline', () => {
+    it('carries a deadline from creation, so a barrier nobody signals is still swept and released', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
+
+        expect(barrier.resumeDateTime).not.toBeNull()
+
+        await db.update('waitpoint', barrier.id, { resumeDateTime: dayjs().subtract(5, 'minute').toISOString() })
+        const rearmed = await sweepOverdueDeadlines({ log: app.log })
+        expect(rearmed).toContain(barrier.id)
+
+        await handleResumeDelayWaitpoint({
+            data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+            log: app.log,
+        })
+
+        expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
+
+        await barrierService(app.log).release({ barrier, timedOut: true, releaseReason: 'timeout' })
+
+        const summary = await readSummary(barrier.id)
+        expect(summary.timedOut).toBe(true)
+        expect(summary.stillRunning).toBe(2)
+    })
+})
+
+describe('multi-approval confirm page', () => {
+    async function createApprovalBarrier({ reasonRequiredOn, requiredSuccesses }: { reasonRequiredOn?: 'none' | 'reject' | 'both', requiredSuccesses?: number } = {}) {
+        const { flowRun } = await createParentRun()
+        const created = await barrierService(app.log).create({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'approval',
+            version: 'V1',
+            policy: { requiredSuccesses: requiredSuccesses ?? 2, ...(reasonRequiredOn ? { reasonRequiredOn } : {}) },
+            signalLabels: ['a@example.com', 'b@example.com', 'c@example.com'],
+        })
+        return { flowRun, created, signals: await listSignals(created.barrier.id) }
+    }
+
+    it('records each approver\'s decision and reason on their own signal', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier({ requiredSuccesses: 3 })
+
+        for (const signal of signals.slice(0, 2)) {
+            const response = await app.inject({
+                method: 'POST',
+                url: `/api/v1/flow-runs/${flowRun.id}/signals/${signal.id}/confirm?action=approve`,
+                payload: { reason: `looks good from ${signal.label}` },
+            })
+            expect(response.statusCode).toBe(200)
+        }
+
+        const decided = (await listSignals(created.barrier.id)).filter((signal) => signal.status === BarrierSignalStatus.SUCCEEDED)
+        expect(decided).toHaveLength(2)
+        expect(decided.map((signal) => signal.result.reason).sort()).toEqual(['looks good from a@example.com', 'looks good from b@example.com'])
+    })
+
+    it('releases once the required approvals have landed, leaving the third link closed', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+
+        for (const signal of signals.slice(0, 2)) {
+            await app.inject({
+                method: 'POST',
+                url: `/api/v1/flow-runs/${flowRun.id}/signals/${signal.id}/confirm?action=approve`,
+                payload: { reason: 'ok' },
+            })
+        }
+
+        await waitFor(async () => isNil(await db.findOneBy('waitpoint', { id: created.barrier.id })))
+        expect(await listSignals(created.barrier.id)).toHaveLength(0)
+    })
+
+    it('rejects a reject with no reason when reasonRequiredOn is reject', async () => {
+        const { flowRun, signals } = await createApprovalBarrier({ reasonRequiredOn: 'reject' })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=disapprove`,
+            payload: {},
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+
+    it('rejects an over-long reason rather than truncating it', async () => {
+        const { flowRun, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            payload: { reason: 'x'.repeat(MAX_SIGNAL_REASON_LENGTH + 1) },
+        })
+
+        expect(response.statusCode).toBe(400)
+    })
+
+    it('stores a reason carrying a NUL byte sanitised rather than failing the write', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            payload: { reason: `fine ${String.fromCharCode(0)} by me` },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
+        expect(stored?.status).toBe(BarrierSignalStatus.SUCCEEDED)
+        expect(JSON.stringify(stored?.result)).not.toContain('\\u0000')
+    })
+
+    it('tells the third approver the request is already closed once the barrier released', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+
+        for (const signal of signals.slice(0, 2)) {
+            await app.inject({
+                method: 'POST',
+                url: `/api/v1/flow-runs/${flowRun.id}/signals/${signal.id}/confirm?action=approve`,
+                payload: { reason: 'ok' },
+            })
+        }
+        await waitFor(async () => isNil(await db.findOneBy('waitpoint', { id: created.barrier.id })))
+
+        const response = await app.inject({
+            method: 'GET',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[2].id}/confirm`,
+            headers: { accept: 'text/html' },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toContain('Already responded')
+    })
+
+    it('records nothing when the confirm url is posted with no action at all', async () => {
+        const { flowRun, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm`,
+            payload: { reason: 'posted the bare link' },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+
+    it('records nothing when the action is misspelled rather than treating it as an approval', async () => {
+        const { flowRun, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=aprove`,
+            payload: { reason: 'typo' },
+        })
+
+        expect(response.statusCode).toBe(400)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
+    })
+
+    it('refuses a signal id that belongs to another run', async () => {
+        const { signals } = await createApprovalBarrier()
+        const { flowRun: otherRun } = await createParentRun()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${otherRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            payload: { reason: 'not mine' },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect((await listSignals(signals[0].waitpointId))[0].status).toBe(BarrierSignalStatus.PENDING)
     })
 })

@@ -15,6 +15,7 @@ export enum SystemJobName {
     RESUME_DELAY_WAITPOINT = 'resume-delay-waitpoint',
     TOOL_SEARCH_REINDEX = 'tool-search-reindex',
     CHAT_STALE_SWEEP = 'chat-stale-sweep',
+    WAITPOINT_DEADLINE_SWEEP = 'waitpoint-deadline-sweep',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -56,6 +57,7 @@ type SystemJobDataMap = {
     [SystemJobName.RESUME_DELAY_WAITPOINT]: ResumeDelayWaitpointSystemJobData
     [SystemJobName.TOOL_SEARCH_REINDEX]: ToolSearchReindexSystemJobData
     [SystemJobName.CHAT_STALE_SWEEP]: Record<string, never>
+    [SystemJobName.WAITPOINT_DEADLINE_SWEEP]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -91,5 +93,11 @@ export type SystemJobSchedule = {
     startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
+    removeJob(params: { jobId: string }): Promise<void>
     close(): Promise<void>
+}
+
+export const systemJobIds = {
+    resumeDelay: ({ waitpointId }: { waitpointId: string }): string => `resume-delay-${waitpointId}`,
+    legacyResumeDelay: ({ flowRunId }: { flowRunId: FlowRunId }): string => `resume-delay-${flowRunId}`,
 }

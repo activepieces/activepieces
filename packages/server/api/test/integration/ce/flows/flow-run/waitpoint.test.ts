@@ -433,6 +433,32 @@ describe('Waitpoint service', () => {
             const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
             expect(result).toBeNull()
         })
+
+        it('should return the COMPLETED waitpoint even when an older unconsumed PENDING one lingers', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'create_approval_links',
+                type: PauseType.WEBHOOK,
+            })
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'wait_for_approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+
+            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            expect(result?.id).toBe(pause.waitpoint.id)
+        })
     })
 
     describe('concurrent complete calls', () => {
