@@ -116,6 +116,33 @@ describe('denoCodeSandbox permission boundary', () => {
                 .rejects.toThrow(PERMISSION_DENIED)
         })
     })
+
+    describe('createScriptSession', () => {
+        it('shares one context across runs, honors noOverwrite, survives a failed run, blocks network', async () => {
+            const session = await denoCodeSandbox.createScriptSession({
+                scriptContext: { base: 40 },
+                functions: { double: (n: number) => n * 2 },
+            })
+            try {
+                expect(await session.run('base + 2')).toBe(42)
+                expect(await session.run('double(base)')).toBe(80)
+
+                await session.setGlobal('step_1', { out: 5 })
+                expect(await session.run('step_1.out + base')).toBe(45)
+
+                await session.setGlobal('base', 100)
+                expect(await session.run('base')).toBe(40)
+
+                await expect(session.run('missingVar.foo')).rejects.toThrow(/missingVar/)
+                expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
+
+                await expect(session.run(`fetch('https://example.com')`)).rejects.toThrow(PERMISSION_DENIED)
+            }
+            finally {
+                session.dispose()
+            }
+        })
+    })
 })
 
 describe('denoCodeSandbox permission profiles', () => {
@@ -141,31 +168,32 @@ describe('denoCodeSandbox permission profiles', () => {
     }
 
     // Assert the permission state without hitting the network/fs (hermetic for CI).
-    // The path grant is queried against os.tmpdir() so it matches the WRITE_TMP flag.
-    const grants = (writePath: string): string => `exports.code = async () => ({
+    // The path grant is queried against os.tmpdir() so it matches the WRITE_TMP/READ_TMP flags.
+    const grants = (tmpPath: string): string => `exports.code = async () => ({
         net: (await Deno.permissions.query({ name: 'net' })).state,
         env: (await Deno.permissions.query({ name: 'env' })).state,
         run: (await Deno.permissions.query({ name: 'run' })).state,
         sys: (await Deno.permissions.query({ name: 'sys' })).state,
         readEtc: (await Deno.permissions.query({ name: 'read', path: '/etc' })).state,
-        writeTmp: (await Deno.permissions.query({ name: 'write', path: ${JSON.stringify(writePath)} })).state,
+        readTmp: (await Deno.permissions.query({ name: 'read', path: ${JSON.stringify(tmpPath)} })).state,
+        writeTmp: (await Deno.permissions.query({ name: 'write', path: ${JSON.stringify(tmpPath)} })).state,
     })`
 
     describe('SANDBOX_PROCESS profile (write-tmp, read-tmp, net, env, run, sys)', () => {
         const profile = () => [DenoPermission.WRITE_TMP, DenoPermission.READ_TMP, DenoPermission.NET, DenoPermission.ENV, DenoPermission.RUN, DenoPermission.SYS]
 
-        it('grants net, env, run, sys and tmp write; does not grant read', async () => {
+        it('grants net, env, run, sys and tmp read/write; does not grant read outside tmp', async () => {
             const out = await runWith(profile(), grants(tmpdir()))
-            // 'prompt' (not 'granted') = read is absent from the flags; --no-prompt turns any
-            // actual read into a hard NotCapable failure at use time.
-            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'prompt', writeTmp: 'granted' })
+            // readEtc 'prompt' (not 'granted') = read outside tmp is absent from the flags;
+            // --no-prompt turns any such read into a hard NotCapable failure at use time.
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'prompt', readTmp: 'granted', writeTmp: 'granted' })
         })
     })
 
     describe('ALL profile (full trust)', () => {
         it('grants all permissions', async () => {
             const out = await runWith([DenoPermission.ALL], grants(tmpdir()))
-            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'granted', writeTmp: 'granted' })
+            expect(out).toEqual({ net: 'granted', env: 'granted', run: 'granted', sys: 'granted', readEtc: 'granted', readTmp: 'granted', writeTmp: 'granted' })
         })
     })
 })
