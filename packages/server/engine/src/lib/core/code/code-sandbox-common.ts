@@ -12,17 +12,6 @@ export type CodeSandbox = {
      * Executes a script.
      */
     runScript(params: RunScriptParams): Promise<unknown>
-
-    /**
-     * Creates a reusable session that shares one script context across multiple script runs.
-     */
-    createScriptSession(params: CreateScriptSessionParams): Promise<ScriptSession>
-}
-
-export type ScriptSession = {
-    run(script: string): Promise<unknown>
-    setGlobal(key: string, value: unknown, noOverwrite?: boolean): Promise<void>
-    dispose(): void
 }
 
 type RunCodeModuleParams = {
@@ -56,5 +45,3 @@ type RunScriptParams = {
     functions: Record<string, Function>
 
 }
-
-export type CreateScriptSessionParams = Omit<RunScriptParams, 'script'>

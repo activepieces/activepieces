@@ -3,7 +3,6 @@ import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { FormulaEvaluationError } from '@activepieces/shared'
 
-import { SharedScriptSession } from '../core/code/shared-script-session'
 import { FlowExecutorContext, StepView } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
 import { connectionToken } from './connection-token'
@@ -42,40 +41,33 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const getStepView = createMemoizedStepViewGetter(executionState)
-            const scriptSession = scriptEvaluator.initSession()
-            try {
-                const resolveOptions = {
-                    engineToken,
-                    projectId,
-                    apiUrl,
-                    getStepView,
-                    scriptSession,
-                    stepNames,
-                    pieceName,
-                }
-                const resolvedInput = await applyFunctionToValues<T>(
-                    unresolvedInput,
-                    (token) => resolveInputAsync({
-                        ...resolveOptions,
-                        input: token,
-                        censoredInput: false,
-                        contextVersion,
-                    }))
-                const censoredInput = await applyFunctionToValues<T>(
-                    unresolvedInput,
-                    (token) => resolveInputAsync({
-                        ...resolveOptions,
-                        input: token,
-                        censoredInput: true,
-                        contextVersion,
-                    }))
-                return {
-                    resolvedInput,
-                    censoredInput,
-                }
+            const resolveOptions = {
+                engineToken,
+                projectId,
+                apiUrl,
+                getStepView,
+                stepNames,
+                pieceName,
             }
-            finally {
-                await scriptSession.dispose()
+            const resolvedInput = await applyFunctionToValues<T>(
+                unresolvedInput,
+                (token) => resolveInputAsync({
+                    ...resolveOptions,
+                    input: token,
+                    censoredInput: false,
+                    contextVersion,
+                }))
+            const censoredInput = await applyFunctionToValues<T>(
+                unresolvedInput,
+                (token) => resolveInputAsync({
+                    ...resolveOptions,
+                    input: token,
+                    censoredInput: true,
+                    contextVersion,
+                }))
+            return {
+                resolvedInput,
+                censoredInput,
             }
         },
     }
@@ -86,10 +78,10 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
  */
 async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
-    const { input, getStepView, engineToken, projectId, apiUrl, censoredInput, scriptSession, stepNames, pieceName } = params
+    const { input, getStepView, engineToken, projectId, apiUrl, censoredInput, stepNames, pieceName } = params
 
     if (formulaEvaluator.containsWrapper(input)) {
-        const formulaOptions = { engineToken, projectId, apiUrl, getStepView, censoredInput, scriptSession, stepNames, pieceName, contextVersion: params.contextVersion }
+        const formulaOptions = { engineToken, projectId, apiUrl, getStepView, censoredInput, stepNames, pieceName, contextVersion: params.contextVersion }
         const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
         const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
         if (error) {
@@ -105,7 +97,6 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         apiUrl,
         getStepView,
         censoredInput,
-        scriptSession,
         stepNames,
         pieceName,
     }
@@ -137,7 +128,7 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
 }
 
 async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, engineToken, projectId, apiUrl, censoredInput, contextVersion, pieceName, getStepView, scriptSession, stepNames } = params
+    const { variableName, engineToken, projectId, apiUrl, censoredInput, contextVersion, pieceName, getStepView, stepNames } = params
     if (variableName.startsWith(VARIABLES)) {
         return variableToken.handle({ variableName, engineToken, projectId, apiUrl, censoredInput })
     }
@@ -146,20 +137,20 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     }
     const segments = propertyPath.parse(variableName)
     if (isNil(segments) || segments.length === 0) {
-        return evalWithScript({ variableName, getStepView, scriptSession, stepNames })
+        return evalWithScript({ variableName, getStepView, stepNames })
     }
     return evalWithPropertyPath({ segments, getStepView })
 }
 
-async function evalWithScript({ variableName, getStepView, scriptSession, stepNames }: EvalStepTokenParams): Promise<unknown> {
-    const session = await scriptSession.get()
+async function evalWithScript({ variableName, getStepView, stepNames }: EvalStepTokenParams): Promise<unknown> {
+    const scriptContext: Record<string, unknown> = {}
     for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
         const view = await getStepView(stepName)
         if (view !== undefined) {
-            await session.setGlobal(stepName, view)
+            scriptContext[stepName] = view
         }
     }
-    return scriptEvaluator.evaluate({ script: variableName, scriptSession })
+    return scriptEvaluator.evaluate({ script: variableName, scriptContext })
 }
 
 async function evalWithPropertyPath({ segments, getStepView }: {
@@ -184,7 +175,7 @@ async function evalWithPropertyPath({ segments, getStepView }: {
 
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'scriptSession' | 'stepNames' | 'pieceName'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'stepNames' | 'pieceName'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -246,7 +237,7 @@ function createMemoizedStepViewGetter(executionState: FlowExecutorContext): GetS
     }
 }
 
-type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'contextVersion' | 'scriptSession' | 'stepNames' | 'pieceName'>
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'contextVersion' | 'stepNames' | 'pieceName'>
 
 async function preResolveFormulaVars({ expression, resolveOptions }: {
     expression: string
@@ -282,7 +273,6 @@ type GetStepView = (stepName: string) => Promise<StepView | undefined>
 type EvalStepTokenParams = {
     variableName: string
     getStepView: GetStepView
-    scriptSession: SharedScriptSession
     stepNames: string[]
 }
 
@@ -294,7 +284,6 @@ type ResolveSingleTokenParams = {
     apiUrl: string
     censoredInput: boolean
     contextVersion: ContextVersion | undefined
-    scriptSession: SharedScriptSession
     stepNames: string[]
     pieceName?: string
 }
@@ -307,7 +296,6 @@ type ResolveInputInternalParams = {
     censoredInput: boolean
     getStepView: GetStepView
     contextVersion: ContextVersion | undefined
-    scriptSession: SharedScriptSession
     stepNames: string[]
     pieceName?: string
 }
