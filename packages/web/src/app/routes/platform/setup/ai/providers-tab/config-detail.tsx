@@ -4,6 +4,7 @@ import {
   AiProviderModelScope,
   AiProviderProjectScope,
   CloudflareGatewayProviderConfig,
+  formErrors,
   OpenAICompatibleProviderConfig,
   Project,
   UpdateAIProviderRequest,
@@ -67,6 +68,7 @@ export function ConfigDetail({
     enabled: !manualModels,
   });
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount =
     !manualModels && draft.modelScope === 'all'
       ? models.length
@@ -85,9 +87,11 @@ export function ConfigDetail({
     const manualConfig = manualConfigParse?.success
       ? manualConfigParse.data
       : undefined;
+    if (nameMissing) {
+      return;
+    }
     onSave({
-      displayName:
-        draft.name.trim().length > 0 ? draft.name.trim() : config.name,
+      displayName: draft.name.trim(),
       modelScope: draft.modelScope,
       modelIds: draft.modelIds,
       projectScope: draft.projectScope,
@@ -151,7 +155,13 @@ export function ConfigDetail({
                 setDraft({ ...draft, name: event.target.value })
               }
               className="max-w-sm"
+              aria-invalid={nameMissing}
             />
+            {nameMissing && (
+              <p className="text-sm text-destructive">
+                {t(formErrors.required)}
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between gap-3 p-4">
             <div className="flex min-w-0 items-center gap-3">
@@ -308,7 +318,12 @@ export function ConfigDetail({
             >
               {t('Discard')}
             </Button>
-            <Button size="sm" loading={isSaving} onClick={save}>
+            <Button
+              size="sm"
+              loading={isSaving}
+              disabled={nameMissing}
+              onClick={save}
+            >
               {t('Save')}
             </Button>
           </div>
