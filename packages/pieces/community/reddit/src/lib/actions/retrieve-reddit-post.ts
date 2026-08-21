@@ -9,6 +9,7 @@ import { redditAuth } from '../auth';
 export const retrieveRedditPost = createAction({
   auth: redditAuth,
   name: 'retrieveRedditPost',
+  classification: 'SEARCH',
   displayName: 'Retrieve Post',
   description: 'Fetch top posts in a subreddit with optional size limit.',
   audience: 'both',

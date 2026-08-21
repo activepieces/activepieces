@@ -4,6 +4,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const batchUpdateRowsAction = createAction({
   name: 'baserow_batch_update_rows',
+  classification: 'WRITE',
   displayName: 'Batch Update Rows',
   description:
     'Updates multiple rows in a single request. Each row must include an "id" field. Accepts up to 200 rows.',

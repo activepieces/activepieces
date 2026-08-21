@@ -25,6 +25,7 @@ interface ZendeskUsersResponse {
 export const findAgentAction = createAction({
   auth: zendeskAuth,
   name: 'find-agent',
+  classification: 'SEARCH',
   displayName: 'Find an Agent',
   description: 'Find an agent by email or name.',
   audience: 'both',

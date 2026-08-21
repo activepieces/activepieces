@@ -10,6 +10,7 @@ import { subscribe } from 'diagnostics_channel';
 export const unsubscribeSubscriberAction = createAction({
   auth: senderAuth,
   name: 'unsubscribe_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Subscriber',
   description: 'Mark an email address as unsubscribed globally or from a group',
   audience: 'both',

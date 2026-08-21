@@ -12,6 +12,7 @@ import {
 export const convertMarkdown = createAction({
   auth: filetopdfAuth,
   name: 'convert_markdown',
+  classification: 'READ',
   displayName: 'Convert Markdown',
   description:
     'Render a raw Markdown string (with optional CSS) to PDF. A sensible default stylesheet is applied when no CSS is provided.',

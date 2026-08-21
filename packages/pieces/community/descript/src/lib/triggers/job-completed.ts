@@ -118,6 +118,7 @@ const polling: Polling<
 export const descriptJobCompletedTrigger = createTrigger({
   auth: descriptAuth,
   name: 'job_completed',
+  classification: 'READ',
   displayName: 'Job Completed',
   description:
     'Triggers when a Descript background job (import, agent edit, or publish) finishes.',

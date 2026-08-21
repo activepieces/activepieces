@@ -17,6 +17,7 @@ interface KlaviyoList {
 export const findListByName = createAction({
   auth: klaviyoAuth,
   name: 'findListByName',
+  classification: 'SEARCH',
   displayName: 'Find List by Name',
   description: 'Find lists by name with optional additional data',
   audience: 'both',

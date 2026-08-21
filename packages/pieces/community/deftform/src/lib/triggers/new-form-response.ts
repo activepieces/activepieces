@@ -14,6 +14,7 @@ const setupMarkdown = `
 export const newFormResponseTrigger = createTrigger({
     auth: deftformAuth,
     name: 'new_form_response',
+    classification: 'READ',
     displayName: 'New Form Response',
     description: 'Triggers instantly when a new response is submitted to a Deftform form.',
     aiMetadata: {

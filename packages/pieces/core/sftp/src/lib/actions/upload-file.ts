@@ -26,6 +26,7 @@ export const uploadFileAction = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload a file to the given path.',
   aiMetadata: { description: 'Uploads a file object, typically one produced by an earlier step, to a given path on the connected FTP, FTPS or SFTP server, creating missing parent directories and overwriting any existing file at that path. Use this instead of Create File from Text whenever you have an actual file rather than a string of text. Requires both the file and the destination remote path (e.g. ./myfolder/test.mp3); idempotent, as repeating the upload converges on the same stored file.', idempotent: true },

@@ -6,6 +6,7 @@ import { jinaAiAuth } from '../auth';
 export const webSearchSummarizationAction = createAction({
   auth:jinaAiAuth,
   name: 'web_search_summarization',
+  classification: 'SEARCH',
   displayName: 'Web Search Summarization',
   description:
     'Perform a web search and retrieve summarized results using the Reader API.',
