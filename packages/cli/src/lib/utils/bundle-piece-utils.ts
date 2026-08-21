@@ -73,6 +73,9 @@ async function bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, in
         if (outRel === BUNDLE_FILENAME) {
             throw new Error(`[bundlePiece] bundleForkedEntries: "${entry}" collides with the main bundle at ${BUNDLE_FILENAME}`)
         }
+        if (files.includes(outRel)) {
+            throw new Error(`[bundlePiece] bundleForkedEntries: "${entry}" collides with another declared entry at ${outRel}`)
+        }
         const outfile = join(distPath, outRel)
         let pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set(excludeList) })
         const unsafe = new Set([

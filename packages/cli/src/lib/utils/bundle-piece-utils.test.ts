@@ -143,4 +143,19 @@ describe('bundlePiece — forked sibling entries (GIT-1772)', () => {
         await expect(bundlePieceUtils.bundlePiece({ piecePath, distPath: join(piecePath, 'dist'), repoRoot: root! }))
             .rejects.toThrow(/no file at/)
     })
+
+    it('fails loudly when two declared entries collide on the same output name', async () => {
+        const piecePath = setupForkingPiece({ declareEntry: true })
+        mkdirSync(join(piecePath, 'src', 'lib', 'other'), { recursive: true })
+        writeFileSync(join(piecePath, 'src', 'lib', 'other', 'runner.ts'), 'export const other = true\n')
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({
+            name: 'piece-forking',
+            version: '0.0.1',
+            dependencies: { oracledb: '6.10.0' },
+            bundleForkedEntries: ['src/lib/runner.ts', 'src/lib/other/runner.ts'],
+        }))
+
+        await expect(bundlePieceUtils.bundlePiece({ piecePath, distPath: join(piecePath, 'dist'), repoRoot: root! }))
+            .rejects.toThrow(/collides with another declared entry/)
+    })
 })
