@@ -18,17 +18,20 @@ export const telegramCreateInviteLinkAction = createAction({
       displayName: 'Name',
       description: 'Name of the invite link (max 32 chars)',
       required: false,
+      advanced: true,
     }),
     expire_date: Property.DateTime({
       displayName: 'Expire Date',
       description: 'Point in time when the link will expire',
       required: false,
+      advanced: true,
     }),
     member_limit: Property.Number({
       displayName: 'Member Limit',
       description:
         'Maximum number of users that can be members of the chat simultaneously after joining the chat via this invite link; 1-99999',
       required: false,
+      advanced: true,
     }),
     creates_join_request: Property.Checkbox({
       displayName: 'Creates Join Request',
@@ -36,6 +39,7 @@ export const telegramCreateInviteLinkAction = createAction({
         'If True, users joining the chat via the link need to be approved by chat administrators.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: createInviteLinkActionOutputSchema,

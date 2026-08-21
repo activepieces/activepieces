@@ -11,6 +11,10 @@ export const telegramEditMessageTextAction = createAction({
   description: 'Edit the text of a previously sent message or an inline message',
   audience: 'human',
   aiMetadata: { description: 'Replaces the text of a message the bot already sent, identified either by chat_id + message_id or by inline_message_id (the two targeting modes are mutually exclusive). Use to update a status or correct a message in place rather than sending a new one. Not idempotent: Telegram rejects an edit whose text matches the current content.', idempotent: false },
+  propertyGroups: [
+    { key: 'target', display: 'section', label: 'Message to edit', icon: 'reply', props: ['instructions', 'chat_id', 'message_id', 'inline_message_id'] },
+    { key: 'content', display: 'section', label: 'New text', icon: 'text', props: ['format', 'instructions_format', 'text', 'disable_web_page_preview'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: Property.ShortText({
@@ -29,13 +33,13 @@ export const telegramEditMessageTextAction = createAction({
       description: 'Identifier of the inline message (mutually exclusive with Chat Id + Message Id).',
       required: false,
     }),
+    format: telegramCommons.parseModeProp(),
+    instructions_format: telegramCommons.formatLinkInstructions(),
     text: Property.LongText({
       displayName: 'New Text',
       description: 'New text of the message (1–4096 chars).',
       required: true,
     }),
-    format: telegramCommons.parseModeProp(),
-    instructions_format: telegramCommons.formatLinkInstructions(),
     disable_web_page_preview: Property.Checkbox({
       displayName: 'Disable Web Page Preview',
       description: 'Disable link previews for links in this message.',
