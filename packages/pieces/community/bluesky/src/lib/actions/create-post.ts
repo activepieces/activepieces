@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blueskyAuth } from '../common/auth';
+import { createPostOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import { RichText } from '@atproto/api';
 import { 
@@ -160,6 +161,7 @@ export const createPost = createAction({
   displayName: 'Create Post',
   description: 'Create a new post on Bluesky',
   audience: 'both',
+  outputSchema: createPostOutputSchema,
   aiMetadata: {
     description: 'Publishes a new post to the authenticated Bluesky account, with optional images, video, an external link card, content-warning labels, and chained thread replies. Use to broadcast content on Bluesky; provide the post text (max 300 characters after hashtags/links are expanded). Not idempotent — each call creates a brand-new post.',
     idempotent: false,

@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, chunk, Cursor, ErrorCode, isNil, SeekPage } from '@activepieces/core-utils'
-import { Cell, CreateRecordsRequest, Field, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
+import { Cell, CreateRecordsRequest, Field, FieldType, Filter, FilterOperator, PopulatedRecord, TableWebhookEventType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -107,6 +107,7 @@ export const recordService = {
         for (const record of records) {
             record.cells = cellsByRecordId.get(record.id) ?? []
         }
+        const fieldTypeById = new Map(fields.map((field) => [field.id, field.type]))
         const filteredOutRecords = records.filter((record) => {
             if (!filters || filters.length === 0) {
                 return true
@@ -114,7 +115,7 @@ export const recordService = {
             return filters.every((filter) => {
                 const cell = record.cells.find(c => c.fieldId === filter.fieldId)
                     ?? { fieldId: filter.fieldId, value: '' }
-                return doesCellValueMatchFilters(cell, [filter])
+                return doesCellValueMatchFilter({ cell, filter, fieldType: fieldTypeById.get(filter.fieldId) })
             })
         })
 
@@ -344,71 +345,6 @@ export const recordService = {
     },
 }
 
-type CreateParams = {
-    request: CreateRecordsRequest
-    projectId: string
-    logger: FastifyBaseLogger
-    fields?: Field[]
-}
-
-type ListParams = {
-    tableId: string
-    projectId: string
-    cursorRequest: Cursor | null
-    limit: number
-    filters: Filter[] | null
-    fields?: Field[]
-}
-
-type GetByIdParams = {
-    id: string
-    projectId: string
-}
-
-type UpdateParams = {
-    id: string
-    projectId: string
-    request: UpdateRecordRequest
-}
-
-type DeleteParams = {
-    ids: string[]
-    projectId: string
-}
-
-type DeleteAllParams = {
-    tableId: string
-    projectId: string
-}
-
-type TriggerWebhooksParams = {
-    projectId: string
-    tableId: string
-    eventType: TableWebhookEventType
-    data: Record<string, unknown>
-    logger: FastifyBaseLogger
-    authorization: string
-}
-type CountParams = {
-    projectId: string
-    tableId: string
-}
-
-type RecordInsertion = {
-    id: string
-    tableId: string
-    projectId: string
-    created: string
-}
-
-type CellInsertion = {
-    id: string
-    recordId: string
-    fieldId: string
-    projectId: string
-    value: string
-}
-
 function prepareRecordInsertions(
     records: Array<Array<{ fieldId: string, value: string | null }>>,
     tableId: string,
@@ -484,53 +420,45 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
     })
 }
 
-function doesCellValueMatchFilters(cell: Pick<Cell, 'fieldId' | 'value'>, filters: Filter[]): boolean {
-    if (filters.length === 0) {
-        return true
+function doesCellValueMatchFilter({ cell, filter, fieldType }: DoesCellValueMatchFilterParams): boolean {
+    const compareOrdered = isDateFieldType(fieldType) ? dateFilterValidator : numberFilterValidator
+    switch (filter.operator) {
+        case FilterOperator.EXISTS: {
+            return cell.value !== null && cell.value !== ''
+        }
+        case FilterOperator.NOT_EXISTS: {
+            return cell.value === null || cell.value === ''
+        }
+        case FilterOperator.EQ: {
+            return cell.value === filter.value
+        }
+        case FilterOperator.NEQ: {
+            return cell.value !== filter.value
+        }
+        case FilterOperator.GT: {
+            return compareOrdered({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue > filterValue })
+        }
+        case FilterOperator.GTE: {
+            return compareOrdered({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue >= filterValue })
+        }
+        case FilterOperator.LT: {
+            return compareOrdered({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue < filterValue })
+        }
+        case FilterOperator.LTE: {
+            return compareOrdered({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue <= filterValue })
+        }
+        case FilterOperator.CO: {
+            if (typeof cell.value === 'string') {
+                return cell.value.toLowerCase().includes(filter.value.toLowerCase())
+            }
+            return false
+        }
     }
-    return filters.every((filter) => {
-        if (filter.fieldId !== cell.fieldId) {
-            return true
-        }
-        switch (filter.operator) {
-            case FilterOperator.EXISTS: {
-                return cell.value !== null && cell.value !== ''
-            }
-            case FilterOperator.NOT_EXISTS: {
-                return cell.value === null || cell.value === ''
-            }
-            case FilterOperator.EQ: {
-                return cell.value === filter.value
-            }
-            case FilterOperator.NEQ: {
-                return cell.value !== filter.value
-            }
-            case FilterOperator.GT: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue > filterValue })
-            }
-            case FilterOperator.GTE: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue >= filterValue })
-            }
-            case FilterOperator.LT: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue < filterValue })
-            }
-            case FilterOperator.LTE: {
-                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue }) => cellValue <= filterValue })
-            }
-            case FilterOperator.CO: {
-                if (typeof cell.value === 'string') {
-                    return cell.value.toLowerCase().includes(filter.value.toLowerCase())
-                }
-                return false
-            }
-        }
-    })
-
 }
 
-const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
+const numberFilterValidator = ({ cellValue, filterValue, cb }: OrderedFilterValidatorParams) => {
     if (typeof cellValue === 'string' || typeof cellValue === 'number') {
-        const cv = parseFloat(cellValue as string)
+        const cv = parseFloat(String(cellValue))
         const fv = parseFloat(filterValue)
         if (isNaN(cv) || isNaN(fv)) {
             return false
@@ -540,4 +468,93 @@ const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unkn
     return false
 }
 
+const dateFilterValidator = ({ cellValue, filterValue, cb }: OrderedFilterValidatorParams) => {
+    if (typeof cellValue !== 'string') {
+        return false
+    }
+    const cv = Date.parse(cellValue)
+    const fv = Date.parse(filterValue)
+    if (isNaN(cv) || isNaN(fv)) {
+        return false
+    }
+    return cb({ cellValue: cv, filterValue: fv })
+}
 
+const isDateFieldType = (fieldType: FieldType | undefined): boolean => fieldType === FieldType.DATE || fieldType === FieldType.DATETIME
+
+type CreateParams = {
+    request: CreateRecordsRequest
+    projectId: string
+    logger: FastifyBaseLogger
+    fields?: Field[]
+}
+
+type ListParams = {
+    tableId: string
+    projectId: string
+    cursorRequest: Cursor | null
+    limit: number
+    filters: Filter[] | null
+    fields?: Field[]
+}
+
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    request: UpdateRecordRequest
+}
+
+type DeleteParams = {
+    ids: string[]
+    projectId: string
+}
+
+type DeleteAllParams = {
+    tableId: string
+    projectId: string
+}
+
+type TriggerWebhooksParams = {
+    projectId: string
+    tableId: string
+    eventType: TableWebhookEventType
+    data: Record<string, unknown>
+    logger: FastifyBaseLogger
+    authorization: string
+}
+type CountParams = {
+    projectId: string
+    tableId: string
+}
+
+type RecordInsertion = {
+    id: string
+    tableId: string
+    projectId: string
+    created: string
+}
+
+type CellInsertion = {
+    id: string
+    recordId: string
+    fieldId: string
+    projectId: string
+    value: string
+}
+
+type DoesCellValueMatchFilterParams = {
+    cell: Pick<Cell, 'value'>
+    filter: Filter
+    fieldType: FieldType | undefined
+}
+
+type OrderedFilterValidatorParams = {
+    cellValue: unknown
+    filterValue: string
+    cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean
+}

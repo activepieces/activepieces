@@ -9,6 +9,8 @@ export const getRoadmap = createAction({
   name: 'get_roadmap',
   displayName: 'Get Roadmap',
   description: 'Get a single roadmap with its sections, items, tags and vote counts.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch one Produktly public roadmap by ID, expanded into its sections and their individual items with vote counts, tags, and last-updated timestamps. Pick this when you need the contents of a known roadmap; use List Roadmaps first to discover roadmap IDs or when section and item counts alone are enough. Requires a roadmap ID. Read-only and idempotent.', idempotent: true },
   props: {
     roadmap: produktlyProps.roadmap,
   },

@@ -20,8 +20,8 @@
       ],
       "primary": {
          "type": "button",
-         "label": "Sign Up",
-         "href": "https://cloud.activepieces.com/sign-up"
+         "label": "Get Started",
+         "href": "https://www.activepieces.com/plans"
       }
    },
    "redirects": [
@@ -108,7 +108,8 @@
                   "group": "Build with AI",
                   "pages": [
                      "ai/chat",
-                     "mcp/overview"
+                     "mcp/overview",
+                     "mcp/tool-search"
                   ]
                },
                {
@@ -118,6 +119,7 @@
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
+                     "flows/project-variables",
                      "flows/publishing-flows",
                      "flows/debugging-runs",
                      "flows/versioning"
@@ -232,6 +234,7 @@
                         "group": "Other Options",
                         "pages": [
                            "install/options/docker",
+                           "install/options/helm",
                            "install/options/easypanel",
                            "install/options/aws",
                            "install/options/gcp",
@@ -428,11 +431,13 @@
                      "build-pieces/piece-reference/flow-control",
                      "build-pieces/piece-reference/persistent-storage",
                      "build-pieces/piece-reference/files",
+                     "build-pieces/piece-reference/large-file-streaming",
                      "build-pieces/piece-reference/external-libraries",
                      "build-pieces/piece-reference/piece-versioning",
                      "build-pieces/piece-reference/examples",
                      "build-pieces/piece-reference/custom-api-calls",
                      "build-pieces/piece-reference/output-schema",
+                     "build-pieces/piece-reference/ai-metadata",
                      "build-pieces/piece-reference/i18n"
                   ]
                },

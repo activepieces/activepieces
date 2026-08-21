@@ -1,12 +1,14 @@
 // Action: Upload Attachment
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { uploadAttachmentActionOutputSchema } from '../output-schemas';
 
 export const uploadAttachmentAction = createAction({
   auth: youtrackAuth,
   name: 'upload_attachment',
+  outputSchema: uploadAttachmentActionOutputSchema,
   displayName: 'Upload Attachment',
   description: 'Uploads one or more files as attachments to an existing issue.',
   audience: 'both',
@@ -60,7 +62,8 @@ export const uploadAttachmentAction = createAction({
         headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
         body,
       });
-      results.push(...(response.body || []));
+      // Only id/name — the raw entries also carry YouTrack's internal `$type`.
+      results.push(...(response.body || []).map((a) => ({ id: a.id, name: a.name })));
     }
     return results;
   },

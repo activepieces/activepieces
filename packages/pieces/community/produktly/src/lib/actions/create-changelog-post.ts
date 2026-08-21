@@ -10,6 +10,8 @@ export const createChangelogPost = createAction({
   displayName: 'Create Changelog Post',
   description:
     'Publish a new post inside a changelog. Visible to your users once active.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a post inside a specific Produktly changelog, with an optional body, release date, active/hidden state, and a list of tag names that must already exist (resolve them with List Tags). Pick this to announce a release to end users; use Update Changelog Post to revise an announcement that already exists. Requires a changelog ID and a title. Not idempotent: each call creates a new post, even with identical content.', idempotent: false },
   props: {
     changelog: produktlyProps.changelog,
     title: Property.ShortText({

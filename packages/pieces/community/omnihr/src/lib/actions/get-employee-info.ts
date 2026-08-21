@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { omnihrAuth } from '../auth';
-import { getAuthHeaders, OmniHrAuth } from '../common/client';
 
 export const getEmployeeInfo = createAction({
   auth: omnihrAuth,
@@ -23,8 +22,11 @@ export const getEmployeeInfo = createAction({
   },
   async run(context) {
     const { system_id } = context.propsValue;
-    const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = {
+      Authorization: `Bearer ${context.auth.access_token}`,
+      'Content-Type': 'application/json',
+      Origin: context.auth.props.origin,
+    };
 
     const employeeResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,

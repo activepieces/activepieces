@@ -7,8 +7,9 @@ import { gmailGetMailActionOutputSchema } from '../output-schemas';
 export const gmailGetEmailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_mail',
+  classification: 'READ',
   description: 'Get an email via Id.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Fetches a single email by its Gmail message ID and returns its parsed contents, including headers, body, and decoded attachments. Use this to read the full details of a specific known message, typically after a trigger or search yields its ID. Idempotent: a read-only lookup that does not modify the mailbox.',

@@ -18,6 +18,10 @@ export const aiProviderQueries = {
       queryKey: aiProviderKeys.all,
       queryFn: () => aiProviderApi.list(),
     }),
+  useChatProvider: () => {
+    const { data: providers, ...rest } = aiProviderQueries.useAiProviders();
+    return { ...rest, data: providers?.find((p) => p.enabledForChat) };
+  },
 };
 
 export const aiProviderMutations = {

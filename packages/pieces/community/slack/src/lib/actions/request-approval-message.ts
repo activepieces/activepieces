@@ -13,6 +13,7 @@ import {
 } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { approvalActionOutputSchema } from '../output-schemas';
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
@@ -22,6 +23,7 @@ export const requestSendApprovalMessageAction = createAction({
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   audience: 'both',
   aiMetadata: { description: 'Post a message with Approve/Disapprove buttons to a channel and pause the flow until someone clicks one, then resume with the boolean outcome. Use this for a simple approval gate visible to a channel; use Request Action from A User for a private DM with custom action choices. Posts a new message each run, so it is not idempotent.', idempotent: false },
+  outputSchema: approvalActionOutputSchema,
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil, PlatformId, ProjectId, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, UserId } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, EngineResponse, EngineResponseStatus, ExecuteRefreshTokenAuthResponse, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, PopulatedFlow, WorkerJobType } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -192,6 +192,68 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             },
         })
     },
+    async revalidateConnection({ id, platformId, projectId, externalId, validate, log }: {
+        id: string
+        platformId: PlatformId
+        projectId: ProjectId
+        externalId: string
+        validate: (params: { pieceName: string, value: AppConnectionValue }) => Promise<void>
+        log: FastifyBaseLogger
+    }): Promise<AppConnection | null> {
+        return distributedLock(log).runExclusive({
+            key: `${platformId}_${externalId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const encryptedAppConnection = await appConnectionsRepo().findOneBy({
+                    id,
+                    platformId,
+                    projectIds: ArrayContains([projectId]),
+                })
+                if (isNil(encryptedAppConnection)) {
+                    return null
+                }
+                let appConnection = await this.decryptConnection(encryptedAppConnection)
+                if (appConnection.value.type === AppConnectionType.NO_AUTH) {
+                    return appConnection
+                }
+                const forceRefresh = REVALIDATE_FORCE_REFRESH_TYPES.has(appConnection.value.type)
+                const skipRefresh = appConnection.value.type === AppConnectionType.PLATFORM_OAUTH2
+                try {
+                    if (!skipRefresh && (forceRefresh || await this.needRefresh(appConnection, log))) {
+                        appConnection = await this.refresh(appConnection, projectId, log)
+                        await appConnectionsRepo().update(appConnection.id, {
+                            status: AppConnectionStatus.ACTIVE,
+                            value: await encryptUtils.encryptObject(appConnection.value),
+                        })
+                    }
+                }
+                catch (e) {
+                    exceptionHandler.handle(e, log)
+                    const isOAuth2Error = oauth2Util(log).isUserError(e)
+                    const isCustomAuthError = e instanceof CustomAuthRefreshError
+                    if (!isOAuth2Error && !isCustomAuthError) {
+                        throw e
+                    }
+                    appConnection.status = AppConnectionStatus.ERROR
+                    await appConnectionsRepo().update(appConnection.id, {
+                        status: AppConnectionStatus.ERROR,
+                        updated: dayjs().toISOString(),
+                    })
+                    return appConnection
+                }
+                const { error } = await tryCatch(() => validate({ pieceName: appConnection.pieceName, value: appConnection.value }))
+                if (!isNil(error) && !(error instanceof ActivepiecesError && error.error.code === ErrorCode.INVALID_APP_CONNECTION)) {
+                    throw error
+                }
+                appConnection.status = isNil(error) ? AppConnectionStatus.ACTIVE : AppConnectionStatus.ERROR
+                await appConnectionsRepo().update(appConnection.id, {
+                    status: appConnection.status,
+                    updated: dayjs().toISOString(),
+                })
+                return appConnection
+            },
+        })
+    },
     async decryptConnection(
         encryptedConnection: AppConnectionSchema,
     ): Promise<AppConnection> {
@@ -242,6 +304,10 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
 const TOKEN_REFRESH_BUFFER_SECONDS = 15 * 60
 const pieceRefreshSupportCache: LRU<boolean> = lru(1000, 0)
+const REVALIDATE_FORCE_REFRESH_TYPES: ReadonlySet<AppConnectionType> = new Set([
+    AppConnectionType.OAUTH2,
+    AppConnectionType.CLOUD_OAUTH2,
+])
 
 export function isCustomAuthTokenStale(value: { access_token?: string, token_refresh_at?: number }): boolean {
     if (isNil(value.access_token)) return true
@@ -252,14 +318,17 @@ export function isCustomAuthTokenStale(value: { access_token?: string, token_ref
 // Returns the unix timestamp at which the token should be refreshed: 15 minutes
 // before expiry, but never earlier than half the token's lifetime — otherwise a
 // token whose TTL is shorter than the buffer would be considered stale the instant
-// it is minted, refreshing on every fetch and defeating the cache. `expiresIn <= 0`
-// means the token never expires, so it never needs refreshing.
-export function computeTokenRefreshAt(expiresIn: number): number | undefined {
-    if (expiresIn <= 0) {
+// it is minted, refreshing on every fetch and defeating the cache. `expiresIn` is
+// typed as unknown because it comes from a third-party token response; any
+// non-positive or non-finite result means the token never expires, so it never
+// needs refreshing.
+export function computeTokenRefreshAt(expiresIn: unknown): number | undefined {
+    const expiresInSeconds = Number(expiresIn)
+    if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
         return undefined
     }
-    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresIn / 2))
-    return dayjs().unix() + expiresIn - buffer
+    const buffer = Math.min(TOKEN_REFRESH_BUFFER_SECONDS, Math.floor(expiresInSeconds / 2))
+    return dayjs().unix() + expiresInSeconds - buffer
 }
 
 function pieceRefreshSupportCacheKey(connection: Pick<AppConnection, 'platformId' | 'pieceName' | 'pieceVersion'>): string {
@@ -286,6 +355,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         projectId,
         platformId,
         userId,
+        previousFlow: flow,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),

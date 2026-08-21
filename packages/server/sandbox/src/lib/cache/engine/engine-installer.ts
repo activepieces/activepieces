@@ -1,39 +1,42 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { SandboxSettings } from '../../types'
-import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 
-const engineExecutablePath = 'dist/packages/engine/main.js'
-const ENGINE_CACHE_ID = nanoid()
-const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
+const engineDistPath = 'dist/packages/engine'
+const engineBundles = ['main.js', 'piece-child.js']
+const installedPaths = new Map<string, Promise<void>>()
 
 export const engineInstaller = (_log: ApLogger, getSettings: () => SandboxSettings) => ({
     async install({ path }: InstallParams): Promise<EngineInstallResult> {
         const isDev = getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
-        // The egress proxy was removed, so there is a single engine bundle (main.js).
-        const source = engineExecutablePath
-        const cache = cacheState(path)
-        const { cacheHit } = await cache.getOrSetCache({
-            key: ENGINE_INSTALLED,
-            cacheMiss: (key: string) => {
-                const isEngineInstalled = key === ENGINE_CACHE_ID
-                return !isEngineInstalled || isDev
-            },
-            installFn: async () => {
-                await atomicCopy(source, `${path}/main.js`)
-                await atomicCopy(`${source}.map`, `${path}/main.js.map`)
-                return ENGINE_CACHE_ID
-            },
-            skipSave: NO_SAVE_GUARD,
-        })
-        return { cacheHit }
+        const inFlight = installedPaths.get(path)
+        if (!isNil(inFlight) && !isDev) {
+            await inFlight
+            return { cacheHit: true }
+        }
+        const install = copyEngine({ path })
+        installedPaths.set(path, install)
+        const { error } = await tryCatch(() => install)
+        if (error) {
+            installedPaths.delete(path)
+            throw error
+        }
+        return { cacheHit: false }
     },
 })
+
+async function copyEngine({ path }: CopyEngineParams): Promise<void> {
+    for (const bundle of engineBundles) {
+        await atomicCopy(`${engineDistPath}/${bundle}`, `${path}/${bundle}`)
+        await atomicCopy(`${engineDistPath}/${bundle}.map`, `${path}/${bundle}.map`)
+    }
+}
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
     const destDir = dirname(dest.toString())
@@ -41,6 +44,10 @@ async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
     await fileSystemUtils.threadSafeMkdir(destDir)
     await copyFile(src, tempPath)
     await rename(tempPath, dest)
+}
+
+type CopyEngineParams = {
+    path: string
 }
 
 type InstallParams = {

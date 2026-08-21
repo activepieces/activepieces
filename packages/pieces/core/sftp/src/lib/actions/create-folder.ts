@@ -6,11 +6,12 @@ import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getSftpError } from './common';
 
 export const createFolderAction = createAction({
-  audience: 'human',
+  audience: 'both',
   auth: sftpAuth,
   name: 'createFolder',
   displayName: 'Create Folder',
   description: 'Creates a folder at given path.',
+  aiMetadata: { description: 'Creates a directory at a given remote path on the connected FTP, FTPS or SFTP server; on SFTP an optional recursive mode also creates any missing parent directories, while FTP/FTPS always ensures the whole path. Use it to prepare a destination directory, for example before a rename or move, noting that Create File from Text and Upload File already create parent directories themselves. Requires the folder path (e.g. ./myfolder); idempotent because it converges on that directory existing.', idempotent: true },
   props: {
     folderPath: Property.ShortText({
       displayName: 'Folder Path',

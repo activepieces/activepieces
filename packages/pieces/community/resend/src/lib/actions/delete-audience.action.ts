@@ -2,11 +2,13 @@ import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
 import { resendProps } from '../common/props';
+import { deleteAudienceOutputSchema } from '../output-schemas';
 
 export const deleteAudience = createAction({
   name: 'delete_audience',
   auth: resendAuth,
   displayName: 'Delete Audience',
+  outputSchema: deleteAudienceOutputSchema,
   description: 'Permanently delete an audience and all its contacts',
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes an entire audience and all of its contacts from Resend, identified by audience ID. Use this to remove a whole mailing list; this is destructive and cannot be undone. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },

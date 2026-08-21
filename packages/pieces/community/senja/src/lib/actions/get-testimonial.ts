@@ -2,14 +2,16 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { senjaAuth } from '../../';
 import { senjaApiCall, mapTestimonial } from '../common';
+import { testimonialActionOutputSchema } from '../output-schemas';
 
 export const getTestimonialAction = createAction({
   auth: senjaAuth,
   name: 'get_testimonial',
   displayName: 'Get Testimonial',
   description: 'Retrieve a specific testimonial by its ID.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches a single Senja testimonial by its unique ID. Use when you already have a testimonial ID (e.g. from List Testimonials or a trigger) and need its full details. Requires the testimonial ID; read-only and idempotent.', idempotent: true },
+  outputSchema: testimonialActionOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Testimonial ID',
@@ -19,12 +21,12 @@ export const getTestimonialAction = createAction({
     }),
   },
   async run(context) {
-    const response = await senjaApiCall<Record<string, unknown>>({
+    const response = await senjaApiCall<{ testimonial: Record<string, unknown> }>({
       token: context.auth.secret_text,
       method: HttpMethod.GET,
       path: `/testimonials/${context.propsValue.id}`,
     });
 
-    return mapTestimonial({ testimonial: response.body });
+    return mapTestimonial({ testimonial: response.body.testimonial });
   },
 });

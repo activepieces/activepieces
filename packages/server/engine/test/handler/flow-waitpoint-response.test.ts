@@ -2,17 +2,13 @@ import { FlowRunStatus } from '@activepieces/shared'
 import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
+import { EngineApiStub, startEngineApiStub } from '../helpers/engine-api-stub'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
 const { mockSendFlowResponse } = vi.hoisted(() => ({
     mockSendFlowResponse: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
-    waitpointClient: {
-        create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
-    },
-}))
 
 vi.mock('../../src/lib/api/engine-run-api', () => ({
     engineRunApi: {
@@ -21,6 +17,17 @@ vi.mock('../../src/lib/api/engine-run-api', () => ({
 }))
 
 describe('flow waitpoint response propagation', () => {
+    let engineApi: EngineApiStub
+
+    beforeEach(async () => {
+        engineApi = await startEngineApiStub({
+            'POST /v1/waitpoints': { id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' },
+        })
+    })
+
+    afterEach(async () => {
+        await engineApi.close()
+    })
 
     beforeEach(() => {
         vi.clearAllMocks()
@@ -48,6 +55,7 @@ describe('flow waitpoint response propagation', () => {
             action,
             executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 triggerPieceName: '@activepieces/piece-webhook',
                 workerHandlerId: 'test-handler-id',
                 httpRequestId: 'test-request-id',
@@ -71,6 +79,9 @@ describe('flow waitpoint response propagation', () => {
                 },
             },
         })
+        const sentHeaders = mockSendFlowResponse.mock.calls[0][0].request.runResponse.headers
+        expect(typeof sentHeaders['x-activepieces-resume-webhook-url']).toBe('string')
+        expect(sentHeaders['x-activepieces-resume-webhook-url']).toMatch(/^https?:\/\//)
     })
 
     it('should not call sendFlowResponse when triggerPieceName does not match', async () => {
@@ -92,6 +103,7 @@ describe('flow waitpoint response propagation', () => {
             action,
             executionState: FlowExecutorContext.empty(),
             constants: generateMockEngineConstants({
+                internalApiUrl: engineApi.url,
                 triggerPieceName: 'some-other-piece',
                 workerHandlerId: 'test-handler-id',
                 httpRequestId: 'test-request-id',

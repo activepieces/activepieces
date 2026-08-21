@@ -72,6 +72,7 @@ const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_delete_flow: Trash2,
   ap_flow_structure: Network,
   ap_read_step_code: Code,
+  ap_read_step_settings: SlidersHorizontal,
 
   ap_validate_flow: ShieldCheck,
   ap_validate_step_config: ShieldCheck,

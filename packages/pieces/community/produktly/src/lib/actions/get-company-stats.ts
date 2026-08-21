@@ -7,6 +7,8 @@ export const getCompanyStats = createAction({
   auth: produktlyAuth,
   name: 'get_company_stats',
   description: 'Get a company-wide statistics summary across all your Produktly features.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch one account-wide statistics summary covering every Produktly feature (tours, checklists, smart tips, announcements, changelogs, NPS widgets, roadmaps), for an optional start/end date window; omit both dates to use the API default period, which also reports the preceding comparison period. Pick this for a cross-feature rollup; use Get Widget Stats when you need per-entity event counts for a single feature type. Read-only and idempotent.', idempotent: true },
   displayName: 'Get Company Stats',
   props: {
     start_date: Property.ShortText({
