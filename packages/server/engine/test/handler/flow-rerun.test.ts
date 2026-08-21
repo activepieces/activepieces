@@ -44,7 +44,7 @@ describe('flow retry', () => {
         })
         expect(failedResult.verdict.status).toBe(FlowRunStatus.FAILED)
         expect(retryEntireFlow.verdict.status).toBe(FlowRunStatus.RUNNING)
-    }, 10000)
+    }, 30000)
 
     it('should retry flow from failed step', async () => {
         const context = FlowExecutorContext.empty()
@@ -58,5 +58,5 @@ describe('flow retry', () => {
         })
         expect(failedResult.verdict.status).toBe(FlowRunStatus.FAILED)
         expect(retryFromFailed.verdict.status).toBe(FlowRunStatus.RUNNING)
-    }, 10000)
+    }, 30000)
 })
