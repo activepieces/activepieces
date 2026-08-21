@@ -7,6 +7,7 @@ import { group } from 'console';
 export const createCampaignAction = createAction({
   auth: senderAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Creates a draft campaign in Sender',
   audience: 'both',

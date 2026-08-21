@@ -10,6 +10,7 @@ import { ticketIdDropdown } from '../common/props';
 export const addTagToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-tag-to-ticket',
+  classification: 'WRITE',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
   audience: 'both',

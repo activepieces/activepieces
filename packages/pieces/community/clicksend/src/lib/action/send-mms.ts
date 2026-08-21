@@ -6,6 +6,7 @@ import { clicksendAuth } from '../..';
 export const clicksendSendMms = createAction({
   auth: clicksendAuth,
   name: 'send_mms',
+  classification: 'WRITE',
   description: 'Send one or more MMS messages.',
   audience: 'both',
   aiMetadata: {

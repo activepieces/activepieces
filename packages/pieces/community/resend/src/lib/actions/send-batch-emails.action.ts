@@ -11,6 +11,7 @@ const BASE_URL = 'https://api.resend.com';
 
 export const sendBatchEmails = createAction({
   name: 'send_batch_emails',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Batch Emails',
   outputSchema: sendBatchEmailsOutputSchema,

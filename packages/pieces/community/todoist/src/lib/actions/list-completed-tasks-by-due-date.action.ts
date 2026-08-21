@@ -7,6 +7,7 @@ import { listCompletedTasksByDueDateActionOutputSchema } from '../output-schemas
 export const todoistListCompletedTasksByDueDateAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_completed_tasks_by_due_date',
+  classification: 'SEARCH',
   displayName: 'List Completed Tasks (by Due Date)',
   description: 'List completed tasks whose due date falls in a window.',
   audience: 'ai',

@@ -12,6 +12,7 @@ import { zoomAuth } from '../..';
 export const zoomCreateMeetingRegistrant = createAction({
   auth: zoomAuth,
   name: 'zoom_create_meeting_registrant',
+  classification: 'WRITE',
   displayName: 'Create Zoom Meeting Registrant',
   description: "Create and submit a user's registration to a meeting.",
   audience: 'both',
