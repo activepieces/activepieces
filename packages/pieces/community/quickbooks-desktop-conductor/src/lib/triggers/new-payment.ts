@@ -10,18 +10,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof quickbooksDeskto
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const conductorAuth: ConductorAuth = { secretKey: auth.props.secretKey, endUserId: auth.props.endUserId };
-    // "New Payment" is deliberately create-only (unlike the invoice trigger, which is
-    // create-or-update by design) — matches the ticket's naming and the QBO sibling piece's
-    // `payment-received.ts` precedent. Conductor's receive-payments/list has no `createdAfter`
-    // filter, only `updatedAfter`, so the fetch is over-broad on purpose: it queries by
-    // `updatedAfter` (catches anything touched, including edits to old payments) but dedupes by
-    // each record's own `createdAt`, not `updatedAt`. Since `updatedAt` is always >= `createdAt`
-    // (a record can't be edited before it's created), `updatedAfter=<checkpoint>` is guaranteed to
-    // be a superset of "records created after <checkpoint>" — no genuinely new payment can be
-    // missed — while an edit to an old payment has an old `createdAt` and gets filtered out below
-    // by pollingHelper's own `epochMilliSeconds > lastFetchEpochMS` check. The cost is that an
-    // old-but-just-edited payment still rides along in the fetched page before being discarded
-    // client-side; accepted, since Conductor gives no cheaper way to ask "created after X" directly.
+    // This trigger is create-only (the invoice one is create-or-update). Conductor only offers
+    // `updatedAfter`, not `createdAfter`, so we fetch broad and dedupe narrow: query by
+    // `updatedAfter`, then key each item's epoch on its own `createdAt`. Since `updatedAt` is
+    // always >= `createdAt`, that query can never miss a genuinely new payment — it just also pulls
+    // in old payments that were merely edited, which pollingHelper then filters out by their old
+    // `createdAt`. A bit of wasted fetching, but there's no cheaper way to ask Conductor directly.
     const payments = await fetchAllUpdatedSince<ConductorPaymentResult>({
       auth: conductorAuth,
       resourceUri: '/quickbooks-desktop/receive-payments',

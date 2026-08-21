@@ -170,10 +170,9 @@ export const recordPaymentAction = createAction({
     }),
   },
   propertyGroups: [
-    // Declared first on purpose: ungrouped props render *after* every declared section, so
-    // paymentType — the field that determines which of the sections below actually matter —
-    // would otherwise land dead last in the form. Confirmed visually (2026-08-20): without this,
-    // a user filled in 12 fields before ever seeing the one that picks the mode.
+    // Declared first on purpose: ungrouped props render after every declared section, so
+    // paymentType — the field that decides which sections below actually matter — would
+    // otherwise land dead last in the form.
     { key: 'type', display: 'section', label: 'Payment Type', props: ['paymentType'] },
     { key: 'details', display: 'section', label: 'Payment Details', props: ['transactionDate', 'amount', 'refNumber', 'memo'] },
     { key: 'ar', display: 'section', label: 'Customer Payment (Accounts Receivable)', props: ['customerId', 'applyToSpecificInvoice', 'invoiceId'] },
@@ -197,10 +196,9 @@ export const recordPaymentAction = createAction({
       );
     }
 
-    // Confirmed live (2026-08-20): `totalAmount` is a real top-level field on receive-payments,
-    // but bill-check-payments/bill-credit-card-payments reject it outright ("Unrecognized key")
-    // — bill payments derive their total from applyToTransactions[].paymentAmount instead. Not a
-    // shared shape across the three endpoints despite the docs' similar-sounding field lists.
+    // `totalAmount` only belongs on receive-payments — the two bill-payment endpoints reject it
+    // and derive their total from applyToTransactions[].paymentAmount instead, so it's added
+    // per-branch below rather than in this shared body.
     const commonBody = {
       transactionDate: toDateOnly(propsValue.transactionDate),
       ...spreadIfDefined('refNumber', propsValue.refNumber),

@@ -52,12 +52,8 @@ export const conductorClient = {
 };
 
 /**
- * Retries an update exactly once when QuickBooks Desktop rejects it for a stale
- * `revisionNumber` — the record changed between the caller's lookup and this update (another
- * flow run, or a human editing in QuickBooks Desktop directly). Confirmed live (2026-08-20):
- * this is a real, reachable condition, not a hypothetical — refetching and retrying once is a
- * well-defined recovery, unlike QBD_CONNECTION_ERROR which has none. A second failure propagates
- * as-is rather than retrying indefinitely.
+ * Retries an update once when QuickBooks Desktop rejects it for a stale `revisionNumber` — the
+ * record changed between the caller's lookup and this update. A second failure propagates as-is.
  */
 export async function withStaleRevisionRetry<T>({
   attempt,
@@ -86,13 +82,9 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Retries a mutating call exactly once when QuickBooks Desktop rejects it because the record is
- * currently being processed by another in-flight request against the same company file
- * ("...because it is already in use"). Confirmed live (2026-08-20): running two Upsert Customer
- * calls against the same customer within seconds of each other through the real engine produced
- * this exact rejection — a real condition at multi-tenant scale, not a hypothetical. Unlike a
- * stale revision, the identical request just needs to wait briefly for the lock to clear; no
- * refetch is needed. Wrap the outermost call (e.g. around `withStaleRevisionRetry`) so both
+ * Retries a mutating call once when QuickBooks Desktop rejects it because the record is already
+ * being processed by another in-flight request against the same company file. No refetch needed,
+ * just a short wait. Wrap the outermost call (e.g. around `withStaleRevisionRetry`) so the two
  * retry paths compose instead of nesting bespoke retry logic per action.
  */
 export async function withRecordLockRetry<T>(attempt: () => Promise<T>): Promise<T> {

@@ -35,14 +35,14 @@ async function lookupVendorByName({
       auth,
       method: HttpMethod.GET,
       resourceUri: '/quickbooks-desktop/vendors',
-      // Vendors have no parent/child hierarchy (unlike customers), so the exact-match filter is
-      // `names`, not `fullNames` — confirmed live against the real docs and API (2026-08-20).
+      // Vendors have no parent/child hierarchy, unlike customers, so the exact-match filter is
+      // `names`, not `fullNames`.
       queryParams: { names: name },
     })
   );
   if (error) {
-    // Same QuickBooks Desktop behavior as customers: an exact-match filter with zero results
-    // raises an error rather than returning an empty list. Confirmed live for vendors too.
+    // Same as customers: an exact-match filter with zero results raises an error instead of
+    // returning an empty list.
     if (error instanceof ConductorApiError && error.isNotFound) {
       return undefined;
     }

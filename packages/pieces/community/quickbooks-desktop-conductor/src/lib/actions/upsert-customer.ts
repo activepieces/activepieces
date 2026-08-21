@@ -40,10 +40,9 @@ async function lookupCustomerByName({
     })
   );
   if (error) {
-    // QuickBooks Desktop raises an error rather than an empty list when an exact `fullNames`
-    // filter matches nothing (confirmed live) — that specific case means "no existing customer,"
-    // same as a genuine empty result would. Anything else (a real connection/auth/business
-    // error) is a real failure and must not be treated as "customer doesn't exist yet."
+    // An exact `fullNames` filter that matches nothing comes back as an error, not an empty
+    // list — that specific case just means "no existing customer." Anything else is a real
+    // failure and shouldn't be treated as "doesn't exist yet."
     if (error instanceof ConductorApiError && error.isNotFound) {
       return undefined;
     }
@@ -120,10 +119,8 @@ export const upsertCustomerAction = createAction({
     };
 
     if (propsValue.name.length > MAX_NAME_LENGTH) {
-      // Caught locally rather than left to Conductor's own validation: a request this shape
-      // comes back as INVALID_REQUEST_ERROR with a useless generic userFacingMessage ("An
-      // internal server error occurred. Please try again.") — confirmed live 2026-08-20. Failing
-      // fast here gives the real, specific reason instead.
+      // Caught here rather than left to Conductor: an over-length name comes back as a generic
+      // "internal server error" from their side, so failing fast gives the real reason instead.
       throw new Error(
         `Customer name must be ${MAX_NAME_LENGTH} characters or fewer (QuickBooks Desktop's limit) — "${propsValue.name}" is ${propsValue.name.length}.`
       );

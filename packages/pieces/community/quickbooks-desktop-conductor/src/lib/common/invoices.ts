@@ -5,9 +5,7 @@ export type ConductorInvoice = {
   refNumber: string | null;
   memo: string | null;
   customer: { id: string; fullName: string } | null;
-  // Field names confirmed live (2026-08-20) against a real created invoice — the docs describe
-  // these only loosely as "amounts (subtotal, tax, balance)". There is no `total` field at all;
-  // total is derived below from `subtotal` + `salesTaxTotal`.
+  // There's no `total` field — it's derived below from subtotal + salesTaxTotal.
   subtotal: string;
   salesTaxTotal: string | null;
   balanceRemaining: string;

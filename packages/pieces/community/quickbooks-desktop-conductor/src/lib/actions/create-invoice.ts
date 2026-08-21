@@ -97,12 +97,9 @@ export const createInvoiceAction = createAction({
       endUserId: context.auth.props.endUserId,
     };
 
-    // Property.Array's resolved propsValue type is always plain `unknown[]` — its `properties`
-    // sub-schema never threads through to StaticPropsValue (confirmed in
-    // packages/pieces/framework/src/lib/property/index.ts). The builder's own form guarantees
-    // this shape from `properties` above; there is no framework-provided type-safe path around
-    // this specific cast (the quickbooks (QBO) sibling's create-invoice.ts hits the same gap and
-    // casts to `any[]` instead, which this avoids).
+    // Property.Array always resolves to `unknown[]` — its `properties` sub-schema doesn't thread
+    // through to the propsValue type — so this cast is unavoidable. The form above guarantees the
+    // actual shape.
     const lineItemInputs = propsValue.lineItems as LineItemInput[];
     if (lineItemInputs.length === 0) {
       throw new Error('At least one line item is required to create an invoice.');

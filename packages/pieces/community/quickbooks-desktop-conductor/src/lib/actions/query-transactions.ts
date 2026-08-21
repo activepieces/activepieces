@@ -136,11 +136,9 @@ export const queryTransactionsAction = createAction({
       ...spreadIfDefined('cursor', propsValue.cursor),
     };
 
-    // `HttpRequest.queryParams` is `Record<string, string>` — one value per key — but
-    // Conductor rejects a comma-joined `transactionTypes` string outright ("Invalid option:
-    // expected one of ..."); it wants the param repeated instead (confirmed live 2026-08-20).
-    // Pre-encoding it into the URL works because the client's `getUrl` parses and preserves any
-    // query string already on `request.url` before merging in the `queryParams` object on top.
+    // queryParams only takes one value per key, but Conductor wants transactionTypes repeated,
+    // not comma-joined — so it's pre-encoded straight into the URL instead. This works because
+    // the client's getUrl preserves any query string already on the URL before merging queryParams.
     const transactionTypesQuery = (propsValue.transactionTypes ?? [])
       .map((type) => `transactionTypes=${encodeURIComponent(type)}`)
       .join('&');

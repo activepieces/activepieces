@@ -15,10 +15,8 @@ type ConductorBill = {
   dueDate: string | null;
   refNumber: string | null;
   memo: string | null;
-  // Field names confirmed live (2026-08-20) against a real created bill. Two surprises the docs'
-  // prose didn't specify: embedded vendor references use `fullName` (the generic qbXML
-  // "ListRef" display-name field) even though the vendor resource itself only has `name` — and
-  // bills use `openAmount`, not `balanceRemaining` (that's the invoices field name).
+  // Vendor references use `fullName`, even though the vendor resource itself only has `name`.
+  // And it's `openAmount` here, not `balanceRemaining` — that's the invoice field name.
   vendor: { id: string; fullName: string } | null;
   amountDue: string;
   openAmount: string;
@@ -124,9 +122,7 @@ export const createBillAction = createAction({
       endUserId: context.auth.props.endUserId,
     };
 
-    // Same framework typing gap as create-invoice.ts's lineItems — Property.Array's resolved
-    // propsValue type is always `unknown[]`, never threaded through to `properties`' declared
-    // shape. See that file for the full explanation.
+    // Same Property.Array typing gap as create-invoice.ts's lineItems.
     const expenseLineInputs = propsValue.expenseLines as ExpenseLineInput[];
     if (expenseLineInputs.length === 0) {
       throw new Error('At least one expense line is required to create a bill.');

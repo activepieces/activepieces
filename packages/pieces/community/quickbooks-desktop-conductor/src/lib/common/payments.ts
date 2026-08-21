@@ -5,10 +5,8 @@ export type ConductorPaymentResult = {
   transactionDate: string;
   refNumber: string | null;
   memo: string | null;
-  // Confirmed live (2026-08-20): receive-payments uses `totalAmount`; both bill-payment
-  // endpoints use plain `amount` — neither uses `amountDue` (that's the bills resource's own
-  // field, not the payment-against-it). Same "same concept, different field name per resource"
-  // lesson as invoices/bills.
+  // receive-payments uses `totalAmount`, the two bill-payment endpoints use plain `amount` —
+  // neither uses `amountDue` (that's the bill's own field, not the payment against it).
   totalAmount: string | null;
   amount: string | null;
   customer: { id: string; fullName: string } | null;

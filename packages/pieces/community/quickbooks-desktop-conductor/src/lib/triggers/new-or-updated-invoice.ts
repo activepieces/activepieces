@@ -56,9 +56,8 @@ export const newOrUpdatedInvoiceTrigger = createTrigger({
     subtotal_amount: '270.00',
     sales_tax_amount: '0.00',
     total_amount: '270.00',
-    // balance_remaining < total_amount and updated_at > created_at on purpose — a partial payment
-    // was applied after creation, so this sample honestly represents the "or updated" half of the
-    // trigger (a payment or edit against an existing invoice), not just a freshly-created one.
+    // A partial payment after creation, so this sample shows the "or updated" half too, not
+    // just a fresh invoice.
     balance_remaining: '120.00',
     is_paid: false,
     line_count: 1,
