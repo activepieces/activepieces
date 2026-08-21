@@ -2,6 +2,7 @@ import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModelType,
   CreateAIProviderRequest,
+  OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   ProviderModelConfig,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -107,6 +108,31 @@ export const UpsertProviderConfigForm = ({
                   />
                 </FormControl>
               )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
+
+      {provider in OPENAI_COMPATIBLE_VENDOR_BASE_URLS && (
+        <FormField
+          control={form.control}
+          name="config.baseUrl"
+          render={({ field }) => (
+            <FormItem className="grid space-y-3">
+              <FormLabel htmlFor="baseUrl">{t('Base URL')}</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value ?? ''}
+                  id="baseUrl"
+                  placeholder={OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]}
+                  disabled={isLoading}
+                />
+              </FormControl>
+              <FormDescription>
+                {t('Leave empty to use the default endpoint.')}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

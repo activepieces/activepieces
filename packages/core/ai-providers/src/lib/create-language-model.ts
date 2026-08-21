@@ -1,5 +1,5 @@
 import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
-import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/core-piece-types'
+import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -51,6 +51,20 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
                 return createOpenRouterChatModel({ apiKey, modelId, options })
             }
             return createOpenAICompatible({ name: 'mistral', baseURL: MISTRAL_BASE_URL, apiKey }).chatModel(modelId)
+        }
+        case AIProviderName.XAI:
+        case AIProviderName.DEEPSEEK:
+        case AIProviderName.ZAI:
+        case AIProviderName.QWEN:
+        case AIProviderName.MINIMAX:
+        case AIProviderName.MOONSHOT: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { baseUrl } = config as OpenAiCompatibleVendorConfig
+            return createOpenAICompatible({
+                name: provider,
+                baseURL: baseUrl ?? OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider],
+                apiKey,
+            }).chatModel(modelId)
         }
         case AIProviderName.OPENROUTER:
         case AIProviderName.ACTIVEPIECES: {
