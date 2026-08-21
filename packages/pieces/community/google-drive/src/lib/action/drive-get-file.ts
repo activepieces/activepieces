@@ -6,6 +6,7 @@ import { driveGetFileOutputSchema } from '../output-schemas';
 export const driveGetFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_get_file',
+  classification: 'READ',
   displayName: 'Get File or Folder',
   description: 'Get a file folder for files/sub-folders',
   audience: 'ai',

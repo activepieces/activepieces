@@ -80,6 +80,7 @@ interface GetPersonResponseV2 {
 export const personMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'person-matching-filter',
+	classification: 'READ',
 	displayName: 'Person Matching Filter',
 	description: 'Triggers when a person newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {

@@ -5,6 +5,7 @@ export const createApprovalLink = createAction({
   audience: 'both',
   auth: PieceAuth.None(),
   name: 'create_approval_links',
+  classification: 'READ',
   displayName: 'Create Approval Links',
   description:
     'Create links only without pausing the flow, use wait for approval to pause',

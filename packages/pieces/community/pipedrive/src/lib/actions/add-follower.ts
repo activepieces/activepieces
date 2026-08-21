@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addFollowerAction = createAction({
 	auth: pipedriveAuth,
 	name: 'add-follower',
+	classification: 'WRITE',
 	displayName: 'Add Follower',
 	description: 'Adds a follower to a deal, person, organization or product.',
 	audience: 'both',

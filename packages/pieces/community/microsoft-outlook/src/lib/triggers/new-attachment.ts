@@ -57,6 +57,7 @@ async function enrichAttachments(
 export const newAttachmentTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newAttachment',
+	classification: 'READ',
 	displayName: 'New Attachment',
 	description: 'Triggers when a new email containing one or more attachments arrives.',
 	aiMetadata: {

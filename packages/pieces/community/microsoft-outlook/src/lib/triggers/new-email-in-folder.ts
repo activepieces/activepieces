@@ -58,6 +58,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlook
 export const newEmailInFolderTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newEmailInFolder',
+	classification: 'READ',
 	displayName: 'New Email in Folder',
 	description: 'Triggers when a new email is delivered into the specified folder.',
 	aiMetadata: {

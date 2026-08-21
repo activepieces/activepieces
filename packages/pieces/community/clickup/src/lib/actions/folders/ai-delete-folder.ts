@@ -6,6 +6,7 @@ import { clickupAuth } from '../../auth';
 export const clickupDeleteFolder = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_folder',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a ClickUp folder by its ID',
   audience: 'ai',
   aiMetadata: {

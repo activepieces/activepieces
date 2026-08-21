@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeCancelPaymentIntent = createAction({
   name: 'cancel_payment_intent',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Cancel Payment Intent (Agent)',
   description: 'Cancel a PaymentIntent that has not been captured.',

@@ -58,6 +58,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Re
 export const newEmailSubscriptionsTimelineTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-email-subscriptions-timeline',
+	classification: 'READ',
 	displayName: 'New Email Subscriptions Timeline',
 	description: 'Triggers when a new email timeline subscription added for the portal.',
 	aiMetadata: {

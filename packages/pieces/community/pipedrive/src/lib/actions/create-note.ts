@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createNoteAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-note',
+	classification: 'WRITE',
 	displayName: 'Create Note',
 	description: 'Creates a new note.',
 	audience: 'both',

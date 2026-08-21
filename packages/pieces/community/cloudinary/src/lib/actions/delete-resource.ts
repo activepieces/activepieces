@@ -7,6 +7,7 @@ import { makeRequest } from '../common/client';
 export const deleteResource = createAction({
   auth: cloudinaryAuth,
   name: 'deleteResource',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Resource',
   description: 'Permanently delete images, videos, or files from Cloudinary.',
   audience: 'both',

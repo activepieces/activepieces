@@ -10,6 +10,7 @@ import { Client } from '@hubspot/api-client';
 export const uploadFileAction = createAction({
 	auth: hubspotAuth,
 	name: 'upload-file',
+	classification: 'WRITE',
 	displayName: 'Upload File',
 	description: 'Uploads a file to HubSpot File Manager.',
 	audience: 'both',

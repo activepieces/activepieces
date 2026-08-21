@@ -16,6 +16,7 @@ import { updatedPageTriggerOutputSchema } from '../output-schemas';
 export const updatedPage = createTrigger({
   auth: notionAuth,
   name: 'updated_page',
+  classification: 'READ',
   displayName: 'Updated Page',
   description:
     'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',

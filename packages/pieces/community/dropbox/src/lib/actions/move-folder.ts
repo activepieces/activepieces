@@ -9,6 +9,7 @@ import { dropboxAuth } from '../auth';
 export const dropboxMoveFolder = createAction({
   auth: dropboxAuth,
   name: 'move_dropbox_folder',
+  classification: 'WRITE',
   description: 'Move a folder',
   audience: 'both',
   aiMetadata: { description: 'Moves (or renames) the folder at the source path, including its contents, to a new destination path within Dropbox; optionally autorenames on conflict. Use to relocate or rename an entire directory. Not idempotent: after a successful move the source no longer exists, so repeating the call fails or, with autorename, produces a differently named folder.', idempotent: false },

@@ -6,6 +6,7 @@ import { sheetsAutoResizeDimensionsActionOutputSchema } from '../output-schemas'
 export const sheetsAutoResizeDimensions = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_auto_resize_dimensions',
+	classification: 'WRITE',
 	displayName: 'Auto-Resize Columns/Rows',
 	description: 'Auto-fit the width of columns or height of rows to their content.',
 	audience: 'ai',

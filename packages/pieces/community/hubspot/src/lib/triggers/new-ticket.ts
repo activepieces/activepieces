@@ -74,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newTicketTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-ticket',
+	classification: 'READ',
 	displayName: 'New Ticket',
 	description: 'Trigger when new ticket is available.',
 	aiMetadata: {

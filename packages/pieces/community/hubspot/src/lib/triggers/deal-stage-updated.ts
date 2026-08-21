@@ -97,6 +97,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const dealStageUpdatedTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'deal-stage-updated',
+	classification: 'READ',
 	displayName: 'Updated Deal Stage',
 	description: 'Triggers when a deal enters a specified stage.',
 	aiMetadata: {

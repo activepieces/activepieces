@@ -110,6 +110,7 @@ async function getFilesRecursively(
 export const driveListFiles = createAction({
   auth: googleDriveAuth,
   name: 'drive_list_files',
+  classification: 'SEARCH',
   displayName: 'List Folder Contents',
   description: 'List files from a Google Drive folder',
   audience: 'ai',

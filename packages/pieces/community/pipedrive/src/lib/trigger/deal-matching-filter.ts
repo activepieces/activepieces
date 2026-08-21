@@ -15,6 +15,7 @@ import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 export const dealMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'deal-matching-filter',
+	classification: 'READ',
 	displayName: 'Deal Matching Filter',
 	description: 'Trigges when a deal newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {
