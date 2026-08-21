@@ -7,6 +7,7 @@ export const createPhotoPost = createAction({
   auth: facebookPagesAuth,
 
   name: 'create_photo_post',
+  classification: 'WRITE',
   displayName: 'Create Page Photo',
   description: 'Create a photo on a Facebook Page you manage',
   audience: 'both',

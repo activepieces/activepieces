@@ -8,6 +8,7 @@ import { TeableAuth, TeableAuthValue } from '../auth';
 export const updateRecordAction = createAction({
 	auth: TeableAuth,
 	name: 'teable_update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in a Teable table.',
 	audience: 'both',

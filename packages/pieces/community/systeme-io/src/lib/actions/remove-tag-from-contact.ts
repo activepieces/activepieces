@@ -7,6 +7,7 @@ import { systemeIoProps } from '../common/props';
 export const removeTagFromContact = createAction({
   auth: systemeIoAuth,
   name: 'removeTagFromContact',
+  classification: 'WRITE',
   displayName: 'Remove Tag from Contact',
   description: 'Remove a tag that is currently assigned to an existing contact',
   audience: 'both',

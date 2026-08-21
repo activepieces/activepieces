@@ -79,6 +79,7 @@ interface GetPersonResponseV2 {
 export const updatedPerson = createTrigger({
 	auth: pipedriveAuth,
 	name: 'updated_person',
+	classification: 'READ',
 	displayName: 'Updated Person',
 	description: 'Triggers when a person is updated.',
 	aiMetadata: {

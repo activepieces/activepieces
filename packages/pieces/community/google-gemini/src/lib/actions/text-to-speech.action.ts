@@ -9,6 +9,7 @@ import { textToSpeechActionOutputSchema } from '../output-schemas';
 export const textToSpeechAction = createAction({
   audience: 'both',
   name: 'text-to-speech',
+  classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',

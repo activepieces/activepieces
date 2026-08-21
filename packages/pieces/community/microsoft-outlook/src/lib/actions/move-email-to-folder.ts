@@ -6,6 +6,7 @@ import { mailFolderIdDropdown, messageIdDropdown } from '../common/props';
 export const moveEmailToFolderAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'moveEmailToFolder',
+	classification: 'WRITE',
 	displayName: 'Move Email to Folder',
 	description: 'Moves an email message to a specific folder.',
 	audience: 'both',

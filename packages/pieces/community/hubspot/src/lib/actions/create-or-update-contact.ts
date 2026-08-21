@@ -10,6 +10,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const createOrUpdateContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-or-update-contact',
+	classification: 'WRITE',
 	displayName: 'Create or Update Contact',
 	description: 'Creates a new contact or updates an existing contact based on email address.',
 	audience: 'both',

@@ -6,6 +6,7 @@ import { domainProp, usersProp } from '../common/props';
 export const newVoicemail = createTrigger({
     auth: connectucAuth,
     name: 'newVoicemail',
+    classification: 'READ',
     displayName: 'New Voicemail',
     description: 'Triggers when a new voicemail is received',
     aiMetadata: {

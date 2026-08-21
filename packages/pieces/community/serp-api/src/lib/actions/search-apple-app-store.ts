@@ -7,6 +7,7 @@ import { searchAppleAppStoreOutputSchema } from '../output-schemas';
 export const searchAppleAppStore = createAction({
   auth: serpApiAuth,
   name: 'search_apple_app_store',
+  classification: 'SEARCH',
   displayName: 'Search Apple App Store',
   description: 'Search the iOS Apple App Store for apps matching a term.',
   audience: 'ai',

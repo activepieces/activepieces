@@ -11,6 +11,7 @@ import { sheetsSearchSpreadsheetsActionOutputSchema } from '../output-schemas';
 export const sheetsSearchSpreadsheets = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_search_spreadsheets',
+	classification: 'SEARCH',
 	displayName: 'Find Spreadsheets',
 	description: 'Find spreadsheet(s) by name.',
 	audience: 'ai',

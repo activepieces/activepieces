@@ -5,6 +5,7 @@ import { twilioAuth } from '../..';
 export const twilioDownloadRecordingMedia = createAction({
   auth: twilioAuth,
   name: 'download_recording_media',
+  classification: 'READ',
   displayName: 'Download Recording Media',
   description: 'Download the media file for a specific recording.',
   audience: 'both',

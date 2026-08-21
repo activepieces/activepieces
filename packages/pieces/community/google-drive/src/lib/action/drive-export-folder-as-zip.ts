@@ -478,6 +478,7 @@ async function downloadAndAddZipEntry({
 export const driveExportFolderAsZip = createAction({
   auth: googleDriveAuth,
   name: 'drive_export_folder_as_zip',
+  classification: 'READ',
   displayName: 'Export Folder as Zip',
   description:
     'Recursively export a Google Drive folder (with all subfolders) as a single zip file.',

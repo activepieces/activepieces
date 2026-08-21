@@ -84,6 +84,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlook
 export const newEmailTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newEmail',
+	classification: 'READ',
 	displayName: 'New Email',
 	description: 'Triggers when a new email is received in the inbox.',
 	aiMetadata: {

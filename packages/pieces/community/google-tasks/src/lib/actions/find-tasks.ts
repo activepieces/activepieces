@@ -7,6 +7,7 @@ import { googleTasksFindTasksOutputSchema } from '../output-schemas';
 export const googleTasksFindTasksAction = createAction({
   auth: googleTasksAuth,
   name: 'find_tasks',
+  classification: 'SEARCH',
   displayName: 'Find Tasks',
   description: 'Search and list tasks in a task list with optional date-range and status filters.',
   audience: 'ai',

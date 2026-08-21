@@ -8,6 +8,7 @@ import { taskWrapperOutputSchema } from '../../output-schemas';
 export const clickupLinkTasksAi = createAction({
   auth: clickupAuth,
   name: 'clickup_link_tasks',
+  classification: 'WRITE',
   description: 'Link two tasks together',
   audience: 'ai',
   aiMetadata: {

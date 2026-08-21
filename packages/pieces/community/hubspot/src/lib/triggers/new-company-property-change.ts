@@ -125,6 +125,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCompanyPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-company-property-change',
+	classification: 'READ',
 	displayName: 'New Company Property Change',
 	description: 'Triggers when a specified property is updated on a company.',
 	aiMetadata: {

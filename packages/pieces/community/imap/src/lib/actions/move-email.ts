@@ -23,6 +23,7 @@ const props = {
 export const moveEmail = createAction({
   auth: imapAuth,
   name: 'move_email',
+  classification: 'WRITE',
   displayName: 'Move Email',
   description: 'Move an email to another mailbox',
   outputSchema: moveEmailActionOutputSchema,

@@ -7,6 +7,7 @@ import { telegramSendLocationActionOutputSchema } from '../output-schemas';
 export const telegramSendLocation = createAction({
   auth: telegramBotAuth,
   name: 'telegram_send_location',
+  classification: 'WRITE',
   displayName: 'Send Location',
   description: 'Send a geographic location (latitude/longitude) to a Telegram chat.',
   audience: 'ai',

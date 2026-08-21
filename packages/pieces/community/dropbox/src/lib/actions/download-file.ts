@@ -9,6 +9,7 @@ import { dropboxAuth } from '../auth';
 export const dropboxDownloadFile = createAction({
   auth: dropboxAuth,
   name: 'downloadFile',
+  classification: 'READ',
   displayName: 'Download File',
   description: 'Download a File from Dropbox',
   audience: 'both',

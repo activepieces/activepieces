@@ -14,6 +14,7 @@ import { downloadTableActionOutputSchema } from '../output-schemas';
 export const downloadTable = createAction({
   audience: 'both',
   name: 'tables-download-table',
+  classification: 'READ',
   displayName: 'Download Table',
   description: 'Export a table as a CSV file.',
   aiMetadata: { description: 'Exports all records of an Activepieces Table as a CSV file, optionally prefixed with a header row of column names. Pick this when a whole table is needed as a file; use Find Records instead to read rows as structured data. Requires the table ID and always exports the full table - it accepts no filters, column selection, or row limit; read-only and idempotent.', idempotent: true },

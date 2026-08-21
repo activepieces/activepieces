@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const stopTimeEntry = createAction({
   auth: togglTrackAuth,
   name: 'stop_time_entry',
+  classification: 'WRITE',
   displayName: 'Stop Time Entry',
   description: 'Stops the currently running time entry.',
   audience: 'both',

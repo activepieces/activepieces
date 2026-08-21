@@ -132,6 +132,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-custom-object-property-change',
+	classification: 'READ',
 	displayName: 'New Custom Object Property Change',
 	description: 'Triggers when a specified property is updated on a custom object.',
 	aiMetadata: {

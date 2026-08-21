@@ -8,6 +8,7 @@ import { Client } from '@hubspot/api-client';
 export const createCompanyAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-company',
+	classification: 'WRITE',
 	displayName: 'Create Company',
 	description: 'Creates a company in Hubspot.',
 	audience: 'both',

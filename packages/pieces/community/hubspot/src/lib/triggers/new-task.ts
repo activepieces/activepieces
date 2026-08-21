@@ -74,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newTaskTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-task',
+	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Trigger when a new task is added.',
 	aiMetadata: {

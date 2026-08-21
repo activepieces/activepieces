@@ -8,6 +8,7 @@ import { Client } from '@hubspot/api-client';
 export const getLineItemAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-line-item',
+	classification: 'READ',
 	displayName: 'Get Line Item',
 	description: 'Gets a line item.',
 	audience: 'both',

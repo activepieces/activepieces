@@ -6,6 +6,7 @@ import { resendProps } from '../common/props';
 
 export const deleteBroadcast = createAction({
   name: 'delete_broadcast',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Delete Broadcast',
   outputSchema: deleteBroadcastOutputSchema,
