@@ -8,6 +8,14 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Famulor community piece talks only to Platform 2.0 / API v1
+
+`@activepieces/piece-famulor` 0.3.0 drops Classic 1.0 (`https://app.famulor.de/`, `/api/user/*`, integer IDs). Auth is now a CustomAuth connection: API key (`fam_…`) plus an optional Base URL that defaults to `https://app.famulor.io`. Actions call `/api/v1` (UUIDs). Classic-only actions (leads CRUD, SMS, WhatsApp, conversations, phone-number search/purchase, campaign start/stop, generate AI reply) are removed. `makePhoneCall` no longer accepts `variables`, `from_number`, or `lead_id`. The `phoneCallEnded` trigger now requires a workspace webhook secret and rejects unsigned payloads.
+
+#### What you need to do
+
+Reconnect every Famulor connection with a Platform 2.0 API key from Settings → API Keys (not Classic). Point optional Base URL at `https://app.famulor.io` or a verified whitelabel domain — never `app.famulor.de`. Recreate flows that used removed Classic actions. For Phone Call Completed, create a workspace webhook for `call.completed` in Settings → Webhooks and paste the webhook secret so `X-Famulor-Signature` can be verified.
+
 #### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
 
 The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.

@@ -1,114 +1,105 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { famulorAuth } from '../..';
-import { famulorCommon } from '../common';
+import {
+  AppConnectionValueForAuthProperty,
+  createTrigger,
+  Property,
+  StaticPropsValue,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
+import { famulorAuth } from '../common/auth';
+import { famulorRequest, flattenAssistant, unwrapList } from '../common/client';
 
-const polling: Polling<PiecePropValueSchema<any>, { type?: string; per_page?: number }> = {
-    strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue }) => {
-    const perPage = propsValue['per_page'] || 10;
-    const type = propsValue['type'];
-    
-    // Get all assistants with pagination
-    let allAssistants: any[] = [];
-    let currentPage = 1;
-    let hasMorePages = true;
+const props = {
+  limit: Property.Number({
+    displayName: 'Page size',
+    description: 'Assistants fetched per API page while polling (1–200, default 100)',
+    required: false,
+    defaultValue: 100,
+  }),
+};
 
-    while (hasMorePages) {
-      const assistants = await famulorCommon.listAllAssistants({ 
-        auth: auth.secret_text, 
-        per_page: perPage,
-        page: currentPage,
-        type
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof famulorAuth>,
+  StaticPropsValue<typeof props>
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue }) => {
+    const pageSize = Math.min(Math.max(propsValue.limit ?? 100, 1), 200);
+    const allAssistants: Record<string, unknown>[] = [];
+    let offset = 0;
+    const maxPages = 50;
+
+    for (let page = 0; page < maxPages; page++) {
+      const body = await famulorRequest({
+        auth,
+        method: HttpMethod.GET,
+        path: '/assistants',
+        queryParams: {
+          limit: String(pageSize),
+          offset: String(offset),
+        },
       });
-      
-      if (assistants.data && assistants.data.length > 0) {
-        allAssistants = allAssistants.concat(assistants.data);
-        hasMorePages = currentPage < assistants.last_page;
-        currentPage++;
-      } else {
-        hasMorePages = false;
+      const batch = unwrapList(body, ['assistants', 'data', 'rows']);
+      if (batch.length === 0) {
+        break;
       }
+      allAssistants.push(...batch);
+      if (batch.length < pageSize) {
+        break;
+      }
+      offset += pageSize;
     }
 
     return allAssistants.map((assistant) => {
-      const assistantDate = assistant.updated_at
-        ? dayjs(assistant.updated_at)
-        : dayjs(assistant.created_at);
+      const updated =
+        typeof assistant['updated_at'] === 'string'
+          ? assistant['updated_at']
+          : typeof assistant['created_at'] === 'string'
+            ? assistant['created_at']
+            : undefined;
       return {
-        epochMilliSeconds: assistantDate.valueOf(),
-        data: assistant,
+        epochMilliSeconds: updated ? dayjs(updated).valueOf() : dayjs().valueOf(),
+        data: flattenAssistant(assistant),
       };
     });
   },
 };
 
 export const getAssistants = createTrigger({
-    auth: famulorAuth,
-    name: 'getAssistants',
-    displayName: 'New or Updated Assistant',
-    description: 'Triggers when AI assistants are created or updated in your Famulor account.',
-    aiMetadata: {
-        description: 'Polls the Famulor account and fires when an AI assistant is newly created or updated, deduplicating by the assistant\'s updated/created timestamp. Optionally filter by assistant type (inbound or outbound). Each emitted item is the full assistant record, including id, name, type, status, phone number, voice and language, timezone, initial message, system prompt, max duration, recording flag, custom variables, webhook configuration, and create/update timestamps. Use to keep an external system in sync with assistant configuration changes.',
-    },
-    props: {
-        type: Property.StaticDropdown({
-            displayName: 'Assistant Type',
-            description: 'Filter assistants by type',
-            required: false,
-            options: {
-                options: [
-                    { label: 'All Types', value: '' },
-                    { label: 'Inbound', value: 'inbound' },
-                    { label: 'Outbound', value: 'outbound' },
-                ],
-            },
-        }),
-        per_page: Property.Number({
-            displayName: 'Items Per Page',
-            description: 'Number of assistants to fetch per page (1-100, default: 10)',
-            required: false,
-            defaultValue: 10,
-        }),
-    },
-    sampleData: {
-        id: 123,
-        user_id: 456,
-        name: "Customer Support Assistant",
-        type: "inbound",
-        status: "active",
-        phone_number_id: 789,
-        voice_id: 101,
-        language_id: 1,
-        language: "en-US",
-        timezone: "UTC",
-        initial_message: "Hello! How can I help you today?",
-        system_prompt: "You are a helpful customer support assistant.",
-        max_duration: 1800,
-        record: true,
-        created_at: "2024-01-15T10:30:00Z",
-        updated_at: "2024-01-15T14:20:00Z",
-        variable: {
-            company_name: "ACME Corp",
-            support_email: "support@acme.com"
-        },
-        is_webhook_active: true,
-        webhook_url: "https://api.example.com/webhook"
-    },
-type: TriggerStrategy.POLLING,
-async test(context) {
+  auth: famulorAuth,
+  name: 'getAssistants',
+  displayName: 'New or Updated Assistant',
+  description: 'Triggers when AI assistants are created or updated in your Famulor workspace.',
+  classification: 'READ',
+  aiMetadata: {
+    description:
+      'Polling trigger for newly created or updated Famulor assistants (UUIDs). Use when a flow should start from assistant changes rather than listing them on demand.',
+  },
+  props,
+  sampleData: {
+    id: '6f3e8862-9f54-48a2-bc83-9093cc7e27f7',
+    name: 'Customer Support Assistant',
+    is_active: true,
+    mode: 'pipeline',
+    primary_language: 'de',
+    timezone: 'Europe/Berlin',
+    first_message: 'Hello, how can I help you today?',
+    tags: 'support',
+    created_at: '2026-01-15T10:30:00Z',
+    updated_at: '2026-01-15T14:20:00Z',
+  },
+  type: TriggerStrategy.POLLING,
+  async test(context) {
     return await pollingHelper.test(polling, context);
-},
-async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
-},
-async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
-},
-async run(context) {
+  },
+  async onEnable(context) {
+    await pollingHelper.onEnable(polling, context);
+  },
+  async onDisable(context) {
+    await pollingHelper.onDisable(polling, context);
+  },
+  async run(context) {
     return await pollingHelper.poll(polling, context);
-},
+  },
 });

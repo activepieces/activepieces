@@ -1,26 +1,39 @@
 import { createAction } from '@activepieces/pieces-framework';
-import { propsValidation } from '@activepieces/pieces-common';
-import { famulorAuth } from '../..';
-import { famulorCommon } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { famulorAuth } from '../common/auth';
+import { famulorRequest, flattenCall } from '../common/client';
+import { callDropdown } from '../common/props';
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const getCall = createAction({
   auth: famulorAuth,
   name: 'getCall',
   displayName: 'Get Call',
-  description: 'Retrieve details for a call by ID, including transcript and recording.',
+  description: 'Retrieve one call by UUID, including transcript, summary, and recording URL.',
+  classification: 'READ',
   audience: 'both',
   aiMetadata: {
     description:
-      'Fetch the full details of a single call by its numeric ID, including transcript and recording. Use when you already have a call ID and need its content; to discover or filter calls first use List Calls. Read-only and idempotent.',
+      'Fetch one Famulor call by UUID, including transcript, summary, and recording URL. Use when you already have the call id; use List Calls to discover ids. Read-only and safe to retry.',
     idempotent: true,
   },
-  props: famulorCommon.getCallProperties(),
+  props: {
+    call_id: callDropdown(),
+  },
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, famulorCommon.getCallSchema);
+    const callId = String(propsValue.call_id ?? '').trim();
+    if (!uuidPattern.test(callId)) {
+      throw new Error('Call ID must be a UUID.');
+    }
 
-    return await famulorCommon.getCall({
-      auth: auth.secret_text,
-      call_id: propsValue.call_id as number,
+    const response = await famulorRequest({
+      auth,
+      method: HttpMethod.GET,
+      path: `/calls/${callId}`,
     });
+
+    return flattenCall(response);
   },
 });

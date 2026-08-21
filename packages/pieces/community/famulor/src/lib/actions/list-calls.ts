@@ -1,39 +1,121 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { propsValidation } from '@activepieces/pieces-common';
-import { famulorAuth } from '../..';
-import { famulorCommon } from '../common';
-import type { CallDirectionType, CallStatusFilter } from '../common/types';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { famulorAuth } from '../common/auth';
+import { famulorRequest, flattenCall, unwrapList, unwrapTotal } from '../common/client';
+import { assistantDropdown, campaignDropdown } from '../common/props';
 
 export const listCalls = createAction({
   auth: famulorAuth,
   name: 'listCalls',
   displayName: 'List Calls',
-  description: 'List calls with optional filters.',
+  description: 'List recent calls, newest first, with optional filters.',
+  classification: 'READ',
   audience: 'both',
   aiMetadata: {
     description:
-      'List call records, optionally narrowed by status, direction (inbound/outbound), phone number, assistant, campaign, date range, and paginated. Use to browse or search calls; to fetch one call\'s full transcript and recording use Get Call instead. Read-only and idempotent.',
+      'List recent Famulor calls with optional assistant, campaign, status, direction, and time filters. Use this to browse many calls; use Get Call when you already have a UUID. Read-only and safe to retry.',
     idempotent: true,
   },
-  props: famulorCommon.listCallsProperties(),
+  props: {
+    assistant_id: assistantDropdown(false),
+    campaign_id: campaignDropdown(false),
+    status: Property.StaticDropdown({
+      displayName: 'Status',
+      description: 'Only return calls with this status',
+      required: false,
+      options: {
+        options: [
+          { label: 'Queued', value: 'queued' },
+          { label: 'Ringing', value: 'ringing' },
+          { label: 'In progress', value: 'in_progress' },
+          { label: 'Completed', value: 'completed' },
+          { label: 'Failed', value: 'failed' },
+          { label: 'No answer', value: 'no_answer' },
+          { label: 'Busy', value: 'busy' },
+        ],
+      },
+    }),
+    direction: Property.StaticDropdown({
+      displayName: 'Direction',
+      description: 'Inbound, outbound, or web',
+      required: false,
+      options: {
+        options: [
+          { label: 'Inbound', value: 'inbound' },
+          { label: 'Outbound', value: 'outbound' },
+          { label: 'Web', value: 'web' },
+        ],
+      },
+    }),
+    q: Property.ShortText({
+      displayName: 'Search',
+      description: 'Optional text search across transcript and summary',
+      required: false,
+    }),
+    from: Property.ShortText({
+      displayName: 'From',
+      description: 'Only calls created at or after this time (ISO 8601)',
+      required: false,
+    }),
+    to: Property.ShortText({
+      displayName: 'To',
+      description: 'Only calls created at or before this time (ISO 8601)',
+      required: false,
+    }),
+    limit: Property.Number({
+      displayName: 'Limit',
+      description: 'Maximum number of calls to return (1–200, default 50)',
+      required: false,
+      defaultValue: 50,
+    }),
+    offset: Property.Number({
+      displayName: 'Offset',
+      description: 'Number of calls to skip for pagination',
+      required: false,
+      defaultValue: 0,
+    }),
+  },
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, famulorCommon.listCallsSchema);
+    const queryParams: Record<string, string> = {};
+    if (propsValue.assistant_id) {
+      queryParams['assistant_id'] = String(propsValue.assistant_id);
+    }
+    if (propsValue.campaign_id) {
+      queryParams['campaign_id'] = String(propsValue.campaign_id);
+    }
+    if (propsValue.status) {
+      queryParams['status'] = String(propsValue.status);
+    }
+    if (propsValue.direction) {
+      queryParams['direction'] = String(propsValue.direction);
+    }
+    if (propsValue.q?.trim()) {
+      queryParams['q'] = propsValue.q.trim();
+    }
+    if (propsValue.from?.trim()) {
+      queryParams['from'] = propsValue.from.trim();
+    }
+    if (propsValue.to?.trim()) {
+      queryParams['to'] = propsValue.to.trim();
+    }
+    if (propsValue.limit !== undefined && propsValue.limit !== null) {
+      queryParams['limit'] = String(propsValue.limit);
+    }
+    if (propsValue.offset !== undefined && propsValue.offset !== null) {
+      queryParams['offset'] = String(propsValue.offset);
+    }
 
-    const phone = propsValue.phone_number as string | undefined;
-    const dateFrom = propsValue.date_from as string | undefined;
-    const dateTo = propsValue.date_to as string | undefined;
-
-    return await famulorCommon.listCalls({
-      auth: auth.secret_text,
-      status: propsValue.status as CallStatusFilter | undefined,
-      type: propsValue.type as CallDirectionType | undefined,
-      phone_number: phone?.trim() ? phone.trim() : undefined,
-      assistant_id: propsValue.assistant_id as number | undefined,
-      campaign_id: propsValue.campaign_id as number | undefined,
-      date_from: dateFrom?.trim() ? dateFrom.trim() : undefined,
-      date_to: dateTo?.trim() ? dateTo.trim() : undefined,
-      per_page: propsValue.per_page as number | undefined,
-      page: propsValue.page as number | undefined,
+    const body = await famulorRequest({
+      auth,
+      method: HttpMethod.GET,
+      path: '/calls',
+      queryParams,
     });
+
+    const rows = unwrapList(body, ['calls', 'data', 'rows']).map((call) => flattenCall(call));
+    return {
+      total: unwrapTotal(body) ?? rows.length,
+      rows,
+    };
   },
 });

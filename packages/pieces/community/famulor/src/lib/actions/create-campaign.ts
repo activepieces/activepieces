@@ -1,41 +1,86 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { propsValidation } from '@activepieces/pieces-common';
-import { famulorAuth } from '../..';
-import { famulorCommon } from '../common';
-import type { CampaignWeekday } from '../common/types';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { famulorAuth } from '../common/auth';
+import { famulorRequest, flattenCampaign } from '../common/client';
+import { assistantDropdown } from '../common/props';
 
 export const createCampaign = createAction({
   auth: famulorAuth,
   name: 'createCampaign',
   displayName: 'Create Campaign',
-  description: 'Create a new outbound calling campaign.',
+  description: 'Create an outbound phone-call campaign. Assign an assistant before you start it in Famulor.',
+  classification: 'WRITE',
   audience: 'both',
-  aiMetadata: { description: 'Create a new outbound calling campaign bound to an AI assistant, optionally configuring dialing windows (timezone, allowed hours/days), parallelism, and retry behavior. Pick when setting up a fresh campaign before adding leads to it; this always creates a new campaign (not idempotent — repeated calls make duplicates).', idempotent: false },
-  props: famulorCommon.createCampaignProperties(),
+  aiMetadata: {
+    description:
+      'Create an outbound Famulor phone campaign bound to an assistant UUID. Does not start the campaign. Each call creates a new campaign.',
+    idempotent: false,
+  },
+  props: {
+    name: Property.ShortText({
+      displayName: 'Campaign name',
+      description: 'Name shown in the Famulor dashboard',
+      required: true,
+    }),
+    assistant_id: assistantDropdown(true),
+    timezone: Property.ShortText({
+      displayName: 'Timezone',
+      description: 'IANA timezone for calling windows, for example Europe/Berlin',
+      required: false,
+    }),
+    concurrency: Property.Number({
+      displayName: 'Max parallel calls',
+      description: 'How many calls the dialer may place at the same time',
+      required: false,
+      defaultValue: 1,
+    }),
+    retry_max: Property.Number({
+      displayName: 'Max retries',
+      description: 'How often a lead is retried after no-answer, busy, or failed (0 = no retries)',
+      required: false,
+      defaultValue: 2,
+    }),
+    retry_delay_minutes: Property.Number({
+      displayName: 'Retry delay (minutes)',
+      description: 'Minutes to wait before retrying a lead',
+      required: false,
+      defaultValue: 60,
+    }),
+    retry_on_voicemail: Property.Checkbox({
+      displayName: 'Retry on voicemail',
+      description: 'Retry when answering-machine detection reaches voicemail',
+      required: false,
+      defaultValue: false,
+    }),
+    mark_complete_when_no_leads: Property.Checkbox({
+      displayName: 'Mark complete when no leads',
+      description: 'Automatically complete the campaign when no open leads remain',
+      required: false,
+      defaultValue: true,
+    }),
+  },
   async run({ auth, propsValue }) {
-    await propsValidation.validateZod(propsValue, famulorCommon.createCampaignSchema);
+    const name = propsValue.name.trim();
+    if (!name) {
+      throw new Error('Campaign name is required.');
+    }
 
-    const timezone = propsValue.timezone as string | undefined;
-    const goalVar = propsValue.goal_completion_variable as string | undefined;
-
-    return await famulorCommon.createCampaign({
-      auth: auth.secret_text,
-      name: propsValue.name as string,
-      assistant_id: propsValue.assistant_id as number,
-      timezone: timezone?.trim() ? timezone.trim() : undefined,
-      max_calls_in_parallel: propsValue.max_calls_in_parallel as number | undefined,
-      allowed_hours_start_time: propsValue.allowed_hours_start_time as string | undefined,
-      allowed_hours_end_time: propsValue.allowed_hours_end_time as string | undefined,
-      allowed_days: propsValue.allowed_days as CampaignWeekday[] | undefined,
-      max_retries: propsValue.max_retries as number | undefined,
-      retry_interval: propsValue.retry_interval as number | undefined,
-      retry_on_voicemail: propsValue.retry_on_voicemail as boolean | undefined,
-      retry_on_goal_incomplete: propsValue.retry_on_goal_incomplete as boolean | undefined,
-      goal_completion_variable: goalVar?.trim() ? goalVar.trim() : undefined,
-      mark_complete_when_no_leads: propsValue.mark_complete_when_no_leads as
-        | boolean
-        | undefined,
-      phone_number_ids: propsValue.phone_number_ids as number[] | undefined,
+    const response = await famulorRequest({
+      auth,
+      method: HttpMethod.POST,
+      path: '/campaigns',
+      body: {
+        name,
+        assistant_id: propsValue.assistant_id,
+        timezone: propsValue.timezone?.trim() || undefined,
+        concurrency: propsValue.concurrency,
+        retry_max: propsValue.retry_max,
+        retry_delay_minutes: propsValue.retry_delay_minutes,
+        retry_on_voicemail: propsValue.retry_on_voicemail,
+        mark_complete_when_no_leads: propsValue.mark_complete_when_no_leads,
+      },
     });
+
+    return flattenCampaign(response);
   },
 });
