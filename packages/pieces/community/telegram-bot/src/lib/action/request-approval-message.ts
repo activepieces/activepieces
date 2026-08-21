@@ -17,12 +17,13 @@ export const telegramRequestApprovalMessageAction = createAction({
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
-    message: Property.LongText({
+    parse_mode: telegramCommons.parseModeProp(),
+    message: Property.RichText({
       displayName: 'Message',
       description: 'The approval message to be sent',
       required: true,
+      formatProperty: 'parse_mode',
     }),
-    parse_mode: telegramCommons.parseModeProp(),
   },
   outputSchema: requestApprovalMessageActionOutputSchema,
   async run(context) {

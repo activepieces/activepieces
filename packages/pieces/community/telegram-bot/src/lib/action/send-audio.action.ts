@@ -20,6 +20,11 @@ export const telegramSendAudioAction = createAction({
   description: 'Send an audio file to a Telegram chat (.MP3/.M4A — shown in the music player)',
   audience: 'human',
   aiMetadata: { description: 'Sends an audio file (.MP3/.M4A) to a Telegram chat where it appears in the music player, supplied as a file or a previously uploaded file_id, with optional performer and track title. Use for music or audio tracks; for raw file attachments use Send Document. Not idempotent: each call sends a new message.', idempotent: false },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
+    { key: 'audio', display: 'section', label: 'Audio', icon: 'file', props: ['audio', 'audio_id', 'performer', 'title', 'duration'] },
+    { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'instructions_format', 'caption'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -34,18 +39,6 @@ export const telegramSendAudioAction = createAction({
       description: 'Reuse an audio file previously uploaded to Telegram by passing its file_id.',
       required: false,
     }),
-    caption: Property.LongText({
-      displayName: 'Caption',
-      description: 'Optional caption (0–1024 chars).',
-      required: false,
-    }),
-    format: telegramCommons.parseModeProp(),
-    instructions_format: telegramCommons.formatLinkInstructions(),
-    duration: Property.Number({
-      displayName: 'Duration',
-      description: 'Duration of the audio in seconds.',
-      required: false,
-    }),
     performer: Property.ShortText({
       displayName: 'Performer',
       description: 'Performer / artist name.',
@@ -55,6 +48,19 @@ export const telegramSendAudioAction = createAction({
       displayName: 'Track Title',
       description: 'Track title.',
       required: false,
+    }),
+    duration: Property.Number({
+      displayName: 'Duration',
+      description: 'Duration of the audio in seconds.',
+      required: false,
+    }),
+    format: telegramCommons.parseModeProp(),
+    instructions_format: telegramCommons.formatLinkInstructions(),
+    caption: Property.RichText({
+      displayName: 'Caption',
+      description: 'Optional caption (0–1024 chars).',
+      required: false,
+      formatProperty: 'format',
     }),
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),

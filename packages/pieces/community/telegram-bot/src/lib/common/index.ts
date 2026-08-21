@@ -50,11 +50,12 @@ const buildParseModeProp = () =>
     displayName: 'Format',
     description: 'How the message text should be parsed by Telegram.',
     required: false,
+    display: 'cards',
     options: {
       options: [
-        { label: 'Markdown (V2)', value: 'MarkdownV2' },
-        { label: 'HTML', value: 'HTML' },
-        { label: 'Plain Text', value: 'None' },
+        { label: 'Markdown (V2)', value: 'MarkdownV2', description: 'Use *bold*, _italic_ and other Markdown syntax', icon: 'markdown' },
+        { label: 'HTML', value: 'HTML', description: 'Use <b>, <i> and other HTML tags', icon: 'code' },
+        { label: 'Plain Text', value: 'None', description: 'No formatting', icon: 'text' },
       ],
     },
     defaultValue: 'MarkdownV2',
@@ -66,6 +67,7 @@ const buildReplyMarkupProp = () =>
     displayName: 'Reply Markup',
     description:
       'Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove reply keyboard or to force a reply from the user.',
+    advanced: true,
   });
 
 const buildDisableNotificationProp = () =>
@@ -74,6 +76,7 @@ const buildDisableNotificationProp = () =>
     description: 'Send the message silently. Users will receive a notification with no sound.',
     required: false,
     defaultValue: false,
+    advanced: true,
   });
 
 const buildProtectContentProp = () =>
@@ -82,6 +85,7 @@ const buildProtectContentProp = () =>
     description: 'Protects the contents of the sent message from forwarding and saving.',
     required: false,
     defaultValue: false,
+    advanced: true,
   });
 
 const buildReplyToMessageIdProp = () =>
@@ -89,6 +93,7 @@ const buildReplyToMessageIdProp = () =>
     displayName: 'Reply To Message Id',
     description: 'If the message is a reply, ID of the original message.',
     required: false,
+    advanced: true,
   });
 
 const resolveParseMode = (value: string | undefined): string | undefined => {

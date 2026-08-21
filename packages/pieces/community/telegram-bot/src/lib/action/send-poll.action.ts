@@ -11,6 +11,12 @@ export const telegramSendPollAction = createAction({
   description: 'Send a native Telegram poll (regular or quiz) to a chat',
   audience: 'human',
   aiMetadata: { description: 'Posts a native Telegram poll (regular or quiz) to a chat with 2–10 answer options. Use to collect votes or run a quiz; quiz polls require a correct_option_id and cannot allow multiple answers, and open_period and close_date are mutually exclusive. Not idempotent: each call creates a new poll.', idempotent: false },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
+    { key: 'poll', display: 'section', label: 'Poll', icon: 'text', props: ['question', 'options', 'type', 'is_anonymous', 'allows_multiple_answers'] },
+    { key: 'quiz', display: 'section', label: 'Quiz answer', props: ['correct_option_id', 'explanation_parse_mode', 'explanation'] },
+    { key: 'schedule', display: 'section', label: 'Schedule', icon: 'calendar', props: ['open_period', 'close_date', 'is_closed'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -35,10 +41,11 @@ export const telegramSendPollAction = createAction({
       displayName: 'Poll Type',
       description: 'Poll type. Defaults to "regular".',
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Regular', value: 'regular' },
-          { label: 'Quiz', value: 'quiz' },
+          { label: 'Regular', value: 'regular', description: 'Voters pick one or more answers', icon: 'users' },
+          { label: 'Quiz', value: 'quiz', description: 'One correct answer, with an optional explanation', icon: 'tag' },
         ],
       },
       defaultValue: 'regular',
@@ -54,12 +61,13 @@ export const telegramSendPollAction = createAction({
       description: '0-based index of the correct answer option (required for quizzes).',
       required: false,
     }),
-    explanation: Property.LongText({
+    explanation_parse_mode: telegramCommons.parseModeProp(),
+    explanation: Property.RichText({
       displayName: 'Explanation (Quiz)',
       description: 'Explanation shown when a user picks an incorrect answer (0–200 chars).',
       required: false,
+      formatProperty: 'explanation_parse_mode',
     }),
-    explanation_parse_mode: telegramCommons.parseModeProp(),
     open_period: Property.Number({
       displayName: 'Open Period (seconds)',
       description: 'Amount of time in seconds the poll will be active (5–600).',
