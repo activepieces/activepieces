@@ -39,10 +39,10 @@ export const telegramSendMediaAction = createAction({
         disabled: false,
         placeholder: 'Select media type',
         options: [
-          { label: 'Image', value: 'photo', description: 'Send a single photo', icon: 'file' },
-          { label: 'Video', value: 'video', description: 'Send a video clip', icon: 'file' },
-          { label: 'Sticker', value: 'sticker', description: 'Send a static or animated sticker', icon: 'tag' },
-          { label: 'GIF', value: 'animation', description: 'Send an animated GIF', icon: 'file' },
+          { label: 'Image', value: 'photo', icon: 'file' },
+          { label: 'Video', value: 'video', icon: 'file' },
+          { label: 'Sticker', value: 'sticker', icon: 'tag' },
+          { label: 'GIF', value: 'animation', icon: 'file' },
         ],
       },
     }),
@@ -128,11 +128,10 @@ export const telegramSendMediaAction = createAction({
     }),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
-    message: Property.RichText({
+    message: Property.LongText({
       displayName: 'Caption',
       description: 'The caption to send with the media',
       required: false,
-      formatProperty: 'format',
     }),
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),

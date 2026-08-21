@@ -50,12 +50,11 @@ const buildParseModeProp = () =>
     displayName: 'Format',
     description: 'How the message text should be parsed by Telegram.',
     required: false,
-    display: 'cards',
     options: {
       options: [
-        { label: 'Markdown (V2)', value: 'MarkdownV2', description: 'Use *bold*, _italic_ and other Markdown syntax', icon: 'markdown' },
-        { label: 'HTML', value: 'HTML', description: 'Use <b>, <i> and other HTML tags', icon: 'code' },
-        { label: 'Plain Text', value: 'None', description: 'No formatting', icon: 'text' },
+        { label: 'Markdown (V2)', value: 'MarkdownV2' },
+        { label: 'HTML', value: 'HTML' },
+        { label: 'Plain Text', value: 'None' },
       ],
     },
     defaultValue: 'MarkdownV2',

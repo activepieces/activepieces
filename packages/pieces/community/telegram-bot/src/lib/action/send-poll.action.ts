@@ -33,26 +33,24 @@ export const telegramSendPollAction = createAction({
     }),
     is_anonymous: Property.Checkbox({
       displayName: 'Anonymous',
-      description: 'True, if the poll needs to be anonymous. Default true.',
       required: false,
       defaultValue: true,
     }),
     type: Property.StaticDropdown({
       displayName: 'Poll Type',
-      description: 'Poll type. Defaults to "regular".',
       required: false,
       display: 'cards',
       options: {
         options: [
-          { label: 'Regular', value: 'regular', description: 'Voters pick one or more answers', icon: 'users' },
-          { label: 'Quiz', value: 'quiz', description: 'One correct answer, with an optional explanation', icon: 'tag' },
+          { label: 'Regular', value: 'regular', description: 'One or more answers', icon: 'users' },
+          { label: 'Quiz', value: 'quiz', description: 'One correct answer', icon: 'tag' },
         ],
       },
       defaultValue: 'regular',
     }),
     allows_multiple_answers: Property.Checkbox({
       displayName: 'Allow Multiple Answers',
-      description: 'True if the poll allows multiple answers (regular polls only).',
+      description: 'Regular polls only.',
       required: false,
       defaultValue: false,
     }),
@@ -62,11 +60,10 @@ export const telegramSendPollAction = createAction({
       required: false,
     }),
     explanation_parse_mode: telegramCommons.parseModeProp(),
-    explanation: Property.RichText({
+    explanation: Property.LongText({
       displayName: 'Explanation (Quiz)',
       description: 'Explanation shown when a user picks an incorrect answer (0–200 chars).',
       required: false,
-      formatProperty: 'explanation_parse_mode',
     }),
     open_period: Property.Number({
       displayName: 'Open Period (seconds)',
@@ -75,12 +72,11 @@ export const telegramSendPollAction = createAction({
     }),
     close_date: Property.DateTime({
       displayName: 'Close Date',
-      description: 'Point in time when the poll will be automatically closed.',
       required: false,
     }),
     is_closed: Property.Checkbox({
       displayName: 'Closed',
-      description: 'Pass True if the poll should be immediately closed. Useful for previews.',
+      description: 'Useful for previews.',
       required: false,
       defaultValue: false,
     }),

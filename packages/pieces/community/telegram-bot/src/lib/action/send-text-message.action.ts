@@ -21,11 +21,10 @@ export const telegramSendMessageAction = createAction({
     message_thread_id: telegramCommons.messageThreadIdProp(),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
-    message: Property.RichText({
+    message: Property.LongText({
       displayName: 'Message',
       description: 'The message to be sent',
       required: true,
-      formatProperty: 'format',
     }),
     web_page_preview: Property.Checkbox({
       displayName: 'Disable Web Page Preview',

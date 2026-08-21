@@ -56,11 +56,10 @@ export const telegramSendAudioAction = createAction({
     }),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
-    caption: Property.RichText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption (0–1024 chars).',
       required: false,
-      formatProperty: 'format',
     }),
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),

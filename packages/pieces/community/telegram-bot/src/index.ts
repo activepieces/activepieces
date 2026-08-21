@@ -1,4 +1,4 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { telegramAnswerCallbackQueryAction } from './lib/action/answer-callback-query.action';
@@ -59,6 +59,24 @@ export const telegramBotAuth = PieceAuth.SecretText({
   displayName: 'Bot Token',
   description: markdownDescription,
   required: true,
+  getConnectionIdentifier: async ({ auth }) => {
+    try {
+      const response = await httpClient.sendRequest<{
+        ok: boolean;
+        result?: { first_name?: string; username?: string };
+      }>({
+        method: HttpMethod.POST,
+        url: `https://api.telegram.org/bot${auth}/getMe`,
+      });
+      const bot = response.body.result;
+      if (!bot?.username) {
+        return bot?.first_name;
+      }
+      return bot.first_name ? `${bot.first_name} (@${bot.username})` : `@${bot.username}`;
+    } catch {
+      return undefined;
+    }
+  },
 });
 
 export const telegramBot = createPiece({

@@ -35,11 +35,10 @@ export const telegramEditMessageTextAction = createAction({
     }),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
-    text: Property.RichText({
+    text: Property.LongText({
       displayName: 'New Text',
       description: 'New text of the message (1–4096 chars).',
       required: true,
-      formatProperty: 'format',
     }),
     disable_web_page_preview: Property.Checkbox({
       displayName: 'Disable Web Page Preview',

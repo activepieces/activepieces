@@ -13,8 +13,8 @@ export const telegramSendLocationAction = createAction({
   aiMetadata: { description: 'Sends a point location given as latitude and longitude to a Telegram chat, optionally as a live location that updates for a set period. Use to share a place or track a moving position; both coordinates are required. Not idempotent: each call posts a new location message.', idempotent: false },
   propertyGroups: [
     { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
-    { key: 'location', display: 'section', label: 'Location', props: ['latitude', 'longitude', 'horizontal_accuracy'] },
-    { key: 'live', display: 'section', label: 'Live location', props: ['live_period', 'heading', 'proximity_alert_radius'] },
+    { key: 'location', display: 'section', label: 'Location', icon: 'location', props: ['latitude', 'longitude', 'horizontal_accuracy'] },
+    { key: 'live', display: 'section', label: 'Live location', icon: 'location', props: ['live_period', 'heading', 'proximity_alert_radius'] },
   ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),

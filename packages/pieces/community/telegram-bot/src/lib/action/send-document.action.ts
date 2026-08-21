@@ -42,11 +42,10 @@ export const telegramSendDocumentAction = createAction({
     }),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
-    caption: Property.RichText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption to display below the document (0–1024 chars).',
       required: false,
-      formatProperty: 'format',
     }),
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),
