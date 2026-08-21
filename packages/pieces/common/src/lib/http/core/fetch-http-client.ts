@@ -126,25 +126,29 @@ function serializeBody(
   const contentType = headers['Content-Type'] ?? headers['content-type'] ?? '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
-      appendFormValue(params, key, value);
+    for (const [key, value] of Object.entries(body)) {
+      appendFormValue({ params, key, value });
     }
     return { body: params.toString(), extraHeaders: {}, isStream: false };
   }
   return { body: JSON.stringify(body), extraHeaders: {}, isStream: false };
 }
 
-function appendFormValue(params: URLSearchParams, key: string, value: unknown): void {
+function appendFormValue({ params, key, value }: AppendFormValueParams): void {
   if (isNil(value)) {
     return;
   }
   if (Array.isArray(value)) {
-    value.forEach((item, index) => appendFormValue(params, isPlainObject(item) ? `${key}[${index}]` : `${key}[]`, item));
+    value.forEach((item, index) => appendFormValue({
+      params,
+      key: isPlainObject(item) ? `${key}[${index}]` : `${key}[]`,
+      value: item,
+    }));
     return;
   }
   if (isPlainObject(value)) {
     for (const [childKey, childValue] of Object.entries(value)) {
-      appendFormValue(params, `${key}[${childKey}]`, childValue);
+      appendFormValue({ params, key: `${key}[${childKey}]`, value: childValue });
     }
     return;
   }
@@ -253,6 +257,12 @@ type FetchInit = RequestInit & { duplex?: 'half', dispatcher?: unknown };
 
 export type SendRequestOptions = {
   dispatcher?: unknown;
+};
+
+type AppendFormValueParams = {
+  params: URLSearchParams;
+  key: string;
+  value: unknown;
 };
 
 export { FetchHttpClient as AxiosHttpClient };
