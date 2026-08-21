@@ -11,16 +11,28 @@ The sibling of `profile-worker-memory`. That one answers *what is holding memory
 
 ## 1. Rule out the database before you profile
 
-An app waiting on Postgres is *idle*, not busy. If containers are actually pegged, the DB is almost never the cause — but check first, because it is one query:
+An app waiting on Postgres is *idle*, not busy. If containers are actually pegged, the DB is almost never the cause — but check first. Take the shape of the connection pool, including how many sessions are blocked on the *client*:
 
 ```sql
 select count(*) total,
        count(*) filter (where state='active') active,
-       count(*) filter (where wait_event_type='Lock') waiting_on_lock
+       count(*) filter (where state='idle in transaction') idle_in_txn,
+       count(*) filter (where wait_event_type='Lock') waiting_on_lock,
+       count(*) filter (where wait_event='ClientRead') waiting_on_client
 from pg_stat_activity;
 ```
 
-The tell that the **app** is the bottleneck: sessions sitting in `wait_event=ClientRead` for seconds. That is Postgres waiting for the client to read results — the event loop is blocked, and the DB is a victim.
+Then look at the individual sessions, because the wait event per session is what actually decides this:
+
+```sql
+select now() - query_start as dur, state, wait_event_type, wait_event, left(query, 120) as q
+from pg_stat_activity
+where state <> 'idle' and query_start is not null
+order by 1 desc
+limit 15;
+```
+
+The tell that the **app** is the bottleneck: sessions sitting in `wait_event=ClientRead` for seconds at a time, with `waiting_on_lock` at zero. `ClientRead` means Postgres has done its work and is waiting for the client to read the results — the event loop is blocked, and the DB is a victim rather than a cause. A genuinely struggling database looks the opposite: non-zero lock waits, or long `dur` on sessions whose `wait_event_type` is `IO` or `LWLock`.
 
 ## 2. Find which thread is hot
 
