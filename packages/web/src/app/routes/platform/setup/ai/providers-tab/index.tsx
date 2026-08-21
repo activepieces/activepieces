@@ -56,6 +56,7 @@ export function ProvidersTab() {
   const [editing, setEditing] = useState<
     AIProviderWithoutSensitiveData | undefined
   >(undefined);
+  const [credentialsVersion, setCredentialsVersion] = useState(0);
   const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
@@ -114,7 +115,9 @@ export function ProvidersTab() {
     ]);
     if (createdId) {
       openConfig(createdId);
+      return;
     }
+    setCredentialsVersion((version) => version + 1);
   };
   const selectChatConfig = (configId: string) => {
     const row = (providers ?? []).find((config) => config.id === configId);
@@ -138,7 +141,7 @@ export function ProvidersTab() {
     return (
       <>
         <ConfigDetail
-          key={activeConfig.id}
+          key={`${activeConfig.id}:${credentialsVersion}`}
           config={activeConfig}
           info={activeInfo}
           projects={projects}

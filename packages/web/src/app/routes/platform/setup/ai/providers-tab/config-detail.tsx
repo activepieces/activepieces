@@ -67,6 +67,16 @@ export function ConfigDetail({
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
   });
+  const selectableModels = [
+    ...models,
+    ...draft.modelIds
+      .filter((modelId) => !models.some((model) => model.id === modelId))
+      .map((modelId) => ({
+        id: modelId,
+        name: modelId,
+        type: AIProviderModelType.TEXT,
+      })),
+  ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
   const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount =
@@ -220,7 +230,7 @@ export function ConfigDetail({
         ) : (
           draft.modelScope === 'selected' && (
             <ModelSelectionPanel
-              models={models}
+              models={selectableModels}
               selectedIds={draft.modelIds}
               onChange={(modelIds) => setDraft({ ...draft, modelIds })}
             />
