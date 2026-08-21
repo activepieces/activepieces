@@ -7362,7 +7362,7 @@
     },
     "packages/pieces/community/quickbooks-desktop-conductor": {
       "name": "@activepieces/piece-quickbooks-desktop-conductor",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

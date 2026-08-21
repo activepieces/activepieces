@@ -7,6 +7,7 @@ import { createInvoiceAction } from './lib/actions/create-invoice';
 import { createBillAction } from './lib/actions/create-bill';
 import { recordPaymentAction } from './lib/actions/record-payment';
 import { queryTransactionsAction } from './lib/actions/query-transactions';
+import { listItemsAction } from './lib/actions/list-items';
 import { newOrUpdatedInvoiceTrigger } from './lib/triggers/new-or-updated-invoice';
 import { newPaymentTrigger } from './lib/triggers/new-payment';
 
@@ -26,6 +27,7 @@ export const quickbooksDesktopConductor = createPiece({
     createBillAction,
     recordPaymentAction,
     queryTransactionsAction,
+    listItemsAction,
     createCustomApiCallAction({
       auth: quickbooksDesktopConductorAuth,
       baseUrl: () => 'https://api.conductor.is/v1',

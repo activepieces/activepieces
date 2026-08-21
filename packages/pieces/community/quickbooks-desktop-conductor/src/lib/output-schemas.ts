@@ -129,3 +129,22 @@ export const upsertVendorActionOutputSchema: OutputSchema = {
     { key: 'updated_at', label: 'Updated At', format: 'datetime' },
   ],
 };
+
+export const listItemsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'items',
+      label: 'Items',
+      labelKey: 'name',
+      listItems: [
+        { key: 'id', label: 'Item ID' },
+        { key: 'name', label: 'Name' },
+        { key: 'full_name', label: 'Full Name' },
+        { key: 'item_type', label: 'Item Type' },
+        { key: 'is_active', label: 'Is Active', format: 'boolean' },
+      ],
+    },
+    { key: 'count', label: 'Result Count', format: 'number' },
+    { key: 'has_more', label: 'Has More', format: 'boolean' },
+  ],
+};
