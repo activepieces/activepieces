@@ -1,0 +1,5 @@
+/* Card titles: larger than the default 16px so the install choices read as headings */
+[data-component-part="card-title"] {
+   font-size: 1.125rem !important;
+   line-height: 1.75rem !important;
+}
