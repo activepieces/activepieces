@@ -164,6 +164,8 @@ export const upsertVendorAction = createAction({
         method: HttpMethod.POST,
         resourceUri: '/quickbooks-desktop/vendors',
         body,
+        // Create branch (no id in the URL) — see the matching comment in upsert-customer.ts.
+        safeToRetry: false,
       })
     );
     return flattenVendor(createdVendor);

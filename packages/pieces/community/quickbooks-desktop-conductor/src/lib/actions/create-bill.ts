@@ -160,6 +160,8 @@ export const createBillAction = createAction({
         method: HttpMethod.POST,
         resourceUri: '/quickbooks-desktop/bills',
         body,
+        // This creates a new bill — see client.ts's `request` doc on why creates opt out of retry.
+        safeToRetry: false,
       })
     );
     return flattenBill(createdBill);

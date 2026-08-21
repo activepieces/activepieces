@@ -167,6 +167,10 @@ export const upsertCustomerAction = createAction({
         method: HttpMethod.POST,
         resourceUri: '/quickbooks-desktop/customers',
         body,
+        // This is the create branch (no id in the URL) — see client.ts's `request` doc on why
+        // creates opt out of retry. The update branch above keeps the default: a resent update
+        // either matches the same revisionNumber or gets rejected as stale, never duplicated.
+        safeToRetry: false,
       })
     );
     return flattenCustomer(createdCustomer);

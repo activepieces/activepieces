@@ -139,6 +139,9 @@ export const createInvoiceAction = createAction({
         method: HttpMethod.POST,
         resourceUri: '/quickbooks-desktop/invoices',
         body,
+        // This creates a new invoice — Conductor has no idempotency key, so a blind transport
+        // retry on a lost response would create a duplicate. See client.ts's `request` doc.
+        safeToRetry: false,
       })
     );
     return flattenInvoice(createdInvoice);

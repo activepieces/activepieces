@@ -226,6 +226,8 @@ export const recordPaymentAction = createAction({
           method: HttpMethod.POST,
           resourceUri: '/quickbooks-desktop/receive-payments',
           body,
+          // This creates a new payment — see client.ts's `request` doc on why creates opt out of retry.
+          safeToRetry: false,
         })
       );
       return flattenPayment({ payment: result, paymentType });
@@ -256,6 +258,7 @@ export const recordPaymentAction = createAction({
           method: HttpMethod.POST,
           resourceUri: '/quickbooks-desktop/bill-check-payments',
           body,
+          safeToRetry: false,
         })
       );
       return flattenPayment({ payment: result, paymentType });
@@ -276,6 +279,7 @@ export const recordPaymentAction = createAction({
         method: HttpMethod.POST,
         resourceUri: '/quickbooks-desktop/bill-credit-card-payments',
         body,
+        safeToRetry: false,
       })
     );
     return flattenPayment({ payment: result, paymentType });

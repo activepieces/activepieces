@@ -10,18 +10,31 @@ export type ConductorAuth = {
 };
 
 export const conductorClient = {
+  /**
+   * `safeToRetry` (default `true`) controls whether a transient failure (timeout, 5xx) gets
+   * `httpClient`'s automatic retry. Conductor has no idempotency-key mechanism — its
+   * `Conductor-Request-Id` is a response-only tracking id for support, not something you can send
+   * to dedupe a resent request — so retrying a create blindly can duplicate a real accounting
+   * record if the original request actually succeeded server-side but its response was lost.
+   * Reads are always safe to retry (the default). Updates-by-id are also safe by default: a
+   * resent update either lands on the same `revisionNumber` result or gets rejected as stale by
+   * `withStaleRevisionRetry`, neither of which duplicates anything. Every call that **creates** a
+   * new record (no id in the URL) must explicitly pass `safeToRetry: false`.
+   */
   async request<T>({
     auth,
     method,
     resourceUri,
     body,
     queryParams,
+    safeToRetry = true,
   }: {
     auth: ConductorAuth;
     method: HttpMethod;
     resourceUri: string;
     body?: unknown;
     queryParams?: Record<string, string>;
+    safeToRetry?: boolean;
   }): Promise<T> {
     const request: HttpRequest = {
       method,
@@ -32,7 +45,7 @@ export const conductorClient = {
       },
       body,
       queryParams,
-      retries: TRANSIENT_HTTP_RETRIES,
+      retries: safeToRetry ? TRANSIENT_HTTP_RETRIES : 0,
     };
     try {
       const response = await httpClient.sendRequest<T>(request);
