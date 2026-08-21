@@ -34,6 +34,22 @@ export const gmailNewAttachmentTrigger = createTrigger({
     description:
       'Fires when a new email carrying one or more attachments arrives, optionally narrowed by sender, recipient, subject, label, category, or file extension. Each event represents a single attachment (a multi-attachment email emits one event per attachment) along with its source message.',
   },
+  propertyGroups: [
+    {
+      key: 'people',
+      display: 'builder',
+      label: 'People',
+      icon: 'users',
+      props: ['from', 'to'],
+    },
+    {
+      key: 'filters',
+      display: 'builder',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['subject', 'label', 'category', 'filenameExtension'],
+    },
+  ],
   props: {
     from: {
       ...GmailProps.from,
@@ -52,6 +68,7 @@ export const gmailNewAttachmentTrigger = createTrigger({
       description:
         'Only trigger for emails containing this text in the subject.',
       required: false,
+      icon: 'type',
     }),
     label: GmailProps.label({
       description: 'Filter by Gmail label.',
@@ -69,6 +86,8 @@ export const gmailNewAttachmentTrigger = createTrigger({
       description:
         'Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).',
       required: false,
+      icon: 'file',
+      placeholder: 'pdf, jpg, docx',
     }),
   },
   outputSchema: newAttachmentTriggerOutputSchema,

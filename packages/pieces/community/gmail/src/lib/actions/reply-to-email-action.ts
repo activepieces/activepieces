@@ -19,6 +19,22 @@ export const gmailReplyToEmailAction = createAction({
       'Sends a reply to an existing email, preserving the thread and subject and addressing the original sender (reply) or all participants (reply all). Use this to respond within a known conversation; requires the Gmail message ID of the email being answered. Not idempotent: each call sends a new reply message into the thread.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'message',
+      display: 'section',
+      label: 'Message',
+      icon: 'reply',
+      props: ['message_id', 'reply_type'],
+    },
+    {
+      key: 'reply',
+      display: 'section',
+      label: 'Reply',
+      icon: 'text',
+      props: ['body_type', 'body'],
+    },
+  ],
   props: {
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
@@ -27,16 +43,21 @@ export const gmailReplyToEmailAction = createAction({
         'Choose whether to reply to sender only or to all recipients',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'To sender only',
+            icon: 'reply',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'To all recipients',
+            icon: 'reply-all',
           },
         ],
       },
@@ -45,16 +66,21 @@ export const gmailReplyToEmailAction = createAction({
       displayName: 'Body Type',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
             label: 'Plain text',
             value: 'plain_text',
+            description: 'Simple, unformatted text',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Rich, styled content',
+            icon: 'code',
           },
         ],
       },
@@ -68,16 +94,20 @@ export const gmailReplyToEmailAction = createAction({
       displayName: 'Sender Name',
       description: 'Optional sender name to display',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
       description: 'Optional file to attach to your reply',
       required: false,
+      advanced: true,
+      icon: 'paperclip',
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
       description: 'Custom name for the attachment',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: replyToEmailActionOutputSchema,
