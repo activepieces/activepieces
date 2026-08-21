@@ -10,6 +10,7 @@ import { discordGetChannelActionOutputSchema } from '../output-schemas';
 export const discordGetChannel = createAction({
   auth: discordAuth,
   name: 'discord_get_channel',
+  classification: 'READ',
   displayName: 'Get Channel',
   description: 'Fetch the details of a single channel.',
   audience: 'ai',

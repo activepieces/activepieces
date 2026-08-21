@@ -6,6 +6,7 @@ import { draftMessageIdDropdown } from '../common/props';
 export const sendDraftEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'sendDraftEmail',
+	classification: 'WRITE',
 	displayName: 'Send Draft Email',
 	description: 'Sends a draft email message.',
 	audience: 'both',

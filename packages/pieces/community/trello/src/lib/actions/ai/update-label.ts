@@ -13,6 +13,7 @@ import { updateLabelActionOutputSchema } from '../../output-schemas';
 export const updateLabel = createAction({
   auth: trelloAuth,
   name: 'update_label',
+  classification: 'WRITE',
   displayName: 'Update Label (Agent)',
   description: 'Rename or recolor a Trello label.',
   audience: 'ai',

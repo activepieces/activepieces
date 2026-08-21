@@ -4,6 +4,7 @@ import { PDFDocument, StandardFonts } from 'pdf-lib';
 export const textToPdf = createAction({
   audience: 'both',
   name: 'textToPdf',
+  classification: 'READ',
   displayName: 'Text to PDF',
   description: 'Convert text to PDF',
   aiMetadata: { description: 'Renders a plain-text string into a brand-new A4 PDF, word-wrapping and paginating automatically at a fixed Helvetica 12pt layout. Use it to turn text into an attachable document; use Add Text to PDF to stamp text onto an existing PDF instead, and Image to PDF when the source is an image. Text is the only input and newlines are treated as paragraph breaks; the same text always produces the same document content, so idempotent.', idempotent: true },

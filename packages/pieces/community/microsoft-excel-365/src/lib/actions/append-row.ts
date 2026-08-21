@@ -8,6 +8,7 @@ import { WorkbookRange } from '@microsoft/microsoft-graph-types';
 export const appendRowAction = createAction({
 	auth: excelAuth,
 	name: 'append_row',
+	classification: 'WRITE',
 	description: 'Append row of values to a worksheet',
 	audience: 'both',
 	aiMetadata: { description: 'Append a new row of values immediately after the last used row of a worksheet. Pick this to add data without specifying a target cell; values can be mapped by header (when the first row holds headers) or written positionally. Not idempotent: each run inserts an additional row.', idempotent: false },

@@ -6,6 +6,7 @@ import { messageIdDropdown } from '../common/props';
 export const removeLabelFromEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'removeLabelFromEmail',
+	classification: 'WRITE',
 	displayName: 'Remove Label from Email',
 	description: 'Removes a category (label) from an email message.',
 	audience: 'both',

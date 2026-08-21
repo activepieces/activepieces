@@ -15,6 +15,7 @@ const CHUNK_SIZE = 8 * 1024 * 1024;
 export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
   name: 'upload_dropbox_file',
+  classification: 'WRITE',
   description: 'Upload a file',
   audience: 'both',
   aiMetadata: { description: 'Uploads a file (provided as a URL or base64 file object) to the given Dropbox path in add mode. Files over 150 MB are uploaded in chunks automatically. Use to store binary or arbitrary file content; prefer the create-text-file action when the source is plain text. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },

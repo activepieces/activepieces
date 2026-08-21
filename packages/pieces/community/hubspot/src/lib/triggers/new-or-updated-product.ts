@@ -74,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-product',
+	classification: 'READ',
 	displayName: 'Product Recently Created or Updated',
 	description: 'Triggers when a product recently created or updated.',
 	aiMetadata: {

@@ -82,6 +82,7 @@ const polling: Polling<
 export const newCalendar = createTrigger({
   auth: googleCalendarAuth,
   name: 'new_calendar',
+  classification: 'READ',
   displayName: 'New Calendar',
   description: 'Fires when a new calendar is created or becomes accessible.',
   aiMetadata: {

@@ -13,6 +13,7 @@ import { chunk } from '@activepieces/pieces-framework';
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
     name: 'remove-associations',
+    classification: 'WRITE',
     displayName: 'Remove Associations',
     description: 'Removes associations between objects',
     audience: 'both',

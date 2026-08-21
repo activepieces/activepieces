@@ -6,6 +6,7 @@ import { driveCopyFileOutputSchema } from '../output-schemas';
 export const driveCopyFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_copy_file',
+  classification: 'WRITE',
   displayName: 'Copy File',
   description: 'Duplicate a file from Google Drive. Returns the new file ID.',
   audience: 'ai',

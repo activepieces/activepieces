@@ -13,6 +13,7 @@ import { chunk } from '@activepieces/pieces-framework';
 export const createAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-associations',
+	classification: 'WRITE',
 	displayName: 'Create Associations',
 	description: 'Creates associations between objects',
 	audience: 'both',

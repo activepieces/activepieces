@@ -7,6 +7,7 @@ import { messageIdDropdown } from '../common/props';
 export const forwardEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'forwardEmail',
+	classification: 'WRITE',
 	displayName: 'Forward Email',
 	description: 'Forwards an email message.',
 	audience: 'both',

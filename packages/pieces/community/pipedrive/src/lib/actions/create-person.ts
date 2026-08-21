@@ -14,6 +14,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const createPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-person',
+	classification: 'WRITE',
 	displayName: 'Create Person',
 	description: 'Creates a new person.',
 	audience: 'both',

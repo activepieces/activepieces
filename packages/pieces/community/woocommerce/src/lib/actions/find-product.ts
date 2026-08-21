@@ -10,6 +10,7 @@ import { wooAuth } from '../auth';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
+  classification: 'READ',
   displayName: 'Find Product',
   description: 'Find a Product',
   audience: 'both',

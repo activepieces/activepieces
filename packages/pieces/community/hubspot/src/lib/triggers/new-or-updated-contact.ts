@@ -74,6 +74,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 export const newOrUpdatedContactTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-contact',
+	classification: 'READ',
 	displayName: 'Contact Recently Created or Updated',
 	description: 'Triggers when a contact recently created or updated.',
 	aiMetadata: {

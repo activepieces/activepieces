@@ -9,6 +9,7 @@ import { formatRowActionOutputSchema } from '../output-schemas';
 export const formatRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'format-row',
+	classification: 'WRITE',
 	description: 'Format one or multiple rows in specific spreadsheet.',
 	audience: 'human',
 	aiMetadata: {

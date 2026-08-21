@@ -72,6 +72,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCompanyTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-company',
+	classification: 'READ',
 	displayName: 'New Company',
 	description: 'Trigger when a new company is added.',
 	aiMetadata: {

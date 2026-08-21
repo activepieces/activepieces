@@ -8,6 +8,7 @@ import { clickupAuth } from '../../auth';
 export const clickupGetBulkTasksTimeInStatusAi = createAction({
   auth: clickupAuth,
   name: 'clickup_get_bulk_tasks_time_in_status',
+  classification: 'READ',
   description: 'Get how long several tasks have spent in each status',
   audience: 'ai',
   aiMetadata: {
