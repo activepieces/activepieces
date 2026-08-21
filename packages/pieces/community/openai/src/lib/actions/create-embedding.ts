@@ -6,6 +6,7 @@ export const createEmbedding = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'create_embedding',
+  classification: 'READ',
   displayName: 'Create Embedding',
   description:
     'Generate a vector embedding for the supplied text. Useful for semantic search, clustering and RAG pipelines.',

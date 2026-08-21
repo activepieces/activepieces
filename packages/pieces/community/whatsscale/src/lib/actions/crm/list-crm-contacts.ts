@@ -10,6 +10,7 @@ import { whatsscaleClient } from '../../common/client';
 export const listCrmContactsAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_list_crm_contacts',
+  classification: 'SEARCH',
   displayName: 'List CRM Contacts',
   description:
     'Retrieve a paginated list of CRM contacts with optional filters',

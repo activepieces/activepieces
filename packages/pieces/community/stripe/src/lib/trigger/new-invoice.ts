@@ -21,6 +21,7 @@ import { invoiceOutputSchema } from '../output-schemas';
 export const stripeNewInvoice = createTrigger({
   auth: stripeAuth,
   name: 'new_invoice',
+  classification: 'READ',
   displayName: 'New Invoice',
   description:
     'Fires when an invoice is created. Supports filters like status, customer, subscription.',

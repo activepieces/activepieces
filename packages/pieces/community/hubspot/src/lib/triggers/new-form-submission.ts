@@ -124,6 +124,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newFormSubmissionTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-form-submission',
+	classification: 'READ',
 	displayName: 'New Form Submission',
 	description: 'Triggers when a form is submitted.',
 	aiMetadata: {

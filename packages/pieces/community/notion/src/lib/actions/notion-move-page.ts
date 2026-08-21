@@ -7,6 +7,7 @@ import { notionMovePageActionOutputSchema } from '../output-schemas';
 export const notionMovePage = createAction({
   auth: notionAuth,
   name: 'notion_move_page',
+  classification: 'WRITE',
   displayName: 'Move Page',
   description:
     'Moves a page under a different parent page (or into a database as a row).',

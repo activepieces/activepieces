@@ -15,6 +15,7 @@ import { taskEventTriggerOutputSchema } from '../output-schemas';
 export const triggerTaskTagUpdated = createTrigger({
   auth: clickupAuth,
   name: 'task_tag_updated',
+  classification: 'READ',
   displayName: 'Task Tag Updated',
   description: 'Triggered when a tag is added or removed or renamed on a task.',
   aiMetadata: {

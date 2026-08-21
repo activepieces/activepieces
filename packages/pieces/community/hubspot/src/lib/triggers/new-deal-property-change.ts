@@ -126,6 +126,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newDealPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-deal-property-change',
+	classification: 'READ',
 	displayName: 'New Deal Property Change',
 	description: 'Triggers when a specified property is updated on a deal.',
 	aiMetadata: {

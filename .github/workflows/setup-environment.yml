@@ -2,7 +2,7 @@ name: Setup Environment
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, edited, closed, labeled]
+    types: [opened, reopened, synchronize, edited, labeled]
   workflow_dispatch:
 
 concurrency:

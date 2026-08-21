@@ -13,6 +13,7 @@ import { Client } from '@hubspot/api-client';
 export const updateContactAction = createAction({
     auth: hubspotAuth,
     name: 'update-contact',
+    classification: 'WRITE',
     displayName: 'Update Contact',
     description: 'Updates a contact in Hubspot.',
     audience: 'both',

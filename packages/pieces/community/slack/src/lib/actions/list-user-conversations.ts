@@ -7,6 +7,7 @@ import { listUserConversationsActionOutputSchema } from '../output-schemas';
 export const listUserConversationsAction = createAction({
   auth: slackAuth,
   name: 'slack_list_user_conversations',
+  classification: 'SEARCH',
   displayName: 'List User Conversations',
   description: 'Lists the channels a user belongs to.',
   audience: 'ai',

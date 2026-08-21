@@ -8,6 +8,7 @@ import mime from 'mime-types';
 export const createVideoAction = createAction({
   audience: 'both',
   name: 'create_video',
+  classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Create Video',
   description: 'Generate a video from a text prompt using Google Veo models.',

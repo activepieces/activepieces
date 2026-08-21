@@ -9,6 +9,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const findLineItemAction = createAction({
     auth: hubspotAuth,
     name: 'find-line-item',
+    classification: 'SEARCH',
     displayName: 'Find Line Item',
     description: 'Finds a line item by searching.',
     audience: 'both',

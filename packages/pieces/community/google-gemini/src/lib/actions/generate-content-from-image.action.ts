@@ -15,6 +15,7 @@ export const generateContentFromImageAction = createAction({
   aiMetadata: { description: 'Sends an image together with a prompt to a vision-capable Gemini model and returns the generated text describing or answering questions about that image, covering captioning, text extraction, and visual question answering. This is the only Gemini action here that accepts image input, so pick it over generate_content whenever a picture is part of the question; the image is required and is sent inline, so keep it small. Not idempotent: each call produces a fresh completion.', idempotent: false },
   displayName: 'Generate Content from Image',
   name: 'generate_content_from_image',
+  classification: 'READ',
   auth: googleGeminiAuth,
   props: {
     prompt: Property.LongText({

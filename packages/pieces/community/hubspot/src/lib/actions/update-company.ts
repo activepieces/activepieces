@@ -13,6 +13,7 @@ import { Client } from '@hubspot/api-client';
 export const updateCompanyAction = createAction({
 	auth: hubspotAuth,
 	name: 'update-company',
+	classification: 'WRITE',
 	displayName: 'Update Company',
 	description: 'Updates a company in Hubspot.',
 	audience: 'both',

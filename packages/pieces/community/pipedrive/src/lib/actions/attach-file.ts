@@ -7,6 +7,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 export const attachFileAction = createAction({
 	auth: pipedriveAuth,
 	name: 'attach-file',
+	classification: 'WRITE',
 	displayName: 'Attach File',
 	description: 'Uploads a file and attaches it to a deal,person,organization,activity or product.',
 	audience: 'both',

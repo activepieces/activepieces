@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findUserAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-user',
+	classification: 'SEARCH',
 	displayName: 'Find User',
 	description: 'Finds a user by name or email.',
 	audience: 'both',
