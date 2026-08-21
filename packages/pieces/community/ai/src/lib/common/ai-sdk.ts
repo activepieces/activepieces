@@ -8,7 +8,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
@@ -159,6 +159,20 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenAICompatible({ name: 'mistral', baseURL: 'https://api.mistral.ai/v1', apiKey }).chatModel(modelId)
+        }
+        case AIProviderName.XAI:
+        case AIProviderName.DEEPSEEK:
+        case AIProviderName.ZAI:
+        case AIProviderName.QWEN:
+        case AIProviderName.MINIMAX:
+        case AIProviderName.MOONSHOT: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { baseUrl } = config as OpenAiCompatibleVendorConfig
+            return createOpenAICompatible({
+                name: provider,
+                baseURL: baseUrl ?? OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider],
+                apiKey,
+            }).chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
