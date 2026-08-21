@@ -125,9 +125,34 @@ function serializeBody(
   }
   const contentType = headers['Content-Type'] ?? headers['content-type'] ?? '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
-    return { body: new URLSearchParams(body as Record<string, string>).toString(), extraHeaders: {}, isStream: false };
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+      appendFormValue(params, key, value);
+    }
+    return { body: params.toString(), extraHeaders: {}, isStream: false };
   }
   return { body: JSON.stringify(body), extraHeaders: {}, isStream: false };
+}
+
+function appendFormValue(params: URLSearchParams, key: string, value: unknown): void {
+  if (isNil(value)) {
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => appendFormValue(params, isPlainObject(item) ? `${key}[${index}]` : `${key}[]`, item));
+    return;
+  }
+  if (isPlainObject(value)) {
+    for (const [childKey, childValue] of Object.entries(value)) {
+      appendFormValue(params, `${key}[${childKey}]`, childValue);
+    }
+    return;
+  }
+  params.append(key, value instanceof Date ? value.toISOString() : String(value));
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Date) && !Buffer.isBuffer(value);
 }
 
 async function parseResponseBody(response: Response, responseType: ResponseType): Promise<unknown> {
