@@ -308,6 +308,10 @@ export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, 
     [AIProviderName.MOONSHOT]: 'https://api.moonshot.ai/v1',
 }
 
+function isOpenAiCompatibleVendor(provider: AIProviderName): provider is OpenAiCompatibleVendor {
+    return provider in OPENAI_COMPATIBLE_VENDOR_BASE_URLS
+}
+
 function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
     return {
         chatModels: ALLOWED_CHAT_MODELS_BY_PROVIDER[provider],
@@ -352,6 +356,7 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    isOpenAiCompatibleVendor,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'

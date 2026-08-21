@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import {
   AIProviderModelType,
+  aiProviderUtils,
   CreateAIProviderRequest,
   OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   ProviderModelConfig,
@@ -65,6 +66,12 @@ export const UpsertProviderConfigForm = ({
     name: 'config.models',
   });
 
+  const vendorDefaultBaseUrl = aiProviderUtils.isOpenAiCompatibleVendor(
+    provider,
+  )
+    ? OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]
+    : undefined;
+
   const [showApiKeyInput, setShowApiKeyInput] = useState(!isEditMode);
   const [showBedrockAuthInputs, setShowBedrockAuthInputs] = useState(
     !isEditMode,
@@ -114,7 +121,7 @@ export const UpsertProviderConfigForm = ({
         />
       )}
 
-      {provider in OPENAI_COMPATIBLE_VENDOR_BASE_URLS && (
+      {vendorDefaultBaseUrl && (
         <FormField
           control={form.control}
           name="config.baseUrl"
@@ -126,7 +133,7 @@ export const UpsertProviderConfigForm = ({
                   {...field}
                   value={field.value ?? ''}
                   id="baseUrl"
-                  placeholder={OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]}
+                  placeholder={vendorDefaultBaseUrl}
                   disabled={isLoading}
                 />
               </FormControl>
