@@ -1,21 +1,7 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AIProviderConfig,
-  AnthropicProviderAuthConfig,
-  AnthropicProviderConfig,
-  AzureProviderAuthConfig,
-  AzureProviderConfig,
-  BedrockProviderAuthConfig,
-  BedrockProviderConfig,
-  CloudflareGatewayProviderAuthConfig,
-  CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
-  GoogleProviderAuthConfig,
-  GoogleProviderConfig,
-  OpenAICompatibleProviderAuthConfig,
-  OpenAICompatibleProviderConfig,
-  OpenAIProviderAuthConfig,
-  OpenAIProviderConfig,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +16,6 @@ import {
   ResolverResult,
   useForm,
 } from 'react-hook-form';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +44,7 @@ import {
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
+import { createFormSchema } from './provider-form-schema';
 import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 
 type UpsertAIProviderDialogProps = {
@@ -283,62 +269,4 @@ export const UpsertAIProviderDialogContent = ({
       </DialogContent>
     </>
   );
-};
-
-const OptionalAuthSchema = z
-  .object({
-    apiKey: z.string().optional(),
-    accessKeyId: z.string().optional(),
-    secretAccessKey: z.string().optional(),
-  })
-  .optional();
-
-const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
-  if (provider === AIProviderName.AZURE) {
-    return z.object({
-      displayName: z.string().min(1),
-      provider: z.literal(AIProviderName.AZURE),
-      config: AzureProviderConfig,
-      auth: editMode ? OptionalAuthSchema : AzureProviderAuthConfig,
-    });
-  }
-  if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-    return z.object({
-      displayName: z.string().min(1),
-      provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
-      config: CloudflareGatewayProviderConfig,
-      auth: editMode ? OptionalAuthSchema : CloudflareGatewayProviderAuthConfig,
-    });
-  }
-  if (provider === AIProviderName.CUSTOM) {
-    return z.object({
-      displayName: z.string().min(1),
-      provider: z.literal(AIProviderName.CUSTOM),
-      config: OpenAICompatibleProviderConfig,
-      auth: editMode ? OptionalAuthSchema : OpenAICompatibleProviderAuthConfig,
-    });
-  }
-  if (provider === AIProviderName.BEDROCK) {
-    return z.object({
-      displayName: z.string().min(1),
-      provider: z.literal(AIProviderName.BEDROCK),
-      config: BedrockProviderConfig,
-      auth: editMode ? OptionalAuthSchema : BedrockProviderAuthConfig,
-    });
-  }
-  const authSchema = z.union([
-    AnthropicProviderAuthConfig,
-    GoogleProviderAuthConfig,
-    OpenAIProviderAuthConfig,
-  ]);
-  return z.object({
-    displayName: z.string().min(1),
-    provider: z.literal(provider),
-    auth: editMode ? OptionalAuthSchema : authSchema,
-    config: z.union([
-      AnthropicProviderConfig,
-      GoogleProviderConfig,
-      OpenAIProviderConfig,
-    ]),
-  });
 };
