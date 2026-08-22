@@ -36,7 +36,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { SidebarUsageLimits, useCreditsUsage } from '@/features/billing';
+import { useCreditsUsage } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
@@ -346,7 +346,6 @@ export function ProjectDashboardSidebar({
         </SidebarContent>
         <SidebarFooter>
           {state === 'expanded' && <DelayedSidebarAiUsage />}
-          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
@@ -374,26 +373,7 @@ function DelayedSidebarAiUsage() {
       ? null
       : used + usage.creditsRemaining;
 
-  return (
-    <div>
-      <SidebarAiUsage used={used} limit={limit} />
-    </div>
-  );
-}
-
-function DelayedSidebarUsageLimits() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShow(true), 250);
-    return () => clearTimeout(timer);
-  }, []);
-
-  return show ? (
-    <div>
-      <SidebarUsageLimits />
-    </div>
-  ) : null;
+  return <SidebarAiUsage used={used} limit={limit} />;
 }
 
 function SidebarPlatformAdminLink() {
