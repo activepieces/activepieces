@@ -103,12 +103,7 @@ export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
-export const AiVendorRegion = z.enum(['international', 'china'])
-export type AiVendorRegion = z.infer<typeof AiVendorRegion>
-
-export const OpenAiCompatibleVendorConfig = z.object({
-    region: AiVendorRegion.optional(),
-})
+export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
 export const AIProviderAuthConfig = z.union([
@@ -130,13 +125,13 @@ export const AIProviderConfig = z.union([
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
     BedrockProviderConfig,
-    OpenAiCompatibleVendorConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    OpenAiCompatibleVendorConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -392,7 +387,7 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
-    OPENAI_COMPATIBLE_VENDOR_ENDPOINTS,
+    OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor, OpenAiCompatibleVendorEndpoints } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'

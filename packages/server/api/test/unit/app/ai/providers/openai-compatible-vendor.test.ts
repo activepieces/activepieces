@@ -21,7 +21,7 @@ describe('openAiCompatibleVendor', () => {
         mockRequest.mockReset()
     })
 
-    it('falls back to the vendor default base url', async () => {
+    it('requests the vendor endpoint for the provider', async () => {
         respondWith(['grok-4.1-fast'])
         const vendor = openAiCompatibleVendor({ name: 'xAI', provider: AIProviderName.XAI })
 
@@ -30,29 +30,11 @@ describe('openAiCompatibleVendor', () => {
         expect(requestedUrl()).toBe('https://api.x.ai/v1/models')
     })
 
-    it('selects the China endpoint when that region is chosen', async () => {
-        respondWith(['moonshot-v1-8k'])
-        const vendor = openAiCompatibleVendor({ name: 'Moonshot AI', provider: AIProviderName.MOONSHOT })
-
-        await vendor.listModels({ apiKey: 'k' }, { region: 'china' })
-
-        expect(requestedUrl()).toBe('https://api.moonshot.cn/v1/models')
-    })
-
-    it('falls back to the international endpoint for a vendor with no China host, rather than building an undefined url', async () => {
-        respondWith(['grok-4.1-fast'])
-        const vendor = openAiCompatibleVendor({ name: 'xAI', provider: AIProviderName.XAI })
-
-        await vendor.listModels({ apiKey: 'k' }, { region: 'china' })
-
-        expect(requestedUrl()).toBe('https://api.x.ai/v1/models')
-    })
-
     it('only ever requests a hardcoded vendor host, so no admin input can redirect it', async () => {
         respondWith(['glm-5.2'])
         const vendor = openAiCompatibleVendor({ name: 'Z.ai', provider: AIProviderName.ZAI })
 
-        await vendor.listModels({ apiKey: 'k' }, { region: 'international' })
+        await vendor.listModels({ apiKey: 'k' }, {})
 
         expect(requestedUrl()).toBe('https://api.z.ai/api/paas/v4/models')
     })

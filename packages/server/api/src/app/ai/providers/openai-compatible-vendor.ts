@@ -1,4 +1,4 @@
-import { aiProviderUtils, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
+import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
 import { safeHttp } from '@activepieces/server-utils'
 import { AIProviderModel, AIProviderModelType, BaseAIProviderAuthConfig, isNil, OpenAiCompatibleVendorConfig, tryCatch } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
@@ -9,22 +9,21 @@ export function openAiCompatibleVendor({ name, provider }: {
 }): AIProviderStrategy<BaseAIProviderAuthConfig, OpenAiCompatibleVendorConfig> {
     return {
         name,
-        async validateConnection(authConfig: BaseAIProviderAuthConfig, config: OpenAiCompatibleVendorConfig): Promise<void> {
-            await listVendorModels({ authConfig, config, provider, name })
+        async validateConnection(authConfig: BaseAIProviderAuthConfig): Promise<void> {
+            await listVendorModels({ authConfig, provider, name })
         },
-        async listModels(authConfig: BaseAIProviderAuthConfig, config: OpenAiCompatibleVendorConfig): Promise<AIProviderModel[]> {
-            return listVendorModels({ authConfig, config, provider, name })
+        async listModels(authConfig: BaseAIProviderAuthConfig): Promise<AIProviderModel[]> {
+            return listVendorModels({ authConfig, provider, name })
         },
     }
 }
 
-async function listVendorModels({ authConfig, config, provider, name }: {
+async function listVendorModels({ authConfig, provider, name }: {
     authConfig: BaseAIProviderAuthConfig
-    config: OpenAiCompatibleVendorConfig
     provider: OpenAiCompatibleVendor
     name: string
 }): Promise<AIProviderModel[]> {
-    const baseUrl = aiProviderUtils.resolveOpenAiCompatibleBaseUrl({ provider, region: config.region })
+    const baseUrl = OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]
     const { data: response, error } = await tryCatch(() => safeHttp.axios.request<OpenAiCompatibleModelsResponse>({
         method: 'GET',
         url: `${baseUrl.replace(/\/+$/, '')}/models`,
