@@ -18,6 +18,8 @@ const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
 
 const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]
 
+const COST_PRECISION = 1_000
+
 const MIN_RETAINED_RATIO = 0.8
 
 async function main(): Promise<void> {
@@ -63,8 +65,8 @@ function toMetadata(model: ModelsDevModel): ModelMetadata {
         contextTokens: model.limit?.context,
         maxOutputTokens: model.limit?.output,
         releaseDate: model.release_date,
-        inputCostPerMillionTokens: model.cost?.input,
-        outputCostPerMillionTokens: model.cost?.output,
+        inputCostPerMillionTokens: roundCost(model.cost?.input),
+        outputCostPerMillionTokens: roundCost(model.cost?.output),
         supportsToolCalling: model.tool_call,
         supportsReasoning: model.reasoning,
         supportsVision: model.modalities?.input?.includes('image'),
@@ -112,6 +114,13 @@ function readPreviousCatalog(): ModelCatalogFile | undefined {
     catch {
         return undefined
     }
+}
+
+function roundCost(cost: number | undefined): number | undefined {
+    if (cost === undefined) {
+        return undefined
+    }
+    return Math.round(cost * COST_PRECISION) / COST_PRECISION
 }
 
 function countModels(catalog: ModelCatalogFile): number {
