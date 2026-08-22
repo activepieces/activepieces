@@ -86,6 +86,7 @@ const polling: Polling<
 export const newUpdatedPersonTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_updated_person',
+  classification: 'READ',
   displayName: 'New/Updated Person',
   description: 'Triggers when a person is added or updated',
   aiMetadata: {

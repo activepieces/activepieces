@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/customer/address/updated';
 export const customerAddressUpdated = createTrigger({
   auth: bigcommerceAuth,
   name: 'customerAddressUpdated',
+  classification: 'READ',
   displayName: 'Customer Address Updated',
   description: 'Triggers when a new customer address is updated',
   aiMetadata: {

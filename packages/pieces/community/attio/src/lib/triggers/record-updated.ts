@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'updated-record-trigger';
 
 export const recordUpdatedTrigger = createTrigger({
 	name: 'record_updated',
+	classification: 'READ',
 	displayName: 'Record Updated',
 	description:
 		'Triggers when an existing record is updated (people, companies, deals, etc.).',

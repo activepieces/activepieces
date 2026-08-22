@@ -7,6 +7,7 @@ import { CommunityMemberDetails } from "../common/types";
 export const findMemberByEmail = createAction({
     auth: circleAuth,
     name: 'find_member_by_email',
+    classification: 'READ',
     displayName: 'Find Member by Email',
     description: 'Finds a community member by their email address.',
     audience: 'both',

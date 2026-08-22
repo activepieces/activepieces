@@ -6,6 +6,7 @@ import { callGraphApi, getResourceOptionsForType } from '../common';
 export const resetCustomAttributesAction = createAction({
     auth: azureAdAuth,
     name: 'reset_custom_attributes',
+    classification: 'DESTRUCTIVE',
     displayName: 'Reset Custom Attributes',
     description: 'Clears extension/custom attributes on a user or group. Provide the resource type and ID, and the extension property names to clear.',
     audience: 'both',

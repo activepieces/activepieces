@@ -9,6 +9,7 @@ import { canvaCommon, AssetResponse, fetchUserAssets } from '../common';
 export const getAsset = createAction({
   auth: canvaAuth,
   name: 'get_asset',
+  classification: 'READ',
   displayName: 'Get Asset',
   description: 'Retrieve metadata for a specific asset (image or video), including name, tags, creation date, and thumbnail.',
   audience: 'both',
