@@ -5298,6 +5298,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/magic-hour": {
+      "name": "@activepieces/piece-magic-hour",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/magical-api": {
       "name": "@activepieces/piece-magical-api",
       "version": "0.1.7",
@@ -11834,6 +11847,8 @@
     "@activepieces/piece-lusha": ["@activepieces/piece-lusha@workspace:packages/pieces/community/lusha"],
 
     "@activepieces/piece-luxury-presence": ["@activepieces/piece-luxury-presence@workspace:packages/pieces/community/luxury-presence"],
+
+    "@activepieces/piece-magic-hour": ["@activepieces/piece-magic-hour@workspace:packages/pieces/community/magic-hour"],
 
     "@activepieces/piece-magical-api": ["@activepieces/piece-magical-api@workspace:packages/pieces/community/magical-api"],
 
