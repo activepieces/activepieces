@@ -10,6 +10,7 @@ A platform-level AI chat assistant that manages Activepieces projects via natura
 The chat LLM loop runs in the **worker**, not the API. Send path: `agent-conversation-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job → worker `execute-agent-run.ts` calls `getChatConfig` RPC, assembles tools, runs `run-agent-turn.ts` (shared `streamText()` DI loop) → chunks stream back via `sendChatEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend reducer. `agent-conversation-service.ts` only does conversation CRUD + persistence.
 
 ### Entities & services
+- **ChatPersonalization** (`chat_personalization`) — first-run onboarding: role + company, background research, researched empty-state cards. See [chat personalization](./chat-personalization.md).
 - **AgentConversation** (`agent_conversation`) — per-user, per-platform, optionally per-project; `status` STREAMING/IDLE/ERROR, `activeRunId`, `messages` (ModelMessage[] JSONB), `uiMessages`, `summary`/`summarizedUpToIndex` for compaction.
 - **ChatRolloutUser** (`chat_rollout_user`) — cloud rollout cohort; `chattedAt` drives the cap.
 - **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`chatHelpers.capMemories`).
