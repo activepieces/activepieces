@@ -2393,5 +2393,15 @@
   "Activate trial key": "Activate trial key",
   "Activate Trial Key": "Activate Trial Key",
   "Enter your trial key to unlock enterprise features.": "Enter your trial key to unlock enterprise features.",
-  "Enter your trial key": "Enter your trial key"
+  "Enter your trial key": "Enter your trial key",
+  "Who am I teaming up with?": "Who am I teaming up with?",
+  "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.": "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",
+  "I'm a {role} at {company}. Show me what you could take off my plate.": "I'm a {role} at {company}. Show me what you could take off my plate.",
+  "Edit role & company": "Edit role & company",
+  "Improve suggestions": "Improve suggestions",
+  "I'm a": "I'm a",
+  "at": "at",
+  "Your role": "Your role",
+  "Your company, industry, or website": "Your company, industry, or website",
+  "Let's go": "Let's go"
 }

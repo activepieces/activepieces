@@ -1,5 +1,8 @@
 import { SeekPage } from '@activepieces/core-utils';
-import { AgentConversation } from '@activepieces/shared';
+import {
+  AgentConversation,
+  ChatPersonalizationStatus,
+} from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
@@ -20,9 +23,12 @@ import {
   useChatStoreContext,
 } from '@/features/chat/lib/chat-store-context';
 import { ChatUIMessage, chatPartUtils } from '@/features/chat/lib/chat-types';
+import { onboardingPrefillUtils } from '@/features/chat/lib/onboarding-prefill';
 import { useAgentChat } from '@/features/chat/lib/use-chat';
 import { useCreditsState } from '@/features/chat/lib/use-credits-state';
+import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -31,6 +37,9 @@ import {
   MessageSkeletons,
   SetupRequiredState,
 } from './components/chat-empty-state';
+import { OnboardingQuestionCard } from './components/onboarding-question-card';
+import { OnboardingWelcome } from './components/onboarding-welcome';
+import { PersonalizationProgress } from './components/personalization-progress';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
@@ -169,6 +178,9 @@ function ChatBoxContent({
   const showBanner = credits.creditsExhausted || credits.showLowCreditsWarning;
 
   const [hasInput, setHasInput] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
     !!initialConversationId && messages.length === 0 && !error;
@@ -178,6 +190,51 @@ function ChatBoxContent({
     !isStreaming &&
     !isAwaitingLoad &&
     !hasSentMessage;
+
+  const isFirstRun = personalization.status === ChatPersonalizationStatus.UNSET;
+  const showOnboardingCard =
+    isEmpty && !incognito && (isFirstRun || promptOpen);
+  const showPersonalizationDonut =
+    isEmpty &&
+    !incognito &&
+    !showOnboardingCard &&
+    !personalization.isResolving &&
+    personalization.status !== null &&
+    personalization.status !== ChatPersonalizationStatus.UNSET;
+  const initialAnswers = onboardingPrefillUtils.resolveInitialAnswers({
+    view: {
+      roleInput: personalization.roleInput,
+      companyInput: personalization.companyInput,
+      profile: personalization.profile,
+      prefill: personalization.prefill,
+    },
+    platformName: platform?.name,
+  });
+
+  const handleOnboardingComplete = (answers: {
+    role: string;
+    company: string;
+    companyDomain: string | null;
+  }) => {
+    setPromptOpen(false);
+    personalization.start({
+      role: answers.role,
+      company: answers.companyDomain ?? answers.company,
+    });
+    void handleSend(
+      t(
+        "I'm a {role} at {company}. Show me what you could take off my plate.",
+        { role: answers.role, company: answers.company },
+      ),
+    );
+  };
+
+  const handleOnboardingDismiss = () => {
+    setPromptOpen(false);
+    if (isFirstRun) {
+      personalization.reset();
+    }
+  };
 
   const cachedConversations = queryClient.getQueryData<
     SeekPage<AgentConversation>
@@ -189,14 +246,17 @@ function ChatBoxContent({
       <AnimatePresence mode="wait">
         {isEmpty ? (
           <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
-            {emptyState ?? (
-              <EmptyState
-                onSuggestionClick={(text) => void handleSend(text)}
-                incognito={incognito}
-                showFlowCards={!hasConversations}
-                hasInput={hasInput}
-              />
-            )}
+            {emptyState ??
+              (showOnboardingCard ? (
+                <OnboardingWelcome />
+              ) : (
+                <EmptyState
+                  onSuggestionClick={(text) => void handleSend(text)}
+                  incognito={incognito}
+                  showFlowCards={!hasConversations}
+                  hasInput={hasInput}
+                />
+              ))}
           </div>
         ) : (
           <motion.div
@@ -300,6 +360,28 @@ function ChatBoxContent({
 
       <div className="px-3 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="max-w-3xl mx-auto relative">
+          {showOnboardingCard && (
+            <div className="mb-3">
+              <OnboardingQuestionCard
+                initialRole={initialAnswers.role}
+                initialCompany={initialAnswers.company}
+                initialCompanyDomain={initialAnswers.companyDomain}
+                onComplete={handleOnboardingComplete}
+                onDismiss={handleOnboardingDismiss}
+              />
+            </div>
+          )}
+          {showPersonalizationDonut && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 mb-3 flex justify-center">
+              <div className="pointer-events-auto">
+                <PersonalizationProgress
+                  answered={Boolean(personalization.roleInput)}
+                  onClick={() => setPromptOpen(true)}
+                  onClear={personalization.reset}
+                />
+              </div>
+            </div>
+          )}
           <ChatBottomBar
             isStreaming={isStreaming}
             onSend={handleSend}
