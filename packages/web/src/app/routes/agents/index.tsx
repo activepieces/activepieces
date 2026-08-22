@@ -17,6 +17,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -142,6 +143,9 @@ const AgentsPageContent = () => {
 
   return (
     <div className="flex w-full flex-col">
+      <div className="flex shrink-0 items-center px-3 pt-3 sm:px-6">
+        <ApSidebarToggle />
+      </div>
       <section className="flex flex-col items-center gap-2 px-12 pt-8">
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
           {isBuilding

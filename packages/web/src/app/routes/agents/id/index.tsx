@@ -31,6 +31,7 @@ import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-too
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -570,6 +571,7 @@ const AgentEditorContent = () => {
       </aside>
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+          <ApSidebarToggle />
           <button
             type="button"
             aria-label={
