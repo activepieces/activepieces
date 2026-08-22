@@ -72,7 +72,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 1. Go to https://platform.minimax.io and sign in.
 2. Open **API Keys** in your account settings, create a key, and paste it below.
 
-Leave the base url empty to use the international endpoint. Set it to \`https://api.minimaxi.chat/v1\` to use the China endpoint.
+Select the **China** region if your account was created on the China platform.
 `),
   },
   {
@@ -96,7 +96,7 @@ Leave the base url empty to use the international endpoint. Set it to \`https://
 1. Go to https://platform.moonshot.ai/console/api-keys.
 2. Click **Create API key**, copy the key, and paste it below.
 
-Leave the base url empty to use the international endpoint. Set it to \`https://api.moonshot.cn/v1\` to use the China endpoint.
+Select the **China** region if your account was created on the China platform.
 `),
   },
   {
@@ -128,7 +128,7 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Go to https://bailian.console.alibabacloud.com and sign in to Alibaba Cloud Model Studio.
 2. Open **API-KEY**, create a key, and paste it below.
 
-Leave the base url empty to use the international endpoint. Set it to \`https://dashscope.aliyuncs.com/compatible-mode/v1\` if your account is in the Beijing region.
+Select the **China** region if your Model Studio account is in the Beijing region.
 `),
   },
   {
@@ -150,7 +150,7 @@ Leave the base url empty to use the international endpoint. Set it to \`https://
 1. Go to https://z.ai/manage-apikey/apikey-list and sign in.
 2. Create an API key, copy it, and paste it below.
 
-Leave the base url empty to use the international endpoint. Set it to \`https://open.bigmodel.cn/api/paas/v4\` to use the China endpoint.
+Select the **China** region if your account was created on the China platform (bigmodel.cn).
 `),
   },
   {

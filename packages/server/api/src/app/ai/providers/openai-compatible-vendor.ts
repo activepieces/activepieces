@@ -1,4 +1,4 @@
-import { OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
+import { aiProviderUtils, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
 import { safeHttp } from '@activepieces/server-utils'
 import { AIProviderModel, AIProviderModelType, BaseAIProviderAuthConfig, isNil, OpenAiCompatibleVendorConfig, tryCatch } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
@@ -24,7 +24,7 @@ async function listVendorModels({ authConfig, config, provider, name }: {
     provider: OpenAiCompatibleVendor
     name: string
 }): Promise<AIProviderModel[]> {
-    const baseUrl = config.baseUrl ?? OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]
+    const baseUrl = aiProviderUtils.resolveOpenAiCompatibleBaseUrl({ provider, region: config.region })
     const { data: response, error } = await tryCatch(() => safeHttp.axios.request<OpenAiCompatibleModelsResponse>({
         method: 'GET',
         url: `${baseUrl.replace(/\/+$/, '')}/models`,

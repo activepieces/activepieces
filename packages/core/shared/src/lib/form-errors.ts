@@ -7,5 +7,4 @@ export const formErrors = {
     invalidFileName: 'invalidFileName',
     messageRequiresContentOrFiles: 'messageRequiresContentOrFiles',
     agentConfigTooLarge: 'agentConfigTooLarge',
-    invalidBaseUrl: 'invalidBaseUrl',
 } as const

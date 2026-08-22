@@ -75,8 +75,11 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const AiVendorRegion = z.enum(['international', 'china'])
+export type AiVendorRegion = z.infer<typeof AiVendorRegion>
+
 export const OpenAiCompatibleVendorConfig = z.object({
-    baseUrl: z.optional(z.url({ error: 'invalidBaseUrl' })),
+    region: z.optional(AiVendorRegion),
 })
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -299,17 +302,41 @@ const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
     AIProviderName.MOONSHOT,
 ])
 
-export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, string> = {
-    [AIProviderName.XAI]: 'https://api.x.ai/v1',
-    [AIProviderName.DEEPSEEK]: 'https://api.deepseek.com/v1',
-    [AIProviderName.ZAI]: 'https://api.z.ai/api/paas/v4',
-    [AIProviderName.QWEN]: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-    [AIProviderName.MINIMAX]: 'https://api.minimax.io/v1',
-    [AIProviderName.MOONSHOT]: 'https://api.moonshot.ai/v1',
+export const OPENAI_COMPATIBLE_VENDOR_ENDPOINTS: Record<OpenAiCompatibleVendor, OpenAiCompatibleVendorEndpoints> = {
+    [AIProviderName.XAI]: {
+        international: 'https://api.x.ai/v1',
+    },
+    [AIProviderName.DEEPSEEK]: {
+        international: 'https://api.deepseek.com/v1',
+    },
+    [AIProviderName.ZAI]: {
+        international: 'https://api.z.ai/api/paas/v4',
+        china: 'https://open.bigmodel.cn/api/paas/v4',
+    },
+    [AIProviderName.QWEN]: {
+        international: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+        china: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    },
+    [AIProviderName.MINIMAX]: {
+        international: 'https://api.minimax.io/v1',
+        china: 'https://api.minimaxi.chat/v1',
+    },
+    [AIProviderName.MOONSHOT]: {
+        international: 'https://api.moonshot.ai/v1',
+        china: 'https://api.moonshot.cn/v1',
+    },
+}
+
+function resolveOpenAiCompatibleBaseUrl({ provider, region }: {
+    provider: OpenAiCompatibleVendor
+    region: AiVendorRegion | undefined
+}): string {
+    const endpoints = OPENAI_COMPATIBLE_VENDOR_ENDPOINTS[provider]
+    return (region === 'china' ? endpoints.china : undefined) ?? endpoints.international
 }
 
 function isOpenAiCompatibleVendor(provider: AIProviderName): provider is OpenAiCompatibleVendor {
-    return provider in OPENAI_COMPATIBLE_VENDOR_BASE_URLS
+    return provider in OPENAI_COMPATIBLE_VENDOR_ENDPOINTS
 }
 
 function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
@@ -357,9 +384,15 @@ export const aiProviderUtils = {
     getCuratedChatModels,
     isCuratedChatModelId,
     isOpenAiCompatibleVendor,
+    resolveOpenAiCompatibleBaseUrl,
 }
 
 export type AIWebSearchMode = 'native' | 'plugin'
+
+export type OpenAiCompatibleVendorEndpoints = {
+    international: string
+    china?: string
+}
 
 export type OpenAiCompatibleVendor =
     | AIProviderName.XAI

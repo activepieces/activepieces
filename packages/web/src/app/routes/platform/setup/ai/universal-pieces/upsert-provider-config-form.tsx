@@ -3,7 +3,7 @@ import {
   AIProviderModelType,
   aiProviderUtils,
   CreateAIProviderRequest,
-  OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
+  OPENAI_COMPATIBLE_VENDOR_ENDPOINTS,
   ProviderModelConfig,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -66,10 +66,8 @@ export const UpsertProviderConfigForm = ({
     name: 'config.models',
   });
 
-  const vendorDefaultBaseUrl = aiProviderUtils.isOpenAiCompatibleVendor(
-    provider,
-  )
-    ? OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider]
+  const vendorEndpoints = aiProviderUtils.isOpenAiCompatibleVendor(provider)
+    ? OPENAI_COMPATIBLE_VENDOR_ENDPOINTS[provider]
     : undefined;
 
   const [showApiKeyInput, setShowApiKeyInput] = useState(!isEditMode);
@@ -121,24 +119,34 @@ export const UpsertProviderConfigForm = ({
         />
       )}
 
-      {vendorDefaultBaseUrl && (
+      {vendorEndpoints?.china && (
         <FormField
           control={form.control}
-          name="config.baseUrl"
+          name="config.region"
           render={({ field }) => (
             <FormItem className="grid space-y-3">
-              <FormLabel htmlFor="baseUrl">{t('Base URL')}</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value ?? ''}
-                  id="baseUrl"
-                  placeholder={vendorDefaultBaseUrl}
-                  disabled={isLoading}
-                />
-              </FormControl>
+              <FormLabel htmlFor="region">{t('Region')}</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? 'international'}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger id="region">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="international">
+                    {t('International')}
+                  </SelectItem>
+                  <SelectItem value="china">{t('China')}</SelectItem>
+                </SelectContent>
+              </Select>
               <FormDescription>
-                {t('Leave empty to use the default endpoint.')}
+                {field.value === 'china'
+                  ? vendorEndpoints.china
+                  : vendorEndpoints.international}
               </FormDescription>
               <FormMessage />
             </FormItem>

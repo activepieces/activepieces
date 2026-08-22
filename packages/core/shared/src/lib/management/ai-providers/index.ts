@@ -1,6 +1,5 @@
 import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
-import { formErrors } from '../../form-errors'
 
 export enum AIProviderModelType {
     IMAGE = 'image',
@@ -104,8 +103,11 @@ export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
+export const AiVendorRegion = z.enum(['international', 'china'])
+export type AiVendorRegion = z.infer<typeof AiVendorRegion>
+
 export const OpenAiCompatibleVendorConfig = z.object({
-    baseUrl: z.url(formErrors.invalidBaseUrl).optional(),
+    region: AiVendorRegion.optional(),
 })
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -390,7 +392,7 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
-    OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
+    OPENAI_COMPATIBLE_VENDOR_ENDPOINTS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor, OpenAiCompatibleVendorEndpoints } from '@activepieces/core-piece-types'
