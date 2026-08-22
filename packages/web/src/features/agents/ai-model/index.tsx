@@ -1,4 +1,5 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { AIProviderModelMetadata } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -272,24 +273,32 @@ export function AIModelSelector({
               <CommandInput placeholder={t('Search models...')} />
               <CommandEmpty>{t('No model found.')}</CommandEmpty>
               <CommandGroup className="max-h-64 overflow-auto">
-                {models.map((model) => (
-                  <CommandItem
-                    key={model.id}
-                    value={model.id}
-                    onSelect={() => handleModelChange(model.id)}
-                    className="cursor-pointer"
-                  >
-                    <span className="flex-1">{model.name}</span>
-                    <Check
-                      className={cn(
-                        'ml-auto h-4 w-4',
-                        selectedModel === model.id
-                          ? 'opacity-100'
-                          : 'opacity-0',
+                {models.map((model) => {
+                  const metrics = formatModelMetrics(model.metadata);
+                  return (
+                    <CommandItem
+                      key={model.id}
+                      value={model.id}
+                      onSelect={() => handleModelChange(model.id)}
+                      className="cursor-pointer"
+                    >
+                      <span className="flex-1">{model.name}</span>
+                      {metrics && (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {metrics}
+                        </span>
                       )}
-                    />
-                  </CommandItem>
-                ))}
+                      <Check
+                        className={cn(
+                          'ml-auto h-4 w-4',
+                          selectedModel === model.id
+                            ? 'opacity-100'
+                            : 'opacity-0',
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </Command>
           </PopoverContent>
@@ -307,4 +316,32 @@ export function AIModelSelector({
       )}
     </div>
   );
+}
+
+function formatModelMetrics(
+  metadata: AIProviderModelMetadata | undefined,
+): string | null {
+  const metrics = [
+    formatContextTokens(metadata?.contextTokens),
+    formatCostPerMillionTokens(metadata?.outputCostPerMillionTokens),
+  ].filter((metric) => !isNil(metric));
+
+  return metrics.length > 0 ? metrics.join(' · ') : null;
+}
+
+function formatContextTokens(tokens: number | undefined): string | null {
+  if (isNil(tokens)) {
+    return null;
+  }
+  if (tokens >= 1_000_000) {
+    return `${Math.round(tokens / 1_000_000)}M`;
+  }
+  if (tokens >= 1_000) {
+    return `${Math.round(tokens / 1_000)}K`;
+  }
+  return String(tokens);
+}
+
+function formatCostPerMillionTokens(cost: number | undefined): string | null {
+  return isNil(cost) ? null : `$${cost}/M`;
 }

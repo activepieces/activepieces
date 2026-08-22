@@ -54,6 +54,7 @@ export {
   normalizeToolOutputToExecuteResponse,
   // ai providers
   AIProviderModel,
+  AIProviderModelMetadata,
   AIProviderWithoutSensitiveData,
   AzureProviderConfig,
   BaseAIProviderAuthConfig,

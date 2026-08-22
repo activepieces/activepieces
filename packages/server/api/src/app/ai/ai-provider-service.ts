@@ -1,4 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined } from '@activepieces/core-utils'
+import { modelCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderWithoutSensitiveData, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CreateAIProviderRequest, GetProviderConfigResponse, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -74,6 +75,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             id: model.id,
             name: model.name,
             type: model.type,
+            ...spreadIfDefined('metadata', modelCatalog.lookup({ provider, modelId: model.id })),
         })))
 
         return modelsCache.get(cacheKey)!

@@ -211,10 +211,23 @@ export const AIProviderWithoutSensitiveData = z.object({
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
+export const AIProviderModelMetadata = z.object({
+    contextTokens: z.number().optional(),
+    maxOutputTokens: z.number().optional(),
+    releaseDate: z.string().optional(),
+    inputCostPerMillionTokens: z.number().optional(),
+    outputCostPerMillionTokens: z.number().optional(),
+    supportsToolCalling: z.boolean().optional(),
+    supportsReasoning: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+})
+export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
+
 export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),
     type: z.nativeEnum(AIProviderModelType),
+    metadata: AIProviderModelMetadata.optional(),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 
