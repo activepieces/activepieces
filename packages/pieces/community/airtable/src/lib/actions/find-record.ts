@@ -7,6 +7,7 @@ import { findRecordActionOutputSchema } from '../output-schemas';
 export const airtableFindRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_record',
+  classification: 'SEARCH',
   displayName: 'Find Airtable Record',
   description: 'Find a record in airtable',
   audience: 'human',

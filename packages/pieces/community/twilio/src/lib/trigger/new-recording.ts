@@ -81,6 +81,7 @@ const polling: Polling<
 export const twilioNewRecording = createTrigger({
     auth: twilioAuth,
     name: 'new_recording',
+    classification: 'READ',
     displayName: 'New Recording',
     description: 'Triggers when a new call recording is completed and available.',
     aiMetadata: {

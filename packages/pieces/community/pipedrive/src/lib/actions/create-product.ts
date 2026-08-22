@@ -14,6 +14,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const createProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-product',
+	classification: 'WRITE',
 	displayName: 'Create Product',
 	description: 'Creates a new product.',
 	audience: 'both',

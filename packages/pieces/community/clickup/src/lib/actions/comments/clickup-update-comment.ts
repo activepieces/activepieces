@@ -6,6 +6,7 @@ import { clickupAuth } from '../../auth';
 export const clickupUpdateComment = createAction({
   auth: clickupAuth,
   name: 'clickup_update_comment',
+  classification: 'WRITE',
   description: 'Update an existing comment in ClickUp',
   audience: 'ai',
   aiMetadata: {

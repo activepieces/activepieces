@@ -11,6 +11,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 export const getCompanyAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-company',
+	classification: 'READ',
 	displayName: 'Get Company',
 	description: 'Gets a company.',
 	audience: 'both',

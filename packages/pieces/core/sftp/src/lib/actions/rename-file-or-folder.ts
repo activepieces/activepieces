@@ -19,6 +19,7 @@ export const renameFileOrFolderAction = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'renameFileOrFolder',
+  classification: 'WRITE',
   displayName: 'Rename File or Folder',
   description: 'Renames a file or folder at given path.',
   aiMetadata: { description: 'Moves a file or folder on the connected FTP, FTPS or SFTP server from an old remote path to a new one, which covers both renaming in place and, on most servers, relocating the entry into a different directory. Prefer it over reading and re-uploading content, and over a delete-then-create pair, when the bytes do not change. The parent directory of the new path must already exist, so create it with Create Folder first; idempotent in that the entry ends up at the new path, though a repeat call errors because the old path is gone.', idempotent: true },

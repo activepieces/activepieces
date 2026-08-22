@@ -8,6 +8,7 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToChannelAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_channel',
+  classification: 'WRITE',
   displayName: 'Send a Text to a Channel',
   description: 'Send a text message to a WhatsApp Channel',
   audience: 'both',

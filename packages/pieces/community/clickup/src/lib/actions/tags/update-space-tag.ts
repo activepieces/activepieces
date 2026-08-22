@@ -10,6 +10,7 @@ import { clickupAuth } from '../../auth';
 export const clickupUpdateSpaceTag = createAction({
   auth: clickupAuth,
   name: 'clickup_update_space_tag',
+  classification: 'WRITE',
   description: 'Rename or recolor an existing tag in a ClickUp space',
   audience: 'ai',
   aiMetadata: {

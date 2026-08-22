@@ -9,6 +9,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendVideoToChannelAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_video_to_channel',
+  classification: 'WRITE',
   displayName: 'Send a Video to a Channel',
   description: 'Broadcast a video to a WhatsApp Channel selected from the dropdown.',
   audience: 'both',

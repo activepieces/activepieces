@@ -14,6 +14,7 @@ import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 export const findDealAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-deal',
+	classification: 'SEARCH',
 	displayName: 'Find Deal',
 	description: 'Finds a deal by any field.',
 	audience: 'both',

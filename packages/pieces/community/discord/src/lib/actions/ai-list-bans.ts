@@ -15,6 +15,7 @@ interface Ban {
 export const discordListBans = createAction({
   auth: discordAuth,
   name: 'discord_list_bans',
+  classification: 'SEARCH',
   displayName: 'List Bans',
   description: 'List the banned users of a guild.',
   audience: 'ai',

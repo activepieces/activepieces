@@ -7,6 +7,7 @@ import { deleteTableColumnActionOutputSchema } from '../output-schemas';
 export const deleteTableColumn = createAction({
   auth: googleDocsAuth,
   name: 'delete_table_column',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Table Column',
   description: 'Delete a column from a table in a Google Docs document',
   audience: 'ai',

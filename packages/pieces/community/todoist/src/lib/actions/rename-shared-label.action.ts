@@ -6,6 +6,7 @@ import { todoistAuth } from '../..';
 export const todoistRenameSharedLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_rename_shared_label',
+  classification: 'WRITE',
   displayName: 'Rename Shared Label',
   description: 'Renames a shared (workspace) label across all tasks in Todoist.',
   audience: 'ai',

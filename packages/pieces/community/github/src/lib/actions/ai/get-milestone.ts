@@ -8,6 +8,7 @@ import { milestoneBodyOutputSchema } from '../../output-schemas';
 export const githubGetMilestoneAction = createAction({
   auth: githubAuth,
   name: 'get_milestone',
+  classification: 'READ',
   displayName: 'Get Milestone (Agent)',
   description: 'Fetches a single milestone by number.',
   audience: 'ai',

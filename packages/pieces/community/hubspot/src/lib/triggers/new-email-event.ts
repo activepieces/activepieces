@@ -70,6 +70,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newEmailEventTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-email-event',
+	classification: 'READ',
 	displayName: 'New Email Event',
 	description: 'Triggers when all,or specific new email event is available.',
 	aiMetadata: {

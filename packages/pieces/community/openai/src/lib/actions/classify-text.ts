@@ -6,6 +6,7 @@ export const classifyText = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'classify_text',
+  classification: 'READ',
   displayName: 'Classify Text (Moderation)',
   description:
     'Classify whether the supplied text violates OpenAI safety policies (harassment, hate, self-harm, sexual, violence, etc.).',

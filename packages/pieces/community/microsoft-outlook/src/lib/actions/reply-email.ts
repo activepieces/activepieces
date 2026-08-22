@@ -7,6 +7,7 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 export const replyEmailAction = createAction({
   auth: microsoftOutlookAuth,
   name: 'reply-email',
+  classification: 'WRITE',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
   audience: 'both',

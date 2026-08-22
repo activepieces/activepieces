@@ -6,6 +6,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const getTicketStatus = createAction({
   auth: freshdeskAuth,
   name: 'get_ticket_status',
+  classification: 'READ',
   displayName: 'Get Ticket Status',
   description:
     'Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id',

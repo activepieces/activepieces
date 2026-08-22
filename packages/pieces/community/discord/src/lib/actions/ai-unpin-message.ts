@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordUnpinMessage = createAction({
   auth: discordAuth,
   name: 'discord_unpin_message',
+  classification: 'WRITE',
   displayName: 'Unpin Message',
   description: 'Remove a pinned message from a channel.',
   audience: 'ai',

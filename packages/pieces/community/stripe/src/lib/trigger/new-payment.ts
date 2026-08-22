@@ -9,6 +9,7 @@ import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeNewPayment = createTrigger({
   auth: stripeAuth,
   name: 'new_payment',
+  classification: 'READ',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is made',
   aiMetadata: {

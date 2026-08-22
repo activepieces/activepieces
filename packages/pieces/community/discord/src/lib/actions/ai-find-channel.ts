@@ -11,6 +11,7 @@ import { discordFindChannelActionOutputSchema } from '../output-schemas';
 export const discordFindChannelAi = createAction({
   auth: discordAuth,
   name: 'discord_find_channel',
+  classification: 'SEARCH',
   displayName: 'Find Channel',
   description: 'Resolve a channel name to its ID within a guild.',
   audience: 'ai',
