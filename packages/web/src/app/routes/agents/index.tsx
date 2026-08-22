@@ -143,7 +143,7 @@ const AgentsPageContent = () => {
 
   return (
     <div className="flex w-full flex-col">
-      <div className="flex shrink-0 items-center px-3 pt-3 sm:px-6">
+      <div className="flex shrink-0 items-center gap-1 px-4 py-3">
         <ApSidebarToggle />
       </div>
       <section className="flex flex-col items-center gap-2 px-12 pt-8">
