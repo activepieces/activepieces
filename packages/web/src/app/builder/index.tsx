@@ -90,6 +90,10 @@ const BuilderPage = () => {
   const prefersSplitLayout =
     rightSidebar === RightSideBarType.PIECE_SETTINGS &&
     stepDataPanelView === 'split';
+  const isPieceSettingsFloating =
+    rightSidebar === RightSideBarType.PIECE_SETTINGS;
+  const isSidePanelCollapsed =
+    rightSidebar === RightSideBarType.NONE || isPieceSettingsFloating;
 
   const rightHandleRef = useRef<PanelImperativeHandle>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
@@ -98,7 +102,7 @@ const BuilderPage = () => {
   useLayoutEffect(() => {
     const handle = rightHandleRef.current;
     if (!handle) return;
-    if (rightSidebar === RightSideBarType.NONE) {
+    if (isSidePanelCollapsed) {
       handle.resize('0%');
       return;
     }
@@ -111,7 +115,12 @@ const BuilderPage = () => {
     handle.resize(targetSize);
     const rafId = window.requestAnimationFrame(() => handle.resize(targetSize));
     return () => window.cancelAnimationFrame(rafId);
-  }, [prefersSplitLayout, previousRightSidebar, rightSidebar]);
+  }, [
+    isSidePanelCollapsed,
+    prefersSplitLayout,
+    previousRightSidebar,
+    rightSidebar,
+  ]);
 
   useEffect(() => {
     if (!isSplitForPiece || !isDraggingHandle) return;
@@ -178,6 +187,31 @@ const BuilderPage = () => {
               position="absolute"
               show={platform?.plan.showPoweredBy}
             />
+            {isPieceSettingsFloating && selectedStep && (
+              <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-6">
+                <div
+                  className={cn(
+                    'pointer-events-auto flex min-h-0 flex-col overflow-hidden',
+                    'h-full max-h-[760px] w-full max-w-[1120px]',
+                    'rounded-xl border border-border bg-background shadow-2xl',
+                  )}
+                >
+                  <StepSettingsProvider
+                    pieceModel={pieceModel}
+                    pieceModelNotFound={pieceModelNotFound}
+                    selectedStep={selectedStep}
+                    key={constructContainerKey({
+                      flowVersionId: flowVersion.id,
+                      step: selectedStep,
+                      hasPieceModelLoaded: !!pieceModel,
+                    })}
+                  >
+                    <StepSettingsContainer />
+                  </StepSettingsProvider>
+                </div>
+              </div>
+            )}
+
             <DataSelector
               parentHeight={middlePanelSize.height}
               parentWidth={middlePanelSize.width}
@@ -186,14 +220,12 @@ const BuilderPage = () => {
         </ResizablePanel>
 
         <ResizableHandle
-          disabled={rightSidebar === RightSideBarType.NONE}
-          withHandle={rightSidebar !== RightSideBarType.NONE}
+          disabled={isSidePanelCollapsed}
+          withHandle={!isSidePanelCollapsed}
           onPointerDown={() => setIsDraggingHandle(true)}
           onPointerUp={() => setIsDraggingHandle(false)}
           onPointerCancel={() => setIsDraggingHandle(false)}
-          className={
-            rightSidebar === RightSideBarType.NONE ? 'bg-transparent' : ''
-          }
+          className={isSidePanelCollapsed ? 'bg-transparent' : ''}
         />
 
         <ResizablePanel
@@ -201,15 +233,9 @@ const BuilderPage = () => {
           id="right-sidebar"
           collapsedSize="0%"
           defaultSize="0%"
-          minSize={
-            rightSidebar === RightSideBarType.NONE ? '0%' : DEFAULT_MIN_SIZE
-          }
+          minSize={isSidePanelCollapsed ? '0%' : DEFAULT_MIN_SIZE}
           maxSize={
-            rightSidebar === RightSideBarType.NONE
-              ? '0%'
-              : prefersSplitLayout
-              ? '95%'
-              : '60%'
+            isSidePanelCollapsed ? '0%' : prefersSplitLayout ? '95%' : '60%'
           }
           className={cn('min-w-0 bg-background z-30', {
             [animateResizeClassName]: !isDraggingHandle,
@@ -221,21 +247,6 @@ const BuilderPage = () => {
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
-            {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-              selectedStep && (
-                <StepSettingsProvider
-                  pieceModel={pieceModel}
-                  pieceModelNotFound={pieceModelNotFound}
-                  selectedStep={selectedStep}
-                  key={constructContainerKey({
-                    flowVersionId: flowVersion.id,
-                    step: selectedStep,
-                    hasPieceModelLoaded: !!pieceModel,
-                  })}
-                >
-                  <StepSettingsContainer />
-                </StepSettingsProvider>
-              )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
           </div>

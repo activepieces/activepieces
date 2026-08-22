@@ -261,5 +261,14 @@
   "Fires upon a payment chargeback event": "Fires upon a payment chargeback event",
   "Payment ID": "Payment ID",
   "The payment to monitor for refunds": "The payment to monitor for refunds",
-  "The payment to monitor for chargebacks": "The payment to monitor for chargebacks"
+  "The payment to monitor for chargebacks": "The payment to monitor for chargebacks",
+  "Payment Details": "Payment Details",
+  "Redirect & Webhook": "Redirect & Webhook",
+  "Addresses": "Addresses",
+  "Options": "Options",
+  "Set up the payment information": "Set up the payment information",
+  "Configure redirect URL": "Configure redirect URL",
+  "Itemise the order (optional)": "Itemise the order (optional)",
+  "Billing and shipping details": "Billing and shipping details",
+  "Additional settings (optional)": "Additional settings (optional)"
 }

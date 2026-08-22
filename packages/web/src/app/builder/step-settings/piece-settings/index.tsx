@@ -15,6 +15,7 @@ import React from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { cn } from '@/lib/utils';
 
 import { ActionErrorHandlingForm } from '../../piece-properties/action-error-handling';
 import { AdvancedSection } from '../../piece-properties/advanced-section';
@@ -23,6 +24,8 @@ import { GenericPropertiesForm } from '../../piece-properties/generic-properties
 import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
 
+import { ConfigNavigator } from './config-navigator';
+import { configSectionUtils, type ConfigSection } from './config-sections';
 import { ConnectionSelect } from './connection-select';
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
@@ -114,18 +117,111 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
       ? (hideContinueOnFailure ? 0 : 1) + (hideRetryOnFailure ? 0 : 1)
       : 0;
 
-  const actionAdvancedCount = Object.keys(actionSplit.advanced).length;
-  const triggerAdvancedCount = Object.keys(triggerSplit.advanced).length;
+  const selectedActionOrTrigger = selectedAction ?? selectedTrigger;
+  const split = isNil(selectedAction) ? triggerSplit : actionSplit;
+  const showErrorHandling =
+    !isNil(selectedAction) && errorHandlingItemsCount > 0;
+  const hasConnection =
+    !isNil(pieceModel?.auth) && (showAuthForAction || showAuthForTrigger);
 
-  const actionAdvancedWatchPaths = Object.keys(actionSplit.advanced).map(
-    (name) => `settings.input.${name}`,
+  const sections = isNil(selectedActionOrTrigger)
+    ? []
+    : configSectionUtils.buildSections({
+        propertyGroups: selectedActionOrTrigger.propertyGroups,
+        essentialProps: split.essential,
+        advancedPropNames: Object.keys(split.advanced),
+        hasConnection,
+        hasErrorHandling: showErrorHandling,
+        hasTest: false,
+      });
+
+  const allProps = isNil(selectedAction)
+    ? triggerPropsWithoutAuth
+    : actionPropsWithoutAuth;
+  const requiredNamesByKey = Object.fromEntries(
+    sections.map((section) => [
+      section.key,
+      configSectionUtils.requiredNamesOf({ section, props: allProps }),
+    ]),
   );
-  const triggerAdvancedWatchPaths = Object.keys(triggerSplit.advanced).map(
-    (name) => `settings.input.${name}`,
-  );
+
+  const usesNavigator = configSectionUtils.usesNavigator({
+    propertyGroups: selectedActionOrTrigger?.propertyGroups,
+  });
+
+  const dynamicPropsInfo = {
+    pieceName: pieceModel?.name ?? '',
+    pieceVersion: pieceModel?.version ?? '',
+    actionOrTriggerName: selectedActionOrTrigger?.name ?? '',
+    placedInside: 'stepSettings' as const,
+    updateFormSchema,
+    updatePropertySettingsSchema,
+  };
+
+  const propsOfSection = (section: ConfigSection) =>
+    section.propNames.reduce<Record<string, PieceProperty>>((acc, name) => {
+      if (split.essential[name]) {
+        acc[name] = split.essential[name];
+      }
+      return acc;
+    }, {});
+
+  const renderSection = (section: ConfigSection) => {
+    if (section.kind === 'connection') {
+      return isNil(pieceModel) ? null : (
+        <ConnectionSelect
+          isTrigger={!isNil(selectedTrigger)}
+          piece={pieceModel}
+          disabled={props.readonly}
+          variant="hero"
+        ></ConnectionSelect>
+      );
+    }
+    if (section.kind === 'advanced') {
+      return (
+        <>
+          <GenericPropertiesForm
+            key={`${selectedActionOrTrigger?.name}-advanced`}
+            prefixValue={'settings.input'}
+            props={split.advanced}
+            propertySettings={selectedStep.settings.propertySettings}
+            disabled={props.readonly}
+            useMentionTextInput={true}
+            markdownVariables={markdownVariables}
+            dynamicPropsInfo={dynamicPropsInfo}
+          ></GenericPropertiesForm>
+          {showErrorHandling && (
+            <ActionErrorHandlingForm
+              hideContinueOnFailure={hideContinueOnFailure}
+              hideRetryOnFailure={hideRetryOnFailure}
+              disabled={props.readonly}
+            />
+          )}
+        </>
+      );
+    }
+    return (
+      <GenericPropertiesForm
+        key={`${selectedActionOrTrigger?.name}-${section.key}`}
+        prefixValue={'settings.input'}
+        props={propsOfSection(section)}
+        propertyGroups={selectedActionOrTrigger?.propertyGroups}
+        propertySettings={selectedStep.settings.propertySettings}
+        disabled={props.readonly}
+        useMentionTextInput={true}
+        markdownVariables={markdownVariables}
+        dynamicPropsInfo={dynamicPropsInfo}
+      ></GenericPropertiesForm>
+    );
+  };
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div
+      className={cn(
+        'flex flex-col gap-4 w-full',
+        usesNavigator && 'min-h-0 flex-1',
+      )}
+    >
       {!pieceModel && (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, index) => (
@@ -140,109 +236,58 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
         </div>
       )}
 
-      {pieceModel && (
+      {pieceModel && usesNavigator && (
+        <ConfigNavigator
+          sections={sections}
+          requiredNamesByKey={requiredNamesByKey}
+          prefixValue="settings.input"
+          renderSection={renderSection}
+        />
+      )}
+
+      {pieceModel && !usesNavigator && !isNil(selectedActionOrTrigger) && (
         <>
-          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
+          {hasConnection && (
             <ConnectionSelect
               isTrigger={!isNil(selectedTrigger)}
               piece={pieceModel}
               disabled={props.readonly}
             ></ConnectionSelect>
           )}
-          {selectedAction && (
-            <>
-              <GenericPropertiesForm
-                key={`${selectedAction.name}-essential`}
-                prefixValue={'settings.input'}
-                props={actionSplit.essential}
-                propertyGroups={selectedAction.propertyGroups}
-                propertySettings={selectedStep.settings.propertySettings}
-                disabled={props.readonly}
-                useMentionTextInput={true}
-                markdownVariables={markdownVariables}
-                dynamicPropsInfo={{
-                  pieceName: pieceModel.name,
-                  pieceVersion: pieceModel.version,
-                  actionOrTriggerName: selectedAction.name,
-                  placedInside: 'stepSettings',
-                  updateFormSchema,
-                  updatePropertySettingsSchema,
-                }}
-              ></GenericPropertiesForm>
-              <AdvancedSection
-                count={actionAdvancedCount}
-                watchPaths={actionAdvancedWatchPaths}
-              >
-                <GenericPropertiesForm
-                  key={`${selectedAction.name}-advanced`}
-                  prefixValue={'settings.input'}
-                  props={actionSplit.advanced}
-                  propertySettings={selectedStep.settings.propertySettings}
-                  disabled={props.readonly}
-                  useMentionTextInput={true}
-                  markdownVariables={markdownVariables}
-                  dynamicPropsInfo={{
-                    pieceName: pieceModel.name,
-                    pieceVersion: pieceModel.version,
-                    actionOrTriggerName: selectedAction.name,
-                    placedInside: 'stepSettings',
-                    updateFormSchema,
-                    updatePropertySettingsSchema,
-                  }}
-                ></GenericPropertiesForm>
-              </AdvancedSection>
-              {errorHandlingItemsCount > 0 && (
-                <ActionErrorHandlingForm
-                  hideContinueOnFailure={hideContinueOnFailure}
-                  hideRetryOnFailure={hideRetryOnFailure}
-                  disabled={props.readonly}
-                />
-              )}
-            </>
-          )}
-          {selectedTrigger && (
-            <>
-              <GenericPropertiesForm
-                key={`${selectedTrigger.name}-essential`}
-                prefixValue={'settings.input'}
-                props={triggerSplit.essential}
-                propertyGroups={selectedTrigger.propertyGroups}
-                useMentionTextInput={true}
-                propertySettings={selectedStep.settings.propertySettings}
-                disabled={props.readonly}
-                markdownVariables={markdownVariables}
-                dynamicPropsInfo={{
-                  pieceName: pieceModel.name,
-                  pieceVersion: pieceModel.version,
-                  actionOrTriggerName: selectedTrigger.name,
-                  placedInside: 'stepSettings',
-                  updateFormSchema,
-                  updatePropertySettingsSchema,
-                }}
-              ></GenericPropertiesForm>
-              <AdvancedSection
-                count={triggerAdvancedCount}
-                watchPaths={triggerAdvancedWatchPaths}
-              >
-                <GenericPropertiesForm
-                  key={`${selectedTrigger.name}-advanced`}
-                  prefixValue={'settings.input'}
-                  props={triggerSplit.advanced}
-                  useMentionTextInput={true}
-                  propertySettings={selectedStep.settings.propertySettings}
-                  disabled={props.readonly}
-                  markdownVariables={markdownVariables}
-                  dynamicPropsInfo={{
-                    pieceName: pieceModel.name,
-                    pieceVersion: pieceModel.version,
-                    actionOrTriggerName: selectedTrigger.name,
-                    placedInside: 'stepSettings',
-                    updateFormSchema,
-                    updatePropertySettingsSchema,
-                  }}
-                ></GenericPropertiesForm>
-              </AdvancedSection>
-            </>
+          <GenericPropertiesForm
+            key={`${selectedActionOrTrigger.name}-essential`}
+            prefixValue={'settings.input'}
+            props={split.essential}
+            propertyGroups={selectedActionOrTrigger.propertyGroups}
+            propertySettings={selectedStep.settings.propertySettings}
+            disabled={props.readonly}
+            useMentionTextInput={true}
+            markdownVariables={markdownVariables}
+            dynamicPropsInfo={dynamicPropsInfo}
+          ></GenericPropertiesForm>
+          <AdvancedSection
+            count={Object.keys(split.advanced).length}
+            watchPaths={Object.keys(split.advanced).map(
+              (name) => `settings.input.${name}`,
+            )}
+          >
+            <GenericPropertiesForm
+              key={`${selectedActionOrTrigger.name}-advanced`}
+              prefixValue={'settings.input'}
+              props={split.advanced}
+              propertySettings={selectedStep.settings.propertySettings}
+              disabled={props.readonly}
+              useMentionTextInput={true}
+              markdownVariables={markdownVariables}
+              dynamicPropsInfo={dynamicPropsInfo}
+            ></GenericPropertiesForm>
+          </AdvancedSection>
+          {showErrorHandling && (
+            <ActionErrorHandlingForm
+              hideContinueOnFailure={hideContinueOnFailure}
+              hideRetryOnFailure={hideRetryOnFailure}
+              disabled={props.readonly}
+            />
           )}
         </>
       )}

@@ -2393,5 +2393,17 @@
   "Activate trial key": "Activate trial key",
   "Activate Trial Key": "Activate Trial Key",
   "Enter your trial key to unlock enterprise features.": "Enter your trial key to unlock enterprise features.",
-  "Enter your trial key": "Enter your trial key"
+  "Enter your trial key": "Enter your trial key",
+  "Completed": "Completed",
+  "Has errors": "Has errors",
+  "Last section": "Last section",
+  "Configuration": "Configuration",
+  "Other Settings": "Other Settings",
+  "Connect your {piece} account": "Connect your {piece} account",
+  "Connect {piece}": "Connect {piece}",
+  "Connect your account to continue setting up this step.": "Connect your account to continue setting up this step.",
+  "You will be asked for the credentials this piece needs. Only the permissions required to run this step are requested.": "You will be asked for the credentials this piece needs. Only the permissions required to run this step are requested.",
+  "{piece} connected": "{piece} connected",
+  "This step will run using the connection below.": "This step will run using the connection below.",
+  "Change connection": "Change connection"
 }

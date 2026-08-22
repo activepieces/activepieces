@@ -364,7 +364,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-0 mr-5 mb-5 right-0 z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-0 mr-5 mb-5 right-0 z-[60] transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },

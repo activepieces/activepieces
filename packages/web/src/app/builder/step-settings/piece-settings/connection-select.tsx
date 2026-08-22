@@ -26,6 +26,11 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
+import { ConnectAccountHero } from '@/app/builder/step-settings/piece-settings/connect-account-hero';
+import {
+  ConnectedAccountPanel,
+  type ConnectionStatusTone,
+} from '@/app/builder/step-settings/piece-settings/connected-account-panel';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -59,6 +64,7 @@ import { cn } from '@/lib/utils';
 function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
+  const [showConnectionPicker, setShowConnectionPicker] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   //in case of reconnection we need to use the piece version from the connection
@@ -108,6 +114,21 @@ function ConnectionSelect(params: ConnectionSelectProps) {
     : null;
   const canShowConnectionStatus =
     !!selectedConnection && (!isSelectedConnectionGlobal || isPlatformAdmin);
+  const showConnectHero =
+    params.variant === 'hero' &&
+    isNil(selectedConnection) &&
+    !dynamicInputModeToggled;
+  const showConnectedPanel =
+    params.variant === 'hero' &&
+    !isNil(selectedConnection) &&
+    !dynamicInputModeToggled &&
+    !showConnectionPicker;
+  const statusTone: ConnectionStatusTone =
+    selectedConnection?.status === AppConnectionStatus.ACTIVE
+      ? 'success'
+      : selectedConnection?.status === AppConnectionStatus.ERROR
+      ? 'destructive'
+      : 'muted';
   const openReconnectDialog = () => {
     setReconnectConnection(selectedConnection ?? null);
     setSelectConnectionOpen(false);
@@ -143,7 +164,72 @@ function ConnectionSelect(params: ConnectionSelectProps) {
           )}
           {!isLoadingConnections &&
             pieceWithCorrectVersion &&
-            params.piece.auth && (
+            params.piece.auth &&
+            showConnectHero && (
+              <>
+                <CreateOrEditConnectionDialog
+                  reconnectConnection={null}
+                  isGlobalConnection={false}
+                  piece={pieceWithCorrectVersion}
+                  key={`ConnectHeroDialog-open-${connectionDialogOpen}`}
+                  open={connectionDialogOpen}
+                  setOpen={(open, connection) => {
+                    setConnectionDialogOpen(open);
+                    if (connection) {
+                      refetch();
+                      field.onChange(addBrackets(connection.externalId));
+                    }
+                  }}
+                ></CreateOrEditConnectionDialog>
+                <ConnectAccountHero
+                  displayName={params.piece.displayName}
+                  logoUrl={params.piece.logoUrl}
+                  disabled={params.disabled}
+                  onConnect={() => setConnectionDialogOpen(true)}
+                />
+              </>
+            )}
+          {!isLoadingConnections &&
+            pieceWithCorrectVersion &&
+            params.piece.auth &&
+            showConnectedPanel &&
+            selectedConnection && (
+              <>
+                <CreateOrEditConnectionDialog
+                  reconnectConnection={reconnectConnection}
+                  isGlobalConnection={isReconnectingGlobalConnection}
+                  piece={pieceWithCorrectVersion}
+                  key={`ConnectedPanelDialog-open-${connectionDialogOpen}`}
+                  open={connectionDialogOpen}
+                  setOpen={(open, connection) => {
+                    setConnectionDialogOpen(open);
+                    if (connection) {
+                      refetch();
+                      field.onChange(addBrackets(connection.externalId));
+                    }
+                  }}
+                ></CreateOrEditConnectionDialog>
+                <ConnectedAccountPanel
+                  pieceDisplayName={params.piece.displayName}
+                  logoUrl={params.piece.logoUrl}
+                  connectionName={selectedConnection.displayName}
+                  statusLabel={statusDisplay?.label ?? ''}
+                  statusTone={statusTone}
+                  scopeLabel={
+                    isSelectedConnectionGlobal ? t('Global') : t('Project')
+                  }
+                  disabled={params.disabled}
+                  onChangeConnection={() => setShowConnectionPicker(true)}
+                  onReconnect={openReconnectDialog}
+                  onDisconnect={() => field.onChange(undefined)}
+                />
+              </>
+            )}
+          {!isLoadingConnections &&
+            pieceWithCorrectVersion &&
+            params.piece.auth &&
+            !showConnectHero &&
+            !showConnectedPanel && (
               <AutoFormFieldWrapper
                 property={params.piece.auth}
                 propertyName="auth"
@@ -364,6 +450,7 @@ type ConnectionSelectProps = {
   disabled: boolean;
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   isTrigger: boolean;
+  variant?: 'inline' | 'hero';
 };
 function addBrackets(str: string) {
   return `{{connections['${str}']}}`;

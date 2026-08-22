@@ -66,7 +66,7 @@ export const READ_ONLY_CLASSIFICATIONS: readonly ActionClassification[] = ['READ
 export const isReadOnlyClassification = (classification: ActionClassification | undefined): boolean =>
   classification !== undefined && READ_ONLY_CLASSIFICATIONS.includes(classification)
 
-export const PropertyGroupDisplay = z.enum(['tabs', 'section', 'summary', 'builder', 'footer'])
+export const PropertyGroupDisplay = z.enum(['tabs', 'page', 'section', 'summary', 'builder', 'footer'])
 export type PropertyGroupDisplay = z.infer<typeof PropertyGroupDisplay>
 
 export const PropertyGroup = z.object({

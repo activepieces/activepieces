@@ -41,6 +41,7 @@ import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { configSectionUtils } from './piece-settings/config-sections';
 import { RouterSettings } from './router-settings';
 import { StepNavigationButtons } from './step-navigation-buttons';
 import { useStepSettingsContext } from './step-settings-context';
@@ -172,64 +173,86 @@ const StepSettingsContainer = () => {
 
   const showTestPanel = showGenerateSampleData || showStepInputOutFromRun;
 
-  const settingsForm = (
-    <ScrollArea className="h-full">
-      <div
-        className={cn(
-          'flex flex-col px-4 pb-6 pt-3',
-          GAP_SIZE_FOR_STEP_SETTINGS,
+  const pieceActionOrTriggerName =
+    'actionName' in modifiedStep.settings
+      ? modifiedStep.settings.actionName
+      : 'triggerName' in modifiedStep.settings
+      ? modifiedStep.settings.triggerName
+      : undefined;
+  const pieceUsesNavigator =
+    !runAgentStep &&
+    !isNil(pieceActionOrTriggerName) &&
+    configSectionUtils.usesNavigator({
+      propertyGroups:
+        pieceModel?.actions[pieceActionOrTriggerName]?.propertyGroups ??
+        pieceModel?.triggers[pieceActionOrTriggerName]?.propertyGroups,
+    });
+
+  const settingsBody = (
+    <div
+      className={cn(
+        'flex flex-col px-4 pb-6 pt-3',
+        GAP_SIZE_FOR_STEP_SETTINGS,
+        pieceUsesNavigator ? 'min-h-0 flex-1' : 'min-h-full',
+      )}
+    >
+      {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
+        <LoopsSettings readonly={readonly}></LoopsSettings>
+      )}
+      {modifiedStep.type === FlowActionType.CODE && (
+        <CodeSettings readonly={readonly}></CodeSettings>
+      )}
+      {modifiedStep.type === FlowActionType.PIECE &&
+        runAgentStep &&
+        modifiedStep && (
+          <AgentSettings
+            step={modifiedStep}
+            flowId={flowVersion.flowId}
+            readonly={readonly}
+          />
         )}
-      >
-        {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
-          <LoopsSettings readonly={readonly}></LoopsSettings>
-        )}
-        {modifiedStep.type === FlowActionType.CODE && (
-          <CodeSettings readonly={readonly}></CodeSettings>
-        )}
-        {modifiedStep.type === FlowActionType.PIECE &&
-          runAgentStep &&
-          modifiedStep && (
-            <AgentSettings
-              step={modifiedStep}
-              flowId={flowVersion.flowId}
-              readonly={readonly}
-            />
-          )}
-        {modifiedStep.type === FlowActionType.PIECE &&
-          !runAgentStep &&
-          modifiedStep && (
-            <PieceSettings
-              step={modifiedStep}
-              flowId={flowVersion.flowId}
-              readonly={readonly}
-            ></PieceSettings>
-          )}
-        {modifiedStep.type === FlowActionType.ROUTER && modifiedStep && (
-          <RouterSettings readonly={readonly}></RouterSettings>
-        )}
-        {modifiedStep.type === FlowTriggerType.PIECE && modifiedStep && (
+      {modifiedStep.type === FlowActionType.PIECE &&
+        !runAgentStep &&
+        modifiedStep && (
           <PieceSettings
             step={modifiedStep}
             flowId={flowVersion.flowId}
             readonly={readonly}
           ></PieceSettings>
         )}
-        {showActionErrorHandlingForm && (
-          <ActionErrorHandlingForm
-            hideContinueOnFailure={
-              stepMetadata.type === FlowActionType.PIECE
-                ? stepMetadata.errorHandlingOptions?.continueOnFailure?.hide
-                : false
-            }
-            disabled={readonly}
-            hideRetryOnFailure={
-              stepMetadata.type === FlowActionType.PIECE
-                ? stepMetadata.errorHandlingOptions?.retryOnFailure?.hide
-                : false
-            }
-          ></ActionErrorHandlingForm>
-        )}
-      </div>
+      {modifiedStep.type === FlowActionType.ROUTER && modifiedStep && (
+        <RouterSettings readonly={readonly}></RouterSettings>
+      )}
+      {modifiedStep.type === FlowTriggerType.PIECE && modifiedStep && (
+        <PieceSettings
+          step={modifiedStep}
+          flowId={flowVersion.flowId}
+          readonly={readonly}
+        ></PieceSettings>
+      )}
+      {showActionErrorHandlingForm && (
+        <ActionErrorHandlingForm
+          hideContinueOnFailure={
+            stepMetadata.type === FlowActionType.PIECE
+              ? stepMetadata.errorHandlingOptions?.continueOnFailure?.hide
+              : false
+          }
+          disabled={readonly}
+          hideRetryOnFailure={
+            stepMetadata.type === FlowActionType.PIECE
+              ? stepMetadata.errorHandlingOptions?.retryOnFailure?.hide
+              : false
+          }
+        ></ActionErrorHandlingForm>
+      )}
+    </div>
+  );
+
+  const settingsForm = pieceUsesNavigator ? (
+    <div className="flex h-full min-h-0 flex-col">{settingsBody}</div>
+  ) : (
+    <ScrollArea className="h-full" viewPortClassName="[&>div]:min-h-full">
+      {settingsBody}
     </ScrollArea>
   );
 
