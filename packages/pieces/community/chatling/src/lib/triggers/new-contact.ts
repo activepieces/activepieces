@@ -60,6 +60,7 @@ const polling: Polling<
 export const newContact = createTrigger({
   auth: chatlingAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact/Lead',
   description: 'Triggers when a new contact or lead is collected by the chatbot.',
   aiMetadata: {
