@@ -39,6 +39,13 @@ data actually moved. `modelCatalog.lookup({ provider, modelId })` is the single 
 happens once, in the `modelsCache` re-map inside `aiProviderService.listModels`, so the web picker, the
 AI piece dropdown and `ap_list_ai_models` all get it from the same place. See decision 000030.
 
+Prices are rounded to three decimals in the generator, both to kill float artefacts
+(`0.049999999999999996`) and because a handful of OpenRouter models — `deepseek/deepseek-v4-flash`
+among them — carry continuously floating five-decimal prices. Rounding does not stop those from
+repricing, so expect the weekly refresh to open a small PR most weeks rather than only on real
+model launches. Three decimals is below anything the UI renders and preserves every real price;
+the cheapest in the set is 0.01.
+
 ### Gotchas
 
 - ACTIVEPIECES auto-provision needs `OPENROUTER_PROVISION_KEY` env var set AND `aiCreditsEnabled` true.
