@@ -262,10 +262,14 @@ export const InstructAgentMemoryRequest = z.object({
 })
 export type InstructAgentMemoryRequest = z.infer<typeof InstructAgentMemoryRequest>
 
+export const AgentMessageSource = z.enum(['onboarding'])
+export type AgentMessageSource = z.infer<typeof AgentMessageSource>
+
 export const SendAgentMessageRequest = z.object({
     content: z.string().max(MAX_AGENT_TEXT_LENGTH),
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
+    messageSource: AgentMessageSource.optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },

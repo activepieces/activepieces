@@ -182,6 +182,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 modelName: isNil(agent) ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
                 files,
                 ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isNil(agentConfig) ? {} : {
                     tools: agentConfig.tools,
                     structuredOutput: agentConfig.structuredOutput,

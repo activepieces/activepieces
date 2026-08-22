@@ -330,6 +330,7 @@ export const ExecuteAgentRunJobData = z.object({
     userId: z.string(),
     userMessage: z.string(),
     source: z.enum(AgentRunSource).optional(),
+    messageSource: z.enum(['onboarding']).optional(),
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentTool).optional(),

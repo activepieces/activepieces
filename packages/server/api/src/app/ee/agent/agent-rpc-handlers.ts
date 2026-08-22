@@ -185,6 +185,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             templates: promptOverride,
         }) + agentSurfaceNotes.buildRunNotes({
             source: conversation.source,
+            ...spreadIfDefined('messageSource', input.messageSource),
             currentDate: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
             searchAvailable: webSearchAvailable,
             fetchAvailable,

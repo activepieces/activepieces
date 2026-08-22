@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   AgentConversation,
+  AgentMessageSource,
   ChatPersonalizationStatus,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -147,10 +148,14 @@ function ChatBoxContent({
   const [hasSentMessage, setHasSentMessage] = useState(false);
 
   const handleSend = useCallback(
-    async (text: string, files?: File[]) => {
+    async (
+      text: string,
+      files?: File[],
+      options?: { messageSource?: AgentMessageSource },
+    ) => {
       if (!text.trim() && (!files || files.length === 0)) return;
       setHasSentMessage(true);
-      await sendMessage(text.trim(), files);
+      await sendMessage(text.trim(), files, options);
     },
     [sendMessage],
   );
@@ -226,6 +231,8 @@ function ChatBoxContent({
         "I'm a {role} at {company}. Show me what you could take off my plate.",
         { role: answers.role, company: answers.company },
       ),
+      undefined,
+      { messageSource: 'onboarding' },
     );
   };
 

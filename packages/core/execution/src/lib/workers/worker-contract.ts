@@ -119,6 +119,7 @@ export type GetAgentConfigRequest = {
     platformId: string
     userId: string
     source?: AgentRunSource
+    messageSource?: 'onboarding'
     projectId?: string | null
     userMessage: string
     modelName: string | null
