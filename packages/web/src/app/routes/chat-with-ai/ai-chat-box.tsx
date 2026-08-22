@@ -30,6 +30,7 @@ import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -389,30 +390,42 @@ function ChatBoxContent({
               </div>
             </div>
           )}
-          <ChatBottomBar
-            isStreaming={isStreaming}
-            onSend={handleSend}
-            onStop={cancelStream}
-            onInputChange={setHasInput}
-            selectedModel={modelName}
-            onModelChange={setModelName}
-            lastAssistantMessage={lastAssistantMessage}
-            lastMessageId={lastMessage?.id}
-            hideModelSelector={agentId !== undefined}
-            placeholder={
-              placeholder ??
-              (isEmpty ? t('Ask, build, or run a task...') : undefined)
-            }
-            banner={
-              showBanner && !hasBlockingCard ? (
-                <ChatCreditsAlert
-                  creditsExhausted={credits.creditsExhausted}
-                  creditsPercentUsed={credits.creditsPercentUsed}
-                  onDismiss={credits.dismissCreditsWarning}
-                />
-              ) : null
-            }
-          />
+          <div
+            className={cn(
+              'transition-opacity duration-300',
+              showOnboardingCard &&
+                'opacity-60 hover:opacity-100 focus-within:opacity-100',
+            )}
+          >
+            <ChatBottomBar
+              isStreaming={isStreaming}
+              onSend={handleSend}
+              onStop={cancelStream}
+              onInputChange={setHasInput}
+              selectedModel={modelName}
+              onModelChange={setModelName}
+              lastAssistantMessage={lastAssistantMessage}
+              lastMessageId={lastMessage?.id}
+              hideModelSelector={agentId !== undefined}
+              placeholder={
+                placeholder ??
+                (showOnboardingCard
+                  ? t('Or tell me the work you want gone')
+                  : isEmpty
+                  ? t('Ask, build, or run a task...')
+                  : undefined)
+              }
+              banner={
+                showBanner && !hasBlockingCard ? (
+                  <ChatCreditsAlert
+                    creditsExhausted={credits.creditsExhausted}
+                    creditsPercentUsed={credits.creditsPercentUsed}
+                    onDismiss={credits.dismissCreditsWarning}
+                  />
+                ) : null
+              }
+            />
+          </div>
           {footerNote !== undefined && (
             <p className="pt-[9px] text-center text-[11.5px] leading-[14px] text-muted-foreground">
               {footerNote}
