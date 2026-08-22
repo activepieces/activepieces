@@ -385,7 +385,7 @@ function SidebarPlatformAdminLink() {
   }
 
   return (
-    <SidebarMenu>
+    <SidebarMenu className="group-data-[collapsible=icon]:items-center">
       <ApSidebarItem
         type="link"
         to="/platform/projects"
