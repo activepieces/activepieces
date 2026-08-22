@@ -1,0 +1,8 @@
+{
+  "Sync invoices, bills, customers, vendors and payments with QuickBooks Desktop through the Conductor API bridge.": "Sync invoices, bills, customers, vendors and payments with QuickBooks Desktop through the Conductor API bridge.",
+  "Connection": "Connection",
+  "Conductor Secret Key": "Conductor Secret Key",
+  "From your Conductor dashboard, Settings → API Keys.": "From your Conductor dashboard, Settings → API Keys.",
+  "Conductor End-User ID": "Conductor End-User ID",
+  "The end-user ID for this QuickBooks Desktop company file (starts with end_usr_).": "The end-user ID for this QuickBooks Desktop company file (starts with end_usr_)."
+}
