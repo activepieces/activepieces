@@ -45,21 +45,6 @@ const RESEARCH_RUNS_PER_PLATFORM_PER_DAY = 5
 const RATE_LIMIT_TTL_SECONDS = 24 * 60 * 60
 const PREFILL_TTL_SECONDS = 7 * 24 * 60 * 60
 
-const EMPTY_CONFIG: Omit<PersonalizationConfigResponse, 'claimed'> = {
-    provider: null,
-    auth: null,
-    providerConfig: {},
-    modelId: null,
-    fastModelId: null,
-    user: null,
-    platformName: null,
-    website: null,
-    companyText: null,
-    role: null,
-    companyProfile: null,
-    webSearch: null,
-}
-
 export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
     async upsert({ platformId, userId, website, role: roleInput, personalize }: UpsertParams): Promise<ChatPersonalizationView> {
@@ -251,7 +236,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         const claimed = await claimForResearch({ platformId, userId, scope })
         if (!claimed) {
             log.info({ platform: { id: platformId }, user: { id: userId }, scope }, '[chatPersonalization] Claim lost, duplicate research job exits')
-            return { ...EMPTY_CONFIG, claimed: false }
+            return { claimed: false }
         }
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
             agentHelpers.resolveChatProvider({ platformId, log }),

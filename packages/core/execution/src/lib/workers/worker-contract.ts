@@ -307,21 +307,23 @@ export type GetPersonalizationConfigRequest = {
     scope: PersonalizationScope
 }
 
-export type PersonalizationConfigResponse = {
-    claimed: boolean
-    provider: string | null
-    auth: Record<string, unknown> | null
-    providerConfig: Record<string, unknown>
-    modelId: string | null
-    fastModelId: string | null
-    user: { firstName: string, lastName: string, email: string } | null
-    platformName: string | null
-    website: string | null
-    companyText: string | null
-    role: string | null
-    companyProfile: unknown
-    webSearch: ResolvedAiToolConfig | null
-}
+export type PersonalizationConfigResponse =
+    | { claimed: false }
+    | {
+        claimed: true
+        provider: string
+        auth: Record<string, unknown>
+        providerConfig: Record<string, unknown>
+        modelId: string
+        fastModelId: string
+        user: { firstName: string, lastName: string, email: string }
+        platformName: string
+        website: string | null
+        companyText: string | null
+        role: string | null
+        companyProfile: Record<string, unknown> | null
+        webSearch: ResolvedAiToolConfig | null
+    }
 
 export type GetPersonalizationPrefillConfigRequest = {
     platformId: string
