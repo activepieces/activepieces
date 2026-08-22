@@ -7,6 +7,7 @@ export { CreditsUsageAlert } from './components/credits-usage-alert';
 export { ChatCreditsAlert } from './components/chat-credits-alert';
 export { CreditsActionButton } from './components/credits-action-button';
 export { SidebarUsageLimits } from './components/sidebar-usage-limits';
+export { useCreditsUsage } from './hooks/use-credits-usage';
 export { CreditsInfoDialog } from './components/feature-usage/credits-info-dialog';
 export { AutoRechargeCard } from './components/feature-usage/auto-recharge-card';
 export { AutoRechargeConfigDialog } from './components/feature-usage/auto-recharge-config-dialog';

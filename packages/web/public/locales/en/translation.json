@@ -2404,5 +2404,7 @@
   "Your role": "Your role",
   "Your company, industry, or website": "Your company, industry, or website",
   "Let's go": "Let's go",
-  "Or tell me the work you want gone": "Or tell me the work you want gone"
+  "Or tell me the work you want gone": "Or tell me the work you want gone",
+  "AI credits used by this project across chat, agents, and AI steps.": "AI credits used by this project across chat, agents, and AI steps.",
+  "AI limit reached — further AI requests are blocked.": "AI limit reached — further AI requests are blocked."
 }
