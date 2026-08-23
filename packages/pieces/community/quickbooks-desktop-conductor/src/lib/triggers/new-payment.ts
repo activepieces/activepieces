@@ -34,7 +34,7 @@ export const newPaymentTrigger = createTrigger({
   displayName: 'New Payment',
   description: 'Fires once when a new customer payment is recorded (Accounts Receivable) in QuickBooks Desktop — a "Receive Payment" transaction, e.g. from the Record Payment action\'s Customer Payment mode. Create-only: editing an existing payment does not re-fire it. Vendor bill payments (Accounts Payable) do not fire this trigger.',
   aiMetadata: {
-    description: 'Fires when a new customer payment is recorded in QuickBooks Desktop (Accounts Receivable — "Receive Payment"), emitting the payment record. Create-only — later edits to that same payment do not fire it again. Scoped to customer payments only — vendor bill payments (Accounts Payable) are not covered. Polls every ~5 minutes; a QuickBooks Desktop machine that is off or asleep at poll time simply yields zero results that cycle, not a failure.',
+    description: 'Fires when a new customer payment is recorded in QuickBooks Desktop (Accounts Receivable — "Receive Payment"), emitting the payment record. Create-only — later edits to that same payment do not fire it again. Scoped to customer payments only — vendor bill payments (Accounts Payable) are not covered. Polls every ~5 minutes; if the QuickBooks Desktop machine is off or asleep at poll time, the poll fails visibly (Conductor returns a connection error) rather than silently returning zero results.',
   },
   props: {},
   type: TriggerStrategy.POLLING,

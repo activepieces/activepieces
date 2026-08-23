@@ -28,7 +28,7 @@ export const newOrUpdatedInvoiceTrigger = createTrigger({
   displayName: 'New or Updated Invoice',
   description: 'Fires when an invoice is created or updated (e.g. line items, balance, or payment status changed) in QuickBooks Desktop. One event per invoice change, not create-only.',
   aiMetadata: {
-    description: 'Fires when an invoice is created or changed in QuickBooks Desktop, emitting the current invoice record. Fires on every update to a matching invoice, not just its creation — a flow reacting only to brand-new invoices should check whether created_at and updated_at are close together. Polls every ~5 minutes; a QuickBooks Desktop machine that is off or asleep at poll time simply yields zero results that cycle, not a failure.',
+    description: 'Fires when an invoice is created or changed in QuickBooks Desktop, emitting the current invoice record. Fires on every update to a matching invoice, not just its creation — a flow reacting only to brand-new invoices should check whether created_at and updated_at are close together. Polls every ~5 minutes; if the QuickBooks Desktop machine is off or asleep at poll time, the poll fails visibly (Conductor returns a connection error) rather than silently returning zero results.',
   },
   props: {},
   type: TriggerStrategy.POLLING,
