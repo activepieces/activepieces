@@ -48,7 +48,7 @@ export function SidebarUser() {
   };
 
   return (
-    <SidebarMenu className="group-data-[collapsible=icon]:items-center">
+    <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu modal>
           <DropdownMenuTrigger asChild className="w-full">

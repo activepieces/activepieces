@@ -232,7 +232,7 @@ export function ProjectDashboardSidebar({
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
-            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+            <div className="mb-1">
               <GlobalSearchCommand />
             </div>
             <SidebarMenu>
@@ -385,7 +385,7 @@ function SidebarPlatformAdminLink() {
   }
 
   return (
-    <SidebarMenu className="group-data-[collapsible=icon]:items-center">
+    <SidebarMenu>
       <ApSidebarItem
         type="link"
         to="/platform/projects"
