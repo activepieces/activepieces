@@ -144,6 +144,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return { provider: chatProvider.provider, auth, config: chatProvider.config, platformId }
     },
 
+    async keyServesScope({ platformId, provider, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
+        const row = await findRunKeyRow({ platformId, provider, scope: resolvedFor, log })
+        if (isNil(row)) {
+            return true
+        }
+        return target.type === 'platform'
+            ? row.projectScope === 'all'
+            : rowAllowsScope({ row, scope: target })
+    },
+
     async exists({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<boolean> {
         const rows = await aiProviderRepo().findBy({ platformId, provider })
         return rows.some((row) => rowAllowsScope({ row, scope }))
@@ -275,10 +285,22 @@ async function listVisibleRows({ platformId, log }: { platformId: PlatformId, lo
     return rows.filter((row) => !(hideActivepieces && row.provider === AIProviderName.ACTIVEPIECES))
 }
 
-async function resolveEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema> {
+async function findRunKeyRow({ platformId, provider, scope, log }: { platformId: PlatformId, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+    const chatRow = await findAvailableChatProviderRow({ platformId, scope, log })
+    if (isNil(provider) || chatRow?.provider === provider) {
+        return chatRow
+    }
+    return findEligibleRow({ platformId, provider, scope })
+}
+
+async function findEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema | null> {
     const rows = await aiProviderRepo().findBy({ platformId, provider })
     const eligible = rows.filter((row) => rowAllowsScope({ row, scope }))
-    const winner = rankRows(eligible)[0]
+    return rankRows(eligible)[0] ?? null
+}
+
+async function resolveEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema> {
+    const winner = await findEligibleRow({ platformId, provider, scope })
     if (isNil(winner)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,

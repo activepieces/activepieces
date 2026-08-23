@@ -405,6 +405,15 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
                 params: { message: 'A flow-step agent run cannot move to another project' },
             })
         }
+        if (!isNil(conversation)) {
+            await agentHelpers.assertProjectSwitchKeepsKey({
+                platformId: conversation.platformId,
+                fromProjectId: conversation.projectId ?? null,
+                toProjectId: input.projectId,
+                ...spreadIfDefined('provider', input.provider),
+                log,
+            })
+        }
         await updateConversationForRun({ conversationId: input.conversationId, runId: input.runId, updates: { projectId: input.projectId } })
         log.info({ conversation: { id: input.conversationId }, project: input.projectId ? { id: input.projectId } : undefined }, '[agentRpc#updateProjectContext] Project context updated')
     },
