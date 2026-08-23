@@ -72,7 +72,7 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 1. Go to https://platform.minimax.io and sign in.
 2. Open **API Keys** in your account settings, create a key, and paste it below.
 
-Select the **China** region if your account was created on the China platform.
+This connects to MiniMax's international endpoint. A key from the China platform will not authenticate here — add that account through **Other (OpenAI Compatible)** with your China base URL instead.
 `),
   },
   {
@@ -96,7 +96,7 @@ Select the **China** region if your account was created on the China platform.
 1. Go to https://platform.moonshot.ai/console/api-keys.
 2. Click **Create API key**, copy the key, and paste it below.
 
-Select the **China** region if your account was created on the China platform.
+This connects to Moonshot's international endpoint. A key from the China platform will not authenticate here — add that account through **Other (OpenAI Compatible)** with your China base URL instead.
 `),
   },
   {
@@ -128,7 +128,7 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Go to https://bailian.console.alibabacloud.com and sign in to Alibaba Cloud Model Studio.
 2. Open **API-KEY**, create a key, and paste it below.
 
-Select the **China** region if your Model Studio account is in the Beijing region.
+This connects to Model Studio's international (Singapore) endpoint. A key from the Beijing region will not authenticate here — add that account through **Other (OpenAI Compatible)** with your China base URL instead.
 `),
   },
   {
@@ -150,7 +150,7 @@ Select the **China** region if your Model Studio account is in the Beijing regio
 1. Go to https://z.ai/manage-apikey/apikey-list and sign in.
 2. Create an API key, copy it, and paste it below.
 
-Select the **China** region if your account was created on the China platform (bigmodel.cn).
+This connects to Z.ai's international endpoint. A key from bigmodel.cn will not authenticate here — add that account through **Other (OpenAI Compatible)** with your China base URL instead.
 `),
   },
   {
