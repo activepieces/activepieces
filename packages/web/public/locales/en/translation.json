@@ -2497,5 +2497,16 @@
   "Could not tailor these, try again": "Could not tailor these, try again",
   "{role} at {company}": "{role} at {company}",
   "Runs on autopilot": "Runs on autopilot",
-  "From your email": "From your email"
+  "From your email": "From your email",
+  "Account": "Account",
+  "Alphabetical": "Alphabetical",
+  "Close sidebar": "Close sidebar",
+  "Open sidebar": "Open sidebar",
+  "Pinned projects": "Pinned projects",
+  "Recently added": "Recently added",
+  "Recently used": "Recently used",
+  "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
+  "Show all projects": "Show all projects",
+  "Sort pinned projects": "Sort pinned projects",
+  "Unpin": "Unpin"
 }
