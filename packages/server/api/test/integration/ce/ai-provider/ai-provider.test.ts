@@ -397,7 +397,7 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Scoped',
-                config: customConfig('https://scoped.example.com'),
+                config: { baseUrl: 'https://scoped.example.com', apiKeyHeader: 'Authorization', models: [] },
                 projectScope: 'selected',
                 projectIds: [ctx.project.id],
                 created: '2026-08-01T00:00:00.000Z',
@@ -436,7 +436,7 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Except this project',
-                config: customConfig('https://except.example.com'),
+                config: { baseUrl: 'https://except.example.com', apiKeyHeader: 'Authorization', models: [] },
                 projectScope: 'except',
                 projectIds: [ctx.project.id],
             })
@@ -659,6 +659,67 @@ describe('AI Providers API', () => {
             const adminResponse = await ctx.get(`/v1/ai-providers/configs/${restricted.id}/models`)
             expect(adminResponse?.statusCode).toBe(StatusCodes.OK)
             expect(adminResponse?.json().map((m: { id: string }) => m.id).sort()).toEqual(['model-a', 'model-b'])
+        })
+    })
+
+    describe('keyServesScope (a run that changes project mid-turn)', () => {
+        it('refuses the project a running key is scoped away from', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'This project only',
+                config: { baseUrl: 'https://scoped.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'selected',
+                projectIds: [ctx.project.id],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(false)
+        })
+
+        it('lets a key its owner left open to every project follow the switch', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Every project',
+                config: { baseUrl: 'https://open.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'all',
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(true)
+        })
+
+        it('refuses to drop a restricted key out of project scope altogether', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'All but one',
+                config: { baseUrl: 'https://except.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'except',
+                projectIds: [apId()],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'platform' },
+            })
+
+            expect(serves).toBe(false)
         })
     })
 })
