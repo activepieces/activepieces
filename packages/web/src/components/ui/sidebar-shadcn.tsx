@@ -60,7 +60,7 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
-  const [hoverSuppressed, setHoverSuppressed] = React.useState(false);
+  const [hoverSuppressed, setHoverSuppressedState] = React.useState(false);
   const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
@@ -121,6 +121,13 @@ function SidebarProvider({
       zIndexTimeoutRef.current = setTimeout(() => {
         setKeepElevatedZIndex(false);
       }, 200);
+    }
+  }, []);
+
+  const setHoverSuppressed = React.useCallback((suppressed: boolean) => {
+    setHoverSuppressedState(suppressed);
+    if (suppressed) {
+      setIsHovered(false);
     }
   }, []);
 
