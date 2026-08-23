@@ -5,14 +5,17 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { getDefaultPropertiesForObject, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-contact',
+	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Creates a contact in Hubspot.',
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new contact record in HubSpot from the supplied property values, then returns the created contact. Use when you specifically need a new contact; to avoid duplicates when a contact may already exist, prefer Create or Update Contact, which upserts on email. Not idempotent: each call creates a separate contact.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
 		markdown: Property.MarkDown({

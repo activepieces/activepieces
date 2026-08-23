@@ -6,6 +6,7 @@ import { deleteDomainOutputSchema } from '../output-schemas';
 
 export const deleteDomain = createAction({
   name: 'delete_domain',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Delete Domain',
   outputSchema: deleteDomainOutputSchema,

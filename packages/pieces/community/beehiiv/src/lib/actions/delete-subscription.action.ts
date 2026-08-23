@@ -7,6 +7,7 @@ import { beehiivApiCall } from '../common/client';
 export const deleteSubscriptionAction = createAction({
 	auth: beehiivAuth,
 	name: 'delete_subscription',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Subscription',
 	description: 'Permanently deletes a subscription from a Beehiiv publication.',
 	audience: 'both',

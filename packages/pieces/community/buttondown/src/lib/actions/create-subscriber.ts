@@ -12,6 +12,7 @@ import {
 export const createSubscriber = createAction({
   auth: buttondownAuth,
   name: 'createSubscriber',
+  classification: 'WRITE',
   displayName: 'Create Subscriber',
   description: 'Create a new subscriber in Buttondown.',
   audience: 'both',

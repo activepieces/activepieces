@@ -7,6 +7,7 @@ import { notionRestoreDatabaseItemActionOutputSchema } from '../output-schemas';
 export const notionRestoreDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion_restore_database_item',
+  classification: 'WRITE',
   displayName: 'Restore Database Item',
   description:
     'Restores an archived Notion database item back to active status by its page id.',

@@ -20,6 +20,7 @@ interface PdfConvertToStructuredFormatRequestBody {
 
 export const convertPdfToStructuredFormat = createAction({
     name: 'convert_pdf_to_structured_format',
+    classification: 'READ',
     displayName: 'Convert PDF to JSON/CSV/XML',
     description: 'Convert PDF content into structured formats (JSON, CSV, or XML).',
     audience: 'both',

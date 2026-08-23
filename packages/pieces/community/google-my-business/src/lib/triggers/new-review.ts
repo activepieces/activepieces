@@ -17,6 +17,7 @@ import { googleAuth } from '../..';
 
 export const newReview = createTrigger({
   name: 'new_review',
+  classification: 'READ',
   displayName: 'New Review',
   description: 'Triggers when there is new review',
   aiMetadata: {

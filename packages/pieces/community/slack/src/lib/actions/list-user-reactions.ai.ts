@@ -7,6 +7,7 @@ import { listUserReactionsActionOutputSchema } from '../output-schemas';
 export const slackListUserReactions = createAction({
   auth: slackAuth,
   name: 'slack_list_user_reactions',
+  classification: 'SEARCH',
   displayName: 'List User Reactions',
   description: 'List the items a user has reacted to.',
   audience: 'ai',

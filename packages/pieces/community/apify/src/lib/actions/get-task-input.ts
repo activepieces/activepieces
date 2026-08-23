@@ -5,6 +5,7 @@ import { getTaskInputActionOutputSchema } from '../output-schemas';
 
 export const apifyGetTaskInput = createAction({
   name: 'apify_get_task_input',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Task Input',
   description: 'Retrieves the stored input body of a saved Actor task by task ID.',

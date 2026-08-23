@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const newTimeOffRequest = createTrigger({
   auth: assembledAuth,
   name: 'new_OOO_request',
+  classification: 'READ',
   displayName: 'New OOO Request',
   description: 'Triggers when a new OOO request is created.',
   aiMetadata: {

@@ -14,6 +14,7 @@ import {
 export const updateOpportunityAction = createAction({
   auth: capsuleCrmAuth,
   name: 'update_opportunity',
+  classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Update an existing Opportunity in Capsule CRM.',
   audience: 'both',

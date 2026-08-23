@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { creditNoteOutputSchema } from '../output-schemas';
 export const stripeCreateCreditNote = createAction({
   name: 'create_credit_note',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Credit Note (Agent)',
   description: 'Issue a credit note against a finalized invoice.',

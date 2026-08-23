@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const createTimeEntry = createAction({
   auth: togglTrackAuth,
   name: 'create_time_entry',
+  classification: 'WRITE',
   displayName: 'Create Time Entry',
   description: 'Create a new time entry in a workspace.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { createDocumentActionOutputSchema } from '../output-schemas';
 export const createDocument = createAction({
   auth: googleDocsAuth,
   name: 'create_document',
+  classification: 'WRITE',
   description: 'Create a document on Google Docs',
   audience: 'human',
   aiMetadata: {

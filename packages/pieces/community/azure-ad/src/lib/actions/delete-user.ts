@@ -6,6 +6,7 @@ import { callGraphApi, userDropdown } from '../common';
 export const deleteUserAction = createAction({
     auth: azureAdAuth,
     name: 'delete_user',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete User',
     description: 'Deletes a user from Azure Active Directory.',
     audience: 'both',

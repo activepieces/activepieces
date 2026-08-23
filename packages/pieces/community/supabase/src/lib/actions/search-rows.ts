@@ -14,6 +14,7 @@ interface Filter {
 
 export const searchRows = createAction({
     name: 'search_rows',
+    classification: 'SEARCH',
     displayName: 'Search Rows',
     description: 'Search for rows in a table with filters and pagination',
     audience: 'both',

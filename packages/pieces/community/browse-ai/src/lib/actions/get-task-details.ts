@@ -6,6 +6,7 @@ import { robotIdDropdown, taskIdDropdown } from '../common/props';
 
 export const getTaskDetailsAction = createAction({
   name: 'get-task-details',
+  classification: 'READ',
   auth: browseAiAuth,
   displayName: 'Get Task Details',
   description:

@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const findActivityAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-activity',
+	classification: 'SEARCH',
 	displayName: 'Find Activity',
 	description: 'Finds an activity by subject.',
 	audience: 'both',

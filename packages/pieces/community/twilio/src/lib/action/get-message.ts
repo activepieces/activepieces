@@ -6,6 +6,7 @@ import { twilioAuth } from '../..';
 export const twilioGetMessage = createAction({
   auth: twilioAuth,
   name: 'get_message',
+  classification: 'READ',
   description: 'Retrieves the details of a specific message.',
   audience: 'both',
   aiMetadata: { description: 'Fetches the full details and status of a single Twilio message by its SID. Use to check delivery status or inspect a known message; requires the message SID (starting with "SM" or "MM"). Read-only and idempotent.', idempotent: true },

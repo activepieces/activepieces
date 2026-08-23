@@ -6,6 +6,7 @@ import { mailerLiteCommon } from '../common';
 export const removeSubscriberFromGroupAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'remove_subscriber_from_group',
+	classification: 'WRITE',
 	displayName: 'Remove Subscriber from a Group',
 	description: 'Removes subscriber from a specific group.',
 	audience: 'both',

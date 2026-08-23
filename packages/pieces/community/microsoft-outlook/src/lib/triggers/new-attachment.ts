@@ -6,6 +6,7 @@ import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
+import { newAttachmentTriggerOutputSchema } from '../output-schemas';
 
 async function enrichAttachments(
 	client: Client,
@@ -57,11 +58,13 @@ async function enrichAttachments(
 export const newAttachmentTrigger = createTrigger({
 	auth: microsoftOutlookAuth,
 	name: 'newAttachment',
+	classification: 'READ',
 	displayName: 'New Attachment',
 	description: 'Triggers when a new email containing one or more attachments arrives.',
 	aiMetadata: {
 		description: 'Fires once per attachment when a new email carrying one or more file attachments arrives, optionally scoped to a folder, sender, or attachment-name filter. Each fire represents a single attachment from a newly received message.',
 	},
+	outputSchema: newAttachmentTriggerOutputSchema,
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',

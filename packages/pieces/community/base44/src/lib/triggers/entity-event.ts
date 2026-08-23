@@ -75,6 +75,7 @@ const polling: Polling<Base44AuthType, { entityType: string; eventType: string }
 export const entityEvent = createTrigger({
   auth: base44Auth,
   name: 'entity_event',
+  classification: 'READ',
   displayName: 'Entity Event',
   description: 'Triggers when an entity is created or updated',
   aiMetadata: {
