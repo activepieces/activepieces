@@ -364,6 +364,7 @@ export const ExecutePersonalizationResearchJobData = z.object({
     companyText: z.string().nullable(),
     role: z.string().nullable(),
     prefillOnly: z.boolean(),
+    researchToken: z.string().nullable(),
 })
 export type ExecutePersonalizationResearchJobData = z.infer<typeof ExecutePersonalizationResearchJobData>
 export type PersonalizationScope = ExecutePersonalizationResearchJobData['scope']

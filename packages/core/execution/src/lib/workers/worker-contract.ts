@@ -306,6 +306,7 @@ export type GetPersonalizationConfigRequest = {
     platformId: string
     userId: string
     scope: PersonalizationScope
+    researchToken: string | null
 }
 
 export type PersonalizationConfigResponse =
@@ -340,6 +341,7 @@ export type SavePersonalizationResultRequest = {
     platformId: string
     userId: string
     scope: PersonalizationScope
+    researchToken: string | null
     status: 'READY' | 'FAILED'
     profile: unknown
     useCases: unknown
@@ -356,6 +358,7 @@ export type SendPersonalizationProgressRequest = {
     platformId: string
     userId: string
     scope: PersonalizationScope
+    researchToken: string | null
     phase: string
     message: string
 }

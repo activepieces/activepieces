@@ -19,6 +19,7 @@ export class AddChatPersonalization1830000000000 implements Migration {
                 "companyText" character varying,
                 "role" character varying,
                 "status" character varying NOT NULL DEFAULT 'PENDING',
+                "researchToken" character varying(21),
                 "profile" jsonb,
                 "useCases" jsonb,
                 CONSTRAINT "pk_chat_personalization" PRIMARY KEY ("id")

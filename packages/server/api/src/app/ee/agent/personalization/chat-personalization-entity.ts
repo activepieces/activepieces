@@ -36,6 +36,10 @@ export const ChatPersonalizationEntity = new EntitySchema<ChatPersonalizationWit
             nullable: false,
             default: ChatPersonalizationStatus.PENDING,
         },
+        researchToken: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         profile: {
             type: 'jsonb',
             nullable: true,

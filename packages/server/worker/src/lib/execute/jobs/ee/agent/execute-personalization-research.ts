@@ -31,7 +31,7 @@ const MAX_DISPLAY_NAME_CHARS = 50
 export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizationResearchJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
     async execute(ctx: JobContext, data: ExecutePersonalizationResearchJobData): Promise<FireAndForgetJobResult> {
-        const { platformId, userId, scope } = data
+        const { platformId, userId, scope, researchToken } = data
         const log = ctx.log.child({ platform: { id: platformId }, user: { id: userId }, scope })
 
         if (data.prefillOnly === true) {
@@ -43,12 +43,12 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
         }
 
         const { data: result, error } = await tryCatch(async () => {
-            const config = await ctx.apiClient.getPersonalizationConfig({ platformId, userId, scope })
+            const config = await ctx.apiClient.getPersonalizationConfig({ platformId, userId, scope, researchToken })
             if (!config.claimed) {
                 return null
             }
             const progress = async ({ phase, message }: { phase: string, message: string }) => {
-                await tryCatch(() => ctx.apiClient.sendPersonalizationProgress({ platformId, userId, scope, phase, message }))
+                await tryCatch(() => ctx.apiClient.sendPersonalizationProgress({ platformId, userId, scope, researchToken, phase, message }))
             }
             return runResearch({ data, config, progress, log })
         })
@@ -56,7 +56,7 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
         if (error) {
             log.error({ error }, '[executePersonalizationResearch] Research failed')
             await tryCatch(() => ctx.apiClient.savePersonalizationResult({
-                platformId, userId, scope,
+                platformId, userId, scope, researchToken,
                 status: 'FAILED',
                 profile: null,
                 useCases: null,
@@ -69,7 +69,7 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
         }
 
         await ctx.apiClient.savePersonalizationResult({
-            platformId, userId, scope,
+            platformId, userId, scope, researchToken,
             status: 'READY',
             profile: result.profile,
             useCases: result.useCases,

@@ -119,6 +119,7 @@ export const ChatPersonalization = z.object({
     companyText: Nullable(z.string()),
     role: Nullable(z.string()),
     status: z.enum(CHAT_PERSONALIZATION_STATUSES),
+    researchToken: Nullable(z.string()),
     profile: Nullable(PersonalizationProfile),
     useCases: Nullable(z.array(PersonalizationUseCase)),
 })

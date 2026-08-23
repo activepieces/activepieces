@@ -111,7 +111,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         if (!isNil(companyRow)) {
             const fresh = Date.now() - new Date(companyRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const inFlight = [ChatPersonalizationStatus.PENDING, ChatPersonalizationStatus.RESEARCHING].includes(companyRow.status)
-            if (inFlight && fresh) {
+            if (inFlight && fresh && !inputsChanged) {
                 return this.getEffectiveView({ platformId, userId })
             }
             if (companyRow.status === ChatPersonalizationStatus.READY && !inputsChanged) {
@@ -129,6 +129,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             return this.getEffectiveView({ platformId, userId })
         }
 
+        const researchToken = apId()
         await writeCompanyRow({
             platformId,
             existing: companyRow,
@@ -137,6 +138,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 companyText,
                 role: effectiveRole,
                 status: ChatPersonalizationStatus.PENDING,
+                researchToken,
                 ...(inputsChanged ? { profile: null, useCases: null } : {}),
             },
         })
@@ -152,6 +154,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             website: domain,
             companyText,
             role: effectiveRole,
+            researchToken,
             log,
         })
         log.info({ platform: { id: platformId }, user: { id: userId }, domain, companyText, role: effectiveRole }, '[chatPersonalization] Company research enqueued')
@@ -159,6 +162,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
     async upsertUserScope({ platformId, userId, companyRow }: { platformId: string, userId: string, companyRow: ChatPersonalization }): Promise<ChatPersonalizationView> {
+        const researchToken = apId()
         const userRow = await findRow({ platformId, userId })
         if (!isNil(userRow)) {
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
@@ -166,7 +170,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             if (terminal || fresh) {
                 return this.getEffectiveView({ platformId, userId })
             }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -176,6 +180,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 domain: companyRow.domain,
                 companyText: companyRow.companyText,
                 status: ChatPersonalizationStatus.PENDING,
+                researchToken,
                 profile: null,
                 useCases: null,
             }))
@@ -195,6 +200,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             website: null,
             companyText: null,
             role: null,
+            researchToken,
             log,
         })
         log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] User research enqueued')
@@ -232,8 +238,8 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
     async getConfigForWorker(input: GetPersonalizationConfigRequest): Promise<PersonalizationConfigResponse> {
-        const { platformId, userId, scope } = input
-        const claimed = await claimForResearch({ platformId, userId, scope })
+        const { platformId, userId, scope, researchToken } = input
+        const claimed = await claimForResearch({ platformId, userId, scope, researchToken })
         if (!claimed) {
             log.info({ platform: { id: platformId }, user: { id: userId }, scope }, '[chatPersonalization] Claim lost, duplicate research job exits')
             return { claimed: false }
@@ -274,16 +280,30 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
     async saveResult(input: SavePersonalizationResultRequest): Promise<void> {
-        const { platformId, userId, scope } = input
+        const { platformId, userId, scope, researchToken } = input
         const validated = validateResult({ input, log })
-        const criteria = scope === ChatPersonalizationScope.USER
+        const scoped = scope === ChatPersonalizationScope.USER
             ? { platformId, userId }
             : { platformId, userId: IsNull() }
-        await personalizationRepo().update(criteria, {
-            status: validated.status,
-            profile: validated.profile === null ? null : sanitizeObjectForPostgresql(validated.profile),
-            useCases: validated.useCases === null ? null : sanitizeObjectForPostgresql(validated.useCases),
-        })
+        const criteria = {
+            ...scoped,
+            ...(isNil(researchToken) ? {} : { researchToken }),
+        }
+        const written = await personalizationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({
+                status: validated.status,
+                profile: validated.profile === null ? null : sanitizeObjectForPostgresql(validated.profile),
+                useCases: validated.useCases === null ? null : sanitizeObjectForPostgresql(validated.useCases),
+            })
+            .where(criteria)
+            .returning('id')
+            .execute()
+        if ((written.raw?.length ?? 0) === 0) {
+            log.info({ platform: { id: platformId }, user: { id: userId }, scope, researchToken }, '[chatPersonalization] Result discarded, the run that produced it was superseded')
+            return
+        }
 
         if (scope === ChatPersonalizationScope.COMPANY && validated.status === ChatPersonalizationStatus.READY) {
             await tryCatch(() => upsertFoundingUserRow({ platformId, userId, validated }))
@@ -306,11 +326,24 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     },
 
     async sendProgress(input: SendPersonalizationProgressRequest): Promise<void> {
-        const { platformId, userId, scope, phase, message } = input
-        const criteria = scope === ChatPersonalizationScope.USER
-            ? { platformId, userId, status: ChatPersonalizationStatus.RESEARCHING }
-            : { platformId, userId: IsNull(), status: ChatPersonalizationStatus.RESEARCHING }
-        await personalizationRepo().update(criteria, { status: ChatPersonalizationStatus.RESEARCHING })
+        const { platformId, userId, scope, researchToken, phase, message } = input
+        const scoped = scope === ChatPersonalizationScope.USER
+            ? { platformId, userId }
+            : { platformId, userId: IsNull() }
+        const beat = await personalizationRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ status: ChatPersonalizationStatus.RESEARCHING })
+            .where({
+                ...scoped,
+                status: ChatPersonalizationStatus.RESEARCHING,
+                ...(isNil(researchToken) ? {} : { researchToken }),
+            })
+            .returning('id')
+            .execute()
+        if ((beat.raw?.length ?? 0) === 0) {
+            return
+        }
         emitProgress({ userId, event: { scope: toScopeEnum(scope), phase, message, done: false } })
     },
 
@@ -401,7 +434,8 @@ async function recoverIfStale({ row, platformId, userId, scope, log }: {
             await personalizationRepo().update({ id: row.id }, { status: ChatPersonalizationStatus.FAILED })
             return
         }
-        await personalizationRepo().update({ id: row.id }, { status: ChatPersonalizationStatus.PENDING })
+        const researchToken = apId()
+        await personalizationRepo().update({ id: row.id }, { status: ChatPersonalizationStatus.PENDING, researchToken })
         await enqueueResearchJob({
             platformId,
             userId,
@@ -409,6 +443,7 @@ async function recoverIfStale({ row, platformId, userId, scope, log }: {
             website: scope === ChatPersonalizationScope.COMPANY ? row.domain ?? null : null,
             companyText: scope === ChatPersonalizationScope.COMPANY ? row.companyText ?? null : null,
             role: row.role ?? null,
+            researchToken,
             log,
         })
     })
@@ -467,7 +502,7 @@ function normalizeWebsite({ input }: { input: string }): string | null {
 async function writeCompanyRow({ platformId, existing, patch }: {
     platformId: string
     existing: ChatPersonalization | null
-    patch: Partial<Pick<ChatPersonalization, 'domain' | 'companyText' | 'role' | 'status' | 'profile' | 'useCases'>>
+    patch: Partial<Pick<ChatPersonalization, 'domain' | 'companyText' | 'role' | 'status' | 'researchToken' | 'profile' | 'useCases'>>
 }): Promise<void> {
     if (isNil(existing)) {
         const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -478,6 +513,7 @@ async function writeCompanyRow({ platformId, existing, patch }: {
             companyText: patch.companyText ?? null,
             role: patch.role ?? null,
             status: patch.status ?? ChatPersonalizationStatus.PENDING,
+            researchToken: patch.researchToken ?? null,
             profile: patch.profile ?? null,
             useCases: patch.useCases ?? null,
         }))
@@ -509,6 +545,7 @@ async function startPrefillLookup({ platformId, userId, log }: {
             website: null,
             companyText: null,
             role: null,
+            researchToken: null,
             prefillOnly: true,
             log,
         })
@@ -540,10 +577,15 @@ async function readPrefill({ platformId, userId, log }: {
     return data
 }
 
-async function claimForResearch({ platformId, userId, scope }: { platformId: string, userId: string, scope: PersonalizationScope }): Promise<boolean> {
-    const criteria = scope === ChatPersonalizationScope.USER
-        ? { platformId, userId, status: ChatPersonalizationStatus.PENDING }
-        : { platformId, userId: IsNull(), status: ChatPersonalizationStatus.PENDING }
+async function claimForResearch({ platformId, userId, scope, researchToken }: { platformId: string, userId: string, scope: PersonalizationScope, researchToken: string | null }): Promise<boolean> {
+    const scoped = scope === ChatPersonalizationScope.USER
+        ? { platformId, userId }
+        : { platformId, userId: IsNull() }
+    const criteria = {
+        ...scoped,
+        status: ChatPersonalizationStatus.PENDING,
+        ...(isNil(researchToken) ? {} : { researchToken }),
+    }
     const updated = await personalizationRepo()
         .createQueryBuilder()
         .update()
@@ -587,13 +629,14 @@ async function guardsAllowResearch({ platformId, log }: { platformId: string, lo
     return true
 }
 
-async function enqueueResearchJob({ platformId, userId, scope, website, companyText, role, prefillOnly, log }: {
+async function enqueueResearchJob({ platformId, userId, scope, website, companyText, role, researchToken, prefillOnly, log }: {
     platformId: string
     userId: string
     scope: PersonalizationScope
     website: string | null
     companyText: string | null
     role: string | null
+    researchToken: string | null
     prefillOnly?: boolean
     log: FastifyBaseLogger
 }): Promise<void> {
@@ -610,6 +653,7 @@ async function enqueueResearchJob({ platformId, userId, scope, website, companyT
             website,
             companyText,
             role,
+            researchToken,
             prefillOnly: prefillOnly ?? false,
         },
     })
