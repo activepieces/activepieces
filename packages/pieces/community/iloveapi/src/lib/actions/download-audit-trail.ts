@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const downloadAuditTrailAction = createAction({
   auth: iloveapiAuth,
   name: 'download_audit_trail',
+  classification: 'READ',
   displayName: 'Download Audit Trail',
   description:
     'Download the audit-trail PDF for a completed signature request. Useful for compliance and dispute resolution.',

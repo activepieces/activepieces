@@ -8,6 +8,7 @@ import mime from 'mime-types';
 export const amazons3UploadFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'upload-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload an File to S3',
   audience: 'both',

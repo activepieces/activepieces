@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getArticleById = createAction({
   auth: asknewsAuth,
   name: 'getArticleById',
+  classification: 'READ',
   displayName: 'Get Article by ID',
   description:
     'Retrieve a single article or multiple articles by their UUID(s)',

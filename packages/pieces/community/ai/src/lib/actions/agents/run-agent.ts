@@ -64,6 +64,7 @@ const agentToolArrayItems: ArraySubProps<boolean> = {
 export const runAgent = createAction({
   audience: 'both',
   name: 'run_agent',
+  classification: 'WRITE',
   displayName: 'Run Agent',
   description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
   aiMetadata: { description: 'Runs an agent that reasons over your prompt and calls the piece actions you attach to this step, iterating until the task is done. Pick it when the work needs tool use or an unknown number of steps; prefer askAi for a single prompt-in/answer-out call, or classifyText and extractStructuredData for one narrow analysis. Sub-flow, MCP and knowledge-base tools are not supported on this step. Requires a prompt and an AI Model; not idempotent, as the agent performs side effects through its tools.', idempotent: false },

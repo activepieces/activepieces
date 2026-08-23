@@ -6,6 +6,7 @@ import { lemlistApiService } from '../common/requests';
 export const updateLeadFromCampaign = createAction({
   auth: lemlistAuth,
   name: 'updateLeadFromCampaign',
+  classification: 'WRITE',
   displayName: 'Update Lead From Campaign',
   description:
     'Updates a lead in a specific campaign.',

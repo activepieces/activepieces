@@ -11,6 +11,7 @@ import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 export const visualClassifierModelPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'visual_classifier_model',
+  classification: 'READ',
   description: 'Call an visual classifier AI model to recognize concepts',
   audience: 'both',
   aiMetadata: {
@@ -45,6 +46,7 @@ export const visualClassifierModelPredictAction = createAction({
 export const imageToTextModelPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'image_text_model',
+  classification: 'READ',
   description: 'Call an image to text AI model',
   audience: 'both',
   aiMetadata: {

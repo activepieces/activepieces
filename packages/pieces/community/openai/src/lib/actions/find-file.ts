@@ -6,6 +6,7 @@ export const findFile = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'find_file',
+  classification: 'SEARCH',
   displayName: 'Find File',
   description:
     'Check whether a file with the given name already exists in the connected OpenAI account.',

@@ -6,6 +6,7 @@ import { pageType } from '../common/props';
 export const deletePageAction = createAction({
 	auth: hubspotAuth,
 	name: 'delete-page',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Page',
 	description: 'Deletes an existing landing/site page.',
 	audience: 'both',

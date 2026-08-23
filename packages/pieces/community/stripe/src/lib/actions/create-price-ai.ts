@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { priceOutputSchema } from '../output-schemas';
 export const stripeCreatePriceAi = createAction({
   name: 'create_price_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Price (Agent)',
   description: 'Create a one-time or recurring price for a product.',

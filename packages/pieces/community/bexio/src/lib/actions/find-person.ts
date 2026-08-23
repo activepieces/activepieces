@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const findPersonAction = createAction({
   auth: bexioAuth,
   name: 'find_person',
+  classification: 'SEARCH',
   displayName: 'Find Person',
   description: 'Search for person contacts using various criteria',
   audience: 'both',

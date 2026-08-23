@@ -13,6 +13,7 @@ import { chunk } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 type Props = {
 	propertyName?: string | string[];
@@ -125,6 +126,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCompanyPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-company-property-change',
+	classification: 'READ',
 	displayName: 'New Company Property Change',
 	description: 'Triggers when a specified property is updated on a company.',
 	aiMetadata: {
@@ -142,6 +144,7 @@ export const newCompanyPropertyChangeTrigger = createTrigger({
 			true,
 		),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

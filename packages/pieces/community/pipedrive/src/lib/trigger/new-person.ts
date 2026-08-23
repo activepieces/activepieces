@@ -79,6 +79,7 @@ interface GetPersonResponseV2 {
 export const newPerson = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_person',
+	classification: 'READ',
 	displayName: 'New Person',
 	description: 'Triggers when a new person is created',
 	aiMetadata: {

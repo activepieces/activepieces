@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const createOrUpdateSubscriber = createAction({
 	auth: mailerLiteAuth,
 	name: 'add_or_update_subscriber',
+	classification: 'WRITE',
 	displayName: 'Add or Update subscriber',
 	description: 'Create a new subscriber or updates an existing one if the email already exists.',
 	audience: 'both',

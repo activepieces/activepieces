@@ -150,6 +150,7 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
     [AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED]: booleanValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
+    [AppSystemProp.AGENTS_ENABLED]: booleanValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,

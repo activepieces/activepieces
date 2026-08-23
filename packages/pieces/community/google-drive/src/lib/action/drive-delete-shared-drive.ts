@@ -6,6 +6,7 @@ import { driveDeleteSharedDriveOutputSchema } from '../output-schemas';
 export const driveDeleteSharedDrive = createAction({
   auth: googleDriveAuth,
   name: 'drive_delete_shared_drive',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Shared Drive',
   description: 'Permanently delete a shared drive by ID.',
   audience: 'ai',

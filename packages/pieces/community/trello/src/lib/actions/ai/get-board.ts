@@ -12,6 +12,7 @@ import { getBoardActionOutputSchema } from '../../output-schemas';
 export const getBoard = createAction({
   auth: trelloAuth,
   name: 'get_board',
+  classification: 'READ',
   displayName: 'Get Board (Agent)',
   description: 'Get the details of a Trello board by ID.',
   audience: 'ai',

@@ -10,6 +10,7 @@ import { discordGetUserActionOutputSchema } from '../output-schemas';
 export const discordGetUser = createAction({
   auth: discordAuth,
   name: 'discord_get_user',
+  classification: 'READ',
   displayName: 'Get User',
   description: 'Fetch a global Discord user object by ID.',
   audience: 'ai',
