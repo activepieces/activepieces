@@ -512,6 +512,12 @@ type UpdateParams = {
 type DeleteParams = {
     ids: string[]
     projectId: string
+    tableId: string
+}
+
+type DeleteRecordsResult = {
+    deletedCount: number
+    records: PopulatedRecord[]
 }
 
 type DeleteAllParams = {
