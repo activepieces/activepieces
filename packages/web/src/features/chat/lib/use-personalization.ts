@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
 import { useSocket } from '@/components/providers/socket-provider';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { personalizationApi } from './personalization-api';
 
@@ -36,6 +37,9 @@ export function usePersonalization({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!active) return;
     const handler = (event: ChatPersonalizationProgressEvent) => {
+      if (event.platformId !== authenticationSession.getPlatformId()) {
+        return;
+      }
       if (event.prefill) {
         const { prefill } = event;
         queryClient.setQueryData<ChatPersonalizationView>(QUERY_KEY, (prev) =>

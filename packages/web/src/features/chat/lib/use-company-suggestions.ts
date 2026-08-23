@@ -69,6 +69,9 @@ function mergeSuggestions({
     if (company.domain === fromEmail?.domain) {
       continue;
     }
+    if (!matchesNeedle({ company, needle })) {
+      continue;
+    }
     merged.push({
       value: company.name,
       hint: company.domain,
@@ -77,6 +80,22 @@ function mergeSuggestions({
     });
   }
   return merged.slice(0, limit);
+}
+
+function matchesNeedle({
+  company,
+  needle,
+}: {
+  company: ClearbitCompany;
+  needle: string;
+}): boolean {
+  if (needle.length === 0) {
+    return true;
+  }
+  return (
+    company.name.toLowerCase().includes(needle) ||
+    company.domain.toLowerCase().includes(needle)
+  );
 }
 
 function emailDomainSuggestion({
