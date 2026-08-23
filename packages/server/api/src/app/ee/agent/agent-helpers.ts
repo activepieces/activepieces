@@ -83,6 +83,26 @@ function selectRunProject({ conversationProjectId, projects }: { conversationPro
     return stillReachable ? conversationProjectId : projects[0]?.id ?? null
 }
 
+async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfigId, fromProjectId, toProjectId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, fromProjectId: string | null, toProjectId: string | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(fromProjectId) || fromProjectId === toProjectId) {
+        return
+    }
+    const serves = await aiProviderService(log).keyServesScope({
+        platformId,
+        ...spreadIfDefined('provider', provider),
+        ...spreadIfDefined('configId', providerConfigId),
+        resolvedFor: { type: 'project', projectId: fromProjectId },
+        target: isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId },
+    })
+    if (serves) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'the AI provider key this run resolved is not available to the project it tried to switch to' },
+    })
+}
+
 async function resolveRunProvider({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
         return resolveChatProvider({ platformId, scope, log })
@@ -315,6 +335,7 @@ export const agentHelpers = {
     resolveChatProviderName,
     runScopeOrThrow,
     selectRunProject,
+    assertProjectSwitchKeepsKey,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

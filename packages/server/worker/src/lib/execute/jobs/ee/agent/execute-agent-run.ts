@@ -559,8 +559,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const selectedConnectionByPiece = new Map<string, string>()
     const localTools = agentWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
+            const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider }))
+            if (!isNil(error)) {
+                log.warn({ error, conversation: { id: conversationId }, project: projectId ? { id: projectId } : undefined }, '[executeAgentRun] Refused a project switch')
+                return { success: false, error: 'Could not switch to that project on this chat — the AI provider key this chat runs on is not available there. Start a new chat in that project instead.' }
+            }
             projectState.projectId = projectId
-            await ctx.apiClient.updateProjectContext({ conversationId, runId, projectId })
+            return { success: true }
         },
         projects,
     })
