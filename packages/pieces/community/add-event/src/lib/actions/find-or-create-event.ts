@@ -8,6 +8,7 @@ import { AddEventEvent, AddEventPage } from '../common/types';
 export const addEventFindOrCreateEventAction = createAction({
   auth: addEventAuth,
   name: 'find_or_create_event',
+  classification: 'WRITE',
   displayName: 'Find or Create Event',
   description:
     'Searches for an event by a term. If no match is found, creates a new event with the details below.',

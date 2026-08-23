@@ -8,6 +8,7 @@ import { outlookCommon } from '../common/client';
 export const requestApprovalInMail = createAction({
   auth: microsoftOutlookAuth,
   name: 'request_approval_in_mail',
+  classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',

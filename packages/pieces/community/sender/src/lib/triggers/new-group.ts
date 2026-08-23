@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_group',
+  classification: 'READ',
   displayName: 'New Group',
   description: 'Fires when a new group/list is created',
   aiMetadata: {

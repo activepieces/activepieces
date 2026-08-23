@@ -32,6 +32,7 @@ interface ZendeskCommentsResponse {
 export const findLatestCommentAction = createAction({
   auth: zendeskAuth,
   name: 'find-latest-comment',
+  classification: 'READ',
   displayName: 'Find Latest Comment',
   description: 'Find the latest comment on a ticket.',
   audience: 'both',

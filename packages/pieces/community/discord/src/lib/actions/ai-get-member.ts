@@ -10,6 +10,7 @@ import { discordGetMemberActionOutputSchema } from '../output-schemas';
 export const discordGetMember = createAction({
   auth: discordAuth,
   name: 'discord_get_member',
+  classification: 'READ',
   displayName: 'Get Member',
   description: 'Fetch a single guild member by user ID.',
   audience: 'ai',

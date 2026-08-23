@@ -37,6 +37,7 @@ const polling: Polling<
 export const newFolder = createTrigger({
   auth: googleDriveAuth,
   name: 'new_folder',
+  classification: 'READ',
   displayName: 'New Folder',
   description: 'Trigger when a new folder is created or uploaded.',
   aiMetadata: {

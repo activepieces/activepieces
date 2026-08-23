@@ -9,6 +9,7 @@ import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 export const findCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-custom-object',
+	classification: 'SEARCH',
 	displayName: 'Find Custom Object',
 	description: 'Finds a custom object by searching.',
 	audience: 'both',

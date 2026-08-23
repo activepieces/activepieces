@@ -8,6 +8,7 @@ import { FilterOperatorEnum, HubSpotAddContactsToListResponse } from '../common/
 export const removeContactFromListAction = createAction({
 	auth: hubspotAuth,
 	name: 'remove-contact-from-list',
+	classification: 'WRITE',
 	displayName: 'Remove Contact from List',
 	description: 'Remove a contact from a specific list.',
 	audience: 'both',

@@ -6,6 +6,7 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const universalScrapingApi = createAction({
   auth: scrapelessApiAuth,
   name: 'universal_scraping_api',
+  classification: 'READ',
   displayName: 'Universal Scraping',
   description: 'Seamlessly accesses protected or dynamic pages by handling anti-scraping systems automatically.',
   audience: 'both',

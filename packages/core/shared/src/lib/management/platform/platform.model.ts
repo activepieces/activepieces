@@ -57,6 +57,7 @@ export enum FeatureFlagId {
     EMBEDDING_ENABLED = 'embeddingEnabled',
     AI_PROVIDERS_ENABLED = 'aiProvidersEnabled',
     CHAT_ENABLED = 'chatEnabled',
+    AGENTS_ENABLED = 'agentsEnabled',
     WORKER_GROUPS_ENABLED = 'workerGroupsEnabled',
     MANAGE_PIECES_ENABLED = 'managePiecesEnabled',
     MANAGE_TEMPLATES_ENABLED = 'manageTemplatesEnabled',
@@ -93,6 +94,7 @@ export const PlatformPlan = z.object({
     embeddingEnabled: z.boolean(),
     aiProvidersEnabled: z.boolean(),
     chatEnabled: z.boolean(),
+    agentsEnabled: z.boolean(),
     workerGroupsEnabled: z.boolean(),
     managePiecesEnabled: z.boolean(),
     manageTemplatesEnabled: z.boolean(),
@@ -280,6 +282,7 @@ export const ProjectCreditUsage = z.object({
     projectId: z.string(),
     projectName: z.string(),
     creditsUsed: z.number(),
+    aiCreditsUsed: z.number(),
 })
 export type ProjectCreditUsage = z.infer<typeof ProjectCreditUsage>
 
@@ -287,6 +290,7 @@ export const PlatformBillingInformation = z.object({
     plan: PlatformPlan,
     usage: PlatformUsage,
     creditsResetInterval: Nullable(z.string()),
+    planInterval: Nullable(z.string()),
     autumnPlanName: Nullable(z.string()),
     scheduledPlanName: Nullable(z.string()),
     nextBillingDate: z.string(),

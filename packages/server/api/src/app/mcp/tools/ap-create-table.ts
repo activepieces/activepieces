@@ -20,7 +20,7 @@ export const apCreateTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
     return {
         title: 'ap_create_table',
         permission: Permission.WRITE_TABLE,
-        description: 'Create a new table with an initial set of fields. Types: TEXT, NUMBER, DATE, STATIC_DROPDOWN.',
+        description: 'Create a new table with an initial set of fields. Types: TEXT, NUMBER, DATE, DATETIME, STATIC_DROPDOWN. DATE and DATETIME both hold an ISO-8601 UTC timestamp; DATETIME additionally shows and edits the time of day.',
         inputSchema: createTableInput.shape,
         annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {

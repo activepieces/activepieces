@@ -9,6 +9,7 @@ import { BaserowFieldType } from '../common/constants';
 
 export const findRowAction = createAction({
   name: 'baserow_find_row',
+  classification: 'SEARCH',
   displayName: 'Find Row',
   description:
     'Finds a row by matching a field value. Returns the first match.',

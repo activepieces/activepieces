@@ -6,6 +6,7 @@ import { blogAuthorDropdown, blogUrlDropdown } from '../common/props';
 export const createBlogPostAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-blog-post',
+	classification: 'WRITE',
 	displayName: 'Create COS Blog Post',
 	description: 'Creates a blog post in you Hubspot COS blog.',
 	audience: 'both',

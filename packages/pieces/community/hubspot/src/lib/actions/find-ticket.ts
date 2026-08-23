@@ -9,6 +9,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const findTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-ticket',
+	classification: 'SEARCH',
 	displayName: 'Find Ticket',
 	description: 'Finds a ticket by searching.',
 	audience: 'both',

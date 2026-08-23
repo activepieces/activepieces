@@ -9,6 +9,7 @@ const MAX_BATCH_SIZE = 10_000;
 export const streamCsvToSubflows = createAction({
   audience: 'both',
   name: 'streamCsvToSubflows',
+  classification: 'WRITE',
   displayName: 'Stream CSV to Subflows',
   description:
     'Stream a CSV and call a subflow once per batch of rows, without loading the whole file into memory.',

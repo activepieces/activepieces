@@ -65,11 +65,12 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 | A connection needs a human-readable label in the UI (account email, workspace name) | `auth-patterns.md` (Connection Identifier) |
 | Your first action in this piece (full file shape) | `action-patterns.md` |
 | A trigger — polling, webhook, handshake, or renewal | `trigger-patterns.md` |
-| A prop type you haven't used (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
+| **Choosing which prop component, display mode, or layout/grouping fits a use case** | `property-ui-selection.md` |
+| The exact syntax of a prop type (dropdowns, dynamic, arrays, files) | `props-patterns.md` |
 | Shared API helper, pagination, or `createCustomApiCallAction` | `common-patterns.md` |
 | An advanced UX pattern (source selectors, AWS-style auth) | `ux-guidelines.md` |
 | Flattening a deeply nested API response | `output-quality.md` |
-| Tagging an action/trigger for AI agents | `ai-metadata.md` |
+| Tagging an action/trigger (`audience`, `aiMetadata`, `classification`) | `ai-metadata.md` |
 
 ### Step 5: WIRE & VERIFY
 
@@ -78,6 +79,7 @@ The condensed rules in this file (Quick Auth Reference, Quick Piece Definition T
 - [ ] Import every action in `src/index.ts` → add to `actions: [...]`
 - [ ] Import every trigger in `src/index.ts` → add to `triggers: [...]`
 - [ ] Add `createCustomApiCallAction` to `actions: [...]`
+- [ ] Every hand-written action carries `audience`, `aiMetadata`, and `classification`; every trigger carries `aiMetadata` and `classification: 'READ'` (see `ai-metadata.md`)
 - [ ] Register in `tsconfig.base.json` at repo root (insert **alphabetically** — build fails without this):
     ```json
     "@activepieces/piece-<name>": ["packages/pieces/community/<name>/src/index.ts"]
@@ -192,6 +194,8 @@ export const myApp = createPiece({
 
 Pieces are used by people who have never seen an API — props, dropdowns, and descriptions must be self-explanatory.
 
+**Before defining any `props`, read `property-ui-selection.md`** to pick the right component, display mode (`cards` / `stepper` / rich-text / date-range), and layout/grouping (`tabs` / `section` / filter `builder`) for each field.
+
 1. **Never ask users to type IDs** — Use dynamic dropdowns so they pick items by name (`"Jane Doe (jane@x.com)"` not `"cus_abc123"`).
 2. **Descriptions must teach** — Don't say "Enter the thread timestamp." Say "Click the three dots next to the message, select Copy Link, and paste the number at the end."
 3. **Use Markdown instructions** for complex setup — Add `Property.MarkDown()` with numbered steps when a prop requires configuration in the third-party app.
@@ -221,8 +225,9 @@ Full patterns and examples: read `output-quality.md`
 
 - **`audience`** (actions only): `'human' | 'ai' | 'both'` — written explicitly on every action (`'both'` for normal integration actions; `'human'` for LLM-wrappers/utilities). Downstream filters only see it when physically present.
 - **`aiMetadata`**: `{ description, idempotent }` on every action, `{ description }` on every trigger — agent-facing description (what + when-to-pick + key constraint) and safe-retry hint derived from `run()`.
+- **`classification`** (actions **and** triggers): `'READ' | 'SEARCH' | 'WRITE' | 'DESTRUCTIVE'` — what the step does to external state, judged from the `run()` body (never from the name). Renders as a badge in the builder's piece selector. **Every trigger is `'READ'`.**
 
-The catalog is fully curated; a new action or trigger without these is a regression. Writing rules, `idempotent` derivation, factory gotchas: read `ai-metadata.md`
+A new action or trigger without these is a regression. Writing rules, `idempotent` derivation, the classification rubric, factory gotchas: read `ai-metadata.md`
 
 ---
 

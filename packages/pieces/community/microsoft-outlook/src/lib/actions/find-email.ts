@@ -9,6 +9,7 @@ import { mailFolderIdDropdown } from '../common/props';
 export const findEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'findEmail',
+	classification: 'SEARCH',
 	displayName: 'Find Email',
 	description: 'Searches for emails using full-text search.',
 	audience: 'both',

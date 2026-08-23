@@ -105,6 +105,7 @@ const notes = `
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
+  classification: 'READ',
   description: 'Get next group of rows from a specifiec workheet',
   audience: 'human',
   aiMetadata: {

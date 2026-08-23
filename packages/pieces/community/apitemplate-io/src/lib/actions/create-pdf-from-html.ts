@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createPdfFromHtml = createAction({
   auth: ApitemplateAuth,
   name: 'createPdfFromHtml',
+  classification: 'WRITE',
   displayName: 'Create PDF From HTML',
   description: 'Creates a PDF from HTML.',
   audience: 'both',

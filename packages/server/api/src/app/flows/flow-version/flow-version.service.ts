@@ -288,16 +288,19 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         removeSampleData: boolean,
     ): FlowVersion {
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const clonedStep = JSON.parse(JSON.stringify(step))
-            if (removeConnectionNames) {
-                clonedStep.settings.input = removeConnectionsFromInput(clonedStep.settings.input)
+            const settings = { ...step.settings }
+            if (removeConnectionNames && !isNil(settings.input)) {
+                settings.input = removeConnectionsFromInput(settings.input)
             }
-            if (removeSampleData && !isNil(clonedStep?.settings?.sampleData)) {
-                clonedStep.settings.sampleData.sampleDataFileId = undefined
-                clonedStep.settings.sampleData.sampleDataInputFileId = undefined
-                clonedStep.settings.sampleData.lastTestDate = undefined
+            if (removeSampleData && !isNil(settings.sampleData)) {
+                settings.sampleData = {
+                    ...settings.sampleData,
+                    sampleDataFileId: undefined,
+                    sampleDataInputFileId: undefined,
+                    lastTestDate: undefined,
+                }
             }
-            return clonedStep
+            return { ...step, settings }
         })
     },
 })

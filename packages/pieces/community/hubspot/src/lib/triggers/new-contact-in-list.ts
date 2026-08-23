@@ -88,6 +88,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newContactInListTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-contact-in-list',
+	classification: 'READ',
 	displayName: 'New Contact in List',
 	description: 'Triggers when a new contact is added to the specified list.',
 	aiMetadata: {
