@@ -407,6 +407,7 @@ import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgre
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
 import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { AddCellCascadeIndices1818000000000 } from './migration/postgres/1818000000000-AddCellCascadeIndices'
 import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
 import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
@@ -841,6 +842,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
+        AddCellCascadeIndices1818000000000,
         AddAutumnBillingColumnsToPlatformPlan1818000000000,
         AddFieldPosition1818000000000,
         DropPieceTags1819000000000,
