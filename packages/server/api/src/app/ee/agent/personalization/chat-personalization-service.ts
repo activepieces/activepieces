@@ -402,41 +402,33 @@ async function upsertFoundingUserRow({ platformId, userId, researchToken, valida
     validated: ValidatedResult
     log: FastifyBaseLogger
 }): Promise<void> {
-    const stillOwned = await personalizationRepo().findOneBy({
-        platformId,
-        userId: IsNull(),
-        ...(isNil(researchToken) ? {} : { researchToken }),
-    })
-    if (isNil(stillOwned)) {
-        log.info({ platform: { id: platformId }, user: { id: userId }, researchToken }, '[chatPersonalization] Founding-user seed skipped, the company row moved on')
+    if (isNil(researchToken)) {
         return
     }
-    const patch = {
-        status: ChatPersonalizationStatus.READY,
-        profile: validated.profile === null ? null : sanitizeObjectForPostgresql(validated.profile),
-        useCases: validated.useCases === null ? null : sanitizeObjectForPostgresql(validated.useCases),
-    }
-    const existing = await findRow({ platformId, userId })
-    if (isNil(existing)) {
-        await personalizationRepo()
-            .createQueryBuilder()
-            .insert()
-            .values({ id: apId(), platformId, userId, domain: null, companyText: null, role: null, ...patch })
-            .orIgnore()
-            .execute()
-        return
-    }
-    const seeded = await personalizationRepo()
-        .createQueryBuilder()
-        .update()
-        .set(patch)
-        .where('"id" = :id', { id: existing.id })
-        .andWhere('"status" NOT IN (:...inFlight)', { inFlight: IN_FLIGHT_STATUSES })
-        .andWhere('"useCases" IS NULL')
-        .returning('id')
-        .execute()
-    if ((seeded.raw?.length ?? 0) === 0) {
-        log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] Founding-user seed skipped, that row has its own research')
+    const profile = validated.profile === null ? null : JSON.stringify(sanitizeObjectForPostgresql(validated.profile))
+    const useCases = validated.useCases === null ? null : JSON.stringify(sanitizeObjectForPostgresql(validated.useCases))
+    const seeded: { id: string }[] = await personalizationRepo().query(
+        `
+        INSERT INTO "chat_personalization" ("id", "created", "updated", "platformId", "userId", "domain", "companyText", "role", "status", "researchToken", "profile", "useCases")
+        SELECT $1, now(), now(), $2, $3, NULL, NULL, NULL, $4, NULL, $5::jsonb, $6::jsonb
+        WHERE EXISTS (
+            SELECT 1 FROM "chat_personalization"
+            WHERE "platformId" = $2 AND "userId" IS NULL AND "researchToken" = $7
+        )
+        ON CONFLICT ("platformId", "userId") WHERE "userId" IS NOT NULL
+        DO UPDATE SET
+            "status" = EXCLUDED."status",
+            "profile" = EXCLUDED."profile",
+            "useCases" = EXCLUDED."useCases",
+            "updated" = now()
+        WHERE "chat_personalization"."status" <> ALL($8::varchar[])
+          AND "chat_personalization"."useCases" IS NULL
+        RETURNING "id"
+        `,
+        [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES],
+    )
+    if (seeded.length === 0) {
+        log.info({ platform: { id: platformId }, user: { id: userId }, researchToken }, '[chatPersonalization] Founding-user seed skipped, the run was superseded or that row has its own research')
     }
 }
 
