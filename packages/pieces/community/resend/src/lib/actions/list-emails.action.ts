@@ -18,6 +18,7 @@ interface EmailRecord {
 
 export const listEmails = createAction({
   name: 'list_emails',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Sent Emails',
   outputSchema: listEmailsOutputSchema,

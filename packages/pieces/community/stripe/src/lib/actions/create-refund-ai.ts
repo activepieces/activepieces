@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { refundOutputSchema } from '../output-schemas';
 export const stripeCreateRefundAi = createAction({
   name: 'create_refund_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Refund (Agent)',
   description: 'Create a full or partial refund for a payment.',

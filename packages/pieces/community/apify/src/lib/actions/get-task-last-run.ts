@@ -16,6 +16,7 @@ const RUN_STATUS_OPTIONS = [
 
 export const apifyGetTaskLastRun = createAction({
   name: 'apify_get_task_last_run',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Task Last Run',
   description: 'Retrieves the most recent run of a saved Actor task, optionally filtered by status.',

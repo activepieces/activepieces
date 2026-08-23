@@ -8,6 +8,7 @@ import { createGistActionOutputSchema } from '../output-schemas';
 export const githubCreateGistAction = createAction({
   auth: githubAuth,
   name: 'github_create_gist',
+  classification: 'WRITE',
   displayName: 'Create Gist',
   description:
     'Create a GitHub Gist. Requires an OAuth or personal access token connection — Gists cannot be created with GitHub App authentication.',

@@ -8,6 +8,7 @@ import { threadRepliesActionOutputSchema } from '../output-schemas';
 
 export const retrieveThreadMessages = createAction({
   name: 'retrieveThreadMessages',
+  classification: 'READ',
   displayName: 'Retrieve Thread Messages',
   description: 'Retrieves thread messages by channel and thread timestamp.',
   audience: 'human',

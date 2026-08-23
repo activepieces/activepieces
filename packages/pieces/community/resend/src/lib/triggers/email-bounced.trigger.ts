@@ -74,6 +74,7 @@ function verifyResendWebhook({
 
 export const emailBounced = createTrigger({
   name: 'email_bounced',
+  classification: 'READ',
   auth: resendAuth,
   displayName: 'Email Event',
   description: 'Triggers when a selected email or contact event occurs in Resend',

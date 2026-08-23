@@ -7,6 +7,7 @@ import { updateGroupUsersActionOutputSchema } from '../output-schemas';
 export const updateGroupUsersAction = createAction({
   auth: slackAuth,
   name: 'update_group_users',
+  classification: 'WRITE',
   displayName: 'Update User Group Members',
   description: 'Add users to or overwrite the member list of a Slack user group.',
   audience: 'both',

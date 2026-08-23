@@ -9,6 +9,7 @@ import { moxieCRMAuth } from '../auth';
 export const moxieCreateTaskAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_task',
+  classification: 'WRITE',
   displayName: 'Create a Task',
   description: 'Create a task in project.',
   audience: 'both',

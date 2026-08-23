@@ -5,14 +5,17 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-ticket',
+	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a ticket in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot support ticket with a name, pipeline, and pipeline stage plus optional properties. Each call creates a separate ticket even for identical input, so it is not idempotent.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		ticketName: Property.ShortText({
 			displayName: 'Ticket Name',

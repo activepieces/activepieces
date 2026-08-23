@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth, generateCashgramToken, validateAuthCredentials } 
 export const createCashgram = createAction({
   auth: cashfreePaymentsAuth,
   name: 'create-cashgram',
+  classification: 'WRITE',
   displayName: 'Create Cashgram',
   description: 'Create a Cashgram for instant money transfers using Cashfree',
   audience: 'both',

@@ -11,6 +11,7 @@ import { phoneNumberDropdown } from '../common/props';
 export const outgoingMessageDelivered = createTrigger({
   auth: openPhoneAuth,
   name: 'outgoing_message_delivered',
+  classification: 'READ',
   displayName: 'Outgoing Message Delivered',
   description:
     'Fires when an outbound message is delivered successfully. Useful for message confirmation workflows.',

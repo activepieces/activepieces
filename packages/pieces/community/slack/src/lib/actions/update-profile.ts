@@ -7,6 +7,7 @@ import { updateProfileActionOutputSchema } from '../output-schemas';
 export const updateProfileAction = createAction({
   auth: slackAuth,
   name: 'slack-update-profile',
+  classification: 'WRITE',
   displayName: 'Update Profile',
   description: 'Update basic profile field such as name or title.',
   audience: 'human',

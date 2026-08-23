@@ -12,6 +12,7 @@ import { getMyMemberActionOutputSchema } from '../../output-schemas';
 export const getMyMember = createAction({
   auth: trelloAuth,
   name: 'get_my_member',
+  classification: 'READ',
   displayName: 'Get My Member (Agent)',
   description: 'Get the connected Trello user.',
   audience: 'ai',

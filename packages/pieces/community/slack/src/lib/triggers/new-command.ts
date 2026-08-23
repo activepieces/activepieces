@@ -12,6 +12,7 @@ import { newCommandTriggerOutputSchema } from '../output-schemas';
 export const newCommand = createTrigger({
   auth: slackAuth,
   name: 'new_command',
+  classification: 'READ',
   displayName: 'New Command in Channel',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',

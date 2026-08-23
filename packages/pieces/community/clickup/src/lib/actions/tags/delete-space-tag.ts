@@ -10,6 +10,7 @@ import { clickupAuth } from '../../auth';
 export const clickupDeleteSpaceTag = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_space_tag',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a tag from a ClickUp space',
   audience: 'ai',
   aiMetadata: {

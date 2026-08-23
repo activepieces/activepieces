@@ -5,6 +5,7 @@ import { bettermodeAuth } from '../auth';
 
 export const createQuestionAction = createAction({
   name: 'create_question',
+  classification: 'WRITE',
   auth: bettermodeAuth,
   displayName: 'Create Question Post',
   description: 'Create a new question post in a space',

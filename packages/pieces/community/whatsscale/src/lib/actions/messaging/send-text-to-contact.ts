@@ -8,6 +8,7 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_contact',
+  classification: 'WRITE',
   displayName: 'Send a Message to a Contact',
   description:
     'Send a text message to a WhatsApp contact selected from your contact list',
