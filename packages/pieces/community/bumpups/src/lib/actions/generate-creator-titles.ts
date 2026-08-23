@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateCreatorTitles = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorTitles',
+  classification: 'READ',
   displayName: 'Generate Creator Titles',
   description: 'Generates engaging titles for a YouTube video based on its content.',
   audience: 'both',

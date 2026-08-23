@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
 import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
@@ -7,6 +8,7 @@ import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
+import { packageDependencies } from './package-dependencies'
 
 const TS_CONFIG_CONTENT = `
 {
@@ -50,12 +52,13 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         log.debug({ sourceCode, name, codePath }, 'Processing code step')
 
         const currentHash = await cryptoUtils.hashObject(sourceCode)
+        const compiledStepPath = codeCache(codesFolderPath).compiledStepPath({ flowVersionId, stepName: name })
         const cache = cacheState(codePath)
         let buildStatus: CodeBuildStatus = 'success'
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                return value !== currentHash
+                return value !== currentHash || !existsSync(compiledStepPath)
             },
             installFn: async () => {
                 const { code, packageJson } = sourceCode
@@ -144,11 +147,11 @@ function getPackageJson(packageJson: string, getSettings: () => SandboxSettings)
     }
     const { data: parsedPackageJson, error: parseError } = tryCatchSync(() => JSON.parse(packageJson))
     const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
+    const requestedDependencies = packageDependencies.sanitize(packageJsonObject?.['dependencies'])
     return JSON.stringify({
-        ...packageJsonObject,
         dependencies: {
             '@types/node': '18.17.1',
-            ...(packageJsonObject?.['dependencies'] ?? {}),
+            ...requestedDependencies,
         },
     })
 }

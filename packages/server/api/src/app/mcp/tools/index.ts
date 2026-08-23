@@ -70,20 +70,20 @@ export const LOCKED_TOOL_NAMES: string[] = [
     'ap_list_runs',
     'ap_get_run',
     'ap_setup_guide',
-]
-
-export const PLATFORM_LEVEL_TOOL_NAMES: string[] = [
+] as const
+ 
+export const PLATFORM_LEVEL_TOOL_NAMES = [
     'ap_research_pieces',
     'ap_search_actions',
     'ap_search_triggers',
     'ap_list_ai_models',
     'ap_get_piece_props',
-]
+] as const
 
 // NOTE: Keep this list in sync with TOOL_CATEGORIES in
 // packages/web/src/app/components/project-settings/mcp-server/utils/mcp-tools-metadata.ts
 // Any tool added here must also be added there so it appears in the UI settings panel.
-export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
+export const ALL_CONTROLLABLE_TOOL_NAMES = [
     'ap_build_flow',
     'ap_create_flow',
     'ap_duplicate_flow',
@@ -109,13 +109,13 @@ export const ALL_CONTROLLABLE_TOOL_NAMES: string[] = [
     'ap_test_step',
     'ap_retry_run',
     'ap_run_action',
-]
+]  as const
 
 export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | undefined, log: FastifyBaseLogger): McpToolDefinition[] => [
     apBuildFlowTool({ mcp, userId }, log),
     apCreateFlowTool({ mcp, userId }, log),
     apDuplicateFlowTool({ mcp, userId }, log),
-    apRenameFlowTool(mcp, log),
+    apRenameFlowTool({ mcp, userId }, log),
     apListFlowsTool(mcp, log),
     apFlowStructureTool(mcp, log),
     apReadStepCodeTool(mcp, log),
@@ -129,17 +129,17 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apResolvePropertyChainTool(mcp, log),
     apValidateStepConfigTool(mcp, log),
     apListConnectionsTool(mcp, log),
-    apUpdateTriggerTool(mcp, log),
-    apAddStepTool(mcp, log),
-    apUpdateStepTool(mcp, log),
-    apDeleteStepTool(mcp, log),
-    apAddBranchTool(mcp, log),
-    apUpdateBranchTool(mcp, log),
-    apDeleteBranchTool(mcp, log),
-    apLockAndPublishTool(mcp, log),
-    apChangeFlowStatusTool(mcp, log),
-    apDeleteFlowTool(mcp, log),
-    apManageNotesTool(mcp, log),
+    apUpdateTriggerTool({ mcp, userId }, log),
+    apAddStepTool({ mcp, userId }, log),
+    apUpdateStepTool({ mcp, userId }, log),
+    apDeleteStepTool({ mcp, userId }, log),
+    apAddBranchTool({ mcp, userId }, log),
+    apUpdateBranchTool({ mcp, userId }, log),
+    apDeleteBranchTool({ mcp, userId }, log),
+    apLockAndPublishTool({ mcp, userId }, log),
+    apChangeFlowStatusTool({ mcp, userId }, log),
+    apDeleteFlowTool({ mcp, userId }, log),
+    apManageNotesTool({ mcp, userId }, log),
     apListAiModelsTool(mcp, log),
     apListTablesTool(mcp, log),
     apFindRecordsTool(mcp, log),
@@ -151,8 +151,8 @@ export const activepiecesTools = (mcp: ProjectScopedMcpServer, userId: string | 
     apDeleteRecordsTool(mcp, log),
     apListRunsTool(mcp, log),
     apGetRunTool(mcp, log),
-    apTestFlowTool(mcp, log),
-    apTestStepTool(mcp, log),
+    apTestFlowTool({ mcp, userId }, log),
+    apTestStepTool({ mcp, userId }, log),
     apRetryRunTool(mcp, log),
     apRunActionTool(mcp, log),
     apSetupGuideTool(mcp, log),

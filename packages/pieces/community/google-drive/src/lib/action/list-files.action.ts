@@ -109,9 +109,10 @@ async function getFilesRecursively(
 export const googleDriveListFiles = createAction({
   auth: googleDriveAuth,
   name: 'list-files',
+  classification: 'SEARCH',
   displayName: 'List files',
   description: 'List files from a Google Drive folder',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Lists files and subfolders inside a given Drive folder, with optional recursion to a chosen depth and optional download of each file\'s content. Use to enumerate the contents of a known folder ID. Read-only and idempotent. Requires the folder ID, not a name.', idempotent: true },
   props: {
     folderId: Property.ShortText({

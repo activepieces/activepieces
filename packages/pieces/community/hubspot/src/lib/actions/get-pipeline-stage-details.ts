@@ -5,6 +5,7 @@ import { Client } from '@hubspot/api-client';
 export const getPipelineStageDetailsAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-pipeline-stage-details',
+	classification: 'READ',
 	displayName: 'Get Pipeline Stage Details',
 	description: 'Finds and retrieves CRM object pipeline stage details.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import {
   HttpRequest,
   QueryParams,
   AuthenticationType,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import {
   ApFile,
@@ -25,10 +26,12 @@ enum AuthType {
 }
 
 export const httpSendRequestAction = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'send_request',
+  classification: 'WRITE',
   displayName: 'Send HTTP request',
   description: 'Send HTTP request',
+  aiMetadata: { description: 'Sends an HTTP request to any URL with a chosen method, optional Basic or Bearer auth, an optional JSON, raw or multipart body, and can retry or continue the flow on 4xx/5xx. Use it as the generic escape hatch for an API with no dedicated piece — prefer that app\'s own piece when one exists, and Parse URL to pull a URL apart without calling it. Requires an absolute URL and a method; not idempotent, since a call\'s effect follows the method and POST/PATCH-style calls mutate remote data.', idempotent: false },
   props: {
     method: httpMethodDropdown,
     url: Property.ShortText({
@@ -318,34 +321,19 @@ export const httpSendRequestAction = createAction({
       request.responseType = 'arraybuffer';
     }
 
-    if (body) {
-      const bodyInput = body['data'];
-      if (body_type === 'form_data') {
-        const formBodyInput = bodyInput as Array<{
-          fieldName: string;
-          fieldType: 'text' | 'file';
-          textFieldValue?: string;
-          fileFieldValue?: ApFile;
-        }>;
+    const formBodyInput =
+      body && body_type === 'form_data' ? ((body['data'] ?? []) as FormDataField[]) : undefined;
 
-        const formData = new FormData();
-
-        for (const { fieldName, fieldType, textFieldValue, fileFieldValue } of formBodyInput) {
-          if (fieldType === 'text' && !isEmpty(textFieldValue)) {
-            formData.append(fieldName, textFieldValue);
-          } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
-            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
-          }
-        }
-
-        request.body = formData;
-        request.headers = { ...request.headers, ...formData.getHeaders() };
-      } else {
-        request.body = bodyInput;
-      }
+    if (body && formBodyInput === undefined) {
+      request.body = body['data'];
     }
 
     const apiRequest = async () => {
+      if (formBodyInput !== undefined) {
+        const formData = toFormData(formBodyInput);
+        request.body = formData;
+        request.headers = { ...(headers as HttpHeaders), ...formData.getHeaders() };
+      }
       if (use_proxy) {
         const proxySettings = context.propsValue.proxy_settings;
         assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
@@ -379,6 +367,7 @@ export const httpSendRequestAction = createAction({
         );
       } catch (error) {
         attempts++;
+        const status = error instanceof HttpError ? error.response.status : 0;
 
         switch (failureMode) {
           case 'retry_all': {
@@ -386,24 +375,18 @@ export const httpSendRequestAction = createAction({
             throw error;
           }
           case 'retry_5xx': {
-            if (
-              (error as HttpError).response.status >= 500 &&
-              (error as HttpError).response.status < 600
-            ) {
+            if (status >= 500 && status < 600) {
               if (attempts < 3) continue;
-              throw error; // after 3 tries, throw
+              throw error;
             }
-            return (error as HttpError).errorMessage(); //throw error; // non 5xxx error
+            return toFailsafeOutput({ error, requestBody: request.body });
           }
 
           case 'continue_all':
-            return (error as HttpError).errorMessage();
+            return toFailsafeOutput({ error, requestBody: request.body });
           case 'continue_4xx':
-            if (
-              (error as HttpError).response?.status >= 400 &&
-              (error as HttpError).response?.status < 500
-            ) {
-              return (error as HttpError).errorMessage();
+            if (status >= 400 && status < 500) {
+              return toFailsafeOutput({ error, requestBody: request.body });
             }
             if (attempts < 3) continue;
             throw error;
@@ -418,6 +401,18 @@ export const httpSendRequestAction = createAction({
     throw new Error('Unexpected error occured');
   },
 });
+
+const toFormData = (fields: FormDataField[]) => {
+  const formData = new FormData();
+  for (const { fieldName, fieldType, textFieldValue, fileFieldValue } of fields) {
+    if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+      formData.append(fieldName, textFieldValue);
+    } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+      formData.append(fieldName, fileFieldValue!.data, { filename: fileFieldValue?.filename });
+    }
+  }
+  return formData;
+};
 
 const handleBinaryResponse = (
   bodyContent: string | ArrayBuffer | Buffer,
@@ -438,4 +433,11 @@ const handleBinaryResponse = (
 
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};
+
+type FormDataField = {
+  fieldName: string;
+  fieldType: 'text' | 'file';
+  textFieldValue?: string;
+  fileFieldValue?: ApFile;
 };

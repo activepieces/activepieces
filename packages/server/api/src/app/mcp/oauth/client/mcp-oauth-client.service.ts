@@ -1,11 +1,13 @@
 import { randomBytes } from 'crypto'
-import { apId } from '@activepieces/core-utils'
+import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthClient } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { McpOAuthClientEntity } from './mcp-oauth-client.entity'
 
 const repo = repoFactory(McpOAuthClientEntity)
+
+const CLIENT_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
 
 function hashSecret(secret: string): string {
     return cryptoUtils.hashSHA256(secret)
@@ -21,12 +23,16 @@ function generateClientSecret(): string {
 
 export const mcpOAuthClientService = {
     async getByClientId(clientId: string): Promise<McpOAuthClient | null> {
+        if (!CLIENT_ID_PATTERN.test(clientId)) {
+            return null
+        }
         return repo().findOneBy({ clientId })
     },
 
     async register(params: RegisterClientParams): Promise<RegisterClientResult> {
         const clientId = generateClientId()
-        const isPublicClient = params.tokenEndpointAuthMethod === 'none'
+        const tokenEndpointAuthMethod = params.tokenEndpointAuthMethod ?? 'client_secret_basic'
+        const isPublicClient = tokenEndpointAuthMethod === 'none'
         const rawSecret = isPublicClient ? null : generateClientSecret()
         const hashedSecret = rawSecret ? hashSecret(rawSecret) : null
 
@@ -42,12 +48,12 @@ export const mcpOAuthClientService = {
             redirectUris: params.redirectUris,
             clientName: params.clientName ?? null,
             grantTypes: params.grantTypes ?? ['authorization_code', 'refresh_token'],
-            tokenEndpointAuthMethod: params.tokenEndpointAuthMethod ?? 'none',
+            tokenEndpointAuthMethod,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
 
-        await repo().save(client)
+        await repo().save(sanitizeObjectForPostgresql(client))
 
         return {
             client_id: clientId,

@@ -4,8 +4,13 @@ import { DAY_HOURS, timezoneOptions, validateHours } from '../common';
 
 export const everyDayTrigger = createTrigger({
   name: 'every_day',
+  classification: 'READ',
   displayName: 'Every Day',
   description: 'Triggers the current flow every day',
+  aiMetadata: {
+    description:
+      'Fires once a day at a chosen hour in a chosen timezone, in either of two modes: every calendar day, or Monday-Friday only when weekends are excluded; each event represents the daily tick, not an external change. Pick this for daily jobs; use Every Hour or Every X Minutes for finer cadence, Every Week / Every Month for coarser, or Cron Expression when the run must land on a specific minute or an irregular day set. Granularity is whole hours only (it always fires at minute 0).',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {},
   props: {

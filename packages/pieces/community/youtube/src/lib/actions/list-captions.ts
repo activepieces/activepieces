@@ -8,6 +8,7 @@ import { youtubeAuth } from '../common/auth';
 export const youtubeListCaptionsAction = createAction({
   auth: youtubeAuth,
   name: 'list_captions',
+  classification: 'SEARCH',
   displayName: 'List Captions',
   description:
     'Returns caption tracks for a specific YouTube video using the captions.list endpoint.',

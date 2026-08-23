@@ -105,6 +105,7 @@ const assessMarketingPotential = (data: any): string => {
 export const mailChimpNewCustomerTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_customer',
+  classification: 'READ',
   displayName: 'New Customer',
   description: 'Fires when a new customer is added to a connected store',
   aiMetadata: {

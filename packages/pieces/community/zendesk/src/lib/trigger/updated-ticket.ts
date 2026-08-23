@@ -32,6 +32,7 @@ interface ZendeskTicket {
 
 export const updatedTicket = createTrigger({
   name: 'updated_ticket',
+  classification: 'READ',
   displayName: 'Updated Ticket',
   description: 'Fires when an existing ticket is updated. Requires a Zendesk Trigger with Notify active webhook.',
   aiMetadata: {

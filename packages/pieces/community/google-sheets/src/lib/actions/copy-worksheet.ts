@@ -8,9 +8,10 @@ import { copyWorksheetActionOutputSchema } from '../output-schemas';
 export const copyWorksheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'copy-worksheet',
+	classification: 'WRITE',
 	displayName: 'Copy Worksheet',
 	description: 'Creates a new worksheet by copying an existing one.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Copies an existing worksheet (tab), with its data, into a destination spreadsheet as a new worksheet. Use when an agent needs to duplicate a tab within or across spreadsheets. Not idempotent — each call creates another copy.',

@@ -1,16 +1,22 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/pieces-framework';
+import { deletedRecordTriggerOutputSchema } from '../output-schemas';
 
 export const deletedRecordTrigger = createTrigger({
     name: 'deletedRecord',
+    classification: 'READ',
     displayName: 'Record Deleted',
     description: 'Triggers when a record is deleted from the selected table.',
+    aiMetadata: {
+        description: 'Fires when a row is removed from the selected Activepieces Table, whether the deletion came from a flow, the table UI, or the API, and represents the record as it stood at the moment of deletion. Use it to react to removals or to archive a row elsewhere, since the record can no longer be fetched afterwards; inserts and edits raise the separate New Record Created and Record Updated triggers. Backed by a webhook registered on one specific table, so a table must be selected.',
+    },
     auth: PieceAuth.None(),
     props: {
         table_id: tablesCommon.table_id,
     },
     sampleData: {},
+    outputSchema: deletedRecordTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const tableExternalId = context.propsValue.table_id;

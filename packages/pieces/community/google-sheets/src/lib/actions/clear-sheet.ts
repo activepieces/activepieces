@@ -7,8 +7,9 @@ import { clearSheetActionOutputSchema } from '../output-schemas';
 export const clearSheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'clear_sheet',
+	classification: 'DESTRUCTIVE',
 	description: 'Clears all rows on an existing sheet.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Deletes all data rows from a worksheet, optionally preserving the header row. Use when an agent needs to empty a sheet before repopulating it. Idempotent — clearing an already-empty sheet leaves it empty; this is destructive and removes all existing row content.',

@@ -66,6 +66,7 @@ interface ListActivitiesResponse {
 export const newActivity = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_activity',
+	classification: 'READ',
 	displayName: 'New Activity',
 	description: 'Triggers when a new activity is added',
 	aiMetadata: {

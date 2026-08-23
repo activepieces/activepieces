@@ -2,14 +2,17 @@ import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
+import { updateProfileActionOutputSchema } from '../output-schemas';
 
 export const updateProfileAction = createAction({
   auth: slackAuth,
   name: 'slack-update-profile',
+  classification: 'WRITE',
   displayName: 'Update Profile',
   description: 'Update basic profile field such as name or title.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: "Update basic profile fields (first name, last name, email) for the authenticated user, or for another user when an admin specifies a user ID; requires a user token. Setting the same values again is idempotent. Note that changing the email triggers Slack notification emails to both addresses, and editing another user is admin-only on paid teams.", idempotent: true },
+  outputSchema: updateProfileActionOutputSchema,
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

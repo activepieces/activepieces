@@ -6,6 +6,7 @@ export const listFiles = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'list_files',
+  classification: 'SEARCH',
   displayName: 'List Files',
   description:
     'Return the list of files uploaded to the connected OpenAI account, optionally filtered by purpose.',

@@ -6,6 +6,7 @@ import { pageType } from '../common/props';
 export const createPageAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-page',
+	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a new landing/site page.',
 	audience: 'both',

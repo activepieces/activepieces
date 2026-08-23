@@ -17,9 +17,11 @@ type StripeWebhookPayload = {
   };
 };
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdatedSubscription = createTrigger({
   auth: stripeAuth,
   name: 'updated_subscription',
+  classification: 'READ',
   displayName: 'Updated Subscription',
   description: 'Fires when an existing subscription is changed.',
   aiMetadata: {
@@ -52,6 +54,7 @@ export const stripeUpdatedSubscription = createTrigger({
       required: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MowQVLkdIwHu7ixeRlqHVzs',
     object: 'subscription',

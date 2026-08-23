@@ -23,6 +23,8 @@ const disallowedRoutes = [
   '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
+  '/v1/authentication/otp/request',
+  '/v1/authentication/otp/verify',
   '/v1/authn/local/verify-email',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',
@@ -123,7 +125,7 @@ function logChatHttp({
 }): void {
   if (!chatDebug.isEnabled()) return;
   const path = url.replace(API_URL, '');
-  if (!path.startsWith('/v1/chat') || path.startsWith('/v1/logs')) return;
+  if (!path.startsWith('/v1/agents') || path.startsWith('/v1/logs')) return;
   const conversationId = path.match(/\/v1\/chat\/conversations\/([^/?]+)/)?.[1];
   const fields = {
     http: {

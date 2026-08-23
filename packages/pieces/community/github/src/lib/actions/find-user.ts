@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { findUserActionOutputSchema } from '../output-schemas';
 
 export const githubFindUserAction = createAction({
   auth: githubAuth,
   name: 'find_user',
+  classification: 'READ',
   displayName: 'Find User',
   description: 'Finds a user by their login name.',
   audience: 'both',
@@ -21,6 +23,7 @@ export const githubFindUserAction = createAction({
       required: true,
     }),
   },
+  outputSchema: findUserActionOutputSchema,
   async run({ auth, propsValue }) {
     const { username } = propsValue;
 

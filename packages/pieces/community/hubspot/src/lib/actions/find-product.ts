@@ -11,6 +11,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const findProductAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-product',
+	classification: 'SEARCH',
 	displayName: 'Find Product',
 	description: 'Finds a product by searching.',
 	audience: 'both',

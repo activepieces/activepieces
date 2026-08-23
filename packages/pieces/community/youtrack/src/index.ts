@@ -2,9 +2,11 @@
 // YouTrack Piece - Main Entry Point
 // =============================================================================
 
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
+
+import { youtrackAuth } from './lib/auth';
 
 import { createIssueAction } from './lib/actions/create-issue';
 import { getIssueAction } from './lib/actions/get-issue';
@@ -27,32 +29,7 @@ import { listAttachmentsAction } from './lib/actions/list-attachments';
 import { newIssueTrigger } from './lib/triggers/new-issue';
 import { updatedIssueTrigger } from './lib/triggers/updated-issue';
 
-export const youtrackAuth = PieceAuth.CustomAuth({
-  displayName: 'YouTrack Connection',
-  description:
-    'Connect your YouTrack instance.\n\n' +
-    '**How to get your permanent token:**\n' +
-    '1. Log in to your YouTrack instance\n' +
-    '2. Click your avatar -> **Profile** -> **Authentication** tab\n' +
-    '3. Click **New permanent token**\n' +
-    '4. Name it (e.g. "Activepieces") and click **Create**\n' +
-    '5. **Copy the token immediately** - it is shown only once\n' +
-    '6. Paste it below with your Instance URL\n\n' +
-    'Your **Instance URL** is your browser address, e.g. https://example.youtrack.cloud',
-  required: true,
-  props: {
-    baseUrl: Property.ShortText({
-      displayName: 'Instance URL',
-      description: 'Your YouTrack URL (e.g. https://example.youtrack.cloud). Do NOT include /api.',
-      required: true,
-    }),
-    apiToken: PieceAuth.SecretText({
-      displayName: 'Permanent Token',
-      description: 'From Profile -> Authentication -> Permanent Tokens. Starts with "perm:".',
-      required: true,
-    }),
-  },
-});
+export { youtrackAuth };
 
 export const youtrack = createPiece({
   displayName: 'YouTrack',
@@ -83,13 +60,12 @@ export const youtrack = createPiece({
     listAttachmentsAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const { baseUrl } = auth as unknown as { baseUrl: string };
+        const baseUrl = auth?.props.baseUrl ?? '';
         return baseUrl.replace(/\/+$/, '') + '/api';
       },
       auth: youtrackAuth,
       authMapping: async (auth) => {
-        const { apiToken } = auth as unknown as { apiToken: string };
-        return { Authorization: 'Bearer ' + apiToken };
+        return { Authorization: 'Bearer ' + auth.props.apiToken };
       },
     }),
   ],

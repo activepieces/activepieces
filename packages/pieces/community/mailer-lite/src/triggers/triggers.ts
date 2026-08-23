@@ -114,6 +114,7 @@ export function register({
 	return createTrigger({
 		auth: mailerLiteAuth,
 		name,
+		classification: 'READ',
 		displayName,
 		description,
 		aiMetadata,

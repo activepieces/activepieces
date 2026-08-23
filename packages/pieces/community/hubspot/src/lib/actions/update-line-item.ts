@@ -14,6 +14,7 @@ import { Client } from '@hubspot/api-client';
 export const updateLineItemAction = createAction({
     auth: hubspotAuth,
     name: 'update-line-item',
+    classification: 'WRITE',
     displayName: 'Update Line Item',
     description: 'Updates a line item in Hubspot.',
     audience: 'both',

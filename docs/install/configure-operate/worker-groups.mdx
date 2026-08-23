@@ -40,6 +40,10 @@ AP_EXECUTION_MODE=SANDBOX_PROCESS   # or SANDBOX_CODE_AND_PROCESS
 AP_REUSE_SANDBOX=true               # or false, must be set explicitly
 ```
 
+<Warning>
+Routing runs to worker group queues is done by the project rate limiter, so the app server must run with `AP_PROJECT_RATE_LIMITER_ENABLED=true`. Without it, assigned projects keep using the shared queue and grouped workers stay idle.
+</Warning>
+
 Once a project is assigned to a group, its flow and webhook runs are routed to that group's dedicated queue (`project-<group-name>-jobs`) and picked up only by workers carrying the matching `AP_WORKER_GROUP_ID` with `AP_PROJECT_WORKER=true`. Projects without a group keep drawing from the shared queue.
 
 ## Assigning projects to a group

@@ -6,6 +6,7 @@ export const listModels = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'list_models',
+  classification: 'SEARCH',
   displayName: 'List Models',
   description:
     'Return the list of models available to the connected OpenAI account, optionally filtered by an ID substring.',

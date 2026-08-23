@@ -12,11 +12,14 @@ import {
 import { wordpressCommon } from '../common';
 import dayjs from 'dayjs';
 import { wordpressAuth } from '../..';
+import { newPostTriggerOutputSchema } from '../output-schemas';
 
 export const wordpressNewPost = createTrigger({
   auth: wordpressAuth,
   name: 'new_post',
+  classification: 'READ',
   displayName: 'New Post',
+  outputSchema: newPostTriggerOutputSchema,
   sampleData: {
     id: 60,
     date: '2023-02-19T10:08:25',

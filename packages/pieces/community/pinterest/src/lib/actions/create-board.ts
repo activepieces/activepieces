@@ -7,10 +7,13 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
+import { createBoardActionOutputSchema } from '../output-schemas';
 
 export const createBoard = createAction({
   auth: pinterestAuth,
   name: 'createBoard',
+  classification: 'WRITE',
+  outputSchema: createBoardActionOutputSchema,
   displayName: 'Create Board',
   description: 'Create a new Pinterest board for organizing Pins.',
   audience: 'both',

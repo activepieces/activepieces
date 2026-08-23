@@ -6,6 +6,7 @@ import { clickupAuth } from '../../auth';
 export const setClickupCustomFieldValue = createAction({
   auth: clickupAuth,
   name: 'set_custom_fields_value',
+  classification: 'WRITE',
   displayName: 'Set Custom Field Value',
   description: 'Add data to a Custom field on a task.',
   audience: 'both',

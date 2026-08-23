@@ -9,6 +9,7 @@ import { Client } from '@hubspot/api-client';
 export const findDealAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-deal',
+	classification: 'SEARCH',
 	displayName: 'Find Deal',
 	description: 'Finds a deal by searching.',
 	audience: 'both',

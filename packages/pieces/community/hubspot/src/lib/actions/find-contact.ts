@@ -9,6 +9,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const findContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-contact',
+	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Finds a contact by searching.',
 	audience: 'both',

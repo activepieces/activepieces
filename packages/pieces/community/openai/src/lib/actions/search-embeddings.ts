@@ -6,6 +6,7 @@ export const searchEmbeddings = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'search_embeddings',
+  classification: 'READ',
   displayName: 'Search Embeddings',
   description:
     'Matches a query string to a list of document strings for best results.',

@@ -7,6 +7,7 @@ import { outlookCommon } from '../common/client';
 export const sendEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'send-email',
+	classification: 'WRITE',
 	displayName: 'Send Email',
 	description: 'Sends an email using Microsoft Outlook.',
 	audience: 'both',

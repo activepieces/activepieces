@@ -6,6 +6,7 @@ import { descriptCommon } from '../common';
 export const descriptImportMediaAction = createAction({
     auth: descriptAuth,
     name: 'import_media',
+    classification: 'WRITE',
     displayName: 'Import Media',
     description:
         'Imports a media file from a URL into a new or existing Descript project and optionally creates a composition.',

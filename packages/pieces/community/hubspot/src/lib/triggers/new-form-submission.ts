@@ -124,6 +124,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newFormSubmissionTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-form-submission',
+	classification: 'READ',
 	displayName: 'New Form Submission',
 	description: 'Triggers when a form is submitted.',
 	aiMetadata: {
@@ -141,18 +142,10 @@ export const newFormSubmissionTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

@@ -12,6 +12,7 @@ import { Client } from '@hubspot/api-client';
 export const createCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-custome-object',
+	classification: 'WRITE',
 	displayName: 'Create Custom Object',
 	description: 'Creates a custom object in Hubspot.',
 	audience: 'both',

@@ -13,6 +13,7 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { acquisitionUtils } from '@/lib/acquisition-utils';
+import { isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
@@ -23,9 +24,10 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const identifiedKey = useRef<string | null>(null);
 
-  const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
+  const { data: telemetryFlagEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
   );
+  const telemetryEnabled = telemetryFlagEnabled && !isRunningCloudInDevMode;
   const { data: flagCurrentVersion } = flagsHooks.useFlag<string>(
     ApFlagId.CURRENT_VERSION,
   );

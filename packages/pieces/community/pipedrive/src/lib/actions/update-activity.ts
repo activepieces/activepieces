@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 export const updateActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'update-activity',
+    classification: 'WRITE',
     displayName: 'Update Activity',
     description: 'Updates an existing activity.',
     audience: 'both',

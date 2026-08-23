@@ -12,6 +12,7 @@ import { huggingFaceAuth } from '../auth';
 export const imageClassification = createAction({
   audience: 'both',
   name: 'image_classification',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Image Classification',
   description:

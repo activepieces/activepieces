@@ -5,10 +5,11 @@ import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../c
 
 export const captureScreenshot = createAction({
     name: 'capture_screenshot',
+    classification: 'READ',
     displayName: 'Capture Screenshot',
     description: 'Take a screenshot of a web page',
     audience: 'both',
-    aiMetadata: { description: 'Renders a web page in a headless browser and returns a PNG or JPEG screenshot of it. Use to capture the visual state of a public URL; the page URL is required, and options like full-page capture, viewport size, clipping region, and waiting for a CSS selector control what is rendered. Read-only: re-running with the same input re-renders the page and produces an equivalent image without side effects.', idempotent: true },
+    aiMetadata: { description: 'Renders a web page in a headless browser and returns a PNG or JPEG screenshot of it. Use to capture the visual state of a public URL; the page URL is required, and options like full-page capture, viewport size, clipping region, and waiting for a CSS selector control what is rendered. Not idempotent: each call runs a fresh headless-browser render, so the returned image reflects the live page at the moment of the call.', idempotent: false },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({

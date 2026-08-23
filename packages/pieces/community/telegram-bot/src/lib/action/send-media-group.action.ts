@@ -16,10 +16,11 @@ type MediaItem = {
 export const telegramSendMediaGroupAction = createAction({
   auth: telegramBotAuth,
   name: 'send_media_group',
+  classification: 'WRITE',
   displayName: 'Send Media Group',
   description:
     'Send a group of 2–10 photos, videos, documents or audios as an album to a chat',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Sends 2–10 media items (each a public URL or a Telegram file_id) as a single grouped album to a chat. Use to post several photos/videos together; photo and video may be mixed, but audio-only and document-only groups cannot be combined with other types. Not idempotent: each call posts a new album.', idempotent: false },
   props: {
     instructions: telegramCommons.chatIdInstructions(),

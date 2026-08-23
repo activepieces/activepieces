@@ -14,6 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 import { todoistRestClient } from '../common/client/rest-client';
 import { TodoistCompletedTask } from '../common/models';
+import { taskCompletedTriggerOutputSchema } from '../output-schemas';
 
 const ISO_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
@@ -43,12 +44,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof todoistAuth>, { 
 export const todoistTaskCompletedTrigger = createTrigger({
 	auth: todoistAuth,
 	name: 'task_completed',
+	classification: 'READ',
 	displayName: 'Task Completed',
 	description: 'Triggers when a new task is completed',
 	aiMetadata: {
 		description: 'Fires when a Todoist task is marked completed, emitting the completed task record. Polls for tasks closed since the last check, optionally limited to a single project (all projects if left blank).',
 	},
 	type: TriggerStrategy.POLLING,
+	outputSchema: taskCompletedTriggerOutputSchema,
 
 	props: {
 		project_id: todoistProjectIdDropdown(

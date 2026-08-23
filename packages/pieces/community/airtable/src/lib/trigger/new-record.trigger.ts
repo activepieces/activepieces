@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 const props = {
   base: airtableCommon.base,
@@ -37,8 +38,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, S
 export const airtableNewRecordTrigger = createTrigger({
   auth: airtableAuth,
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to the selected table.',
+  outputSchema: newRecordTriggerOutputSchema,
   aiMetadata: {
     description:
       'Fires when a new record is created in the selected base and table (optionally scoped to a view), polling on each record\'s creation time. Represents a newly added row.',

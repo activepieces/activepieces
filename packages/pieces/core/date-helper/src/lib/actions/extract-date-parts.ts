@@ -9,11 +9,13 @@ import {
 } from '../common';
 
 export const extractDateParts = createAction({
-  audience: 'human',
+  audience: 'both',
   name: 'extract_date_parts',
+  classification: 'READ',
   displayName: 'Extract Date Units',
   description:
     'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
+  aiMetadata: { description: 'Parses one date string and returns the selected calendar components as separate values, any combination in a single call, with month as a 1-12 number and the weekday and month names spelled out. Use it when downstream logic needs the parts as data, for example branching on the weekday name; prefer Format Date when you only need the whole date rendered differently. Requires the date and its input pattern, and each requested unit must come from that supported set or the action throws; read-only and idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
@@ -57,7 +59,7 @@ export const extractDateParts = createAction({
     }),
   },
   async run(context) {
-    
+
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const unitExtract = context.propsValue.unitExtract;

@@ -2,14 +2,16 @@ import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createCommentActionOutputSchema } from '../output-schemas';
 
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
   name: 'createCommentOnAIssue',
+  classification: 'WRITE',
   displayName: 'Create comment on a issue',
   description:
     'Adds a comment to the specified issue (also works with pull requests)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Posts a comment on an issue (or pull request, which shares the issue number space) in a repository. Use to add a reply or note to an existing issue/PR identified by its number. Not idempotent: each call appends a new comment.',
@@ -28,6 +30,7 @@ export const githubCreateCommentOnAIssue = createAction({
       required: true,
     }),
   },
+  outputSchema: createCommentActionOutputSchema,
   async run({ auth, propsValue }) {
     const issue_number = propsValue.issue_number;
     const { owner, repo } = propsValue.repository!;
