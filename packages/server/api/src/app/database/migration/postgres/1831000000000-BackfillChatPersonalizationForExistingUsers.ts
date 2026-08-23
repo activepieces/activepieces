@@ -16,6 +16,7 @@ export class BackfillChatPersonalizationForExistingUsers1831000000000 implements
                 "user"."id",
                 'DISMISSED_LEGACY'
             FROM "user"
+            WHERE "user"."platformId" IS NOT NULL
             ON CONFLICT DO NOTHING
         `)
     }

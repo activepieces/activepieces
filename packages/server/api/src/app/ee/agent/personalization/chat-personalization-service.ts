@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import {
     ApEdition,
     ChatPersonalization,
@@ -245,7 +245,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             findRow({ platformId, userId: null }),
             tryCatch(() => aiToolConfigService(log).getEnabledTools({ platformId })),
         ])
-        const providerName = provider.provider as AIProviderName
+        const providerName = provider.provider
         const webSearch = enabledTools.data?.webSearch ?? null
         return {
             claimed: true,

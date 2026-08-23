@@ -8,7 +8,7 @@ status: accepted
 The first-run onboarding card ("Who am I teaming up with?") renders when the caller has **no `chat_personalization` row at all**, a state the service synthesizes as `UNSET` and never persists. To keep that from firing for the entire existing user base on ship day, the shipping migration **backfills one terminal row per existing user** rather than gating the card on a hardcoded ship date.
 
 ## Context
-The card's gate is `isEmpty && !incognito && !stage.isStageOpen && (status === UNSET || promptOpen)`. `UNSET` means "no row exists", not "new account", so on first deploy every user who had never answered would have met it, including the grandfathered cloud users from the 200-user chat rollout cap. Those people have been chatting for months and would have opened a normal new chat to find a new-user welcome takeover where their greeting used to be.
+The card's gate is `isEmpty && !incognito && (isFirstRun || promptOpen)`, where `isFirstRun` is `status === UNSET`. `UNSET` means "no row exists", not "new account", so on first deploy every user who had never answered would have met it, including the grandfathered cloud users from the 200-user chat rollout cap. Those people have been chatting for months and would have opened a normal new chat to find a new-user welcome takeover where their greeting used to be.
 
 The obvious fix is `user.created > SHIP_DATE`. It works, and it leaves a date constant in the code that nobody ever deletes and no one dares change.
 
@@ -25,4 +25,4 @@ Rejected: gating on `user.created` against a ship-date constant, for the reasons
 - The migration writes one row per existing user in a single `INSERT ... SELECT`. It is the hardest thing in this feature to reverse, since un-writing it cannot distinguish a backfilled row from a real one. The distinct legacy status is what makes it reversible at all.
 - Anyone adding a status to the enum must decide whether it is terminal for this gate. A non-terminal addition silently re-opens the card for everyone holding it.
 - The card is still gated on an empty conversation, so a backfilled user never sees it even if a row is later cleared by hand.
-- Not yet implemented. This records the call, made while planning `feat/chat-onboarding-personalization`; the migration lands with the feature.
+- Shipped with the feature on `feat/chat-onboarding-personalization`, as `BackfillChatPersonalizationForExistingUsers`. It skips users with a null `platformId`, which the `user` table still permits, because the target column is `NOT NULL`.

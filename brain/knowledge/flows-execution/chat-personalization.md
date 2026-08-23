@@ -22,7 +22,7 @@ The first-run onboarding inside chat. A user with no row is asked "Who am I team
 - **The prefill only works once the platform is named after the company.** It reads `platform.name`, so it depends on work-email platform naming; before that shipped every platform was `"<FirstName>'s Platform"` and the predicate correctly rejected all of them. A person-named platform yields an empty blank, not a wrong one.
 - **Apollo and Clearbit are Cloud-only and both optional.** Apollo guesses the role from `AppSystemProp.APOLLO_API_KEY` and Clearbit powers company autocomplete from the browser. Neither runs off Cloud, and neither is required: the company blank fills locally on every edition. Apollo deliberately does not read an AI-tool config, because those are per-platform and a fresh signup has none.
 - **Research needs a chat AI provider or it degrades to SKIPPED silently.** `guardsAllowResearch` returns false with no provider and the user simply keeps the stock cards. See the AI Providers page for why a local Cloud platform has no provider until you flip `aiProvidersEnabled`.
-- **A backfilled user never sees the card, so the progress donut is their only way in.** The card is gated on UNSET, and the migration made every pre-existing user DISMISSED_LEGACY. Removing the donut would lock the entire existing base out of the feature permanently.
+- **A backfilled user never sees the card, so the personalization chip is their only way in.** The card is gated on UNSET, and the migration made every pre-existing user DISMISSED_LEGACY. Removing the chip would lock the entire existing base out of the feature permanently.
 
 ## Key files
 - `packages/server/api/src/app/ee/agent/personalization/` — entity, service, controller
@@ -30,4 +30,4 @@ The first-run onboarding inside chat. A user with no row is asked "Who am I team
 - `packages/core/shared/src/lib/ee/agent/chat-personalization.ts` — statuses, view, `chatPersonalizationUtils`
 - `packages/web/src/features/chat/lib/` — `use-personalization.ts`, `onboarding-prefill.ts`, `personalization-api.ts`
 - `packages/web/src/features/chat/use-cases/` — the card set and its code-drawn art
-- `packages/web/src/app/routes/chat-with-ai/components/` — `onboarding-question-card.tsx`, `onboarding-welcome.tsx`, `personalization-progress.tsx`
+- `packages/web/src/app/routes/chat-with-ai/components/` — `onboarding-question-card.tsx`, `onboarding-welcome.tsx`, `personalization-chip.tsx`

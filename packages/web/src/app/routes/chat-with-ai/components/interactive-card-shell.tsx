@@ -16,7 +16,7 @@ export function InteractiveCardShell({
   return (
     <motion.div
       className={cn(
-        'chat-question-gradient-border rounded-2xl bg-background p-4 sm:p-5 shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm transition-[colors,opacity]',
+        'chat-question-gradient-border rounded-2xl bg-background p-4 sm:p-5 shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm transition-[color,background-color,border-color,opacity]',
         !active && 'opacity-60',
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}

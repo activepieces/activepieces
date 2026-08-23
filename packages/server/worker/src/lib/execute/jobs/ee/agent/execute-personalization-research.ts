@@ -310,7 +310,7 @@ async function enrichWithApollo({ apiKey, email, domain, log }: {
             : tryCatch(() => client.get<Record<string, unknown>>(`https://api.apollo.io/api/v1/organizations/enrich?domain=${encodeURIComponent(domain)}`)),
     ])
     const lines: string[] = []
-    const personData = person.data?.data?.['person'] as Record<string, unknown> | undefined
+    const personData = asRecord(person.data?.data?.['person'])
     let title: string | null = null
     let departments: string[] | null = null
     let personOrgDomain: string | null = null
@@ -818,6 +818,10 @@ function retargetProfileForUser({ companyProfile }: { companyProfile: Record<str
 // edit distance bounded by ~25% of the typed length (min 2, max 4). "Business
 // Analist" → "Business Analyst" passes (distance 1); "Business Analyst" →
 // "Data Analyst" does not.
+function asRecord(value: unknown): Record<string, unknown> | null {
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? Object.fromEntries(Object.entries(value)) : null
+}
+
 function isMinorSpellingFix({ typed, suggested }: { typed: string, suggested: string }): boolean {
     const a = typed.trim().toLowerCase()
     const b = suggested.trim().toLowerCase()

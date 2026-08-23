@@ -495,6 +495,7 @@
   "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.": "The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.",
   "Maximum number of flows that can run at the same time for this project": "Maximum number of flows that can run at the same time for this project",
   "Active Flows Limit": "Active Flows Limit",
+  "Unlimited": "Unlimited",
   "Maximum number of enabled flows in this project. Leave empty for no limit.": "Maximum number of enabled flows in this project. Leave empty for no limit.",
   "Your changes have been saved.": "Your changes have been saved.",
   "General": "General",
@@ -567,6 +568,7 @@
   "No memories yet.": "No memories yet.",
   "Settings": "Settings",
   "No results": "No results",
+  "Beta": "Beta",
   "Search projects...": "Search projects...",
   "No projects found.": "No projects found.",
   "Platform Admin": "Platform Admin",
@@ -1924,6 +1926,7 @@
   "Credits Usage by Project": "Credits Usage by Project",
   "No project usage yet": "No project usage yet",
   "Once your projects consume credits, their usage will appear here.": "Once your projects consume credits, their usage will appear here.",
+  "AI Usage": "AI Usage",
   "Runs Usage": "Runs Usage",
   "Total": "Total",
   "{used} seats": "{used} seats",
@@ -2415,5 +2418,7 @@
   "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
   "Show all projects": "Show all projects",
   "Sort pinned projects": "Sort pinned projects",
-  "Unpin": "Unpin"
+  "Unpin": "Unpin",
+  "Runs on autopilot": "Runs on autopilot",
+  "From your email": "From your email"
 }

@@ -1,8 +1,10 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   isNil,
   PROJECT_COLOR_PALETTE,
   ProjectType,
   ProjectWithLimits,
+  TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -44,11 +46,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { SidebarUsageLimits } from '@/features/billing';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import { templatesTelemetryApi } from '@/features/templates';
 import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -59,6 +67,9 @@ import { HelpAndFeedback } from '../help-and-feedback';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { checkAccess } = useAuthorization();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const {
     collapsed,
     setCollapsed,
@@ -68,6 +79,9 @@ export function PrimaryRail() {
   if (embedState.isEmbedded || embedState.hideSideNav) {
     return null;
   }
+
+  const showAgents =
+    platform.plan.agentsEnabled && checkAccess(Permission.READ_AGENT);
 
   const openSidebar = () => setCollapsed(false);
 
@@ -89,26 +103,39 @@ export function PrimaryRail() {
             collapsed ? 'items-center px-2' : 'px-2',
           )}
         >
-          <RailNavButton
-            collapsed={collapsed}
-            to="/chat"
-            icon={SquarePen}
-            label={t('Chat')}
-            isActive={({ pathname }) => pathname.startsWith('/chat')}
-          />
-          <RailNavButton
-            collapsed={collapsed}
-            to="/agents"
-            icon={Bot}
-            label={t('Agents')}
-            isActive={({ pathname }) => pathname.startsWith('/agents')}
-          />
+          {platform.plan.chatEnabled && (
+            <RailNavButton
+              collapsed={collapsed}
+              to="/chat"
+              icon={SquarePen}
+              label={t('Chat')}
+              isActive={({ pathname }) => pathname.startsWith('/chat')}
+              onClick={() =>
+                window.dispatchEvent(new Event(chatUtils.newChatEvent))
+              }
+            />
+          )}
+          {showAgents && (
+            <RailNavButton
+              collapsed={collapsed}
+              to="/agents"
+              icon={Bot}
+              label={t('Agents')}
+              isActive={({ pathname }) => pathname.startsWith('/agents')}
+            />
+          )}
           <RailNavButton
             collapsed={collapsed}
             to="/templates"
             icon={Compass}
             label={t('Explore')}
             isActive={({ pathname }) => pathname.startsWith('/templates')}
+            onClick={() =>
+              templatesTelemetryApi.sendEvent({
+                eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+                userId: currentUser?.id,
+              })
+            }
           />
           <RailNavButton
             collapsed={collapsed}
@@ -265,12 +292,14 @@ function RailNavButton({
   icon: Icon,
   label,
   isActive,
+  onClick,
 }: {
   collapsed: boolean;
   to: string;
   icon: ComponentType<{ className?: string }>;
   label: string;
   isActive: (location: { pathname: string; search: string }) => boolean;
+  onClick?: () => void;
 }) {
   const location = useLocation();
   const active = isActive(location);
@@ -279,7 +308,10 @@ function RailNavButton({
     <Link
       to={to}
       aria-label={label}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
       className={cn(
         'flex items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
@@ -308,9 +340,8 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
   const { data: projects } = projectCollectionUtils.useAll();
   const location = useLocation();
   const navigate = useNavigate();
-  const [sort, setSort] = useState<PinnedSort>(
-    () =>
-      (localStorage.getItem(PINNED_SORT_KEY) as PinnedSort | null) ?? 'added',
+  const [sort, setSort] = useState<PinnedSort>(() =>
+    readStoredSort(localStorage.getItem(PINNED_SORT_KEY)),
   );
 
   const changeSort = (next: PinnedSort) => {
@@ -318,22 +349,21 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
     localStorage.setItem(PINNED_SORT_KEY, next);
   };
 
-  const listed = showAll
-    ? projects
-    : pinnedIds
-        .map((id) => projects.find((project) => project.id === id))
-        .filter((project): project is NonNullable<typeof project> => !!project);
+  const pinned = pinnedIds
+    .map((id) => projects.find((project) => project.id === id))
+    .filter((project): project is NonNullable<typeof project> => !!project);
+  const listingEverything = showAll || pinned.length === 0;
+  const listed = listingEverything ? projects : pinned;
 
   if (listed.length === 0) {
     return null;
   }
 
-  // "Recently added" is a pin-order concept, so fall back when listing everything.
-  const sorted = sortPinnedProjects(
-    listed,
+  const sorted = sortPinnedProjects({
+    projects: listed,
     pinnedIds,
-    showAll && sort === 'added' ? 'recency' : sort,
-  );
+    sort: listingEverything && sort === 'added' ? 'recency' : sort,
+  });
 
   const openProject = (projectId: string) => {
     if (projectId !== authenticationSession.getProjectId()) {
@@ -358,13 +388,13 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <div className="flex items-center gap-1 py-0.5 pl-3 pr-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
-            {showAll ? t('Projects') : t('Pinned projects')}
+            {listingEverything ? t('Projects') : t('Pinned projects')}
           </span>
           <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/pinned:opacity-100">
             <PinnedSortMenu
               sort={sort}
               onChange={changeSort}
-              showAll={showAll}
+              showAll={listingEverything}
               onShowAllChange={setShowAll}
             />
           </div>
@@ -515,12 +545,20 @@ function PinnedMenuOption({
   );
 }
 
-function sortPinnedProjects(
-  pinned: ProjectWithLimits[],
-  pinnedIds: string[],
-  sort: PinnedSort,
-): ProjectWithLimits[] {
-  const copy = [...pinned];
+function readStoredSort(stored: string | null): PinnedSort {
+  return PINNED_SORTS.find((sort) => sort === stored) ?? 'added';
+}
+
+function sortPinnedProjects({
+  projects,
+  pinnedIds,
+  sort,
+}: {
+  projects: ProjectWithLimits[];
+  pinnedIds: string[];
+  sort: PinnedSort;
+}): ProjectWithLimits[] {
+  const copy = [...projects];
   if (sort === 'alphabetical') {
     return copy.sort((a, b) =>
       getProjectName(a).localeCompare(getProjectName(b)),
@@ -668,4 +706,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
 
 const PINNED_SORT_KEY = 'rail-pinned-sort';
 
-type PinnedSort = 'added' | 'recency' | 'alphabetical';
+const PINNED_SORTS = ['added', 'recency', 'alphabetical'] as const;
+
+type PinnedSort = (typeof PINNED_SORTS)[number];
