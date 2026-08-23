@@ -314,6 +314,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         emitProgress({
             userId,
             event: {
+                platformId,
                 scope: toScopeEnum(scope),
                 phase: validated.status === ChatPersonalizationStatus.READY ? 'done' : 'failed',
                 message: validated.status === ChatPersonalizationStatus.READY
@@ -345,7 +346,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         if ((beat.raw?.length ?? 0) === 0) {
             return
         }
-        emitProgress({ userId, event: { scope: toScopeEnum(scope), phase, message, done: false } })
+        emitProgress({ userId, event: { platformId, scope: toScopeEnum(scope), phase, message, done: false } })
     },
 
     async savePrefill(input: SavePersonalizationPrefillRequest): Promise<void> {
@@ -361,6 +362,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         emitProgress({
             userId,
             event: {
+                platformId,
                 scope: ChatPersonalizationScope.COMPANY,
                 phase: 'prefill',
                 message: 'Looking you up',

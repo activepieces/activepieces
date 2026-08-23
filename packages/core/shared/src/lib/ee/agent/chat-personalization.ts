@@ -144,6 +144,7 @@ export const ChatPersonalizationView = z.object({
 export type ChatPersonalizationView = z.infer<typeof ChatPersonalizationView>
 
 export const ChatPersonalizationProgressEvent = z.object({
+    platformId: z.string(),
     scope: z.enum([ChatPersonalizationScope.COMPANY, ChatPersonalizationScope.USER]),
     phase: z.string(),
     message: z.string(),
