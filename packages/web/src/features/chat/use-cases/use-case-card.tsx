@@ -10,9 +10,6 @@ import {
   useCaseCardArt,
 } from './use-case-card-art';
 
-// One use-case tile, shared by the chat empty state and the signed-out auth
-// backdrop so the two can never drift. Without onSelect it renders as inert
-// decoration — same pixels, nothing clickable.
 export function UseCaseCard({ card, delay, onSelect }: UseCaseCardProps) {
   const theme = useCaseCardArt.resolveTheme(card.imageId);
   const interactive = !isNil(onSelect);
@@ -51,8 +48,6 @@ export function UseCaseCard({ card, delay, onSelect }: UseCaseCardProps) {
       <h3 className="mt-3 pr-7 font-sentient text-[17px] font-medium leading-snug text-foreground">
         {card.title}
       </h3>
-      {/* Hover affordance: a freehand arrow glides in at the bottom-right —
-          absolutely positioned so the card itself never shifts. */}
       {interactive && (
         <DoodleArrow
           className={cn(

@@ -5,12 +5,6 @@ import { useEffect, useState } from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-// Smart autocomplete for the personalization company blank, which accepts a
-// company name OR an industry/category. Suggestions merge three sources: the
-// company implied by the user's work-email domain, a local industry list, and
-// live company-name matches from Clearbit's keyless autocomplete (which also
-// yields a domain — unlocking the richer domain-based research path). Every
-// source degrades silently; the field stays plain free text either way.
 export function useCompanySuggestions({
   query,
   email,
@@ -201,8 +195,6 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-// Mirrors GENERIC_EMAIL_DOMAINS in the server's workspace-name.ts — personal
-// mailbox domains say nothing about the user's company.
 const GENERIC_EMAIL_DOMAINS: ReadonlySet<string> = new Set([
   'gmail.com',
   'googlemail.com',
@@ -228,8 +220,6 @@ const GENERIC_EMAIL_DOMAINS: ReadonlySet<string> = new Set([
   'qq.com',
 ]);
 
-// Written with articles so a pick reads naturally inside the sentence:
-// "I'm a founder at a marketing agency".
 const INDUSTRIES: readonly string[] = [
   'a marketing agency',
   'an e-commerce store',

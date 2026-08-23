@@ -10,19 +10,6 @@ import {
 
 const MAX_TILES = 4;
 
-// A presentational "showcase" card the agent uses to introduce itself / explain what's
-// possible (answering "what can you do?", "what is this?") and similar spotlights. Designed
-// to be reused for any explainer: a headline plus a grid of up to 4 use-case tiles (each an
-// app logo or a Lucide icon; tapping sends the title as a message). Non-blocking —
-// nothing resolves back to the tool. Brand accents come from --primary tokens so it
-// stays white-label correct.
-//
-// While the tool input is still streaming (`streaming`), the card renders
-// PROGRESSIVELY from the partial input: the headline appears the instant its
-// first characters arrive and grows as text streams, and each tile pops in the
-// moment it settles — no skeleton wall, the card visibly builds itself. A tile
-// counts as settled once its description field has started (which guarantees
-// its title is complete, so a tap never sends a half-written title).
 export function ShowcaseCard({
   content,
   onSendPrompt,
@@ -35,9 +22,6 @@ export function ShowcaseCard({
   const reducedMotion = useReducedMotion();
   const animate = !reducedMotion;
 
-  // The card renders from raw model tool-input, which can be partial (streaming) or
-  // malformed (a validation-errored call). Never assume tiles is an array — a bad shape
-  // must degrade to "render nothing", never crash the page. Hard-cap at 4 tiles.
   const tiles = (Array.isArray(content?.tiles) ? content.tiles : []).slice(
     0,
     MAX_TILES,
@@ -47,34 +31,20 @@ export function ShowcaseCard({
     return null;
   }
 
-  // "list" (the default) stacks the tiles as full-width rows with larger type.
-  // "grid" is the opt-in compact 2-up variant.
   const isList = content.layout !== 'grid';
 
   return (
     <motion.div
-      // overflow-hidden: list rows bleed edge-to-edge, so their hover tint and
-      // dividers must clip against the card's rounded corners, never poke out.
       className={cn(
         'overflow-hidden rounded-2xl border bg-background shadow-sm dark:bg-neutral-900',
-        // List mode: zero card padding — rows carry their own, so the first and
-        // last rows' hover tint reaches the card's very edges (clipped by the
-        // rounded corners), with no dead strip above or below.
         !isList && 'p-4 sm:p-5',
       )}
-      // Entrance plays ONLY while the card is streaming in. A mount with
-      // streaming=false is a re-render of an already-seen card (history load,
-      // end-of-stream message reconciliation) — animating there reads as a
-      // "look, I rendered again!" flicker.
       initial={
         animate && streaming ? { opacity: 0, y: 16, scale: 0.98 } : false
       }
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* The list layout carries NO headline/subhead — the agent's own chat
-          line right above the card is the introduction, and repeating it in
-          the card was noise. Grid (standalone spotlight) keeps its header. */}
       {!isList && (
         <>
           <h3 className="text-base font-semibold leading-snug text-foreground">
@@ -94,8 +64,6 @@ export function ShowcaseCard({
       <div
         className={cn(
           'grid grid-cols-1',
-          // Full-bleed rows on hairline dividers spanning the whole card —
-          // quieter and cleaner than boxed gaps.
           isList ? 'divide-y divide-border/60' : 'mt-4 gap-2.5 sm:grid-cols-2',
         )}
       >
@@ -111,8 +79,6 @@ export function ShowcaseCard({
           />
         ))}
         {streaming && tiles.length === 0 && (
-          // A single quiet ghost row holding the space; the first real tile
-          // replaces it the moment it lands.
           <div
             className={cn(
               'flex w-full animate-pulse items-center',

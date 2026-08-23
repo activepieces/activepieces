@@ -1,7 +1,3 @@
-// The default use cases a new user meets in the chat empty state. Kept in its
-// own dependency-free module so surfaces outside chat — the signed-out auth
-// landing, for one — can show the very same set without pulling the chat
-// component (and its auth/query context) along with it.
 export const DEFAULT_USE_CASES: ExampleCardData[] = [
   { id: 'do-research', title: 'Do my research', prompt: 'Do my research' },
   { id: 'write-emails', title: 'Write my emails', prompt: 'Write my emails' },
@@ -57,8 +53,6 @@ export type ExampleCardData = {
   prompt: string;
 };
 
-// The greeting the chat empty state opens with, and the line under it. Shared
-// so the signed-out backdrop shows the exact same words as the real app.
 export const GREETING_HEADLINES: GreetingHeadline[] = [
   { withName: 'Put me to work, {name}.', plain: 'Put me to work.' },
   { withName: "I'll handle it, {name}.", plain: "I'll handle it." },

@@ -3,24 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-// The art above the onboarding question. At rest it's nothing but the
-// builder's quiet dot-grid canvas. On hover the cursor becomes a soft lens
-// revealing a hidden mural of people living their actual lives — dancing,
-// playing guitar, reading in a hammock, painting, stargazing, playing fetch
-// — drawn in the riso inks of the use-case cards. The mural measures the host
-// with a ResizeObserver and distributes scenes across the space that actually
-// exists: more room means more rows, a cramped header means a single
-// spread-out row, and nothing is ever cropped or piled up. The mural only
-// ever shows under a real hover — no self-playing reveals.
 export function OnboardingJourneyPattern() {
   const reducedMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const lensRef = useRef<HTMLDivElement>(null);
   const [placements, setPlacements] = useState<ScenePlacement[]>([]);
 
-  // Both effects talk to the parent element hosting this backdrop (the root
-  // itself is pointer-events-none so it never eats clicks) — external DOM
-  // systems, hence effects.
   useEffect(() => {
     const host = rootRef.current?.parentElement;
     if (!host) {
@@ -38,9 +26,6 @@ export function OnboardingJourneyPattern() {
     return () => observer.disconnect();
   }, []);
 
-  // The lens position is written straight to CSS vars via rAF (no
-  // re-renders), with a light lerp so it glides instead of sticking to the
-  // cursor.
   useEffect(() => {
     const host = rootRef.current?.parentElement;
     const lens = lensRef.current;
@@ -118,8 +103,6 @@ export function OnboardingJourneyPattern() {
             <circle cx="1.2" cy="1.2" r="1.2" fill="currentColor" />
           </pattern>
 
-          {/* Strongest in the open middle, dissolving at every edge so the
-              art never touches chrome or text. */}
           <radialGradient id="obGridFade" cx="50%" cy="62%" r="68%">
             <stop offset="0%" stopColor="#fff" stopOpacity="1" />
             <stop offset="62%" stopColor="#fff" stopOpacity="0.55" />
@@ -130,7 +113,6 @@ export function OnboardingJourneyPattern() {
           </mask>
         </defs>
 
-        {/* the canvas — all the resting state ever shows */}
         <motion.g
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -146,7 +128,6 @@ export function OnboardingJourneyPattern() {
         </motion.g>
       </svg>
 
-      {/* The inked world, revealed only through the cursor lens. */}
       <div
         ref={lensRef}
         className="absolute inset-0 opacity-0 transition-opacity duration-500"
@@ -155,7 +136,6 @@ export function OnboardingJourneyPattern() {
           WebkitMaskImage: LENS_MASK,
         }}
       >
-        {/* Inside the lens the canvas itself lights up in the brand color. */}
         <svg
           viewBox="0 0 900 520"
           preserveAspectRatio="xMidYMax slice"
@@ -214,9 +194,6 @@ function SceneSprite({ placement }: { placement: ScenePlacement }) {
   );
 }
 
-// Sizes the mural to the measured host: a coarse grid of cells (1-3 rows,
-// 2-6 columns), scenes spread evenly across the available cells with a
-// deterministic hand-jitter so it never reads as a grid.
 function computeLayout({
   width,
   height,
@@ -236,9 +213,6 @@ function computeLayout({
   const mains = MURAL_SCENES.slice(0, Math.min(MURAL_SCENES.length, cellCount));
   const fillerRoom = cellCount - mains.length;
   const fillers = FILLER_DOODLES.slice(0, Math.max(0, fillerRoom));
-  // The even spread maps the last entry to the last (bottom-right) cell, so a
-  // person goes there — the small abstract fillers sit in between rather than
-  // ending the mural.
   const chosen = [...mains.slice(0, -1), ...fillers, ...mains.slice(-1)];
 
   return chosen.map((scene, i) => {
@@ -280,7 +254,6 @@ function clamp({
 const LENS_MASK =
   'radial-gradient(circle 160px at var(--ob-mx, -300px) var(--ob-my, -300px), black 45%, transparent 100%)';
 
-// Same riso inks as the use-case cards.
 const INK_BLUE = 'text-[#0078BF] dark:text-[#57ABE8]';
 const INK_TEAL = 'text-[#00838A] dark:text-[#35B5B0]';
 const INK_ORANGE = 'text-[#F0602F] dark:text-[#FF8E5E]';
@@ -288,7 +261,6 @@ const INK_SUNFLOWER = 'text-[#D69A00] dark:text-[#F5B93D]';
 const INK_PINK = 'text-[#E3399B] dark:text-[#FF7AC1]';
 const INK_PURPLE = 'text-[#765BA7] dark:text-[#A98FD6]';
 
-// Hand-jitter presets (fractions of the free room inside a cell).
 const JITTER = [
   { x: -0.3, y: 0.2 },
   { x: 0.25, y: -0.3 },
@@ -302,9 +274,7 @@ const JITTER = [
   { x: 0.1, y: -0.2 },
 ];
 
-// The humans, in the order they join the mural as space allows.
 const MURAL_SCENES: AgentScene[] = [
-  // Reading in a hammock strung between two posts.
   {
     id: 'hammock',
     sizePx: 88,
@@ -319,7 +289,6 @@ const MURAL_SCENES: AgentScene[] = [
       'M27.5 23.9c1.1-2.8 2.9-4.3 5.4-4.4 1 1.3 1.6 2.8 1.8 4.5',
     ],
   },
-  // Dancing, arms up, one leg kicked, a note in the air.
   {
     id: 'dancer',
     sizePx: 80,
@@ -335,7 +304,6 @@ const MURAL_SCENES: AgentScene[] = [
       'M32.9 12.2l.4-6.2c1.1.5 2.2.7 3.4.6',
     ],
   },
-  // Painting a little heart at the easel, palette in hand.
   {
     id: 'painter',
     sizePx: 86,
@@ -354,7 +322,6 @@ const MURAL_SCENES: AgentScene[] = [
       'M7.8 28.3c1.6-1 3.2-.9 4.6.2-.5 1.5-1.7 2.3-3.5 2.2-1.1-.5-1.5-1.3-1.1-2.4z',
     ],
   },
-  // Playing guitar, one leg propped.
   {
     id: 'guitarist',
     sizePx: 84,
@@ -373,7 +340,6 @@ const MURAL_SCENES: AgentScene[] = [
       'M42.9 5.2l.4-4.2c.9.4 1.9.6 2.9.5',
     ],
   },
-  // At the telescope under a couple of stars.
   {
     id: 'stargazer',
     sizePx: 82,
@@ -391,7 +357,6 @@ const MURAL_SCENES: AgentScene[] = [
       'M32.5 9.5c.3-.1.5.1.4.4-.1.3-.4.3-.5.1-.1-.2 0-.4.1-.5z',
     ],
   },
-  // Throwing a ball for a leaping dog.
   {
     id: 'fetch',
     sizePx: 84,
@@ -414,7 +379,6 @@ const MURAL_SCENES: AgentScene[] = [
   },
 ];
 
-// Small curiosities that only join when there's room to spare.
 const FILLER_DOODLES: AgentScene[] = [
   {
     id: 'heart',

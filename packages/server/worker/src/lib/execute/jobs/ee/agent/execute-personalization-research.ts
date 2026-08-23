@@ -10,8 +10,6 @@ const HOMEPAGE_TIMEOUT_MS = 6_000
 const ENRICHMENT_TIMEOUT_MS = 8_000
 const HOMEPAGE_MAX_BYTES = 1_000_000
 const HOMEPAGE_BODY_EXCERPT_CHARS = 3_000
-// Speed budget: direct parallel searches (~2-4s) + parallel fast-model
-// synthesis (~15s) target ≤20s end to end.
 const SEARCH_TIMEOUT_MS = 6_000
 const SEARCH_RESULTS_PER_QUERY = 5
 const SEARCH_CONTENT_CLIP_CHARS = 800
@@ -19,18 +17,9 @@ const FALLBACK_RESEARCH_TIMEOUT_MS = 15_000
 const GENERATE_TIMEOUT_MS = 30_000
 const CURATION_TIMEOUT_MS = 20_000
 const MAX_RESEARCH_STEPS = 3
-// Enough cards to fill both the carousel (first 4) AND the expanded grid —
-// every card the user sees is tailored, none are stock filler. The model is
-// asked for MORE candidates than we show: fast models drift a couple short of
-// an exact count, and validation may drop a dupe — the surplus absorbs both so
-// the user reliably sees MAX_USE_CASES.
 const MIN_USE_CASES = 12
 const MAX_USE_CASES = 20
-// Two parallel half-batches; sized so that title-dedupe and art caps across
-// the merged union still reliably leave MAX_USE_CASES survivors.
 const CANDIDATE_USE_CASES = 28
-// 17 card arts exist; 20 cards means a few repeats are unavoidable, but no
-// art may carry more than two cards.
 const MAX_USES_PER_ART = 2
 const MAX_TITLE_CHARS = 40
 const TITLE_HARD_MAX_CHARS = 60
@@ -39,18 +28,12 @@ const DANGLING_TITLE_WORDS = new Set([
 ])
 const MAX_DISPLAY_NAME_CHARS = 50
 
-// The whole run targets ~10-15s: homepage fetch (~1-3s) + two fast-model
-// generateObject calls (~4-6s each). The slow web-search research only runs
-// as a fallback when the homepage is unreachable.
 export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizationResearchJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
     async execute(ctx: JobContext, data: ExecutePersonalizationResearchJobData): Promise<FireAndForgetJobResult> {
         const { platformId, userId, scope } = data
         const log = ctx.log.child({ platform: { id: platformId }, user: { id: userId }, scope })
 
-        // Autofill runs stop here. They claim nothing and save no result, so a
-        // failure is invisible to the user: they just type the blanks
-        // themselves, exactly as they would with no enrichment configured.
         if (data.prefillOnly === true) {
             const { error: prefillError } = await tryCatch(() => runPrefillLookup({ data, apiClient: ctx.apiClient, log }))
             if (prefillError) {
@@ -59,8 +42,6 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
 
-        // Everything (incl. fetching the config) sits inside the error path: an
-        // unhandled throw would strand the row in RESEARCHING (attempts: 1).
         const { data: result, error } = await tryCatch(async () => {
             const config = await ctx.apiClient.getPersonalizationConfig({ platformId, userId, scope })
             if (!config.claimed) {
@@ -98,8 +79,6 @@ export const executePersonalizationResearchJob: JobHandler<ExecutePersonalizatio
     },
 }
 
-// The entire autofill feature: look the person up, hand back what came out.
-// No model is created, no catalog fetched, no row touched.
 async function runPrefillLookup({ data, apiClient, log }: {
     data: ExecutePersonalizationResearchJobData
     apiClient: JobContext['apiClient']
@@ -143,16 +122,12 @@ async function runResearch({ data, config, progress, log }: {
         provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
     })
 
-    // A teammate upgrade rides on the already-researched company profile — role
-    // inference + card retargeting only, no web work.
     if (data.scope === 'user') {
         if (isNil(config.companyProfile)) {
             throw new Error('User-scope research requires a company profile')
         }
         await progress({ phase: 'crafting', message: 'Crafting your use cases…' })
         const digest = `Company profile (already researched and verified):\n${JSON.stringify(config.companyProfile)}`
-        // The teammate's own role — not the founder's — has to drive their apps,
-        // otherwise an invited designer inherits whatever the first signup got.
         const pool = await generateCards({ model: fastModel, digest, role: config.role, user: config.user, log })
         if (isNil(pool)) {
             throw new Error('Card generation produced no valid cards')
@@ -164,8 +139,6 @@ async function runResearch({ data, config, progress, log }: {
         }
     }
 
-    // Either a resolvable domain (homepage read + Apollo org enrich) or a
-    // free-text company/sector descriptor (web search only) — one is guaranteed.
     const domain = data.website ?? config.website
     const companyText = data.companyText ?? config.companyText
     const companyRef = domain ?? companyText
@@ -173,29 +146,18 @@ async function runResearch({ data, config, progress, log }: {
         throw new Error('Company-scope research requires a domain or company descriptor')
     }
     const companyLabel = domain ? domain.split('.')[0] : companyRef
-    // In the domain case, pair the brand label with the domain for sharper
-    // search hits; for free text the descriptor stands on its own.
     const companyPhrase = domain ? `${companyLabel} ${domain}` : companyRef
 
     await progress({ phase: 'reading', message: domain ? `Reading ${domain}…` : `Researching ${companyRef}…` })
 
     const role = data.role ?? config.role ?? null
-    // Everything the synthesis needs is gathered in ONE parallel burst:
-    // homepage, Apollo enrichment, and five direct web searches. The depth
-    // lives in the retrieved content — no slow LLM search loops needed.
     const searchQueries: SearchQuery[] = role
         ? [
             { focus: 'company', query: `${companyPhrase} business model products pricing` },
             { focus: 'company', query: `${companyLabel} competitors alternatives` },
             { focus: 'company', query: `${companyLabel} news` },
             { focus: 'role', query: `${role} at ${companyLabel} responsibilities tools metrics` },
-            // Anchor to the company's industry so a generic title (e.g.
-            // "Operations Manager") doesn't pull unrelated-discipline SEO
-            // content (e.g. marketing-ops) that then bleeds into the cards.
             { focus: 'role', query: `${role} responsibilities at a company like ${companyPhrase}` },
-            // The only query that asks outright what this seat OPENS. Without
-            // it the corpus describes the employer, and app suggestions drift
-            // to whatever the company builds.
             { focus: 'role', query: `what software and tools does ${aOrAn(role)} ${role} use every day` },
         ]
         : [
@@ -221,18 +183,12 @@ async function runResearch({ data, config, progress, log }: {
         : await fallbackResearch({ provider, auth: config.auth, providerConfig: config.providerConfig, fastModelId: config.fastModelId, companyRef, role, groundwork, log })
 
     await progress({ phase: 'understanding', message: `Studying how ${homepage?.siteName ?? companyLabel} runs behind the scenes…` })
-    // Profile and cards synthesize in PARALLEL from the same digest — the
-    // cards get the role directly and never wait on the distilled profile.
     const profilePromise = generateProfile({ model: fastModel, domain, companyText, digest, role, user: config.user, log })
     const cardsPromise = generateCards({ model: fastModel, digest, role, user: config.user, log })
     const profile = await profilePromise
     if (isNil(profile)) {
         throw new Error('Profile generation failed')
     }
-    // The user-typed role is authoritative in MEANING; the model may fix its
-    // spelling ("Business Analist" → "Business Analyst"). Its version is only
-    // accepted when it's provably a minor correction — anything further from
-    // the input than a couple of typos is a paraphrase and gets discarded.
     if (role) {
         const modelRole = typeof profile['userRole'] === 'string' ? profile['userRole'].trim() : null
         profile['userRole'] = modelRole && isMinorSpellingFix({ typed: role, suggested: modelRole }) ? modelRole : role
@@ -243,8 +199,6 @@ async function runResearch({ data, config, progress, log }: {
     if (isNil(pool)) {
         throw new Error('Card generation produced no valid cards')
     }
-    // Quality gate: judge the pool for genuine role+company fit and keep the
-    // strongest MAX. Best-effort — returns the pool trimmed to MAX on failure.
     const useCases = await curateCards({ model: fastModel, cards: pool, role, profile, user: config.user, log })
     return { profile, useCases }
 }
@@ -262,9 +216,6 @@ async function emitPrefill({ enrichment, domain, apiClient, platformId, userId, 
     if (isNil(enrichment)) {
         return
     }
-    // The company blank falls back to the domain's own brand label so it still
-    // prefills when only the person matched — but never to a bare domain with
-    // no findings at all, which the user can read off their own address.
     const brandLabel = domain?.split('.')[0] ?? ''
     const company = enrichment.companyName
         ?? (brandLabel.length > 0 ? brandLabel.charAt(0).toUpperCase() + brandLabel.slice(1) : null)
@@ -284,9 +235,6 @@ async function emitPrefill({ enrichment, domain, apiClient, platformId, userId, 
     log.info({ platform: { id: platformId }, user: { id: userId }, confidence: enrichment.confidence }, '[executePersonalizationResearch] Prefill emitted')
 }
 
-// Apollo people/company enrichment — verified job title + firmographics turn
-// guessed personalization into grounded personalization. The endpoint host is
-// fixed (admin-configured capability), but safeHttp stays per the SSRF rule.
 async function enrichWithApollo({ apiKey, email, domain, log }: {
     apiKey: string
     email: string
@@ -301,8 +249,6 @@ async function enrichWithApollo({ apiKey, email, domain, log }: {
             'Cache-Control': 'no-cache',
         },
     })
-    // People match rides on the signup email and works without a domain; the
-    // org enrich needs a domain, so it's skipped for free-text companies.
     const [person, org] = await Promise.all([
         tryCatch(() => client.post<Record<string, unknown>>('https://api.apollo.io/api/v1/people/match', { email, reveal_personal_emails: false })),
         isNil(domain)
@@ -350,10 +296,6 @@ async function enrichWithApollo({ apiKey, email, domain, log }: {
         title,
         departments,
         companyName,
-        // A title only earns "high" when the matched record's own employer
-        // domain agrees with the address the person signed up with. Apollo
-        // matches on email alone, so without that agreement the title may
-        // belong to a previous job.
         confidence: isNil(title)
             ? null
             : (!isNil(domain) && personOrgDomain === domain ? 'high' : 'medium'),
@@ -367,8 +309,6 @@ type HomepageExtract = {
     bodyExcerpt: string
 }
 
-// The website is user-provided input — safeHttp (request-filtering-agent) is
-// mandatory here; a raw fetch would open SSRF to private/metadata IPs.
 async function readHomepage({ domain, log }: { domain: string, log: JobContext['log'] }): Promise<HomepageExtract | null> {
     const client = safeHttp.createAxios({
         timeout: HOMEPAGE_TIMEOUT_MS,
@@ -431,11 +371,6 @@ function buildHomepageDigest({ domain, homepage }: { domain: string, homepage: H
     ].join('\n')
 }
 
-// The heart of "deep AND fast": direct parallel web searches. The depth of the
-// personalization comes from the retrieved content (named competitors, recent
-// news, role best practices), which arrives in ~2-4s — no LLM search loop.
-// Same request shape as the chat's ap_web_search tool. Every query is
-// best-effort; whatever lands feeds the synthesis.
 async function tavilyResearch({ apiKey, queries, log }: {
     apiKey: string
     queries: SearchQuery[]
@@ -474,10 +409,6 @@ async function tavilyResearch({ apiKey, queries, log }: {
     return blocks
 }
 
-
-// Fallback when the platform has no direct web-search capability: one bounded
-// fast-model call through the provider's web plugin, covering company + role
-// compressed. Degrades further to groundwork-only.
 async function fallbackResearch({ provider, auth, providerConfig, fastModelId, companyRef, role, groundwork, log }: {
     provider: AIProviderName
     auth: Record<string, unknown>
@@ -511,9 +442,6 @@ ${groundworkBlock}`,
     return `${groundworkBlock}\n\n--- RESEARCH ---\n${data.text}`
 }
 
-// No minItems/maxItems/maxLength in schemas: Anthropic's structured output
-// rejects numeric constraints. Counts/lengths are enforced in the prompt and
-// re-validated in code (same approach as chat-quick-replies).
 const PROFILE_SCHEMA = z.object({
     companyName: z.string(),
     displayName: z.string(),
@@ -523,7 +451,6 @@ const PROFILE_SCHEMA = z.object({
     userRole: z.string().nullable(),
     roleConfidence: z.enum(['low', 'medium', 'high']).nullable(),
 })
-
 
 const CARDS_SCHEMA = z.object({
     useCases: z.array(z.object({
@@ -548,9 +475,6 @@ async function generateProfile({ model, domain, companyText, digest, role, user,
     const roleInstruction = role
         ? `- "userRole": the person typed their role as "${role}". Return it with any spelling mistake FIXED — this is required, not optional: "Analist" → "Analyst", "Manger" → "Manager", "Enginer" → "Engineer". If every word is already spelled correctly, return it unchanged. NEVER change word choice, meaning, or expand abbreviations ("Biz" stays "Biz"). "roleConfidence": "high".`
         : '- "userRole": from the signup name/email, the enrichment data (a verified title wins), and the company, this person\'s most likely role or department, or null if you cannot tell. "roleConfidence": low/medium/high, or null.'
-    // Domain case anchors strictly to the company behind the domain; free-text
-    // case anchors to whatever the user described (a specific company or a
-    // sector/company-type).
     const anchor = domain
         ? `From the material below, extract a precise profile of the company OPERATING **${domain}**. The company is strictly the one behind that domain — the signup email's local part is NOT a company-name signal; never derive the company name from it.`
         : `From the material below, extract a precise profile of the company or sector the user described: **${companyText}**. Pin it to a specific company only when the research makes it unambiguous; otherwise treat it as that sector/company-type. The signup email's local part is NOT a company-name signal; never derive the company name from it.`
@@ -582,10 +506,6 @@ ${digest}`
     return null
 }
 
-// The 24 candidates are written by TWO parallel half-batches (output tokens
-// are the wall-clock long pole — halving the per-call output roughly halves
-// the wait). Each half gets a different emphasis so the merge stays diverse;
-// cleanCards dedupes ids/titles and enforces the art caps across the union.
 async function generateCards({ model, digest, role, user, log }: {
     model: LanguageModel
     digest: string
@@ -607,8 +527,6 @@ async function generateCards({ model, digest, role, user, log }: {
         }))))
         const candidates = halves.flatMap((half) => half.data?.object.useCases ?? [])
         if (candidates.length > 0) {
-            // Return the FULL clean pool (not pre-capped at MAX) so the
-            // curation judge has extra candidates to cull from.
             const cleaned = cleanCards({ raw: candidates, limit: CANDIDATE_USE_CASES })
             if (cleaned) {
                 return cleaned
@@ -677,11 +595,6 @@ function cleanProfile({ raw }: { raw: z.infer<typeof PROFILE_SCHEMA> }): Record<
     }
 }
 
-// The prompt asks for MAX_TITLE_CHARS but the model sometimes overruns; a
-// hard mid-word slice produced cards like "…metrics bri". Overlong titles keep
-// up to TITLE_HARD_MAX_CHARS (the card wraps to two lines), and past that get
-// cut at a word boundary with dangling connectors/punctuation stripped —
-// never mid-word.
 function tidyTitle(rawTitle: string): string {
     const trimmed = rawTitle.trim()
     if (trimmed.length <= TITLE_HARD_MAX_CHARS) {
@@ -715,7 +628,6 @@ function cleanCards({ raw, limit = MAX_USE_CASES }: { raw: z.infer<typeof CARDS_
         const title = tidyTitle(candidate.title)
         const promptText = candidate.prompt.trim()
         const id = (candidate.id.trim() || slugify(title)).slice(0, 60)
-        // Title dedupe matters since candidates come from two parallel batches.
         const titleKey = slugify(title)
         if (title.length === 0 || promptText.length === 0 || seenIds.has(id) || seenTitles.has(titleKey) || (artUses.get(candidate.imageId) ?? 0) >= MAX_USES_PER_ART) {
             continue
@@ -745,11 +657,6 @@ const CURATION_SCHEMA = z.object({
     keep: z.array(z.number()),
 })
 
-// The quality gate: a fast judge scores the whole candidate pool and returns
-// the strongest MAX_USE_CASES that genuinely fit THIS role at THIS company,
-// dropping off-lane cards (e.g. marketing-ops leaking into an Operations
-// Manager set) and near-duplicates the mechanical dedupe missed. Purely
-// additive — any failure or a too-thin result falls back to the pool as-is.
 async function curateCards({ model, cards, role, profile, user, log }: {
     model: LanguageModel
     cards: PersonalizationUseCaseResult[]
@@ -803,21 +710,11 @@ ${numbered}`,
     return picked.slice(0, MAX_USE_CASES)
 }
 
-// A teammate's personal profile is the company profile minus the founder's
-// role — the model re-infers the role during card crafting, but we don't
-// persist a guessed role for someone we only know by name/email.
 function retargetProfileForUser({ companyProfile }: { companyProfile: Record<string, unknown> }): Record<string, unknown> {
-    // suggestedApps is per-PERSON, so it must be dropped along with the role it
-    // was derived from — otherwise an invited designer inherits the founder's
-    // CRM and billing chips. The caller re-derives it for this teammate.
     const { userRole: _userRole, roleConfidence: _roleConfidence, suggestedApps: _suggestedApps, ...companyFacts } = companyProfile
     return companyFacts
 }
 
-// A "minor spelling fix" is a couple of typos, never a rewrite: case-blind
-// edit distance bounded by ~25% of the typed length (min 2, max 4). "Business
-// Analist" → "Business Analyst" passes (distance 1); "Business Analyst" →
-// "Data Analyst" does not.
 function asRecord(value: unknown): Record<string, unknown> | null {
     return typeof value === 'object' && value !== null && !Array.isArray(value) ? Object.fromEntries(Object.entries(value)) : null
 }
@@ -859,8 +756,6 @@ function stripControlChars(value: string): string {
     return value.replace(/[\u0000-\u001f\u007f]/g, '')
 }
 
-// 'role' blocks describe the SEAT, 'company' blocks describe the employer. The
-// split exists so app suggestion can read the same corpus role-first.
 type SearchQuery = {
     query: string
     focus: 'company' | 'role'
@@ -870,8 +765,6 @@ type SearchBlock = SearchQuery & {
     block: string
 }
 
-// The digest is what the model reads; the discrete fields are what the
-// onboarding prefill needs as data rather than prose.
 type ApolloEnrichment = {
     digest: string
     title: string | null

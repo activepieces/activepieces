@@ -1,6 +1,3 @@
-// Autocomplete suggestions for the onboarding role input. Not exhaustive and
-// never enforced — the user can type anything; these just speed up the common
-// cases.
 const COMMON_ROLES: readonly string[] = [
   'Founder',
   'Co-founder',
@@ -98,9 +95,6 @@ const COMMON_ROLES: readonly string[] = [
   'Agency Owner',
 ] as const;
 
-// A handful of high-frequency roles shown as chips before the user types, so
-// the suggestion feature is discoverable (a native datalist reads as browser
-// autofill and gets ignored).
 const POPULAR_ROLES: readonly string[] = [
   'Founder',
   'CEO',

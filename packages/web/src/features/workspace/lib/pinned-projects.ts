@@ -3,11 +3,6 @@ import { persist } from 'zustand/middleware';
 
 type PinnedProjectsState = {
   pinnedIds: string[];
-  /**
-   * When true the sidebar lists every project instead of just pinned ones, so
-   * users who want the classic projects-in-the-sidebar layout don't have to pin
-   * one by one — and newly created projects show up automatically.
-   */
   showAll: boolean;
   pin: (projectId: string) => void;
   unpin: (projectId: string) => void;

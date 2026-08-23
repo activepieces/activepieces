@@ -18,13 +18,6 @@ import { cn } from '@/lib/utils';
 
 import { InteractiveCardShell } from './interactive-card-shell';
 
-// The onboarding question card: the same visual shell as the agent's
-// `ap_show_questions` cards, shown above the composer on a brand-new user's
-// first visit. ONE step, one sentence — "I'm a [role] at [company]" — filled
-// in place. The blanks rotate example values while empty and only open their
-// autocomplete once the user starts typing (a dropdown on focus is
-// distracting). Returns STRUCTURED answers via onComplete; the caller
-// composes the chat message.
 export function OnboardingQuestionCard({
   initialRole = '',
   initialCompany = '',
@@ -38,8 +31,6 @@ export function OnboardingQuestionCard({
   initialCompany?: string;
   initialCompanyDomain?: string | null;
   active?: boolean;
-  // Overrides the "Let's go" button label — e.g. "Next" when this card is the
-  // first of the two edit steps.
   submitLabel?: string;
   onComplete: (answers: OnboardingAnswers) => void;
   onDismiss: () => void;
@@ -47,9 +38,6 @@ export function OnboardingQuestionCard({
   const { data: user } = userHooks.useCurrentUser();
   const [role, setRole] = useState(initialRole);
   const [company, setCompany] = useState(initialCompany);
-  // Set when a company suggestion carrying a domain is picked, or when the
-  // background enrichment prefills one — submitting the domain unlocks the
-  // richer domain-based research path. Cleared on edit.
   const [companyDomain, setCompanyDomain] = useState<string | null>(
     initialCompanyDomain,
   );
@@ -61,11 +49,6 @@ export function OnboardingQuestionCard({
   const [done, setDone] = useState(false);
   const companyRef = useRef<HTMLInputElement>(null);
 
-  // Background enrichment resolves a second or two AFTER this card mounts, so
-  // the answers arrive as changed props rather than as initial state. Adjusting
-  // during render is React's sanctioned alternative to a sync effect here.
-  // Guarded on `touched`: a late guess must never overwrite something the user
-  // has already started typing.
   if (
     !touched &&
     (initialRole !== lastPrefill.role || initialCompany !== lastPrefill.company)
@@ -86,10 +69,6 @@ export function OnboardingQuestionCard({
 
   const valid = role.trim().length > 0 && company.trim().length > 0;
 
-  // Focus the FIRST empty blank on mount, never one that's already filled (a
-  // prefilled reopen shouldn't yank the cursor into a field the user already
-  // answered). Nothing autofocuses when both are filled. Autocomplete still
-  // only opens once the user types — a focused-but-empty field shows no list.
   const focusField =
     initialRole.trim().length === 0
       ? 'role'
@@ -110,8 +89,6 @@ export function OnboardingQuestionCard({
   };
 
   return (
-    // No header, no question label: the sentence IS the card. One line to
-    // fill, one button, nothing else.
     <InteractiveCardShell
       onDismiss={onDismiss}
       active={active}
@@ -168,9 +145,6 @@ export function OnboardingQuestionCard({
   );
 }
 
-// A soft pill blank that grows with its content via an invisible twin span —
-// exact to the pixel and instant. Rotates example values while empty; the
-// suggestion list opens only once the user has typed something.
 function OnboardingPill({
   value,
   onChange,
@@ -212,9 +186,6 @@ function OnboardingPill({
   }, [rotating]);
   const example = examples[exampleIndex % examples.length];
 
-  // The whole point vs a plain autocomplete: nothing opens until typing starts
-  // — and never while the blank isn't the focused field (clicking away or
-  // tabbing on must close the list immediately).
   const typed = value.trim().length > 0;
   const exactOnly =
     suggestions.length === 1 &&
@@ -259,9 +230,6 @@ function OnboardingPill({
 
   return (
     <span className="relative inline-grid max-w-full">
-      {/* Invisible twin sharing the input's font and padding: it sizes the
-          grid cell to the exact rendered text width, so the pill grows
-          instantly and pixel-tight. */}
       <span
         aria-hidden
         className="invisible col-start-1 row-start-1 overflow-hidden whitespace-pre px-3.5 py-1.5"
@@ -315,8 +283,6 @@ function OnboardingPill({
           id={listboxId}
           role="listbox"
           aria-label={ariaLabel}
-          // preventDefault keeps focus in the input so clicking the list
-          // doesn't blur-close it before the pick lands.
           onMouseDown={(e) => e.preventDefault()}
           className="absolute left-0 top-full z-20 mt-2 max-h-56 w-max min-w-full max-w-[19rem] overflow-y-auto rounded-xl border border-border bg-popover p-1 font-sans text-sm font-normal text-popover-foreground shadow-lg"
         >
@@ -364,7 +330,6 @@ function OnboardingPill({
 
 const EXAMPLE_ROTATE_MS = 3600;
 
-// Untranslated on purpose — example data values, not UI copy.
 const ROLE_EXAMPLES: readonly string[] = [
   'founder',
   'sales manager',
@@ -374,9 +339,6 @@ const ROLE_EXAMPLES: readonly string[] = [
   'software engineer',
 ];
 
-// Real, recognizable companies that plausibly run automations — alternated
-// with small-business archetypes so both enterprise and SMB users see
-// themselves. Never fake names ("Acme").
 const COMPANY_EXAMPLES: readonly string[] = [
   'Shopify',
   'a real-estate agency',
