@@ -21,6 +21,7 @@ import FeedParser from 'feedparser';
 
 export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
+  classification: 'READ',
   displayName: 'New Video In Channel',
   description: 'Runs when a new video is added to a YouTube channel',
   aiMetadata: {

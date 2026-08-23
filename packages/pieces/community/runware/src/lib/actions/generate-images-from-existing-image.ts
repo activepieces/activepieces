@@ -5,6 +5,7 @@ import { runwareAuth, runwareCommon } from '../common';
 export const generateImagesFromExistingImage = createAction({
   auth: runwareAuth,
   name: 'generateImagesFromExistingImage',
+  classification: 'READ',
   displayName: 'Generate Images from Existing Image',
   description: 'Generate new images based on a provided image (image-to-image).',
   audience: 'both',

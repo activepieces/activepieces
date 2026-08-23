@@ -6,6 +6,7 @@ import { listBasesActionOutputSchema } from '../output-schemas';
 export const airtableListBasesAction = createAction({
   auth: airtableAuth,
   name: 'list_bases',
+  classification: 'SEARCH',
   displayName: 'List Bases (Agent)',
   description: 'List all Airtable bases the token can access.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { eventOutputSchema } from '../output-schemas';
 export const aiGetEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_event',
+  classification: 'READ',
   displayName: 'Get Event',
   description: 'Fetch the full details of a single Google Calendar event by its event ID.',
   audience: 'ai',

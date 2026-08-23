@@ -6,6 +6,7 @@ import { props } from '../common/props';
 export const linearRemovedIssue = createTrigger({
   auth: linearAuth,
   name: 'removed_issue',
+  classification: 'READ',
   displayName: 'Removed Issue',
   description: 'Triggers when an existing Linear issue is removed',
   aiMetadata: {

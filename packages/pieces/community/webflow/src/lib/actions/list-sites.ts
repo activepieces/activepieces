@@ -5,6 +5,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowListSites = createAction({
 	auth: webflowAuth,
 	name: 'list_sites',
+	classification: 'SEARCH',
 	description: 'List all sites',
 	displayName: 'List Sites',
 	audience: 'both',

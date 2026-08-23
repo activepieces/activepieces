@@ -6,6 +6,7 @@ import slackifyMarkdown from 'slackify-markdown';
 
 export const markdownToSlackFormat = createAction({
   name: 'markdownToSlackFormat',
+  classification: 'READ',
   displayName: 'Markdown to Slack format',
   description:
     "Convert Markdown-formatted text to Slack's pseudo - markdown syntax",

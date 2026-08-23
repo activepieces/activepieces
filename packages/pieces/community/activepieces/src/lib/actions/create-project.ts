@@ -8,6 +8,7 @@ import { activePieceAuth } from '../auth';
 
 export const createProject = createAction({
   name: 'create_project',
+  classification: 'WRITE',
   auth: activePieceAuth,
   displayName: 'Create Project',
   description: 'Create a new project',

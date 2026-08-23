@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const removeTagFromContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_remove_tag',
+  classification: 'WRITE',
   displayName: 'Remove Tags from Contact',
   description: 'Removes tags from an existing contact.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { docIdDropdown } from '../common/props';
 export const listTablesAction = createAction({
 	auth: codaAuth,
 	name: 'list-tables',
+	classification: 'SEARCH',
 	displayName: 'List Table(s)',
 	description: 'List tables in a selected document.',
 	audience: 'both',

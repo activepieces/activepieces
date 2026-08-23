@@ -6,6 +6,7 @@ import { filloutFormsAuth } from '../auth';
 export const findFormByTitle = createAction({
   auth: filloutFormsAuth,
   name: 'findFormByTitle',
+  classification: 'SEARCH',
   displayName: 'Find Form by Title',
   description: 'Finds an existing forms by title.',
   audience: 'both',

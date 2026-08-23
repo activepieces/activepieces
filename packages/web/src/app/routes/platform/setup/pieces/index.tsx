@@ -177,59 +177,44 @@ const PiecesListTab = () => {
     );
 
   return (
-    <>
-      {!isEnabled && (
-        <LockedAlert
-          title={t('Control Pieces')}
-          description={t(
-            "Show the pieces that matter most to your users and hide the ones you don't like.",
-          )}
-          button={
-            <RequestTrial
-              featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
-            />
-          }
-        />
+    <DataTable
+      emptyStateTextTitle={t('No pieces found')}
+      emptyStateTextDescription={t(
+        'Start by installing pieces that you want to use in your automations',
       )}
-      <DataTable
-        emptyStateTextTitle={t('No pieces found')}
-        emptyStateTextDescription={t(
-          'Start by installing pieces that you want to use in your automations',
-        )}
-        emptyStateIcon={<Package className="size-14" />}
-        columns={columns}
-        filters={[
-          {
-            type: 'input',
-            title: t('Piece Name'),
-            accessorKey: 'name',
-            icon: CheckIcon,
-          },
-        ]}
-        page={{
-          data: pieces ?? [],
-          next: null,
-          previous: null,
-        }}
-        isLoading={isLoading}
-        toolbarButtons={[
-          <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
-          <SyncPiecesButton key="sync" />,
-          <InstallPieceDialog
-            key="install"
-            onInstallPiece={() => refetchPieces()}
-            scope={PieceScope.PLATFORM}
-          />,
-        ]}
-        virtualizeRows={true}
-        hidePagination={true}
-      />
-    </>
+      emptyStateIcon={<Package className="size-14" />}
+      columns={columns}
+      filters={[
+        {
+          type: 'input',
+          title: t('Piece Name'),
+          accessorKey: 'name',
+          icon: CheckIcon,
+        },
+      ]}
+      page={{
+        data: pieces ?? [],
+        next: null,
+        previous: null,
+      }}
+      isLoading={isLoading}
+      toolbarButtons={[
+        <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
+        <SyncPiecesButton key="sync" />,
+        <InstallPieceDialog
+          key="install"
+          onInstallPiece={() => refetchPieces()}
+          scope={PieceScope.PLATFORM}
+        />,
+      ]}
+      virtualizeRows={true}
+      hidePagination={true}
+    />
   );
 };
 
 const PlatformPiecesPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get('tab') as TabValue) || 'pieces';
 
@@ -250,6 +235,22 @@ const PlatformPiecesPage = () => {
         title={t('Pieces')}
       />
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
+        {!platform.plan.managePiecesEnabled && (
+          <div className="px-4 shrink-0">
+            <LockedAlert
+              title={t('Control Pieces')}
+              description={t(
+                "Show the pieces that matter most to your users and hide the ones you don't like.",
+              )}
+              button={
+                <RequestTrial
+                  featureKey="ENTERPRISE_PIECES"
+                  buttonVariant="basic"
+                />
+              }
+            />
+          </div>
+        )}
         <Tabs
           value={activeTab}
           onValueChange={(v) => setTab(v as TabValue)}

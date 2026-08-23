@@ -5,6 +5,7 @@ import { chargekeepAuth } from '../auth';
 export const newSubscription = createTrigger({
   auth: chargekeepAuth,
   name: 'new_subscription',
+  classification: 'READ',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is created',
   aiMetadata: {

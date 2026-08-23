@@ -5,14 +5,17 @@ import { hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { FilterOperatorEnum } from '../common/types';
 import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
+import { customObjectSearchOutputSchema } from '../output-schemas';
 
 export const findCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-custom-object',
+	classification: 'SEARCH',
 	displayName: 'Find Custom Object',
 	description: 'Finds a custom object by searching.',
 	audience: 'both',
 	aiMetadata: { description: 'Search records of a selected HubSpot custom object type by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Requires choosing the custom object type; use Create Custom Object to add a new record.', idempotent: true },
+	outputSchema: customObjectSearchOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		firstSearchPropertyName: customObjectPropertiesDropdown(

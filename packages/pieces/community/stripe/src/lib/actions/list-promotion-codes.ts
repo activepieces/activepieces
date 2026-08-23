@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { promotionCodeListOutputSchema } from '../output-schemas';
 export const stripeListPromotionCodes = createAction({
   name: 'list_promotion_codes',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Promotion Codes (Agent)',
   description: 'List Stripe promotion codes.',

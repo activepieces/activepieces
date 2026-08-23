@@ -54,6 +54,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
 export const newOrModifiedFile = createTrigger({
   auth: sftpAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Trigger when a new file is created or modified.',
   aiMetadata: {

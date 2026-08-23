@@ -8,6 +8,7 @@ export const analyzeSentiment = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'analyze_sentiment',
+  classification: 'READ',
   displayName: 'Analyze Text Sentiment',
   description:
     'Analyzes text for sentiment (positive, negative, or neutral).',

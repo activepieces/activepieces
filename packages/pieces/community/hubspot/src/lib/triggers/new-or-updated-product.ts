@@ -15,6 +15,7 @@ import { FilterOperatorEnum } from '../common/types';
 import dayjs from 'dayjs';
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ additionalPropertiesToRetrieve?: string[] | string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -74,6 +75,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>,{ a
 export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-product',
+	classification: 'READ',
 	displayName: 'Product Recently Created or Updated',
 	description: 'Triggers when a product recently created or updated.',
 	aiMetadata: {
@@ -95,6 +97,7 @@ export const newOrUpdatedProductTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);
