@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const HOVER_SUPPRESS_RELEASE_MS = 350;
 const SIDEBAR_WIDTH = '14.375rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
@@ -61,6 +62,9 @@ function SidebarProvider({
   const [openMobile, setOpenMobile] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [hoverSuppressed, setHoverSuppressedState] = React.useState(false);
+  const suppressTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
@@ -125,10 +129,19 @@ function SidebarProvider({
   }, []);
 
   const setHoverSuppressed = React.useCallback((suppressed: boolean) => {
-    setHoverSuppressedState(suppressed);
-    if (suppressed) {
-      setIsHovered(false);
+    if (suppressTimeoutRef.current) {
+      clearTimeout(suppressTimeoutRef.current);
+      suppressTimeoutRef.current = null;
     }
+    setIsHovered(false);
+    if (suppressed) {
+      setHoverSuppressedState(true);
+      return;
+    }
+    suppressTimeoutRef.current = setTimeout(() => {
+      setHoverSuppressedState(false);
+      setIsHovered(false);
+    }, HOVER_SUPPRESS_RELEASE_MS);
   }, []);
 
   React.useEffect(() => {
@@ -138,6 +151,9 @@ function SidebarProvider({
       }
       if (zIndexTimeoutRef.current) {
         clearTimeout(zIndexTimeoutRef.current);
+      }
+      if (suppressTimeoutRef.current) {
+        clearTimeout(suppressTimeoutRef.current);
       }
     };
   }, []);
