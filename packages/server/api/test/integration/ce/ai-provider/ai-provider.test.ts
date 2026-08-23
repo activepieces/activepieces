@@ -702,6 +702,34 @@ describe('AI Providers API', () => {
             expect(serves).toBe(true)
         })
 
+        it('refuses when any key the run could be holding excludes the target project', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Open chat key',
+                config: { baseUrl: 'https://open-chat.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'all',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Pinned to this project',
+                config: { baseUrl: 'https://pinned.example.com', apiKeyHeader: 'Authorization', models: [] },
+                projectScope: 'selected',
+                projectIds: [ctx.project.id],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(false)
+        })
+
         it('refuses to drop a restricted key out of project scope altogether', async () => {
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
