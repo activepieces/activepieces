@@ -1,4 +1,4 @@
-import { AIProviderName, apId, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import {
     ApEdition,
     ChatPersonalization,
@@ -556,14 +556,24 @@ async function claimForResearch({ platformId, userId, scope }: { platformId: str
 
 async function guardsAllowResearch({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
     const chatProvider = await tryCatch(() => aiProviderService(log).getChatProvider({ platformId }))
-    if (chatProvider.error || isNil(chatProvider.data)) {
-        log.warn({ platform: { id: platformId } }, '[chatPersonalization] No chat AI provider, skipping research')
+    if (chatProvider.error) {
+        log.warn({ platform: { id: platformId }, error: chatProvider.error }, '[chatPersonalization] Chat AI provider failed to load, skipping research')
+        return false
+    }
+    if (isNil(chatProvider.data)) {
+        log.warn({ platform: { id: platformId } }, '[chatPersonalization] No chat AI provider configured, skipping research')
         return false
     }
     const credits = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
     if (credits.error) {
-        log.warn({ platform: { id: platformId } }, '[chatPersonalization] Credits exhausted, skipping research')
-        return false
+        const exhausted = credits.error instanceof ActivepiecesError && credits.error.error.code === ErrorCode.QUOTA_EXCEEDED
+        if (!exhausted) {
+            log.warn({ platform: { id: platformId }, error: credits.error }, '[chatPersonalization] Credits check failed, allowing research')
+        }
+        else {
+            log.warn({ platform: { id: platformId } }, '[chatPersonalization] Credits exhausted, skipping research')
+            return false
+        }
     }
     const { allowed, count } = await agentHelpers.incrementAndCheckLimit({
         key: `chat-personalization-runs:${platformId}`,
