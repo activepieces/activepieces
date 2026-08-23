@@ -243,12 +243,7 @@ export const recordService = {
                 },
             })
         }
-        const records = await loadRecordsForDeleteWebhook({
-            projectId,
-            tableId,
-            recordIds: uniqueIds,
-        })
-        const deletedIds = await deleteRecordsReturningIds({
+        const { deletedIds, records } = await deleteRecordsAndReturnWebhookPayloads({
             projectId,
             tableId,
             recordIds: uniqueIds,
@@ -259,12 +254,9 @@ export const recordService = {
                 params: { entityType: 'Record', entityId: uniqueIds[0] },
             })
         }
-
-        const deletedIdSet = new Set(deletedIds)
-        const deletedRecords = records.filter((record) => deletedIdSet.has(record.id))
         return {
             deletedCount: deletedIds.length,
-            records: await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId }),
+            records,
         }
     },
 
@@ -272,9 +264,8 @@ export const recordService = {
         tableId,
         projectId,
     }: DeleteAllParams): Promise<PopulatedRecord[]> {
-        const records = await loadRecordsForDeleteWebhook({ projectId, tableId })
-        await recordRepo().delete({ projectId, tableId })
-        return formatRecordsAndFetchField({ records, tableId, projectId })
+        const { records } = await deleteRecordsAndReturnWebhookPayloads({ projectId, tableId })
+        return records
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
@@ -360,12 +351,12 @@ async function deleteRecordsReturningIds({
 }: {
     projectId: string
     tableId: string
-    recordIds: string[]
+    recordIds?: string[]
 }): Promise<string[]> {
     const result = await recordRepo()
         .createQueryBuilder()
         .delete()
-        .where({ id: In(recordIds), projectId, tableId })
+        .where(isNil(recordIds) ? { projectId, tableId } : { id: In(recordIds), projectId, tableId })
         .returning('id')
         .execute()
     const deletedRows: unknown = result.raw
@@ -377,6 +368,25 @@ async function deleteRecordsReturningIds({
 
 function isRowWithId(row: unknown): row is { id: string } {
     return typeof row === 'object' && !isNil(row) && typeof Reflect.get(row, 'id') === 'string'
+}
+
+async function deleteRecordsAndReturnWebhookPayloads({
+    projectId,
+    tableId,
+    recordIds,
+}: {
+    projectId: string
+    tableId: string
+    recordIds?: string[]
+}): Promise<{ deletedIds: string[], records: PopulatedRecord[] }> {
+    const snapshot = await loadRecordsForDeleteWebhook({ projectId, tableId, recordIds })
+    const deletedIds = await deleteRecordsReturningIds({ projectId, tableId, recordIds })
+    const deletedIdSet = new Set(deletedIds)
+    const deletedRecords = snapshot.filter((record) => deletedIdSet.has(record.id))
+    return {
+        deletedIds,
+        records: await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId }),
+    }
 }
 
 async function formatRecordsAndFetchField({ records, tableId, projectId, fields: prefetchedFields }: { records: RecordSchema[], tableId: string, projectId: string, fields?: Field[] }): Promise<PopulatedRecord[]> {
