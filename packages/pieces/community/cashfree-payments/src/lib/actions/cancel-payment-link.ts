@@ -5,6 +5,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const cancelPaymentLink = createAction({
   auth: cashfreePaymentsAuth,
   name: 'cancel-payment-link',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Payment Link',
   description: 'Cancel a payment link in Cashfree Payment Gateway. Only links in ACTIVE status can be cancelled.',
   audience: 'both',
