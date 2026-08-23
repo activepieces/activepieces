@@ -2,46 +2,73 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { whatsscaleAuth } from './lib/auth';
 
-//  Text actions
-import { sendTextManualAction } from './lib/actions/messaging/send-text-manual';
-import { sendTextToContactAction } from './lib/actions/messaging/send-text-to-contact';
-import { sendTextToGroupAction } from './lib/actions/messaging/send-text-to-group';
-import { sendTextToChannelAction } from './lib/actions/messaging/send-text-to-channel';
-import { sendTextToCrmContactAction } from './lib/actions/messaging/send-text-to-crm-contact';
+// Human — messaging actions with a dropdown-picked recipient (covered by an ai/ atomic)
+import { sendTextToContactAction } from './lib/actions/human/messaging/send-text-to-contact';
+import { sendTextToGroupAction } from './lib/actions/human/messaging/send-text-to-group';
+import { sendTextToChannelAction } from './lib/actions/human/messaging/send-text-to-channel';
+import { sendTextToCrmContactAction } from './lib/actions/human/messaging/send-text-to-crm-contact';
+import { sendImageToContactAction } from './lib/actions/human/messaging/send-image-to-contact';
+import { sendImageToGroupAction } from './lib/actions/human/messaging/send-image-to-group';
+import { sendImageToChannelAction } from './lib/actions/human/messaging/send-image-to-channel';
+import { sendImageToCrmContactAction } from './lib/actions/human/messaging/send-image-to-crm-contact';
+import { sendVideoToContactAction } from './lib/actions/human/messaging/send-video-to-contact';
+import { sendVideoToGroupAction } from './lib/actions/human/messaging/send-video-to-group';
+import { sendVideoToChannelAction } from './lib/actions/human/messaging/send-video-to-channel';
+import { sendVideoToCrmContactAction } from './lib/actions/human/messaging/send-video-to-crm-contact';
+import { sendDocumentToContactAction } from './lib/actions/human/messaging/send-document-to-contact';
+import { sendDocumentToGroupAction } from './lib/actions/human/messaging/send-document-to-group';
+import { sendDocumentToCrmContactAction } from './lib/actions/human/messaging/send-document-to-crm-contact';
 
-// Image actions
-import { sendImageToContactAction } from './lib/actions/messaging/send-image-to-contact';
-import { sendImageToGroupAction } from './lib/actions/messaging/send-image-to-group';
-import { sendImageToChannelAction } from './lib/actions/messaging/send-image-to-channel';
-import { sendImageToCrmContactAction } from './lib/actions/messaging/send-image-to-crm-contact';
-import { sendImageManualAction } from './lib/actions/messaging/send-image-manual';
+// Human — CRM actions with a dropdown-picked contact (covered by an ai/ atomic)
+import { getCrmContactAction } from './lib/actions/human/crm/get-contact';
+import { updateCrmContactAction } from './lib/actions/human/crm/update-contact';
+import { deleteCrmContactAction } from './lib/actions/human/crm/delete-contact';
+import { addCrmContactTagAction } from './lib/actions/human/crm/add-contact-tag';
+import { removeCrmContactTagAction } from './lib/actions/human/crm/remove-contact-tag';
 
-// Video actions
-import { sendVideoToContactAction } from './lib/actions/messaging/send-video-to-contact';
-import { sendVideoToGroupAction } from './lib/actions/messaging/send-video-to-group';
-import { sendVideoToChannelAction } from './lib/actions/messaging/send-video-to-channel';
-import { sendVideoToCrmContactAction } from './lib/actions/messaging/send-video-to-crm-contact';
-import { sendVideoManualAction } from './lib/actions/messaging/send-video-manual';
+// Both — CRM actions with no dropdown target, nothing to split
+import { createCrmContactAction } from './lib/actions/both/crm/create-contact';
+import { findCrmContactByPhoneAction } from './lib/actions/both/crm/find-contact-by-phone';
+import { listCrmContactsAction } from './lib/actions/both/crm/list-contacts';
+import { listCrmTagsAction } from './lib/actions/both/crm/list-tags';
 
-// Document actions
-import { sendDocumentToContactAction } from './lib/actions/messaging/send-document-to-contact';
-import { sendDocumentToGroupAction } from './lib/actions/messaging/send-document-to-group';
-import { sendDocumentToCrmContactAction } from './lib/actions/messaging/send-document-to-crm-contact';
+// Both — messaging actions with no dropdown target at all (no human twin exists to conflict with)
+import { sendAudioManualAction } from './lib/actions/both/messaging/send-audio';
+import { sendLocationManualAction } from './lib/actions/both/messaging/send-location';
+import { sendPollManualAction } from './lib/actions/both/messaging/send-poll';
 
-// CRM actions
-import { createCrmContactAction } from './lib/actions/crm/create-crm-contact';
-import { getCrmContactAction } from './lib/actions/crm/get-crm-contact';
-import { findCrmContactByPhoneAction } from './lib/actions/crm/find-crm-contact-by-phone';
-import { updateCrmContactAction } from './lib/actions/crm/update-crm-contact';
-import { deleteCrmContactAction } from './lib/actions/crm/delete-crm-contact';
-import { addCrmContactTagAction } from './lib/actions/crm/add-crm-contact-tag';
-import { removeCrmContactTagAction } from './lib/actions/crm/remove-crm-contact-tag';
-import { listCrmContactsAction } from './lib/actions/crm/list-crm-contacts';
+// Both — group management (no dropdown-based human twin exists yet)
+import { addGroupParticipantsAction } from './lib/actions/both/groups/add-participants';
+import { removeGroupParticipantsAction } from './lib/actions/both/groups/remove-participants';
+import { promoteGroupAdminsAction } from './lib/actions/both/groups/promote-admins';
+import { demoteGroupAdminsAction } from './lib/actions/both/groups/demote-admins';
+import { leaveGroupAction } from './lib/actions/both/groups/leave';
 
-// Utility actions
-import { checkWhatsappAction } from './lib/actions/utility/check-whatsapp';
+// Both — groups, status, and utility actions
+import { listGroupParticipantsAction } from './lib/actions/both/groups/list-participants';
+import { postTextStatusAction } from './lib/actions/both/status/post-text';
+import { postImageStatusAction } from './lib/actions/both/status/post-image';
+import { postVideoStatusAction } from './lib/actions/both/status/post-video';
+import { checkWhatsappAction } from './lib/actions/both/utility/check-whatsapp';
+import { listSessionsAction } from './lib/actions/both/utility/list-sessions';
+import { listWhatsappContactsAction } from './lib/actions/both/utility/list-whatsapp-contacts';
+import { listWhatsappGroupsAction } from './lib/actions/both/utility/list-whatsapp-groups';
 
-//   Triggers
+// AI — messaging actions that take a recipient ID directly, no builder dropdown
+// (a human dropdown twin exists for these four content types, so the raw-ID version is ai-only)
+import { sendTextManualAction } from './lib/actions/ai/messaging/send-text';
+import { sendImageManualAction } from './lib/actions/ai/messaging/send-image';
+import { sendVideoManualAction } from './lib/actions/ai/messaging/send-video';
+import { sendDocumentManualAction } from './lib/actions/ai/messaging/send-document';
+
+// AI — CRM actions that take a contact ID directly, no builder dropdown
+import { getCrmContactByIdAction } from './lib/actions/ai/crm/get-contact';
+import { updateCrmContactByIdAction } from './lib/actions/ai/crm/update-contact';
+import { deleteCrmContactByIdAction } from './lib/actions/ai/crm/delete-contact';
+import { addCrmContactTagByIdAction } from './lib/actions/ai/crm/add-contact-tag';
+import { removeCrmContactTagByIdAction } from './lib/actions/ai/crm/remove-contact-tag';
+
+// Triggers
 import { watchIncomingMessagesTrigger } from './lib/triggers/watch-incoming-messages';
 import { watchGroupMessagesTrigger } from './lib/triggers/watch-group-messages';
 import { watchChannelMessagesTrigger } from './lib/triggers/watch-channel-messages';
@@ -52,7 +79,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 export const whatsscale = createPiece({
   displayName: 'WhatsScale',
   auth: whatsscaleAuth,
-  minimumSupportedRelease: '0.36.0',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/whatsscale.png',
   authors: ['whatsscale'],
   description:
@@ -63,39 +90,63 @@ export const whatsscale = createPiece({
     PieceCategory.SALES_AND_CRM,
   ],
   actions: [
-    // Text actions
-    sendTextManualAction,
+    // Human — messaging (dropdown-picked recipient, covered by an ai/ atomic)
     sendTextToContactAction,
     sendTextToGroupAction,
     sendTextToChannelAction,
     sendTextToCrmContactAction,
-    // Image actions
     sendImageToContactAction,
     sendImageToGroupAction,
     sendImageToChannelAction,
     sendImageToCrmContactAction,
-    sendImageManualAction,
-    // Video actions
     sendVideoToContactAction,
     sendVideoToGroupAction,
     sendVideoToChannelAction,
     sendVideoToCrmContactAction,
-    sendVideoManualAction,
-    // Document actions
     sendDocumentToContactAction,
     sendDocumentToGroupAction,
     sendDocumentToCrmContactAction,
-    // CRM actions
-    createCrmContactAction,
+    // Human — CRM (dropdown-picked contact, covered by an ai/ atomic)
     getCrmContactAction,
-    findCrmContactByPhoneAction,
     updateCrmContactAction,
     deleteCrmContactAction,
     addCrmContactTagAction,
     removeCrmContactTagAction,
+    // Both — CRM (no dropdown target, nothing to split)
+    createCrmContactAction,
+    findCrmContactByPhoneAction,
     listCrmContactsAction,
-    // Utility actions
+    listCrmTagsAction,
+    // Both — messaging with no dropdown target (no human twin exists to conflict with)
+    sendAudioManualAction,
+    sendLocationManualAction,
+    sendPollManualAction,
+    // Both — group management (no dropdown-based human twin exists yet)
+    addGroupParticipantsAction,
+    removeGroupParticipantsAction,
+    promoteGroupAdminsAction,
+    demoteGroupAdminsAction,
+    leaveGroupAction,
+    // Both — groups, status, utility
+    listGroupParticipantsAction,
+    postTextStatusAction,
+    postImageStatusAction,
+    postVideoStatusAction,
     checkWhatsappAction,
+    listSessionsAction,
+    listWhatsappContactsAction,
+    listWhatsappGroupsAction,
+    // AI — messaging (a human dropdown twin already covers these four content types)
+    sendTextManualAction,
+    sendImageManualAction,
+    sendVideoManualAction,
+    sendDocumentManualAction,
+    // AI — CRM
+    getCrmContactByIdAction,
+    updateCrmContactByIdAction,
+    deleteCrmContactByIdAction,
+    addCrmContactTagByIdAction,
+    removeCrmContactTagByIdAction,
     createCustomApiCallAction({
       auth: whatsscaleAuth,
       baseUrl: () => 'https://proxy.whatsscale.com',
