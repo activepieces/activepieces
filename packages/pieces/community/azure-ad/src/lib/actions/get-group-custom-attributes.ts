@@ -6,6 +6,7 @@ import { callGraphApi, groupDropdown } from '../common';
 export const getGroupCustomAttributesAction = createAction({
     auth: azureAdAuth,
     name: 'get_group_custom_attributes',
+    classification: 'READ',
     displayName: 'Get Group Custom Attributes',
     description: 'Gets extension and custom attributes for an Azure AD group. Returns schema extensions and open extensions.',
     audience: 'both',

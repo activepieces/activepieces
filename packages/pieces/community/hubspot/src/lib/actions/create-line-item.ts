@@ -10,6 +10,7 @@ import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createLineItemAction = createAction({
 	auth: hubspotAuth,
@@ -19,6 +20,7 @@ export const createLineItemAction = createAction({
 	description: 'Creates a line item in Hubspot.',
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new standalone line item in HubSpot from a required product plus optional property values (quantity, price, discount), and returns the created line item. Use when building out a quote or deal\'s line items. Not idempotent: each call creates a separate line item.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		productId: productDropdown({
 			displayName: 'Line Item Information: Product ID',
