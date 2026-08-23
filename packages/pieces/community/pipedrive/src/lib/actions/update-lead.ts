@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 export const updateLeadAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-lead',
+	classification: 'WRITE',
 	displayName: 'Update Lead',
 	description: 'Updates an existing lead.',
 	audience: 'both',

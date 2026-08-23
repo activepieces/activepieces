@@ -16,6 +16,7 @@ interface TagName {
 export const createContact = createAction({
   auth: systemeIoAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new contact with email and contact fields from your Systeme.io account, with optional tags',
   audience: 'both',

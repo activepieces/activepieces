@@ -6,6 +6,7 @@ import { jinaAiAuth } from '../auth';
 export const deepSearchQueryAction = createAction({
   auth:jinaAiAuth,
   name: 'deepsearch_query',
+  classification: 'READ',
   displayName: 'DeepSearch Query',
   description:
     'Answer complex questions through iterative search, reading, and reasoning with the DeepSearch API.',

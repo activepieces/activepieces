@@ -7,6 +7,7 @@ import { notionUpdateDatabaseItemActionOutputSchema } from '../output-schemas';
 export const notionUpdateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion_update_database_item',
+  classification: 'WRITE',
   displayName: 'Update Database Item',
   description:
     'Overwrites property values on an existing Notion database row, identified by its page id, from a raw Notion properties object.',

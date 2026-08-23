@@ -10,6 +10,7 @@ const triggerHooks = createWebhookTriggerHooks({
 
 export const rowEventTrigger = createTrigger({
   name: 'baserow_row_event',
+  classification: 'READ',
   auth: baserowAuth,
   displayName: 'Any Row Change',
   description:

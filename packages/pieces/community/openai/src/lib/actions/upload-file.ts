@@ -18,6 +18,7 @@ export const uploadFile = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description:
     'Upload a file to OpenAI for use with Assistants, Vector Stores, Batch jobs, Fine-tuning, or Vision.',

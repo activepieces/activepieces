@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getBusinessResultAction = createAction({
   auth: aipriseAuth,
   name: 'get_business_verification_result',
+  classification: 'READ',
   displayName: 'Get Business Verification Result',
   description:
     "Fetches the current status and outcome of a company's background check — whether it is still running, approved, or declined.",

@@ -5,6 +5,7 @@ import { aiAnswerAuth } from '../auth';
 
 export const gmailGetListOfAgents = createAction({
   name: 'gmailGetListOfAgents',
+  classification: 'SEARCH',
   auth: aiAnswerAuth,
   displayName: 'Gmail get list of Agents',
   description: 'get the lists of agents with Gmail',

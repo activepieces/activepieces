@@ -7,6 +7,7 @@ import { GristWebhookPayload } from '../common/types';
 export const gristNewRecordTrigger = createTrigger({
   auth: gristAuth,
   name: 'grist-new-record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to the table.',
   aiMetadata: {

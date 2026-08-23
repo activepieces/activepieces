@@ -24,6 +24,7 @@ export const moxieCRMRegisterTrigger = ({
   createTrigger({
     auth: moxieCRMAuth,
     name: `moxie_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

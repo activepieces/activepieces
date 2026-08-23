@@ -11,10 +11,10 @@ import { Migration } from '../../migration'
 // breaking = true because down() restores the UNIQUE (platformId, provider) index
 // that up() drops so a platform can hold several keys per provider: once a second
 // key exists the old shape no longer fits the data, so the rollback is one-way.
-export class AddAiProviderScopes1829000000000 implements Migration {
-    name = 'AddAiProviderScopes1829000000000'
+export class AddAiProviderScopes1830000000000 implements Migration {
+    name = 'AddAiProviderScopes1830000000000'
     breaking = true
-    release = '0.87.1'
+    release = '0.88.3'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {

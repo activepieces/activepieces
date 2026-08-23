@@ -6,6 +6,7 @@ import { CreateAccountRequest } from '../../common/types';
 export const createAccountAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_create_account',
+	classification: 'WRITE',
 	displayName: 'Create Account',
 	description: 'Creates a new account.',
 	audience: 'both',

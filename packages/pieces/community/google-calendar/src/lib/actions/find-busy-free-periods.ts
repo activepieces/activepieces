@@ -94,6 +94,7 @@ export async function runFindFreeBusy(
 export const findFreeBusy = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_find_busy_free_periods',
+  classification: 'SEARCH',
   displayName: 'Find Busy/Free Periods in Calendar',
   description: 'Finds free/busy calendar details from Google Calendar.',
   audience: 'human',

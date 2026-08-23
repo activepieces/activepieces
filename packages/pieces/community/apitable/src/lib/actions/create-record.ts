@@ -9,6 +9,7 @@ import { APITableAuth } from '../auth';
 export const createRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in datasheet.',
   audience: 'both',

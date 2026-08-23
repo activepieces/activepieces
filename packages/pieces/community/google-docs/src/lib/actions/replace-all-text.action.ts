@@ -6,6 +6,7 @@ import { replaceAllTextActionOutputSchema } from '../output-schemas';
 export const replaceAllText = createAction({
 	auth: googleDocsAuth,
 	name: 'replace_all_text',
+	classification: 'WRITE',
 	displayName: 'Replace All Text in Document',
 	description:
 		'Replace every occurrence of a literal string in a Google Docs document with another string.',

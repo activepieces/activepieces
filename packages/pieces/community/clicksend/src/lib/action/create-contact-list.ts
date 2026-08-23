@@ -6,6 +6,7 @@ import { clicksendAuth } from '../..';
 export const clicksendCreateContactListAction = createAction({
   auth: clicksendAuth,
   name: 'create_contact_list',
+  classification: 'WRITE',
   description: 'Creates a new contact list.',
   audience: 'both',
   aiMetadata: {

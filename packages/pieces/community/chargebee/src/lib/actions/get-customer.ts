@@ -6,6 +6,7 @@ import { chargebeeRequest } from '../common/client';
 
 export const getCustomer = createAction({
   name: 'get_customer',
+  classification: 'READ',
   auth: chargebeeAuth,
   displayName: 'Get Customer',
   description: 'Retrieve a customer from Chargebee by ID.',
