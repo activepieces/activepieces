@@ -91,6 +91,7 @@ export function ProjectDashboardLayout({
 
   const hideHeader =
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
+    location.pathname.includes('/mcp-server') ||
     isPlatformPage;
 
   return (

@@ -224,7 +224,7 @@ export function ProjectDashboardSidebar({
   const mcpServerLink: SidebarItemType = {
     type: 'link',
     to: '/mcp-server',
-    label: t('MCP Server'),
+    label: t('MCP'),
     icon: ConnectIcon,
     show: true,
     hasPermission: checkAccess(Permission.READ_MCP),

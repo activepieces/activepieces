@@ -1,33 +1,51 @@
 import { t } from 'i18next';
 
-import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { PageHeader } from '@/components/custom/page-header';
-import { cn, DASHBOARD_CONTENT_PADDING_X } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-import { ConnectCards } from './connect-cards';
+import { ConnectSteps } from './connect-steps';
 import { ConnectedClients } from './connected-clients';
 import { useMcpServerUrl } from './mcp-client-identity';
+import { mcpClientsQueries } from './mcp-clients-hooks';
 
 export default function McpServerPage() {
   const { serverUrl, isPublic } = useMcpServerUrl();
+  const { rows } = mcpClientsQueries.useClientsReachingProject();
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <PageHeader showSidebarToggle={true} title={t('MCP Server')} />
-      <div
-        className={cn('flex flex-col gap-8 pb-10', DASHBOARD_CONTENT_PADDING_X)}
-      >
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium">{t('Server URL')}</label>
-          <p className="text-xs text-muted-foreground">
-            {t('No API keys — the URL is the whole credential.')}
-          </p>
-          <CopyToClipboardInput textToCopy={serverUrl} useInput={true} />
-        </div>
-
-        <ConnectCards serverUrl={serverUrl} isPublicUrl={isPublic} />
-
-        <ConnectedClients />
+    <div className="flex w-full flex-col gap-2">
+      <PageHeader showSidebarToggle={true} title={t('Connect using MCP')} />
+      <div className="w-full px-4 pb-10 sm:px-6">
+        <Tabs defaultValue="connect" className="flex flex-col gap-8">
+          <TabsList variant="outline" className="w-full justify-start border-b">
+            <TabsTrigger
+              variant="outline"
+              value="connect"
+              className="text-base"
+            >
+              {t('Connect')}
+            </TabsTrigger>
+            <TabsTrigger
+              variant="outline"
+              value="clients"
+              className="text-base"
+            >
+              {t('Connected clients')}
+              {rows.length > 0 && (
+                <Badge variant="accent" className="ml-2">
+                  {rows.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="connect" className="mt-0">
+            <ConnectSteps serverUrl={serverUrl} isPublicUrl={isPublic} />
+          </TabsContent>
+          <TabsContent value="clients" className="mt-0">
+            <ConnectedClients />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
