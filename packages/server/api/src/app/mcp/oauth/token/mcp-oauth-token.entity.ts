@@ -36,12 +36,24 @@ export const McpOAuthTokenEntity = new EntitySchema<McpOAuthToken>({
             nullable: false,
             default: false,
         },
+        lastUsedAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_mcp_oauth_token_refresh',
             columns: ['refreshToken'],
             unique: true,
+        },
+        {
+            name: 'idx_mcp_oauth_token_project_revoked',
+            columns: ['projectId', 'revoked'],
+        },
+        {
+            name: 'idx_mcp_oauth_token_user_revoked',
+            columns: ['userId', 'revoked'],
         },
     ],
 })

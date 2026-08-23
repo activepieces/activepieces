@@ -1,4 +1,4 @@
-import { BaseModelSchema } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export const McpOAuthClient = z.object({
@@ -25,6 +25,7 @@ export const McpOAuthToken = z.object({
     scopes: z.array(z.string()).nullable(),
     expiresAt: z.string(),
     revoked: z.boolean(),
+    lastUsedAt: z.string().nullable(),
 })
 
 export type McpOAuthToken = z.infer<typeof McpOAuthToken>
@@ -46,3 +47,55 @@ export const McpOAuthAuthorizationCode = z.object({
 })
 
 export type McpOAuthAuthorizationCode = z.infer<typeof McpOAuthAuthorizationCode>
+
+export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'windsurf', 'unknown'])
+
+export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
+
+export const McpOAuthClientConnectsFrom = z.enum(['local', 'remote'])
+
+export type McpOAuthClientConnectsFrom = z.infer<typeof McpOAuthClientConnectsFrom>
+
+export const McpOAuthClientRow = z.object({
+    id: z.string(),
+    clientKey: McpOAuthClientKey,
+    clientName: z.string().nullable(),
+    connectsFrom: McpOAuthClientConnectsFrom,
+    projectId: z.string().nullable(),
+    projectName: z.string().nullable(),
+    userId: z.string().optional(),
+    user: z.object({
+        firstName: z.string(),
+        lastName: z.string(),
+        email: z.string(),
+    }).optional(),
+    created: z.string(),
+    lastUsedAt: z.string().nullable(),
+})
+
+export type McpOAuthClientRow = z.infer<typeof McpOAuthClientRow>
+
+export const ListMcpOAuthClientsRequestQuery = z.object({
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+})
+
+export type ListMcpOAuthClientsRequestQuery = z.infer<typeof ListMcpOAuthClientsRequestQuery>
+
+export const ListProjectMcpOAuthClientsRequestQuery = ListMcpOAuthClientsRequestQuery.extend({
+    projectId: ApId,
+})
+
+export type ListProjectMcpOAuthClientsRequestQuery = z.infer<typeof ListProjectMcpOAuthClientsRequestQuery>
+
+export const RevokeMcpOAuthClientsRequestBody = z.object({
+    ids: z.array(ApId).min(1).max(100),
+})
+
+export type RevokeMcpOAuthClientsRequestBody = z.infer<typeof RevokeMcpOAuthClientsRequestBody>
+
+export const RevokeProjectMcpOAuthClientsRequestBody = RevokeMcpOAuthClientsRequestBody.extend({
+    projectId: ApId,
+})
+
+export type RevokeProjectMcpOAuthClientsRequestBody = z.infer<typeof RevokeProjectMcpOAuthClientsRequestBody>

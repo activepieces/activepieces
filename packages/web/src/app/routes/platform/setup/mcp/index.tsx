@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { CenteredPage } from '@/app/components/centered-page';
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
-import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -35,14 +34,6 @@ export default function PlatformMcpPage() {
 
   const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp/platform`;
 
-  const jsonConfiguration = {
-    mcpServers: {
-      activepieces: {
-        url: serverUrl,
-      },
-    },
-  };
-
   return (
     <CenteredPage
       title={t('Platform MCP Server')}
@@ -66,7 +57,7 @@ export default function PlatformMcpPage() {
                   </label>
                   <p className="text-xs text-muted-foreground">
                     {t(
-                      'Use this URL to connect from Cursor, Windsurf, Claude Desktop, or any MCP-compatible client. Authentication is handled via OAuth.',
+                      'Use this URL to connect from Claude, Cursor, VS Code, or any MCP-compatible client. Authentication is handled via OAuth.',
                     )}
                   </p>
                   <CopyToClipboardInput
@@ -74,15 +65,6 @@ export default function PlatformMcpPage() {
                     useInput={true}
                   />
                 </div>
-
-                <CollapsibleJson
-                  json={jsonConfiguration}
-                  label={t('JSON Configuration')}
-                  description={t(
-                    'Copy this into your MCP client config (Cursor, Windsurf, Claude Desktop, etc.).',
-                  )}
-                  defaultOpen={false}
-                />
               </div>
             </TabsContent>
 
