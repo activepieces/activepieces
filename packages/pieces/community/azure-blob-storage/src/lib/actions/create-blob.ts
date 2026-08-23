@@ -6,6 +6,7 @@ import { containerProp } from '../common';
 export const createBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'createBlob',
+  classification: 'WRITE',
   displayName: 'Create Blob',
   description: 'Creates a new Blob in the specified location',
   audience: 'both',
@@ -21,6 +22,7 @@ export const createBlob = createAction({
         displayName: 'File',
         description: 'The file to upload as a blob',
         required: true,
+        streaming: true,
       }),
       tags: Property.Object({
         displayName: 'Tags',
@@ -36,6 +38,6 @@ export const createBlob = createAction({
       const containerClient = blobServiceClient.getContainerClient(container);
       const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-      return await blockBlobClient.uploadData(file.data, { tags: tags as Tags });
+      return await blockBlobClient.uploadStream(file.body, undefined, undefined, { tags: tags as Tags });
     },
 });

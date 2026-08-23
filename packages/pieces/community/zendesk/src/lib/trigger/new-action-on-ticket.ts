@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_ticket_action_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskTicket {
   id: number;
   subject: string;
@@ -34,6 +28,7 @@ interface ZendeskTicket {
 
 export const newActionOnTicket = createTrigger({
   name: 'new_action_on_ticket',
+  classification: 'READ',
   displayName: 'New Action on Ticket',
   description: 'Fires when the specified ticket updates. Requires a Zendesk Trigger with Notify active webhook.',
   aiMetadata: {

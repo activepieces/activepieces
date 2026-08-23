@@ -93,6 +93,7 @@ const polling: Polling<
 export const twilioNewTranscription = createTrigger({
   auth: twilioAuth,
   name: 'new_transcription',
+  classification: 'READ',
   displayName: 'New Transcription',
   description: 'Triggers when a new call recording transcription is completed.',
   aiMetadata: {

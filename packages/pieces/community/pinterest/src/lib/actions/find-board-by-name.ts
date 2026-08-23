@@ -7,10 +7,13 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
+import { findBoardByNameActionOutputSchema } from '../output-schemas';
 
 export const findBoardByName = createAction({
   auth: pinterestAuth,
   name: 'findBoardByName',
+  classification: 'SEARCH',
+  outputSchema: findBoardByNameActionOutputSchema,
   displayName: 'Find Board by Name',
   description: "Search for boards by name using Pinterest's search API.",
   audience: 'both',

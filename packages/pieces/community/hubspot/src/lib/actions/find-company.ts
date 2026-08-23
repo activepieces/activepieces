@@ -12,6 +12,7 @@ import { FilterOperatorEnum } from '../common/types';
 export const findCompanyAction = createAction({
     auth: hubspotAuth,
     name: 'find-company',
+    classification: 'SEARCH',
     displayName: 'Find Company',
     description: 'Finds a company by searching.',
     audience: 'both',

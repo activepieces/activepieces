@@ -7,15 +7,10 @@ import {
 import { zendeskAuth } from '../..';
 import { ticketIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const addTagToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-tag-to-ticket',
+  classification: 'WRITE',
   displayName: 'Add Tag to Ticket',
   description: 'Apply one or more tags to a ticket.',
   audience: 'both',

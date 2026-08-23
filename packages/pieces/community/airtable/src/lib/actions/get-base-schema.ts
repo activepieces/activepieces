@@ -1,14 +1,17 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 import { airtableCommon } from '../common';
+import { getBaseSchemaActionOutputSchema } from '../output-schemas';
 
 export const airtableGetBaseSchemaAction = createAction({
   auth: airtableAuth,
   name: 'airtable_get_base_schema',
+  classification: 'READ',
   displayName: 'Get Base Schema',
   description:
     'Retrieve the schema for a specific base, including all its tables and fields.',
-  audience: 'both',
+  audience: 'human',
+  outputSchema: getBaseSchemaActionOutputSchema,
   aiMetadata: {
     description:
       'Returns the full schema of a base — the list of all its tables along with their fields and types. Use to discover what tables and fields a base contains before reading or writing records. Read-only and idempotent.',

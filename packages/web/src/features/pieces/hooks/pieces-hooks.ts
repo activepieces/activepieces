@@ -69,6 +69,7 @@ type UsePieceProps = {
   name: string;
   version?: string;
   enabled?: boolean;
+  projectId?: string;
 };
 
 type UseMultiplePiecesProps = {
@@ -89,12 +90,17 @@ type UsePiecesSearchProps = {
 };
 
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
+  usePiece: ({ name, version, enabled = true, projectId }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language],
+      queryKey: ['piece', name, version, i18n.language, projectId],
       queryFn: () =>
-        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
+        piecesApi.get({
+          name,
+          version,
+          locale: i18n.language as LocalesEnum,
+          projectId,
+        }),
       staleTime: Infinity,
       enabled,
       retry: (failureCount, error) => {

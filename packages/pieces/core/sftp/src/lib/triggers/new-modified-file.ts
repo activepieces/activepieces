@@ -54,8 +54,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { pat
 export const newOrModifiedFile = createTrigger({
   auth: sftpAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Trigger when a new file is created or modified.',
+  aiMetadata: {
+    description: 'Fires for each file in a watched directory on an FTP, FTPS or SFTP server whose modification time is newer than the previous poll, so it covers both newly added files and edits to existing ones. Each event represents one such file. Polls a single directory only, without recursing into subfolders, and can optionally skip hidden dotfiles.',
+  },
   props: {
     path: Property.ShortText({
       displayName: 'Path',

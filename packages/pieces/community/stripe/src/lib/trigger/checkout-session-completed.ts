@@ -16,9 +16,11 @@ type StripeWebhookPayload = {
   };
 };
 
+import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeCheckoutSessionCompleted = createTrigger({
   auth: stripeAuth,
   name: 'checkout_session_completed',
+  classification: 'READ',
   displayName: 'Checkout Session Completed',
   description:
     'Fires when a Stripe Checkout Session is successfully completed.',
@@ -34,6 +36,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
       required: false,
     }),
   },
+  outputSchema: checkoutSessionOutputSchema,
   sampleData: {
     id: 'cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u',
     object: 'checkout.session',

@@ -7,9 +7,10 @@ import { searchFolderActionOutputSchema } from '../output-schemas';
 export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
   name: 'search-folder',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search a Google Drive folder for files/sub-folders',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     queryTerm: Property.StaticDropdown({
@@ -106,7 +107,6 @@ export const googleDriveSearchFolder = createAction({
     if (allFiles.length > 0) {
       return allFiles;
     } else {
-      console.log('Resource not found');
       return [];
     }
   },

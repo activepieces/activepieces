@@ -9,6 +9,7 @@ import { OBJECT_TYPE } from '../common/constants';
 export const createTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-ticket',
+	classification: 'WRITE',
 	displayName: 'Create Ticket',
 	description: 'Creates a ticket in HubSpot.',
 	audience: 'both',

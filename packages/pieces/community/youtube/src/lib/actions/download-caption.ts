@@ -8,9 +8,12 @@ import { youtubeAuth } from '../common/auth';
 export const youtubeDownloadCaptionAction = createAction({
   auth: youtubeAuth,
   name: 'download_caption',
+  classification: 'READ',
   displayName: 'Download Caption',
   description:
     'Returns a caption track text by caption ID using the YouTube captions.download endpoint. Requires permission to edit the video, so it only works for captions on videos the authenticated user owns. Auto-generated (asr) caption tracks cannot be downloaded and will return a 403.',
+  audience: 'both',
+  aiMetadata: { description: 'Downloads the raw text of one YouTube caption track identified by its caption ID, optionally emitting it as SRT, VTT, SBV, SCC, or TTML and machine-translating it into a target language code. Use it after List Captions has supplied the caption ID; the endpoint only serves tracks on videos the authenticated account can edit, and auto-generated (asr) tracks are refused with a 403. Read-only and idempotent.', idempotent: true },
   props: {
     captionId: Property.ShortText({
       displayName: 'Caption ID',

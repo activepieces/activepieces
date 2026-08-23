@@ -23,8 +23,9 @@ import { insertRowActionOutputSchema } from '../output-schemas';
 export const insertRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert_row',
+	classification: 'WRITE',
 	description: 'Add a new row of data to a specific spreadsheet.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Appends a single new row to the end of a worksheet. Use when an agent needs to record one new entry into a Google Sheet. Requires a spreadsheet and sheet to be selected; values map to columns either positionally or by header name. Not idempotent — calling it again appends another row.',

@@ -12,10 +12,11 @@ import { createDatabaseItemActionOutputSchema } from '../output-schemas';
 export const createDatabaseItem = createAction({
   auth: notionAuth,
   name: 'create_database_item',
+  classification: 'WRITE',
   displayName: 'Create Database Item',
   description:
     'Add a new item to a Notion database with custom field values and optional content. Ideal for creating tasks, records, or entries in structured databases.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new row (page) in a specific Notion database, setting its property fields and optionally appending body content. Use when an agent must add a structured record (task, contact, ticket) to a known database; requires the target database_id and field values matching that database schema. Not idempotent: each call creates a separate item, so guard against duplicates.',

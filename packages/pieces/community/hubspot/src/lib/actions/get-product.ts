@@ -9,6 +9,7 @@ import { OBJECT_TYPE } from '../common/constants';
 export const getProductAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-product',
+	classification: 'READ',
 	displayName: 'Get Product',
 	description: 'Gets a product.',
 	audience: 'both',

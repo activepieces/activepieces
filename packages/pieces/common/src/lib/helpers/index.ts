@@ -1,4 +1,5 @@
 import {
+  ActionClassification,
   OAuth2PropertyValue,
   PieceAuthProperty,
   Property,
@@ -12,12 +13,12 @@ import {
   ApFile,
 } from '@activepieces/pieces-framework';
 import {
-  HttpError,
   HttpHeaders,
   HttpMethod,
   HttpRequest,
   QueryParams,
   httpClient,
+  toFailsafeOutput,
 } from '../http';
 import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/core-utils';
 import fs from 'fs';
@@ -148,6 +149,7 @@ export function createCustomApiCallAction<
   props,
   extraProps,
   authLocation = 'headers',
+  classification = 'WRITE',
 }: {
   auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
@@ -172,10 +174,13 @@ export function createCustomApiCallAction<
   };
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
+  // The method is caller-supplied at runtime, so a single tag has to assume mutation.
+  classification?: ActionClassification;
 }) {
   return createAction({
     audience: 'human',
     name: name ? name : 'custom_api_call',
+    classification,
     displayName: displayName ? displayName : 'Custom API Call',
     description: description
       ? description
@@ -437,7 +442,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         );
       } catch (error) {
         if (failsafe) {
-          return (error as HttpError).errorMessage();
+          return toFailsafeOutput({ error, requestBody: request.body });
         }
         throw error;
       }

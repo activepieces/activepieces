@@ -65,6 +65,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newEngagementTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-engagement',
+	classification: 'READ',
 	displayName: 'New Engagement',
 	description: 'Triggers when a new engagement is created.',
 	aiMetadata: {
@@ -104,18 +105,10 @@ export const newEngagementTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

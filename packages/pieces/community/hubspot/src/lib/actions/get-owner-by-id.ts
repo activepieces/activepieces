@@ -5,6 +5,7 @@ import { Client } from '@hubspot/api-client';
 export const getOwnerByIdAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-owner-by-id',
+	classification: 'READ',
 	displayName: 'Get Owner by ID',
 	description: 'Gets an existing owner by ID.',
 	audience: 'both',

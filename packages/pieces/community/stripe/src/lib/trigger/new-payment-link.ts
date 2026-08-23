@@ -11,9 +11,11 @@ type StripeWebhookPayload = {
   };
 };
 
+import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeNewPaymentLink = createTrigger({
   auth: stripeAuth,
   name: 'new_payment_link',
+  classification: 'READ',
   displayName: 'New Payment Link',
   description: 'Fires when a new Payment Link is created.',
   aiMetadata: {
@@ -21,6 +23,7 @@ export const stripeNewPaymentLink = createTrigger({
       'Fires when a new payment link is created in Stripe (the payment_link.created event), emitting the new payment link including its shareable URL. Use to react to payment-link creation, such as distributing the URL or logging it.',
   },
   props: {},
+  outputSchema: paymentLinkOutputSchema,
   sampleData: {
     id: 'plink_1MoC3ULkdIwHu7ixZjtGpVl2',
     object: 'payment_link',

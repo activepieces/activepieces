@@ -17,9 +17,11 @@ type StripeWebhookPayload = {
   };
 };
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCanceledSubscription = createTrigger({
   auth: stripeAuth,
   name: 'canceled_subscription',
+  classification: 'READ',
   displayName: 'Canceled Subscription',
   description: 'Fires when a subscription is canceled.',
   aiMetadata: {
@@ -35,6 +37,7 @@ export const stripeCanceledSubscription = createTrigger({
     }),
   },
 
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MlPf9LkdIwHu7ixB6VIYRyX',
     object: 'subscription',

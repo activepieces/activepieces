@@ -10,6 +10,7 @@ import { WebhookInformation, common } from '../common';
 export const newComment = createTrigger({
   auth: boxAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment',
   description: 'Triggers when a comment is created',
   aiMetadata: {

@@ -41,7 +41,7 @@ describe('Piece Bundle Endpoint', () => {
         expect(response.statusCode).toBe(StatusCodes.UNAUTHORIZED)
     })
 
-    it('redirects an official piece to the npm tarball when S3 is not configured', async () => {
+    it('redirects a registry piece to the npm tarball, never to our own S3', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
         await db.save('piece_metadata', createMockPieceMetadata({
             name: '@activepieces/piece-bundle-official',

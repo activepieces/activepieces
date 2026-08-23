@@ -6,6 +6,7 @@ import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
 export const gristUpdateRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-update-record',
+  classification: 'WRITE',
   displayName: 'Update Record',
   description: 'Updates an existing record in specific table.',
   audience: 'both',

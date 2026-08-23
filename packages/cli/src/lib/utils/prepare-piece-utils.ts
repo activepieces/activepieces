@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync, readdirSync, mkdirSync, statSync, rmSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { join, relative } from 'node:path'
 import { buildWorkspaceVersionMap, findRepoRoot, resolveWorkspaceDependencies, stripSemverRanges } from './workspace-utils'
 import { bundlePieceUtils } from './bundle-piece-utils'
@@ -38,21 +39,22 @@ async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     copyPackageJson(paths)
     copyI18nAssets(paths)
 
-    const { bundleBytes, rawBytes, external } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
+    const { bundleBytes, rawBytes, external, extraBundleFiles } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
 
-    rewriteManifestForBundle({ distPath, external, repoRoot })
+    rewriteManifestForBundle({ distPath, external, repoRoot, extraBundleFiles })
     pruneDistToPublishedFiles({ distPath })
 
     const ratio = rawBytes > 0 ? (rawBytes / bundleBytes).toFixed(1) : '—'
     const extNote = external.length ? ` external=[${external.join(', ')}]` : ''
-    console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}`)
+    const forkNote = extraBundleFiles.length ? ` forked=[${extraBundleFiles.join(', ')}]` : ''
+    console.info(`[preparePiece] bundled ${piecePath} → ${(bundleBytes / 1024).toFixed(0)} KB (${ratio}x smaller than ${(rawBytes / 1024).toFixed(0)} KB raw inputs)${extNote}${forkNote}`)
 }
 
 // The published artifact inlines @activepieces/* workspace code AND third-party deps into the
 // self-contained bundle by default. Only deps that cannot be safely inlined (native addons,
 // dynamic require) stay external and are kept here so the runtime installer resolves them.
 // A piece can force a dep external via bundleDeps in its package.json (escape hatch).
-function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: string, external: string[], repoRoot: string }): void {
+function rewriteManifestForBundle({ distPath, external, repoRoot, extraBundleFiles = [] }: { distPath: string, external: string[], repoRoot: string, extraBundleFiles?: string[] }): void {
     const distPackageJsonPath = join(distPath, 'package.json')
     const json = JSON.parse(readFileSync(distPackageJsonPath, 'utf-8'))
 
@@ -61,9 +63,14 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
 
     const externalDeps: Record<string, string> = {}
     for (const dep of external) {
-        if (resolvedDeps[dep]) {
-            externalDeps[dep] = resolvedDeps[dep]
+        if (bundlePieceUtils.OPTIONAL_EXTERNALS.has(dep)) {
+            continue
         }
+        const version = resolvedDeps[dep] ?? resolveInstalledVersion({ dep, repoRoot })
+        if (version === undefined) {
+            throw new Error(`[preparePiece] external dependency "${dep}" has no resolvable version (not a direct dependency and not found under node_modules); publishing it would crash at runtime with a missing module`)
+        }
+        externalDeps[dep] = version
     }
 
     json.main = `./${bundlePieceUtils.BUNDLE_FILENAME}`
@@ -73,9 +80,53 @@ function rewriteManifestForBundle({ distPath, external, repoRoot }: { distPath: 
     delete json.scripts
     delete json.types
     delete json.bundleDeps
-    json.files = [bundlePieceUtils.BUNDLE_FILENAME, 'package.json', 'src/i18n']
+    delete json.bundleForkedEntries
+    json.files = [bundlePieceUtils.BUNDLE_FILENAME, ...extraBundleFiles, 'package.json', 'src/i18n']
 
     writeFileSync(distPackageJsonPath, JSON.stringify(json, null, 2) + '\n')
+}
+
+function resolveInstalledVersion({ dep, repoRoot }: { dep: string, repoRoot: string }): string | undefined {
+    try {
+        const requireFromRoot = createRequire(join(repoRoot, 'package.json'))
+        return JSON.parse(readFileSync(requireFromRoot.resolve(`${dep}/package.json`), 'utf-8')).version
+    }
+    catch {
+        return findInstalledVersion({ nodeModulesDir: join(repoRoot, 'node_modules'), dep })
+    }
+}
+
+function findInstalledVersion({ nodeModulesDir, dep }: { nodeModulesDir: string, dep: string }): string | undefined {
+    const relPackageJson = join(...dep.split('/'), 'package.json')
+    const stack = [nodeModulesDir]
+    while (stack.length > 0) {
+        const dir = stack.pop()!
+        const candidate = join(dir, relPackageJson)
+        if (existsSync(candidate)) {
+            return JSON.parse(readFileSync(candidate, 'utf-8')).version
+        }
+        stack.push(...nestedNodeModules(dir))
+    }
+    return undefined
+}
+
+function nestedNodeModules(nodeModulesDir: string): string[] {
+    return safeReaddir(nodeModulesDir).flatMap((name) => {
+        const packageDir = join(nodeModulesDir, name)
+        const packageDirs = name.startsWith('@')
+            ? safeReaddir(packageDir).map((child) => join(packageDir, child))
+            : [packageDir]
+        return packageDirs.map((d) => join(d, 'node_modules')).filter((nested) => existsSync(nested))
+    })
+}
+
+function safeReaddir(dir: string): string[] {
+    try {
+        return readdirSync(dir)
+    }
+    catch {
+        return []
+    }
 }
 
 // After bundling, dist/ still holds the full tsc output (compiled lib/*, .d.ts, .map). Prune it
@@ -128,7 +179,7 @@ function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
     removeUnpublished(distPath)
 }
 
-export { preparePieceDistForPublish }
+export { preparePieceDistForPublish, resolveInstalledVersion, findInstalledVersion, rewriteManifestForBundle }
 
 type PieceDistPaths = {
     piecePath: string

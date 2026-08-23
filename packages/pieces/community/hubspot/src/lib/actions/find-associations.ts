@@ -7,6 +7,7 @@ import { Client } from '@hubspot/api-client';
 export const findAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-associations',
+	classification: 'SEARCH',
 	displayName: 'Find Associations',
 	description: 'Finds associations between objects',
 	audience: 'both',

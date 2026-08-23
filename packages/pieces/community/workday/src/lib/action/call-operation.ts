@@ -12,6 +12,12 @@ export const callOperation = createAction({
 	displayName: 'Call Operation',
 	description:
 		'Calls a Workday REST sub-resource or SOAP operation (e.g. approve, close, submit).',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Invokes a Workday operation that has no dedicated action, in one of two modes: a REST sub-resource call (POST, PUT, or PATCH against a business-object path such as /jobRequisitions/{id}/close) or a raw SOAP operation against a named web service such as Staffing. Use as the escape hatch for verbs like approve, close, or submit, and prefer the specific action (e.g. Approve Task, Update Business Object) whenever one exists. Requires the operation name, plus the SOAP service name when running in SOAP mode. Not idempotent: each call submits the operation as a fresh event.',
+		idempotent: false,
+	},
 	props: {
 		...sharedModuleProps,
 		operationType: Property.StaticDropdown({

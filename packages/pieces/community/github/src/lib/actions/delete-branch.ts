@@ -6,9 +6,10 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubDeleteBranchAction = createAction({
   auth: githubAuth,
   name: 'delete_branch',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Branch',
   description: 'Deletes a branch from a repository.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Permanently deletes a branch (git ref under heads/) from a repository. Use to clean up a merged or stale branch. Effectively idempotent for the end state (the branch ends up gone), but a repeat call on an already-deleted branch returns a not-found error.',

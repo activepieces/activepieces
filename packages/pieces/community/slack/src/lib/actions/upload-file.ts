@@ -5,14 +5,17 @@ import {
   slackChannel,
 } from '../common/props';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { uploadFileActionOutputSchema } from '../output-schemas';
 
 export const uploadFile = createAction({
   auth: slackAuth,
   name: 'uploadFile',
+  classification: 'WRITE',
   displayName: 'Upload file',
   description: 'Upload file without sharing it to a channel or user',
   audience: 'both',
   aiMetadata: { description: 'Upload a file to Slack, optionally sharing it into a channel and setting a title and filename. Each call creates a new file, so it is not idempotent. To attach a file inline with a message instead, use the attachment option on Send Message To A Channel.', idempotent: false },
+  outputSchema: uploadFileActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'Attachment',

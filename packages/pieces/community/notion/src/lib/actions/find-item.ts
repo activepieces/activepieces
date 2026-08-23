@@ -7,9 +7,10 @@ import { notionFindDatabaseItemActionOutputSchema } from '../output-schemas';
 export const findDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion-find-database-item',
+  classification: 'SEARCH',
   displayName: 'Find Database Item',
   description: 'Searches for an item in database by field.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Queries a Notion database for items whose property values match the given filter fields (combined with AND). Use when an agent needs to look up existing records by field value before reading or updating them; requires the database_id and at least one filter field matching the database schema. Idempotent read-only lookup.',

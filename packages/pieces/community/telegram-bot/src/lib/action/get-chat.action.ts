@@ -7,9 +7,10 @@ import { getChatActionOutputSchema } from '../output-schemas';
 export const telegramGetChatAction = createAction({
   auth: telegramBotAuth,
   name: 'get_chat',
+  classification: 'READ',
   displayName: 'Get Chat',
   description: 'Get up-to-date information about a chat (name, description, photo, member count, etc.)',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Looks up current details about a chat (title, description, type, photo, member count, etc.) by chat_id. Use to resolve or inspect a chat before acting on it; the bot must be a member of or have access to the chat. Idempotent: read-only lookup with no side effects.', idempotent: true },
   props: {
     instructions: telegramCommons.chatIdInstructions(),

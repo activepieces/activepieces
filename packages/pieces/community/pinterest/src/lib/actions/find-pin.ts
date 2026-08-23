@@ -7,10 +7,13 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
+import { findPinActionOutputSchema } from '../output-schemas';
 
 export const findPin = createAction({
   auth: pinterestAuth,
   name: 'findPin',
+  classification: 'SEARCH',
+  outputSchema: findPinActionOutputSchema,
   displayName: 'Find Pin by Title/Keyword',
   description: 'Search for Pins using title, description, or keywords.',
   audience: 'both',

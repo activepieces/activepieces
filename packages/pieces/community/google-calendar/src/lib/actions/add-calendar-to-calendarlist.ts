@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
+import { calendarListEntryOutputSchema } from '../output-schemas';
 
 export const addCalendarToCalendarlist = createAction({
   auth: googleCalendarAuth,
   name: 'addCalendarToCalendarlist',
+  classification: 'WRITE',
   displayName: 'Add Calendar to calendarList',
   description: "Adds other people's calendars to your calendarList",
   props: {
@@ -14,6 +16,7 @@ export const addCalendarToCalendarlist = createAction({
       required: true
     })
   },
+  outputSchema: calendarListEntryOutputSchema,
   async run(context) {
     
     const id = context.propsValue.id;

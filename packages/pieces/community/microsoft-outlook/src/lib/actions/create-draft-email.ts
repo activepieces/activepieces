@@ -6,6 +6,7 @@ import { outlookCommon } from '../common/client';
 export const createDraftEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'createDraftEmail',
+	classification: 'WRITE',
 	displayName: 'Create Draft Email',
 	description: 'Creates a draft email message.',
 	audience: 'both',

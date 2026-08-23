@@ -84,6 +84,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newBlogArticleTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-blog-article',
+	classification: 'READ',
 	displayName: 'New COS Blog Article',
 	description: 'Triggers when a new article is added to your COS blog.',
 	aiMetadata: {
@@ -115,18 +116,10 @@ export const newBlogArticleTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

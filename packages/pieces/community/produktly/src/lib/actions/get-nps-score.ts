@@ -9,6 +9,8 @@ export const getNpsScore = createAction({
   name: 'get_nps_score',
   displayName: 'Get NPS Score',
   description: 'Get the current Net Promoter Score (NPS) for a widget, broken down into promoters, passives and detractors.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the aggregated Net Promoter Score for one Produktly NPS widget, with promoter, passive, and detractor counts and percentages, optionally restricted to a start/end date window. Pick this when you want the computed score; use List NPS Responses when you need the individual ratings and free-text comments behind it. Requires an NPS widget ID (discover one with List NPS Widgets). Read-only and idempotent.', idempotent: true },
   props: {
     widget: produktlyProps.npsWidget,
     start_date: Property.ShortText({

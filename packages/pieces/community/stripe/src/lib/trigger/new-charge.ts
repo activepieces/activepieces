@@ -11,9 +11,11 @@ type StripeWebhookPayload = {
   };
 };
 
+import { chargeOutputSchema } from '../output-schemas';
 export const stripeNewCharge = createTrigger({
   auth: stripeAuth,
   name: 'new_charge',
+  classification: 'READ',
   displayName: 'New Charge',
   description: 'Fires when a charge is successfully completed.',
   aiMetadata: {
@@ -21,6 +23,7 @@ export const stripeNewCharge = createTrigger({
       'Fires when a charge is successfully completed in Stripe (the charge.succeeded event), emitting the charge record. Use to react to a successful card charge; note this is the charge-level event, distinct from the New Payment trigger which fires on a succeeded payment intent.',
   },
   props: {},
+  outputSchema: chargeOutputSchema,
   sampleData: {
     id: 'ch_3MmlLrLkdIwHu7ix0snN0B15',
     object: 'charge',

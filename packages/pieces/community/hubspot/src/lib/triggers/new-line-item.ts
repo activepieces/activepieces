@@ -78,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-line-item',
+	classification: 'READ',
 	displayName: 'New Line Item',
 	description: 'Triggers when new line item is available.',
 	aiMetadata: {
@@ -101,18 +102,10 @@ export const newLineItemTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

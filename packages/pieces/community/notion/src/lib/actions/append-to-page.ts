@@ -10,9 +10,10 @@ import { appendToPageActionOutputSchema } from '../output-schemas';
 export const appendToPage = createAction({
   auth: notionAuth,
   name: 'append_to_page',
+  classification: 'WRITE',
   displayName: 'Append to Page',
   description: 'Appends content to the end of a page.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Appends new block content (parsed from markdown) to the end of an existing Notion page or block. Use when an agent must add to a page without altering existing content; requires the target page/block id. Not idempotent: each call appends again, duplicating the content on repeat.',

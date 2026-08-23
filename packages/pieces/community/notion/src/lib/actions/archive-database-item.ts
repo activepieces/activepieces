@@ -7,10 +7,11 @@ import { archiveDatabaseItemActionOutputSchema } from '../output-schemas';
 export const archiveDatabaseItem = createAction({
   auth: notionAuth,
   name: 'archive_database_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Database Item',
   description:
     'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Soft-deletes a Notion database item by setting its archived flag, keeping it recoverable via Restore. Use when an agent must remove a record from active views without permanent deletion; requires the database_id and item id. Idempotent: archiving an already-archived item leaves it archived.',

@@ -6,10 +6,11 @@ import { telegramBotAuth } from '../..';
 export const telegramAnswerCallbackQueryAction = createAction({
   auth: telegramBotAuth,
   name: 'answer_callback_query',
+  classification: 'WRITE',
   displayName: 'Answer Callback Query',
   description:
     'Respond to a callback query sent by an inline keyboard button. Shows a notification or alert to the user.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Acknowledges a callback query raised when a user taps an inline keyboard button, identified by callback_query_id (from the trigger payload), optionally showing a toast or alert. Use to stop the button spinner and give feedback; a given query can only be answered once. Not idempotent: each call is a one-time response to that query.', idempotent: false },
   props: {
     callback_query_id: Property.ShortText({

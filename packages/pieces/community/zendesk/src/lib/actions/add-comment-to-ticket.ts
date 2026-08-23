@@ -7,15 +7,10 @@ import {
 import { zendeskAuth } from '../..';
 import { ticketIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const addCommentToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'add-comment-to-ticket',
+  classification: 'WRITE',
   displayName: 'Add Comment to Ticket',
   description: 'Append a public/private comment to a ticket.',
   audience: 'both',

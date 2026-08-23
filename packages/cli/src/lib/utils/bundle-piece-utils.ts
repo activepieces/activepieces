@@ -1,6 +1,6 @@
 import { statSync, existsSync, readFileSync } from 'node:fs'
 import { builtinModules } from 'node:module'
-import { join, resolve, isAbsolute } from 'node:path'
+import { join, resolve, isAbsolute, basename, sep } from 'node:path'
 import * as esbuild from 'esbuild'
 
 async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams): Promise<BundleResult> {
@@ -21,7 +21,10 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
     // to trace it. If pass 1 surfaced any such unsafe package, externalize it and rebuild ONCE —
     // auto-externalize the offending dep instead of failing the whole piece. Only the handful of
     // pieces with dynamic-require deps (couchbase, metabase, text-helper, scrapeless) hit pass 2.
-    const unsafe = unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings })
+    const unsafe = new Set([
+        ...unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings }),
+        ...importMetaPackages(pass.result.metafile),
+    ])
     if (unsafe.size > 0) {
         pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set([...excludeList, ...unsafe]) })
     }
@@ -43,17 +46,90 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
         }
     }
 
+    assertDirnameUsageDeclared({ piecePath, metafile: pass.result.metafile, manifest })
+    const forked = await bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, inlineAll, inlineList, excludeList })
+    for (const dep of forked.externalized) {
+        pass.externalized.add(dep)
+    }
+
     const bundleBytes = statSync(outfile).size
     const rawBytes = totalInputBytes(pass.result.metafile)
-    const external = directDepsOf(manifest).filter((dep) => !pass.inlined.has(dep) && !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
+    const external = [...pass.externalized].filter((dep) => !dep.startsWith('@activepieces/') && !BUNDLE_HELPER_DEPS.has(dep))
 
     enforceSizeGate({ piecePath, bundleBytes })
 
-    return { bundleFile: outfile, bundleBytes, rawBytes, external, inlined: [...pass.inlined] }
+    return { bundleFile: outfile, bundleBytes, rawBytes, external, inlined: [...pass.inlined], extraBundleFiles: forked.files }
+}
+
+async function bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, inlineAll, inlineList, excludeList }: ForkedEntriesParams): Promise<ForkedEntriesResult> {
+    const files: string[] = []
+    const externalized = new Set<string>()
+    for (const entry of manifest.bundleForkedEntries ?? []) {
+        const entryFile = join(piecePath, entry)
+        if (!existsSync(entryFile)) {
+            throw new Error(`[bundlePiece] bundleForkedEntries: no file at ${entryFile}`)
+        }
+        const outRel = `src/${basename(entry).replace(/\.ts$/, '.js')}`
+        if (outRel === BUNDLE_FILENAME) {
+            throw new Error(`[bundlePiece] bundleForkedEntries: "${entry}" collides with the main bundle at ${BUNDLE_FILENAME}`)
+        }
+        if (files.some((file) => file.toLowerCase() === outRel.toLowerCase())) {
+            throw new Error(`[bundlePiece] bundleForkedEntries: "${entry}" collides with another declared entry at ${outRel}`)
+        }
+        const outfile = join(distPath, outRel)
+        let pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set(excludeList) })
+        const unsafe = new Set([
+            ...unsafePackages({ metafile: pass.result.metafile, warnings: pass.result.warnings }),
+            ...importMetaPackages(pass.result.metafile),
+        ])
+        if (unsafe.size > 0) {
+            pass = await runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external: new Set([...excludeList, ...unsafe]) })
+        }
+        const issues = gateBundle({ metafile: pass.result.metafile, warnings: pass.result.warnings })
+        if (issues.length > 0) {
+            throw new Error(`[bundlePiece] ${piecePath} forked entry "${entry}" failed the safety gate:\n  - ${issues.join('\n  - ')}`)
+        }
+        enforceSizeGate({ piecePath: `${piecePath} (${entry})`, bundleBytes: statSync(outfile).size })
+        files.push(outRel)
+        for (const dep of pass.externalized) {
+            externalized.add(dep)
+        }
+    }
+    return { files, externalized }
+}
+
+function assertDirnameUsageDeclared({ piecePath, metafile, manifest }: DirnameGateParams): void {
+    if ((manifest.bundleForkedEntries ?? []).length > 0) {
+        return
+    }
+    const pieceRoot = resolve(piecePath)
+    for (const input of Object.keys(metafile.inputs)) {
+        const abs = resolve(process.cwd(), input)
+        if (!abs.startsWith(pieceRoot + sep) || abs.includes(`${sep}node_modules${sep}`)) {
+            continue
+        }
+        if (/\b__dirname\b/.test(safeReadFile(abs))) {
+            throw new Error(
+                `[bundlePiece] ${input} uses __dirname but the piece declares no bundleForkedEntries. `
+                + 'The published piece is a single bundled src/index.js, so __dirname-relative file access breaks after publish. '
+                + 'Declare the runtime-loaded file in package.json "bundleForkedEntries" (it will be emitted beside the bundle), or remove the __dirname usage.',
+            )
+        }
+    }
+}
+
+function safeReadFile(file: string): string {
+    try {
+        return readFileSync(file, 'utf-8')
+    }
+    catch {
+        return ''
+    }
 }
 
 async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList, external }: RunEsbuildParams): Promise<EsbuildPass> {
     const inlined = new Set<string>()
+    const externalized = new Set<string>()
     const result = await esbuild.build({
         entryPoints: [entryFile],
         bundle: true,
@@ -70,10 +146,10 @@ async function runEsbuild({ entryFile, outfile, repoRoot, inlineAll, inlineList,
         metafile: true,
         logLevel: 'silent',
         alias: workspaceAliases(repoRoot),
-        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined })],
+        plugins: [externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized })],
         loader: { '.node': 'file' },
     })
-    return { result, inlined }
+    return { result, inlined, externalized }
 }
 
 function readPieceManifest(piecePath: string): PieceManifest {
@@ -82,10 +158,6 @@ function readPieceManifest(piecePath: string): PieceManifest {
         return {}
     }
     return JSON.parse(readFileSync(pkgPath, 'utf-8'))
-}
-
-function directDepsOf(manifest: PieceManifest): string[] {
-    return Object.keys(manifest.dependencies ?? {})
 }
 
 // Inline-by-default. Third-party deps are bundled in unless they cannot be safely inlined
@@ -109,7 +181,7 @@ function readInlineConfig(manifest: PieceManifest): InlineConfig {
 // Only @activepieces/* workspace code and relative/absolute imports are always bundled in.
 // Node builtins and packages in `external` (known-native + auto-externalized dynamic-require
 // deps) are kept external. Everything else is inlined when inlineAll / listed in inlineList.
-function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: ExternalizeParams): esbuild.Plugin {
+function externalizeThirdParty({ inlineAll, inlineList, external, inlined, externalized }: ExternalizeParams): esbuild.Plugin {
     return {
         name: 'externalize-third-party',
         setup(build) {
@@ -129,12 +201,14 @@ function externalizeThirdParty({ inlineAll, inlineList, external, inlined }: Ext
                 }
                 const top = topLevelPkg(id)
                 if (external.has(top)) {
+                    externalized.add(top)
                     return { path: id, external: true }
                 }
                 if (inlineAll || inlineList.has(top)) {
                     inlined.add(top)
                     return null
                 }
+                externalized.add(top)
                 return { path: id, external: true }
             })
         },
@@ -165,6 +239,32 @@ function unsafePackages({ metafile, warnings }: GateParams): Set<string> {
         }
     }
     return pkgs
+}
+
+// esbuild rewrites `import.meta` to `{}` in CJS output (silently), so an inlined package relying on
+// it (e.g. openpgp's `createRequire(import.meta.url)`) crashes at load. Externalize such packages so
+// they install and run in their own module context instead.
+function importMetaPackages(metafile: esbuild.Metafile): Set<string> {
+    const pkgs = new Set<string>()
+    for (const input of Object.keys(metafile.inputs)) {
+        const pkg = pkgOfInput(input)
+        if (pkg === null || pkgs.has(pkg)) {
+            continue
+        }
+        if (usesImportMeta(resolve(process.cwd(), input))) {
+            pkgs.add(pkg)
+        }
+    }
+    return pkgs
+}
+
+function usesImportMeta(file: string): boolean {
+    try {
+        return /\bimport\.meta\b/.test(readFileSync(file, 'utf-8'))
+    }
+    catch {
+        return false
+    }
 }
 
 // Build-time safety gate, evaluated on the FINAL pass. By now native/dynamic-require deps have
@@ -275,6 +375,11 @@ const HAZARD_WARNING_IDS = new Set<string>([
     'commonjs-variable-in-esm',
 ])
 
+const OPTIONAL_EXTERNALS = new Set<string>([
+    'pg-native',
+    'mongodb-client-encryption', 'kerberos', 'snappy', '@mongodb-js/zstd', 'aws4',
+])
+
 // Known-native packages: they ship a `.node` binary (or load one via a runtime-computed path)
 // and cannot be inlined. Always kept external, even under inline-by-default.
 const NATIVE_EXTERNALS = new Set<string>([
@@ -283,12 +388,14 @@ const NATIVE_EXTERNALS = new Set<string>([
     'pg-native', 'mongodb-client-encryption', 'kerberos',
     'snappy', 'aws4', 'bson-ext', '@mongodb-js/zstd',
     'playwright', 'playwright-core', 'puppeteer', 'puppeteer-core',
+    'sharp',
+    'tiktoken',
     // native-backed SDK (pulls better-sqlite3), and packages that load sibling files at runtime:
     // pg-format → require(__dirname + '/reserved.js'); clarifai-nodejs-grpc → loadSync('*.proto').
     '@actual-app/api', 'pg-format', 'clarifai-nodejs-grpc',
 ])
 
-export const bundlePieceUtils = { bundlePiece, BUNDLE_FILENAME, readInlineConfig, unsafePackages }
+export const bundlePieceUtils = { bundlePiece, BUNDLE_FILENAME, readInlineConfig, unsafePackages, OPTIONAL_EXTERNALS }
 
 export type BundlePieceParams = {
     piecePath: string
@@ -302,6 +409,7 @@ export type BundleResult = {
     rawBytes: number
     external: string[]
     inlined: string[]
+    extraBundleFiles: string[]
 }
 
 type InlineConfig = {
@@ -313,6 +421,7 @@ type InlineConfig = {
 type EsbuildPass = {
     result: esbuild.BuildResult & { metafile: esbuild.Metafile }
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type RunEsbuildParams = {
@@ -327,6 +436,28 @@ type RunEsbuildParams = {
 type PieceManifest = {
     dependencies?: Record<string, string>
     bundleDeps?: boolean | string[]
+    bundleForkedEntries?: string[]
+}
+
+type ForkedEntriesParams = {
+    piecePath: string
+    distPath: string
+    repoRoot: string
+    manifest: PieceManifest
+    inlineAll: boolean
+    inlineList: Set<string>
+    excludeList: Set<string>
+}
+
+type ForkedEntriesResult = {
+    files: string[]
+    externalized: Set<string>
+}
+
+type DirnameGateParams = {
+    piecePath: string
+    metafile: esbuild.Metafile
+    manifest: PieceManifest
 }
 
 type ExternalizeParams = {
@@ -334,6 +465,7 @@ type ExternalizeParams = {
     inlineList: Set<string>
     external: Set<string>
     inlined: Set<string>
+    externalized: Set<string>
 }
 
 type GateParams = {

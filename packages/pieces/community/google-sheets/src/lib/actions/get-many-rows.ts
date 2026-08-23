@@ -5,10 +5,11 @@ import { getManyRowsActionOutputSchema } from '../output-schemas';
 
 export const getManyRowsAction = createAction({
     name: 'get-many-rows',
+    classification: 'SEARCH',
     auth: googleSheetsAuth,
     displayName: 'Get All Rows',
     description: 'Get all the rows from a specific sheet.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description:
             'Reads every row from a worksheet in a single call, optionally keyed by header names. Use when an agent needs the full contents of a sheet rather than a search or a single row; be mindful of size on large sheets. Read-only and idempotent.',

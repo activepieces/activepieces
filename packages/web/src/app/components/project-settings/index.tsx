@@ -1,4 +1,4 @@
-import { isNil, Permission } from '@activepieces/core-utils';
+import { isNil, Permission, tryCatch } from '@activepieces/core-utils';
 import { ApFlagId, PlatformRole, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
@@ -11,12 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/features/projects';
 import { ApProjectDisplay } from '@/features/projects/components/ap-project-display';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { ProjectAvatar } from '../project-avatar';
@@ -70,17 +72,29 @@ export function ProjectSettingsDialog({
       icon: project.icon,
       externalId: initialValues?.externalId,
       maxConcurrentJobs: project.maxConcurrentJobs,
+      activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const handleSave = (values: FormValues) => {
-    projectCollectionUtils.update(project.id, {
+  const handleSave = async (values: FormValues) => {
+    const activeFlowsLimitChanged =
+      (values.activeFlowsLimit ?? null) !==
+      (project.plan?.activeFlowsLimit ?? null);
+    const transaction = projectCollectionUtils.update(project.id, {
       displayName: values.projectName,
       externalId: values.externalId,
       icon: values.icon,
       maxConcurrentJobs: values.maxConcurrentJobs,
+      plan: activeFlowsLimitChanged
+        ? { ...project.plan, activeFlowsLimit: values.activeFlowsLimit ?? null }
+        : undefined,
     });
+    const { error } = await tryCatch(() => transaction.isPersisted.promise);
+    if (!isNil(error)) {
+      toast.error(api.extractServerErrorMessage(error, INTERNAL_ERROR_MESSAGE));
+      return;
+    }
     toast.success(t('Your changes have been saved.'), {
       duration: 3000,
     });
@@ -94,6 +108,7 @@ export function ProjectSettingsDialog({
         ...initialValues,
         icon: project.icon,
         maxConcurrentJobs: project.maxConcurrentJobs,
+        activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
       });
       setActiveTab(initialTab);
     }

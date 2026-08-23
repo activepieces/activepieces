@@ -13,6 +13,7 @@ const encodeToRFC2047 = (text: string) => {
 export const sendNotification = createAction({
   auth: ntfyAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to ntfy',
   audience: 'both',

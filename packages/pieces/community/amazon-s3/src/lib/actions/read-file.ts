@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
@@ -5,6 +6,7 @@ import { resolveS3Client } from '../common';
 export const readFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'read-file',
+  classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from S3 to use it in other steps',
   audience: 'both',
@@ -29,13 +31,12 @@ export const readFile = createAction({
       Bucket: bucket,
       Key: key,
     });
-    const base64 = await file.Body?.transformToString('base64');
-    if (!base64) {
+    if (!(file.Body instanceof Readable)) {
       throw new Error(`Could not read file ${key} from S3`);
     }
     return await context.files.write({
       fileName: key,
-      data: Buffer.from(base64, 'base64'),
+      data: file.Body,
     });
   },
 });

@@ -9,6 +9,7 @@ import { dropboxAuth } from '../auth';
 export const dropboxDownloadFile = createAction({
   auth: dropboxAuth,
   name: 'downloadFile',
+  classification: 'READ',
   displayName: 'Download File',
   description: 'Download a File from Dropbox',
   audience: 'both',
@@ -38,13 +39,13 @@ export const dropboxDownloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
+      responseType:'stream'
     });
 
     return {
       file: await context.files.write({
         fileName: fileName,
-        data: Buffer.from(result.body)
+        data: result.body
       })
     }
   },

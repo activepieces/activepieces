@@ -26,6 +26,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newFormSubmission = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_form_submission',
+  classification: 'READ',
   displayName: 'New Form Submission',
   description: 'Trigger when a form is submitted.',
   aiMetadata: {

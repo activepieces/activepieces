@@ -13,15 +13,10 @@ import {
   problemTicketIdDropdown,
 } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const updateTicketAction = createAction({
   auth: zendeskAuth,
   name: 'update-ticket',
+  classification: 'WRITE',
   displayName: 'Update Ticket',
   description: 'Modify ticket fields or status via API call.',
   audience: 'both',

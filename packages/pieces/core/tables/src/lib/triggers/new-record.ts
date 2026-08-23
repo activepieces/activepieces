@@ -1,16 +1,22 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/pieces-framework';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',
+    classification: 'READ',
     displayName: 'New Record Created',
     description: 'Triggers when a new record is added to the selected table.',
+    aiMetadata: {
+        description: 'Fires when a new row is inserted into the selected Activepieces Table, whether the insert came from a flow, the table UI, or the API, and represents that newly created record. Use it to react to freshly captured data; edits and removals of existing rows raise the separate Record Updated and Record Deleted triggers instead. Backed by a webhook registered on one specific table, so a table must be selected.',
+    },
     auth: PieceAuth.None(),
     props: {
         table_id: tablesCommon.table_id,
     },
     sampleData: {},
+    outputSchema: newRecordTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context){
         const tableExternalId = context.propsValue.table_id;

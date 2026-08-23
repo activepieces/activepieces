@@ -1,4 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
+import { Upload } from '@aws-sdk/lib-storage';
 import { amazonS3CombinedAuth, S3AuthProps } from '../auth';
 import { resolveS3Client } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
@@ -7,6 +8,7 @@ import mime from 'mime-types';
 export const amazons3UploadFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'upload-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload an File to S3',
   audience: 'both',
@@ -19,6 +21,7 @@ export const amazons3UploadFile = createAction({
       displayName: 'File',
       description: 'The file to upload to S3.',
       required: true,
+      streaming: true,
     }),
     fileName: Property.ShortText({
       displayName: 'File Name (Optional)',
@@ -96,13 +99,19 @@ export const amazons3UploadFile = createAction({
 
     const finalFileName = fileName ? (fileName.endsWith(extension) ? fileName : fileName + extension) : generatedName;
 
-    const uploadResponse = await s3.putObject({
-      Bucket: bucket,
-      Key: finalFileName,
-      ACL: acl as ObjectCannedACL | undefined,
-      ContentType: contentType,
-      Body: file.data,
-    });
+    // Streams the body in 5MB parts instead of buffering the whole file in the
+    // sandbox. Each part is buffered before it is sent, so the SDK can replay it
+    // on a retry; files under one part size go out as a plain PutObject.
+    const uploadResponse = await new Upload({
+      client: s3,
+      params: {
+        Bucket: bucket,
+        Key: finalFileName,
+        ACL: acl as ObjectCannedACL | undefined,
+        ContentType: contentType,
+        Body: file.body,
+      },
+    }).done();
 
     return {
       fileName: finalFileName,
