@@ -43,6 +43,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SidebarUsageLimits } from '@/features/billing';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
@@ -55,8 +56,6 @@ import { cn } from '@/lib/utils';
 import AccountSettingsDialog from '../account-settings';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
-
-import { RailCreditsCard } from './rail-credits-card';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
@@ -121,8 +120,12 @@ export function PrimaryRail() {
           <RailPinnedProjects collapsed={collapsed} />
         </div>
 
+        {!collapsed && (
+          <div className="mx-2 mb-1">
+            <SidebarUsageLimits />
+          </div>
+        )}
         <RailPlatformAdminButton collapsed={collapsed} />
-        {!collapsed && <RailCreditsCard />}
         <RailAccountRow collapsed={collapsed} />
       </div>
     </TooltipProvider>
