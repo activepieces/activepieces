@@ -6,6 +6,7 @@ import { deftformApiCall, DeftformCommon } from '../common';
 export const addFormResponse = createAction({
     auth: deftformAuth,
     name: 'add_form_response',
+    classification: 'WRITE',
     displayName: 'Add Form Response',
     description: `Submits a new response programmatically to a form. 
 **Note:** This does **not** trigger email notifications to the form admin, unlike regular public submissions.`,

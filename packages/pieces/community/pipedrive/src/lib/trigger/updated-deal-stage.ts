@@ -93,6 +93,7 @@ interface GetDealResponseV2 {
 export const updatedDealStageTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'updated-deal-stage',
+	classification: 'READ',
 	displayName: 'Updated Deal Stage',
 	description: "Triggers when a deal's stage is updated.",
 	aiMetadata: {

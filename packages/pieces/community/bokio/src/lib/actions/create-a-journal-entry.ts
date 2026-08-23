@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createAJournalEntry = createAction({
   auth: bokioAuth,
   name: 'createAJournalEntry',
+  classification: 'WRITE',
   displayName: 'Create a journal entry',
   description: 'Creates a new journal entry in Bokio',
   audience: 'both',

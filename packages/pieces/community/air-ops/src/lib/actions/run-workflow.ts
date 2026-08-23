@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const runWorkflow = createAction({
   auth: airOpsAuth,
   name: 'run_workflow',
+  classification: 'WRITE',
   displayName: 'Run Workflow',
   description: 'Execute an AirOps workflow synchronously.',
   audience: 'both',

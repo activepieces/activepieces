@@ -21,6 +21,7 @@ import { disputeOutputSchema } from '../output-schemas';
 export const stripeNewDispute = createTrigger({
   auth: stripeAuth,
   name: 'new_dispute',
+  classification: 'READ',
   displayName: 'New Dispute',
   description: 'Fires when a customer disputes a charge.',
   aiMetadata: {

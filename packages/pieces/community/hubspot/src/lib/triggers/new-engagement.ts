@@ -65,6 +65,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newEngagementTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-engagement',
+	classification: 'READ',
 	displayName: 'New Engagement',
 	description: 'Triggers when a new engagement is created.',
 	aiMetadata: {

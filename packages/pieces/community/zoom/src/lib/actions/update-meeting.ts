@@ -11,6 +11,7 @@ import { zoomAuth } from '../..';
 export const zoomUpdateMeeting = createAction({
   auth: zoomAuth,
   name: 'zoom_update_meeting',
+  classification: 'WRITE',
   displayName: 'Update Zoom Meeting',
   description: 'Update the details of an existing meeting.',
   audience: 'both',

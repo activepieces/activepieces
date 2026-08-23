@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newCampaignBounceTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_campaign_bounce',
+	classification: 'READ',
 	displayName: 'New Campaign Bounce',
 	description: 'Triggers when a contact email address bounces from a sent campaign.',
 	aiMetadata: {

@@ -6,6 +6,7 @@ import { heygenApiCall } from '../common/client';
 export const retrieveTranslatedVideoStatus = createAction({
   auth: heygenAuth,
   name: 'retrieve-translated-video-status',
+  classification: 'READ',
   displayName: 'Retrieve Translated Video Status',
   description: 'Retrieves the status of a translated video.',
   audience: 'both',

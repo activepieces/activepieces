@@ -14,6 +14,7 @@ import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_specific_column_updated',
+  classification: 'READ',
   displayName: 'Specific Column Value Updated in Board',
   description: 'Triggers when a specific column value is updated in board.',
   aiMetadata: {

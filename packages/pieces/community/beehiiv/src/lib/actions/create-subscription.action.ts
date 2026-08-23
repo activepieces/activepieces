@@ -7,6 +7,7 @@ import { beehiivApiCall } from '../common/client';
 export const createSubscriptionAction = createAction({
 	auth: beehiivAuth,
 	name: 'create_subscription',
+	classification: 'WRITE',
 	displayName: 'Create Subscription',
 	description: 'Creates a new subscription.',
 	audience: 'both',

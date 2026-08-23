@@ -9,6 +9,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const alertForQuery = createTrigger({
   auth: asknewsAuth,
   name: 'alertForQuery',
+  classification: 'READ',
   displayName: 'Alert for Query',
   description: 'Trigger when a new alert is created for a specific news query',
   aiMetadata: {

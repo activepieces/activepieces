@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const updateJobSchedule = createAction({
   auth: housecallProAuth,
   name: "update_job_schedule",
+  classification: 'WRITE',
   displayName: "Update Job Schedule",
   description: "Updates a job's schedule. Jobs with multi days feature containing more than 1 appointment can't be updated through this action.",
   audience: 'both',

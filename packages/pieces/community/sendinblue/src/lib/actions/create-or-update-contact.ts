@@ -5,6 +5,7 @@ import { sendinblueAuth } from '../..';
 export const createOrUpdateContact = createAction({
   auth: sendinblueAuth,
   name: 'create_or_update_contact',
+  classification: 'WRITE',
   displayName: 'Create or Update Contact',
   description: 'Create or update an existing contact',
   audience: 'both',

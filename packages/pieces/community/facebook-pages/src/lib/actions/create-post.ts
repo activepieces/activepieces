@@ -5,6 +5,7 @@ import { facebookPagesAuth } from '../..';
 export const createPost = createAction({
   auth: facebookPagesAuth,
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Page Post',
   description: 'Create a post on a Facebook Page you manage',
   audience: 'both',
