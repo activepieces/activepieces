@@ -152,13 +152,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
-        const row = await findRunKeyRow({ platformId, provider, configId, scope: resolvedFor, log })
-        if (isNil(row)) {
-            return true
-        }
-        return target.type === 'platform'
+        const candidates = await findRunKeyCandidates({ platformId, provider, configId, scope: resolvedFor, log })
+        return candidates.every((row) => target.type === 'platform'
             ? row.projectScope === 'all'
-            : rowAllowsScope({ row, scope: target })
+            : rowAllowsScope({ row, scope: target }))
     },
 
     async exists({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<boolean> {
@@ -292,15 +289,16 @@ async function listVisibleRows({ platformId, log }: { platformId: PlatformId, lo
     return rows.filter((row) => !(hideActivepieces && row.provider === AIProviderName.ACTIVEPIECES))
 }
 
-async function findRunKeyRow({ platformId, provider, configId, scope, log }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
+async function findRunKeyCandidates({ platformId, provider, configId, scope, log }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema[]> {
     if (!isNil(configId)) {
-        return aiProviderRepo().findOneBy({ id: configId, platformId })
+        const pinnedRow = await aiProviderRepo().findOneBy({ id: configId, platformId })
+        return isNil(pinnedRow) ? [] : [pinnedRow]
     }
     const chatRow = await findAvailableChatProviderRow({ platformId, scope, log })
-    if (isNil(provider) || chatRow?.provider === provider) {
-        return chatRow
-    }
-    return findEligibleRow({ platformId, provider, scope })
+    const namedRow = isNil(provider) ? null : await findEligibleRow({ platformId, provider, scope })
+    return [chatRow, namedRow].reduce<AIProviderSchema[]>((acc, row) => (
+        isNil(row) || acc.some((seen) => seen.id === row.id) ? acc : [...acc, row]
+    ), [])
 }
 
 async function findEligibleRow({ platformId, provider, scope }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope }): Promise<AIProviderSchema | null> {
