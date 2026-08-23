@@ -412,6 +412,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
                 fromProjectId: conversation.projectId ?? null,
                 toProjectId: input.projectId,
                 ...spreadIfDefined('provider', input.provider),
+                ...spreadIfDefined('providerConfigId', input.providerConfigId),
                 log,
             })
         }

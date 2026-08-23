@@ -196,6 +196,7 @@ export type UpdateProjectContextRequest = {
     runId?: string
     projectId: string | null
     provider?: AIProviderName
+    providerConfigId?: string
 }
 
 export type ExecuteAgentToolRequest = {
