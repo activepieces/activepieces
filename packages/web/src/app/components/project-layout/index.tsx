@@ -20,7 +20,6 @@ import {
   useGlobalSearch,
 } from '../global-search/global-search-context';
 import { PrimaryRail } from '../primary-rail';
-import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -90,7 +89,6 @@ export function ProjectDashboardLayout({
     },
   ];
 
-  const hideSidebar = location.pathname.startsWith('/chat');
   const hideHeader =
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
@@ -100,7 +98,6 @@ export function ProjectDashboardLayout({
       <GlobalSearchProvider>
         <ProjectDashboardLayoutInner
           hideHeader={hideHeader}
-          hideSidebar={hideSidebar}
           isEmbedded={isEmbedded}
           currentProjectId={currentProjectId}
         >
@@ -114,13 +111,11 @@ export function ProjectDashboardLayout({
 
 function ProjectDashboardLayoutInner({
   hideHeader,
-  hideSidebar,
   isEmbedded,
   currentProjectId,
   children,
 }: {
   hideHeader: boolean;
-  hideSidebar: boolean;
   isEmbedded: boolean;
   currentProjectId: string;
   children: React.ReactNode;
@@ -135,7 +130,6 @@ function ProjectDashboardLayoutInner({
         hoverMode={!searchOpen}
         className="flex-1 min-w-0 w-auto will-change-transform"
       >
-        {!isEmbedded && !hideSidebar && <ProjectDashboardSidebar />}
         <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div
             className={cn(

@@ -8,12 +8,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Bot,
+  ChartLine,
+  Compass,
   Lock,
   LogOut,
   PanelLeftClose,
   PinOff,
   Search,
   Settings,
+  Shield,
   SlidersHorizontal,
   SquarePen,
   UserCogIcon,
@@ -43,6 +46,7 @@ import {
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -100,9 +104,24 @@ export function PrimaryRail() {
             label={t('Agents')}
             isActive={({ pathname }) => pathname.startsWith('/agents')}
           />
+          <RailNavButton
+            collapsed={collapsed}
+            to="/templates"
+            icon={Compass}
+            label={t('Explore')}
+            isActive={({ pathname }) => pathname.startsWith('/templates')}
+          />
+          <RailNavButton
+            collapsed={collapsed}
+            to="/impact"
+            icon={ChartLine}
+            label={t('Impact')}
+            isActive={({ pathname }) => pathname.startsWith('/impact')}
+          />
           <RailPinnedProjects collapsed={collapsed} />
         </div>
 
+        <RailPlatformAdminButton collapsed={collapsed} />
         {!collapsed && <RailCreditsCard />}
         <RailAccountRow collapsed={collapsed} />
       </div>
@@ -212,6 +231,27 @@ function RailHeader({
           <TooltipContent side="right">{t('Close sidebar')}</TooltipContent>
         </Tooltip>
       </div>
+    </div>
+  );
+}
+
+function RailPlatformAdminButton({ collapsed }: { collapsed: boolean }) {
+  const showPlatformAdmin = useIsPlatformAdmin();
+  const { embedState } = useEmbedding();
+
+  if (embedState.isEmbedded || !showPlatformAdmin) {
+    return null;
+  }
+
+  return (
+    <div className={cn('px-2 pb-1', collapsed && 'flex justify-center')}>
+      <RailNavButton
+        collapsed={collapsed}
+        to="/platform/projects"
+        icon={Shield}
+        label={t('Platform Admin')}
+        isActive={({ pathname }) => pathname.startsWith('/platform')}
+      />
     </div>
   );
 }
