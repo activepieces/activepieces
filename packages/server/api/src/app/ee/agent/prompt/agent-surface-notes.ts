@@ -1,8 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 
-function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
     source: AgentRunSource
+    messageSource?: 'onboarding'
     currentDate: string
     searchAvailable: boolean
     fetchAvailable: boolean
@@ -25,7 +26,23 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
     })
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
+        + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
 }
+
+const ONBOARDING_FIRST_MESSAGE_NOTE = [
+    '',
+    '',
+    '## This is the user\'s FIRST message ever, make it land',
+    'They just signed up and told you their role and company, both of which are above. They are asking to see what you can actually do for them, so show them something useful and real, never a pitch or a feature tour. A short scripted welcome is already on their screen, so do NOT introduce yourself or greet them again.',
+    '',
+    '**First, do your homework, quickly.** Before answering, ground yourself in who they are: one or two fast web searches on their company and on what someone in their role does day to day. Skip it only if web search is unavailable. Keep it snappy, a couple of searches rather than deep research, but enough that your ideas are obviously tailored to this role at this company rather than generic. It is fine that they see you doing this. If you say anything before searching, make it one short line about what you are grounding in, and never announce a duration or narrate a timer.',
+    '',
+    '**Then answer with ONE `ap_show_showcase` card**, default list layout, three or four tiles. Each tile `title` is BOTH what they read AND the exact message sent to chat when they tap it, so write it as the plain first-person instruction they would type themselves, three to six words, naming the app when one is involved. The `description` under it is one short plain-English line on what it does for them, under 110 characters so it fits on one line. Never answer this with prose or a bullet list, and do not also call ap_show_quick_replies in the same turn. One warm sentence before the card is plenty.',
+    '',
+    '**Lead with zero-setup wins.** Prioritise use cases that need nothing connected, things you can do today with built-in Tables plus web research plus a schedule. The strongest opener for almost anyone: pick a topic that matters to their role, research it, put the findings in a Table, then put it on a schedule so it stays current. You may include one use case that needs an app they have already connected, but the no-setup plays come first.',
+    '',
+    'Close with one line proposing the single most useful first thing you would start right now.',
+].join('\n')
 
 function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
     currentDate: string
