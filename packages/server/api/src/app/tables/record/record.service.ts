@@ -260,9 +260,11 @@ export const recordService = {
             })
         }
 
+        const deletedIdSet = new Set(deletedIds)
+        const deletedRecords = records.filter((record) => deletedIdSet.has(record.id))
         return {
             deletedCount: deletedIds.length,
-            records: await formatRecordsAndFetchField({ records, tableId, projectId }),
+            records: await formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId }),
         }
     },
 
