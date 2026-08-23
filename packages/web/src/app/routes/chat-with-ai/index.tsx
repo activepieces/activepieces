@@ -7,7 +7,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -235,7 +234,6 @@ export function ChatWithAIPage() {
       )}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
         <div className="shrink-0 flex items-center gap-1 px-4 py-3 border-b">
-          <ApSidebarToggle />
           <ConversationSidebarToggle
             pinned={effectivePinned}
             isMobile={isMobile}

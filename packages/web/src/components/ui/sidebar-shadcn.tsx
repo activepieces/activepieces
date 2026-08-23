@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 
@@ -301,7 +302,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer hidden text-sidebar-foreground md:block"
+      className="group/sidebar-edge group peer hidden text-sidebar-foreground md:block"
       data-state={state}
       data-collapsible={state === 'collapsed' ? collapsible : ''}
       data-variant={variant}
@@ -369,6 +370,7 @@ function Sidebar({
           )}
           {children}
         </div>
+        {collapsible === 'icon' && <SidebarEdgeHandle />}
       </div>
     </div>
   );
@@ -401,6 +403,28 @@ function SidebarTrigger({
       )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
+  );
+}
+
+function SidebarEdgeHandle() {
+  const { open, isHoverExpanded, setOpen } = useSidebar();
+  const pinnedOpen = open && !isHoverExpanded;
+
+  return (
+    <button
+      type="button"
+      data-slot="sidebar-edge-handle"
+      onClick={() => setOpen(!pinnedOpen)}
+      aria-label={pinnedOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+      title={pinnedOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+      className="absolute top-1/2 -right-3 z-30 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border bg-background text-muted-foreground opacity-0 shadow-sm transition-[opacity,color,background-color] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none group-hover/sidebar-edge:opacity-100 md:flex"
+    >
+      {pinnedOpen ? (
+        <ChevronLeft className="size-3.5" />
+      ) : (
+        <ChevronRight className="size-3.5" />
+      )}
+    </button>
   );
 }
 
