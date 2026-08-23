@@ -323,6 +323,7 @@ export type AgentToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
+    ap_show_showcase: { displayed: boolean }
     ap_update_thinking_status: { success: boolean }
 }
 
