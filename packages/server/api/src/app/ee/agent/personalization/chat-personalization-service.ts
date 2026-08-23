@@ -41,6 +41,7 @@ import { ChatPersonalizationEntity } from './chat-personalization-entity'
 const personalizationRepo = repoFactory(ChatPersonalizationEntity)
 
 const RESEARCH_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
+const IN_FLIGHT_STATUSES = [ChatPersonalizationStatus.PENDING, ChatPersonalizationStatus.RESEARCHING]
 const RESEARCH_RUNS_PER_PLATFORM_PER_DAY = 5
 const RATE_LIMIT_TTL_SECONDS = 24 * 60 * 60
 const PREFILL_TTL_SECONDS = 7 * 24 * 60 * 60
@@ -110,7 +111,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
         if (!isNil(companyRow)) {
             const fresh = Date.now() - new Date(companyRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
-            const inFlight = [ChatPersonalizationStatus.PENDING, ChatPersonalizationStatus.RESEARCHING].includes(companyRow.status)
+            const inFlight = IN_FLIGHT_STATUSES.includes(companyRow.status)
             if (inFlight && fresh && !inputsChanged) {
                 return this.getEffectiveView({ platformId, userId })
             }
@@ -422,7 +423,7 @@ async function recoverIfStale({ row, platformId, userId, scope, log }: {
     if (isNil(row)) {
         return row
     }
-    const inFlight = [ChatPersonalizationStatus.PENDING, ChatPersonalizationStatus.RESEARCHING].includes(row.status)
+    const inFlight = IN_FLIGHT_STATUSES.includes(row.status)
     const stale = Date.now() - new Date(row.updated).getTime() > RESEARCH_STALENESS_TIMEOUT_MS
     if (!inFlight || !stale) {
         return row
@@ -466,11 +467,9 @@ async function takeOverStaleRow({ observed, researchToken }: {
         .createQueryBuilder()
         .update()
         .set({ status: ChatPersonalizationStatus.PENDING, researchToken })
-        .where({
-            id: observed.id,
-            status: observed.status,
-            researchToken: isNil(observed.researchToken) ? IsNull() : observed.researchToken,
-        })
+        .where('"id" = :id', { id: observed.id })
+        .andWhere('"status" IN (:...inFlight)', { inFlight: IN_FLIGHT_STATUSES })
+        .andWhere('"updated" < now() - (:staleMs || \' milliseconds\')::interval', { staleMs: RESEARCH_STALENESS_TIMEOUT_MS })
         .returning('*')
         .execute()
     return swapped.raw?.[0] ?? null
