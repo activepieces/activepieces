@@ -6,6 +6,7 @@ import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces
 export const addContactToWorkflowAction = createAction({
     auth:hubspotAuth,
     name:'add-contact-to-workflow',
+    classification: 'WRITE',
     displayName:'Add Contact to Workflow',
     description:'Adds a contact to a specified workflow in your HubSpot account.',
     audience: 'both',

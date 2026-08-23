@@ -9,6 +9,7 @@ import { dropboxAuth } from '../auth';
 export const dropboxCopyFolder = createAction({
   auth: dropboxAuth,
   name: 'copy_dropbox_folder',
+  classification: 'WRITE',
   description: 'Copy a folder',
   audience: 'both',
   aiMetadata: { description: 'Copies the folder at the source path, including its contents, to a new destination path within Dropbox, leaving the original in place; optionally autorenames on conflict. Use to duplicate an entire directory. Not idempotent: each call creates a copy, so repeating it errors on conflict or, with autorename, produces additional duplicates.', idempotent: false },

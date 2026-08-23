@@ -6,6 +6,7 @@ import { ExecutionType } from '@activepieces/pieces-framework';
 import { markdownDescription } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { delayForActionOutputSchema } from '../output-schemas';
 
 enum TimeUnit {
   SECONDS = 'seconds',
@@ -14,9 +15,16 @@ enum TimeUnit {
   DAYS = 'days',
 }
 
+// Shared by run() and test() so Test Step cannot report success for an amount
+// that a real run would reject.
+const propsSchema = {
+  delayFor: z.number().check(z.minimum(0)),
+};
+
 export const delayForAction = createAction({
   audience: 'both',
   name: 'delayFor',
+  classification: 'READ',
   displayName: 'Delay For',
   description: 'Delays the execution of the next action for a given duration',
   aiMetadata: { description: 'Pauses the flow for a fixed relative duration before the next step runs, given as an amount plus a unit (seconds, minutes, hours or days); short waits sleep in-process while longer ones suspend the run and resume it later. Pick this when the wait is known relative to now, and prefer Delay Until when you have an absolute target date/time. The amount must be non-negative and the wait cannot exceed the instance paused-flow timeout; idempotent, nothing is created or mutated.', idempotent: true },
@@ -53,10 +61,9 @@ export const delayForAction = createAction({
       required: true,
     }),
   },
+  outputSchema: delayForActionOutputSchema,
   async run(ctx) {
-    await propsValidation.validateZod(ctx.propsValue, {
-      delayFor: z.number().check(z.minimum(0)),
-    });
+    await propsValidation.validateZod(ctx.propsValue, propsSchema);
 
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
     const delayInMs = calculateDelayInMs(ctx.propsValue.delayFor, unit);
@@ -85,6 +92,8 @@ export const delayForAction = createAction({
     }
   },
   async test(ctx) {
+    await propsValidation.validateZod(ctx.propsValue, propsSchema);
+
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
     return {
       delayForInMs: calculateDelayInMs(ctx.propsValue.delayFor, unit),

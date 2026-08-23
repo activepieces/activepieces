@@ -7,6 +7,7 @@ import { filloutFormsAuth } from '../auth';
 export const getSingleResponse = createAction({
 	auth: filloutFormsAuth,
 	name: 'getSingleResponse',
+	classification: 'READ',
 	displayName: 'Get Single Response',
 	description: 'Retrieves a specific submission from a form.',
 	audience: 'both',

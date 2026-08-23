@@ -2,15 +2,12 @@ import { t } from 'i18next';
 import { useEffect, useRef, useState } from 'react';
 
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 import { useCellContext } from './cell-context';
+import { CellEditorTrigger } from './cell-editor-trigger';
 
 function isValidDate(date: string) {
   return !isNaN(new Date(date).getTime());
@@ -57,71 +54,59 @@ function DateEditor() {
           }
         }}
       >
-        <PopoverTrigger asChild>
-          <button
-            className={cn(
-              'w-full h-full flex items-center justify-between gap-2',
-              'bg-background text-sm px-2',
-              'focus:outline-hidden',
-              {
-                'border-2 border-primary': isEditing,
-                'border-transparent bg-transparent!': !isEditing,
-              },
-            )}
-          >
-            {isEditing && (
-              <input
-                ref={inputRef}
-                placeholder={t('mm/dd/yyy')}
-                value={inputValue}
-                type="text"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                onChange={(e) => {
-                  setInputValue(e.target.value);
-                  if (isValidDate(e.target.value)) {
-                    setDate(new Date(e.target.value));
-                    setMonth(new Date(e.target.value));
-                  } else {
-                    setDate(undefined);
-                  }
-                }}
-                onBlur={(e) => {
-                  if (!containerRef.current?.contains(e.target as Node)) {
-                    handleCellChange(date?.toISOString() ?? '');
-                  }
-                }}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === 'Enter') {
-                    handleCellChange(date?.toISOString() ?? '');
-                    e.preventDefault();
-                  }
-                  if (e.key === 'Escape') {
-                    setIsEditing(false);
-                    e.preventDefault();
-                  }
-                }}
-                className={cn(
-                  'flex-1 h-full min-w-0',
-                  'border-none text-sm px-2',
-                  'focus:outline-hidden',
-                  'placeholder:text-muted-foreground',
-                  {
-                    'border-transparent bg-transparent!': !isEditing,
-                  },
-                )}
-                autoComplete="off"
-              />
-            )}
-            {!isEditing && (
-              <div className="flex grow h-full min-w-0">
-                {getFormattedDate(value)}
-              </div>
-            )}
-          </button>
-        </PopoverTrigger>
+        <CellEditorTrigger isEditing={isEditing}>
+          {isEditing && (
+            <input
+              ref={inputRef}
+              placeholder={t('mm/dd/yyy')}
+              value={inputValue}
+              type="text"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                if (isValidDate(e.target.value)) {
+                  setDate(new Date(e.target.value));
+                  setMonth(new Date(e.target.value));
+                } else {
+                  setDate(undefined);
+                }
+              }}
+              onBlur={(e) => {
+                if (!containerRef.current?.contains(e.target as Node)) {
+                  handleCellChange(date?.toISOString() ?? '');
+                }
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  handleCellChange(date?.toISOString() ?? '');
+                  e.preventDefault();
+                }
+                if (e.key === 'Escape') {
+                  setIsEditing(false);
+                  e.preventDefault();
+                }
+              }}
+              className={cn(
+                'flex-1 h-full min-w-0',
+                'border-none text-sm px-2',
+                'focus:outline-hidden',
+                'placeholder:text-muted-foreground',
+                {
+                  'border-transparent bg-transparent!': !isEditing,
+                },
+              )}
+              autoComplete="off"
+            />
+          )}
+          {!isEditing && (
+            <div className="flex grow h-full min-w-0">
+              {getFormattedDate(value)}
+            </div>
+          )}
+        </CellEditorTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"

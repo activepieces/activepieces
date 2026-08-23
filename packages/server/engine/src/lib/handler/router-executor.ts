@@ -16,7 +16,7 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
     }) {
         const stepStartTime = performance.now()
         const { data: resolved, error: resolveError } = await utils.tryCatchAndThrowOnEngineError(() =>
-            constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<RouterActionSettings>({
+            constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<RouterActionSettings>({
                 unresolvedInput: {
                     ...action.settings,
                 },

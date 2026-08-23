@@ -222,8 +222,14 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        const result = await projectRepo().softDelete({ id, platformId })
-        if (result.affected === 0) {
+        const result = await projectRepo()
+            .createQueryBuilder()
+            .softDelete()
+            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+            .returning('id')
+            .execute()
+        const deletedRows: unknown[] = result.raw ?? []
+        if (deletedRows.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {

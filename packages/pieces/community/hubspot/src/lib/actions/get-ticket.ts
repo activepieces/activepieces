@@ -9,6 +9,7 @@ import { hubspotAuth } from '../auth';
 export const getTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-ticket',
+	classification: 'READ',
 	displayName: 'Get Ticket',
 	description: 'Gets a ticket.',
 	audience: 'both',

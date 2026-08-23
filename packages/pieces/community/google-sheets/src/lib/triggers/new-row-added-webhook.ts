@@ -26,6 +26,7 @@ import { googlesheetsNewRowAddedTriggerOutputSchema } from '../output-schemas';
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'googlesheets_new_row_added',
+	classification: 'READ',
 	displayName: 'New Row Added',
 	description: 'Triggers when a new row is added to bottom of a spreadsheet.',
 	aiMetadata: {

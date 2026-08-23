@@ -4,6 +4,7 @@ import { chatDataAuth, SendMessageDto } from '../common/types';
 
 export const sendMessage = createAction({
   name: 'send_message',
+  classification: 'READ',
   displayName: 'Send Message to Chatbot',
   description:
     'Send messages to a chatbot and receive a response with support for streaming and OpenAI-compatible formats',

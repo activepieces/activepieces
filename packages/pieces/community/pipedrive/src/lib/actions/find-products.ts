@@ -13,6 +13,7 @@ import { GetField } from '../common/types';
 export const findProductsAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-products',
+	classification: 'SEARCH',
 	displayName: 'Find Products',
 	description: 'Finds a product or products by name or product code.',
 	audience: 'both',

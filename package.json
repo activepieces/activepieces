@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.87.0",
+  "version": "0.88.3",
   "packageManager": "bun@1.3.3",
   "trustedDependencies": [
     "sqlite3",
@@ -136,6 +136,7 @@
   ],
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
-    "axios": "1.18.0"
+    "axios": "1.18.0",
+    "nanoid": "3.3.17"
   }
 }

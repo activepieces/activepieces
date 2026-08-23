@@ -1,6 +1,7 @@
 # Last matching pattern wins. Core reviewers own everything by default;
 # platform team owns the critical execution path (engine, worker, execution core).
 # Both teams use round-robin review assignment (one reviewer per PR).
+# A pattern with an empty owner column releases a path from the catch-all above.
 *                            @activepieces/core
 
 /packages/pieces/            @activepieces/pieces
@@ -8,3 +9,10 @@
 /packages/server/engine/     @activepieces/platform
 /packages/server/worker/     @activepieces/platform
 /packages/core/execution/    @activepieces/platform
+
+# Unowned on purpose: no team is auto-requested and no code-owner approval is
+# required. One approving review from any write-access collaborator still is.
+# The leading slash is required — unanchored patterns would also match the
+# per-piece lockfiles under packages/pieces/.
+/bun.lock
+/brain/

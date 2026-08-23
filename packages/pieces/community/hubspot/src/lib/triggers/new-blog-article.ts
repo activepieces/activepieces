@@ -84,6 +84,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newBlogArticleTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-blog-article',
+	classification: 'READ',
 	displayName: 'New COS Blog Article',
 	description: 'Triggers when a new article is added to your COS blog.',
 	aiMetadata: {

@@ -31,7 +31,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
     })
 
     const { data: executionStateResult, error: executionStateError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        const { censoredInput, resolvedInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<Record<string, unknown>>({
+        const { censoredInput, resolvedInput } = await constants.getPropsResolver({ contextVersion: LATEST_CONTEXT_VERSION }).resolve<Record<string, unknown>>({
             unresolvedInput: action.settings.input,
             executionState,
         })

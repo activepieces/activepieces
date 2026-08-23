@@ -2,10 +2,12 @@ import { createAction, MarkdownVariant, PieceAuth, Property } from '@activepiece
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
+import { createRecordsActionOutputSchema } from '../output-schemas';
 
 export const createRecords = createAction({
   audience: 'both',
   name: 'tables-create-records',
+  classification: 'WRITE',
   displayName: 'Create Record(s)',
   description: 'Insert one or more new records to a table.',
   aiMetadata: { description: 'Inserts one or more new rows into an Activepieces Table via either a per-field form built from the columns of the selected table, or a raw JSON array of objects keyed by column name that overrides the form, for when the table is chosen dynamically at runtime. Use Update Record instead to change a row that already exists. Requires a table ID, and any value whose key does not match a real column is silently dropped; not idempotent, since every call appends new records with new IDs.', idempotent: false },
@@ -57,14 +59,24 @@ export const createRecords = createAction({
       required: false,
     }),
   },
+  outputSchema: createRecordsActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, values, records: rawRecords } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
 
+    // Property.Json defaults to `{}` in the builder whenever the field is left
+    // untouched, so `!= null` alone can't tell "raw JSON provided" from
+    // "advanced field never touched" — a row with no keys means the latter.
+    const rawArray: Record<string, unknown>[] = Array.isArray(rawRecords)
+      ? rawRecords
+      : rawRecords != null
+      ? [rawRecords as Record<string, unknown>]
+      : [];
+    const hasRawRecords = rawArray.some((row) => Object.keys(row ?? {}).length > 0);
+
     let records: CreateRecordsRequest['records'];
-    if (rawRecords != null) {
-      const rawArray = Array.isArray(rawRecords) ? rawRecords : [rawRecords];
+    if (hasRawRecords) {
       records = toCells({ rows: rawArray, fieldIdByKey: (name) => tableFields.find((field) => field.name === name)?.id });
     } else {
       const formRecords = values['values'];

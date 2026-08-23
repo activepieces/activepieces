@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { youtrackAuth } from '../../';
+import { youtrackAuth } from '../auth';
 import { issueDropdown, youtrackApiCall } from '../common';
+import { listAttachmentsActionOutputSchema } from '../output-schemas';
 
 export const listAttachmentsAction = createAction({
   auth: youtrackAuth,
   name: 'list_attachments',
+  outputSchema: listAttachmentsActionOutputSchema,
   displayName: 'List Attachments',
   description: 'Lists all attachments on a specific issue with metadata (name, size, type).',
   audience: 'both',
@@ -22,13 +24,13 @@ export const listAttachmentsAction = createAction({
       token: apiToken,
       method: HttpMethod.GET,
       path: '/issues/' + context.propsValue.issue + '/attachments',
-      queryParams: { fields: 'id,name,contentType,size,author(name,login),created', '$top': String(limit) },
+      queryParams: { fields: 'id,name,mimeType,size,author(name,login),created', '$top': String(limit) },
     });
     const data = response.body;
     return (data || []).map((att) => ({
       id: att['id'],
       name: att['name'],
-      content_type: att['contentType'],
+      content_type: att['mimeType'] ?? null,
       size_bytes: att['size'],
       author_name: (att['author'] as Record<string, unknown>)?.['name'] ?? null,
       author_login: (att['author'] as Record<string, unknown>)?.['login'] ?? null,

@@ -7,12 +7,13 @@ import { searchWalmartOutputSchema } from '../output-schemas';
 export const searchWalmart = createAction({
   auth: serpApiAuth,
   name: 'search_walmart',
+  classification: 'SEARCH',
   displayName: 'Search Walmart',
   description: 'Find products on Walmart for a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Searches Walmart via SerpApi for products matching a query, returning results in `organic_results` (title, price, rating, seller, product link). Use to look up Walmart product pricing and availability. Filter by price range and minimum rating, sort, and paginate by page. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search Walmart for products matching a query, to check prices, ratings, and availability. Use to look up Walmart product listings for price checks or stock research. Filter by price range and minimum rating, sort, and paginate by page.',
     idempotent: true,
   },
   outputSchema: searchWalmartOutputSchema,

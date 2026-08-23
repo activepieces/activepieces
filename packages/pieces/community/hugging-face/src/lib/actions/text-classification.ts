@@ -10,6 +10,7 @@ import { huggingFaceAuth } from '../auth';
 export const textClassification = createAction({
   audience: 'both',
   name: 'text_classification',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Text Classification',
   description:

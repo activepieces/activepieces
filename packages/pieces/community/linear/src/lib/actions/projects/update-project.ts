@@ -6,6 +6,7 @@ import { makeClient } from '../../common/client';
 export const linearUpdateProject = createAction({
   auth: linearAuth,
   name: 'linear_update_project',
+  classification: 'WRITE',
   displayName: 'Update Project',
   description: 'Update a existing project in Linear workspace',
   audience: 'both',

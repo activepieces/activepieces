@@ -6,6 +6,7 @@ import { messageIdDropdown } from '../common/props';
 export const addLabelToEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'addLabelToEmail',
+	classification: 'WRITE',
 	displayName: 'Add Label to Email',
 	description: 'Adds a category (label) to an email message.',
 	audience: 'both',

@@ -46,6 +46,21 @@ If a dependency must not be inlined (for example a native module), add it to a `
 }
 ```
 
+### Files loaded at runtime (forked processes)
+
+A file your piece loads by path at runtime — for example `child_process.fork(path.join(__dirname, 'runner.js'))` — is invisible to the bundler's import graph, so by default it would not exist in the published package. Declare it in `bundleForkedEntries`:
+
+```jsonc
+{
+  "name": "@activepieces/piece-oracle-database",
+  "bundleForkedEntries": ["src/lib/common/oracle-runner.ts"]
+}
+```
+
+Each declared entry is bundled on its own and emitted **next to the main bundle** at `src/<name>.js` — which is where `path.join(__dirname, '<name>.js')` resolves at runtime, since the bundled parent code lives at `src/index.js`. Dependencies that only the forked file imports (e.g. `oracledb`) are still captured into the published `dependencies`.
+
+The bundler **fails the build** if piece code uses `__dirname` without declaring any `bundleForkedEntries`, because such code breaks silently after publishing.
+
 ### Building and publishing
 
 Bundling happens automatically when you build or publish a piece:

@@ -6,6 +6,7 @@ import { whatsscaleClient } from '../../common/client';
 export const findCrmContactByPhoneAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_find_crm_contact_by_phone',
+  classification: 'READ',
   displayName: 'Find a CRM Contact by Phone',
   description: 'Look up a CRM contact using their phone number',
   audience: 'both',

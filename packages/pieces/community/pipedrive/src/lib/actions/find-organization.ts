@@ -14,6 +14,7 @@ import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 export const findOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-organization',
+	classification: 'SEARCH',
 	displayName: 'Find Organization',
 	description: 'Finds an organization.',
 	audience: 'both',

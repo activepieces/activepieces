@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'add_library_items',
+  classification: 'WRITE',
   auth: spotifyCommon.authentication,
   displayName: 'Add items to library',
   description: 'Add tracks, episodes, albums, shows, audiobooks, users or playlists to your library',

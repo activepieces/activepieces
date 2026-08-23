@@ -12,6 +12,7 @@ import {
 export const dateDifferenceAction = createAction({
   audience: 'both',
   name: 'date_difference',
+  classification: 'READ',
   displayName: 'Date Difference',
   description: 'Get the difference between two dates',
   aiMetadata: { description: 'Measures the elapsed time between a start date and an end date, returning any combination of the requested units in one call. Use it to compare two known dates for age, SLA or gap checks; use Add/Subtract Time instead to shift a single date. Each date needs its own input pattern, and the units are decomposed duration components rather than totals - the day value is the remainder inside the month - and come back negative when the end date precedes the start; read-only and idempotent.', idempotent: true },
@@ -70,7 +71,7 @@ export const dateDifferenceAction = createAction({
     }),
   },
   async run(context) {
-    
+
     const inputStartDate = context.propsValue.startDate;
     const startDateFormat = getCorrectedFormat(context.propsValue.startDateFormat);
     const inputEndDate = context.propsValue.endDate;

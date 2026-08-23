@@ -7,6 +7,7 @@ import { outlookCommon } from '../common/client';
 export const downloadAttachmentAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'downloadAttachment',
+	classification: 'READ',
 	displayName: 'Download Attachment',
 	description: 'Download attachments from a specific email message.',
 	audience: 'both',

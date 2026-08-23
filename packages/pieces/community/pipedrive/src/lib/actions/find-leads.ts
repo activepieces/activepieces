@@ -7,6 +7,7 @@ import { pipedriveAuth } from '../auth';
 export const findLeadAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-lead',
+	classification: 'SEARCH',
 	displayName: 'Find Lead',
 	description: 'Finds leads by title.',
 	audience: 'both',

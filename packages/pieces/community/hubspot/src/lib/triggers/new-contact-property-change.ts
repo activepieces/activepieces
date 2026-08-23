@@ -127,6 +127,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newContactPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-contact-property-change',
+	classification: 'READ',
 	displayName: 'New Contact Property Change',
 	description: 'Triggers when a specified property is updated on a contact.',
 	aiMetadata: {

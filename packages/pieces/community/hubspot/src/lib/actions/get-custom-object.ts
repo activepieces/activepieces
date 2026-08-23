@@ -8,6 +8,7 @@ import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/
 export const getCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-custom-object',
+	classification: 'READ',
 	displayName: 'Get Custom Object',
 	description: 'Gets a custom object.',
 	audience: 'both',

@@ -94,6 +94,7 @@ interface GetDealResponseV2 {
 export const updatedDeal = createTrigger({
 	auth: pipedriveAuth,
 	name: 'updated_deal',
+	classification: 'READ',
 	displayName: 'Updated Deal',
 	description: 'Triggers when a deal is updated.',
 	aiMetadata: {

@@ -15,6 +15,7 @@ import { wooAuth } from '../auth';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
+  classification: 'WRITE',
   displayName: 'Create Coupon',
   description: 'Create a coupon',
   audience: 'both',

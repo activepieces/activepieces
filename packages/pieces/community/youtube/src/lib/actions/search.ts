@@ -5,6 +5,7 @@ import { youtubeAuth } from '../common/auth';
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description:
     'Search YouTube videos, channels, and playlists using the YouTube Data API search.list endpoint.',

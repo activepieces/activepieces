@@ -78,6 +78,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-line-item',
+	classification: 'READ',
 	displayName: 'New Line Item',
 	description: 'Triggers when new line item is available.',
 	aiMetadata: {

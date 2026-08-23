@@ -9,6 +9,7 @@ import * as z from 'zod/mini'
 export const uploadFileToSessionAction = createAction({
 	auth: airtopAuth,
 	name: 'upload-file-to-session',
+	classification: 'WRITE',
 	displayName: 'Upload File to Sessions',
 	description: 'Push an existing file to one or more sessions, making it available for use in file inputs or downloads.',
 	audience: 'both',

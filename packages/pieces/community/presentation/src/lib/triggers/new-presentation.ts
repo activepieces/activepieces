@@ -40,6 +40,7 @@ const polling: Polling<
 export const newPresentation = createTrigger({
   auth: presentonAuth,
   name: 'newPresentation',
+  classification: 'READ',
   displayName: 'New Presentation',
   description: 'Triggers when a new presentation is created in Presenton.',
   aiMetadata: {

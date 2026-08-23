@@ -5,6 +5,7 @@ import { createBackBlazeS3 } from '../common';
 export const readBackBlazeFileAction = createAction({
   auth: backBlazeS3Auth,
   name: 'read-backblaze-file',
+  classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from Backblaze bucket to use it in other steps.',
   audience: 'both',

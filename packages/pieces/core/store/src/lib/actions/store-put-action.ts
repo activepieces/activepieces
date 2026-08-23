@@ -35,6 +35,7 @@ async function executeStoragePut(context: ActionContext<PieceAuthProperty | unde
 export const storagePutAction = createAction({
   audience: 'both',
   name: 'put',
+  classification: 'WRITE',
   displayName: 'Put',
   description: 'Put a value in storage',
   aiMetadata: { description: 'Writes a value under a key in the key/value store, overwriting whatever was there before. Use it to persist state across steps, runs, or flows; prefer Append to concatenate onto an existing string, or Add To List to push onto a stored array, since Put replaces the entire value. Requires the key (max 128 characters), the value, and the Store Scope the reader will use, caps the stored value at 512 KB, and is idempotent.', idempotent: true },

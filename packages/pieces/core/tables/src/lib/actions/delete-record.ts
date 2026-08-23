@@ -1,10 +1,12 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { deleteRecordActionOutputSchema } from '../output-schemas';
 
 export const deleteRecord = createAction({
   audience: 'both',
   name: 'tables-delete-record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record(s)',
   description: 'Delete record(s) from a table',
   aiMetadata: { description: 'Deletes one or more rows from an Activepieces Table by record ID, accepting a list of IDs in a single call. Pick this to remove specific known rows; use Clear Table to empty a table wholesale, or Delete Table to drop the table along with its schema. Requires the table ID plus the record IDs, which come from Find Records or a table trigger payload, and cannot delete by filter or field value; idempotent.', idempotent: true },
@@ -17,6 +19,7 @@ export const deleteRecord = createAction({
       description: 'The IDs of the records to delete'
     }),
   },
+  outputSchema: deleteRecordActionOutputSchema,
   async run(context) {
     const { records_ids, table_id } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(table_id, context);

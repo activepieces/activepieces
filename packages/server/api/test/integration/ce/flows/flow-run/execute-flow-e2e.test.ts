@@ -67,7 +67,7 @@ afterAll(async () => {
     await app.close()
 }, 15_000)
 
-async function setupSubflowFixtures() {
+async function setupSubflowFixtures({ childAlwaysFails = false, retryOnFailure = false }: { childAlwaysFails?: boolean, retryOnFailure?: boolean } = {}) {
     const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
     const webhookPiece = createMockPieceMetadata({
@@ -117,7 +117,9 @@ async function setupSubflowFixtures() {
         valid: true,
         settings: {
             sourceCode: {
-                code: `export const code = async (inputs) => {
+                code: childAlwaysFails
+                    ? 'export const code = async () => { throw new Error(\'deliberate subflow failure\') }'
+                    : `export const code = async (inputs) => {
                     return {
                         greeting: 'Hello ' + inputs.name,
                         processed: true,
@@ -199,7 +201,9 @@ async function setupSubflowFixtures() {
                 waitForResponse: true,
             },
             propertySettings: {},
-            errorHandlingOptions: {},
+            errorHandlingOptions: retryOnFailure
+                ? { retryOnFailure: { value: true }, continueOnFailure: { value: false } }
+                : {},
         },
     }
 
@@ -229,7 +233,7 @@ async function setupSubflowFixtures() {
     })
     await db.save('flow_version', parentFlowVersion)
 
-    return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+    return { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject }
 }
 
 async function setupSubflowWithWebhookResponseFixtures() {
@@ -809,6 +813,36 @@ describe('Execute Flow E2E', () => {
                 },
             }),
         )
+    }, 180_000)
+
+    it('retry-on-failure of a wait-for-response Call Flow retries the parent step and fails after maxAttempts without re-invoking the child subflow', async () => {
+        const { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject } = await setupSubflowFixtures({
+            childAlwaysFails: true,
+            retryOnFailure: true,
+        })
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: parentFlow.id,
+            payload: { body: { name: 'Alice' } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: parentFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        const childRunCount = await databaseConnection()
+            .getRepository('flow_run')
+            .count({ where: { flowId: childFlow.id } })
+
+        expect(result.status).toBe(FlowRunStatus.FAILED)
+        expect(childRunCount).toBe(1)
     }, 180_000)
 
     it('executes a webhook → delay_for → code flow without infinite loop', async () => {

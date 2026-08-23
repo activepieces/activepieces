@@ -12,6 +12,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const findProductAction = createAction({
     auth: pipedriveAuth,
     name: 'find-product',
+    classification: 'SEARCH',
     displayName: 'Find Product',
     description: 'Finds a product by name ',
     audience: 'both',
