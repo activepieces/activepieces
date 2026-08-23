@@ -428,21 +428,25 @@ async function recoverIfStale({ row, platformId, userId, scope, log }: {
         return row
     }
     log.warn({ platform: { id: platformId }, user: { id: userId }, scope, stuckStatus: row.status }, '[chatPersonalization] Recovering stale in-flight research row')
+    const researchToken = apId()
     const { error } = await tryCatch(async () => {
-        const allowed = await guardsAllowResearch({ platformId, log })
-        if (!allowed) {
-            await personalizationRepo().update({ id: row.id }, { status: ChatPersonalizationStatus.FAILED })
+        const claimed = await takeOverStaleRow({ observed: row, researchToken })
+        if (isNil(claimed)) {
+            log.info({ platform: { id: platformId }, user: { id: userId }, scope }, '[chatPersonalization] Recovery abandoned, the row moved on while it was being read')
             return
         }
-        const researchToken = apId()
-        await personalizationRepo().update({ id: row.id }, { status: ChatPersonalizationStatus.PENDING, researchToken })
+        const allowed = await guardsAllowResearch({ platformId, log })
+        if (!allowed) {
+            await personalizationRepo().update({ id: claimed.id, researchToken }, { status: ChatPersonalizationStatus.FAILED })
+            return
+        }
         await enqueueResearchJob({
             platformId,
             userId,
             scope,
-            website: scope === ChatPersonalizationScope.COMPANY ? row.domain ?? null : null,
-            companyText: scope === ChatPersonalizationScope.COMPANY ? row.companyText ?? null : null,
-            role: row.role ?? null,
+            website: scope === ChatPersonalizationScope.COMPANY ? claimed.domain ?? null : null,
+            companyText: scope === ChatPersonalizationScope.COMPANY ? claimed.companyText ?? null : null,
+            role: claimed.role ?? null,
             researchToken,
             log,
         })
@@ -452,6 +456,24 @@ async function recoverIfStale({ row, platformId, userId, scope, log }: {
         return row
     }
     return findRow({ platformId, userId: scope === ChatPersonalizationScope.COMPANY ? null : userId })
+}
+
+async function takeOverStaleRow({ observed, researchToken }: {
+    observed: ChatPersonalization
+    researchToken: string
+}): Promise<ChatPersonalization | null> {
+    const swapped = await personalizationRepo()
+        .createQueryBuilder()
+        .update()
+        .set({ status: ChatPersonalizationStatus.PENDING, researchToken })
+        .where({
+            id: observed.id,
+            status: observed.status,
+            researchToken: isNil(observed.researchToken) ? IsNull() : observed.researchToken,
+        })
+        .returning('*')
+        .execute()
+    return swapped.raw?.[0] ?? null
 }
 
 function normalizeRoleTitle({ input }: { input: string }): string | null {
