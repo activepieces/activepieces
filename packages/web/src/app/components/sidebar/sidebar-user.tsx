@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -35,7 +35,13 @@ export function SidebarUser() {
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
-  const { state } = useSidebar();
+  const { state, setHoverSuppressed } = useSidebar();
+
+  useEffect(() => {
+    setHoverSuppressed(accountSettingsOpen);
+    return () => setHoverSuppressed(false);
+  }, [accountSettingsOpen, setHoverSuppressed]);
+
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
     return null;
