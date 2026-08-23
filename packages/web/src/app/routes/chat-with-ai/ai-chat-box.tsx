@@ -40,7 +40,10 @@ import {
 } from './components/chat-empty-state';
 import { OnboardingQuestionCard } from './components/onboarding-question-card';
 import { OnboardingWelcome } from './components/onboarding-welcome';
-import { PersonalizationProgress } from './components/personalization-progress';
+import {
+  PersonalizationChip,
+  PersonalizationChipState,
+} from './components/personalization-chip';
 import { QuickReplies } from './components/quick-replies';
 import { UserMessage } from './components/user-message';
 import { getTextFromParts } from './lib/message-parsers';
@@ -206,6 +209,15 @@ function ChatBoxContent({
     !personalization.isResolving &&
     personalization.status !== null &&
     personalization.status !== ChatPersonalizationStatus.UNSET;
+  const personalizationChipState: PersonalizationChipState =
+    personalization.isResearching
+      ? 'researching'
+      : personalization.status === ChatPersonalizationStatus.FAILED
+      ? 'failed'
+      : personalization.roleInput
+      ? 'ready'
+      : 'unanswered';
+
   const initialAnswers = onboardingPrefillUtils.resolveInitialAnswers({
     view: {
       roleInput: personalization.roleInput,
@@ -381,8 +393,13 @@ function ChatBoxContent({
           {showPersonalizationDonut && (
             <div className="pointer-events-none absolute inset-x-0 bottom-full z-10 mb-3 flex justify-center">
               <div className="pointer-events-auto">
-                <PersonalizationProgress
-                  answered={Boolean(personalization.roleInput)}
+                <PersonalizationChip
+                  state={personalizationChipState}
+                  role={personalization.roleInput}
+                  company={
+                    personalization.profile?.companyName ??
+                    personalization.companyInput
+                  }
                   onClick={() => setPromptOpen(true)}
                   onClear={personalization.reset}
                 />

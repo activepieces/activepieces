@@ -2397,8 +2397,6 @@
   "Who am I teaming up with?": "Who am I teaming up with?",
   "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.": "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",
   "I'm a {role} at {company}. Show me what you could take off my plate.": "I'm a {role} at {company}. Show me what you could take off my plate.",
-  "Edit role & company": "Edit role & company",
-  "Improve suggestions": "Improve suggestions",
   "I'm a": "I'm a",
   "at": "at",
   "Your role": "Your role",
@@ -2406,5 +2404,10 @@
   "Let's go": "Let's go",
   "Or tell me the work you want gone": "Or tell me the work you want gone",
   "AI credits used by this project across chat, agents, and AI steps.": "AI credits used by this project across chat, agents, and AI steps.",
-  "AI limit reached — further AI requests are blocked.": "AI limit reached — further AI requests are blocked."
+  "AI limit reached — further AI requests are blocked.": "AI limit reached — further AI requests are blocked.",
+  "Tailor these to my work": "Tailor these to my work",
+  "Tailoring to {company}…": "Tailoring to {company}…",
+  "Tailoring these to your work…": "Tailoring these to your work…",
+  "Could not tailor these, try again": "Could not tailor these, try again",
+  "{role} at {company}": "{role} at {company}"
 }
