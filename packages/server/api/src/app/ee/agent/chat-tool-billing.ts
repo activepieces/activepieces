@@ -3,6 +3,7 @@ import { PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, Pers
 const BILLABLE_EXTERNAL_TOOL_NAMES = new Set<string>([
     'ap_web_search',
     'ap_scrape_url',
+    'ap_ask_platform_docs',
     'ap_generate_image',
     'ap_execute_action',
     'ap_explore_data',

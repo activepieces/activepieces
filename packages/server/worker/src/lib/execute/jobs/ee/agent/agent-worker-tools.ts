@@ -729,7 +729,10 @@ function createWebTools({ taintState }: { taintState: TaintState }): ToolSet {
 const SEARCH_TIMEOUT_MS = 30 * 1_000
 const SCRAPE_TIMEOUT_MS = 60 * 1_000
 const IMAGE_TIMEOUT_MS = 120 * 1_000
+const PLATFORM_KNOWLEDGE_TIMEOUT_MS = 15 * 1_000
 const MAX_SEARCH_RESULTS = 5
+const DEFAULT_PLATFORM_KNOWLEDGE_BASE_URL = 'https://jentic.activepieces.com'
+const PLATFORM_KNOWLEDGE_BRIEF_DIRECTIVE = 'Answer in under 60 words. State only facts you can support from the documentation. Do not ask follow-up questions. If you do not know, say so.'
 
 const FAL_MODEL_BY_STYLE: Record<ImageStyle, string> = {
     realistic: 'fal-ai/flux-pro/v1.1',
@@ -817,6 +820,51 @@ function createScrapeTools({ scraping, taintState }: { scraping: ResolvedToolCon
                             return { content: [{ type: 'text', text: `Failed to scrape ${toolInput.url}: ${error instanceof Error ? error.message : String(error)}` }] }
                         }
                         return truncateLargeResult({ url: toolInput.url, markdown: scraped.markdown, metadata: scraped.metadata })
+                    },
+                })
+            },
+        }),
+    }
+}
+
+function createPlatformKnowledgeTools({ platformKnowledge, taintState }: { platformKnowledge: ResolvedToolConfig, taintState: TaintState }): ToolSet {
+    return {
+        ap_ask_platform_docs: tool({
+            description: 'Ask the Activepieces knowledge service a question about Activepieces THE PRODUCT and get a documented answer. Use it for plans and pricing, what each edition or plan includes, account and billing behaviour, usage limits, and how a platform feature actually behaves (project scoping and isolation, roles and permissions, SSO, self-hosting requirements, security posture). These are facts you must never answer from memory — they change and a wrong answer costs the user money. Do NOT use it for anything you already have a tool for: finding an app or action (ap_research_pieces, ap_search_actions), how to build or debug an automation (ap_load_guide), or anything about this user\'s own workspace, flows, runs, connections or data. One question per call, phrased as the user would ask it. The answer comes back in English — restate it in the user\'s language, in your own voice.',
+            inputSchema: z.object({
+                ...cardTitleFields,
+                question: z.string().describe('The product question, self-contained and in plain language. Never include the user\'s own data, flow names, connection names or email addresses.'),
+            }),
+            execute: async (toolInput) => {
+                taintState.tainted = true
+                return withToolTimeout({
+                    toolName: 'ap_ask_platform_docs',
+                    timeoutMs: PLATFORM_KNOWLEDGE_TIMEOUT_MS + 5_000,
+                    fn: async (signal) => {
+                        const config = isObject(platformKnowledge.config) ? platformKnowledge.config : {}
+                        const workspace = typeof config['workspace'] === 'string' ? config['workspace'] : undefined
+                        if (isNil(workspace) || workspace.length === 0) {
+                            return { content: [{ type: 'text', text: 'The Activepieces knowledge service is not fully configured (missing workspace). Tell the user you cannot confirm product details right now and point them to activepieces.com/pricing.' }] }
+                        }
+                        const baseUrl = typeof config['baseUrl'] === 'string' && config['baseUrl'].length > 0 ? config['baseUrl'] : DEFAULT_PLATFORM_KNOWLEDGE_BASE_URL
+                        const { data: response, error } = await tryCatch(() => safeHttp.axios.post(`${baseUrl.replace(/\/+$/, '')}/v1/runs`, {
+                            workspace,
+                            input: `${PLATFORM_KNOWLEDGE_BRIEF_DIRECTIVE}\n\n${toolInput.question}`,
+                            stream: true,
+                        }, {
+                            signal,
+                            timeout: PLATFORM_KNOWLEDGE_TIMEOUT_MS,
+                            responseType: 'text',
+                            headers: { Authorization: `Bearer ${platformKnowledge.apiKey}`, 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+                        }))
+                        if (error) {
+                            return { content: [{ type: 'text', text: `Could not reach the Activepieces knowledge service: ${error instanceof Error ? error.message : String(error)}. Do not guess the answer — tell the user you could not confirm it.` }] }
+                        }
+                        const { answer, failure } = parsePlatformKnowledgeStream({ body: typeof response.data === 'string' ? response.data : '' })
+                        if (isNil(answer)) {
+                            return { content: [{ type: 'text', text: `The Activepieces knowledge service returned no answer${isNil(failure) ? '' : ` (${failure})`}. Do not guess — tell the user you could not confirm it.` }] }
+                        }
+                        return truncateLargeResult({ question: toolInput.question, answer, source: 'activepieces-knowledge-service' })
                     },
                 })
             },
@@ -1184,6 +1232,37 @@ function truncateForCard(text: string): string {
     return trimmed.length > CARD_ERROR_MAX_LENGTH ? `${trimmed.slice(0, CARD_ERROR_MAX_LENGTH)}…` : trimmed
 }
 
+function parsePlatformKnowledgeStream({ body }: { body: string }): { answer: string | null, failure: string | null } {
+    const deltas: string[] = []
+    let finalText: string | null = null
+    let failure: string | null = null
+    for (const line of body.split('\n')) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('data:')) {
+            continue
+        }
+        const payload: unknown = tryCatchSync(() => JSON.parse(trimmed.slice('data:'.length).trim())).data
+        if (!isObject(payload)) {
+            continue
+        }
+        if (typeof payload['delta'] === 'string') {
+            deltas.push(payload['delta'])
+        }
+        if (typeof payload['final_text'] === 'string' && payload['final_text'].trim().length > 0) {
+            finalText = payload['final_text']
+        }
+        const runError = payload['error']
+        if (isObject(runError) && typeof runError['message'] === 'string') {
+            failure = runError['message']
+        }
+        if (payload['status'] === 'failed' && isNil(failure)) {
+            failure = 'the knowledge service reported a failed run'
+        }
+    }
+    const combined = finalText ?? deltas.join('')
+    return { answer: combined.trim().length === 0 ? null : combined.trim(), failure }
+}
+
 function isReadableTextContentType(contentType: string): boolean {
     return contentType === '' || READABLE_TEXT_CONTENT_TYPE.test(contentType)
 }
@@ -1485,6 +1564,7 @@ export const agentWorkerTools = {
     createWebTools,
     createSearchTools,
     createScrapeTools,
+    createPlatformKnowledgeTools,
     createImageTools,
     createEmailTools,
     wrapTestFlowGate,
@@ -1498,6 +1578,7 @@ export const agentWorkerTools = {
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
+    parsePlatformKnowledgeStream,
     truncateLargeResult,
     withToolTimeout,
     normalizePieceName,

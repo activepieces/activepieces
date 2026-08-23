@@ -6,6 +6,7 @@ export enum AiToolCapability {
     WEB_SEARCH = 'WEB_SEARCH',
     WEB_SCRAPING = 'WEB_SCRAPING',
     IMAGE_GENERATION = 'IMAGE_GENERATION',
+    PLATFORM_KNOWLEDGE = 'PLATFORM_KNOWLEDGE',
 }
 
 export enum AiToolProvider {
@@ -13,12 +14,14 @@ export enum AiToolProvider {
     FIRECRAWL = 'firecrawl',
     APIFY = 'apify',
     FAL = 'fal',
+    JENTIC = 'jentic',
 }
 
 export const PROVIDERS_BY_CAPABILITY: Record<AiToolCapability, AiToolProvider[]> = {
     [AiToolCapability.WEB_SEARCH]: [AiToolProvider.TAVILY],
     [AiToolCapability.WEB_SCRAPING]: [AiToolProvider.FIRECRAWL, AiToolProvider.APIFY],
     [AiToolCapability.IMAGE_GENERATION]: [AiToolProvider.FAL],
+    [AiToolCapability.PLATFORM_KNOWLEDGE]: [AiToolProvider.JENTIC],
 }
 
 export const AiToolAuthConfig = z.object({
@@ -77,5 +80,6 @@ export const GetEnabledAiToolsResponse = z.object({
     webSearch: ResolvedAiTool.optional(),
     webScraping: ResolvedAiTool.optional(),
     imageGeneration: ResolvedAiTool.optional(),
+    platformKnowledge: ResolvedAiTool.optional(),
 })
 export type GetEnabledAiToolsResponse = z.infer<typeof GetEnabledAiToolsResponse>

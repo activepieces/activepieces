@@ -66,6 +66,9 @@ export const aiToolConfigService = (_log: FastifyBaseLogger) => ({
                 case AiToolCapability.IMAGE_GENERATION:
                     result.imageGeneration = resolved
                     break
+                case AiToolCapability.PLATFORM_KNOWLEDGE:
+                    result.platformKnowledge = resolved
+                    break
             }
         }
         return result

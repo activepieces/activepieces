@@ -84,6 +84,10 @@ const TOOL_LABELS: Record<string, { active: string; done: string }> = {
   ap_generate_image: { active: 'Generating image', done: 'Generated image' },
   ap_run_code: { active: 'Writing code', done: 'Ran code' },
   ap_web_search: { active: 'Searching the web', done: 'Searched the web' },
+  ap_ask_platform_docs: {
+    active: 'Checking the Activepieces docs',
+    done: 'Checked the Activepieces docs',
+  },
   ap_fetch_url: { active: 'Reading the page', done: 'Read the page' },
   ap_scrape_url: { active: 'Reading the page', done: 'Read the page' },
   ap_explore_data: {

@@ -175,6 +175,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(webSearchActive ? agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
+                ...(aiTools.platformKnowledge ? agentWorkerTools.createPlatformKnowledgeTools({ platformKnowledge: aiTools.platformKnowledge, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),

@@ -2393,5 +2393,8 @@
   "Activate trial key": "Activate trial key",
   "Activate Trial Key": "Activate Trial Key",
   "Enter your trial key to unlock enterprise features.": "Enter your trial key to unlock enterprise features.",
-  "Enter your trial key": "Enter your trial key"
+  "Enter your trial key": "Enter your trial key",
+  "Platform Knowledge": "Platform Knowledge",
+  "Let the assistant answer questions about Activepieces itself — plans and pricing, what each edition includes, limits, and how platform features behave. When off, it says it cannot confirm those details instead of guessing.": "Let the assistant answer questions about Activepieces itself — plans and pricing, what each edition includes, limits, and how platform features behave. When off, it says it cannot confirm those details instead of guessing.",
+  "The Activepieces knowledge service. Answers product questions from the official documentation.": "The Activepieces knowledge service. Answers product questions from the official documentation."
 }

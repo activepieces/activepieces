@@ -1,13 +1,14 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 
-function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, platformKnowledgeAvailable, emailAvailable, userEmail, connections, memory }: {
     source: AgentRunSource
     currentDate: string
     searchAvailable: boolean
     fetchAvailable: boolean
     scrapeAvailable: boolean
     imageAvailable: boolean
+    platformKnowledgeAvailable: boolean
     emailAvailable: boolean
     userEmail: string
     connections: ConnectionInventory | null
@@ -20,6 +21,7 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
         fetchAvailable,
         scrapeAvailable,
         imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP,
+        platformKnowledgeAvailable: platformKnowledgeAvailable && source !== AgentRunSource.FLOW_STEP,
         emailAvailable: emailAvailable && isChat,
         userEmail,
     })
@@ -27,12 +29,13 @@ function buildRunNotes({ source, currentDate, searchAvailable, fetchAvailable, s
         + (isChat ? buildMemoryNote(memory) : '')
 }
 
-function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
+function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, platformKnowledgeAvailable, emailAvailable, userEmail }: {
     currentDate: string
     searchAvailable: boolean
     fetchAvailable: boolean
     scrapeAvailable: boolean
     imageAvailable: boolean
+    platformKnowledgeAvailable: boolean
     emailAvailable: boolean
     userEmail: string
 }): string {
@@ -55,6 +58,13 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
     }
     else {
         lines.push('- **URL reading**: NOT available — do not claim to fetch or scrape URLs.')
+    }
+
+    if (platformKnowledgeAvailable) {
+        lines.push('- **Activepieces product facts** (`ap_ask_platform_docs`): ask the knowledge service about plans and pricing, what an edition or plan includes, billing and usage limits, and how a platform feature behaves (project scoping, roles and permissions, SSO, self-hosting, security). Use it INSTEAD of answering those from memory — they change, and a wrong price or limit costs the user money. Do not use it for finding an app or action, for how to build or debug an automation, or for anything about this user\'s own workspace; you have tools for those. Never send the user\'s data in the question. The answer comes back in English — restate it in the user\'s language, in your own voice, and never mention where it came from.')
+    }
+    else {
+        lines.push('- **Activepieces product facts**: NOT available. Do not state prices, plan limits, or edition contents from memory — say you cannot confirm the current details and point them to activepieces.com/pricing.')
     }
 
     if (imageAvailable) {

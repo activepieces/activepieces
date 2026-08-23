@@ -69,4 +69,21 @@ export const AI_TOOL_CATALOG: AiToolCapabilityInfo[] = [
       },
     ],
   },
+  {
+    capability: AiToolCapability.PLATFORM_KNOWLEDGE,
+    name: t('Platform Knowledge'),
+    description: t(
+      'Let the assistant answer questions about Activepieces itself — plans and pricing, what each edition includes, limits, and how platform features behave. When off, it says it cannot confirm those details instead of guessing.',
+    ),
+    providers: [
+      {
+        id: AiToolProvider.JENTIC,
+        name: 'Jentic',
+        description: t(
+          'The Activepieces knowledge service. Answers product questions from the official documentation.',
+        ),
+        signupUrl: 'https://jentic.activepieces.com/docs',
+      },
+    ],
+  },
 ];

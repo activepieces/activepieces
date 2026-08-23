@@ -46,6 +46,7 @@ const DEFAULT_TOOL_ICON: LucideIcon = Wrench;
 const TOOL_ICONS: Record<string, LucideIcon> = {
   ap_research_pieces: Search,
   ap_web_search: Globe,
+  ap_ask_platform_docs: BookOpen,
   ap_explore_data: Search,
   ap_find_records: Search,
   ap_list_across_projects: List,

@@ -23,6 +23,7 @@ describe('chatToolBilling.isBillableChatToolCall', () => {
         expect(chatToolBilling.isBillableChatToolCall('ap_web_search')).toBe(true)
         expect(chatToolBilling.isBillableChatToolCall('ap_scrape_url')).toBe(true)
         expect(chatToolBilling.isBillableChatToolCall('ap_generate_image')).toBe(true)
+        expect(chatToolBilling.isBillableChatToolCall('ap_ask_platform_docs')).toBe(true)
     })
 
     it('bills chat-initiated ad-hoc executions (not separately metered)', () => {

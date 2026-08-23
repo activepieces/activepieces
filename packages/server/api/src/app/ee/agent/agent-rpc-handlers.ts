@@ -190,6 +190,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
+            platformKnowledgeAvailable: !isNil(aiTools.platformKnowledge),
             emailAvailable: emailEnabled,
             userEmail: runUserEmail,
             connections: inventoryResult && !inventoryResult.error

@@ -620,3 +620,62 @@ describe('agentWorkerTools', () => {
         })
     })
 })
+
+
+describe('parsePlatformKnowledgeStream', () => {
+    function sse(events: { event: string, data: unknown }[]): string {
+        return events.map(({ event, data }) => `id: evt_1\nevent: ${event}\ndata: ${JSON.stringify(data)}\n`).join('\n')
+    }
+
+    it('prefers final_text over the concatenated deltas', () => {
+        const body = sse([
+            { event: 'run.created', data: { run: 'run_1', status: 'running' } },
+            { event: 'text.delta', data: { delta: 'Team is ' } },
+            { event: 'text.delta', data: { delta: '$200/mo.' } },
+            { event: 'run.completed', data: { run: 'run_1', status: 'succeeded', final_text: 'Team is $200/mo, or $166/mo billed annually.' } },
+        ])
+
+        expect(agentWorkerTools.parsePlatformKnowledgeStream({ body })).toEqual({
+            answer: 'Team is $200/mo, or $166/mo billed annually.',
+            failure: null,
+        })
+    })
+
+    it('falls back to the deltas when the run never reports final_text', () => {
+        const body = sse([
+            { event: 'text.delta', data: { delta: 'Connections are ' } },
+            { event: 'text.delta', data: { delta: 'scoped per project.' } },
+        ])
+
+        expect(agentWorkerTools.parsePlatformKnowledgeStream({ body }).answer).toBe('Connections are scoped per project.')
+    })
+
+    it('reports a failed run instead of inventing an answer', () => {
+        const body = sse([
+            { event: 'run.created', data: { run: 'run_1', status: 'running' } },
+            { event: 'run.failed', data: { run: 'run_1', status: 'failed', error: { code: 'model_timeout', message: 'upstream timed out' } } },
+        ])
+
+        expect(agentWorkerTools.parsePlatformKnowledgeStream({ body })).toEqual({
+            answer: null,
+            failure: 'upstream timed out',
+        })
+    })
+
+    it('returns no answer for an empty or unparseable stream rather than throwing', () => {
+        expect(agentWorkerTools.parsePlatformKnowledgeStream({ body: '' }).answer).toBeNull()
+        expect(agentWorkerTools.parsePlatformKnowledgeStream({ body: 'data: not json\n\ndata: {broken' }).answer).toBeNull()
+    })
+
+    it('ignores the follow-up suggestion chips Jentic emits alongside the answer', () => {
+        const body = sse([
+            { event: 'text.delta', data: { delta: 'SSO is on Enterprise.' } },
+            { event: 'suggestions.generated', data: { run: 'run_1', suggestions: [{ label: 'Compare plans', prompt: 'Compare plans', category: 'compare' }] } },
+            { event: 'run.completed', data: { run: 'run_1', status: 'succeeded', final_text: 'SSO is on Enterprise.' } },
+        ])
+
+        const { answer } = agentWorkerTools.parsePlatformKnowledgeStream({ body })
+        expect(answer).toBe('SSO is on Enterprise.')
+        expect(answer).not.toContain('Compare plans')
+    })
+})

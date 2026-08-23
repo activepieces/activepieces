@@ -13,7 +13,7 @@ const CHAT_ONLY_TOOLS = [
     'ap_discover_action_auth',
 ]
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, platformKnowledgeAvailable: true, emailAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -75,7 +75,7 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, platformKnowledgeAvailable: false, emailAvailable: false,
             userEmail: 'owner@acme.com',
             connections: null,
             memory: { instructions: null, memories: [] },
@@ -84,5 +84,30 @@ describe('what each surface is told it can do', () => {
         expect(notes).toContain('NOT available')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
+    })
+})
+
+describe('platform knowledge', () => {
+    it('names the tool to a chat run when the platform configured it', () => {
+        expect(notesFor(AgentRunSource.CHAT)).toContain('ap_ask_platform_docs')
+    })
+
+    it('never names it to an unattended flow step, which is not granted it', () => {
+        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('ap_ask_platform_docs')
+    })
+
+    it('forbids answering prices from memory when the platform has not configured it', () => {
+        const notes = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            platformKnowledgeAvailable: false,
+            userEmail: 'owner@acme.com',
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+
+        expect(notes).not.toContain('ap_ask_platform_docs')
+        expect(notes).toContain('activepieces.com/pricing')
     })
 })
