@@ -69,6 +69,9 @@ function SidebarProvider({
   const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
+    if (hoverMode) {
+      return defaultOpen;
+    }
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(SIDEBAR_COOKIE_NAME);
       if (stored !== null) {
@@ -94,10 +97,12 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      if (!hoverMode) {
+        localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      }
     },
-    [setOpenProp, persistedOpen],
+    [setOpenProp, persistedOpen, hoverMode],
   );
 
   const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(

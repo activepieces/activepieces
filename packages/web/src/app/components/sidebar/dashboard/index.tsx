@@ -36,7 +36,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
-import { useCreditsUsage } from '@/features/billing';
+import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
@@ -58,7 +58,6 @@ import { STATIC_PAGES } from '../../global-search/static-pages';
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
-import { SidebarAiUsage } from '../sidebar-ai-usage';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
 
@@ -345,7 +344,7 @@ export function ProjectDashboardSidebar({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          {state === 'expanded' && <DelayedSidebarAiUsage />}
+          {state === 'expanded' && <DelayedSidebarUsageLimits />}
           <SidebarPlatformAdminLink />
           <SidebarUser />
         </SidebarFooter>
@@ -354,26 +353,19 @@ export function ProjectDashboardSidebar({
   );
 }
 
-function DelayedSidebarAiUsage() {
+function DelayedSidebarUsageLimits() {
   const [show, setShow] = useState(false);
-  const { usage, isUnlimited } = useCreditsUsage();
 
   useEffect(() => {
     const timer = setTimeout(() => setShow(true), 250);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!show || isNil(usage)) {
-    return null;
-  }
-
-  const used = usage.creditsUsed;
-  const limit =
-    isUnlimited || isNil(usage.creditsRemaining)
-      ? null
-      : used + usage.creditsRemaining;
-
-  return <SidebarAiUsage used={used} limit={limit} />;
+  return show ? (
+    <div>
+      <SidebarUsageLimits />
+    </div>
+  ) : null;
 }
 
 function SidebarPlatformAdminLink() {
