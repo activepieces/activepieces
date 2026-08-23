@@ -419,8 +419,8 @@ import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-A
 import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
 import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
 import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
-import { AddChatPersonalization1829000000000 } from './migration/postgres/1829000000000-AddChatPersonalization'
-import { BackfillChatPersonalizationForExistingUsers1830000000000 } from './migration/postgres/1830000000000-BackfillChatPersonalizationForExistingUsers'
+import { AddChatPersonalization1830000000000 } from './migration/postgres/1830000000000-AddChatPersonalization'
+import { BackfillChatPersonalizationForExistingUsers1831000000000 } from './migration/postgres/1831000000000-BackfillChatPersonalizationForExistingUsers'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -855,8 +855,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentIdToAgentConversation1826000000000,
         AddVersionToOtp1827000000000,
         DropChatbot1828000000000,
-        AddChatPersonalization1829000000000,
-        BackfillChatPersonalizationForExistingUsers1830000000000,
+        AddChatPersonalization1830000000000,
+        BackfillChatPersonalizationForExistingUsers1831000000000,
     ]
     return migrations
 }
