@@ -9,6 +9,7 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateContactAction = createAction({
     auth: hubspotAuth,
@@ -18,6 +19,7 @@ export const updateContactAction = createAction({
     description: 'Updates a contact in Hubspot.',
     audience: 'both',
     aiMetadata: { description: 'Update properties on an existing HubSpot contact identified by Contact ID; only the supplied fields are changed. Applying the same values repeatedly is idempotent. Use a find action to resolve the contact ID first, or a create action to add a new contact.', idempotent: true },
+    outputSchema: crmObjectOutputSchema,
     props: {
         contactId: Property.ShortText({
             displayName: 'Contact ID',

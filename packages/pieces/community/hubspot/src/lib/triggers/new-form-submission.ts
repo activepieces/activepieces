@@ -15,6 +15,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
+import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	formId: string;
@@ -131,6 +132,7 @@ export const newFormSubmissionTrigger = createTrigger({
 		description:
 			'Fires when the selected HubSpot form receives a submission. Each event represents one submission, with field values mapped to their human-readable form labels plus metadata such as submission timestamp, conversion ID, and page URL. Polls the form-integrations submissions API.',
 	},
+	outputSchema: newFormSubmissionTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		formId: formDropdown,
