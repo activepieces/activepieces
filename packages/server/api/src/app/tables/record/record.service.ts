@@ -519,14 +519,6 @@ type DeleteAllParams = {
     projectId: string
 }
 
-type TriggerWebhooksParams = {
-    projectId: string
-    tableId: string
-    eventType: TableWebhookEventType
-    data: Record<string, unknown>
-    logger: FastifyBaseLogger
-    authorization: string
-}
 type CountParams = {
     projectId: string
     tableId: string
