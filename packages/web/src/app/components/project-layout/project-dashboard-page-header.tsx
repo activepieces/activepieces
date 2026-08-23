@@ -180,6 +180,7 @@ export const ProjectDashboardPageHeader = ({
         title={titleContent}
         description={description}
         rightContent={rightContent}
+        showSidebarToggle={true}
         className="min-w-full"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />

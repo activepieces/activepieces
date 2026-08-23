@@ -233,7 +233,7 @@ export function ChatWithAIPage() {
         </div>
       )}
       <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-        <div className="shrink-0 flex items-center gap-1 px-4 py-3 border-b">
+        <div className="shrink-0 flex items-center gap-1.5 px-3 sm:px-6 py-3 border-b">
           <ConversationSidebarToggle
             pinned={effectivePinned}
             isMobile={isMobile}

@@ -569,7 +569,7 @@ const AgentEditorContent = () => {
         </div>
       </aside>
       <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-4">
+        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
           <button
             type="button"
             aria-label={

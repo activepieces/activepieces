@@ -1,5 +1,4 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 
@@ -27,7 +26,6 @@ import { cn } from '@/lib/utils';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const HOVER_SUPPRESS_RELEASE_MS = 350;
 const SIDEBAR_WIDTH = '14.375rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
@@ -62,16 +60,9 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
-  const [hoverSuppressed, setHoverSuppressedState] = React.useState(false);
-  const suppressTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
   const [keepElevatedZIndex, setKeepElevatedZIndex] = React.useState(false);
 
   const [_open, _setOpen] = React.useState(() => {
-    if (hoverMode) {
-      return defaultOpen;
-    }
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(SIDEBAR_COOKIE_NAME);
       if (stored !== null) {
@@ -82,8 +73,7 @@ function SidebarProvider({
   });
   const persistedOpen = openProp ?? _open;
 
-  const isHoverExpanded =
-    hoverMode && !persistedOpen && isHovered && !hoverSuppressed;
+  const isHoverExpanded = hoverMode && !persistedOpen && isHovered;
   const open = persistedOpen || isHoverExpanded;
   const shouldElevateZIndex = isHoverExpanded || keepElevatedZIndex;
 
@@ -97,12 +87,10 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      if (!hoverMode) {
-        localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-      }
+      localStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState));
+      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
-    [setOpenProp, persistedOpen, hoverMode],
+    [setOpenProp, persistedOpen],
   );
 
   const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -134,22 +122,6 @@ function SidebarProvider({
     }
   }, []);
 
-  const setHoverSuppressed = React.useCallback((suppressed: boolean) => {
-    if (suppressTimeoutRef.current) {
-      clearTimeout(suppressTimeoutRef.current);
-      suppressTimeoutRef.current = null;
-    }
-    setIsHovered(false);
-    if (suppressed) {
-      setHoverSuppressedState(true);
-      return;
-    }
-    suppressTimeoutRef.current = setTimeout(() => {
-      setHoverSuppressedState(false);
-      setIsHovered(false);
-    }, HOVER_SUPPRESS_RELEASE_MS);
-  }, []);
-
   React.useEffect(() => {
     return () => {
       if (hoverTimeoutRef.current) {
@@ -157,9 +129,6 @@ function SidebarProvider({
       }
       if (zIndexTimeoutRef.current) {
         clearTimeout(zIndexTimeoutRef.current);
-      }
-      if (suppressTimeoutRef.current) {
-        clearTimeout(suppressTimeoutRef.current);
       }
     };
   }, []);
@@ -198,7 +167,6 @@ function SidebarProvider({
       isHoverExpanded,
       shouldElevateZIndex,
       setHovered,
-      setHoverSuppressed,
     }),
     [
       state,
@@ -212,7 +180,6 @@ function SidebarProvider({
       hoverMode,
       isHoverExpanded,
       setHovered,
-      setHoverSuppressed,
     ],
   );
 
@@ -307,7 +274,7 @@ function Sidebar({
 
   return (
     <div
-      className="group/sidebar-edge group peer hidden text-sidebar-foreground md:block"
+      className="group peer hidden text-sidebar-foreground md:block"
       data-state={state}
       data-collapsible={state === 'collapsed' ? collapsible : ''}
       data-variant={variant}
@@ -375,7 +342,6 @@ function Sidebar({
           )}
           {children}
         </div>
-        {collapsible === 'icon' && <SidebarEdgeHandle />}
       </div>
     </div>
   );
@@ -408,28 +374,6 @@ function SidebarTrigger({
       )}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
-  );
-}
-
-function SidebarEdgeHandle() {
-  const { open, isHoverExpanded, setOpen } = useSidebar();
-  const pinnedOpen = open && !isHoverExpanded;
-
-  return (
-    <button
-      type="button"
-      data-slot="sidebar-edge-handle"
-      onClick={() => setOpen(!pinnedOpen)}
-      aria-label={pinnedOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-      title={pinnedOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-      className="absolute top-1/2 -right-3 z-30 hidden size-6 -translate-y-1/2 items-center justify-center rounded-full border bg-background text-muted-foreground opacity-0 shadow-sm transition-[opacity,color,background-color] hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none group-hover/sidebar-edge:opacity-100 md:flex"
-    >
-      {pinnedOpen ? (
-        <ChevronLeft className="size-3.5" />
-      ) : (
-        <ChevronRight className="size-3.5" />
-      )}
-    </button>
   );
 }
 
@@ -627,7 +571,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:font-normal data-active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center text-left text-sm ring-sidebar-ring outline-hidden transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:font-normal data-active:text-sidebar-accent-foreground data-open:hover:bg-sidebar-accent data-open:hover:text-sidebar-accent-foreground group-has-data-[sidebar=menu-action]/menu-item:pr-8   [&>span:last-child]:truncate [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -890,5 +834,4 @@ type SidebarContextProps = {
   isHoverExpanded: boolean;
   shouldElevateZIndex: boolean;
   setHovered: (hovered: boolean) => void;
-  setHoverSuppressed: (suppressed: boolean) => void;
 };

@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronsUpDown, LogOut, UserCogIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -35,13 +35,7 @@ export function SidebarUser() {
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
-  const { state, setHoverSuppressed } = useSidebar();
-
-  useEffect(() => {
-    setHoverSuppressed(accountSettingsOpen);
-    return () => setHoverSuppressed(false);
-  }, [accountSettingsOpen, setHoverSuppressed]);
-
+  const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
     return null;
@@ -58,7 +52,7 @@ export function SidebarUser() {
       <SidebarMenuItem>
         <DropdownMenu modal>
           <DropdownMenuTrigger asChild className="w-full">
-            <SidebarMenuButton className="h-10! group-data-[collapsible=icon]:h-10!">
+            <SidebarMenuButton className="h-10! pl-2! group-data-[collapsible=icon]:h-10! group-data-[collapsible=icon]:pl-2!">
               <div className="size-[18px] shrink-0 overflow-hidden flex items-center justify-center rounded-full">
                 <UserAvatar
                   className={cn('size-full object-cover', {

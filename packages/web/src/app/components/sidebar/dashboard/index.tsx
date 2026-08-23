@@ -159,7 +159,6 @@ export function ProjectDashboardSidebar({
     icon: SendIcon,
     hasPermission: true,
     isSubItem: false,
-    badge: t('Beta'),
     onClick: () => {
       window.dispatchEvent(new Event(chatUtils.newChatEvent));
     },
@@ -231,7 +230,7 @@ export function ProjectDashboardSidebar({
 
         <SidebarContent className="overflow-x-hidden">
           <SidebarGroup>
-            <div className="mb-1">
+            <div className="mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
               <GlobalSearchCommand />
             </div>
             <SidebarMenu>
