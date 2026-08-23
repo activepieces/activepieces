@@ -22,8 +22,7 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             log.warn({ error: String(bundleError), flow: { id: flow.id } }, 'Flow bundle fetch failed, falling back to resolve')
         }
         if (!isNil(bundle)) {
-            // tryFetch already wrote the compiled code to the Code Cache; nothing to compile or republish.
-            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, code: { kind: 'materialized' }, publishBundle: null }
+            return { kind: 'ready', flowVersion: bundle.flowVersion, pieces: bundle.pieces, codeSteps: extractCodeArtifacts(bundle.flowVersion), publishBundle: null }
         }
 
         const flowVersion = await flowCache(log, apiClient, basePath).getVersion({ flowVersionId: flow.versionId })
@@ -49,8 +48,7 @@ export const flowProvisioning = (log: ApLogger, apiClient: WorkerToApiContract, 
             kind: 'ready',
             flowVersion,
             pieces,
-            code: { kind: 'source', steps: extractCodeArtifacts(flowVersion) },
-            // The compiled code only exists on disk after install, so the caller invokes this afterwards.
+            codeSteps: extractCodeArtifacts(flowVersion),
             publishBundle: shouldPublish ? buildPublishBundle({ log, apiClient, basePath, flowVersion, pieces, projectId: flow.projectId, platformId }) : null,
         }
     },
@@ -168,11 +166,7 @@ type BuildMissingPieceFailedStepParams = {
 
 export type PublishBundle = () => Promise<void>
 
-export type ProvisionedCode =
-    | { kind: 'materialized' }
-    | { kind: 'source', steps: CodeArtifact[] }
-
 export type ResolvedFlow =
     | { kind: 'flow-not-found' }
     | { kind: 'disabled', failedStep?: FailedStep }
-    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], code: ProvisionedCode, publishBundle: PublishBundle | null }
+    | { kind: 'ready', flowVersion: FlowVersion, pieces: PiecePackage[], codeSteps: CodeArtifact[], publishBundle: PublishBundle | null }

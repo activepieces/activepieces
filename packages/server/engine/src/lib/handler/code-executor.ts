@@ -53,7 +53,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             // code-cache sink guard already block this upstream; this is the runtime backstop.
             throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
         }
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.ts`)
         const codeSandbox = await initCodeSandbox()
 
         const output = await codeSandbox.runCodeModule({

@@ -7,9 +7,9 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
-        const { child, denoPath } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb })
+        const { child, denoPath } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules })
         child.stdin.end(buildRunProgram({ body, marker }))
 
         return new Promise((resolve, reject) => {
@@ -91,21 +91,20 @@ function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string }> {
     const { childProcess, os } = await getNodeApis()
     const denoPath = resolveDenoPath()
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
         '--no-prompt',
-        // Skip config/workspace discovery from cwd (slow: it walks the
-        // monorepo) and forbid remote/npm imports — code is pre-bundled.
         '--no-config',
         '--no-lock',
         '--no-remote',
-        '--no-npm',
+        resolveNodeModules ? '--node-modules-dir=manual' : '--no-npm',
         `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
         ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
+        ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
         entry,
     ], {
         cwd,
@@ -202,6 +201,8 @@ type DenoProgramParams = {
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb?: number
+    allowReadPaths?: string[]
+    resolveNodeModules?: boolean
 }
 
 type SpawnDenoParams = {
@@ -209,6 +210,8 @@ type SpawnDenoParams = {
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb: number
+    allowReadPaths: string[]
+    resolveNodeModules: boolean
 }
 
 type NodeApis = {
