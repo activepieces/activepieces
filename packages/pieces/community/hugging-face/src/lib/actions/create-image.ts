@@ -7,6 +7,7 @@ import { huggingFaceAuth } from '../auth';
 export const createImage = createAction({
   audience: 'both',
   name: 'create_image',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Create Image',
   description:

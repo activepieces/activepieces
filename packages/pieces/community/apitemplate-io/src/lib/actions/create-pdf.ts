@@ -7,6 +7,7 @@ import { templateIdDropdown } from '../common/props';
 export const createPdf = createAction({
   auth: ApitemplateAuth,
   name: 'createPdf',
+  classification: 'WRITE',
   displayName: 'Create PDF',
   description: 'Creates a PDF from a template with provided data.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { huggingFaceAuth } from '../auth';
 export const textSummarization = createAction({
   audience: 'both',
   name: 'text_summarization',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Text Summarization',
   description:

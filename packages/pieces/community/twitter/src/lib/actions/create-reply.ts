@@ -13,6 +13,7 @@ export const createReply = createAction({
     auth: twitterAuth,
   
     name: 'create-reply',
+    classification: 'WRITE',
     displayName: 'Create Reply',
     description: 'Reply to a tweet.',
     audience: 'both',

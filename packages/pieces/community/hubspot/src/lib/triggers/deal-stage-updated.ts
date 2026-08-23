@@ -30,6 +30,7 @@ type Props = {
 };
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -129,6 +130,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

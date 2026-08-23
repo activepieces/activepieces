@@ -15,6 +15,7 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { newBlogArticleTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	articleState: string;
@@ -91,6 +92,7 @@ export const newBlogArticleTrigger = createTrigger({
 		description:
 			'Fires when a blog post is added to your HubSpot COS (CMS) blog. The configured article state (Published only, Draft only, or Both) determines which posts qualify; published posts are tracked by publish date and drafts by creation date. Each event represents one blog post with its full CMS metadata.',
 	},
+	outputSchema: newBlogArticleTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		articleState: Property.StaticDropdown({
