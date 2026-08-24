@@ -1,4 +1,5 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -200,14 +201,33 @@ async function searchPieces({ params, projectId, platformId, log }: {
     const overflowHint = totalCount > ENRICHED_CAP
         ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
         : ''
+    const { pieces: fitted, trimmed } = fitPiecesToBudget(enrichedPieces)
+    const trimHint = trimmed
+        ? ' Some action and trigger detail was left out to keep the response readable — look a piece up by name with pieceNames for its full list.'
+        : ''
     return {
-        content: [{ type: 'text', text: `✅ Found pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
+        content: [{ type: 'text', text: `✅ Found pieces${overflowHint}:\n${JSON.stringify(fitted)}${trimHint}` }],
         structuredContent: {
-            pieces: enrichedPieces,
-            count: enrichedPieces.length,
+            pieces: fitted,
+            count: fitted.length,
             totalCount,
+            trimmed,
         },
     }
+}
+
+// Ten pieces with every action and trigger spelled out runs to hundreds of kilobytes, which no
+// client can read: the caps above bound how many pieces come back, not how much each one carries.
+export function fitPiecesToBudget<T>(pieces: T[]): { pieces: T[], trimmed: boolean } {
+    if ((largeResultUtils.byteSizeOf(pieces) ?? 0) <= MAX_TOOL_RESULT_BYTES) {
+        return { pieces, trimmed: false }
+    }
+    const fitted = largeResultUtils.fitToBudget<T[]>({
+        value: pieces,
+        maxBytes: MAX_TOOL_RESULT_BYTES,
+        wrap: (json) => JSON.parse(json),
+    })
+    return isNil(fitted) ? { pieces: [], trimmed: true } : { pieces: fitted, trimmed: true }
 }
 
 function emptySearchResult(searchQuery: string | undefined): { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> } {
