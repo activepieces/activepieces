@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { deleteFileActionOutputSchema } from '../output-schemas';
 
 export const deleteFile = createAction({
   audience: 'both',
@@ -17,6 +18,7 @@ export const deleteFile = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteFileActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { fileId } = context.propsValue;
