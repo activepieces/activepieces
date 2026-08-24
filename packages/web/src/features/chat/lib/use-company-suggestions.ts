@@ -20,7 +20,7 @@ export function useCompanySuggestions({
   const remoteLookupAllowed = edition === ApEdition.CLOUD;
   const remoteQuery =
     remoteLookupAllowed && debouncedNeedle.length >= 2 ? debouncedNeedle : '';
-  const { data: companies } = useQuery({
+  const { data: companies, isPlaceholderData } = useQuery({
     queryKey: ['company-name-suggestions', remoteQuery],
     queryFn: () => fetchCompanies({ query: remoteQuery }),
     enabled: remoteQuery.length > 0,
@@ -31,7 +31,8 @@ export function useCompanySuggestions({
   return mergeSuggestions({
     needle,
     email,
-    companies: remoteQuery.length > 0 ? companies ?? [] : [],
+    companies:
+      remoteQuery.length > 0 && !isPlaceholderData ? companies ?? [] : [],
     limit,
   });
 }

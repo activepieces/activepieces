@@ -299,21 +299,22 @@ function ExampleCards({
   const handleToggle = () => setExpanded((value) => !value);
 
   return (
-    <div className="mt-16">
+    <div className={cn('mt-16', expanded && 'pb-16')}>
       {expanded ? (
         <motion.div
-          className="grid grid-cols-1 gap-4 sm:grid-cols-6"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {cards.map((card, i) => (
-            <div
+          {cards.map((card) => (
+            <UseCaseCard
               key={card.key}
-              className={i < 2 ? 'sm:col-span-3' : 'sm:col-span-2'}
-            >
-              <UseCaseCard card={card} delay={0} onSelect={onSuggestionClick} />
-            </div>
+              card={card}
+              delay={0}
+              onSelect={onSuggestionClick}
+              className="h-full w-full"
+            />
           ))}
         </motion.div>
       ) : (

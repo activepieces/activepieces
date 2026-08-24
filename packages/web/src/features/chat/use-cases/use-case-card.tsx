@@ -10,7 +10,12 @@ import {
   useCaseCardArt,
 } from './use-case-card-art';
 
-export function UseCaseCard({ card, delay, onSelect }: UseCaseCardProps) {
+export function UseCaseCard({
+  card,
+  delay,
+  onSelect,
+  className,
+}: UseCaseCardProps) {
   const theme = useCaseCardArt.resolveTheme(card.imageId);
   const interactive = !isNil(onSelect);
 
@@ -25,6 +30,7 @@ export function UseCaseCard({ card, delay, onSelect }: UseCaseCardProps) {
         interactive ? 'cursor-pointer' : 'cursor-default',
         useCaseCardArt.CARD_SURFACE,
         theme.ring,
+        className,
       )}
       onClick={interactive ? () => onSelect(card.prompt) : undefined}
       initial={{ opacity: 0, y: 12 }}
@@ -73,6 +79,7 @@ export type ResolvedUseCase = {
 };
 
 type UseCaseCardProps = {
+  className?: string;
   card: ResolvedUseCase;
   delay: number;
   onSelect?: (prompt: string) => void;
