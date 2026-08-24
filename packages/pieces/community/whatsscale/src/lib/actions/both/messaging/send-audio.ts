@@ -7,7 +7,7 @@ import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../c
 import { whatsscaleProps } from '../../../common/props';
 import { ChatType } from '../../../common/types';
 import { buildRecipientBody, RecipientType } from '../../../common/recipients';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 
 export const sendAudioManualAction = createAction({
   auth: whatsscaleAuth,
@@ -16,7 +16,7 @@ export const sendAudioManualAction = createAction({
   displayName: 'Send an Audio Message (By ID)',
   description: 'Send an audio file to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'both',
-  aiMetadata: { description: 'Sends an audio file to a recipient identified directly by ID rather than a builder dropdown. Sends as a native WhatsApp voice note by default; set voice to false to deliver it as a regular file attachment with an optional caption instead. Requires a directly downloadable audio URL. Not idempotent: each call delivers another audio message.', idempotent: false },
+  aiMetadata: { description: 'Sends an audio file to a recipient identified directly by ID rather than a builder dropdown. Sends as a native WhatsApp voice note by default; set voice to false to deliver it as a regular file attachment with an optional caption instead. Takes either a directly downloadable audio URL or a file from a previous step. Not idempotent: each call delivers another audio message.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -24,12 +24,13 @@ export const sendAudioManualAction = createAction({
       displayName: 'Recipient Type',
       description: 'Who this audio message is being sent to.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contact (Phone Number)', value: ChatType.CONTACT },
-          { label: 'Group', value: ChatType.GROUP },
-          { label: 'Channel', value: ChatType.CHANNEL },
-          { label: 'CRM Contact', value: ChatType.CRM_CONTACT },
+          { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
+          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
+          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
+          { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
     }),
@@ -39,9 +40,9 @@ export const sendAudioManualAction = createAction({
         'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
-    audioUrl: Property.ShortText({
-      displayName: 'Audio URL',
-      description: 'Direct URL to the audio file.',
+    audioUrl: Property.File({
+      displayName: 'Audio',
+      description: 'A direct URL to the audio, or a file from a previous step.',
       required: true,
     }),
     voice: Property.Checkbox({
@@ -52,7 +53,7 @@ export const sendAudioManualAction = createAction({
     }),
     filename: Property.ShortText({
       displayName: 'Filename',
-      description: 'Optional filename. Auto-detected from URL if not provided.',
+      description: 'Optional filename. Auto-detected from the file if not provided.',
       required: false,
     }),
     caption: Property.ShortText({
@@ -65,13 +66,13 @@ export const sendAudioManualAction = createAction({
     const { session, chatType, recipient, audioUrl, voice, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, audioUrl, 'audio');
+    const preparedUrl = await prepareMediaFile({ apiKey, file: audioUrl, files: context.files, mediaType: 'audio' });
 
     const recipientBody = buildRecipientBody(
       RecipientType.MANUAL,
       session,
       recipient,
-      chatType as ChatType,
+      chatType,
     );
 
     const body: Record<string, unknown> = { ...recipientBody, file: preparedUrl };

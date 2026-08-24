@@ -7,7 +7,7 @@ import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../c
 import { whatsscaleProps } from '../../../common/props';
 import { ChatType } from '../../../common/types';
 import { buildRecipientBody, RecipientType } from '../../../common/recipients';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 import { pollJob } from '../../../common/poll-job';
 
 export const sendDocumentManualAction = createAction({
@@ -17,7 +17,7 @@ export const sendDocumentManualAction = createAction({
   displayName: 'Send a Document (By ID)',
   description: 'Send a document to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends a document/file to a recipient identified directly by ID rather than a builder dropdown, with an optional display filename and caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Requires a directly downloadable document URL; the send completes asynchronously. Not idempotent: each call delivers another document.', idempotent: false },
+  aiMetadata: { description: 'Sends a document/file to a recipient identified directly by ID rather than a builder dropdown, with an optional display filename and caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable document URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another document.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -25,12 +25,13 @@ export const sendDocumentManualAction = createAction({
       displayName: 'Recipient Type',
       description: 'Who this document is being sent to.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contact (Phone Number)', value: ChatType.CONTACT },
-          { label: 'Group', value: ChatType.GROUP },
-          { label: 'Channel', value: ChatType.CHANNEL },
-          { label: 'CRM Contact', value: ChatType.CRM_CONTACT },
+          { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
+          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
+          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
+          { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
     }),
@@ -40,14 +41,14 @@ export const sendDocumentManualAction = createAction({
         'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
-    documentUrl: Property.ShortText({
-      displayName: 'Document URL',
-      description: 'Direct URL to the document file.',
+    documentUrl: Property.File({
+      displayName: 'Document',
+      description: 'A direct URL to the document, or a file from a previous step.',
       required: true,
     }),
     filename: Property.ShortText({
       displayName: 'Filename',
-      description: 'Optional filename shown in WhatsApp (e.g. report.pdf). Auto-detected from URL if not provided.',
+      description: 'Optional filename shown in WhatsApp (e.g. report.pdf). Auto-detected from the file if not provided.',
       required: false,
     }),
     caption: Property.ShortText({
@@ -60,13 +61,13 @@ export const sendDocumentManualAction = createAction({
     const { session, chatType, recipient, documentUrl, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, documentUrl, 'document');
+    const preparedUrl = await prepareMediaFile({ apiKey, file: documentUrl, files: context.files, mediaType: 'document' });
 
     const recipientBody = buildRecipientBody(
       RecipientType.MANUAL,
       session,
       recipient,
-      chatType as ChatType,
+      chatType,
     );
 
     const body: Record<string, unknown> = {

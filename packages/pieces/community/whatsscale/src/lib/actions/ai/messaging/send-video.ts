@@ -7,7 +7,7 @@ import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../c
 import { whatsscaleProps } from '../../../common/props';
 import { ChatType } from '../../../common/types';
 import { buildRecipientBody, RecipientType } from '../../../common/recipients';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 import { pollJob } from '../../../common/poll-job';
 
 export const sendVideoManualAction = createAction({
@@ -17,7 +17,7 @@ export const sendVideoManualAction = createAction({
   displayName: 'Send a Video (By ID)',
   description: 'Send a video to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends a video to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Requires a directly downloadable video URL; the send completes asynchronously. Not idempotent: each call delivers another video.', idempotent: false },
+  aiMetadata: { description: 'Sends a video to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable video URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another video.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -25,12 +25,13 @@ export const sendVideoManualAction = createAction({
       displayName: 'Recipient Type',
       description: 'Who this video is being sent to.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contact (Phone Number)', value: ChatType.CONTACT },
-          { label: 'Group', value: ChatType.GROUP },
-          { label: 'Channel', value: ChatType.CHANNEL },
-          { label: 'CRM Contact', value: ChatType.CRM_CONTACT },
+          { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
+          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
+          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
+          { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
     }),
@@ -40,9 +41,9 @@ export const sendVideoManualAction = createAction({
         'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
-    videoUrl: Property.ShortText({
-      displayName: 'Video URL',
-      description: 'Direct URL to the video file.',
+    videoUrl: Property.File({
+      displayName: 'Video',
+      description: 'A direct URL to the video, or a file from a previous step.',
       required: true,
     }),
     caption: Property.ShortText({
@@ -55,13 +56,13 @@ export const sendVideoManualAction = createAction({
     const { session, chatType, recipient, videoUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, videoUrl);
+    const preparedUrl = await prepareMediaFile({ apiKey, file: videoUrl, files: context.files, mediaType: 'video' });
 
     const recipientBody = buildRecipientBody(
       RecipientType.MANUAL,
       session,
       recipient,
-      chatType as ChatType,
+      chatType,
     );
 
     const sendResponse = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendVideo', {

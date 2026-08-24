@@ -5,7 +5,7 @@ import { whatsscaleAuth } from '../../../auth';
 import { whatsscaleClient } from '../../../common/client';
 import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../common/messaging';
 import { whatsscaleProps } from '../../../common/props';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 import { pollJob } from '../../../common/poll-job';
 
 export const sendVideoToChannelAction = createAction({
@@ -15,14 +15,14 @@ export const sendVideoToChannelAction = createAction({
   displayName: 'Send a Video to a Channel',
   description: 'Broadcast a video to a WhatsApp Channel selected from the dropdown.',
   audience: 'human',
-  aiMetadata: { description: 'Broadcasts a video to a WhatsApp Channel whose ID is chosen from the session channel list, with an optional caption. Pick this for one-to-many channel broadcasts rather than the contact/group/CRM variants used for direct chats. Requires a directly downloadable video URL. Not idempotent: each call posts another video to the channel.', idempotent: false },
+  aiMetadata: { description: 'Broadcasts a video to a WhatsApp Channel whose ID is chosen from the session channel list, with an optional caption. Pick this for one-to-many channel broadcasts rather than the contact/group/CRM variants used for direct chats. Takes either a directly downloadable video URL or a file from a previous step. Not idempotent: each call posts another video to the channel.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
     channel: whatsscaleProps.channel,
-    videoUrl: Property.ShortText({
-      displayName: 'Video URL',
-      description: 'Direct URL to the video file.',
+    videoUrl: Property.File({
+      displayName: 'Video',
+      description: 'A direct URL to the video, or a file from a previous step.',
       required: true,
     }),
     caption: Property.ShortText({
@@ -35,7 +35,7 @@ export const sendVideoToChannelAction = createAction({
     const { session, channel, videoUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, videoUrl);
+    const preparedUrl = await prepareMediaFile({ apiKey, file: videoUrl, files: context.files, mediaType: 'video' });
 
     const sendResponse = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendVideo', {
       session,

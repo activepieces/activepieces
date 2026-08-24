@@ -5,7 +5,7 @@ import { whatsscaleAuth } from '../../../auth';
 import { whatsscaleClient } from '../../../common/client';
 import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../common/messaging';
 import { whatsscaleProps } from '../../../common/props';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 import { pollJob } from '../../../common/poll-job';
 
 export const sendVideoToContactAction = createAction({
@@ -15,14 +15,14 @@ export const sendVideoToContactAction = createAction({
   displayName: 'Send a Video to a Contact',
   description: 'Send a video to a WhatsApp contact selected from the dropdown.',
   audience: 'human',
-  aiMetadata: { description: 'Sends a video to a WhatsApp contact whose chat ID is chosen from the session contact list, with an optional caption. Pick this when the recipient is a known direct contact; use the manual-entry video action for a raw phone number, or the group/CRM/channel variants for other recipient types. Requires a directly downloadable video URL. Not idempotent: each call delivers another video.', idempotent: false },
+  aiMetadata: { description: 'Sends a video to a WhatsApp contact whose chat ID is chosen from the session contact list, with an optional caption. Pick this when the recipient is a known direct contact; use the manual-entry video action for a raw phone number, or the group/CRM/channel variants for other recipient types. Takes either a directly downloadable video URL or a file from a previous step. Not idempotent: each call delivers another video.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
     contact: whatsscaleProps.contact,
-    videoUrl: Property.ShortText({
-      displayName: 'Video URL',
-      description: 'Direct URL to the video file.',
+    videoUrl: Property.File({
+      displayName: 'Video',
+      description: 'A direct URL to the video, or a file from a previous step.',
       required: true,
     }),
     caption: Property.ShortText({
@@ -35,7 +35,7 @@ export const sendVideoToContactAction = createAction({
     const { session, contact, videoUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, videoUrl);
+    const preparedUrl = await prepareMediaFile({ apiKey, file: videoUrl, files: context.files, mediaType: 'video' });
 
     const sendResponse = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendVideo', {
       session,

@@ -7,7 +7,7 @@ import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../c
 import { whatsscaleProps } from '../../../common/props';
 import { ChatType } from '../../../common/types';
 import { buildRecipientBody, RecipientType } from '../../../common/recipients';
-import { prepareFile } from '../../../common/prepare-file';
+import { prepareMediaFile } from '../../../common/prepare-file';
 
 export const sendImageManualAction = createAction({
   auth: whatsscaleAuth,
@@ -16,7 +16,7 @@ export const sendImageManualAction = createAction({
   displayName: 'Send an Image (By ID)',
   description: 'Send an image to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends an image to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Requires a directly downloadable image URL. Not idempotent: each call delivers another image.', idempotent: false },
+  aiMetadata: { description: 'Sends an image to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable image URL or a file from a previous step. Not idempotent: each call delivers another image.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -24,12 +24,13 @@ export const sendImageManualAction = createAction({
       displayName: 'Recipient Type',
       description: 'Who this image is being sent to.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contact (Phone Number)', value: ChatType.CONTACT },
-          { label: 'Group', value: ChatType.GROUP },
-          { label: 'Channel', value: ChatType.CHANNEL },
-          { label: 'CRM Contact', value: ChatType.CRM_CONTACT },
+          { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
+          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
+          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
+          { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
     }),
@@ -39,9 +40,9 @@ export const sendImageManualAction = createAction({
         'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
-    imageUrl: Property.ShortText({
-      displayName: 'Image URL',
-      description: 'Direct URL to the image file.',
+    imageUrl: Property.File({
+      displayName: 'Image',
+      description: 'A direct URL to the image, or a file from a previous step.',
       required: true,
     }),
     caption: Property.ShortText({
@@ -54,13 +55,13 @@ export const sendImageManualAction = createAction({
     const { session, chatType, recipient, imageUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
 
-    const preparedUrl = await prepareFile(apiKey, imageUrl);
+    const preparedUrl = await prepareMediaFile({ apiKey, file: imageUrl, files: context.files, mediaType: 'image' });
 
     const recipientBody = buildRecipientBody(
       RecipientType.MANUAL,
       session,
       recipient,
-      chatType as ChatType,
+      chatType,
     );
 
     const response = await whatsscaleClient(apiKey, HttpMethod.POST, '/api/sendImage', {
