@@ -29,7 +29,21 @@ Attach none and it can only talk.
 
 You attach individual actions, not whole apps. An agent given **Send message** can post to Slack and nothing else.
 
-Pin the inputs that have to be exact and leave the rest to the agent. See [Agents in Flows](/agents/in-flows).
+Each input on that action is one of three modes, so you pin what has to be exact and leave the rest to the agent.
+
+<CardGroup cols={3}>
+  <Card title="Let agent decide" icon="wand-magic-sparkles" color="#8143E3">
+    It writes the value.
+  </Card>
+  <Card title="Set value myself" icon="thumbtack" color="#0EA5E9">
+    You pin it.
+  </Card>
+  <Card title="Leave empty" icon="ban" color="#64748B">
+    Nothing is sent.
+  </Card>
+</CardGroup>
+
+Pin the Slack channel, let the agent write the message.
 
 ## Flow tools
 
