@@ -58,7 +58,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
         if (personalize && !hasCompanyInput && !isNil(companyRow)
             && (!isNil(companyRow.domain) || !isNil(companyRow.companyText))) {
-            return this.upsertUserScope({ platformId, userId, companyRow })
+            return this.upsertUserScope({ platformId, userId, companyRow, role })
         }
 
         let domain: string | null
@@ -163,7 +163,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         return this.getEffectiveView({ platformId, userId })
     },
 
-    async upsertUserScope({ platformId, userId, companyRow }: { platformId: string, userId: string, companyRow: ChatPersonalization }): Promise<ChatPersonalizationView> {
+    async upsertUserScope({ platformId, userId, companyRow, role }: { platformId: string, userId: string, companyRow: ChatPersonalization, role: string | null }): Promise<ChatPersonalizationView> {
         const researchToken = apId()
         const userRow = await findRow({ platformId, userId })
         if (!isNil(userRow)) {
@@ -172,7 +172,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             if (terminal || fresh) {
                 return this.getEffectiveView({ platformId, userId })
             }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, role })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -181,6 +181,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 userId,
                 domain: companyRow.domain,
                 companyText: companyRow.companyText,
+                role,
                 status: ChatPersonalizationStatus.PENDING,
                 researchToken,
                 profile: null,
@@ -201,7 +202,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             scope: ChatPersonalizationScope.USER,
             website: null,
             companyText: null,
-            role: null,
+            role,
             researchToken,
             log,
         })
@@ -248,6 +249,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             log.info({ platform: { id: platformId }, user: { id: userId }, scope }, '[chatPersonalization] Claim lost, duplicate research job exits')
             return { claimed: false }
         }
+        const userRow = scope === ChatPersonalizationScope.USER ? await findRow({ platformId, userId }) : null
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
             agentHelpers.resolveChatProvider({ platformId, log }),
             userService(log).getMetaInformation({ id: userId }),
@@ -268,7 +270,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             platformName: platform.name,
             website: companyRow?.domain ?? null,
             companyText: companyRow?.companyText ?? null,
-            role: companyRow?.role ?? null,
+            role: userRow?.role ?? companyRow?.role ?? null,
             companyProfile: (companyRow?.status === ChatPersonalizationStatus.READY ? companyRow.profile : null) ?? null,
             webSearch,
         }
