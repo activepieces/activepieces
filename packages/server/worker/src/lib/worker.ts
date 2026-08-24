@@ -138,7 +138,7 @@ export const worker = {
             apiClient,
             getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
             log: logger,
-        }))
+        }), logger)
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
