@@ -32,9 +32,15 @@ Both live in the **Knowledge Base** section of the agent editor, below Agent Too
 If a flow already writes the data, use a table. The agent then reads what's true right now, with nothing to re-upload.
 </Tip>
 
-## Keep it out of the instructions
+## Why not just paste it in
 
-You can paste a product list into an agent's instructions. It works until the list changes, and then you have two versions of the truth and one of them is wrong.
+Two reasons, and the first is size.
+
+Everything in an agent's instructions has to fit the model's context window, and all of it is read on **every single run**. That caps you at a few pages, and makes every run slower and more expensive whether the content was relevant or not.
+
+Knowledge works the other way round. A file is split into chunks and indexed, and the agent searches it only when it needs something, pulling back the passages that match. A three-hundred-page policy manual costs nothing until a question actually touches it.
+
+The second reason is freshness. A product list pasted into instructions works until the list changes, and then you have two versions of the truth and one of them is wrong.
 
 Instructions are for **how to behave**. Knowledge is for **what's true**.
 
