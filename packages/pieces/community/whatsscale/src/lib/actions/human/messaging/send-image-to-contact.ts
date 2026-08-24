@@ -30,6 +30,10 @@ export const sendImageToContactAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'contact'] },
+    { key: 'content', display: 'section' as const, label: 'Image', props: ['imageUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, contact, imageUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

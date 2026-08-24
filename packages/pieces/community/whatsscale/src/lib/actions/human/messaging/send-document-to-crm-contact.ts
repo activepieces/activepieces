@@ -36,6 +36,10 @@ export const sendDocumentToCrmContactAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'crmContact'] },
+    { key: 'content', display: 'section' as const, label: 'Document', props: ['documentUrl', 'filename', 'caption'] },
+  ],
   async run(context) {
     const { session, crmContact, documentUrl, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

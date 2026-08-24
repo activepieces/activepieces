@@ -31,6 +31,10 @@ export const sendVideoToChannelAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'channel'] },
+    { key: 'content', display: 'section' as const, label: 'Video', props: ['videoUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, channel, videoUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

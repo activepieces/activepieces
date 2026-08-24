@@ -30,6 +30,10 @@ export const sendImageToGroupAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'group'] },
+    { key: 'content', display: 'section' as const, label: 'Image', props: ['imageUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, group, imageUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

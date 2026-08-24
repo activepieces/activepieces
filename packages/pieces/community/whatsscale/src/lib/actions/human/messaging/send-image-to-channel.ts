@@ -30,6 +30,10 @@ export const sendImageToChannelAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'channel'] },
+    { key: 'content', display: 'section' as const, label: 'Image', props: ['imageUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, channel, imageUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

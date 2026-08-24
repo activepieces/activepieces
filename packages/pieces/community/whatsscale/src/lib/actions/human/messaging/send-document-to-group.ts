@@ -36,6 +36,10 @@ export const sendDocumentToGroupAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'group'] },
+    { key: 'content', display: 'section' as const, label: 'Document', props: ['documentUrl', 'filename', 'caption'] },
+  ],
   async run(context) {
     const { session, group, documentUrl, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

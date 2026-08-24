@@ -36,6 +36,10 @@ export const sendDocumentToContactAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'contact'] },
+    { key: 'content', display: 'section' as const, label: 'Document', props: ['documentUrl', 'filename', 'caption'] },
+  ],
   async run(context) {
     const { session, contact, documentUrl, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

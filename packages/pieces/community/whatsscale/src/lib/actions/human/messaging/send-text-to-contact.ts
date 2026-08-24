@@ -26,6 +26,10 @@ export const sendTextToContactAction = createAction({
       description: 'The text message to send',
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'contact'] },
+    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+  ],
   async run(context) {
     const { session, contact, text } = context.propsValue;
     const auth = context.auth.secret_text;

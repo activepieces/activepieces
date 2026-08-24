@@ -57,6 +57,10 @@ export const sendDocumentManualAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'chatType', 'recipient'] },
+    { key: 'content', display: 'section' as const, label: 'Document', props: ['documentUrl', 'filename', 'caption'] },
+  ],
   async run(context) {
     const { session, chatType, recipient, documentUrl, filename, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

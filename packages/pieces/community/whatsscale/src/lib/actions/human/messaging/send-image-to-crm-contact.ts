@@ -30,6 +30,10 @@ export const sendImageToCrmContactAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'crmContact'] },
+    { key: 'content', display: 'section' as const, label: 'Image', props: ['imageUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, crmContact, imageUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;

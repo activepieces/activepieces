@@ -31,6 +31,10 @@ export const sendVideoToContactAction = createAction({
       required: false,
     }),
   },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'contact'] },
+    { key: 'content', display: 'section' as const, label: 'Video', props: ['videoUrl', 'caption'] },
+  ],
   async run(context) {
     const { session, contact, videoUrl, caption } = context.propsValue;
     const apiKey = context.auth.secret_text;
