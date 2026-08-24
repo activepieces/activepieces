@@ -164,7 +164,20 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             })
         }
 
-        await agentHelpers.assertRunProviderConfigured({ platformId, log, ...spreadIfDefined('provider', agentConfig?.provider ?? undefined) })
+        // Resolve the project the run will adopt, so admission asks about the same credentials the
+        // worker will resolve. A brand-new conversation carries no project until the first turn
+        // persists one, and checking platform-wide there would admit a message no key can serve.
+        const runProjectId = agentHelpers.selectRunProject({
+            conversationProjectId: conversation.projectId ?? null,
+            projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
+        })
+        await agentHelpers.assertRunProviderConfigured({
+            platformId,
+            log,
+            scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }),
+            ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
+            ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
+        })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
         await jobQueue(runLog).add({
@@ -188,6 +201,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                     structuredOutput: agentConfig.structuredOutput,
                     maxSteps: agentConfig.maxSteps,
                     ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
+                    ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
                     promptOverride: { system: agentConfig.instructions },
                 }),
             },

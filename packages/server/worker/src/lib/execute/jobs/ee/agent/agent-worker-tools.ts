@@ -370,7 +370,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
 }
 
 function createLocalTools({ onSetProjectContext, projects }: {
-    onSetProjectContext: (projectId: string | null) => Promise<void>
+    onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
     projects: Array<{ id: string, displayName: string, type: string }>
 }): ToolSet {
     const availableProjectIds = new Set(projects.map((p) => p.id))
@@ -386,7 +386,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
                     return { success: false, error: `Project ${input.projectId} is not accessible.` }
                 }
                 const project = projects.find((p) => p.id === input.projectId)
-                await onSetProjectContext(input.projectId)
+                const outcome = await onSetProjectContext(input.projectId)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: `Now working in project ${project?.displayName ?? input.projectId}.` }
             },
         }),
@@ -395,7 +398,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
             description: 'Clear project context. Useful when working across multiple projects.',
             inputSchema: z.object({}),
             execute: async () => {
-                await onSetProjectContext(null)
+                const outcome = await onSetProjectContext(null)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: 'Project context cleared.' }
             },
         }),
