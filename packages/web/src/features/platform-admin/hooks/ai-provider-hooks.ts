@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AIProviderAuthConfig,
+  AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
@@ -15,6 +16,10 @@ export const aiProviderKeys = {
   configs: ['ai-provider-configs'] as const,
   forProject: (projectId: string | null) =>
     ['ai-providers', projectId] as const,
+  configModels: (configId?: string) =>
+    configId === undefined
+      ? (['ai-provider-config-models'] as const)
+      : (['ai-provider-config-models', configId] as const),
 };
 
 export const aiProviderQueries = {
@@ -22,6 +27,7 @@ export const aiProviderQueries = {
     useQuery({
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
+      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
   useProjectAiProviders: () => {
     const projectId = authenticationSession.getProjectId();
@@ -42,8 +48,29 @@ export const aiProviderQueries = {
 export const aiProviderMutations = {
   useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
-      mutationFn: (provider: string) => aiProviderApi.delete(provider),
+      mutationFn: (providerId: string) => aiProviderApi.delete(providerId),
       onSuccess,
+    });
+  },
+  useUpdateAiProvider: ({
+    onSuccess,
+    onError,
+  }: {
+    onSuccess: () => void;
+    onError?: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => void;
+  }) => {
+    return useMutation({
+      mutationFn: ({
+        providerId,
+        request,
+      }: {
+        providerId: string;
+        request: UpdateAIProviderRequest;
+      }) => aiProviderApi.update(providerId, request),
+      onSuccess,
+      onError,
     });
   },
   useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {
@@ -65,17 +92,19 @@ export const aiProviderMutations = {
     onError,
   }: UpsertAiProviderOptions) => {
     return useMutation({
-      mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
+      mutationFn: async (
+        data: CreateAIProviderRequest,
+      ): Promise<AIProviderWithoutSensitiveData | undefined> => {
         if (providerId) {
           const updateData: UpdateAIProviderRequest = {
             displayName: data.displayName,
             config: data.config,
             ...(hasAnyAuthFieldFilled(data.auth) ? { auth: data.auth } : {}),
           };
-          return aiProviderApi.update(providerId, updateData);
-        } else {
-          return aiProviderApi.upsert(data);
+          await aiProviderApi.update(providerId, updateData);
+          return undefined;
         }
+        return aiProviderApi.upsert(data);
       },
       onSuccess,
       onError,
@@ -96,7 +125,7 @@ export const hasAnyAuthFieldFilled = (
 
 type UpsertAiProviderOptions = {
   providerId?: string;
-  onSuccess: () => void;
+  onSuccess: (created?: AIProviderWithoutSensitiveData) => void;
   onError: (
     error: AxiosError<{ message?: string; params?: { message: string } }>,
   ) => void;
