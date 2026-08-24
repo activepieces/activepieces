@@ -283,6 +283,51 @@ async function createAgentFromChat({ toolInput, projectId, userId, log }: {
     }
 }
 
+async function updateAgentFromChat({ toolInput, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const agentId = isString(toolInput.agentId) ? toolInput.agentId : ''
+    if (agentId.length === 0) {
+        return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
+    }
+    const displayName = isString(toolInput.displayName) ? toolInput.displayName.trim() : undefined
+    const description = isString(toolInput.description) ? toolInput.description.trim() : undefined
+    const instructions = isString(toolInput.instructions) ? toolInput.instructions.trim() : undefined
+    if (isNil(displayName) && isNil(description) && isNil(instructions)) {
+        return { error: 'Nothing to change. Pass a new displayName, description or instructions.' }
+    }
+    const { data: existing, error } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
+    if (!isNil(error) || isNil(existing)) {
+        return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
+    }
+    const updated = await agentService(log).update({
+        id: agentId,
+        projectId,
+        userId,
+        request: {
+            ...spreadIfDefined('displayName', displayName),
+            ...spreadIfDefined('description', description),
+            ...(isNil(instructions) ? {} : { draft: { ...existing.draft, instructions } }),
+        },
+    })
+    return {
+        agentId: updated.id,
+        displayName: updated.displayName,
+        changed: [
+            ...(isNil(displayName) ? [] : ['displayName']),
+            ...(isNil(description) ? [] : ['description']),
+            ...(isNil(instructions) ? [] : ['instructions']),
+        ],
+        url: `/projects/${projectId}/agents/${updated.id}`,
+        note: isNil(updated.published)
+            ? 'Saved to the draft. This agent is not published, so nothing runs it yet.'
+            : 'Saved to the draft. Flows and chats keep running the published version until the user publishes this change — tell them that, and link them to the url above.',
+    }
+}
+
 async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     userId: string
     projectId: string
@@ -386,6 +431,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
         }
         case 'ap_list_agents':
+        case 'ap_update_agent':
         case 'ap_create_agent': {
             const unavailable = await agentsUnavailable({ platformId, log })
             if (!isNil(unavailable)) {
@@ -403,11 +449,15 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (toolName === 'ap_list_agents') {
                 const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: 50 })
                 return data.map((agent) => ({
+                    agentId: agent.id,
                     displayName: agent.displayName,
                     description: agent.description,
                     published: agent.isPublished,
                     toolCount: agent.toolCount,
                 }))
+            }
+            if (toolName === 'ap_update_agent') {
+                return updateAgentFromChat({ toolInput, projectId, userId, log })
             }
             return createAgentFromChat({ toolInput, projectId, userId, log })
         }

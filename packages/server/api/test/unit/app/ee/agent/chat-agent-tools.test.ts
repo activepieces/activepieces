@@ -9,6 +9,8 @@ const {
     mockCheck,
     mockCreate,
     mockList,
+    mockUpdate,
+    mockGetOneOrThrow,
 } = vi.hoisted(() => ({
     mockGetUserProjects: vi.fn(),
     mockGetConversationOrThrow: vi.fn(),
@@ -17,6 +19,8 @@ const {
     mockCheck: vi.fn(),
     mockCreate: vi.fn(),
     mockList: vi.fn(),
+    mockUpdate: vi.fn(),
+    mockGetOneOrThrow: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
@@ -40,7 +44,7 @@ vi.mock('../../../../../src/app/mcp/mcp-permissions', () => ({
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-service', () => ({
-    agentService: () => ({ create: mockCreate, list: mockList }),
+    agentService: () => ({ create: mockCreate, list: mockList, update: mockUpdate, getOneOrThrow: mockGetOneOrThrow }),
 }))
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -69,6 +73,8 @@ describe('the chat tools that build agents', () => {
         mockCheck.mockReturnValue(null)
         mockCreate.mockResolvedValue({ id: 'agent-1', displayName: CREATE_INPUT.displayName })
         mockList.mockResolvedValue({ data: [] })
+        mockGetOneOrThrow.mockResolvedValue({ id: 'agent-1', draft: { instructions: 'Old brief.', tools: [], maxSteps: 20 }, published: null })
+        mockUpdate.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: null })
     })
 
     it('refuses when the instance has agents turned off, so chat cannot offer a surface nobody has', async () => {
@@ -130,6 +136,49 @@ describe('the chat tools that build agents', () => {
 
         expect(result).toEqual({ error: expect.stringContaining('name and instructions') })
         expect(mockCreate).not.toHaveBeenCalled()
+    })
+
+    it('needs write permission to change one', async () => {
+        mockCheck.mockReturnValue({ content: [{ type: 'text', text: 'no permission' }] })
+
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.' })
+
+        expect(mockCheck).toHaveBeenCalledWith(Permission.WRITE_AGENT, 'ap_update_agent')
+        expect(result).toEqual({ content: [{ type: 'text', text: 'no permission' }] })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('replaces the instructions while keeping the rest of the draft', async () => {
+        await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.' })
+
+        const request = mockUpdate.mock.calls[0]?.[0]?.request
+        expect(request.draft).toEqual({ instructions: 'New brief.', tools: [], maxSteps: 20 })
+        expect(request.displayName).toBeUndefined()
+    })
+
+    it('says a published agent keeps running its published version until someone publishes the change', async () => {
+        mockGetOneOrThrow.mockResolvedValue({ id: 'agent-1', draft: { instructions: 'Old brief.', tools: [] }, published: { instructions: 'Old brief.' } })
+        mockUpdate.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: { instructions: 'Old brief.' } })
+
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.' })
+
+        expect(result).toEqual(expect.objectContaining({ note: expect.stringContaining('until the user publishes') }))
+    })
+
+    it('refuses an agent the user cannot see, rather than reporting a change it did not make', async () => {
+        mockGetOneOrThrow.mockRejectedValue(new Error('ENTITY_NOT_FOUND'))
+
+        const result = await runTool('ap_update_agent', { agentId: 'agent-elsewhere', instructions: 'New brief.' })
+
+        expect(result).toEqual({ error: expect.stringContaining('No agent with that id') })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('will not call the service with nothing to change', async () => {
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1' })
+
+        expect(result).toEqual({ error: expect.stringContaining('Nothing to change') })
+        expect(mockUpdate).not.toHaveBeenCalled()
     })
 
     it('reports whether each listed agent is published, since a flow can only run a published one', async () => {

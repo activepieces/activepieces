@@ -293,6 +293,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             guides,
             aiTools,
             emailEnabled,
+            agentsAvailable,
             userEmail: runUserEmail,
             source: conversation.source,
         }

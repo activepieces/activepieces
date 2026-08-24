@@ -460,13 +460,14 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, agentsAvailable }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
     taintState: TaintState
+    agentsAvailable: boolean
 }): ToolSet {
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
@@ -690,11 +691,42 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             },
         }),
 
+        ap_remember: tool({
+            description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
+            inputSchema: z.object({
+                memory: z.string().describe('One concise durable preference/fact about the user'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remember', toolInput)
+            },
+        }),
+
+        ...(agentsAvailable ? agentSurfaceTools({ executeTool }) : {}),
+    }
+}
+
+function agentSurfaceTools({ executeTool }: {
+    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+}): ToolSet {
+    return {
         ap_list_agents: tool({
             description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
             inputSchema: z.object({}),
             execute: async (toolInput) => {
                 return executeTool('ap_list_agents', toolInput)
+            },
+        }),
+
+        ap_update_agent: tool({
+            description: 'Change a saved agent\'s name, description or instructions. Use it when the user wants their existing agent to behave differently, instead of creating a second one. Send the full new instructions, not a diff — they replace what is there. This edits the draft, so flows keep running the published version until the user publishes it.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
+                displayName: z.string().optional(),
+                description: z.string().optional(),
+                instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_update_agent', toolInput)
             },
         }),
 
@@ -710,15 +742,6 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             },
         }),
 
-        ap_remember: tool({
-            description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
-            inputSchema: z.object({
-                memory: z.string().describe('One concise durable preference/fact about the user'),
-            }),
-            execute: async (toolInput) => {
-                return executeTool('ap_remember', toolInput)
-            },
-        }),
     }
 }
 

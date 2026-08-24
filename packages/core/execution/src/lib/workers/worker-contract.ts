@@ -158,6 +158,7 @@ export type AgentConfigResponse = {
     guides: Record<string, string>
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
+    agentsAvailable: boolean
     userEmail: string
     source: AgentRunSource
 }
