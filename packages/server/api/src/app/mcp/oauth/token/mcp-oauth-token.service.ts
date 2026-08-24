@@ -8,7 +8,6 @@ import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../../project/project-repo'
-import { userRepo } from '../../../user/user-service'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -135,76 +134,58 @@ export const mcpOAuthTokenService = {
     },
 
     async listForUser({ userId, platformId, cursor, limit }: ListForUserParams): Promise<SeekPage<McpOAuthClientRow>> {
-        return listGrants({ where: { userId, platformId }, cursor, limit, withUser: false })
-    },
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
+        const paginator = buildPaginator({
+            entity: McpOAuthTokenEntity,
+            query: {
+                limit: limit ?? DEFAULT_GRANT_PAGE_SIZE,
+                order: 'DESC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+        const queryBuilder = repo()
+            .createQueryBuilder('mcp_oauth_token')
+            .where({ userId, platformId, revoked: false })
+            .andWhere('mcp_oauth_token."expiresAt" > :now', { now: new Date().toISOString() })
 
-    async listForProject({ projectId, cursor, limit }: ListForProjectParams): Promise<SeekPage<McpOAuthClientRow>> {
-        return listGrants({ where: { projectId }, cursor, limit, withUser: true })
+        const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
+
+        const clients = await findClientsByClientId(data.map((token) => token.clientId))
+        const projectNames = await findProjectNames(data.map((token) => token.projectId))
+
+        const rows = data.map((token) => {
+            const client = clients.get(token.clientId)
+            const identity = mcpOAuthClientIdentity.classify({ redirectUris: client?.redirectUris ?? [] })
+            return {
+                id: token.id,
+                clientKey: identity.key,
+                clientName: client?.clientName ?? null,
+                connectsFrom: identity.connectsFrom,
+                projectId: token.projectId,
+                projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
+                created: token.created,
+                lastUsedAt: token.lastUsedAt,
+            }
+        })
+
+        return paginationHelper.createPage<McpOAuthClientRow>(rows, nextCursor)
     },
 
     async revokeForUser({ ids, userId, platformId }: RevokeForUserParams): Promise<void> {
-        await revokeGrants({ ids, where: { userId, platformId } })
-    },
-
-    async revokeForProject({ ids, projectId }: RevokeForProjectParams): Promise<void> {
-        await revokeGrants({ ids, where: { projectId } })
+        const matched = await repo().findBy({ userId, platformId, id: In(ids) })
+        if (matched.length !== unique(ids).length) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: 'One or more grants do not exist or are not yours to revoke' },
+            })
+        }
+        await repo().update({ id: In(matched.map((token) => token.id)) }, { revoked: true })
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
         return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, scopes: ['mcp'] })
     },
-}
-
-async function listGrants({ where, cursor, limit, withUser }: ListGrantsParams): Promise<SeekPage<McpOAuthClientRow>> {
-    const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
-    const paginator = buildPaginator({
-        entity: McpOAuthTokenEntity,
-        query: {
-            limit: limit ?? DEFAULT_GRANT_PAGE_SIZE,
-            order: 'DESC',
-            afterCursor: decodedCursor.nextCursor,
-            beforeCursor: decodedCursor.previousCursor,
-        },
-    })
-    const queryBuilder = repo()
-        .createQueryBuilder('mcp_oauth_token')
-        .where({ ...where, revoked: false })
-        .andWhere('mcp_oauth_token."expiresAt" > :now', { now: new Date().toISOString() })
-
-    const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
-
-    const clients = await findClientsByClientId(data.map((token) => token.clientId))
-    const projectNames = await findProjectNames(data.map((token) => token.projectId))
-    const users = withUser ? await findUsers(data.map((token) => token.userId)) : new Map()
-
-    const rows = data.map((token) => {
-        const client = clients.get(token.clientId)
-        const identity = mcpOAuthClientIdentity.classify({ redirectUris: client?.redirectUris ?? [] })
-        return {
-            id: token.id,
-            clientKey: identity.key,
-            clientName: client?.clientName ?? null,
-            connectsFrom: identity.connectsFrom,
-            projectId: token.projectId,
-            projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
-            created: token.created,
-            lastUsedAt: token.lastUsedAt,
-            ...(withUser ? { userId: token.userId, user: users.get(token.userId) } : {}),
-        }
-    })
-
-    return paginationHelper.createPage<McpOAuthClientRow>(rows, nextCursor)
-}
-
-async function revokeGrants({ ids, where }: RevokeGrantsParams): Promise<void> {
-    const matched = await repo().findBy({ ...where, id: In(ids) })
-    if (matched.length !== unique(ids).length) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: { message: 'One or more grants do not exist or are not yours to revoke' },
-        })
-    }
-    await repo().update({ id: In(matched.map((token) => token.id)) }, { revoked: true })
 }
 
 async function findClientsByClientId(clientIds: string[]): Promise<Map<string, { redirectUris: string[], clientName: string | null }>> {
@@ -223,19 +204,6 @@ async function findProjectNames(projectIds: (string | null)[]): Promise<Map<stri
     }
     const projects = await projectRepo().findBy({ id: In(distinct) })
     return new Map(projects.map((project) => [project.id, project.displayName]))
-}
-
-async function findUsers(userIds: string[]): Promise<Map<string, GrantUser>> {
-    const distinct = unique(userIds)
-    if (distinct.length === 0) {
-        return new Map()
-    }
-    const users = await userRepo().find({ where: { id: In(distinct) }, relations: { identity: true } })
-    return new Map(users.map((user) => [user.id, {
-        firstName: user.identity.firstName,
-        lastName: user.identity.lastName,
-        email: user.identity.email,
-    }]))
 }
 
 export class OAuthTokenError extends Error {
@@ -271,39 +239,9 @@ type RevokeRefreshTokenParams = {
     clientId: string
 }
 
-type GrantUser = {
-    firstName: string
-    lastName: string
-    email: string
-}
-
-type GrantScope = {
-    userId?: string
-    platformId?: string
-    projectId?: string
-}
-
-type ListGrantsParams = {
-    where: GrantScope
-    cursor?: string
-    limit?: number
-    withUser: boolean
-}
-
-type RevokeGrantsParams = {
-    ids: string[]
-    where: GrantScope
-}
-
 type ListForUserParams = {
     userId: string
     platformId: string
-    cursor?: string
-    limit?: number
-}
-
-type ListForProjectParams = {
-    projectId: string
     cursor?: string
     limit?: number
 }
@@ -312,11 +250,6 @@ type RevokeForUserParams = {
     ids: string[]
     userId: string
     platformId: string
-}
-
-type RevokeForProjectParams = {
-    ids: string[]
-    projectId: string
 }
 
 type RefreshParams = {

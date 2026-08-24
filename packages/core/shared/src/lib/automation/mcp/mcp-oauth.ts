@@ -63,12 +63,6 @@ export const McpOAuthClientRow = z.object({
     connectsFrom: McpOAuthClientConnectsFrom,
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
-    userId: z.string().optional(),
-    user: z.object({
-        firstName: z.string(),
-        lastName: z.string(),
-        email: z.string(),
-    }).optional(),
     created: z.string(),
     lastUsedAt: z.string().nullable(),
 })
@@ -82,20 +76,8 @@ export const ListMcpOAuthClientsRequestQuery = z.object({
 
 export type ListMcpOAuthClientsRequestQuery = z.infer<typeof ListMcpOAuthClientsRequestQuery>
 
-export const ListProjectMcpOAuthClientsRequestQuery = ListMcpOAuthClientsRequestQuery.extend({
-    projectId: ApId,
-})
-
-export type ListProjectMcpOAuthClientsRequestQuery = z.infer<typeof ListProjectMcpOAuthClientsRequestQuery>
-
 export const RevokeMcpOAuthClientsRequestBody = z.object({
     ids: z.array(ApId).min(1).max(100),
 })
 
 export type RevokeMcpOAuthClientsRequestBody = z.infer<typeof RevokeMcpOAuthClientsRequestBody>
-
-export const RevokeProjectMcpOAuthClientsRequestBody = RevokeMcpOAuthClientsRequestBody.extend({
-    projectId: ApId,
-})
-
-export type RevokeProjectMcpOAuthClientsRequestBody = z.infer<typeof RevokeProjectMcpOAuthClientsRequestBody>

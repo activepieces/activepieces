@@ -1,16 +1,14 @@
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { McpOAuthClientRow } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plug } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatUtils } from '@/lib/format-utils';
 
 import { ClientIcon } from './connect-steps';
 import { mcpClientIdentity } from './mcp-client-identity';
-import { McpClientGrantRow, mcpClientsQueries } from './mcp-clients-hooks';
-
-dayjs.extend(relativeTime);
+import { mcpClientsQueries } from './mcp-clients-hooks';
 
 const MAX_SHOWN = 3;
 
@@ -21,7 +19,7 @@ export function RecentlyConnected({
   onManageConnections: () => void;
   onPickClient: () => void;
 }) {
-  const { rows, isLoading } = mcpClientsQueries.useClientsReachingProject();
+  const { rows, isLoading } = mcpClientsQueries.useMyClients();
 
   if (isLoading) {
     return null;
@@ -29,7 +27,7 @@ export function RecentlyConnected({
 
   const recent = [...rows]
     .sort((a, b) =>
-      dayjs(b.lastUsedAt ?? b.created).diff(dayjs(a.lastUsedAt ?? a.created)),
+      (b.lastUsedAt ?? b.created).localeCompare(a.lastUsedAt ?? a.created),
     )
     .slice(0, MAX_SHOWN);
 
@@ -78,7 +76,7 @@ export function RecentlyConnected({
   );
 }
 
-function ClientChip({ row }: { row: McpClientGrantRow }) {
+function ClientChip({ row }: { row: McpOAuthClientRow }) {
   return (
     <span className="flex items-center gap-2">
       <ClientIcon
@@ -95,7 +93,7 @@ function ClientChip({ row }: { row: McpClientGrantRow }) {
         </Badge>
       ) : (
         <span className="text-[13px] text-muted-foreground">
-          {dayjs(row.lastUsedAt).fromNow()}
+          {formatUtils.formatDateToAgo(new Date(row.lastUsedAt))}
         </span>
       )}
     </span>

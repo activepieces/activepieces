@@ -2,7 +2,6 @@ import { apId } from '@activepieces/core-utils'
 import { DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
@@ -80,8 +79,16 @@ describe('MCP OAuth connected clients', () => {
                 projectName: ctx.project.displayName,
                 lastUsedAt: null,
             })
-            expect(data[0].userId).toBeUndefined()
-            expect(data[0].user).toBeUndefined()
+        })
+
+        it('lists a grant scoped to another project, since the list is not project-scoped', async () => {
+            const elsewhere = await createTestContext(app!)
+            const id = await grantAccess({ userId: ctx.user.id, projectId: elsewhere.project.id, redirectUris: ['https://claude.ai/x'] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/clients/me')).json()
+
+            expect(data).toHaveLength(1)
+            expect(data[0]).toMatchObject({ id, projectId: elsewhere.project.id })
         })
 
         it('hides expired and already-revoked grants', async () => {
@@ -99,47 +106,6 @@ describe('MCP OAuth connected clients', () => {
             const { data } = (await ctx.get('/v1/mcp-oauth/clients/me')).json()
 
             expect(data[0]).toMatchObject({ clientKey: 'codex', connectsFrom: 'local', projectId: null, projectName: null })
-        })
-    })
-
-    describe('GET /v1/mcp-oauth/clients', () => {
-        it('lists every members grant on the project, with who holds it', async () => {
-            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
-            await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: ['http://localhost:54545/callback'] })
-
-            const response = await ctx.get('/v1/mcp-oauth/clients', { projectId: ctx.project.id })
-
-            expect(response.statusCode).toBe(200)
-            const { data } = response.json()
-            expect(data).toHaveLength(1)
-            expect(data[0]).toMatchObject({
-                clientKey: 'claude-code',
-                userId: member.user.id,
-                user: { email: member.userIdentity.email },
-            })
-        })
-
-        it('still lists a grant whose holder was deleted, so it stays revokable', async () => {
-            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
-            const id = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
-            await databaseConnection().getRepository('project_member').delete({ userId: member.user.id })
-            await databaseConnection().getRepository('user').delete({ id: member.user.id })
-
-            const response = await ctx.get('/v1/mcp-oauth/clients', { projectId: ctx.project.id })
-
-            expect(response.statusCode).toBe(200)
-            const { data } = response.json()
-            expect(data).toHaveLength(1)
-            expect(data[0]).toMatchObject({ id, userId: member.user.id })
-            expect(data[0].user).toBeUndefined()
-        })
-
-        it('refuses a VIEWER, who has READ_MCP but not WRITE_MCP', async () => {
-            const viewer = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.VIEWER })
-
-            const response = await viewer.get('/v1/mcp-oauth/clients', { projectId: ctx.project.id })
-
-            expect(response.statusCode).toBe(403)
         })
     })
 
@@ -173,25 +139,4 @@ describe('MCP OAuth connected clients', () => {
         })
     })
 
-    describe('POST /v1/mcp-oauth/clients/revoke', () => {
-        it('lets a project admin revoke another members grant', async () => {
-            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.EDITOR })
-            const id = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
-
-            const response = await ctx.post('/v1/mcp-oauth/clients/revoke', { projectId: ctx.project.id, ids: [id] })
-
-            expect(response.statusCode).toBe(204)
-            expect(await db.findOneBy('mcp_oauth_token', { id })).toMatchObject({ revoked: true })
-        })
-
-        it('refuses a grant that belongs to a different project', async () => {
-            const elsewhere = await createTestContext(app!)
-            const id = await grantAccess({ userId: ctx.user.id, projectId: elsewhere.project.id, redirectUris: ['https://claude.ai/x'] })
-
-            const response = await ctx.post('/v1/mcp-oauth/clients/revoke', { projectId: ctx.project.id, ids: [id] })
-
-            expect(response.statusCode).toBe(403)
-            expect(await db.findOneBy('mcp_oauth_token', { id })).toMatchObject({ revoked: false })
-        })
-    })
 })
