@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { listFilesActionOutputSchema } from '../output-schemas';
 
 export const listFiles = createAction({
   audience: 'both',
@@ -32,6 +33,7 @@ export const listFiles = createAction({
       defaultValue: 100,
     }),
   },
+  outputSchema: listFilesActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { purpose, limit } = context.propsValue;
