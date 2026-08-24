@@ -253,7 +253,6 @@
                         "group": "Other Options",
                         "pages": [
                            "install/options/docker",
-                           "install/options/helm",
                            "install/options/easypanel",
                            "install/options/aws",
                            "install/options/gcp",
