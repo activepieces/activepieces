@@ -34,6 +34,19 @@ function authRequestIdFrom(location: string): string {
     return new URL(location, MCP_OAUTH_REDIRECT_URI).searchParams.get('authRequestId') ?? ''
 }
 
+async function consentThenApprove({ state }: { state: string }): Promise<URL> {
+    const consent = await authorize({ state })
+    expect(consent.statusCode).toBe(302)
+
+    const approved = await ctx.post('/v1/mcp-oauth/approve', {
+        authRequestId: authRequestIdFrom(String(consent.headers.location)),
+        projectId: ctx.project.id,
+    })
+    expect(approved.statusCode).toBe(200)
+
+    return new URL(approved.json().redirectUrl)
+}
+
 describe('ChatGPT platform connector conformance', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
@@ -43,24 +56,18 @@ describe('ChatGPT platform connector conformance', () => {
     it('returns the relay state to the connector unchanged after consent', async () => {
         expect(CHATGPT_RELAY_STATE.length).toBeGreaterThan(512)
 
-        const consent = await authorize({ state: CHATGPT_RELAY_STATE })
-        expect(consent.statusCode).toBe(302)
-
-        const approved = await ctx.post('/v1/mcp-oauth/approve', {
-            authRequestId: authRequestIdFrom(String(consent.headers.location)),
-            projectId: ctx.project.id,
-        })
-        expect(approved.statusCode).toBe(200)
-
-        const redirect = new URL(approved.json().redirectUrl)
+        const redirect = await consentThenApprove({ state: CHATGPT_RELAY_STATE })
         expect(redirect.searchParams.get('state')).toBe(CHATGPT_RELAY_STATE)
         expect(redirect.searchParams.get('code')).toEqual(expect.any(String))
     })
 
-    it('accepts a relay state at the length limit', async () => {
-        const consent = await authorize({ state: 'a'.repeat(STATE_LIMIT) })
+    it('stores and returns a relay state at the length limit', async () => {
+        const state = 'a'.repeat(STATE_LIMIT)
 
-        expect(consent.statusCode).toBe(302)
+        const redirect = await consentThenApprove({ state })
+
+        expect(redirect.searchParams.get('state')).toBe(state)
+        expect(redirect.searchParams.get('code')).toEqual(expect.any(String))
     })
 
     it('refuses a relay state beyond the length limit without a 5xx', async () => {
