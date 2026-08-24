@@ -13,20 +13,22 @@ Describe the job. Give it tools. It figures out the rest.
 
 ## Flow or agent?
 
+Both can be built by describing what you want. The difference is **when the path gets decided**.
+
 |  | Flow | Agent |
 |---|---|---|
-| **Steps** | You draw them | It decides them |
-| **Best when** | The process is known | The work varies |
-| **Same input twice** | Same path | May take a different route |
-| **You steer it by** | Editing steps | Instructions and tools |
+| **The path is decided** | Once, when you build it | Every run, by the agent |
+| **Same input twice** | Same steps, same order | May take a different route |
+| **Best when** | You know the procedure | The work varies case by case |
+| **You steer it by** | Changing the steps | Changing instructions and tools |
 
-Agents can call flows as tools, so the reliable parts stay a flow.
+A flow is predictable, which is what you want for anything that must happen the same way every time. An agent handles the cases you cannot enumerate in advance. Agents can call flows as tools, so the parts that need to be exact stay exact.
 
 ## Start here
 
 <CardGroup cols={2}>
   <Card title="Create an agent" icon="pen" href="/agents/create">
-    Templates, and how to write instructions.
+    Describe it, and it gets written for you.
   </Card>
   <Card title="Agent Tools" icon="wrench" href="/agents/tools">
     Pieces, flows, MCP, knowledge.
