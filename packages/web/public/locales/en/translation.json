@@ -2481,5 +2481,21 @@
   "Activate Trial Key": "Activate Trial Key",
   "Enter your trial key to unlock enterprise features.": "Enter your trial key to unlock enterprise features.",
   "Enter your trial key": "Enter your trial key",
-  "Could not save this key": "Could not save this key"
+  "Could not save this key": "Could not save this key",
+  "Who am I teaming up with?": "Who am I teaming up with?",
+  "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.": "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",
+  "I'm a {role} at {company}. Show me what you could take off my plate.": "I'm a {role} at {company}. Show me what you could take off my plate.",
+  "I'm a": "I'm a",
+  "at": "at",
+  "Your role": "Your role",
+  "Your company, industry, or website": "Your company, industry, or website",
+  "Let's go": "Let's go",
+  "Or tell me the work you want gone": "Or tell me the work you want gone",
+  "Tailor these to my work": "Tailor these to my work",
+  "Tailoring to {company}…": "Tailoring to {company}…",
+  "Tailoring these to your work…": "Tailoring these to your work…",
+  "Could not tailor these, try again": "Could not tailor these, try again",
+  "{role} at {company}": "{role} at {company}",
+  "Runs on autopilot": "Runs on autopilot",
+  "From your email": "From your email"
 }
