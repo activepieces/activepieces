@@ -23,11 +23,37 @@ Both can be built by describing what you want. The difference is **where the log
 | **Best when** | You know the procedure | The work varies case by case |
 | **You steer it by** | Changing the steps | Changing instructions and tools |
 
-A flow is predictable, which is what you want for anything that must happen the same way every time. An agent handles the cases you cannot write rules for in advance. Agents can call flows as tools, so the parts that need to be exact stay exact.
+A flow is predictable, which is what you want for anything that must happen the same way every time. An agent handles the cases you cannot write rules for in advance.
+
+## What makes an agent powerful
+
+One sentence of instruction can end up touching a dozen systems. The agent works out which ones and in what order, and you decide what it is allowed to reach.
+
+<CardGroup cols={2}>
+  <Card title="Every app you already use" icon="grid-2">
+    Any action from 760+ pieces becomes a tool it can call.
+  </Card>
+  <Card title="Your own flows" icon="sitemap">
+    Hand it a flow when part of the job has to run exactly the same way every time.
+  </Card>
+  <Card title="Any MCP server" icon="plug">
+    Your internal tools included, without building a piece for them.
+  </Card>
+  <Card title="Your documents and tables" icon="book">
+    Answers grounded in your own material instead of guesses.
+  </Card>
+</CardGroup>
+
+And you keep the reins:
+
+- **Pin any input.** Let the agent choose a value or set it yourself, field by field.
+- **Cap the run.** A step budget stops a confused agent instead of letting it loop.
+- **Shape the answer.** Output fields turn a paragraph into data the next step can use.
+- **Limit who sees it.** Open it to the whole project or to a named few.
 
 ## Start here
 
-<CardGroup cols={4}>
+<CardGroup cols={2}>
   <Card title="Create an agent" icon="pen" href="/agents/create">
     Describe it and it gets written for you.
   </Card>
