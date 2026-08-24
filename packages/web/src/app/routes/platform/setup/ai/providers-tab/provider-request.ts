@@ -67,41 +67,23 @@ function buildCreateRequest({
         auth: { apiKey: value('apiKey') },
       };
     case AIProviderName.OPENAI:
-      return {
-        provider,
-        displayName,
-        config: {},
-        auth: { apiKey: value('apiKey') },
-      };
     case AIProviderName.ANTHROPIC:
-      return {
-        provider,
-        displayName,
-        config: {},
-        auth: { apiKey: value('apiKey') },
-      };
     case AIProviderName.GOOGLE:
-      return {
-        provider,
-        displayName,
-        config: {},
-        auth: { apiKey: value('apiKey') },
-      };
     case AIProviderName.OPENROUTER:
-      return {
-        provider,
-        displayName,
-        config: {},
-        auth: { apiKey: value('apiKey') },
-      };
     case AIProviderName.MISTRAL:
+    case AIProviderName.XAI:
+    case AIProviderName.DEEPSEEK:
+    case AIProviderName.ZAI:
+    case AIProviderName.QWEN:
+    case AIProviderName.MINIMAX:
+    case AIProviderName.MOONSHOT:
       return {
         provider,
         displayName,
         config: {},
         auth: { apiKey: value('apiKey') },
       };
-    default:
+    case AIProviderName.ACTIVEPIECES:
       throw new Error(`Provider ${provider} cannot be connected manually`);
   }
 }
