@@ -106,7 +106,7 @@ export function PrimaryRail() {
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
           'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
-          collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-60',
+          collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >
         <RailHeader collapsed={collapsed} onToggle={toggleCollapsed} />
