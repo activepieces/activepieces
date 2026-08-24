@@ -8,6 +8,7 @@ import { listMilestonesOutputSchema } from '../../output-schemas';
 export const githubListMilestonesAction = createAction({
   auth: githubAuth,
   name: 'list_milestones',
+  classification: 'SEARCH',
   displayName: 'List Milestones (Agent)',
   description: 'Lists the milestones in a repository.',
   audience: 'ai',

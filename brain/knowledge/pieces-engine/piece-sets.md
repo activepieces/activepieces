@@ -20,6 +20,7 @@ A named, reusable piece/action/trigger visibility configuration a platform admin
 
 ### Gotchas
 - EE/Cloud only, gated behind `platform.plan.managePiecesEnabled`. On CE / flag off, piece sets are inert and filtering falls back to legacy project-plan allow/block lists.
+- The **whole** `/v1/piece-sets` module is behind that flag, `GET` included — so on a locked plan the web list query is `enabled: false`, the table is simply empty, and row actions never render. Only toolbar/entry points need a UI guard. The `LockedAlert` + `RequestTrial featureKey="ENTERPRISE_PIECES"` lives once on `PlatformPiecesPage`, above the tabs, since the same flag gates both the Pieces and Piece Sets tabs; the details route redirects back to the tab rather than hanging on a spinner waiting for a query that will never run.
 - There is **no** install-time sync and no `onPieceCreated` hook — resolution is purely read-time. See ADR 0001 (visibility derived, not materialized).
 - Embed auth: a v4 JWT carries a `pieceSet` key claim; legacy v2/v3 tokens carry `piecesTags` (only the first tag honored, resolved to `key = tag`, else Default). Enforcement (`applyProjectPieceAccess`) runs unconditionally, not gated by the flag.
 - Migration is three ordered steps: create table + backfill (`1807...`), then `CREATE INDEX CONCURRENTLY` (`1808...`, non-transactional), then the breaking drop of legacy platform piece-filter columns (`1809...`). Legacy `tag`/`piece_tag` tables are kept only because the backfill reads them once via raw SQL.

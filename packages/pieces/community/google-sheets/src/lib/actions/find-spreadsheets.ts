@@ -12,6 +12,7 @@ import { findSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
+	classification: 'SEARCH',
 	displayName: 'Find Spreadsheet(s)',
 	description: 'Find spreadsheet(s) by name.',
 	audience: 'human',

@@ -1,5 +1,5 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -21,7 +21,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 export const agentRunController: FastifyPluginAsyncZod = async (app) => {
     app.post('/runs', StartAgentRunRoute, async (request, reply) => {
-        const { instruction, flowRunId, waitpointId, agentId, tools: inlineTools } = request.body
+        const { instruction, flowRunId, waitpointId, agentId, providerConfigId, tools: inlineTools } = request.body
         if (request.principal.type !== PrincipalType.ENGINE) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -58,7 +58,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -83,7 +83,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 waitpointId,
                 flowTools,
                 ...(isNil(linked)
-                    ? { tools: supportedTools, structuredOutput, maxSteps, modelName: modelName ?? null, provider: provider ?? undefined }
+                    ? { tools: supportedTools, structuredOutput, maxSteps, modelName: modelName ?? null, provider: provider ?? undefined, ...spreadIfDefined('providerConfigId', providerConfigId) }
                     : { ...agentHelpers.jobFieldsFromConfig({ config: linked }), tools: supportedTools }),
             },
         })
@@ -177,6 +177,7 @@ const StartAgentRunRequest = z.object({
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).optional(),
     modelName: z.string().optional(),
     provider: z.enum(AIProviderName).optional(),
+    providerConfigId: z.string().optional(),
 })
 
 const StartAgentRunResponse = z.object({

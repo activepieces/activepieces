@@ -7,6 +7,7 @@ import { LinearDocument } from '@linear/sdk';
 export const linearCreateIssue = createAction({
   auth: linearAuth,
   name: 'linear_create_issue',
+  classification: 'WRITE',
   displayName: 'Create Issue',
   description: 'Create a new issue in Linear workspace',
   audience: 'both',

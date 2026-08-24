@@ -10,6 +10,7 @@ import { notionCreatePageActionOutputSchema } from '../output-schemas';
 export const notionCreatePage = createAction({
   auth: notionAuth,
   name: 'notion_create_page',
+  classification: 'WRITE',
   displayName: 'Create Page',
   description:
     'Creates a new sub-page under an existing Notion page, with a title and optional markdown body.',

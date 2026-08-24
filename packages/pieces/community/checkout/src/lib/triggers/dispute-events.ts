@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const disputeEventsTrigger = createTrigger({
   name: 'dispute_events',
+  classification: 'READ',
   displayName: 'Dispute Events',
   description: 'Notify operations upon dispute opening or resolution.',
   aiMetadata: {

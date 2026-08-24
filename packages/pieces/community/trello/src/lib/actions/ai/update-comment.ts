@@ -12,6 +12,7 @@ import { updateCommentActionOutputSchema } from '../../output-schemas';
 export const updateComment = createAction({
   auth: trelloAuth,
   name: 'update_comment',
+  classification: 'WRITE',
   displayName: 'Update Comment (Agent)',
   description: 'Edit an existing comment on a Trello card.',
   audience: 'ai',

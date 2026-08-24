@@ -128,7 +128,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
-            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+            name: signupNames.platformNameFromSignup({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,

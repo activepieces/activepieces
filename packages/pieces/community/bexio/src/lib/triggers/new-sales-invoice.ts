@@ -77,6 +77,7 @@ const polling: Polling<
 export const newSalesInvoiceTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_sales_invoice',
+  classification: 'READ',
   displayName: 'New Sales-Invoice',
   description: 'Triggers when a Sales-Invoice is created or updated with the chosen status',
   aiMetadata: {

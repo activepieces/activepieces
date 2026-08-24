@@ -19,7 +19,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { ProjectDashboardSidebar } from '../sidebar/dashboard';
+import { PrimaryRail } from '../primary-rail';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -123,31 +123,37 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
-      {!isEmbedded && <ProjectDashboardSidebar />}
-      <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div
-          className={cn(
-            'flex-1 flex flex-col overflow-hidden',
-            !isEmbedded && 'pr-2 pt-3 pb-3',
-          )}
-        >
+    <div className="flex h-full w-full overflow-hidden">
+      {!isEmbedded && <PrimaryRail />}
+      <SidebarProvider
+        defaultOpen={false}
+        hoverMode={!searchOpen}
+        className="flex-1 min-w-0 w-auto will-change-transform"
+      >
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div
-            id="dashboard-content-container"
             className={cn(
-              'relative flex flex-col h-full bg-background overflow-clip',
-              !isEmbedded &&
-                'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              'flex-1 flex flex-col overflow-hidden',
+              !isEmbedded && 'pr-2 pt-3 pb-3',
             )}
           >
-            {!hideHeader && (
-              <ProjectDashboardLayoutHeader key={currentProjectId} />
-            )}
-            <CreditsUsageAlert />
-            <div className="flex-1 overflow-auto">{children}</div>
+            <div
+              id="dashboard-content-container"
+              className={cn(
+                'relative flex flex-col h-full bg-background overflow-clip',
+                !isEmbedded &&
+                  'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              )}
+            >
+              {!hideHeader && (
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
+              )}
+              <CreditsUsageAlert />
+              <div className="flex-1 overflow-auto">{children}</div>
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

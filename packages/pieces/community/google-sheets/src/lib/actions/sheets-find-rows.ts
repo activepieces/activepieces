@@ -13,6 +13,7 @@ import { sheetsFindRowsActionOutputSchema } from '../output-schemas';
 export const sheetsFindRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_find_rows',
+	classification: 'SEARCH',
 	displayName: 'Find Rows',
 	description: 'Look up rows in a worksheet based on a column value.',
 	audience: 'ai',

@@ -6,6 +6,7 @@ import { makeClient } from '../../common/client';
 export const linearCreateProject = createAction({
   auth: linearAuth,
   name: 'linear_create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new project in Linear workspace',
   audience: 'both',

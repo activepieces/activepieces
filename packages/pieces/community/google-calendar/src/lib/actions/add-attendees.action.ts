@@ -6,6 +6,7 @@ import { eventOutputSchema } from '../output-schemas';
 export const addAttendeesToEventAction = createAction({
   auth: googleCalendarAuth,
   name: 'google-calendar-add-attendees',
+  classification: 'WRITE',
   displayName: 'Add Attendees to Event',
   description: 'Add one or more person to existing event.',
   audience: 'both',

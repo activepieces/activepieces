@@ -9,6 +9,7 @@ import { stripeAuth } from '../..';
 import { customerOutputSchema } from '../output-schemas';
 export const stripeRetrieveCustomer = createAction({
   name: 'retrieve_customer',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve Customer',
   description: 'Retrieve a customer in stripe by id',

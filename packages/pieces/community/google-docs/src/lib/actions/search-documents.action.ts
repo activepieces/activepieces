@@ -6,6 +6,7 @@ import { searchDocumentsActionOutputSchema } from '../output-schemas';
 export const searchDocuments = createAction({
 	auth: googleDocsAuth,
 	name: 'search_documents',
+	classification: 'SEARCH',
 	displayName: 'Search Documents',
 	description:
 		'Search Google Drive for Google Docs documents by name or full-text content.',

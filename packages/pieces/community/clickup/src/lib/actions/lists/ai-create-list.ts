@@ -7,6 +7,7 @@ import { listOutputSchema } from '../../output-schemas';
 export const clickupCreateList = createAction({
   auth: clickupAuth,
   name: 'clickup_create_list',
+  classification: 'WRITE',
   description: 'Create a new list inside a ClickUp folder',
   audience: 'ai',
   aiMetadata: {

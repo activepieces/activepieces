@@ -24,6 +24,7 @@ type CommentsPage = {
 export const todoistListCommentsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_comments',
+  classification: 'SEARCH',
   displayName: 'List Comments',
   description: 'Lists all comments on a Todoist task or project.',
   audience: 'ai',

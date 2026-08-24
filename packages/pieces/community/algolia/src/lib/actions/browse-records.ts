@@ -8,6 +8,7 @@ import { parseRequiredString } from '../common/utils';
 export const browseRecordsAction = createAction({
   auth: algoliaAuth,
   name: 'browse-records',
+  classification: 'SEARCH',
   displayName: 'Browse Records',
   description: 'Retrieves records from an Algolia index.',
   audience: 'both',

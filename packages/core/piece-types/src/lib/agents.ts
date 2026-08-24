@@ -290,6 +290,7 @@ export type ToolCallBase = z.infer<typeof toolCallBaseSchema>
 export type AgentProviderModel = {
     provider: AIProviderName
     model: string
+    configId?: string
 }
 
 export type AgentResult = {

@@ -12,6 +12,7 @@ import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
+import { AgentsFlagGuard } from '../guards/agents-flag-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
@@ -90,15 +91,17 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-          <PageTitle title="Agent">
-            <SuspenseWrapper>
-              <AgentEditorPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <AgentsFlagGuard>
+        <ProjectDashboardLayout>
+          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+            <PageTitle title="Agent">
+              <SuspenseWrapper>
+                <AgentEditorPage />
+              </SuspenseWrapper>
+            </PageTitle>
+          </RoutePermissionGuard>
+        </ProjectDashboardLayout>
+      </AgentsFlagGuard>
     ),
   }),
   ...ProjectRouterWrapper({
