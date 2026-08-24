@@ -30,6 +30,65 @@ Install Activepieces on this machine by running `curl -fsSL https://get.activepi
 Use `--port <port>` if 8080 is taken, and `--dir <path>` to install somewhere other than `./activepieces`. Want to read it before running it? `curl -fsSL https://get.activepieces.com` prints the script.
 </Tip>
 
+<Accordion title="Prefer to set it up yourself?" icon="wrench">
+The script only writes a `.env` and a `docker-compose.yml`, then starts them. You can do the same by hand, which is the right choice if you are air-gapped, if your change process needs a compose file it can review, or if you are pointing Activepieces at a database you already run.
+
+**1. Get the compose file**
+
+```bash
+git clone --depth 1 https://github.com/activepieces/activepieces.git
+cd activepieces
+```
+
+**2. Generate your secrets**
+
+```bash
+sh tools/deploy.sh
+```
+
+This copies `.env.example` to `.env` and fills in the passwords and keys. It needs `openssl`. If `openssl` is missing it will still report success while leaving the values blank, so check before you continue:
+
+```bash
+grep -E '^(AP_ENCRYPTION_KEY|AP_JWT_SECRET|AP_POSTGRES_PASSWORD)=' .env
+```
+
+Every one of those must have a value. If any is empty, install `openssl` and run `sh tools/deploy.sh` again.
+
+**3. Set the edition**
+
+Add this to `.env`. Without it you get the Community edition, and you will not be able to activate a license key later.
+
+```bash
+AP_EDITION=ee
+AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+```
+
+`.env.example` ships `AP_EXECUTION_MODE=UNSANDBOXED`, which the server rejects at startup on `ee`.
+
+**4. Point the worker at the app**
+
+In `docker-compose.yml`, give the `worker` service its own `AP_FRONTEND_URL`:
+
+```yaml
+worker:
+  environment:
+    - AP_CONTAINER_TYPE=WORKER
+    - AP_FRONTEND_URL=http://app
+```
+
+Both services share `.env`, where `AP_FRONTEND_URL` is your public URL. That address means "the app" to a browser but "myself" to the worker container, so without this override the worker cannot open its socket and the Workers page stays empty.
+
+**5. Start it**
+
+```bash
+docker compose -p activepieces up -d
+```
+
+<Note>
+Two more things worth changing before production. The image tag in `docker-compose.yml` is pinned to a specific release, so bump it yourself when you upgrade. And `worker` is set to `replicas: 5`, which is more than a single small machine wants; see [Production Setup](/install/configure-operate/production-setup) for sizing.
+</Note>
+</Accordion>
+
 
 ## Open Activepieces
 
