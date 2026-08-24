@@ -6,14 +6,14 @@ import { whatsscaleClient } from '../../../common/client';
 import { whatsscaleProps } from '../../../common/props';
 import { toParticipantJids, ConductorParticipantResult, flattenParticipantResults } from '../../../common/group-participants';
 
-export const addGroupParticipantsAction = createAction({
+export const demoteGroupAdminsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_add_group_participants',
+  name: 'whatsscale_demote_group_admins',
   classification: 'WRITE',
-  displayName: 'Add Participants to a Group',
-  description: 'Add one or more people to a WhatsApp group by group ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Adds one or more phone numbers to a WhatsApp group as members, given the raw group ID. Accepts a comma-separated list of phone numbers with country code. Not idempotent: a number already in the group may error or no-op depending on how the group responds, so check List Group Participants first if you need to avoid duplicates.', idempotent: false },
+  displayName: 'Demote Group Admins (By ID)',
+  description: 'Revoke admin rights from one or more group members by group ID.',
+  audience: 'ai',
+  aiMetadata: { description: 'Revokes admin privileges from one or more members of a WhatsApp group, given the raw group ID, dropping them back to regular member. Idempotent: demoting a non-admin converges on the same end state.', idempotent: true },
   outputSchema: groupParticipantResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -22,9 +22,9 @@ export const addGroupParticipantsAction = createAction({
       description: 'The group ID, with or without the @g.us suffix.',
       required: true,
     }),
-    participants: Property.ShortText({
+    participants: Property.Array({
       displayName: 'Participants',
-      description: 'Comma-separated phone numbers with country code (e.g. +31612345678, +31687654321).',
+      description: 'Phone numbers with country code (e.g. +31612345678).',
       required: true,
     }),
   },
@@ -35,7 +35,7 @@ export const addGroupParticipantsAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${groupId}/participants/add`,
+      `/v1/groups/${groupId}/admin/demote`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);

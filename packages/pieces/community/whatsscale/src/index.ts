@@ -37,15 +37,23 @@ import { sendAudioManualAction } from './lib/actions/both/messaging/send-audio';
 import { sendLocationManualAction } from './lib/actions/both/messaging/send-location';
 import { sendPollManualAction } from './lib/actions/both/messaging/send-poll';
 
-// Both — group management (no dropdown-based human twin exists yet)
-import { addGroupParticipantsAction } from './lib/actions/both/groups/add-participants';
-import { removeGroupParticipantsAction } from './lib/actions/both/groups/remove-participants';
-import { promoteGroupAdminsAction } from './lib/actions/both/groups/promote-admins';
-import { demoteGroupAdminsAction } from './lib/actions/both/groups/demote-admins';
-import { leaveGroupAction } from './lib/actions/both/groups/leave';
+// Human — group management via dropdowns
+import { addParticipantsToGroupAction } from './lib/actions/human/groups/add-participants';
+import { removeParticipantsFromGroupAction } from './lib/actions/human/groups/remove-participants';
+import { promoteAdminsInGroupAction } from './lib/actions/human/groups/promote-admins';
+import { demoteAdminsInGroupAction } from './lib/actions/human/groups/demote-admins';
+import { leaveSelectedGroupAction } from './lib/actions/human/groups/leave';
+import { listParticipantsInGroupAction } from './lib/actions/human/groups/list-participants';
 
-// Both — groups, status, and utility actions
-import { listGroupParticipantsAction } from './lib/actions/both/groups/list-participants';
+// AI — group management by raw group ID
+import { addGroupParticipantsAction } from './lib/actions/ai/groups/add-participants';
+import { removeGroupParticipantsAction } from './lib/actions/ai/groups/remove-participants';
+import { promoteGroupAdminsAction } from './lib/actions/ai/groups/promote-admins';
+import { demoteGroupAdminsAction } from './lib/actions/ai/groups/demote-admins';
+import { leaveGroupAction } from './lib/actions/ai/groups/leave';
+
+// Both — status and utility actions
+import { listGroupParticipantsAction } from './lib/actions/ai/groups/list-participants';
 import { postTextStatusAction } from './lib/actions/both/status/post-text';
 import { postImageStatusAction } from './lib/actions/both/status/post-image';
 import { postVideoStatusAction } from './lib/actions/both/status/post-video';
@@ -121,13 +129,20 @@ export const whatsscale = createPiece({
     sendAudioManualAction,
     sendLocationManualAction,
     sendPollManualAction,
-    // Both — group management (no dropdown-based human twin exists yet)
+    // Human — group management via dropdowns
+    addParticipantsToGroupAction,
+    removeParticipantsFromGroupAction,
+    promoteAdminsInGroupAction,
+    demoteAdminsInGroupAction,
+    leaveSelectedGroupAction,
+    listParticipantsInGroupAction,
+    // AI — group management by raw group ID
     addGroupParticipantsAction,
     removeGroupParticipantsAction,
     promoteGroupAdminsAction,
     demoteGroupAdminsAction,
     leaveGroupAction,
-    // Both — groups, status, utility
+    // Both — status and utility
     listGroupParticipantsAction,
     postTextStatusAction,
     postImageStatusAction,

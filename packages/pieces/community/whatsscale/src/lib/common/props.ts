@@ -274,4 +274,141 @@ export const whatsscaleProps = {
       }
     },
   }),
+
+  groupParticipants: Property.MultiSelectDropdown<string, true, typeof whatsscaleAuth>({
+    auth: whatsscaleAuth,
+    displayName: 'Participants',
+    description: 'Pick one or more current members of the selected group.',
+    required: true,
+    refreshers: ['session', 'group'],
+    options: async ({ auth, session, group }): Promise<DropdownState<string>> => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account',
+        };
+      }
+      if (!session) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a session first',
+        };
+      }
+      if (!group) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a group first',
+        };
+      }
+      try {
+        const response = await whatsscaleClient(
+          auth.secret_text,
+          HttpMethod.GET,
+          `/v1/groups/${group as string}/participants`,
+          undefined,
+          { session: session as string, limit: '500' }
+        );
+        const participants = response.body as GroupParticipantOption[];
+        if (!participants || participants.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No participants found',
+          };
+        }
+        return {
+          disabled: false,
+          options: participants.map((participant) => ({
+            label: toParticipantLabel(participant),
+            value: toParticipantValue(participant),
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading participants',
+        };
+      }
+    },
+  }),
+
+  contactsToAdd: Property.MultiSelectDropdown<string, true, typeof whatsscaleAuth>({
+    auth: whatsscaleAuth,
+    displayName: 'Participants',
+    description: 'Pick one or more contacts from this session to add to the group.',
+    required: true,
+    refreshers: ['session'],
+    options: async ({ auth, session }): Promise<DropdownState<string>> => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your account',
+        };
+      }
+      if (!session) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a session first',
+        };
+      }
+      try {
+        const response = await whatsscaleClient(
+          auth.secret_text,
+          HttpMethod.GET,
+          '/make/contacts',
+          undefined,
+          { session: session as string }
+        );
+        const contacts = (response.body as { label: string; value: string }[]).filter(
+          (contact) => contact.value.endsWith('@c.us'),
+        );
+        if (contacts.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No phone-number contacts found',
+          };
+        }
+        return { disabled: false, options: contacts };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Error loading contacts',
+        };
+      }
+    },
+  }),
+};
+
+function toParticipantLabel(participant: GroupParticipantOption): string {
+  const phone = toParticipantPhone(participant);
+  const name = phone ?? `Hidden number (${participant.id.split('@')[0]})`;
+  return participant.role && participant.role !== 'participant'
+    ? `${name} (${participant.role})`
+    : name;
+}
+
+function toParticipantValue(participant: GroupParticipantOption): string {
+  const pn = participant.pn?.trim();
+  return pn ? pn : participant.id;
+}
+
+function toParticipantPhone(participant: GroupParticipantOption): string | undefined {
+  const pn = participant.pn?.trim();
+  return pn ? pn.split('@')[0] : undefined;
+}
+
+type GroupParticipantOption = {
+  id: string;
+  pn?: string | null;
+  role?: string | null;
 };

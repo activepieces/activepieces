@@ -1,7 +1,6 @@
-export function toParticipantJids(participants: string): { id: string }[] {
+export function toParticipantJids(participants: unknown[]): { id: string }[] {
   return participants
-    .split(',')
-    .map((value) => value.trim())
+    .map((value) => String(value).trim())
     .filter((value) => value.length > 0)
     .map((value) => ({ id: value.includes('@') ? value : `${value}@c.us` }));
 }

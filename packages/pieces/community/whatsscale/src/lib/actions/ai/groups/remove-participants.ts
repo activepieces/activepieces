@@ -6,14 +6,14 @@ import { whatsscaleClient } from '../../../common/client';
 import { whatsscaleProps } from '../../../common/props';
 import { toParticipantJids, ConductorParticipantResult, flattenParticipantResults } from '../../../common/group-participants';
 
-export const promoteGroupAdminsAction = createAction({
+export const removeGroupParticipantsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_promote_group_admins',
+  name: 'whatsscale_remove_group_participants',
   classification: 'WRITE',
-  displayName: 'Promote Group Admins',
-  description: 'Grant admin rights to one or more group members by group ID.',
-  audience: 'both',
-  aiMetadata: { description: 'Grants admin privileges to one or more existing members of a WhatsApp group, given the raw group ID. Accepts a comma-separated list of phone numbers with country code; each must already be a member. Idempotent: promoting an existing admin converges on the same end state.', idempotent: true },
+  displayName: 'Remove Participants from a Group (By ID)',
+  description: 'Remove (kick) one or more people from a WhatsApp group by group ID.',
+  audience: 'ai',
+  aiMetadata: { description: 'Removes one or more phone numbers from a WhatsApp group, given the raw group ID. Idempotent: removing someone already outside the group converges on the same end state.', idempotent: true },
   outputSchema: groupParticipantResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -22,9 +22,9 @@ export const promoteGroupAdminsAction = createAction({
       description: 'The group ID, with or without the @g.us suffix.',
       required: true,
     }),
-    participants: Property.ShortText({
+    participants: Property.Array({
       displayName: 'Participants',
-      description: 'Comma-separated phone numbers with country code (e.g. +31612345678, +31687654321).',
+      description: 'Phone numbers with country code (e.g. +31612345678).',
       required: true,
     }),
   },
@@ -35,7 +35,7 @@ export const promoteGroupAdminsAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${groupId}/admin/promote`,
+      `/v1/groups/${groupId}/participants/remove`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);

@@ -8,9 +8,9 @@ export const leaveGroupAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_leave_group',
   classification: 'DESTRUCTIVE',
-  displayName: 'Leave a Group',
+  displayName: 'Leave a Group (By ID)',
   description: 'Make the connected session leave a WhatsApp group by group ID.',
-  audience: 'both',
+  audience: 'ai',
   aiMetadata: { description: 'Removes the connected WhatsApp session from a group, given the raw group ID. The session can only rejoin if re-invited or re-added — treat as destructive. Idempotent: leaving a group you already left converges on the same end state.', idempotent: true },
   props: {
     session: whatsscaleProps.session,
