@@ -72,32 +72,22 @@ export const checkWhatsappOutputSchema: OutputSchema = {
 export const listSessionsOutputSchema: OutputSchema = {
   itemLabel: '{push_name} ({status})',
   fields: [
-    {
-      key: 'sessions', label: 'Sessions', value: '',
-      listItems: [
-        { key: 'session_name', label: 'Session Name' },
-        { key: 'status', label: 'Status' },
-        { key: 'presence', label: 'Presence' },
-        { key: 'phone_number', label: 'Phone Number' },
-        { key: 'push_name', label: 'Push Name' },
-        { key: 'jid', label: 'JID' },
-      ],
-    },
+    { key: 'session_name', label: 'Session Name' },
+    { key: 'status', label: 'Status' },
+    { key: 'presence', label: 'Presence' },
+    { key: 'phone_number', label: 'Phone Number' },
+    { key: 'push_name', label: 'Push Name' },
+    { key: 'jid', label: 'JID' },
   ],
 };
 
 export const listWhatsappGroupsOutputSchema: OutputSchema = {
   itemLabel: '{name}',
   fields: [
-    {
-      key: 'groups', label: 'Groups', value: '',
-      listItems: [
-        { key: 'group_id', label: 'Group ID' },
-        { key: 'name', label: 'Name' },
-        { key: 'size', label: 'Size', format: 'number' },
-        { key: 'admin_count', label: 'Admin Count', format: 'number' },
-      ],
-    },
+    { key: 'group_id', label: 'Group ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'size', label: 'Size', format: 'number' },
+    { key: 'admin_count', label: 'Admin Count', format: 'number' },
   ],
 };
 
@@ -112,39 +102,24 @@ const groupParticipantResultFields: OutputSchema['fields'] = [
 
 export const groupParticipantResultOutputSchema: OutputSchema = {
   itemLabel: '{phone_number}',
-  fields: [
-    {
-      key: 'participants', label: 'Participants', value: '',
-      listItems: groupParticipantResultFields,
-    },
-  ],
+  fields: groupParticipantResultFields,
 };
 
 export const listGroupParticipantsOutputSchema: OutputSchema = {
-  itemLabel: '{phone_number} ({role})',
+  itemLabel: '{pn} ({role})',
   fields: [
-    {
-      key: 'participants', label: 'Participants', value: '',
-      listItems: [
-        { key: 'id', label: 'ID' },
-        { key: 'pn', label: 'Phone Number' },
-        { key: 'role', label: 'Role' },
-      ],
-    },
+    { key: 'id', label: 'ID' },
+    { key: 'pn', label: 'Phone Number' },
+    { key: 'role', label: 'Role' },
   ],
 };
 
 export const listWhatsappContactsOutputSchema: OutputSchema = {
   itemLabel: '{pushname}',
   fields: [
-    {
-      key: 'contacts', label: 'Contacts', value: '',
-      listItems: [
-        { key: 'id', label: 'Contact ID' },
-        { key: 'name', label: 'Name' },
-        { key: 'pushname', label: 'Push Name' },
-      ],
-    },
+    { key: 'id', label: 'Contact ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'pushname', label: 'Push Name' },
   ],
 };
 const messageMediaFields: OutputSchema['fields'] = [
