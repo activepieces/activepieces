@@ -211,22 +211,25 @@ describe('worker settings override', () => {
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
     }, 10_000)
 
-    it('worker group + SANDBOX_CODE_ONLY throws error', async () => {
-        process.env.AP_WORKER_GROUP_ID = 'group-1'
-        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_CODE_ONLY
-        const serverSettings = buildWorkerSettingsResponse()
-
-        const err = await connectAndExpectCrash(serverSettings)
-        expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
-    }, 10_000)
-
-    it('worker group + UNSANDBOXED throws error', async () => {
+    it('worker group + UNSANDBOXED passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse()
+        await connectAndWaitForSettings(serverSettings)
+
+        expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.EXECUTION_MODE).toBe(ExecutionMode.UNSANDBOXED)
+    }, 10_000)
+
+    it('worker group without AP_REUSE_SANDBOX throws error', async () => {
+        process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
         const serverSettings = buildWorkerSettingsResponse()
 
         const err = await connectAndExpectCrash(serverSettings)
-        expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
+        expect(err.message).toMatch(/Worker group "group-1" requires AP_REUSE_SANDBOX/)
     }, 10_000)
 
     it('worker group + no local override, server sends SANDBOX_PROCESS → passes', async () => {
