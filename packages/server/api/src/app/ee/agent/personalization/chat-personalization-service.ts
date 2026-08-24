@@ -56,7 +56,8 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         const freeTextCompany = hasCompanyInput && isNil(normalizedWebsite) ? trimmedInput.slice(0, 255) : null
         const role = isNil(roleInput) ? null : normalizeRoleTitle({ input: roleInput })
 
-        if (personalize && !hasCompanyInput && companyRow?.status === ChatPersonalizationStatus.READY) {
+        if (personalize && !hasCompanyInput && !isNil(companyRow)
+            && (!isNil(companyRow.domain) || !isNil(companyRow.companyText))) {
             return this.upsertUserScope({ platformId, userId, companyRow })
         }
 
@@ -217,18 +218,20 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             recoverIfStale({ row: foundUserRow, platformId, userId, scope: ChatPersonalizationScope.USER, log }),
             recoverIfStale({ row: foundCompanyRow, platformId, userId, scope: ChatPersonalizationScope.COMPANY, log }),
         ])
+        const personalStatus = userRow?.status ?? ChatPersonalizationStatus.UNSET
         if (userRow?.status === ChatPersonalizationStatus.READY) {
-            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, prefill: null })
+            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, personalStatus, prefill: null })
         }
         if (!isNil(companyRow)) {
-            return toView({ row: companyRow, scope: ChatPersonalizationScope.COMPANY, inputsRow: companyRow, prefill: null })
+            return toView({ row: companyRow, scope: ChatPersonalizationScope.COMPANY, inputsRow: companyRow, personalStatus, prefill: null })
         }
         if (!isNil(userRow)) {
-            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: userRow, prefill: null })
+            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: userRow, personalStatus, prefill: null })
         }
         await startPrefillLookup({ platformId, userId, log })
         return {
             status: ChatPersonalizationStatus.UNSET,
+            personalStatus: ChatPersonalizationStatus.UNSET,
             scope: ChatPersonalizationScope.COMPANY,
             useCases: [],
             profile: null,
@@ -726,14 +729,16 @@ function validateResult({ input, log }: { input: SavePersonalizationResultReques
     return { status: ChatPersonalizationStatus.READY, profile: profile.data, useCases: useCases.data }
 }
 
-function toView({ row, scope, inputsRow, prefill }: {
+function toView({ row, scope, inputsRow, personalStatus, prefill }: {
     row: ChatPersonalization
     scope: ChatPersonalizationScope
     inputsRow: ChatPersonalization
+    personalStatus: ChatPersonalizationStatus
     prefill: PersonalizationPrefill | null
 }): ChatPersonalizationView {
     return {
         status: row.status,
+        personalStatus,
         scope,
         useCases: row.useCases ?? [],
         profile: row.profile ?? null,

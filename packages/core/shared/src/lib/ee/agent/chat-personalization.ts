@@ -134,6 +134,7 @@ export type UpsertChatPersonalizationRequest = z.infer<typeof UpsertChatPersonal
 
 export const ChatPersonalizationView = z.object({
     status: z.enum(CHAT_PERSONALIZATION_STATUSES),
+    personalStatus: z.enum(CHAT_PERSONALIZATION_STATUSES),
     scope: z.enum([ChatPersonalizationScope.COMPANY, ChatPersonalizationScope.USER]),
     useCases: z.array(PersonalizationUseCase),
     profile: Nullable(PersonalizationProfile),
