@@ -599,7 +599,10 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onConnectorReconnected: (connectorUuid) => brokenConnectors.delete(connectorUuid),
         onGateOpened: storePendingGate,
     })
-    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState, agentsAvailable })
+    const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool })
+        : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -671,6 +674,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             phase: phaseTools,
             buildPlan: buildPlanTools,
             email: emailTools,
+            agentSurface: agentSurfaceTools,
             mcp: mcpTools as ToolSet,
             configuredPiece: configuredTools,
             configuredFlow: configuredFlowToolSet,

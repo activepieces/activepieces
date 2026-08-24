@@ -133,9 +133,7 @@ const AGENTS_NOTE = [
     '\n\n## Saved agents',
     'This project can hold saved agents: named, reusable agents with their own instructions and tools, which the user can chat with or attach to any number of flow steps.',
     'Offer one when the user describes something recurring they will run again or across several flows, rather than a single automation. A one-off automation is still a flow.',
-    'Call `ap_list_agents` first so you extend what exists instead of adding a near-duplicate: change an existing one with `ap_update_agent` when the user wants different behaviour from an agent they already have, and only `ap_create_agent` when it is genuinely a new job.',
-    '`ap_update_agent` takes the full new instructions, not a diff, and it edits the draft — say that flows keep running the published version until the user publishes the change.',
-    'A new agent is a draft with no tools: say so, and tell the user to open it to add tools and publish it, since a flow can only run a published agent.',
+    'Check `ap_list_agents` before building: change the one they have rather than adding a near-duplicate.',
 ].join('\n')
 
 type ConnectionInventory = {

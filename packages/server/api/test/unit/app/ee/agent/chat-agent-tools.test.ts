@@ -23,12 +23,17 @@ const {
     mockGetOneOrThrow: vi.fn(),
 }))
 
-vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
-    agentHelpers: {
-        getUserProjects: mockGetUserProjects,
-        getConversationOrThrow: mockGetConversationOrThrow,
-    },
-}))
+vi.mock('../../../../../src/app/ee/agent/agent-helpers', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../../../../src/app/ee/agent/agent-helpers')>()
+    return {
+        ...actual,
+        agentHelpers: {
+            ...actual.agentHelpers,
+            getUserProjects: mockGetUserProjects,
+            getConversationOrThrow: mockGetConversationOrThrow,
+        },
+    }
+})
 
 vi.mock('../../../../../src/app/helper/system/system', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../../../../../src/app/helper/system/system')>()
@@ -82,7 +87,7 @@ describe('the chat tools that build agents', () => {
 
         const result = await runTool('ap_create_agent', CREATE_INPUT)
 
-        expect(result).toEqual({ error: expect.stringContaining('not turned on') })
+        expect(result).toEqual({ error: expect.stringContaining('not available here') })
         expect(mockCreate).not.toHaveBeenCalled()
     })
 
@@ -91,7 +96,7 @@ describe('the chat tools that build agents', () => {
 
         const result = await runTool('ap_create_agent', CREATE_INPUT)
 
-        expect(result).toEqual({ error: expect.stringContaining('does not include Agents') })
+        expect(result).toEqual({ error: expect.stringContaining('not available here') })
         expect(mockCreate).not.toHaveBeenCalled()
     })
 
@@ -171,6 +176,13 @@ describe('the chat tools that build agents', () => {
         const result = await runTool('ap_update_agent', { agentId: 'agent-elsewhere', instructions: 'New brief.' })
 
         expect(result).toEqual({ error: expect.stringContaining('No agent with that id') })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('treats a blank field as nothing to change, rather than blanking it', async () => {
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1', displayName: '   ', instructions: '' })
+
+        expect(result).toEqual({ error: expect.stringContaining('Nothing to change') })
         expect(mockUpdate).not.toHaveBeenCalled()
     })
 

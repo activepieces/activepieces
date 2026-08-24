@@ -9,8 +9,11 @@ import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { UserMemoryEntity } from './user-memory-entity'
 
@@ -319,7 +322,16 @@ async function saveUserMemory({ platformId, userId, instructions, memories, base
     })
 }
 
+async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
+        return false
+    }
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    return plan.agentsEnabled
+}
+
 export const agentHelpers = {
+    agentsSurfaceAvailable,
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,

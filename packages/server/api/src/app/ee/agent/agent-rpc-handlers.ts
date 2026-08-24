@@ -19,7 +19,6 @@ import { runFlowAsTool } from '../../mcp/mcp-server-builder'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { agentApprovalGate } from './agent-approval-gate'
 import { agentCompaction } from './agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from './agent-file-utils'
@@ -37,7 +36,7 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', 'ap_list_agents', 'ap_create_agent', 'ap_update_agent']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
@@ -129,9 +128,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = system.getBoolean(AppSystemProp.AGENTS_ENABLED) === true
-            && carriesChatContext
-            && (await platformPlanService(log).getOrCreateForPlatform(platformId)).agentsEnabled
+        const agentsAvailable = carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)

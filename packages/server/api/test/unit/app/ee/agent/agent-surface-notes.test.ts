@@ -28,9 +28,9 @@ function notesFor(source: AgentRunSource): string {
 
 describe('what each surface is told it can do', () => {
     it('only tells a chat run about saved agents, and only where the surface exists', () => {
-        expect(notesFor(AgentRunSource.CHAT)).toContain('ap_create_agent')
-        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('ap_create_agent')
-        expect(notesFor(AgentRunSource.AGENT)).not.toContain('ap_create_agent')
+        expect(notesFor(AgentRunSource.CHAT)).toContain('Saved agents')
+        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('Saved agents')
+        expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
     })
 
     it('says nothing about saved agents when the instance has them turned off', () => {
@@ -44,7 +44,6 @@ describe('what each surface is told it can do', () => {
             memory: { instructions: null, memories: [] },
         })
 
-        expect(notes).not.toContain('ap_create_agent')
         expect(notes).not.toContain('Saved agents')
     })
 

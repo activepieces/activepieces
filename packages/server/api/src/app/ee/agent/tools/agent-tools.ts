@@ -7,8 +7,7 @@ import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
+import { domainHelper } from '../../../helper/domain-helper'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { runActionInput } from '../../../mcp/tools/ap-run-action'
@@ -16,13 +15,13 @@ import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRu
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
-import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { agentApprovalGate } from '../agent-approval-gate'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
 
+const AGENT_LIST_LIMIT = 50
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
 const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
     AppConnectionType.OAUTH2,
@@ -217,14 +216,10 @@ async function listResourceForProject({ resource, projectId, status, log }: {
 }
 
 async function agentsUnavailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<{ error: string } | null> {
-    if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
-        return { error: 'Agents are not turned on for this instance, so there is nothing to list or create. Do not offer to build one.' }
+    if (await agentHelpers.agentsSurfaceAvailable({ platformId, log })) {
+        return null
     }
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    if (!plan.agentsEnabled) {
-        return { error: 'This plan does not include Agents, so there is nothing to list or create. Do not offer to build one.' }
-    }
-    return null
+    return { error: 'Agents are not available here, so there is nothing to list, create or change. Do not offer to build one.' }
 }
 
 async function activeProjectId({ conversationId, projects, platformId, userId }: {
@@ -241,6 +236,27 @@ async function activeProjectId({ conversationId, projects, platformId, userId }:
         return undefined
     }
     return conversation.projectId
+}
+
+async function listAgentsForChat({ platformId, projectId, userId, log }: {
+    platformId: string
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: AGENT_LIST_LIMIT })
+    return data.map((agent) => ({
+        agentId: agent.id,
+        displayName: agent.displayName,
+        description: agent.description,
+        published: agent.isPublished,
+        toolCount: agent.toolCount,
+    }))
+}
+
+function nonEmpty(value: unknown): string | undefined {
+    const trimmed = isString(value) ? value.trim() : ''
+    return trimmed.length === 0 ? undefined : trimmed
 }
 
 async function createAgentFromChat({ toolInput, projectId, userId, log }: {
@@ -278,7 +294,7 @@ async function createAgentFromChat({ toolInput, projectId, userId, log }: {
         agentId: agent.id,
         displayName: agent.displayName,
         published: false,
-        url: `/projects/${projectId}/agents/${agent.id}`,
+        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${agent.id}` }),
         note: 'Created as a draft with no tools and the default model. Link the user to the url above, and tell them to add tools and publish it there — a flow can only run a published agent.',
     }
 }
@@ -293,11 +309,11 @@ async function updateAgentFromChat({ toolInput, projectId, userId, log }: {
     if (agentId.length === 0) {
         return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
     }
-    const displayName = isString(toolInput.displayName) ? toolInput.displayName.trim() : undefined
-    const description = isString(toolInput.description) ? toolInput.description.trim() : undefined
-    const instructions = isString(toolInput.instructions) ? toolInput.instructions.trim() : undefined
+    const displayName = nonEmpty(toolInput.displayName)
+    const description = nonEmpty(toolInput.description)
+    const instructions = nonEmpty(toolInput.instructions)
     if (isNil(displayName) && isNil(description) && isNil(instructions)) {
-        return { error: 'Nothing to change. Pass a new displayName, description or instructions.' }
+        return { error: 'Nothing to change. Pass a new displayName, description or instructions, and none of them may be blank.' }
     }
     const { data: existing, error } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
     if (!isNil(error) || isNil(existing)) {
@@ -321,7 +337,7 @@ async function updateAgentFromChat({ toolInput, projectId, userId, log }: {
             ...(isNil(description) ? [] : ['description']),
             ...(isNil(instructions) ? [] : ['instructions']),
         ],
-        url: `/projects/${projectId}/agents/${updated.id}`,
+        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${updated.id}` }),
         note: isNil(updated.published)
             ? 'Saved to the draft. This agent is not published, so nothing runs it yet.'
             : 'Saved to the draft. Flows and chats keep running the published version until the user publishes this change — tell them that, and link them to the url above.',
@@ -447,14 +463,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return denial
             }
             if (toolName === 'ap_list_agents') {
-                const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: 50 })
-                return data.map((agent) => ({
-                    agentId: agent.id,
-                    displayName: agent.displayName,
-                    description: agent.description,
-                    published: agent.isPublished,
-                    toolCount: agent.toolCount,
-                }))
+                return listAgentsForChat({ platformId, projectId, userId, log })
             }
             if (toolName === 'ap_update_agent') {
                 return updateAgentFromChat({ toolInput, projectId, userId, log })

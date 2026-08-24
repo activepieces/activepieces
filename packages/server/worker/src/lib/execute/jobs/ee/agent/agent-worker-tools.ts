@@ -460,14 +460,13 @@ function createProgressGuard() {
     }
 }
 
-function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState, agentsAvailable }: {
+function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, onGateOpened, guides, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
     eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     guides: Record<string, string>
     taintState: TaintState
-    agentsAvailable: boolean
 }): ToolSet {
     const progressGuard = createProgressGuard()
     const executeWithTimeout = (toolName: string, toolInput: Record<string, unknown>) =>
@@ -700,12 +699,10 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
                 return executeTool('ap_remember', toolInput)
             },
         }),
-
-        ...(agentsAvailable ? agentSurfaceTools({ executeTool }) : {}),
     }
 }
 
-function agentSurfaceTools({ executeTool }: {
+function createAgentSurfaceTools({ executeTool }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
 }): ToolSet {
     return {
@@ -1546,6 +1543,7 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
 export const agentWorkerTools = {
     createEventEmitter,
     createDisplayTools,
+    createAgentSurfaceTools,
     createLocalTools,
     createCrossProjectTools,
     createWebTools,
