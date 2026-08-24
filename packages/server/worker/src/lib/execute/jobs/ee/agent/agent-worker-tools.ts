@@ -690,6 +690,26 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             },
         }),
 
+        ap_list_agents: tool({
+            description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
+            inputSchema: z.object({}),
+            execute: async (toolInput) => {
+                return executeTool('ap_list_agents', toolInput)
+            },
+        }),
+
+        ap_create_agent: tool({
+            description: 'Create a saved agent in the active project from a name and instructions. Use it when the user wants a reusable agent rather than a one-off flow step — something they will run again, chat with, or attach to several flows. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. It is created as a draft with no tools, so tell the user to open it to add tools and publish it.',
+            inputSchema: z.object({
+                displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
+                instructions: z.string().describe('The agent\'s standing brief, in second person'),
+                description: z.string().optional().describe('One line on what it is for'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_create_agent', toolInput)
+            },
+        }),
+
         ap_remember: tool({
             description: 'Save a durable fact or preference about THIS user so it carries across all future conversations (silent, internal). Call it whenever the user would otherwise have to repeat themselves next time: when they explicitly ask you to remember something ("remember I love cheese") — always honor that — or when they volunteer a durable personal fact, preference, default, or correction ("I love cheese", "I prefer TypeScript", "default notify channel is #ops", "always EU-based candidates", "stop asking me things you can find"). One short standalone statement per call. Duplicates and contradictions are reconciled automatically, so err toward saving when unsure. Do NOT use for one-off task details (those go in the brief).',
             inputSchema: z.object({

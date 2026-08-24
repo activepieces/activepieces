@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -10,6 +10,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     scrapeAvailable: boolean
     imageAvailable: boolean
     emailAvailable: boolean
+    agentsAvailable: boolean
     userEmail: string
     connections: ConnectionInventory | null
     memory: RunMemory
@@ -24,6 +25,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
         emailAvailable: emailAvailable && isChat,
         userEmail,
     })
+        + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
@@ -126,6 +128,14 @@ function buildMemoryNote({ instructions, memories }: RunMemory): string {
 }
 
 export const agentSurfaceNotes = { buildRunNotes }
+
+const AGENTS_NOTE = [
+    '\n\n## Saved agents',
+    'This project can hold saved agents: named, reusable agents with their own instructions and tools, which the user can chat with or attach to any number of flow steps.',
+    'Offer one when the user describes something recurring they will run again or across several flows, rather than a single automation. A one-off automation is still a flow.',
+    'Call `ap_list_agents` first so you extend what exists instead of adding a near-duplicate, then `ap_create_agent` with a name and a standing brief written in second person.',
+    'A new agent is a draft with no tools: say so, and tell the user to open it to add tools and publish it, since a flow can only run a published agent.',
+].join('\n')
 
 type ConnectionInventory = {
     connections: { displayName: string, pieceName: string, status: string }[]

@@ -19,6 +19,7 @@ import { runFlowAsTool } from '../../mcp/mcp-server-builder'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { agentApprovalGate } from './agent-approval-gate'
 import { agentCompaction } from './agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from './agent-file-utils'
@@ -128,6 +129,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
+        const agentsAvailable = system.getBoolean(AppSystemProp.AGENTS_ENABLED) === true
+            && carriesChatContext
+            && (await platformPlanService(log).getOrCreateForPlatform(platformId)).agentsEnabled
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
@@ -196,6 +200,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
+            agentsAvailable,
             userEmail: runUserEmail,
             connections: inventoryResult && !inventoryResult.error
                 ? { connections: inventoryResult.data.data, truncated: inventoryResult.data.data.length >= CONNECTION_INVENTORY_LIMIT }

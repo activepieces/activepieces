@@ -233,6 +233,7 @@ async function resolveReadableProjects({ platformId, userId, projectId, log }: R
 function toSummary(agent: Agent, project?: Project): AgentSummary {
     return {
         ...omit(agent, ['draft', 'published']),
+        isPublished: !isNil(agent.published),
         projectDisplayName: project?.displayName ?? '',
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,

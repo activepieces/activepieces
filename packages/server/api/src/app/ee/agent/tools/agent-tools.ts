@@ -1,12 +1,14 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { agentToolClassification, AppConnectionStatus, AppConnectionType, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { AgentIcon, agentToolClassification, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { runActionInput } from '../../../mcp/tools/ap-run-action'
@@ -14,9 +16,11 @@ import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRu
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { tableService } from '../../../tables/table/table.service'
+import { platformPlanService } from '../../platform/platform-plan/platform-plan.service'
 import { agentApprovalGate } from '../agent-approval-gate'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
+import { agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
 
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
@@ -212,6 +216,73 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
+async function agentsUnavailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<{ error: string } | null> {
+    if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
+        return { error: 'Agents are not turned on for this instance, so there is nothing to list or create. Do not offer to build one.' }
+    }
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    if (!plan.agentsEnabled) {
+        return { error: 'This plan does not include Agents, so there is nothing to list or create. Do not offer to build one.' }
+    }
+    return null
+}
+
+async function activeProjectId({ conversationId, projects, platformId, userId }: {
+    conversationId?: string
+    projects: Project[]
+    platformId: string
+    userId: string
+}): Promise<string | undefined> {
+    if (isNil(conversationId)) {
+        return undefined
+    }
+    const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+    if (isNil(conversation.projectId) || !projects.some((project) => project.id === conversation.projectId)) {
+        return undefined
+    }
+    return conversation.projectId
+}
+
+async function createAgentFromChat({ toolInput, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const displayName = isString(toolInput.displayName) ? toolInput.displayName.trim() : ''
+    const instructions = isString(toolInput.instructions) ? toolInput.instructions.trim() : ''
+    if (displayName.length === 0 || instructions.length === 0) {
+        return { error: 'An agent needs a name and instructions.' }
+    }
+    const agent = await agentService(log).create({
+        projectId,
+        ownerId: userId,
+        request: {
+            projectId,
+            displayName,
+            description: isString(toolInput.description) ? toolInput.description : null,
+            icon: AgentIcon.SPARKLES,
+            color: ColorName.PURPLE,
+            draft: {
+                instructions,
+                provider: null,
+                modelName: null,
+                providerConfigId: null,
+                maxSteps: DEFAULT_AGENT_MAX_STEPS,
+                tools: [],
+                structuredOutput: [],
+            },
+        },
+    })
+    return {
+        agentId: agent.id,
+        displayName: agent.displayName,
+        published: false,
+        url: `/projects/${projectId}/agents/${agent.id}`,
+        note: 'Created as a draft with no tools and the default model. Link the user to the url above, and tell them to add tools and publish it there — a flow can only run a published agent.',
+    }
+}
+
 async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     userId: string
     projectId: string
@@ -313,6 +384,32 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     ? 'This connection is valid — safe to build on.'
                     : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
             }
+        }
+        case 'ap_list_agents':
+        case 'ap_create_agent': {
+            const unavailable = await agentsUnavailable({ platformId, log })
+            if (!isNil(unavailable)) {
+                return unavailable
+            }
+            const projectId = await activeProjectId({ conversationId, projects, platformId, userId })
+            if (isNil(projectId)) {
+                return { error: 'No project is selected for this conversation. Ask the user which project the agent belongs to.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(toolName === 'ap_list_agents' ? Permission.READ_AGENT : Permission.WRITE_AGENT, toolName)
+            if (!isNil(denial)) {
+                return denial
+            }
+            if (toolName === 'ap_list_agents') {
+                const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: 50 })
+                return data.map((agent) => ({
+                    displayName: agent.displayName,
+                    description: agent.description,
+                    published: agent.isPublished,
+                    toolCount: agent.toolCount,
+                }))
+            }
+            return createAgentFromChat({ toolInput, projectId, userId, log })
         }
         case 'ap_execute_action': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
