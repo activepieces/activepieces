@@ -29,13 +29,14 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
         },
         info(...args: unknown[]) {
             try {
-                const { message, fields } = normalizePinoArgs(args)
+                const { message, fields, err } = normalizePinoArgsWithError(args)
+                const safeFields = err ? { error: stringifyError(err), ...fields } : fields
                 const wide = wideEvent.current()
                 if (wide) {
-                    wide.info(message ?? 'log', { ...bindings, ...fields })
+                    wide.info(message ?? 'log', { ...bindings, ...safeFields })
                 }
                 else {
-                    log.info({ msg: message, ...bindings, ...fields })
+                    log.info({ msg: message, ...bindings, ...safeFields })
                 }
             }
             catch {
@@ -44,13 +45,14 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
         },
         warn(...args: unknown[]) {
             try {
-                const { message, fields } = normalizePinoArgs(args)
+                const { message, fields, err } = normalizePinoArgsWithError(args)
+                const safeFields = err ? { error: stringifyError(err), ...fields } : fields
                 const wide = wideEvent.current()
                 if (wide) {
-                    wide.warn(message ?? 'log', { ...bindings, ...fields })
+                    wide.warn(message ?? 'log', { ...bindings, ...safeFields })
                 }
                 else {
-                    log.warn({ msg: message, ...bindings, ...fields })
+                    log.warn({ msg: message, ...bindings, ...safeFields })
                 }
             }
             catch {
@@ -68,7 +70,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...bindings, ...fields })
                     }
                     else {
                         log.error({ msg: message, ...bindings, ...fields })
@@ -88,7 +90,7 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
                 }
                 else {
                     if (err) {
-                        log.error({ msg: message ?? err.message, error: `${err.message}\n${err.stack ?? ''}`, ...bindings, ...fields })
+                        log.error({ msg: message ?? err.message, error: stringifyError(err), ...bindings, ...fields })
                     }
                     else {
                         log.error({ msg: message, ...bindings, ...fields })
@@ -101,8 +103,9 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
         },
         debug(...args: unknown[]) {
             try {
-                const { message, fields } = normalizePinoArgs(args)
-                log.debug({ msg: message, ...bindings, ...fields })
+                const { message, fields, err } = normalizePinoArgsWithError(args)
+                const safeFields = err ? { error: stringifyError(err), ...fields } : fields
+                log.debug({ msg: message, ...bindings, ...safeFields })
             }
             catch {
                 // never throw
@@ -110,8 +113,9 @@ function buildLogger(bindings: Record<string, unknown>): ApLogger {
         },
         trace(...args: unknown[]) {
             try {
-                const { message, fields } = normalizePinoArgs(args)
-                log.debug({ msg: message, ...bindings, ...fields })
+                const { message, fields, err } = normalizePinoArgsWithError(args)
+                const safeFields = err ? { error: stringifyError(err), ...fields } : fields
+                log.debug({ msg: message, ...bindings, ...safeFields })
             }
             catch {
                 // never throw
@@ -128,17 +132,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function normalizePinoArgs(args: unknown[]): { message: string | undefined, fields: Record<string, unknown> } {
-    const first = args[0]
-    if (typeof first === 'string') {
-        return { message: first, fields: {} }
-    }
-    if (isRecord(first)) {
-        const second = args[1]
-        const message = typeof second === 'string' ? second : undefined
-        return { message, fields: first }
-    }
-    return { message: String(first ?? ''), fields: {} }
+function stringifyError(err: Error): string {
+    return `${err.message}\n${err.stack ?? ''}`
 }
 
 function normalizePinoArgsWithError(args: unknown[]): { message: string | undefined, fields: Record<string, unknown>, err: Error | undefined } {
