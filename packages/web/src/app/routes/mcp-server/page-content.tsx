@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
-export function PageBand({
+export function PageContent({
   className,
   children,
 }: {

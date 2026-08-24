@@ -137,19 +137,19 @@ export const mcpOAuthTokenService = {
 
     async listGrants({ platformId, userId, projectIds, memberIds, clientKeys, cursor, limit }: ListGrantsParams): Promise<ListMcpOAuthGrantsResponse> {
         const scope = { platformId, userId }
-        const buckets = await countGrantsByBucket(scope)
+        const groups = await countGrantsByGroup(scope)
         const [clients, members, projectNames] = await Promise.all([
-            findClientsByClientId(buckets.map((bucket) => bucket.clientId)),
-            findMembers(buckets.map((bucket) => bucket.userId)),
-            findProjectNames(buckets.map((bucket) => bucket.projectId)),
+            findClientsById(groups.map((group) => group.clientId)),
+            findMembers(groups.map((group) => group.userId)),
+            findProjectNames(groups.map((group) => group.projectId)),
         ])
         const clientKeyOf = (clientId: string): McpOAuthClientKey =>
-            mcpOAuthClientIdentity.classify({ redirectUris: clients.get(clientId)?.redirectUris ?? [] })
-        const facets = buildFacets({ buckets, clients, members, projectNames, clientKeyOf })
+            mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: clients.get(clientId)?.redirectUris ?? [] })
+        const facets = buildFacets({ groups, clients, members, projectNames, clientKeyOf })
 
         const clientIds = isNil(clientKeys)
             ? undefined
-            : unique(buckets.map((bucket) => bucket.clientId).filter((clientId) => clientKeys.includes(clientKeyOf(clientId))))
+            : unique(groups.map((group) => group.clientId).filter((clientId) => clientKeys.includes(clientKeyOf(clientId))))
         if (!isNil(clientIds) && clientIds.length === 0) {
             return { ...paginationHelper.createPage<McpOAuthGrant>([], null), facets }
         }
@@ -235,7 +235,7 @@ function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBu
     }))
 }
 
-async function countGrantsByBucket(scope: GrantScope): Promise<GrantBucket[]> {
+async function countGrantsByGroup(scope: GrantScope): Promise<GrantGroupCount[]> {
     const rows = await applyScope(repo().createQueryBuilder(TOKEN_ALIAS), scope)
         .select(`${TOKEN_ALIAS}."clientId"`, 'clientId')
         .addSelect(`${TOKEN_ALIAS}."userId"`, 'userId')
@@ -248,25 +248,25 @@ async function countGrantsByBucket(scope: GrantScope): Promise<GrantBucket[]> {
     return rows.map((row) => ({ ...row, count: Number(row.count) }))
 }
 
-function buildFacets({ buckets, clients, members, projectNames, clientKeyOf }: BuildFacetsParams): McpOAuthGrantFacets {
+function buildFacets({ groups, clients, members, projectNames, clientKeyOf }: BuildFacetsParams): McpOAuthGrantFacets {
     const byClient = new Map<McpOAuthClientKey, { clientName: string | null, count: number }>()
     const byMember = new Map<string, number>()
     const byProject = new Map<string, number>()
 
-    for (const bucket of buckets) {
-        const clientKey = clientKeyOf(bucket.clientId)
+    for (const group of groups) {
+        const clientKey = clientKeyOf(group.clientId)
         const client = byClient.get(clientKey)
         byClient.set(clientKey, {
-            clientName: client?.clientName ?? clients.get(bucket.clientId)?.clientName ?? null,
-            count: (client?.count ?? 0) + bucket.count,
+            clientName: client?.clientName ?? clients.get(group.clientId)?.clientName ?? null,
+            count: (client?.count ?? 0) + group.count,
         })
-        byMember.set(bucket.userId, (byMember.get(bucket.userId) ?? 0) + bucket.count)
-        const projectKey = bucket.projectId ?? PLATFORM_WIDE_GRANT_FILTER_VALUE
-        byProject.set(projectKey, (byProject.get(projectKey) ?? 0) + bucket.count)
+        byMember.set(group.userId, (byMember.get(group.userId) ?? 0) + group.count)
+        const projectKey = group.projectId ?? PLATFORM_WIDE_GRANT_FILTER_VALUE
+        byProject.set(projectKey, (byProject.get(projectKey) ?? 0) + group.count)
     }
 
     return {
-        total: buckets.reduce((total, bucket) => total + bucket.count, 0),
+        total: groups.reduce((total, group) => total + group.count, 0),
         byClient: [...byClient].map(([clientKey, { clientName, count }]) => ({ clientKey, clientName, count })),
         byMember: [...byMember].map(([userId, count]) => ({ member: members.get(userId) ?? unknownMember(userId), count })),
         byProject: [...byProject].map(([projectKey, count]) => ({
@@ -277,7 +277,7 @@ function buildFacets({ buckets, clients, members, projectNames, clientKeyOf }: B
     }
 }
 
-async function findClientsByClientId(clientIds: string[]): Promise<Map<string, { redirectUris: string[], clientName: string | null }>> {
+async function findClientsById(clientIds: string[]): Promise<Map<string, { redirectUris: string[], clientName: string | null }>> {
     const distinct = unique(clientIds)
     if (distinct.length === 0) {
         return new Map()
@@ -378,7 +378,7 @@ type GrantScope = {
     userId: string | null
 }
 
-type GrantBucket = {
+type GrantGroupCount = {
     clientId: string
     userId: string
     projectId: string | null
@@ -386,7 +386,7 @@ type GrantBucket = {
 }
 
 type BuildFacetsParams = {
-    buckets: GrantBucket[]
+    groups: GrantGroupCount[]
     clients: Map<string, { redirectUris: string[], clientName: string | null }>
     members: Map<string, UserWithMetaInformation>
     projectNames: Map<string, string>

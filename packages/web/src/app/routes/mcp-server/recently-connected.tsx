@@ -10,7 +10,7 @@ import { ClientIcon } from './client-icon';
 import { mcpClientBranding } from './mcp-client-branding';
 import { mcpGrantsQueries } from './mcp-grants-hooks';
 import { useMcpNav } from './mcp-nav';
-import { PageBand } from './page-band';
+import { PageContent } from './page-content';
 
 const MAX_SHOWN = 3;
 
@@ -31,7 +31,7 @@ export function RecentlyConnected() {
 
   return (
     <div className="border-t">
-      <PageBand className="flex flex-wrap items-center gap-4 px-6 py-5 lg:px-14">
+      <PageContent className="flex flex-wrap items-center gap-4 px-6 py-5 lg:px-14">
         <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           {t('Recently connected')}
         </span>
@@ -69,7 +69,7 @@ export function RecentlyConnected() {
             </Button>
           </>
         )}
-      </PageBand>
+      </PageContent>
     </div>
   );
 }

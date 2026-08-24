@@ -26,7 +26,7 @@ import {
   mcpClientCatalog,
 } from './mcp-client-catalog';
 import { useMcpNav } from './mcp-nav';
-import { PageBand } from './page-band';
+import { PageContent } from './page-content';
 import { RecentlyConnected } from './recently-connected';
 
 export function ConnectSteps({
@@ -37,7 +37,10 @@ export function ConnectSteps({
   isReachableFromInternet: boolean;
 }) {
   const { view, clientKey } = useMcpNav();
-  const clients = useMemo(() => mcpClientCatalog.build(serverUrl), [serverUrl]);
+  const clients = useMemo(
+    () => mcpClientCatalog.clients(serverUrl),
+    [serverUrl],
+  );
   const selected = clients.find((client) => client.key === clientKey) ?? null;
 
   if (view === 'client' && selected !== null) {
@@ -72,7 +75,7 @@ function ConnectLanding({
 
   return (
     <div className="flex flex-col bg-background">
-      <PageBand className="flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
+      <PageContent className="flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
           <h1 className="max-w-[455px] text-[40px] font-bold leading-[46px] tracking-[-0.035em]">
             {t('One link for everywhere you use AI.')}
@@ -121,7 +124,7 @@ function ConnectLanding({
             <ChevronRight className="size-[15px]" />
           </button>
         </div>
-      </PageBand>
+      </PageContent>
 
       <IntegrationsBanner />
       <RecentlyConnected />
@@ -138,18 +141,18 @@ function ClientBrowser({
 }) {
   const nav = useMcpNav();
   const [search, setSearch] = useState('');
-  const needle = search.trim().toLowerCase();
-  const matches = clients.filter(
+  const query = search.trim().toLowerCase();
+  const matchingClients = clients.filter(
     (client) =>
-      needle === '' ||
-      client.name.toLowerCase().includes(needle) ||
-      client.hint.toLowerCase().includes(needle),
+      query === '' ||
+      client.name.toLowerCase().includes(query) ||
+      client.hint.toLowerCase().includes(query),
   );
 
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageContent className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
           <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
@@ -164,7 +167,7 @@ function ClientBrowser({
             </div>
             <div className="flex shrink-0 items-center gap-2.5 rounded-[9px] border bg-muted/40 py-2 pl-3.5 pr-2">
               <span className="font-mono text-xs text-muted-foreground">
-                {shortServerUrl(serverUrl)}
+                {abbreviateServerUrl(serverUrl)}
               </span>
               <CopyButton textToCopy={serverUrl} variant="default" size="sm">
                 {t('Copy')}
@@ -190,12 +193,12 @@ function ClientBrowser({
               {t('Client not listed?')}
             </Button>
           </div>
-        </PageBand>
+        </PageContent>
       </div>
 
-      <PageBand className="flex flex-col gap-7 px-6 py-7 lg:px-12">
+      <PageContent className="flex flex-col gap-7 px-6 py-7 lg:px-12">
         {mcpClientCatalog.groups().map((group) => {
-          const groupClients = matches.filter(
+          const groupClients = matchingClients.filter(
             (client) => client.group === group.key,
           );
           if (groupClients.length === 0) {
@@ -209,12 +212,12 @@ function ClientBrowser({
             />
           );
         })}
-        {matches.length === 0 && (
+        {matchingClients.length === 0 && (
           <span className="text-sm text-muted-foreground">
             {t('No client matches your search.')}
           </span>
         )}
-      </PageBand>
+      </PageContent>
     </div>
   );
 }
@@ -297,7 +300,7 @@ function ClientInstructions({
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageContent className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
           <BackLink label={t('All clients')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-center gap-4">
             <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
@@ -316,10 +319,10 @@ function ClientInstructions({
               </a>
             </Button>
           </div>
-        </PageBand>
+        </PageContent>
       </div>
 
-      <PageBand className="flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
+      <PageContent className="flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
         <div className="flex min-w-0 flex-1 flex-col">
           {client.steps.map((step, index) => (
             <ConnectStepRow
@@ -370,7 +373,7 @@ function ClientInstructions({
             </span>
           </button>
         </div>
-      </PageBand>
+      </PageContent>
     </div>
   );
 }
@@ -536,7 +539,7 @@ function BackLink({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
-function shortServerUrl(serverUrl: string): string {
+function abbreviateServerUrl(serverUrl: string): string {
   try {
     return `…${new URL(serverUrl).pathname}`;
   } catch {

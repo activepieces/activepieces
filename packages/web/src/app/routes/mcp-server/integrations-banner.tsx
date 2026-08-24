@@ -4,7 +4,7 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { pieceSearchUtils } from '@/features/pieces/utils/piece-search-utils';
 import { cn } from '@/lib/utils';
 
-import { PageBand } from './page-band';
+import { PageContent } from './page-content';
 
 const TILES_PER_ROW = 36;
 const FEATURED_PIECES = pieceSearchUtils.POPULAR_PIECES_NAMES;
@@ -16,18 +16,18 @@ export function IntegrationsBanner() {
   const featured = FEATURED_PIECES.map((name) => byName.get(name)).filter(
     (piece) => piece !== undefined,
   );
-  const logos = [
+  const tiles = [
     ...featured,
     ...withLogos.filter((piece) => !FEATURED_PIECES.includes(piece.name)),
   ].slice(0, TILES_PER_ROW * 2);
 
-  if (logos.length === 0) {
+  if (tiles.length === 0) {
     return null;
   }
 
   return (
     <div className="border-t bg-muted/30 pb-9 pt-8">
-      <PageBand className="flex flex-col gap-6">
+      <PageContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
             {t('Your AI gets all of this')}
@@ -40,27 +40,27 @@ export function IntegrationsBanner() {
           </p>
         </div>
         <div className="flex flex-col gap-2.5 overflow-hidden pl-6 [mask-image:linear-gradient(to_right,#000_88%,transparent)] lg:pl-14">
-          <TileRow logos={logos.filter((_, index) => index % 2 === 0)} />
+          <TileRow tiles={tiles.filter((_, index) => index % 2 === 0)} />
           <TileRow
-            logos={logos.filter((_, index) => index % 2 === 1)}
+            tiles={tiles.filter((_, index) => index % 2 === 1)}
             className="pl-8"
           />
         </div>
-      </PageBand>
+      </PageContent>
     </div>
   );
 }
 
 function TileRow({
-  logos,
+  tiles,
   className = '',
 }: {
-  logos: { name: string; displayName: string; logoUrl: string }[];
+  tiles: { name: string; displayName: string; logoUrl: string }[];
   className?: string;
 }) {
   return (
     <div className={cn('flex gap-2.5', className)}>
-      {logos.map((piece) => (
+      {tiles.map((piece) => (
         <span
           key={piece.name}
           title={piece.displayName}

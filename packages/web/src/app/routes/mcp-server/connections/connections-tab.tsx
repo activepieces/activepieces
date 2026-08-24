@@ -23,7 +23,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { mcpClientBranding } from '../mcp-client-branding';
 import { mcpGrantsMutations, mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
-import { PageBand } from '../page-band';
+import { PageContent } from '../page-content';
 
 import { buildConnectionsColumns } from './connections-columns';
 
@@ -37,9 +37,9 @@ export function ConnectionsTab() {
     () => ({
       cursor: searchParams.get('cursor') ?? undefined,
       limit: Number(searchParams.get('limit')) || undefined,
-      projectIds: optionalValues(searchParams.getAll('project')),
-      memberIds: optionalValues(searchParams.getAll('member')),
-      clientKeys: optionalValues(
+      projectIds: undefinedIfEmpty(searchParams.getAll('project')),
+      memberIds: undefinedIfEmpty(searchParams.getAll('member')),
+      clientKeys: undefinedIfEmpty(
         searchParams.getAll('client').filter(isClientKey),
       ),
     }),
@@ -63,7 +63,7 @@ export function ConnectionsTab() {
 
   if (!isLoading && !hasActiveFilters && (facets?.total ?? 0) === 0) {
     return (
-      <PageBand className="px-6 py-8 lg:px-12">
+      <PageContent className="px-6 py-8 lg:px-12">
         <Empty className="border border-dashed py-20">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -80,12 +80,12 @@ export function ConnectionsTab() {
             </Button>
           </EmptyHeader>
         </Empty>
-      </PageBand>
+      </PageContent>
     );
   }
 
   return (
-    <PageBand className="flex flex-col gap-2 px-6 py-8 lg:px-12">
+    <PageContent className="flex flex-col gap-2 px-6 py-8 lg:px-12">
       <DataTable
         columns={columns}
         page={data}
@@ -144,11 +144,11 @@ export function ConnectionsTab() {
           {t('How connecting works')} ↗
         </a>
       </div>
-    </PageBand>
+    </PageContent>
   );
 }
 
-function optionalValues<T>(values: T[]): T[] | undefined {
+function undefinedIfEmpty<T>(values: T[]): T[] | undefined {
   return values.length === 0 ? undefined : values;
 }
 

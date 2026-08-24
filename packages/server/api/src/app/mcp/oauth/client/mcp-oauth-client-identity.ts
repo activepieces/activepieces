@@ -18,7 +18,7 @@ function isLoopback(url: URL): boolean {
     return LOOPBACK_HOSTS.includes(url.hostname.toLowerCase())
 }
 
-function clientKeyFromRedirectUri(url: URL): McpOAuthClientKey | null {
+function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
     const host = url.hostname.toLowerCase()
     const scheme = url.protocol.toLowerCase()
     const loopback = isLoopback(url)
@@ -48,15 +48,15 @@ function clientKeyFromRedirectUri(url: URL): McpOAuthClientKey | null {
 }
 
 export const mcpOAuthClientIdentity = {
-    classify({ redirectUris }: ClassifyParams): McpOAuthClientKey {
+    clientKeyFrom({ redirectUris }: ClientKeyFromParams): McpOAuthClientKey {
         return redirectUris
             .map(parseRedirectUri)
             .filter((url): url is URL => url !== null)
-            .map(clientKeyFromRedirectUri)
+            .map(clientKeyFromUrl)
             .find((candidate) => candidate !== null) ?? 'unknown'
     },
 }
 
-type ClassifyParams = {
+type ClientKeyFromParams = {
     redirectUris: string[]
 }

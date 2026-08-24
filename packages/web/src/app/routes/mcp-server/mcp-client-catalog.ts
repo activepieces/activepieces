@@ -32,25 +32,25 @@ function vscodeDeepLink(serverUrl: string): string {
   return `vscode:mcp/install?${encodeURIComponent(config)}`;
 }
 
-function json(value: unknown): string {
+function prettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function mcpServersJson(activepieces: object): string {
-  return json({ mcpServers: { activepieces } });
+function mcpServersJson(serverConfig: object): string {
+  return prettyJson({ mcpServers: { activepieces: serverConfig } });
 }
 
-function entries(url: string): CatalogEntry[] {
+function catalogEntries(url: string): CatalogEntry[] {
   return [
     {
       key: 'claude-code',
       icon: claudeIcon,
       name: 'Claude Code',
       group: 'terminal',
-      setup: 'fast',
+      setupSpeed: 'fast',
       hint: t('One command'),
       docsUrl: 'https://docs.claude.com/en/docs/claude-code/mcp',
-      add: {
+      addStep: {
         body: t('From the folder you want the tools available in.'),
         command: `claude mcp add --transport http activepieces ${url}`,
       },
@@ -65,10 +65,10 @@ function entries(url: string): CatalogEntry[] {
       icon: openaiIcon,
       name: 'Codex',
       group: 'terminal',
-      setup: 'fast',
+      setupSpeed: 'fast',
       hint: t('One command'),
       docsUrl: 'https://developers.openai.com/codex/mcp',
-      add: {
+      addStep: {
         body: t('From the folder you want the tools available in.'),
         command: `codex mcp add activepieces --url ${url}`,
       },
@@ -82,11 +82,11 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'Gemini CLI',
       group: 'terminal',
-      setup: 'fast',
+      setupSpeed: 'fast',
       hint: t('Settings file'),
       docsUrl:
         'https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html',
-      add: {
+      addStep: {
         body: t('Pass --scope project to keep it to one repository.'),
         command: `gemini mcp add --transport http activepieces ${url}`,
       },
@@ -100,11 +100,11 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'goose',
       group: 'terminal',
-      setup: 'slow',
+      setupSpeed: 'slow',
       hint: t('Extension config'),
       docsUrl:
         'https://block.github.io/goose/docs/getting-started/using-extensions',
-      add: {
+      addStep: {
         title: t('Add the extension'),
         body: t(
           'Run goose configure, pick Add Extension → Remote Extension (Streamable HTTP), and paste the server URL.',
@@ -121,10 +121,10 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'Warp',
       group: 'terminal',
-      setup: 'slow',
+      setupSpeed: 'slow',
       hint: t('Add in settings'),
       docsUrl: 'https://docs.warp.dev/agent-platform/capabilities/mcp',
-      add: {
+      addStep: {
         title: t('Add the server'),
         body: t(
           'Settings → AI → MCP servers → + Add, choose CLI Server or paste the JSON below.',
@@ -134,17 +134,17 @@ function entries(url: string): CatalogEntry[] {
         'Start the server from the MCP panel and approve the sign-in prompt.',
       ),
       verify: t('The MCP panel lists activepieces as running.'),
-      config: { snippet: json({ activepieces: { url } }) },
+      config: { snippet: prettyJson({ activepieces: { url } }) },
     },
     {
       key: 'cursor',
       icon: cursorIcon,
       name: 'Cursor',
       group: 'editors',
-      setup: 'fast',
+      setupSpeed: 'fast',
       hint: t('One click install'),
       docsUrl: 'https://docs.cursor.com/context/mcp',
-      add: {
+      addStep: {
         body: t(
           'Opens Cursor and writes the server into ~/.cursor/mcp.json. You can also edit that file by hand.',
         ),
@@ -161,10 +161,10 @@ function entries(url: string): CatalogEntry[] {
       icon: vscodeIcon,
       name: 'VS Code',
       group: 'editors',
-      setup: 'fast',
+      setupSpeed: 'fast',
       hint: t('One click install'),
       docsUrl: 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers',
-      add: {
+      addStep: {
         body: t(
           'Opens VS Code and writes the server into .vscode/mcp.json for this workspace.',
         ),
@@ -176,7 +176,9 @@ function entries(url: string): CatalogEntry[] {
       verify: t('The MCP panel lists activepieces as running.'),
       config: {
         path: '.vscode/mcp.json',
-        snippet: json({ servers: { activepieces: { type: 'http', url } } }),
+        snippet: prettyJson({
+          servers: { activepieces: { type: 'http', url } },
+        }),
       },
     },
     {
@@ -184,10 +186,10 @@ function entries(url: string): CatalogEntry[] {
       icon: windsurfIcon,
       name: 'Windsurf',
       group: 'editors',
-      setup: 'slow',
+      setupSpeed: 'slow',
       hint: t('Config file'),
       docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
-      add: {
+      addStep: {
         body: t(
           'Cascade → Plugins → View raw config, then add the server to ~/.codeium/windsurf/mcp_config.json.',
         ),
@@ -206,11 +208,11 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'Cline',
       group: 'editors',
-      setup: 'slow',
-      form: 'extension',
+      setupSpeed: 'slow',
+      formFactor: 'extension',
       hint: t('Add in settings'),
       docsUrl: 'https://docs.cline.bot/mcp/mcp-overview',
-      add: {
+      addStep: {
         body: t(
           'MCP Servers → Remote Servers → Add, or edit cline_mcp_settings.json directly. The type must be streamableHttp.',
         ),
@@ -227,10 +229,10 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'Zed',
       group: 'editors',
-      setup: 'slow',
+      setupSpeed: 'slow',
       hint: t('Config file'),
       docsUrl: 'https://zed.dev/docs/ai/mcp',
-      add: {
+      addStep: {
         body: t(
           'Settings → AI → MCP Servers → Add Custom Server, or add it to your settings.json.',
         ),
@@ -238,7 +240,7 @@ function entries(url: string): CatalogEntry[] {
       verify: t('The Agent Panel shows activepieces with its tool count.'),
       config: {
         path: 'settings.json',
-        snippet: json({ context_servers: { activepieces: { url } } }),
+        snippet: prettyJson({ context_servers: { activepieces: { url } } }),
       },
     },
     {
@@ -246,10 +248,10 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'JetBrains IDEs',
       group: 'editors',
-      setup: 'slow',
+      setupSpeed: 'slow',
       hint: t('Add in settings'),
       docsUrl: 'https://www.jetbrains.com/help/ai-assistant/mcp.html',
-      add: {
+      addStep: {
         body: t(
           'Settings → Tools → AI Assistant → Model Context Protocol → Add, then paste the JSON below.',
         ),
@@ -265,11 +267,11 @@ function entries(url: string): CatalogEntry[] {
       icon: mcpIcon,
       name: 'Continue',
       group: 'editors',
-      setup: 'slow',
-      form: 'extension',
+      setupSpeed: 'slow',
+      formFactor: 'extension',
       hint: t('Config file'),
       docsUrl: 'https://docs.continue.dev/customize/deep-dives/mcp',
-      add: {
+      addStep: {
         body: t(
           'Add the server to ~/.continue/config.yaml, or drop the same block in .continue/mcpServers/activepieces.yaml.',
         ),
@@ -288,7 +290,7 @@ function entries(url: string): CatalogEntry[] {
       hint: t('Add a connector'),
       docsUrl:
         'https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp',
-      add: {
+      addStep: {
         body: t(
           'Customize → Connectors → + → Add custom connector, then paste the server URL. This client dials your server from the internet, so localhost will not reach it.',
         ),
@@ -306,7 +308,7 @@ function entries(url: string): CatalogEntry[] {
       group: 'chat',
       hint: t('Add a connector'),
       docsUrl: 'https://platform.openai.com/docs/mcp',
-      add: {
+      addStep: {
         body: t(
           'Settings → Connectors → Create, then paste the server URL. ChatGPT dials your server from the internet, so localhost will not reach it.',
         ),
@@ -320,7 +322,7 @@ function entries(url: string): CatalogEntry[] {
       group: 'other',
       hint: t('Streamable HTTP or SSE. Point it at the link and it works.'),
       docsUrl: 'https://modelcontextprotocol.io/clients',
-      add: {
+      addStep: {
         body: t('Check your client’s docs for where the server URL goes.'),
         command: url,
       },
@@ -332,24 +334,24 @@ function entries(url: string): CatalogEntry[] {
   ];
 }
 
-function addTitle(entry: CatalogEntry): string {
+function addStepTitle(entry: CatalogEntry): string {
   const byGroup = {
     terminal: () => t('Run this in your terminal'),
     editors: () => t('Add the server'),
     chat: () => t('Add the connector'),
     other: () => t('Paste the server URL'),
   };
-  return entry.add.title ?? byGroup[entry.group]();
+  return entry.addStep.title ?? byGroup[entry.group]();
 }
 
-function localAuth(client: string): string {
+function localAuthStepBody(client: string): string {
   return t(
     '{client} opens your browser on the first tool call. Approve the project.',
     { client },
   );
 }
 
-function authBody(entry: CatalogEntry): string {
+function authStepBody(entry: CatalogEntry): string {
   const byGroup = {
     chat: () =>
       t(
@@ -360,8 +362,8 @@ function authBody(entry: CatalogEntry): string {
       t(
         'The client opens an OAuth prompt on the first tool call. Approve the project.',
       ),
-    terminal: () => localAuth(entry.name),
-    editors: () => localAuth(entry.name),
+    terminal: () => localAuthStepBody(entry.name),
+    editors: () => localAuthStepBody(entry.name),
   };
   return entry.auth ?? byGroup[entry.group]();
 }
@@ -370,17 +372,17 @@ function kindLabel(entry: CatalogEntry): string {
   const byGroup = {
     terminal: () => t('Terminal · runs locally'),
     editors: () =>
-      entry.form === 'extension'
+      entry.formFactor === 'extension'
         ? t('Editor extension · runs locally')
         : t('Editor · runs locally'),
     chat: () => t('Desktop and web · needs a public HTTPS address'),
     other: () => t('Streamable HTTP · OAuth'),
   };
-  if (!entry.setup) {
+  if (!entry.setupSpeed) {
     return byGroup[entry.group]();
   }
   const duration =
-    entry.setup === 'fast' ? t('about 30 seconds') : t('about 1 minute');
+    entry.setupSpeed === 'fast' ? t('about 30 seconds') : t('about 1 minute');
   return `${byGroup[entry.group]()} · ${duration}`;
 }
 
@@ -390,7 +392,7 @@ function configLabel(config: EntryConfig): string {
     : t('MCP server JSON');
 }
 
-function toClient(entry: CatalogEntry): ConnectableClient {
+function toConnectableClient(entry: CatalogEntry): ConnectableClient {
   return {
     key: entry.key,
     icon: entry.icon,
@@ -405,12 +407,12 @@ function toClient(entry: CatalogEntry): ConnectableClient {
     },
     steps: [
       {
-        title: addTitle(entry),
-        body: entry.add.body,
-        command: entry.add.command,
-        action: entry.add.action,
+        title: addStepTitle(entry),
+        body: entry.addStep.body,
+        command: entry.addStep.command,
+        action: entry.addStep.action,
       },
-      { title: t('Authenticate'), body: authBody(entry) },
+      { title: t('Authenticate'), body: authStepBody(entry) },
       {
         title: t('Check it works'),
         body: entry.verify ?? t('If it answers with your tools, you’re set.'),
@@ -426,12 +428,12 @@ const VERIFY_PROMPTS = [
 ];
 
 export const mcpClientCatalog = {
-  build: (serverUrl: string): ConnectableClient[] =>
-    entries(serverUrl).map(toClient),
+  clients: (serverUrl: string): ConnectableClient[] =>
+    catalogEntries(serverUrl).map(toConnectableClient),
 
   branding: (): Record<string, { icon: string; name: string }> =>
     Object.fromEntries(
-      entries('').map((entry) => [
+      catalogEntries('').map((entry) => [
         entry.key,
         { icon: entry.icon, name: entry.name },
       ]),
@@ -506,11 +508,11 @@ type CatalogEntry = {
   icon: string;
   name: string;
   group: ClientGroupKey;
-  setup?: 'fast' | 'slow';
-  form?: 'extension';
+  setupSpeed?: 'fast' | 'slow';
+  formFactor?: 'extension';
   hint: string;
   docsUrl: string;
-  add: {
+  addStep: {
     title?: string;
     body: string;
     command?: string;

@@ -20,7 +20,7 @@ function isReachableFromInternet(publicUrl: string | undefined): boolean {
   }
 }
 
-function entry(key: McpOAuthClientKey) {
+function brandingFor(key: McpOAuthClientKey) {
   return mcpClientCatalog.branding()[key];
 }
 
@@ -37,8 +37,8 @@ export function useMcpServerUrl(): {
 }
 
 export const mcpClientBranding = {
-  icon: (key: McpOAuthClientKey): string => entry(key).icon,
+  icon: (key: McpOAuthClientKey): string => brandingFor(key).icon,
 
   label: (key: McpOAuthClientKey, clientName: string | null): string =>
-    key === 'unknown' ? clientName ?? t('MCP client') : entry(key).name,
+    key === 'unknown' ? clientName ?? t('MCP client') : brandingFor(key).name,
 };

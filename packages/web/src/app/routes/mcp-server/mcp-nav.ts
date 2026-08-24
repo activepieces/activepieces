@@ -14,7 +14,7 @@ export function useMcpNav(): McpNav {
   const [params, setParams] = useSearchParams();
   const clientKey = params.get('client');
 
-  const withProject = (next: Record<string, string>) => {
+  const keepProject = (next: Record<string, string>) => {
     const project = params.get('project');
     return project === null ? next : { ...next, project };
   };
@@ -24,12 +24,12 @@ export function useMcpNav(): McpNav {
     tab: readTab(params),
     view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
     projectId: params.get('project') ?? authenticationSession.getProjectId()!,
-    showLanding: () => setParams(withProject({})),
-    showBrowse: () => setParams(withProject({ browse: '1' })),
-    showClient: (key: string) => setParams(withProject({ client: key })),
-    showReach: () => setParams(withProject({ tab: 'reach' })),
-    showConnections: () => setParams(withProject({ tab: 'connections' })),
-    showProject: (projectId: string) =>
+    showLanding: () => setParams(keepProject({})),
+    showBrowse: () => setParams(keepProject({ browse: '1' })),
+    showClient: (key: string) => setParams(keepProject({ client: key })),
+    showReach: () => setParams(keepProject({ tab: 'reach' })),
+    showConnections: () => setParams(keepProject({ tab: 'connections' })),
+    selectProject: (projectId: string) =>
       setParams({ tab: readTab(params), project: projectId }),
   };
 }
@@ -48,5 +48,5 @@ export type McpNav = {
   showClient: (key: string) => void;
   showReach: () => void;
   showConnections: () => void;
-  showProject: (projectId: string) => void;
+  selectProject: (projectId: string) => void;
 };

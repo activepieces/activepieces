@@ -15,8 +15,8 @@ const CLASSIFICATION_ORDER: ActionClassification[] = [
 
 const DEFAULT_CLASSIFICATION: ActionClassification = 'WRITE';
 
-function matches(haystack: string | undefined, needle: string): boolean {
-  return (haystack ?? '').toLowerCase().includes(needle);
+function containsQuery(text: string | undefined, query: string): boolean {
+  return (text ?? '').toLowerCase().includes(query);
 }
 
 function groupByClassification(actions: ActionBase[]): ReachActionGroup[] {
@@ -42,7 +42,7 @@ function orderPopularFirst(
   );
 }
 
-function toRow(
+function toPieceRow(
   piece: PieceMetadataModelSummary,
   actions: ActionBase[],
   forceExpanded: boolean,
@@ -73,26 +73,27 @@ function buildRows({
 
   if (query === '') {
     return ordered.map((piece) =>
-      toRow(piece, piece.suggestedActions ?? [], false),
+      toPieceRow(piece, piece.suggestedActions ?? [], false),
     );
   }
 
   return ordered.flatMap((piece) => {
     const actions = piece.suggestedActions ?? [];
     const pieceMatches =
-      matches(piece.displayName, query) || matches(piece.description, query);
+      containsQuery(piece.displayName, query) ||
+      containsQuery(piece.description, query);
     if (pieceMatches) {
-      return [toRow(piece, actions, false)];
+      return [toPieceRow(piece, actions, false)];
     }
     const matchingActions = actions.filter(
       (action) =>
-        matches(action.displayName, query) ||
-        matches(action.description, query),
+        containsQuery(action.displayName, query) ||
+        containsQuery(action.description, query),
     );
     if (matchingActions.length === 0) {
       return [];
     }
-    return [toRow(piece, matchingActions, true)];
+    return [toPieceRow(piece, matchingActions, true)];
   });
 }
 
