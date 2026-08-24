@@ -11,10 +11,6 @@ import customHtmlPlugin from './vite-plugins/html-plugin';
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
 
-  const apiPort = process.env.AP_DEV_API_PORT ?? '3000';
-  const webPort = Number(process.env.AP_DEV_WEB_PORT ?? '4200');
-  const apiTarget = `http://127.0.0.1:${apiPort}`;
-
   const AP_TITLE = 'Activepieces';
   const AP_FAVICON = 'https://activepieces.com/favicon.ico';
 
@@ -25,7 +21,7 @@ export default defineConfig(({ command, mode }) => {
       // allowedHosts: ['wozcsvaint.loclx.io'],
       proxy: {
         '/api': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -34,12 +30,12 @@ export default defineConfig(({ command, mode }) => {
           ws: true,
         },
         '/ingest': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
         },
         '^/mcp(/|$)': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -48,7 +44,7 @@ export default defineConfig(({ command, mode }) => {
           rewrite: (p: string) => p,
         },
         '/.well-known': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -56,7 +52,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
         '/register': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -64,7 +60,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
         '/authorize': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -72,7 +68,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
         '/token': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -80,7 +76,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
         '/revoke': {
-          target: apiTarget,
+          target: 'http://127.0.0.1:3000',
           secure: false,
           changeOrigin: true,
           headers: {
@@ -88,7 +84,7 @@ export default defineConfig(({ command, mode }) => {
           },
         },
       },
-      port: webPort,
+      port: 4200,
       host: '0.0.0.0',
     },
 
