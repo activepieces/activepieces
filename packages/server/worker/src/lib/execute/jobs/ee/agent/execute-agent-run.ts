@@ -221,7 +221,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
                         model,
-                        fastModel: dryRun ? undefined : fastModel,
+                        fastModel: firstStepUsesFastModel({ source, dryRun }) ? fastModel : undefined,
                         provider,
                         systemPrompt: config.systemPrompt,
                         messages: config.messages as ModelMessage[],
@@ -413,6 +413,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
+}
+
+export function firstStepUsesFastModel({ source, dryRun }: { source: AgentRunSource, dryRun?: boolean }): boolean {
+    return dryRun !== true && source !== AgentRunSource.FLOW_STEP
 }
 
 function incompleteReason({ truncatedAfterRetries, budgetExceeded }: { truncatedAfterRetries: boolean, budgetExceeded: boolean }): string | undefined {

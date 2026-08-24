@@ -1,4 +1,6 @@
+import { AgentRunSource } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
+import { firstStepUsesFastModel } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
 import { isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('isTransientFailureText', () => {
@@ -24,5 +26,20 @@ describe('looksEmptyResultText', () => {
 
     it('does not flag a populated result', () => {
         expect(looksEmptyResultText('✅ done {"found":true,"result":[{"id":"r1"}]}')).toBe(false)
+    })
+})
+
+describe('firstStepUsesFastModel', () => {
+    it('buys time to first token on the surfaces someone is watching', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT })).toBe(true)
+        expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT })).toBe(true)
+    })
+
+    it('leaves a flow step on the model it was configured with, since nobody is waiting', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP })).toBe(false)
+    })
+
+    it('stays off in the playground, which executes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, dryRun: true })).toBe(false)
     })
 })
