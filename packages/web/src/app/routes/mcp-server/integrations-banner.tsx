@@ -10,7 +10,7 @@ const TILES_PER_ROW = 36;
 const FEATURED_PIECES = pieceSearchUtils.POPULAR_PIECES_NAMES;
 
 export function IntegrationsBanner() {
-  const { pieces } = piecesHooks.usePieces({});
+  const { pieces } = piecesHooks.usePieces({ skipProjectFilter: true });
   const withLogos = (pieces ?? []).filter((piece) => piece.logoUrl);
   const byName = new Map(withLogos.map((piece) => [piece.name, piece]));
   const featured = FEATURED_PIECES.map((name) => byName.get(name)).filter(

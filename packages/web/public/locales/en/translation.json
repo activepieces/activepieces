@@ -2503,5 +2503,20 @@
   "about 1 minute": "about 1 minute",
   "about 30 seconds": "about 30 seconds",
   "{client} opens Activepieces in your browser. Approve the project it can reach.": "{client} opens Activepieces in your browser. Approve the project it can reach.",
-  "{client} opens your browser on the first tool call. Approve the project.": "{client} opens your browser on the first tool call. Approve the project."
+  "{client} opens your browser on the first tool call. Approve the project.": "{client} opens your browser on the first tool call. Approve the project.",
+  "Reach": "Reach",
+  "Every piece a connected client can reach, and every action inside it.": "Every piece a connected client can reach, and every action inside it.",
+  "This page is a mirror — a platform admin decides what is on the list.": "This page is a mirror — a platform admin decides what is on the list.",
+  "Nothing below can run right now": "Nothing below can run right now",
+  "Running piece actions is switched off for this project. Clients can still see the list, but every call fails.": "Running piece actions is switched off for this project. Clients can still see the list, but every call fails.",
+  "Turn it on in project settings": "Turn it on in project settings",
+  "Search pieces and actions...": "Search pieces and actions...",
+  "No piece or action matches your search.": "No piece or action matches your search.",
+  "No pieces are reachable in this project.": "No pieces are reachable in this project.",
+  "Show {count} more pieces": "Show {count} more pieces",
+  "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.": "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.",
+  "This project's pieces are controlled by a Piece Set.": "This project's pieces are controlled by a Piece Set.",
+  "Review piece set": "Review piece set",
+  "destructiveActionCount": "{count, plural, =1 {1 destructive} other {# destructive}}",
+  "reachActionCount": "{count, plural, =1 {1 action} other {# actions}}"
 }
