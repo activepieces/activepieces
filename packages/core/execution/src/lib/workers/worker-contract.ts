@@ -114,6 +114,7 @@ export type SendAgentEventRequest = {
 
 export type GetAgentConfigRequest = {
     provider?: AIProviderName
+    providerConfigId?: string
     conversationId: string
     runId?: string
     platformId: string
@@ -142,6 +143,7 @@ export type AgentAiToolsConfig = {
 
 export type AgentConfigResponse = {
     provider: string
+    providerConfigId: string
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     modelId: string
@@ -199,6 +201,8 @@ export type UpdateProjectContextRequest = {
     conversationId: string
     runId?: string
     projectId: string | null
+    provider?: AIProviderName
+    providerConfigId?: string
 }
 
 export type ExecuteAgentToolRequest = {
@@ -215,6 +219,7 @@ export type ExecutePieceToolRequest = {
     toolName: string
     instruction: string
     provider?: AIProviderName
+    providerConfigId?: string
     piece: AgentPieceToolMetadata
 }
 
@@ -226,6 +231,7 @@ export type ExecuteKnowledgeBaseToolRequest = {
     conversationId: string
     toolName: string
     provider?: AIProviderName
+    providerConfigId?: string
     knowledgeBaseFileId: string
     query: string
 }

@@ -24,7 +24,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
 import { z } from 'zod'
-import { aiProviderService } from '../../../ai/ai-provider-service'
+import { aiProviderService, ProviderScope } from '../../../ai/ai-provider-service'
 import { aiToolConfigService } from '../../../ai/ai-tool-config-service'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { websocketService } from '../../../core/websockets.service'
@@ -40,6 +40,7 @@ import { ChatPersonalizationEntity } from './chat-personalization-entity'
 
 const personalizationRepo = repoFactory(ChatPersonalizationEntity)
 
+const PERSONALIZATION_PROVIDER_SCOPE: ProviderScope = { type: 'platform' }
 const RESEARCH_STALENESS_TIMEOUT_MS = 2 * 60 * 1_000
 const IN_FLIGHT_STATUSES = [ChatPersonalizationStatus.PENDING, ChatPersonalizationStatus.RESEARCHING]
 const RESEARCH_RUNS_PER_PLATFORM_PER_DAY = 5
@@ -262,7 +263,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         }
         const userRow = scope === ChatPersonalizationScope.USER ? await findRow({ platformId, userId }) : null
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
-            agentHelpers.resolveChatProvider({ platformId, log }),
+            agentHelpers.resolveChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             userService(log).getMetaInformation({ id: userId }),
             platformService(log).getOneOrThrow(platformId),
             findRow({ platformId, userId: null }),
@@ -682,7 +683,7 @@ async function claimForResearch({ platformId, userId, scope, researchToken }: { 
 }
 
 async function guardsAllowResearch({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
-    const chatProvider = await tryCatch(() => aiProviderService(log).getChatProvider({ platformId }))
+    const chatProvider = await tryCatch(() => aiProviderService(log).getChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE }))
     if (chatProvider.error) {
         log.warn({ platform: { id: platformId }, error: chatProvider.error }, '[chatPersonalization] Chat AI provider failed to load, skipping research')
         return false

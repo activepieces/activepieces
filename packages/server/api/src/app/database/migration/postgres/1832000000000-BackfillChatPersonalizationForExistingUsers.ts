@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class BackfillChatPersonalizationForExistingUsers1831000000000 implements Migration {
-    name = 'BackfillChatPersonalizationForExistingUsers1831000000000'
+export class BackfillChatPersonalizationForExistingUsers1832000000000 implements Migration {
+    name = 'BackfillChatPersonalizationForExistingUsers1832000000000'
     breaking = false
     release = '0.88.2'
     transaction = true

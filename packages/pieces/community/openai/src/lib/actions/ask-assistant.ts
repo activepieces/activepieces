@@ -8,6 +8,7 @@ import { openaiAuth } from '../auth';
 import { sleep } from '../common/common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { askAssistantActionOutputSchema } from '../output-schemas';
 
 export const askAssistant = createAction({
   audience: 'both',
@@ -67,6 +68,7 @@ export const askAssistant = createAction({
       required: false,
     }),
   },
+  outputSchema: askAssistantActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       memoryKey: z.optional(z.string().check(z.maxLength(128))),
