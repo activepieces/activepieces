@@ -15,7 +15,7 @@ export const sendPollManualAction = createAction({
   displayName: 'Send a Poll (By ID)',
   description: 'Send an interactive poll to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'both',
-  aiMetadata: { description: 'Sends an interactive poll (2-12 options) to a recipient identified directly by ID rather than a builder dropdown. Set multiple_answers to allow more than one option to be selected. Not idempotent: each call sends another poll.', idempotent: false },
+  aiMetadata: { description: 'Sends an interactive poll (2-12 options) to a recipient identified directly by ID rather than a builder dropdown. Set multiple_answers to allow more than one option to be selected. WhatsScale currently fails to deliver a poll to a group chat, so group is not offered. Not idempotent: each call sends another poll.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -27,7 +27,6 @@ export const sendPollManualAction = createAction({
       options: {
         options: [
           { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
-          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
           { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
           { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
@@ -36,7 +35,7 @@ export const sendPollManualAction = createAction({
     recipient: Property.ShortText({
       displayName: 'Recipient ID',
       description:
-        'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
+        'Contact: phone number with country code. Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
     question: Property.ShortText({

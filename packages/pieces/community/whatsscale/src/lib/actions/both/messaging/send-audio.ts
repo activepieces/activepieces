@@ -16,7 +16,7 @@ export const sendAudioManualAction = createAction({
   displayName: 'Send an Audio Message (By ID)',
   description: 'Send an audio file to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'both',
-  aiMetadata: { description: 'Sends an audio file to a recipient identified directly by ID rather than a builder dropdown. Sends as a native WhatsApp voice note by default; set voice to false to deliver it as a regular file attachment with an optional caption instead. Takes either a directly downloadable audio URL or a file from a previous step. Not idempotent: each call delivers another audio message.', idempotent: false },
+  aiMetadata: { description: 'Sends an audio file to a recipient identified directly by ID rather than a builder dropdown. Sends as a native WhatsApp voice note by default; set voice to false to deliver it as a regular file attachment with an optional caption instead. Takes either a directly downloadable audio URL or a file from a previous step. WhatsScale currently fails to deliver audio to a group chat, so group is not offered. Not idempotent: each call delivers another audio message.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -28,7 +28,6 @@ export const sendAudioManualAction = createAction({
       options: {
         options: [
           { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
-          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
           { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
           { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
@@ -37,7 +36,7 @@ export const sendAudioManualAction = createAction({
     recipient: Property.ShortText({
       displayName: 'Recipient ID',
       description:
-        'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
+        'Contact: phone number with country code. Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
     audioUrl: Property.File({
