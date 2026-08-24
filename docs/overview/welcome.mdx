@@ -78,63 +78,42 @@ Connect from any MCP client, including:
   </span>
 </div>
 
-## Go deeper
+## Maximum control and security
 
-<Columns cols={2}>
-  <div>
-    **Flows**
-    - [Pass data between steps](/flows/passing-data)
-    - [Publish and run](/flows/publishing-flows)
-    - [Debug a run](/flows/debugging-runs)
-  </div>
-  <div>
-    **Agents**
-    - [Write good instructions](/agents/create)
-    - [Give them tools](/agents/tools)
-    - [Run one inside a flow](/agents/in-flows)
-  </div>
-</Columns>
-
-## Connect your stack
-
-<Columns cols={2}>
-  <div>
-    **AI**
-    - [Bring your own AI keys](/admin-guide/guides/setup-ai-providers)
-    - [Expose flows as tools](/mcp/overview) for your AI client
-  </div>
-  <div>
-    **Apps**
-    - [Browse pieces](https://www.activepieces.com/pieces)
-    - [Manage which apps are available](/admin-guide/guides/manage-pieces)
-  </div>
-</Columns>
-
-## Run it for your team
-
-<Columns cols={2}>
-  <div>
-    **Structure**
-    - [Projects](/admin-guide/guides/structure-projects)
-    - [Permissions](/admin-guide/guides/permissions)
-  </div>
-  <div>
-    **Access**
-    - [SSO](/admin-guide/guides/sso)
-    - [License key](/install/configure-operate/enterprise-license)
-  </div>
-</Columns>
-
-## Make it yours
+Give the business AI automation without losing the ability to answer for it. Decide who can build, which apps they can reach, which models see your data, and where credentials live.
 
 <CardGroup cols={3}>
-  <Card href="/build-pieces/building-pieces/development-setup" title="Build a piece" icon="code" color="#F59E0B">
-    TypeScript, with hot reloading.
+  <Card title="Own your AI" icon="robot" href="/admin-guide/guides/setup-ai-providers">
+    Your providers, your models, your budget.
   </Card>
-  <Card href="/embedding/overview" title="Embed it" icon="cube" color="#EC4899">
-    Put the builder in your product.
+  <Card title="Own your secrets" icon="lock" href="/admin-guide/guides/secret-managers/overview">
+    Bring your vault. Credentials never sit in the product.
   </Card>
-  <Card href="/endpoints/overview" title="API" icon="terminal" color="#64748B">
-    Automate the platform itself.
+  <Card title="Control access" icon="key" href="/admin-guide/guides/sso">
+    SSO and SCIM, so access follows your identity provider.
+  </Card>
+  <Card title="Separate teams" icon="sitemap" href="/admin-guide/guides/permissions">
+    Projects, roles, and permissions.
+  </Card>
+  <Card title="Approve the apps" icon="puzzle-piece" href="/admin-guide/guides/manage-pieces">
+    Decide which apps your organization can use at all.
+  </Card>
+  <Card title="See everything" icon="list-check" href="/admin-guide/security/audit-logs/overview">
+    Audit logs, streamable to your SIEM.
+  </Card>
+</CardGroup>
+
+Run it fully self-hosted and network-gapped if you need to. See [Enterprise Control](/admin-guide/overview).
+
+## Put it inside your product
+
+Give your own users a builder without building one. The SDK embeds the flow builder in your app, white-labeled, with your users provisioned and their connections set up ahead of time.
+
+<CardGroup cols={2}>
+  <Card href="/embedding/overview" title="Embed SDK" icon="cube" color="#EC4899" horizontal>
+    Embed the builder in your app.
+  </Card>
+  <Card href="/endpoints/overview" title="API" icon="terminal" color="#64748B" horizontal>
+    Drive the platform from your backend.
   </Card>
 </CardGroup>
