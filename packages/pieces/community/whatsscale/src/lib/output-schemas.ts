@@ -147,3 +147,42 @@ export const listWhatsappContactsOutputSchema: OutputSchema = {
     },
   ],
 };
+
+const inboundMessageFields: OutputSchema['fields'] = [
+  { key: 'body', label: 'Message Body' },
+  { key: 'has_media', label: 'Has Media', format: 'boolean' },
+  { key: 'media_type', label: 'Media Type' },
+  { key: 'media_url', label: 'Media URL' },
+  { key: 'media_mimetype', label: 'Media MIME Type' },
+  { key: 'media_filename', label: 'Media Filename' },
+  { key: 'timestamp', label: 'Timestamp', format: 'datetime' },
+  { key: 'is_forwarded', label: 'Is Forwarded', format: 'boolean' },
+  { key: 'quoted_message_id', label: 'Quoted Message ID' },
+  { key: 'quoted_body', label: 'Quoted Message Body' },
+  { key: 'is_reply', label: 'Is Reply', format: 'boolean' },
+  { key: 'session_name', label: 'Session' },
+];
+
+export const incomingMessageOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'message_id', label: 'Message ID' },
+    { key: 'chat_id', label: 'Chat ID' },
+    { key: 'from_number', label: 'From Phone Number' },
+    { key: 'from_id', label: 'From ID' },
+    { key: 'from_name', label: 'From Name' },
+    ...inboundMessageFields,
+  ],
+};
+
+export const groupMessageOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'message_id', label: 'Message ID' },
+    { key: 'group_id', label: 'Group ID' },
+    { key: 'chat_id', label: 'Chat ID' },
+    { key: 'participant_id', label: 'Participant ID' },
+    { key: 'participant_name', label: 'Participant Name' },
+    { key: 'participant_phone', label: 'Participant Phone Number' },
+    { key: 'from_name', label: 'From Name' },
+    ...inboundMessageFields,
+  ],
+};
