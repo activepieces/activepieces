@@ -433,19 +433,18 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
               <CreateProjectButton
                 variant="icon"
                 projects={projects ?? []}
+                className={RAIL_HEADER_ICON_BUTTON}
                 onCreate={(project) => {
                   navigate(`/projects/${project.id}/automations`);
                 }}
               />
             )}
-            <div className="opacity-0 transition-opacity group-hover/pinned:opacity-100">
-              <PinnedSortMenu
-                sort={sort}
-                onChange={changeSort}
-                showAll={listingEverything}
-                onShowAllChange={setShowAll}
-              />
-            </div>
+            <PinnedSortMenu
+              sort={sort}
+              onChange={changeSort}
+              showAll={listingEverything}
+              onShowAllChange={setShowAll}
+            />
           </div>
         </div>
       )}
@@ -546,7 +545,10 @@ function PinnedSortMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t('Sort pinned projects')}
-        className="flex size-6 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent"
+        className={cn(
+          RAIL_HEADER_ICON_BUTTON,
+          'flex items-center justify-center data-[state=open]:bg-sidebar-accent',
+        )}
       >
         <SlidersHorizontal className="size-3.5" />
       </DropdownMenuTrigger>
@@ -752,6 +754,9 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
     </div>
   );
 }
+
+const RAIL_HEADER_ICON_BUTTON =
+  'size-6 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground [&_svg]:size-3.5!';
 
 const PINNED_SORT_KEY = 'rail-pinned-sort';
 
