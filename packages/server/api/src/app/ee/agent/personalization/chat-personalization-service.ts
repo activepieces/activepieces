@@ -175,8 +175,9 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         if (!isNil(userRow)) {
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
-            if (terminal || fresh) {
-                if (!isNil(role) && role !== userRow.role) {
+            const roleChanged = !isNil(role) && role !== userRow.role
+            if (terminal || (fresh && !roleChanged)) {
+                if (roleChanged) {
                     await personalizationRepo().update({ platformId, userId }, { role })
                 }
                 return this.getEffectiveView({ platformId, userId })
