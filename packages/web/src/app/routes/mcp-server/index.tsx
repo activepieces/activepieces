@@ -5,10 +5,10 @@ import { PageHeader } from '@/components/custom/page-header';
 
 import { ConnectSteps } from './connect-steps';
 import { ConnectedClients } from './connected-clients';
-import { useMcpServerUrl } from './mcp-client-identity';
+import { useMcpServerUrl } from './mcp-client-branding';
 
 export default function McpServerPage() {
-  const { serverUrl, isPublic } = useMcpServerUrl();
+  const { serverUrl, isReachableFromInternet } = useMcpServerUrl();
   const [isManagingConnections, setIsManagingConnections] = useState(false);
 
   return (
@@ -20,7 +20,7 @@ export default function McpServerPage() {
         ) : (
           <ConnectSteps
             serverUrl={serverUrl}
-            isPublicUrl={isPublic}
+            isReachableFromInternet={isReachableFromInternet}
             onManageConnections={() => setIsManagingConnections(true)}
           />
         )}

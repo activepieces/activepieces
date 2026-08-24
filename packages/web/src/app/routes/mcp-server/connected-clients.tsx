@@ -25,8 +25,9 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
 
 import { ClientIcon } from './connect-steps';
-import { mcpClientIdentity } from './mcp-client-identity';
+import { mcpClientBranding } from './mcp-client-branding';
 import { mcpGrantsMutations, mcpGrantsQueries } from './mcp-grants-hooks';
+import { PageBand } from './page-band';
 
 export function ConnectedClients({ onBack }: { onBack: () => void }) {
   const { rows, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
@@ -34,7 +35,7 @@ export function ConnectedClients({ onBack }: { onBack: () => void }) {
   const revoke = mcpGrantsMutations.useRevokeMine();
 
   return (
-    <div className="mx-auto flex w-full max-w-[1198px] flex-col gap-5 bg-background px-6 py-8 lg:px-12">
+    <PageBand className="flex flex-col gap-5 bg-background px-6 py-8 lg:px-12">
       <button
         type="button"
         onClick={onBack}
@@ -91,7 +92,7 @@ export function ConnectedClients({ onBack }: { onBack: () => void }) {
           {t('Load more')}
         </Button>
       )}
-    </div>
+    </PageBand>
   );
 }
 
@@ -102,12 +103,12 @@ function ClientRow({
   row: McpOAuthGrant;
   onRevoke: () => Promise<void>;
 }) {
-  const label = mcpClientIdentity.label(row.clientKey, row.clientName);
+  const label = mcpClientBranding.label(row.clientKey, row.clientName);
 
   return (
     <Item variant="outline" size="sm">
       <ItemMedia>
-        <ClientIcon icon={mcpClientIdentity.icon(row.clientKey)} />
+        <ClientIcon icon={mcpClientBranding.icon(row.clientKey)} />
       </ItemMedia>
       <ItemContent className="min-w-0">
         <TextWithTooltip tooltipMessage={label}>

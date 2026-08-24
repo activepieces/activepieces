@@ -24,15 +24,16 @@ import {
   POPULAR_CLIENT_KEYS,
   mcpClientCatalog,
 } from './mcp-client-catalog';
+import { PageBand } from './page-band';
 import { RecentlyConnected } from './recently-connected';
 
 export function ConnectSteps({
   serverUrl,
-  isPublicUrl,
+  isReachableFromInternet,
   onManageConnections,
 }: {
   serverUrl: string;
-  isPublicUrl: boolean;
+  isReachableFromInternet: boolean;
   onManageConnections: () => void;
 }) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export function ConnectSteps({
       <ClientInstructions
         client={selected}
         serverUrl={serverUrl}
-        isPublicUrl={isPublicUrl}
+        isReachableFromInternet={isReachableFromInternet}
         totalClients={clients.length}
         onBack={() => setSelectedKey(null)}
         onBrowseAll={() => {
@@ -97,7 +98,7 @@ function ConnectLanding({
 
   return (
     <div className="flex flex-col bg-background">
-      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
+      <PageBand className="flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
           <h1 className="max-w-[455px] text-[40px] font-bold leading-[46px] tracking-[-0.035em]">
             {t('One link for everywhere you use AI.')}
@@ -146,7 +147,7 @@ function ConnectLanding({
             <ChevronRight className="size-[15px]" />
           </button>
         </div>
-      </div>
+      </PageBand>
 
       <IntegrationsBanner />
       <RecentlyConnected
@@ -180,7 +181,7 @@ function ClientBrowser({
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
           <BackLink label={t('Back')} onClick={onBack} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
@@ -221,10 +222,10 @@ function ClientBrowser({
               {t('Client not listed?')}
             </Button>
           </div>
-        </div>
+        </PageBand>
       </div>
 
-      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-7 px-6 py-7 lg:px-12">
+      <PageBand className="flex flex-col gap-7 px-6 py-7 lg:px-12">
         {mcpClientCatalog.groups().map((group) => {
           const groupClients = matches.filter(
             (client) => client.group === group.key,
@@ -246,7 +247,7 @@ function ClientBrowser({
             {t('No client matches your search.')}
           </span>
         )}
-      </div>
+      </PageBand>
     </div>
   );
 }
@@ -318,14 +319,14 @@ function ClientGroupSection({
 function ClientInstructions({
   client,
   serverUrl,
-  isPublicUrl,
+  isReachableFromInternet,
   totalClients,
   onBack,
   onBrowseAll,
 }: {
   client: ConnectableClient;
   serverUrl: string;
-  isPublicUrl: boolean;
+  isReachableFromInternet: boolean;
   totalClients: number;
   onBack: () => void;
   onBrowseAll: () => void;
@@ -333,7 +334,7 @@ function ClientInstructions({
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
           <BackLink label={t('All clients')} onClick={onBack} />
           <div className="flex flex-wrap items-center gap-4">
             <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
@@ -352,10 +353,10 @@ function ClientInstructions({
               </a>
             </Button>
           </div>
-        </div>
+        </PageBand>
       </div>
 
-      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
+      <PageBand className="flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
         <div className="flex min-w-0 flex-1 flex-col">
           {client.steps.map((step, index) => (
             <ConnectStepRow
@@ -364,7 +365,7 @@ function ClientInstructions({
               step={step}
               config={index === 0 ? client.config : undefined}
               isLast={index === client.steps.length - 1}
-              isPublicUrl={isPublicUrl}
+              isReachableFromInternet={isReachableFromInternet}
             />
           ))}
         </div>
@@ -406,7 +407,7 @@ function ClientInstructions({
             </span>
           </button>
         </div>
-      </div>
+      </PageBand>
     </div>
   );
 }
@@ -416,16 +417,17 @@ function ConnectStepRow({
   step,
   config,
   isLast,
-  isPublicUrl,
+  isReachableFromInternet,
 }: {
   number: number;
   step: ConnectStep;
   config?: { label: string; snippet: string };
   isLast: boolean;
-  isPublicUrl: boolean;
+  isReachableFromInternet: boolean;
 }) {
   const blockedByPrivateUrl =
-    step.action?.requiresInternetReachableUrl === true && !isPublicUrl;
+    step.action?.requiresInternetReachableUrl === true &&
+    !isReachableFromInternet;
 
   return (
     <div className="flex gap-4">

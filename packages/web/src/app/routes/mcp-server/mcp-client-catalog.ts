@@ -429,6 +429,14 @@ export const mcpClientCatalog = {
   build: (serverUrl: string): ConnectableClient[] =>
     entries(serverUrl).map(toClient),
 
+  branding: (): Record<string, { icon: string; name: string }> =>
+    Object.fromEntries(
+      entries('').map((entry) => [
+        entry.key,
+        { icon: entry.icon, name: entry.name },
+      ]),
+    ),
+
   groups: (): ClientGroup[] => [
     {
       key: 'terminal',

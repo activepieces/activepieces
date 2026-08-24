@@ -1,45 +1,13 @@
 import { t } from 'i18next';
 
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
+import { pieceSearchUtils } from '@/features/pieces/utils/piece-search-utils';
 import { cn } from '@/lib/utils';
 
+import { PageBand } from './page-band';
+
 const TILES_PER_ROW = 36;
-const FEATURED_PIECES = [
-  'slack',
-  'gmail',
-  'google-sheets',
-  'notion',
-  'hubspot',
-  'google-drive',
-  'openai',
-  'github',
-  'stripe',
-  'shopify',
-  'discord',
-  'google-calendar',
-  'airtable',
-  'salesforce',
-  'jira-cloud',
-  'linear',
-  'asana',
-  'telegram-bot',
-  'twilio',
-  'trello',
-  'microsoft-teams',
-  'mailchimp',
-  'intercom',
-  'zendesk',
-  'clickup',
-  'monday',
-  'typeform',
-  'calendly',
-  'dropbox',
-  'zoom',
-  'todoist',
-  'supabase',
-  'webflow',
-  'square',
-].map((name) => `@activepieces/piece-${name}`);
+const FEATURED_PIECES = pieceSearchUtils.POPULAR_PIECES_NAMES;
 
 export function IntegrationsBanner() {
   const { pieces } = piecesHooks.usePieces({});
@@ -59,7 +27,7 @@ export function IntegrationsBanner() {
 
   return (
     <div className="border-t bg-muted/30 pb-9 pt-8">
-      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-6">
+      <PageBand className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
             {t('Your AI gets all of this')}
@@ -78,7 +46,7 @@ export function IntegrationsBanner() {
             className="pl-8"
           />
         </div>
-      </div>
+      </PageBand>
     </div>
   );
 }
