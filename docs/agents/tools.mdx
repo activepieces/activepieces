@@ -1,28 +1,29 @@
 ---
 title: "Agent Tools"
 sidebarTitle: "Agent Tools"
-description: "The four things an agent can use"
+description: "The three things an agent can act through"
 icon: "wrench"
 ---
 
 An agent can only act through the tools you attach. Without them it can only talk.
 
-<CardGroup cols={2}>
-  <Card title="Pieces" icon="puzzle-piece" color="#8143E3">
-    Actions from your connected apps. Send the Slack message, create the CRM record.
+<CardGroup cols={3}>
+  <Card title="Piece tool" icon="puzzle-piece" color="#8143E3">
+    An action from a connected app. Send the Slack message, create the CRM record.
   </Card>
-  <Card title="Flows" icon="sitemap" color="#16A34A">
-    One of your flows, as a single tool. The agent decides when, the flow decides how.
+  <Card title="Flow tool" icon="sitemap" color="#16A34A">
+    One of your flows, as a single tool.
   </Card>
-  <Card title="MCP servers" icon="plug" color="#0EA5E9">
-    Any external MCP server, for systems that aren't pieces yet.
-  </Card>
-  <Card title="Knowledge" icon="book" color="#F59E0B" href="/agents/knowledge">
-    Files and tables it can look things up in.
+  <Card title="MCP server" icon="plug" color="#0EA5E9">
+    An external MCP server, for systems that aren't pieces yet.
   </Card>
 </CardGroup>
 
-Add any of them from **Agent Tools** in the agent editor.
+Add them under **Agent Tools** in the agent editor.
+
+<Note>
+Documents and tables live in a separate **Knowledge Base** section below the tools. See [Agent Knowledge](/agents/knowledge).
+</Note>
 
 ## Hand it a flow
 
@@ -37,5 +38,5 @@ Paste the URL and pick how it authenticates: none, an access token, an API key, 
 Activepieces lists the server's tools as soon as you add it, so you know it works before an agent depends on it.
 
 <Tip>
-When an agent keeps getting something wrong, ask which of the four it was missing. Usually it needed somewhere to look something up, not a longer prompt.
+When an agent keeps getting something wrong, ask what it was missing. Usually it needed somewhere to look something up, not a longer prompt.
 </Tip>
