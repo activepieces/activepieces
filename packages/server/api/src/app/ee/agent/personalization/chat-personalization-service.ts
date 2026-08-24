@@ -100,10 +100,10 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         ) {
             await Promise.all([
                 personalizationRepo().update({ id: companyRow.id }, { status: ChatPersonalizationStatus.READY }),
-                personalizationRepo().update({ platformId, userId, useCases: Not(IsNull()) }, { status: ChatPersonalizationStatus.READY, ...spreadIfDefined('role', role) }),
+                personalizationRepo().update({ platformId, userId, useCases: Not(IsNull()) }, { status: ChatPersonalizationStatus.READY }),
             ])
             log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] Restored stored personalization')
-            return this.getEffectiveView({ platformId, userId })
+            return this.upsertUserScope({ platformId, userId, companyRow, role })
         }
 
         if (!isNil(companyRow) && !inputsChanged) {
