@@ -52,15 +52,10 @@ export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cu
 
 export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
 
-export const McpOAuthClientConnectsFrom = z.enum(['local', 'remote'])
-
-export type McpOAuthClientConnectsFrom = z.infer<typeof McpOAuthClientConnectsFrom>
-
 export const McpOAuthGrant = z.object({
     id: z.string(),
     clientKey: McpOAuthClientKey,
     clientName: z.string().nullable(),
-    connectsFrom: McpOAuthClientConnectsFrom,
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
     created: z.string(),

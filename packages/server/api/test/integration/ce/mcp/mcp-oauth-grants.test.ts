@@ -74,7 +74,6 @@ describe('MCP OAuth connected clients', () => {
             expect(data[0]).toMatchObject({
                 id: mine,
                 clientKey: 'claude',
-                connectsFrom: 'remote',
                 projectId: ctx.project.id,
                 projectName: ctx.project.displayName,
                 lastUsedAt: null,
@@ -105,7 +104,7 @@ describe('MCP OAuth connected clients', () => {
 
             const { data } = (await ctx.get('/v1/mcp-oauth/grants/me')).json()
 
-            expect(data[0]).toMatchObject({ clientKey: 'codex', connectsFrom: 'local', projectId: null, projectName: null })
+            expect(data[0]).toMatchObject({ clientKey: 'codex', projectId: null, projectName: null })
         })
     })
 

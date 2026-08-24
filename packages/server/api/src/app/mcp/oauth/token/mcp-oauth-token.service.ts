@@ -156,12 +156,10 @@ export const mcpOAuthTokenService = {
 
         const rows = data.map((token) => {
             const client = clients.get(token.clientId)
-            const identity = mcpOAuthClientIdentity.classify({ redirectUris: client?.redirectUris ?? [] })
             return {
                 id: token.id,
-                clientKey: identity.key,
+                clientKey: mcpOAuthClientIdentity.classify({ redirectUris: client?.redirectUris ?? [] }),
                 clientName: client?.clientName ?? null,
-                connectsFrom: identity.connectsFrom,
                 projectId: token.projectId,
                 projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
                 created: token.created,
