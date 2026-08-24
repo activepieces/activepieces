@@ -2,6 +2,7 @@ import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer } from 'socket.io'
 import {
+    ApEdition,
     createRpcServer,
     ExecutionMode,
     NetworkMode,
@@ -211,16 +212,38 @@ describe('worker settings override', () => {
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
     }, 10_000)
 
-    it('worker group + UNSANDBOXED passes validation', async () => {
+    it('worker group + UNSANDBOXED passes validation on non-cloud editions', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
         process.env.AP_REUSE_SANDBOX = 'false'
-        const serverSettings = buildWorkerSettingsResponse()
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.ENTERPRISE })
         await connectAndWaitForSettings(serverSettings)
 
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.UNSANDBOXED)
+    }, 10_000)
+
+    it('worker group + UNSANDBOXED throws on cloud edition', async () => {
+        process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_EXECUTION_MODE = ExecutionMode.UNSANDBOXED
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.CLOUD })
+
+        const err = await connectAndExpectCrash(serverSettings)
+        expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
+    }, 10_000)
+
+    it('worker group + SANDBOX_PROCESS passes validation on cloud edition', async () => {
+        process.env.AP_WORKER_GROUP_ID = 'group-1'
+        process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
+        process.env.AP_REUSE_SANDBOX = 'false'
+        const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.CLOUD })
+        await connectAndWaitForSettings(serverSettings)
+
+        expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
+        const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
+        expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
     }, 10_000)
 
     it('worker group without AP_REUSE_SANDBOX throws error', async () => {
