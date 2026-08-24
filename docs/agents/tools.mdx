@@ -9,13 +9,13 @@ An agent can only act through the tools you attach. Without them it can only tal
 
 <CardGroup cols={3}>
   <Card title="Piece tool" icon="puzzle-piece" color="#8143E3">
-    An action from a connected app. Send the Slack message, create the CRM record.
+    A single action from one of your connected apps.
   </Card>
   <Card title="Flow tool" icon="sitemap" color="#16A34A">
-    One of your flows, as a single tool.
+    One of your own flows, handed over as a tool.
   </Card>
   <Card title="MCP server" icon="plug" color="#0EA5E9">
-    An external MCP server, for systems that aren't pieces yet.
+    An external server, for systems that aren't pieces.
   </Card>
 </CardGroup>
 
@@ -25,13 +25,19 @@ Add them under **Agent Tools** in the agent editor.
 Documents and tables live in a separate **Knowledge Base** section below the tools. See [Agent Knowledge](/agents/knowledge).
 </Note>
 
-## Hand it a flow
+## Piece tools
 
-The most underused one. When part of a job has to happen the same way every time, build that part as a flow and give it to the agent as a tool.
+You attach individual actions, not whole apps. An agent given **Send message** can post to Slack and nothing else.
+
+Pin the inputs that have to be exact and leave the rest to the agent. See [Agents in Flows](/agents/in-flows).
+
+## Flow tools
+
+The most underused one. When part of a job has to happen the same way every time, build that part as a flow and hand it over.
 
 The agent chooses the moment. The flow guarantees the steps.
 
-## Connect an MCP server
+## MCP servers
 
 Paste the URL and pick how it authenticates: none, an access token, an API key, or custom headers. Streamable HTTP, SSE, and plain HTTP all work.
 
