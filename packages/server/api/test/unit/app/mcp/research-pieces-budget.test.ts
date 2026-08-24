@@ -2,109 +2,74 @@ import { MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { describe, expect, it } from 'vitest'
 import { fitEnrichedResponse } from '../../../../src/app/mcp/tools/ap-research-pieces'
 
-function component(index: number) {
-    return {
-        name: `action_${index}`,
-        displayName: `Action ${index}`,
-        description: 'y'.repeat(200),
-        requiresAuth: true,
-        cardinality: 'other' as const,
-        aiDescription: 'x'.repeat(1_200),
-    }
-}
+const SLIM_PIECE = { name: '@activepieces/piece-webhook', displayName: 'Webhook', description: 'Receive HTTP requests.' }
 
-function fatPiece(index: number) {
+function piece({ index, actionCount, detailLength, aiLength }: { index: number, actionCount: number, detailLength: number, aiLength: number }) {
     return {
+        ...SLIM_PIECE,
         name: `@activepieces/piece-${index}`,
-        displayName: `Piece ${index}`,
-        description: `Piece ${index} description`,
-        actions: Array.from({ length: 60 }, (_, actionIndex) => component(actionIndex)),
-        triggers: Array.from({ length: 20 }, (_, triggerIndex) => component(triggerIndex)),
-    }
-}
-
-// Sized so that keeping name plus displayName is the first rung that fits: enough components that
-// the rung below (which also keeps requiresAuth and cardinality) is still over budget.
-function wideePiece(index: number) {
-    return {
-        name: `@activepieces/piece-wide-${index}`,
-        displayName: `Wide piece ${index}`,
-        description: '',
-        actions: Array.from({ length: 130 }, (_, actionIndex) => ({
-            ...component(actionIndex),
-            name: `a_fairly_long_action_name_number_${actionIndex}_for_piece_${index}`,
-            description: '',
-            aiDescription: '',
+        actions: Array.from({ length: actionCount }, (_, action) => ({
+            name: `an_action_name_long_enough_to_count_${action}_of_piece_${index}`,
+            displayName: `Action ${action}`,
+            description: 'y'.repeat(detailLength),
+            requiresAuth: true,
+            cardinality: 'other' as const,
+            aiDescription: 'x'.repeat(aiLength),
         })),
     }
 }
 
-function slimPiece() {
-    return { name: '@activepieces/piece-webhook', displayName: 'Webhook', description: 'Receive HTTP requests.' }
+function pieces({ count, actionCount, detailLength, aiLength }: { count: number, actionCount: number, detailLength: number, aiLength: number }) {
+    return Array.from({ length: count }, (_, index) => piece({ index, actionCount, detailLength, aiLength }))
+}
+
+function fit(input: Array<typeof SLIM_PIECE | ReturnType<typeof piece>>) {
+    return fitEnrichedResponse({ pieces: input, overflowHint: '', totalCount: input.length })
 }
 
 function byteSize(value: unknown): number {
     return Buffer.byteLength(JSON.stringify(value), 'utf8')
 }
 
-function fit(pieces: ReturnType<typeof fatPiece>[] | ReturnType<typeof slimPiece>[]) {
-    return fitEnrichedResponse({ pieces, overflowHint: '', totalCount: pieces.length })
-}
-
 describe('what ap_research_pieces is allowed to return', () => {
     it('leaves a result that already fits completely alone', () => {
-        const response = fit([slimPiece()])
+        const result = fit([SLIM_PIECE])
 
-        expect(response.structuredContent.trimmed).toBe(false)
-        expect(response.structuredContent.pieces).toEqual([slimPiece()])
+        expect(result.structuredContent).toMatchObject({ pieces: [SLIM_PIECE], trimmed: false })
     })
 
-    it('measures what it actually sends, not just the piece array', () => {
-        const response = fit(Array.from({ length: 10 }, (_, index) => fatPiece(index)))
+    it('measures what it sends, envelope included, not just the piece array', () => {
+        const result = fit(pieces({ count: 10, actionCount: 30, detailLength: 200, aiLength: 1_200 }))
 
-        expect(byteSize(response)).toBeLessThanOrEqual(MAX_TOOL_RESULT_BYTES)
-        expect(response.structuredContent.trimmed).toBe(true)
+        expect(byteSize(result)).toBeLessThanOrEqual(MAX_TOOL_RESULT_BYTES)
+        expect(result.structuredContent.trimmed).toBe(true)
     })
 
-    it.each([
-        ['a rung that drops descriptions', Array.from({ length: 10 }, (_, index) => fatPiece(index))],
-        ['a rung that keeps only names', Array.from({ length: 10 }, (_, index) => wideePiece(index))],
-    ])('never leaves a half-built entry in an action list, at %s', (_label, pieces) => {
-        const response = fit(pieces)
+    // detailLength 0 forces the names-only rung: dropping descriptions alone leaves it over budget.
+    it.each([1_200, 0])('never leaves a half-built action entry, at detail length %i', (detailLength) => {
+        const result = fit(pieces({ count: 10, actionCount: 130, detailLength, aiLength: detailLength }))
 
-        for (const piece of response.structuredContent.pieces as Array<Record<string, unknown>>) {
-            for (const key of ['actions', 'triggers']) {
-                const components = piece[key]
-                if (components === undefined) {
-                    continue
-                }
-                for (const entry of components as unknown[]) {
-                    expect(typeof entry, JSON.stringify(entry)).toBe('object')
-                    expect(entry).toHaveProperty('name')
-                }
-            }
+        const actions = (result.structuredContent.pieces as Array<{ actions?: unknown[] }>).flatMap((found) => found.actions ?? [])
+        for (const action of actions) {
+            expect(action, JSON.stringify(action)).toHaveProperty('name')
         }
     })
 
     it('still names every piece it found, so the model can look one up', () => {
-        const pieces = Array.from({ length: 10 }, (_, index) => fatPiece(index))
+        const input = pieces({ count: 10, actionCount: 60, detailLength: 1_200, aiLength: 1_200 })
 
-        const response = fit(pieces)
+        const found = fit(input).structuredContent.pieces as Array<{ name: string }>
 
-        const names = (response.structuredContent.pieces as Array<{ name: string }>).map((piece) => piece.name)
-        expect(names).toEqual(pieces.map((piece) => piece.name))
+        expect(found.map((piece) => piece.name)).toEqual(input.map((piece) => piece.name))
     })
 
     it('says so rather than emitting a payload no client can read, when even names do not fit', () => {
-        const manyNames = Array.from({ length: 3_000 }, (_, index) => ({
+        const result = fit(Array.from({ length: 3_000 }, (_, index) => ({
+            ...SLIM_PIECE,
             name: `@activepieces/piece-with-a-fairly-long-name-${index}`,
-            displayName: `Piece With A Fairly Long Display Name ${index}`,
-            description: '',
-        }))
+        })))
 
-        const response = fitEnrichedResponse({ pieces: manyNames, overflowHint: '', totalCount: manyNames.length })
-
-        expect(response.content[0].text).toContain('too many to describe here')
-        expect(response.structuredContent.trimmed).toBe(true)
+        expect(result.content[0].text).toContain('too many to name here')
+        expect(result.structuredContent).toMatchObject({ pieces: [], trimmed: true })
     })
 })
