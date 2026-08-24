@@ -4,6 +4,7 @@ import qs from 'qs';
 
 import { callClickUpApi } from '../../common';
 import { clickupAuth } from '../../auth';
+import { getBulkTasksTimeInStatusOutputSchema } from '../../output-schemas';
 
 export const clickupGetBulkTasksTimeInStatusAi = createAction({
   auth: clickupAuth,
@@ -24,6 +25,7 @@ export const clickupGetBulkTasksTimeInStatusAi = createAction({
       required: true,
     }),
   },
+  outputSchema: getBulkTasksTimeInStatusOutputSchema,
   async run(configValue) {
     const taskIds = configValue.propsValue.task_ids as string[];
     if (!taskIds || taskIds.length === 0) {
