@@ -1,54 +1,44 @@
 ---
 title: "Create an agent"
 sidebarTitle: "Create an agent"
-description: "Describe the job, and Activepieces writes the agent"
+description: "The three routes in, and what each setting is for"
 icon: "pen"
 ---
 
-## Just describe it
+## Pick a starting point
 
-The **Agents** page opens on a prompt box. Say what you want in a sentence and Activepieces writes the instructions, picks the tools, and drops you into the finished agent.
-
-<Prompt description="An agent that triages inbound support" icon="sparkles" actions={["copy"]}>
-Read new support emails, work out how urgent each one is, reply to the simple ones, and post anything that needs a human into our Slack channel.
-</Prompt>
-
-You need an [AI provider connected](/admin-guide/guides/setup-ai-providers) first. If none is set up, the page says so and links you there.
-
-<Tip>
-Not sure what to ask for? The page suggests a few starting points, like **Triage support tickets** or **Research a company**. Clicking one builds it immediately, and you can edit everything afterwards.
-</Tip>
-
-There is also a **New agent** dialog with ready-made templates if you would rather start from something already written.
-
-## What makes it good
-
-Everything the agent does comes from two things.
-
-<CardGroup cols={2}>
-  <Card title="Instructions" icon="pen-line">
-    The job it owns, how to behave, and when to stop.
+<CardGroup cols={3}>
+  <Card title="Describe it" icon="wand-magic-sparkles" color="#8143E3">
+    The Agents page opens on a prompt box. Say what you need in a sentence and the agent is written for you.
   </Card>
-  <Card title="Tools" icon="wrench" href="/agents/tools">
-    What it can actually reach. No tools means it can only talk.
+  <Card title="Use a template" icon="copy" color="#F59E0B">
+    **New agent** offers ready-made agents with instructions already written.
+  </Card>
+  <Card title="Start blank" icon="file" color="#0EA5E9">
+    Name it, describe it, write the instructions yourself.
   </Card>
 </CardGroup>
 
-Brief it like a capable new colleague. Say the goal and the edges, not every keystroke. The two that people forget:
+Every route lands in the same editor, and nothing is locked in. You need an [AI provider connected](/admin-guide/guides/setup-ai-providers) before any of them will work.
 
-- **When to stop.** What "done" looks like, and what it must never do.
-- **When to ask.** Which calls it should hand back to a human instead of making itself.
+## Set it up
 
-## Make the output usable
+The **Configure** tab holds everything that changes what the agent does.
 
-By default an agent replies in prose, which is fine for a human but awkward for a flow. Define **output fields** and it returns structured data instead, so the next step can read `priority` or `customer_email` directly rather than parsing a paragraph.
+| Setting | What it's for |
+|---|---|
+| **Instructions** | The job it owns, how to decide, and when to stop. This is the agent. |
+| **[Tools](/agents/tools)** | What it can reach. Apps, your own flows, MCP servers, and [knowledge](/agents/knowledge). Without tools it can only talk. |
+| **Model** | Which model answers, and whose key pays for it. |
+| **Output fields** | Return named fields instead of prose, so a [flow can use the result](/agents/in-flows). |
+| **Max steps** | The budget for one run. A stuck agent stops instead of looping. |
 
-That is what turns an agent from a chat window into something you can [run inside a flow](/agents/in-flows).
+The **Settings** tab is name, description, and how it looks in the list.
 
-## Publish when it's ready
+## Try it
 
-Agents have a **draft** and a **published** version, like flows. Tune the draft as much as you like without disturbing what's already running, then publish.
+The editor has a conversation panel beside the configuration. Talk to the agent there, watch which tools it reaches for, and adjust the instructions until it behaves. Changes take effect as soon as you save.
 
-<Note>
-Agents are capped at a number of steps per run, so a confused agent stops rather than looping forever. Raise the limit for genuinely long jobs.
-</Note>
+<Tip>
+Brief it like a capable new colleague. Say the goal and the edges, not every keystroke. The two people forget most: what "done" looks like, and which calls it should hand back to a human.
+</Tip>
