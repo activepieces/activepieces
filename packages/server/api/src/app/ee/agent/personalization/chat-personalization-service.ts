@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import {
     ApEdition,
     ChatPersonalization,
@@ -100,20 +100,17 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         ) {
             await Promise.all([
                 personalizationRepo().update({ id: companyRow.id }, { status: ChatPersonalizationStatus.READY }),
-                personalizationRepo().update({ platformId, userId, useCases: Not(IsNull()) }, { status: ChatPersonalizationStatus.READY }),
+                personalizationRepo().update({ platformId, userId, useCases: Not(IsNull()) }, { status: ChatPersonalizationStatus.READY, ...spreadIfDefined('role', role) }),
             ])
             log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] Restored stored personalization')
             return this.getEffectiveView({ platformId, userId })
         }
 
-        if (!isNil(companyRow)) {
+        if (!isNil(companyRow) && !inputsChanged) {
             const fresh = Date.now() - new Date(companyRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const inFlight = IN_FLIGHT_STATUSES.includes(companyRow.status)
-            if (inFlight && fresh && !inputsChanged) {
-                return this.getEffectiveView({ platformId, userId })
-            }
-            if (companyRow.status === ChatPersonalizationStatus.READY && !inputsChanged) {
-                return this.getEffectiveView({ platformId, userId })
+            if ((inFlight && fresh) || companyRow.status === ChatPersonalizationStatus.READY) {
+                return this.upsertUserScope({ platformId, userId, companyRow, role })
             }
         }
 
@@ -179,9 +176,12 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
             if (terminal || fresh) {
+                if (!isNil(role) && role !== userRow.role) {
+                    await personalizationRepo().update({ platformId, userId }, { role })
+                }
                 return this.getEffectiveView({ platformId, userId })
             }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, role })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, ...spreadIfDefined('role', role) })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
