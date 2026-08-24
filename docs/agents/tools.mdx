@@ -5,35 +5,36 @@ description: "The four things an agent can use"
 icon: "wrench"
 ---
 
-An agent can only act through the tools you attach.
+An agent can only act through the tools you attach. Without them it can only talk.
 
 <CardGroup cols={2}>
-  <Card title="Pieces" icon="puzzle-piece">
+  <Card title="Pieces" icon="puzzle-piece" color="#8143E3">
     Actions from your connected apps. Send the Slack message, create the CRM record.
   </Card>
-  <Card title="Flows" icon="sitemap">
-    Your own flows, as one tool. The agent decides *when*, the flow decides *how*.
+  <Card title="Flows" icon="sitemap" color="#16A34A">
+    One of your flows, as a single tool. The agent decides when, the flow decides how.
   </Card>
-  <Card title="MCP servers" icon="plug">
-    External tools over [MCP](/mcp/overview), for systems that aren't pieces.
+  <Card title="MCP servers" icon="plug" color="#0EA5E9" href="/mcp/overview">
+    Your own systems, for anything that isn't a piece yet.
   </Card>
-  <Card title="Knowledge bases" icon="book" href="/agents/knowledge">
-    Files or [tables](/tables/overview) it can look things up in.
+  <Card title="Knowledge" icon="book" color="#F59E0B" href="/agents/knowledge">
+    Files and tables it can look things up in.
   </Card>
 </CardGroup>
 
-## Flows as tools
+Add any of them from **Agent Tools** in the agent editor.
 
-The most underused one. When part of a job must happen the same way every time, build it as a flow and hand it over.
+## Hand it a flow
 
-## MCP servers
+The most underused one. When part of a job has to happen the same way every time, build that part as a flow and give it to the agent as a tool.
 
-| | |
-|---|---|
-| **Transport** | Streamable HTTP, SSE, HTTP |
-| **Auth** | None, access token, API key, custom headers |
+The agent chooses the moment. The flow guarantees the steps.
 
-Activepieces connects and lists the server's tools, so you confirm it works before the agent depends on it.
+## Connect an MCP server
+
+Paste the URL and pick how it authenticates: none, an access token, an API key, or custom headers. Streamable HTTP, SSE, and plain HTTP all work.
+
+Activepieces lists the server's tools as soon as you add it, so you know it works before an agent depends on it.
 
 <Tip>
 When an agent keeps getting something wrong, ask which of the four it was missing. Usually it needed somewhere to look something up, not a longer prompt.

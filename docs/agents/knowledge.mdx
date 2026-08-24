@@ -5,28 +5,26 @@ description: "Give an agent something to look things up in"
 icon: "book"
 ---
 
-Tools let an agent *act*. A knowledge base lets it *know*.
+Tools let an agent act. Knowledge lets it know.
 
-Attach one and the agent can look something up before deciding, instead of guessing or relying on whatever you crammed into the instructions.
-
-## Two sources
+Attach some and it can look something up before deciding, instead of guessing.
 
 <CardGroup cols={2}>
-  <Card title="Files" icon="file">
-    Upload a document. **PDF, DOCX, TXT, CSV**.
+  <Card title="Files" icon="file" color="#8143E3">
+    Upload a document. PDF, DOCX, TXT, or CSV.
   </Card>
-  <Card title="Tables" icon="table">
-    Point at a [table](/tables/overview) already in your project.
+  <Card title="Tables" icon="table" color="#0EA5E9" href="/tables/overview">
+    Point at a table already in your project.
   </Card>
 </CardGroup>
 
-Add either from the agent's tools, with **Add File Source** or **Add Table Source**.
+Add either from **Agent Tools**, with **Add File Source** or **Add Table Source**.
 
-## Files or tables?
+## Which one
 
-| | Use a file | Use a table |
+|  | File | Table |
 |---|---|---|
-| **Content** | Documents, policies, guides | Rows of data |
+| **Holds** | Documents, policies, guides | Rows of data |
 | **Changes** | Rarely | Constantly |
 | **Updated by** | Re-uploading | Your flows, live |
 
@@ -34,14 +32,14 @@ Add either from the agent's tools, with **Add File Source** or **Add Table Sourc
 If a flow already writes the data, use a table. The agent then reads what's true right now, with nothing to re-upload.
 </Tip>
 
-## Why not just use instructions
+## Keep it out of the instructions
 
-You can paste a product list into an agent's instructions. It works until the list changes, and then you have two versions of the truth and one is wrong.
+You can paste a product list into an agent's instructions. It works until the list changes, and then you have two versions of the truth and one of them is wrong.
 
-Instructions are for **how to behave**. Knowledge is for **what's true**. Keeping them apart means updating your prices doesn't mean editing your agent.
+Instructions are for **how to behave**. Knowledge is for **what's true**.
 
 ## Say when to use it
 
-A knowledge base tells the agent what it *can* look up, not when to bother. Put that in the [instructions](/agents/create):
+Knowledge tells the agent what it can look up, not when to bother. Put that in the [instructions](/agents/create):
 
 > Before answering pricing questions, check the pricing table. Never quote a figure that isn't in it.

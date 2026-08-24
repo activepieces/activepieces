@@ -5,9 +5,11 @@ description: "Docker Compose with PostgreSQL and Redis"
 icon: "docker"
 ---
 
-## Install
+## Install with one command
 
-Run this in the folder where you want Activepieces to live:
+The fastest way in. One line writes the config, generates your secrets, and starts everything.
+
+Run it in the folder where you want Activepieces to live:
 
 ```bash
 curl -fsSL https://get.activepieces.com | sh
@@ -30,9 +32,11 @@ Install Activepieces on this machine by running `curl -fsSL https://get.activepi
 Use `--port <port>` if 8080 is taken, and `--dir <path>` to install somewhere other than `./activepieces`. Want to read it before running it? `curl -fsSL https://get.activepieces.com` prints the script.
 </Tip>
 
-## Install manually with Docker Compose
+## Install with Docker Compose directly
 
-The script only writes a `.env` and a `docker-compose.yml`, then starts them. You can do the same by hand, which is the right choice if you are air-gapped, if your change process needs a compose file it can review, or if you are pointing Activepieces at a database you already run.
+Prefer to run Docker Compose yourself instead of the one-line installer? These are the same files the script writes, done by hand.
+
+Choose this if you are air-gapped, if your change process needs a compose file it can review, or if you are pointing Activepieces at a database you already run.
 
 <Accordion title="Show the manual steps" icon="wrench">
 **1. Get the compose file**

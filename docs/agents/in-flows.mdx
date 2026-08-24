@@ -5,44 +5,33 @@ description: "Use an agent as a step, and act on what it returns"
 icon: "sitemap"
 ---
 
-Drop an agent into a [flow](/flows/building-flows) and it can research, decide, or go and do the work. The flow handles what's certain. The agent handles what can't be drawn in advance.
+Drop an agent into a [flow](/flows/building-flows) as a step. The flow handles what's certain, the agent handles the rest.
 
-## When to use one
+## What people use it for
 
-<Columns cols={2}>
-  <div>
-    **Use an agent**
-    - The input is messy, like an email
-    - The next action depends on what it finds
-    - You'd otherwise write twenty branches
-  </div>
-  <div>
-    **Use a normal step**
-    - The rule fits in a condition
-    - The mapping is fixed
-    - It must behave identically every time
-  </div>
-</Columns>
+<CardGroup cols={3}>
+  <Card title="Research" icon="magnifying-glass" color="#8143E3">
+    Looks up a lead and returns a brief with a fit score.
+  </Card>
+  <Card title="Triage" icon="inbox" color="#F59E0B">
+    Reads an email, classifies it, sets the urgency.
+  </Card>
+  <Card title="Action" icon="bolt" color="#16A34A">
+    Files the invoice, updates the system, posts the summary.
+  </Card>
+</CardGroup>
 
 <Tip>
 If you can write the rule in one sentence without saying "depends", it's a condition, not an agent.
 </Tip>
 
-## Three shapes
+## Get a result you can build on
 
-| | The agent does | Give it |
-|---|---|---|
-| **Research** | Looks up a lead, returns a brief and a fit score | Web search, read-only tools |
-| **Triage** | Reads an email, classifies it, sets urgency | Structured output |
-| **Action** | Files the invoice, updates the system, posts the summary | Pinned inputs, few tools |
-
-## Getting a usable result
-
-Text output is hard to build on. Phrasing drifts, so nothing downstream can branch on it reliably:
+Prose is hard to branch on, because the phrasing drifts every run.
 
 > "This looks fairly urgent, someone should pick it up today."
 
-**Structured output** fixes it. Define the fields it must return:
+Ask for **structured output** instead and you get fields:
 
 | Field | Type | Example |
 |---|---|---|
@@ -50,33 +39,32 @@ Text output is hard to build on. Phrasing drifts, so nothing downstream can bran
 | `urgency` | Number | `4` |
 | `needs_human` | Boolean | `true` |
 
-Then reference them like any other step, using the slug shown when you hover the step:
+Reference them like any other step:
 
 ```
-{{step_2.category}}
 {{step_2.urgency}}
-{{step_2.needs_human}}
 ```
 
-Route on `needs_human`, sort by `urgency`, put `category` in the Slack message.
+Now you can route on `needs_human`, sort by `urgency`, and drop `category` into the Slack message.
 
 <Tip>
 Ask for the fewest fields the next step needs. Every extra field is one more thing to get wrong.
 </Tip>
 
-## Settings
+## Decide what it fills in
 
-| | |
-|---|---|
-| **Prompt** | The task, usually built from earlier steps |
-| **Agent Tools** | What it may use. See [Agent Tools](/agents/tools) |
-| **Model** | Which AI model runs it |
-| **Max steps** | Ceiling on actions before it stops |
-| **Web search** | Let it look things up online |
-| **Structured output** | The fields it must return |
+Every input on a piece tool is one of three modes, so you can pin what must be exact and leave the rest to the agent.
 
-Each piece-tool input is **Let agent decide**, **Set value myself**, or **Leave empty**. Set the Slack channel yourself, let the agent write the message.
+<CardGroup cols={3}>
+  <Card title="Let agent decide" icon="wand-magic-sparkles" color="#8143E3">
+    It writes the value.
+  </Card>
+  <Card title="Set value myself" icon="thumbtack" color="#0EA5E9">
+    You pin it.
+  </Card>
+  <Card title="Leave empty" icon="ban" color="#64748B">
+    Nothing is sent.
+  </Card>
+</CardGroup>
 
-<Tip>
-**Max steps** is your cost control. Start low, raise it only if tasks are being cut short.
-</Tip>
+Pin the Slack channel, let the agent write the message.
