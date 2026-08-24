@@ -336,11 +336,15 @@ const ConfigureFields = ({
       <AIModelSelector
         defaultProvider={form.watch('draft.provider') ?? undefined}
         defaultModel={form.watch('draft.modelName') ?? undefined}
-        onChange={({ provider, model }) => {
+        defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
+        onChange={({ provider, model, configId }) => {
           form.setValue('draft.provider', parseProvider(provider), {
             shouldDirty: true,
           });
           form.setValue('draft.modelName', model ?? null, {
+            shouldDirty: true,
+          });
+          form.setValue('draft.providerConfigId', configId ?? null, {
             shouldDirty: true,
           });
         }}

@@ -190,7 +190,7 @@ function formatAuthSteps({ auth, displayName }: { auth: Record<string, unknown>,
 
 async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
     const project = await projectService(log).getOneOrThrow(mcp.projectId)
-    const providers = await aiProviderService(log).listProviders(project.platformId)
+    const providers = await aiProviderService(log).listForProject({ platformId: project.platformId, projectId: mcp.projectId })
 
     const lines: string[] = []
 

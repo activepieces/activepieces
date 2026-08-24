@@ -55,6 +55,7 @@ export {
   // ai providers
   AIProviderModel,
   AIProviderWithoutSensitiveData,
+  ProjectAIProvider,
   AzureProviderConfig,
   BaseAIProviderAuthConfig,
   BedrockProviderAuthConfig,
