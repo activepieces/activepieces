@@ -374,7 +374,7 @@ function RailNavButton({
 }
 
 function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
-  const { pinnedIds, toggle } = usePinnedProjects();
+  const { pinnedProjectId, toggle } = usePinnedProjects();
   const { data: projects } = projectCollectionUtils.useAll();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -398,7 +398,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
 
   const sorted = sortProjects({
     projects,
-    pinnedIds,
+    pinnedProjectId,
     lastUsed: lastUsedByProject(),
     sort,
   });
@@ -463,7 +463,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
             ? PROJECT_COLOR_PALETTE[project.icon.color]
             : null;
         const active = location.pathname.includes(`/projects/${project.id}`);
-        const isPinned = pinnedIds.includes(project.id);
+        const isPinned = pinnedProjectId === project.id;
 
         const badge = (
           <span
@@ -643,19 +643,19 @@ function compareProjects({
 
 function sortProjects({
   projects,
-  pinnedIds,
+  pinnedProjectId,
   lastUsed,
   sort,
 }: {
   projects: ProjectWithLimits[];
-  pinnedIds: string[];
+  pinnedProjectId: string | null;
   lastUsed: Record<string, number>;
   sort: PinnedSort;
 }): ProjectWithLimits[] {
   const compare = compareProjects({ sort, lastUsed });
-  const pinned = projects.filter((project) => pinnedIds.includes(project.id));
-  const rest = projects.filter((project) => !pinnedIds.includes(project.id));
-  return [...pinned.sort(compare), ...rest.sort(compare)];
+  const pinned = projects.filter((project) => project.id === pinnedProjectId);
+  const rest = projects.filter((project) => project.id !== pinnedProjectId);
+  return [...pinned, ...rest.sort(compare)];
 }
 
 function RailAccountRow({ collapsed }: { collapsed: boolean }) {
