@@ -7,13 +7,13 @@ icon: 💬
 A platform-level AI chat assistant that manages Activepieces projects via natural language. Streams LLM responses over WebSocket and exposes project resources (flows, tables, connections, runs) as callable tools through the project's MCP server. Conversations persist per-user with cross-session memory (personal instructions + remembered facts injected into every turn), compaction, attachments, multi-project context, and two-phase tool gating. EE/Cloud only (not registered in CE).
 
 ### Execution model (read first)
-The chat LLM loop runs in the **worker**, not the API. Send path: `agent-conversation-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_CHAT_AGENT` job → worker `execute-agent-run.ts` calls `getChatConfig` RPC, assembles tools, runs `run-agent-turn.ts` (shared `streamText()` DI loop) → chunks stream back via `sendChatEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend reducer. `agent-conversation-service.ts` only does conversation CRUD + persistence.
+The chat LLM loop runs in the **worker**, not the API. Send path: `agent-conversation-controller.ts` (`POST /conversations/:id/messages`) enqueues a `WorkerJobType.EXECUTE_AGENT_RUN` job → worker `execute-agent-run.ts` calls `getAgentConfig` RPC, assembles tools, runs `run-agent-turn.ts` (shared `streamText()` DI loop) → chunks stream back via `sendAgentEvent` RPC → websocket `CHAT_MESSAGE_CHUNK` (filtered by `runId`) → frontend reducer. `agent-conversation-service.ts` only does conversation CRUD + persistence.
 
 ### Entities & services
 - **ChatPersonalization** (`chat_personalization`) — first-run onboarding: role + company, background research, researched empty-state cards. See [chat personalization](./chat-personalization.md).
 - **AgentConversation** (`agent_conversation`) — per-user, per-platform, optionally per-project; `status` STREAMING/IDLE/ERROR, `activeRunId`, `messages` (ModelMessage[] JSONB), `uiMessages`, `summary`/`summarizedUpToIndex` for compaction.
 - **ChatRolloutUser** (`chat_rollout_user`) — cloud rollout cohort; `chattedAt` drives the cap.
-- **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`chatHelpers.capMemories`).
+- **UserMemory** (`user_memory`) — one row per (platformId, userId): `instructions` (nullable text) + `memories` (jsonb string[]); capped at 50 facts × 280 chars and 4000 chars of instructions (`agentHelpers.capMemories`).
 - Tool logic in `ee/agent/`; shared tool phase/classification in `core/shared/.../ee/agent/`.
 
 ### How it works
@@ -26,7 +26,7 @@ The chat LLM loop runs in the **worker**, not the API. Send path: `agent-convers
 
 ### Turn liveness — three independent timers (get this right)
 A turn is kept alive / reclaimed by three separate mechanisms in `execute-agent-run.ts`; confusing them causes "chat randomly stops" bugs:
-- **Heartbeat** (`HEARTBEAT_INTERVAL_MS` 15s): a `setInterval` that bumps `conversation.updated` (via `heartbeatChatConversation` RPC) + sends an empty keepalive chunk, so a live-but-slow turn is never reclaimed as stale.
+- **Heartbeat** (`HEARTBEAT_INTERVAL_MS` 15s): a `setInterval` that bumps `conversation.updated` (via `heartbeatAgentConversation` RPC) + sends an empty keepalive chunk, so a live-but-slow turn is never reclaimed as stale.
 - **DB stale-recovery** (`STREAMING_STALENESS_TIMEOUT_MS` 90s, `agent-helpers.ts`): on-read (`getConversationOrThrow`) + a per-minute sweep flip any STREAMING conversation whose `updated` is >90s old back to IDLE. The heartbeat is what holds this off.
 - **Stream idle watchdog** (`STREAM_IDLE_TIMEOUT_MS` 90s, in `streamChunksToClient`): aborts the turn if the drain-stream reader is silent 90s. It must be SUSPENDED while legitimate silent work is in flight — pending tool calls AND in-flight reasoning (`reasoning-start`→`reasoning-end`). **Reasoning-awareness was missing and caused the bug where long "thinking" on the Expert tier randomly aborted a healthy turn** (a >90s gap between reasoning deltas looked like a wedge). Backstop for a genuine mid-reasoning wedge is `MAX_TURN_WALL_CLOCK_MS` (20 min).
 
