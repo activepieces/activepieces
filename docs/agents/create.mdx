@@ -9,29 +9,39 @@ icon: "pen"
 
 <CardGroup cols={3}>
   <Card title="Describe it" icon="wand-magic-sparkles" color="#8143E3">
-    The Agents page opens on a prompt box. Say what you need in a sentence and the agent is written for you.
+    Say what you need in a sentence.
   </Card>
   <Card title="Use a template" icon="copy" color="#F59E0B">
-    **New agent** offers ready-made agents with instructions already written.
+    Start from one already written.
   </Card>
   <Card title="Start blank" icon="file" color="#0EA5E9">
-    Name it, describe it, write the instructions yourself.
+    Write the instructions yourself.
   </Card>
 </CardGroup>
 
-Every route lands in the same editor, and nothing is locked in. You need an [AI provider connected](/admin-guide/guides/setup-ai-providers) before any of them will work.
+The prompt box sits at the top of the Agents page. Templates and blank are behind **New agent**. All three land in the same editor, and all three need an [AI provider connected](/admin-guide/guides/setup-ai-providers).
 
 ## Set it up
 
 The **Configure** tab holds everything that changes what the agent does.
 
-| Setting | What it's for |
-|---|---|
-| **Instructions** | The job it owns, how to decide, and when to stop. This is the agent. |
-| **[Tools](/agents/tools)** | What it can reach. Apps, your own flows, MCP servers, and [knowledge](/agents/knowledge). Without tools it can only talk. |
-| **Model** | Which model answers, and whose key pays for it. |
-| **Output fields** | Return named fields instead of prose, so a [flow can use the result](/agents/in-flows). |
-| **Max steps** | The budget for one run. A stuck agent stops instead of looping. |
+<CardGroup cols={1}>
+  <Card title="Instructions" icon="pen-line" color="#8143E3" horizontal>
+    The job it owns, how to decide, and when to stop. This is the agent.
+  </Card>
+  <Card title="Tools" icon="wrench" color="#0EA5E9" href="/agents/tools" horizontal>
+    What it can reach. Apps, your own flows, MCP servers, and knowledge.
+  </Card>
+  <Card title="Model" icon="microchip" color="#EC4899" horizontal>
+    Which model answers, and whose key pays for it.
+  </Card>
+  <Card title="Output fields" icon="brackets-curly" color="#16A34A" href="/agents/in-flows" horizontal>
+    Named fields instead of prose, so a flow can use the result.
+  </Card>
+  <Card title="Max steps" icon="gauge" color="#F59E0B" horizontal>
+    The budget for one run, so a stuck agent stops instead of looping.
+  </Card>
+</CardGroup>
 
 The **Settings** tab is name, description, and how it looks in the list.
 
