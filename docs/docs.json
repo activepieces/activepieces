@@ -20,8 +20,8 @@
       ],
       "primary": {
          "type": "button",
-         "label": "Get Started",
-         "href": "https://www.activepieces.com/plans"
+         "label": "Sign Up",
+         "href": "https://cloud.activepieces.com/sign-up"
       }
    },
    "redirects": [
@@ -105,11 +105,13 @@
                   ]
                },
                {
-                  "group": "Build with AI",
+                  "group": "Agents",
                   "pages": [
-                     "ai/chat",
-                     "mcp/overview",
-                     "mcp/tool-search"
+                     "agents/overview",
+                     "agents/create",
+                     "agents/tools",
+                     "agents/knowledge",
+                     "agents/in-flows"
                   ]
                },
                {
@@ -123,6 +125,24 @@
                      "flows/publishing-flows",
                      "flows/debugging-runs",
                      "flows/versioning"
+                  ]
+               },
+               {
+                  "group": "Tables",
+                  "pages": [
+                     "tables/overview",
+                     "tables/fields",
+                     "tables/in-flows",
+                     "tables/with-agents",
+                     "tables/import-export"
+                  ]
+               },
+               {
+                  "group": "Build with AI",
+                  "pages": [
+                     "ai/chat",
+                     "mcp/overview",
+                     "mcp/tool-search"
                   ]
                },
                {
@@ -221,7 +241,7 @@
             ]
          },
          {
-            "tab": "Install",
+            "tab": "Install Activepieces",
             "groups": [
                {
                   "group": "Install Activepieces",
@@ -316,8 +336,15 @@
             ]
          },
          {
-            "tab": "Admin Guide",
+            "tab": "Enterprise Control",
+            "icon": "crown",
             "groups": [
+               {
+                  "group": "Overview",
+                  "pages": [
+                     "admin-guide/overview"
+                  ]
+               },
                {
                   "group": "Guides",
                   "pages": [
@@ -459,7 +486,7 @@
             ]
          },
          {
-            "tab": "Embed",
+            "tab": "Embed SDK",
             "groups": [
                {
                   "group": "Essentials",

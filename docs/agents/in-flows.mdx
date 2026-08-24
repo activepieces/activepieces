@@ -1,0 +1,82 @@
+---
+title: "Agents in Flows"
+sidebarTitle: "Agents in Flows"
+description: "Use an agent as a step, and act on what it returns"
+icon: "sitemap"
+---
+
+Drop an agent into a [flow](/flows/building-flows) and it can research, decide, or go and do the work. The flow handles what's certain. The agent handles what can't be drawn in advance.
+
+## When to use one
+
+<Columns cols={2}>
+  <div>
+    **Use an agent**
+    - The input is messy, like an email
+    - The next action depends on what it finds
+    - You'd otherwise write twenty branches
+  </div>
+  <div>
+    **Use a normal step**
+    - The rule fits in a condition
+    - The mapping is fixed
+    - It must behave identically every time
+  </div>
+</Columns>
+
+<Tip>
+If you can write the rule in one sentence without saying "depends", it's a condition, not an agent.
+</Tip>
+
+## Three shapes
+
+| | The agent does | Give it |
+|---|---|---|
+| **Research** | Looks up a lead, returns a brief and a fit score | Web search, read-only tools |
+| **Triage** | Reads an email, classifies it, sets urgency | Structured output |
+| **Action** | Files the invoice, updates the system, posts the summary | Pinned inputs, few tools |
+
+## Getting a usable result
+
+Text output is hard to build on. Phrasing drifts, so nothing downstream can branch on it reliably:
+
+> "This looks fairly urgent, someone should pick it up today."
+
+**Structured output** fixes it. Define the fields it must return:
+
+| Field | Type | Example |
+|---|---|---|
+| `category` | Text | `billing` |
+| `urgency` | Number | `4` |
+| `needs_human` | Boolean | `true` |
+
+Then reference them like any other step, using the slug shown when you hover the step:
+
+```
+{{step_2.category}}
+{{step_2.urgency}}
+{{step_2.needs_human}}
+```
+
+Route on `needs_human`, sort by `urgency`, put `category` in the Slack message.
+
+<Tip>
+Ask for the fewest fields the next step needs. Every extra field is one more thing to get wrong.
+</Tip>
+
+## Settings
+
+| | |
+|---|---|
+| **Prompt** | The task, usually built from earlier steps |
+| **Agent Tools** | What it may use. See [Agent Tools](/agents/tools) |
+| **Model** | Which AI model runs it |
+| **Max steps** | Ceiling on actions before it stops |
+| **Web search** | Let it look things up online |
+| **Structured output** | The fields it must return |
+
+Each piece-tool input is **Let agent decide**, **Set value myself**, or **Leave empty**. Set the Slack channel yourself, let the agent write the message.
+
+<Tip>
+**Max steps** is your cost control. Start low, raise it only if tasks are being cut short.
+</Tip>
