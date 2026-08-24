@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 export const createActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'create-activity',
+    classification: 'WRITE',
     displayName: 'Create Activity',
     description: 'Creates a new activity.',
     audience: 'both',

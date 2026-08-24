@@ -14,6 +14,7 @@ import { PERSON_OPTIONAL_FIELDS } from '../common/constants';
 export const findPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-person',
+	classification: 'SEARCH',
 	displayName: 'Find Person',
 	description: 'Finds a person.',
 	audience: 'both',

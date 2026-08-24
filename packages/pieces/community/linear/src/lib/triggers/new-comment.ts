@@ -6,6 +6,7 @@ import { props } from '../common/props';
 export const linearNewComment = createTrigger({
   auth: linearAuth,
   name: 'new_comment',
+  classification: 'READ',
   displayName: 'New Comment',
   description: 'Triggers when a new comment is created on a Linear issue',
   aiMetadata: {

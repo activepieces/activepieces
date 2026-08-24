@@ -6,6 +6,7 @@ import { callGraphApi, flattenGroup } from '../common';
 export const createGroupAction = createAction({
     auth: azureAdAuth,
     name: 'create_group',
+    classification: 'WRITE',
     displayName: 'Create Group',
     description: 'Creates a new group in Azure Active Directory.',
     audience: 'both',

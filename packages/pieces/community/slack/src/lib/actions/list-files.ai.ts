@@ -7,6 +7,7 @@ import { listFilesActionOutputSchema } from '../output-schemas';
 export const slackListFiles = createAction({
   auth: slackAuth,
   name: 'slack_list_files',
+  classification: 'SEARCH',
   displayName: 'List Files',
   description: 'List files in the workspace, optionally filtered by channel, user, or type.',
   audience: 'ai',

@@ -4,14 +4,17 @@ import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-custom-object',
+	classification: 'READ',
 	displayName: 'Get Custom Object',
 	description: 'Gets a custom object.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single custom-object record by its ID for a chosen custom object type, returning the requested properties. Use when you already have the record ID and the custom object type; for standard CRM objects use the dedicated Get Contact / Deal / Company / Ticket actions instead. Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({

@@ -7,6 +7,7 @@ import { accountId, folderId, messageId } from '../common/props';
 export const unarchiveEmailAction = createAction({
 	auth: zohoMailAuth,
 	name: 'unarchive_email',
+	classification: 'WRITE',
 	displayName: 'Unarchive Email',
 	description: 'Unarchives an email.',
 	audience: 'both',

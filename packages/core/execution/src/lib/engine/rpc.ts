@@ -71,10 +71,15 @@ export function createNotifyClient<T extends Contract>(
 export function createNotifyServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
-    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown }) => {
-        const handler = handlers[msg.method as keyof T]
-        handler(msg.payload)
+    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown } | null | undefined) => {
+        const handler = handlers[msg?.method as keyof T]
+        if (typeof handler !== 'function') {
+            log?.error({ rpc: { method: String(msg?.method) } }, 'Notify received for unknown method, ignoring')
+            return
+        }
+        handler(msg?.payload)
     })
 }
 

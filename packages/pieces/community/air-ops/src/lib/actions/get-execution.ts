@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const getExecution = createAction({
   auth: airOpsAuth,
   name: 'get_execution',
+  classification: 'READ',
   displayName: 'Get Execution',
   description: 'Get an execution by UUID.',
   audience: 'both',

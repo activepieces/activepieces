@@ -12,6 +12,7 @@ import { getCardActionOutputSchema } from '../../output-schemas';
 export const getCard = createAction({
   auth: trelloAuth,
   name: 'get_card',
+  classification: 'READ',
   displayName: 'Get Card',
   description: 'Gets a card by ID.',
   audience: 'human',

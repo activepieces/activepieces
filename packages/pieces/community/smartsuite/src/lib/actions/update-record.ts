@@ -6,6 +6,7 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const updateRecord = createAction({
 	name: 'update_record',
+	classification: 'WRITE',
 	displayName: 'Update a Record',
 	description: 'Updates an existing record in the specified table',
 	audience: 'both',

@@ -15,6 +15,7 @@ import { leadConnectorAuth } from '../..';
 export const updateTaskAction = createAction({
   auth: leadConnectorAuth,
   name: 'update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Update a task.',
   audience: 'both',

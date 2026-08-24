@@ -12,6 +12,7 @@ import {
   DEFAULT_CHAT_TIER_ID,
   PersistedAgentMessage,
   ToolProgressEvent,
+  AgentMessageSource,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -612,7 +613,11 @@ export function useAgentChat({
   );
 
   const sendMessage = useCallback(
-    async (content: string, files?: File[]) => {
+    async (
+      content: string,
+      files?: File[],
+      options?: { messageSource?: AgentMessageSource },
+    ) => {
       updateSendStatus({ type: 'submitting' });
 
       const fileNames = files?.map((f) => f.name) ?? [];
@@ -713,6 +718,9 @@ export function useAgentChat({
           content,
           runId,
           files: pendingFilesRef.current,
+          ...(options?.messageSource
+            ? { messageSource: options.messageSource }
+            : {}),
         }),
       );
       if (sendError) {

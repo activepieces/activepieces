@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getDailyPuzzle = createAction({
   name: 'get_daily_puzzle',
+  classification: 'READ',
   displayName: 'Get Daily Puzzle',
   description: "Retrieve today's Chess.com daily puzzle.",
   audience: 'both',

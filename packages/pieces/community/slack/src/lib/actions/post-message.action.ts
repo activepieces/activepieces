@@ -16,6 +16,7 @@ import {
 export const slackPostMessageAction = createAction({
   auth: slackAuth,
   name: 'slack_post_message',
+  classification: 'WRITE',
   displayName: 'Post Message',
   description: 'Post a message to a Slack channel.',
   audience: 'ai',

@@ -14,6 +14,7 @@ import {
 export const newTimeEntry = createTrigger({
   auth: togglTrackAuth,
   name: 'new_time_entry',
+  classification: 'READ',
   displayName: 'New Time Entry',
   description:
     'Fires when a new time entry is added (with optional project/task filter).',

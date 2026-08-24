@@ -204,4 +204,58 @@ describe('apLogger', () => {
             apLogger.setCurrentLevel('info') // restore
         })
     })
+
+    describe('Error fields are stringified at every level', () => {
+        function makeCyclicAxiosLikeError(): Error {
+            const err = new Error('Request failed with status code 521')
+            const request: Record<string, unknown> = { host: 'console.activepieces.com' }
+            const response: Record<string, unknown> = { status: 521, request }
+            request['res'] = response
+            Object.assign(err, { isAxiosError: true, code: 'ERR_BAD_RESPONSE', request, response })
+            return err
+        }
+
+        it('warn({ error: Error }) sends a string error field to the wide event, never the raw object', () => {
+            ambientState.active = true
+            const logger = apLogger.create({})
+            logger.warn({ error: makeCyclicAxiosLikeError(), platform: { id: 'p1' } }, 'enrollment failed')
+            expect(spies.wideWarnSpy).toHaveBeenCalledOnce()
+            const [msg, ctx] = spies.wideWarnSpy.mock.calls[0]
+            expect(msg).toBe('enrollment failed')
+            expect(typeof ctx.error).toBe('string')
+            expect(ctx.error).toContain('Request failed with status code 521')
+            expect(ctx.platform).toEqual({ id: 'p1' })
+        })
+
+        it('warn({ err: Error }) removes err and emits the canonical string error field', () => {
+            ambientState.active = true
+            const logger = apLogger.create({})
+            logger.warn({ err: makeCyclicAxiosLikeError() }, 'failed')
+            const [, ctx] = spies.wideWarnSpy.mock.calls[0]
+            expect(typeof ctx.error).toBe('string')
+            expect(ctx.err).toBeUndefined()
+        })
+
+        it('info({ error: Error }) sends a string error field to the wide event', () => {
+            ambientState.active = true
+            const logger = apLogger.create({})
+            logger.info({ error: makeCyclicAxiosLikeError() }, 'soft failure')
+            const [, ctx] = spies.wideInfoSpy.mock.calls[0]
+            expect(typeof ctx.error).toBe('string')
+        })
+
+        it('warn({ error: Error }) without ambient wide event logs a string error field', () => {
+            const logger = apLogger.create({})
+            logger.warn({ error: makeCyclicAxiosLikeError() }, 'failed')
+            const arg = spies.logWarnSpy.mock.calls[0][0]
+            expect(typeof arg.error).toBe('string')
+        })
+
+        it('debug({ error: Error }) logs a string error field', () => {
+            const logger = apLogger.create({})
+            logger.debug({ error: makeCyclicAxiosLikeError() }, 'debugging')
+            const arg = spies.logDebugSpy.mock.calls[0][0]
+            expect(typeof arg.error).toBe('string')
+        })
+    })
 })

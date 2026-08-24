@@ -9,6 +9,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendDocumentToContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_document_to_contact',
+  classification: 'WRITE',
   displayName: 'Send a Document to a Contact',
   description: 'Send a document to a WhatsApp contact selected from the dropdown.',
   audience: 'both',

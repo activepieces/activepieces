@@ -7,6 +7,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const findNotesAction = createAction({
     auth: pipedriveAuth,
     name: 'find-notes',
+    classification: 'SEARCH',
     displayName: 'Find Notes',
     description: 'Finds notes by Deal, Lead, Person, or Organization ID.',
     audience: 'both',

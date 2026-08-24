@@ -9,6 +9,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const activityMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'activity-matching-filter',
+	classification: 'READ',
 	displayName: 'Activity Matching Filter',
 	description: 'Trigges when an activity newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {

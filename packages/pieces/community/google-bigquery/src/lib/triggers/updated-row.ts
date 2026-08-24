@@ -142,6 +142,7 @@ const polling: Polling<
 export const updatedRowTrigger = createTrigger({
   auth: bigQueryAuth,
   name: 'updated_row',
+  classification: 'READ',
   displayName: 'Updated Row',
   description:
     'Triggers when an existing row is updated in a BigQuery table. Requires an `updated_at` TIMESTAMP column that is set whenever a row changes.',

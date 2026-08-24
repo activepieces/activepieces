@@ -66,7 +66,7 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-ai',
-    label: 'Platform Admin — AI Providers',
+    label: 'Platform Admin — AI Center',
     href: '/platform/setup/ai',
     icon: BotIcon,
     requiresPlatformAdmin: true,
