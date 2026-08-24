@@ -27,9 +27,11 @@ import { formatUtils } from '@/lib/format-utils';
 import { ClientIcon } from './connect-steps';
 import { mcpClientBranding } from './mcp-client-branding';
 import { mcpGrantsMutations, mcpGrantsQueries } from './mcp-grants-hooks';
+import { useMcpNav } from './mcp-nav';
 import { PageBand } from './page-band';
 
-export function ConnectedClients({ onBack }: { onBack: () => void }) {
+export function ConnectedClients() {
+  const nav = useMcpNav();
   const { rows, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     mcpGrantsQueries.useMyGrants();
   const revoke = mcpGrantsMutations.useRevokeMine();
@@ -38,7 +40,7 @@ export function ConnectedClients({ onBack }: { onBack: () => void }) {
     <PageBand className="flex flex-col gap-5 bg-background px-6 py-8 lg:px-12">
       <button
         type="button"
-        onClick={onBack}
+        onClick={nav.showLanding}
         className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-[15px]" />

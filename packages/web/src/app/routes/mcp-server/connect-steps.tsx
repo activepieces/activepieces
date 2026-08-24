@@ -24,74 +24,47 @@ import {
   POPULAR_CLIENT_KEYS,
   mcpClientCatalog,
 } from './mcp-client-catalog';
+import { useMcpNav } from './mcp-nav';
 import { PageBand } from './page-band';
 import { RecentlyConnected } from './recently-connected';
 
 export function ConnectSteps({
   serverUrl,
   isReachableFromInternet,
-  onManageConnections,
 }: {
   serverUrl: string;
   isReachableFromInternet: boolean;
-  onManageConnections: () => void;
 }) {
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [isBrowsingAll, setIsBrowsingAll] = useState(false);
+  const { view, clientKey } = useMcpNav();
   const clients = useMemo(() => mcpClientCatalog.build(serverUrl), [serverUrl]);
-  const selected = clients.find((client) => client.key === selectedKey) ?? null;
+  const selected = clients.find((client) => client.key === clientKey) ?? null;
 
-  if (selected !== null) {
+  if (view === 'client' && selected !== null) {
     return (
       <ClientInstructions
         client={selected}
         serverUrl={serverUrl}
         isReachableFromInternet={isReachableFromInternet}
         totalClients={clients.length}
-        onBack={() => setSelectedKey(null)}
-        onBrowseAll={() => {
-          setSelectedKey(null);
-          setIsBrowsingAll(true);
-        }}
       />
     );
   }
 
-  if (isBrowsingAll) {
-    return (
-      <ClientBrowser
-        clients={clients}
-        serverUrl={serverUrl}
-        onSelect={setSelectedKey}
-        onBack={() => setIsBrowsingAll(false)}
-      />
-    );
+  if (view === 'browse') {
+    return <ClientBrowser clients={clients} serverUrl={serverUrl} />;
   }
 
-  return (
-    <ConnectLanding
-      clients={clients}
-      serverUrl={serverUrl}
-      onSelect={setSelectedKey}
-      onBrowseAll={() => setIsBrowsingAll(true)}
-      onManageConnections={onManageConnections}
-    />
-  );
+  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
 }
 
 function ConnectLanding({
   clients,
   serverUrl,
-  onSelect,
-  onBrowseAll,
-  onManageConnections,
 }: {
   clients: ConnectableClient[];
   serverUrl: string;
-  onSelect: (key: string) => void;
-  onBrowseAll: () => void;
-  onManageConnections: () => void;
 }) {
+  const nav = useMcpNav();
   const popular = POPULAR_CLIENT_KEYS.map((key) =>
     clients.find((client) => client.key === key),
   ).filter((client): client is ConnectableClient => client !== undefined);
@@ -135,12 +108,12 @@ function ConnectLanding({
               key={client.key}
               client={client}
               highlighted={index === 0}
-              onClick={() => onSelect(client.key)}
+              onClick={() => nav.showClient(client.key)}
             />
           ))}
           <button
             type="button"
-            onClick={onBrowseAll}
+            onClick={nav.showBrowse}
             className="mt-0.5 flex items-center justify-center gap-2 rounded-[11px] bg-muted py-3 text-[13.5px] font-semibold transition-colors hover:bg-muted/70"
           >
             {t('See all {total} clients', { total: clients.length })}
@@ -150,10 +123,7 @@ function ConnectLanding({
       </PageBand>
 
       <IntegrationsBanner />
-      <RecentlyConnected
-        onManageConnections={onManageConnections}
-        onPickClient={onBrowseAll}
-      />
+      <RecentlyConnected />
     </div>
   );
 }
@@ -161,14 +131,11 @@ function ConnectLanding({
 function ClientBrowser({
   clients,
   serverUrl,
-  onSelect,
-  onBack,
 }: {
   clients: ConnectableClient[];
   serverUrl: string;
-  onSelect: (key: string) => void;
-  onBack: () => void;
 }) {
+  const nav = useMcpNav();
   const [search, setSearch] = useState('');
   const needle = search.trim().toLowerCase();
   const matches = clients.filter(
@@ -182,7 +149,7 @@ function ClientBrowser({
     <div className="flex flex-col bg-background">
       <div className="border-b">
         <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
-          <BackLink label={t('Back')} onClick={onBack} />
+          <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
               <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
@@ -217,7 +184,7 @@ function ClientBrowser({
             <Button
               variant="link"
               className="absolute right-1.5 h-auto text-[12.5px] font-semibold"
-              onClick={() => onSelect('unknown')}
+              onClick={() => nav.showClient('unknown')}
             >
               {t('Client not listed?')}
             </Button>
@@ -238,7 +205,6 @@ function ClientBrowser({
               key={group.key}
               group={group}
               clients={groupClients}
-              onSelect={onSelect}
             />
           );
         })}
@@ -255,12 +221,11 @@ function ClientBrowser({
 function ClientGroupSection({
   group,
   clients,
-  onSelect,
 }: {
   group: ClientGroup;
   clients: ConnectableClient[];
-  onSelect: (key: string) => void;
 }) {
+  const nav = useMcpNav();
   const isCatchAll = group.key === 'other';
 
   return (
@@ -285,7 +250,7 @@ function ClientGroupSection({
           <button
             key={client.key}
             type="button"
-            onClick={() => onSelect(client.key)}
+            onClick={() => nav.showClient(client.key)}
             className="flex items-center gap-3.5 rounded-[11px] border border-dashed bg-muted/40 px-4.5 py-4 text-left transition-colors hover:border-ring"
           >
             <ClientIcon icon={client.icon} className="size-[34px]" />
@@ -307,7 +272,7 @@ function ClientGroupSection({
             <ClientCard
               key={client.key}
               client={client}
-              onClick={() => onSelect(client.key)}
+              onClick={() => nav.showClient(client.key)}
             />
           ))}
         </div>
@@ -321,21 +286,18 @@ function ClientInstructions({
   serverUrl,
   isReachableFromInternet,
   totalClients,
-  onBack,
-  onBrowseAll,
 }: {
   client: ConnectableClient;
   serverUrl: string;
   isReachableFromInternet: boolean;
   totalClients: number;
-  onBack: () => void;
-  onBrowseAll: () => void;
 }) {
+  const nav = useMcpNav();
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
         <PageBand className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
-          <BackLink label={t('All clients')} onClick={onBack} />
+          <BackLink label={t('All clients')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-center gap-4">
             <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
             <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -395,7 +357,7 @@ function ClientInstructions({
           </div>
           <button
             type="button"
-            onClick={onBrowseAll}
+            onClick={nav.showBrowse}
             className="flex items-center gap-2.5 rounded-[11px] border px-4 py-3.5 text-left transition-colors hover:border-ring"
           >
             <Plug className="size-4 shrink-0 text-muted-foreground" />

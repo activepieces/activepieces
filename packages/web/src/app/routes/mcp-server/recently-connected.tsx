@@ -9,17 +9,13 @@ import { formatUtils } from '@/lib/format-utils';
 import { ClientIcon } from './connect-steps';
 import { mcpClientBranding } from './mcp-client-branding';
 import { mcpGrantsQueries } from './mcp-grants-hooks';
+import { useMcpNav } from './mcp-nav';
 import { PageBand } from './page-band';
 
 const MAX_SHOWN = 3;
 
-export function RecentlyConnected({
-  onManageConnections,
-  onPickClient,
-}: {
-  onManageConnections: () => void;
-  onPickClient: () => void;
-}) {
+export function RecentlyConnected() {
+  const nav = useMcpNav();
   const { rows, isLoading } = mcpGrantsQueries.useMyGrants();
 
   if (isLoading) {
@@ -50,7 +46,7 @@ export function RecentlyConnected({
             <Button
               variant="link"
               className="ml-auto h-auto p-0 text-[13px] font-semibold"
-              onClick={onPickClient}
+              onClick={nav.showBrowse}
             >
               {t('Pick a client')}
             </Button>
@@ -66,7 +62,7 @@ export function RecentlyConnected({
             <Button
               variant="link"
               className="ml-auto h-auto p-0 text-[13px] font-semibold"
-              onClick={onManageConnections}
+              onClick={nav.showConnected}
             >
               {t('Manage connections')}
             </Button>
