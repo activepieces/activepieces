@@ -254,7 +254,7 @@ export function PlatformSidebar() {
         </SidebarContent>
       </div>
 
-      <SidebarFooter>
+      <SidebarFooter className="pb-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>
