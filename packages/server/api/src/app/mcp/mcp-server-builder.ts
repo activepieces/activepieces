@@ -13,9 +13,6 @@ import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
-const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
-const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
-const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
@@ -269,6 +266,10 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
         annotations: tool.annotations,
     }
 }
+
+const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
+const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 type RegisterToolsParams = {
     server: McpServer
