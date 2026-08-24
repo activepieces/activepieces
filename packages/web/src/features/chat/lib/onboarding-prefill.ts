@@ -15,8 +15,7 @@ function resolveInitialAnswers({
   platformName: string | null | undefined;
 }): InitialOnboardingAnswers {
   const { roleInput, companyInput, profile, prefill, personalStatus } = view;
-  const answeredThemselves =
-    personalStatus !== ChatPersonalizationStatus.UNSET;
+  const answeredThemselves = personalStatus !== ChatPersonalizationStatus.UNSET;
   return {
     role: answeredThemselves
       ? roleInput ?? profile?.userRole ?? prefill?.role ?? ''
