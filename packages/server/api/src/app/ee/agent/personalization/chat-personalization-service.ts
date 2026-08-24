@@ -86,10 +86,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 profile: null,
                 useCases: null,
             }
-            await Promise.all([
-                writeCompanyRow({ platformId, existing: companyRow, patch: cleared }),
-                personalizationRepo().update({ platformId, userId }, cleared),
-            ])
+            await writeUserRow({ platformId, userId, patch: cleared })
             return this.getEffectiveView({ platformId, userId })
         }
 
@@ -128,6 +125,11 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 existing: companyRow,
                 patch: { domain, companyText, role: effectiveRole, status: ChatPersonalizationStatus.SKIPPED },
             })
+            await writeUserRow({
+                platformId,
+                userId,
+                patch: { domain, companyText, role: effectiveRole, status: ChatPersonalizationStatus.SKIPPED },
+            })
             return this.getEffectiveView({ platformId, userId })
         }
 
@@ -145,9 +147,18 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        if (inputsChanged) {
-            await tryCatch(() => personalizationRepo().delete({ platformId, userId }))
-        }
+        await writeUserRow({
+            platformId,
+            userId,
+            patch: {
+                domain,
+                companyText,
+                role: effectiveRole,
+                status: ChatPersonalizationStatus.PENDING,
+                researchToken,
+                ...(inputsChanged ? { profile: null, useCases: null } : {}),
+            },
+        })
 
         await enqueueResearchJob({
             platformId,
@@ -428,8 +439,9 @@ async function upsertFoundingUserRow({ platformId, userId, researchToken, valida
             "profile" = EXCLUDED."profile",
             "useCases" = EXCLUDED."useCases",
             "updated" = now()
-        WHERE "chat_personalization"."status" <> ALL($8::varchar[])
-          AND "chat_personalization"."useCases" IS NULL
+        WHERE "chat_personalization"."researchToken" = $7
+           OR ("chat_personalization"."status" <> ALL($8::varchar[])
+               AND "chat_personalization"."useCases" IS NULL)
         RETURNING "id"
         `,
         [apId(), platformId, userId, ChatPersonalizationStatus.READY, profile, useCases, researchToken, IN_FLIGHT_STATUSES],
@@ -569,6 +581,32 @@ async function writeCompanyRow({ platformId, existing, patch }: {
         }
     }
     await personalizationRepo().update({ platformId, userId: IsNull() }, patch)
+}
+
+async function writeUserRow({ platformId, userId, patch }: {
+    platformId: string
+    userId: string
+    patch: Partial<Pick<ChatPersonalization, 'domain' | 'companyText' | 'role' | 'status' | 'researchToken' | 'profile' | 'useCases'>>
+}): Promise<void> {
+    const existing = await findRow({ platformId, userId })
+    if (isNil(existing)) {
+        const { error } = await tryCatch(() => personalizationRepo().insert({
+            id: apId(),
+            platformId,
+            userId,
+            domain: patch.domain ?? null,
+            companyText: patch.companyText ?? null,
+            role: patch.role ?? null,
+            status: patch.status ?? ChatPersonalizationStatus.PENDING,
+            researchToken: patch.researchToken ?? null,
+            profile: patch.profile ?? null,
+            useCases: patch.useCases ?? null,
+        }))
+        if (isNil(error)) {
+            return
+        }
+    }
+    await personalizationRepo().update({ platformId, userId }, patch)
 }
 
 async function startPrefillLookup({ platformId, userId, log }: {
