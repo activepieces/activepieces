@@ -39,13 +39,7 @@ Ask for **structured output** instead and you get fields:
 | `urgency` | Number | `4` |
 | `needs_human` | Boolean | `true` |
 
-Reference them like any other step:
-
-```
-{{step_2.urgency}}
-```
-
-Now you can route on `needs_human`, sort by `urgency`, and drop `category` into the Slack message.
+Later steps pick these up from the [data selector](/flows/passing-data), the same as any other step's output. Route on `needs_human`, sort by `urgency`, drop `category` into the Slack message.
 
 <Tip>
 Ask for the fewest fields the next step needs. Every extra field is one more thing to get wrong.
