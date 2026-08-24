@@ -30,9 +30,11 @@ Install Activepieces on this machine by running `curl -fsSL https://get.activepi
 Use `--port <port>` if 8080 is taken, and `--dir <path>` to install somewhere other than `./activepieces`. Want to read it before running it? `curl -fsSL https://get.activepieces.com` prints the script.
 </Tip>
 
-<Accordion title="Prefer to set it up yourself?" icon="wrench">
+## Install manually with Docker Compose
+
 The script only writes a `.env` and a `docker-compose.yml`, then starts them. You can do the same by hand, which is the right choice if you are air-gapped, if your change process needs a compose file it can review, or if you are pointing Activepieces at a database you already run.
 
+<Accordion title="Show the manual steps" icon="wrench">
 **1. Get the compose file**
 
 ```bash

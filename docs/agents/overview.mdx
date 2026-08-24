@@ -13,28 +13,29 @@ Describe the job. Give it tools. It figures out the rest.
 
 ## Flow or agent?
 
-Both can be built by describing what you want. The difference is **when the path gets decided**.
+Both can be built by describing what you want. The difference is **where the logic lives**.
 
 |  | Flow | Agent |
 |---|---|---|
-| **The path is decided** | Once, when you build it | Every run, by the agent |
-| **Same input twice** | Same steps, same order | May take a different route |
+| **The logic is** | Written down, once | Worked out each run |
+| **Decisions come from** | Conditions you defined | The agent's judgement |
+| **Same input twice** | Same steps, same order | May handle it differently |
 | **Best when** | You know the procedure | The work varies case by case |
 | **You steer it by** | Changing the steps | Changing instructions and tools |
 
-A flow is predictable, which is what you want for anything that must happen the same way every time. An agent handles the cases you cannot enumerate in advance. Agents can call flows as tools, so the parts that need to be exact stay exact.
+A flow is predictable, which is what you want for anything that must happen the same way every time. An agent handles the cases you cannot write rules for in advance. Agents can call flows as tools, so the parts that need to be exact stay exact.
 
 ## Start here
 
-<CardGroup cols={2}>
+<CardGroup cols={4}>
   <Card title="Create an agent" icon="pen" href="/agents/create">
-    Describe it, and it gets written for you.
+    Describe it and it gets written for you.
   </Card>
   <Card title="Agent Tools" icon="wrench" href="/agents/tools">
-    Pieces, flows, MCP, knowledge.
+    Everything it can reach.
   </Card>
   <Card title="Agent Knowledge" icon="book" href="/agents/knowledge">
-    Files and tables it can read.
+    What it can read.
   </Card>
   <Card title="Agents in Flows" icon="sitemap" href="/agents/in-flows">
     Run one as a step.
