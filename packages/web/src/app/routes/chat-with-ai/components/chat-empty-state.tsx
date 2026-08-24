@@ -432,7 +432,7 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         ref={scrollerRef}
         onScroll={updateEdges}
-        className="flex snap-x gap-4 overflow-x-auto scroll-smooth pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-0.5 flex snap-x gap-4 overflow-x-auto scroll-smooth px-0.5 pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
