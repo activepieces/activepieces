@@ -112,6 +112,12 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 params: { message: 'An agent needs instructions before it can be published' },
             })
         }
+        if (!isNil(agent.draft.providerConfigId) && isNil(agent.draft.provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'This agent pins an AI provider key without naming its provider, so a run would resolve a different one. Pick the provider that key belongs to.' },
+            })
+        }
         const published = await agentRepo()
             .createQueryBuilder()
             .update()

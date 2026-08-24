@@ -251,6 +251,16 @@ describe('a flow step that links a saved agent', () => {
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
     })
 
+    it('will not publish an agent that pins a key without naming its provider', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { provider: null, providerConfigId: apId() })
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('without naming its provider')
+    })
+
     it('refuses an agent the project cannot all see, since nobody is watching the run', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
