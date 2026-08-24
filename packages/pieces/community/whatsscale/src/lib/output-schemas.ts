@@ -147,8 +147,7 @@ export const listWhatsappContactsOutputSchema: OutputSchema = {
     },
   ],
 };
-
-const inboundMessageFields: OutputSchema['fields'] = [
+const messageMediaFields: OutputSchema['fields'] = [
   { key: 'body', label: 'Message Body' },
   { key: 'has_media', label: 'Has Media', format: 'boolean' },
   { key: 'media_type', label: 'Media Type' },
@@ -156,12 +155,16 @@ const inboundMessageFields: OutputSchema['fields'] = [
   { key: 'media_mimetype', label: 'Media MIME Type' },
   { key: 'media_filename', label: 'Media Filename' },
   { key: 'timestamp', label: 'Timestamp', format: 'datetime' },
+];
+
+const replyContextFields: OutputSchema['fields'] = [
   { key: 'is_forwarded', label: 'Is Forwarded', format: 'boolean' },
   { key: 'quoted_message_id', label: 'Quoted Message ID' },
   { key: 'quoted_body', label: 'Quoted Message Body' },
   { key: 'is_reply', label: 'Is Reply', format: 'boolean' },
-  { key: 'session_name', label: 'Session' },
 ];
+
+const sessionField: OutputSchema['fields'] = [{ key: 'session_name', label: 'Session' }];
 
 export const incomingMessageOutputSchema: OutputSchema = {
   fields: [
@@ -170,7 +173,9 @@ export const incomingMessageOutputSchema: OutputSchema = {
     { key: 'from_number', label: 'From Phone Number' },
     { key: 'from_id', label: 'From ID' },
     { key: 'from_name', label: 'From Name' },
-    ...inboundMessageFields,
+    ...messageMediaFields,
+    ...replyContextFields,
+    ...sessionField,
   ],
 };
 
@@ -183,6 +188,17 @@ export const groupMessageOutputSchema: OutputSchema = {
     { key: 'participant_name', label: 'Participant Name' },
     { key: 'participant_phone', label: 'Participant Phone Number' },
     { key: 'from_name', label: 'From Name' },
-    ...inboundMessageFields,
+    ...messageMediaFields,
+    ...replyContextFields,
+    ...sessionField,
+  ],
+};
+
+export const channelMessageOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'message_id', label: 'Message ID' },
+    { key: 'channel_id', label: 'Channel ID' },
+    ...messageMediaFields,
+    ...sessionField,
   ],
 };
