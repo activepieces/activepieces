@@ -11,8 +11,8 @@ function managedModelLabel(modelId: string): string | undefined {
 
 async function listProviders(ctx: {
   server: { apiUrl: string; token: string };
-}): Promise<ProjectAIProvider[]> {
-  const { body } = await httpClient.sendRequest<ProjectAIProvider[]>({
+}): Promise<ListedProvider[]> {
+  const { body } = await httpClient.sendRequest<ListedProvider[]>({
     method: HttpMethod.GET,
     url: `${ctx.server.apiUrl}v1/ai-providers`,
     headers: {
@@ -20,6 +20,20 @@ async function listProviders(ctx: {
     },
   });
   return body;
+}
+
+function providerOptionsOf(provider: ListedProvider): {
+  label: string;
+  value: AIProviderSelection;
+}[] {
+  const keys = provider.keys ?? [];
+  if (keys.length === 0) {
+    return [{ label: provider.name, value: { provider: provider.provider } }];
+  }
+  return keys.map((key) => ({
+    label: keys.length > 1 ? `${provider.name}: ${key.name}` : provider.name,
+    value: { provider: provider.provider, configId: key.id },
+  }));
 }
 
 function toProviderName(value: string): AIProviderName | undefined {
@@ -69,15 +83,7 @@ export const aiProps = <T extends AIModelType>({
               ? allowedProviders.includes(provider.provider)
               : true
           )
-          .flatMap(provider =>
-            provider.keys.map(key => ({
-              label:
-                provider.keys.length > 1
-                  ? `${provider.name}: ${key.name}`
-                  : provider.name,
-              value: { provider: provider.provider, configId: key.id },
-            }))
-          ),
+          .flatMap(provider => providerOptionsOf(provider)),
       };
     },
   }),
@@ -145,4 +151,8 @@ export type AIProviderSelection = {
 type AIPropsParams<T extends AIModelType> = {
   modelType: T;
   allowedProviders?: AIProviderName[];
+};
+
+type ListedProvider = Omit<ProjectAIProvider, 'keys'> & {
+  keys?: ProjectAIProvider['keys'];
 };
