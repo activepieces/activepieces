@@ -1,6 +1,7 @@
 {
   "name": "@activepieces/piece-plivo",
   "version": "0.0.1",
+  "description": "Plivo piece for Activepieces to send SMS, place voice calls, look up numbers, and trigger flows from inbound Plivo messages",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {

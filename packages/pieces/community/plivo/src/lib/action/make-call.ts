@@ -11,7 +11,7 @@ export const plivoMakeCall = createAction({
   aiMetadata: { description: 'Places an outbound voice call from a Plivo number and fetches the call flow from an Answer URL that returns Plivo XML. Use to trigger a phone call whose behaviour is defined by XML you host. Requires both numbers in E.164 format and an answer URL; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },
   displayName: 'Make Call',
   props: {
-    from: plivoCommon.phone_number,
+    from: plivoCommon.voice_phone_number,
     to: Property.ShortText({
       displayName: 'To',
       description: 'The phone number to call. Must be in E.164 format (e.g., +15558675310).',

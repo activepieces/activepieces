@@ -3,6 +3,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { plivoSendSms } from './lib/action/send-sms';
 import { plivoMakeCall } from './lib/action/make-call';
+import { plivoLookupNumber } from './lib/action/lookup-number';
 import { plivoNewIncomingSms } from './lib/trigger/new-incoming-sms';
 import { plivoNewIncomingCall } from './lib/trigger/new-incoming-call';
 
@@ -23,7 +24,7 @@ export const plivoAuth = PieceAuth.BasicAuth({
 export const plivo = createPiece({
   displayName: 'Plivo',
   description:
-    'Cloud communications platform for building SMS and Voice applications',
+    'Send SMS, place voice calls, look up phone numbers, and trigger flows from inbound Plivo messages',
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/plivo.png',
@@ -32,6 +33,7 @@ export const plivo = createPiece({
   actions: [
     plivoSendSms,
     plivoMakeCall,
+    plivoLookupNumber,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://api.plivo.com/v1/Account/${auth?.username}`,
