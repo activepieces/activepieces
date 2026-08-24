@@ -8,7 +8,7 @@ A flow step type (the `run_agent` action of `@activepieces/piece-ai`) that runs 
 
 ### How it works
 
-- A step carries its own configuration in the flow version's step settings: `settings.input` holds `agentTools`, `structuredOutput`, `prompt`, `maxSteps` and `aiProviderModel` (`{ provider, model, configId }`). Separately, an **Agent** is a project-scoped row of its own (`agent` table, `ee/agent/agent-entity.ts`) that a step can reference instead of carrying that config, see *agent*.
+- A step carries its own configuration in the flow version's step settings: `settings.input` holds `agentTools`, `structuredOutput`, `prompt`, `maxSteps` and `aiProviderModel` (`{ provider, model, configId }`). A saved **Agent** is a separate thing — a project-scoped row (`agent` table, `ee/agent/agent-entity.ts`) that Chat and the Agents page use; a flow step does not read it.
 - Configured entirely in the Flow Builder (`web/src/app/builder/step-settings/agent-settings/`); a test panel runs a single agent step. `AgentTimeline` renders `AgentStepBlock[]` from the output as markdown blocks + expandable tool-call cards.
 
 ### Tool types (AgentTool discriminated union)
