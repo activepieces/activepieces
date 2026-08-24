@@ -141,8 +141,7 @@
                   "group": "Build with AI",
                   "pages": [
                      "ai/chat",
-                     "mcp/overview",
-                     "mcp/tool-search"
+                     "mcp/overview"
                   ]
                },
                {
@@ -523,7 +522,8 @@
                {
                   "group": "MCP Tools",
                   "pages": [
-                     "mcp/tools"
+                     "mcp/tools",
+                     "mcp/tool-search"
                   ]
                },
                {
