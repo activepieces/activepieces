@@ -22,7 +22,7 @@ The core (all-editions) auth layer: user identity creation, sign-in, and JWT ses
 
 ### Gotchas
 - Email-auth checks and domain allow-listing guards are **skipped on Community** edition.
-- OTP verification only sent on Cloud production; CE/EE and Cloud-dev (`AP_ENVIRONMENT=development`) auto-verify the identity.
+- **OTP verification is sent on Cloud unless `AP_ENVIRONMENT` is exactly `dev`, in which case the identity is silently auto-verified and no email goes out.** `sendVerificationOrAutoVerify` compares against `ApEnvironment.DEVELOPMENT`, whose value is the string **`dev`** — not `development`, which an earlier version of this line claimed. The distinction is not cosmetic: `AP_ENVIRONMENT=dev` on Cloud takes the `verify()` branch and the email-code flow becomes untestable locally, while any other value (including a typo like `development`, which fails the system validator with a warning and nothing more) falls through to `otpService.createAndSend` and really does email. So to exercise sign-up email locally on Cloud, `AP_ENVIRONMENT` must not be `dev`; `prod` also works but switches on the newsletter POST to a live endpoint. CE/EE take the other edition arm entirely.
 - Telemetry PII (email/name) sent only on Cloud; CE/EE send non-PII fields (`pickTelemetryPii`). Sign-in telemetry covers password sign-in only, not SSO.
 - Sessions are invalidated by rotating `tokenVersion` on `UserIdentity`.
 - **A new unauthenticated endpoint must be added to `disallowedRoutes` in `packages/web/src/lib/api.ts`**, otherwise the SPA attaches whatever stale bearer token is still in storage and the call fails in exactly the situation the endpoint exists for.

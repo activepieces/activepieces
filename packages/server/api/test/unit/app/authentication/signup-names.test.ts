@@ -1,3 +1,4 @@
+import { chatPersonalizationUtils } from '@activepieces/shared'
 import { signupNames } from '../../../../src/app/authentication/lib/signup-names'
 
 describe('signupNames', () => {
@@ -85,6 +86,28 @@ describe('signupNames', () => {
 
             expect(name).toMatch(safeString)
             expect(name.length).toBeLessThanOrEqual(100)
+        })
+    })
+
+    describe('generated platform names are recognised as personal defaults', () => {
+        it.each([
+            ['Ahmad'],
+            ['Chris'],
+            ["Ahmad's"],
+            ['Ahmad Bin'],
+            [''],
+        ])('detects the name generated for %s', (firstName) => {
+            const generated = signupNames.platformNameFromPerson({ firstName, email: 'ahmad.tash@gmail.com' })
+
+            expect(chatPersonalizationUtils.isPersonalDefaultPlatformName(generated)).toBe(true)
+            expect(chatPersonalizationUtils.companyFromPlatformName(generated)).toBeNull()
+        })
+
+        it('detects the whole-fallback name', () => {
+            const generated = signupNames.platformNameFromPerson({ firstName: '', email: '___@gmail.com' })
+
+            expect(generated).toBe('My Platform')
+            expect(chatPersonalizationUtils.isPersonalDefaultPlatformName(generated)).toBe(true)
         })
     })
 

@@ -56,6 +56,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EVENT_DESTINATION:
+        case WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.workerHandlerId)
@@ -87,6 +88,7 @@ export enum WorkerJobType {
     EXECUTE_AGENT_RUN = 'EXECUTE_AGENT_RUN',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
     EXECUTE_ACTION = 'EXECUTE_ACTION',
+    EXECUTE_PERSONALIZATION_RESEARCH = 'EXECUTE_PERSONALIZATION_RESEARCH',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -99,6 +101,7 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_AGENT_RUN,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
     WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
+    WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
     WorkerJobType.EXECUTE_ACTION,
 ] as const
 
@@ -327,6 +330,7 @@ export const ExecuteAgentRunJobData = z.object({
     userId: z.string(),
     userMessage: z.string(),
     source: z.enum(AgentRunSource).optional(),
+    messageSource: z.enum(['onboarding']).optional(),
     flowRunId: z.string().optional(),
     waitpointId: z.string().optional(),
     tools: z.array(AgentTool).optional(),
@@ -350,6 +354,22 @@ export const ExecuteAgentRunJobData = z.object({
 })
 export type ExecuteAgentRunJobData = z.infer<typeof ExecuteAgentRunJobData>
 
+export const ExecutePersonalizationResearchJobData = z.object({
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH),
+    platformId: z.string(),
+    projectId: z.string().nullable(),
+    userId: z.string(),
+    scope: z.enum(['company', 'user']),
+    website: z.string().nullable(),
+    companyText: z.string().nullable(),
+    role: z.string().nullable(),
+    prefillOnly: z.boolean(),
+    researchToken: z.string().nullable(),
+})
+export type ExecutePersonalizationResearchJobData = z.infer<typeof ExecutePersonalizationResearchJobData>
+export type PersonalizationScope = ExecutePersonalizationResearchJobData['scope']
+
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
     platformId: z.string(),
@@ -370,6 +390,7 @@ export const JobData = z.union([
     UserInteractionJobData,
     EventDestinationJobData,
     ExecuteAgentRunJobData,
+    ExecutePersonalizationResearchJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>
