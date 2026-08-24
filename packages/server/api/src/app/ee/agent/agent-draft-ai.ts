@@ -18,7 +18,7 @@ const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/a
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
-        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: FAST_TIER_ID, log }))
+        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
         if (!isNil(modelError) || isNil(resolved)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -32,7 +32,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         let attempt = await runDraft({ model: resolved.model, prompt })
         let usedModelId = resolved.modelId
         if (!isNil(attempt.error) && !rejectedCredentials(statusOf(attempt.error))) {
-            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, log }))
+            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
             if (!isNil(fallback) && fallback.modelId !== resolved.modelId) {
                 log.warn({ from: resolved.modelId, to: fallback.modelId, platform: { id: platformId } }, '[agentDraftAi] Retrying the draft on the model chat runs on')
                 attempt = await runDraft({ model: fallback.model, prompt })
@@ -119,7 +119,7 @@ function parseDraft(raw: string): DraftAgentResponse | null {
 
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {
-        const provider = await agentHelpers.resolveChatProviderName({ platformId, log })
+        const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
         const value = provider === AIProviderName.ACTIVEPIECES ? agentHelpers.resolveTier({ tierId: FAST_TIER_ID }).creditWeight : CHAT_BYOK_CREDIT_WEIGHT
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const usage = {

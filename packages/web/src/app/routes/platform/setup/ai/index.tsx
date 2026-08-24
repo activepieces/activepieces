@@ -30,7 +30,7 @@ const ACTIVEPIECES_LOGO_URL =
   'https://cdn.activepieces.com/pieces/activepieces.png';
 
 export default function AIProvidersPage() {
-  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
+  const { data: providers, refetch } = aiProviderQueries.useAiProviderConfigs();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
