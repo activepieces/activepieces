@@ -83,13 +83,14 @@ function selectRunProject({ conversationProjectId, projects }: { conversationPro
     return stillReachable ? conversationProjectId : projects[0]?.id ?? null
 }
 
-async function assertProjectSwitchKeepsKey({ platformId, provider, fromProjectId, toProjectId, log }: { platformId: string, provider?: AIProviderName, fromProjectId: string | null, toProjectId: string | null, log: FastifyBaseLogger }): Promise<void> {
+async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfigId, fromProjectId, toProjectId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, fromProjectId: string | null, toProjectId: string | null, log: FastifyBaseLogger }): Promise<void> {
     if (isNil(fromProjectId) || fromProjectId === toProjectId) {
         return
     }
     const serves = await aiProviderService(log).keyServesScope({
         platformId,
         ...spreadIfDefined('provider', provider),
+        ...spreadIfDefined('configId', providerConfigId),
         resolvedFor: { type: 'project', projectId: fromProjectId },
         target: isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId },
     })
@@ -102,11 +103,11 @@ async function assertProjectSwitchKeepsKey({ platformId, provider, fromProjectId
     })
 }
 
-async function resolveRunProvider({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+async function resolveRunProvider({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
     if (isNil(provider)) {
         return resolveChatProvider({ platformId, scope, log })
     }
-    return aiProviderService(log).getConfigOrThrow({ platformId, provider, scope })
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId) })
 }
 
 async function resolveChatProvider({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
@@ -120,7 +121,7 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
     return chatProvider
 }
 
-async function assertRunProviderConfigured({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
     if (isNil(provider)) {
         const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
         if (isNil(chatProvider)) {
@@ -131,7 +132,7 @@ async function assertRunProviderConfigured({ platformId, provider, scope, log }:
         }
         return
     }
-    const configured = await aiProviderService(log).exists({ platformId, provider, scope })
+    const configured = await aiProviderService(log).exists({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId ?? undefined) })
     if (!configured) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -183,8 +184,8 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-async function resolveTierModel({ platformId, tierId, provider, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
-    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider) })
+async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
     return {
         model: agentAiUtils.createChatModel({
@@ -198,16 +199,16 @@ async function resolveTierModel({ platformId, tierId, provider, scope, log }: { 
     }
 }
 
-async function resolveFastModel({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider) })).model
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
 }
 
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
-async function resolveEmbeddingModel({ platformId, provider, scope, log }: { platformId: string, provider?: AIProviderName, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider) })
+async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     return agentAiUtils.createEmbeddingModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,

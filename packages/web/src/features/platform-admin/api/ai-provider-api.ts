@@ -17,9 +17,14 @@ export const aiProviderApi = {
       '/v1/ai-providers/configs',
     );
   },
-  listModelsForProvider(provider: string, projectId: string) {
+  listModelsForProvider(
+    provider: string,
+    projectId: string,
+    configId?: string,
+  ) {
     return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`, {
       projectId,
+      ...(configId === undefined ? {} : { configId }),
     });
   },
   listModelsForConfig(configId: string) {
