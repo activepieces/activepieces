@@ -72,6 +72,10 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import AccountSettingsDialog from '../account-settings';
+import {
+  getAccessHistory,
+  recordAccess,
+} from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
 
@@ -370,7 +374,7 @@ function RailNavButton({
 }
 
 function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
-  const { pinnedIds, toggle, showAll, setShowAll } = usePinnedProjects();
+  const { pinnedIds, toggle } = usePinnedProjects();
   const { data: projects } = projectCollectionUtils.useAll();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -388,23 +392,30 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
     localStorage.setItem(PINNED_SORT_KEY, next);
   };
 
-  const pinned = pinnedIds
-    .map((id) => projects.find((project) => project.id === id))
-    .filter((project): project is NonNullable<typeof project> => !!project);
-  const listingEverything = showAll || pinned.length === 0;
-  const listed = listingEverything ? projects : pinned;
-
-  if (listed.length === 0) {
+  if (projects.length === 0) {
     return null;
   }
 
-  const sorted = sortPinnedProjects({
-    projects: listed,
+  const sorted = sortProjects({
+    projects,
     pinnedIds,
-    sort: listingEverything && sort === 'added' ? 'recency' : sort,
+    lastUsed: lastUsedByProject(),
+    sort,
   });
 
-  const openProject = (projectId: string) => {
+  const openProject = ({
+    projectId,
+    name,
+  }: {
+    projectId: string;
+    name: string;
+  }) => {
+    recordAccess({
+      id: `project-${projectId}`,
+      type: 'project',
+      label: name,
+      href: `/projects/${projectId}/automations`,
+    });
     if (projectId !== authenticationSession.getProjectId()) {
       authenticationSession.switchToProject(projectId);
     }
@@ -427,7 +438,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <div className="flex items-center gap-1 py-0.5 pl-3 pr-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
-            {listingEverything ? t('Projects') : t('Pinned projects')}
+            {t('Projects')}
           </span>
           <div className="ml-auto flex items-center gap-0.5">
             {showCreateProject && (
@@ -440,12 +451,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
                 }}
               />
             )}
-            <PinnedSortMenu
-              sort={sort}
-              onChange={changeSort}
-              showAll={listingEverything}
-              onShowAllChange={setShowAll}
-            />
+            <PinnedSortMenu sort={sort} onChange={changeSort} />
           </div>
         </div>
       )}
@@ -481,7 +487,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              openProject(project.id);
+              openProject({ projectId: project.id, name });
             }}
             aria-label={name}
             className={cn(
@@ -540,13 +546,9 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
 function PinnedSortMenu({
   sort,
   onChange,
-  showAll,
-  onShowAllChange,
 }: {
   sort: PinnedSort;
   onChange: (next: PinnedSort) => void;
-  showAll: boolean;
-  onShowAllChange: (value: boolean) => void;
 }) {
   return (
     <DropdownMenu>
@@ -576,11 +578,6 @@ function PinnedSortMenu({
           onClick={() => onChange('alphabetical')}
         />
         <DropdownMenuSeparator />
-        <PinnedMenuOption
-          label={t('Show all projects')}
-          active={showAll}
-          onClick={() => onShowAllChange(!showAll)}
-        />
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -607,27 +604,58 @@ function readStoredSort(stored: string | null): PinnedSort {
   return PINNED_SORTS.find((sort) => sort === stored) ?? 'added';
 }
 
-function sortPinnedProjects({
+function lastUsedByProject(): Record<string, number> {
+  return getAccessHistory().reduce<Record<string, number>>((acc, item) => {
+    const projectId = /^\/projects\/([^/]+)/.exec(item.href)?.[1];
+    if (isNil(projectId)) {
+      return acc;
+    }
+    const seen = acc[projectId];
+    if (!isNil(seen) && seen >= item.accessedAt) {
+      return acc;
+    }
+    return { ...acc, [projectId]: item.accessedAt };
+  }, {});
+}
+
+function compareProjects({
+  sort,
+  lastUsed,
+}: {
+  sort: PinnedSort;
+  lastUsed: Record<string, number>;
+}) {
+  return (a: ProjectWithLimits, b: ProjectWithLimits): number => {
+    if (sort === 'alphabetical') {
+      return getProjectName(a).localeCompare(getProjectName(b));
+    }
+    if (sort === 'added') {
+      return new Date(b.created).getTime() - new Date(a.created).getTime();
+    }
+    const usedA = lastUsed[a.id] ?? 0;
+    const usedB = lastUsed[b.id] ?? 0;
+    if (usedA !== usedB) {
+      return usedB - usedA;
+    }
+    return new Date(b.updated).getTime() - new Date(a.updated).getTime();
+  };
+}
+
+function sortProjects({
   projects,
   pinnedIds,
+  lastUsed,
   sort,
 }: {
   projects: ProjectWithLimits[];
   pinnedIds: string[];
+  lastUsed: Record<string, number>;
   sort: PinnedSort;
 }): ProjectWithLimits[] {
-  const copy = [...projects];
-  if (sort === 'alphabetical') {
-    return copy.sort((a, b) =>
-      getProjectName(a).localeCompare(getProjectName(b)),
-    );
-  }
-  if (sort === 'recency') {
-    return copy.sort(
-      (a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime(),
-    );
-  }
-  return copy.sort((a, b) => pinnedIds.indexOf(b.id) - pinnedIds.indexOf(a.id));
+  const compare = compareProjects({ sort, lastUsed });
+  const pinned = projects.filter((project) => pinnedIds.includes(project.id));
+  const rest = projects.filter((project) => !pinnedIds.includes(project.id));
+  return [...pinned.sort(compare), ...rest.sort(compare)];
 }
 
 function RailAccountRow({ collapsed }: { collapsed: boolean }) {
