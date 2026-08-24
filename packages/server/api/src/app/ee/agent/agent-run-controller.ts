@@ -48,7 +48,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 

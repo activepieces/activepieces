@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   AIProviderAuthConfig,
   CreateAIProviderRequest,
@@ -6,20 +7,34 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
+import { authenticationSession } from '@/lib/authentication-session';
+
 import { aiProviderApi } from '../api/ai-provider-api';
 
 export const aiProviderKeys = {
-  all: ['ai-providers'] as const,
+  configs: ['ai-provider-configs'] as const,
+  forProject: (projectId: string | null) =>
+    ['ai-providers', projectId] as const,
 };
 
 export const aiProviderQueries = {
-  useAiProviders: () =>
+  useAiProviderConfigs: () =>
     useQuery({
-      queryKey: aiProviderKeys.all,
-      queryFn: () => aiProviderApi.list(),
+      queryKey: aiProviderKeys.configs,
+      queryFn: () => aiProviderApi.listConfigs(),
     }),
+  useProjectAiProviders: () => {
+    const projectId = authenticationSession.getProjectId();
+    return useQuery({
+      queryKey: aiProviderKeys.forProject(projectId),
+      queryFn: () =>
+        isNil(projectId) ? [] : aiProviderApi.listForProject(projectId),
+      enabled: !isNil(projectId),
+    });
+  },
   useChatProvider: () => {
-    const { data: providers, ...rest } = aiProviderQueries.useAiProviders();
+    const { data: providers, ...rest } =
+      aiProviderQueries.useProjectAiProviders();
     return { ...rest, data: providers?.find((p) => p.enabledForChat) };
   },
 };

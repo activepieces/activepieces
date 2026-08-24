@@ -688,7 +688,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -700,16 +700,27 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { 
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.enabledForChat ?? aiProvider?.provider === AIProviderName.ACTIVEPIECES,
+        enabledForChat: aiProvider?.enabledForChat ?? (aiProvider?.provider === AIProviderName.ACTIVEPIECES),
+        modelScope: aiProvider?.modelScope ?? 'all',
+        modelIds: aiProvider?.modelIds ?? [],
+        projectScope: aiProvider?.projectScope ?? 'all',
+        projectIds: aiProvider?.projectIds ?? [],
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
-    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
 }
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
+}
+
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -789,9 +800,4 @@ type MockBasicSetupParams = {
     plan?: Partial<PlatformPlan>
     platform?: Partial<Platform>
     project?: Partial<Project>
-}
-
-type MockOtpWithCode = {
-    otp: OtpModel
-    code: string
 }
