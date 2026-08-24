@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -50,6 +49,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAgentsNavVisible } from '@/features/agents';
 import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
@@ -61,10 +61,7 @@ import {
 import { templatesTelemetryApi } from '@/features/templates';
 import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
-import {
-  useAuthorization,
-  useIsPlatformAdmin,
-} from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -82,20 +79,17 @@ import { HelpAndFeedback } from '../help-and-feedback';
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { checkAccess } = useAuthorization();
   const { data: currentUser } = userHooks.useCurrentUser();
   const {
     collapsed,
     setCollapsed,
     toggle: toggleCollapsed,
   } = useRailCollapsed();
+  const showAgents = useAgentsNavVisible();
 
   if (embedState.isEmbedded || embedState.hideSideNav) {
     return null;
   }
-
-  const showAgents =
-    platform.plan.agentsEnabled && checkAccess(Permission.READ_AGENT);
 
   const openSidebar = () => setCollapsed(false);
 
