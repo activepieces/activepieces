@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { t } from 'i18next';
-import { Plug, Unplug } from 'lucide-react';
+import { ArrowLeft, Plug, Unplug } from 'lucide-react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { ClientIcon } from './connect-steps';
 import { mcpClientIdentity } from './mcp-client-identity';
 import {
   McpClientGrantRow,
@@ -24,7 +25,7 @@ import {
 
 dayjs.extend(relativeTime);
 
-export function ConnectedClients() {
+export function ConnectedClients({ onBack }: { onBack: () => void }) {
   const projectId = authenticationSession.getProjectId()!;
   const {
     rows,
@@ -38,12 +39,25 @@ export function ConnectedClients() {
   const revokeForProject = mcpClientsMutations.useRevokeForProject(projectId);
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="text-base text-muted-foreground">
-        {t(
-          'Every grant that can reach this project. Grants scoped to all projects stay with their holder.',
-        )}
-      </p>
+    <div className="flex flex-col gap-5 rounded-xl border bg-background px-6 py-8 lg:px-12">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-[15px]" />
+        {t('Back')}
+      </button>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
+          {t('Connected clients')}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t(
+            'Every grant that can reach this project. Grants scoped to all projects stay with their holder.',
+          )}
+        </p>
+      </div>
 
       {isLoading && (
         <div className="flex items-center justify-center py-16">
@@ -55,7 +69,7 @@ export function ConnectedClients() {
         <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
           <Plug className="size-6 text-muted-foreground" />
           <p className="text-base text-muted-foreground">
-            {t('Nothing is connected yet. Pick a client on the Connect tab.')}
+            {t('No clients yet — the first one to use the link shows up here.')}
           </p>
         </div>
       )}
@@ -108,13 +122,10 @@ function ClientRow({
 
   return (
     <div className="flex items-center gap-4 px-4 py-3.5">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
-        <img
-          src={mcpClientIdentity.icon(row.clientKey)}
-          alt=""
-          className="size-6"
-        />
-      </div>
+      <ClientIcon
+        icon={mcpClientIdentity.icon(row.clientKey)}
+        className="size-10 rounded-lg"
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TextWithTooltip tooltipMessage={label}>

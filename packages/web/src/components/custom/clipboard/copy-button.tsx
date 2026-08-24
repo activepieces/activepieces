@@ -16,7 +16,6 @@ interface CopyButtonProps extends ButtonProps {
   tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
   withoutTooltip?: boolean;
   children?: React.ReactNode;
-  variant?: 'ghost' | 'outline';
 }
 
 export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
