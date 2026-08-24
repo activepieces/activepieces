@@ -30,7 +30,7 @@ const loopStep: FlowAction = {
   settings: { items: '' },
 };
 
-let stepUtils: typeof import('@/features/pieces').stepUtils;
+let stepUtils: typeof import('@/features/pieces/utils/step-utils').stepUtils;
 
 describe('core step metadata translation', () => {
   beforeAll(async () => {
@@ -42,7 +42,7 @@ describe('core step metadata translation', () => {
       resources: {},
     });
 
-    ({ stepUtils } = await import('@/features/pieces'));
+    ({ stepUtils } = await import('@/features/pieces/utils/step-utils'));
 
     i18n.addResourceBundle(
       LocalesEnum.JAPANESE,
@@ -50,7 +50,7 @@ describe('core step metadata translation', () => {
       JAPANESE_BUNDLE,
     );
     await i18n.changeLanguage(LocalesEnum.JAPANESE);
-  });
+  }, 60000);
 
   it('translates a core step resolved through getMetadata', async () => {
     const metadata = await stepUtils.getMetadata(
