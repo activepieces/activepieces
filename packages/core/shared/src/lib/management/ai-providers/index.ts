@@ -103,6 +103,9 @@ export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
+export const OpenAiCompatibleVendorConfig = z.object({})
+export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -128,6 +131,7 @@ export const AIProviderConfig = z.union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    OpenAiCompatibleVendorConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -191,6 +195,42 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.MISTRAL),
         config: MistralProviderConfig,
         auth: MistralProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.XAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.DEEPSEEK),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ZAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.QWEN),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MINIMAX),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MOONSHOT),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
     }),
 ])
 
@@ -376,6 +416,7 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
+    OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
