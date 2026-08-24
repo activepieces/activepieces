@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { createEmbeddingActionOutputSchema } from '../output-schemas';
 
 export const createEmbedding = createAction({
   audience: 'both',
@@ -43,6 +44,7 @@ export const createEmbedding = createAction({
       required: false,
     }),
   },
+  outputSchema: createEmbeddingActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, input, dimensions, user } = context.propsValue;
