@@ -1,4 +1,4 @@
-import { McpOAuthClientRow } from '@activepieces/shared';
+import { McpOAuthGrant } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plug } from 'lucide-react';
 
@@ -8,7 +8,7 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { ClientIcon } from './connect-steps';
 import { mcpClientIdentity } from './mcp-client-identity';
-import { mcpClientsQueries } from './mcp-clients-hooks';
+import { mcpGrantsQueries } from './mcp-grants-hooks';
 
 const MAX_SHOWN = 3;
 
@@ -19,7 +19,7 @@ export function RecentlyConnected({
   onManageConnections: () => void;
   onPickClient: () => void;
 }) {
-  const { rows, isLoading } = mcpClientsQueries.useMyClients();
+  const { rows, isLoading } = mcpGrantsQueries.useMyGrants();
 
   if (isLoading) {
     return null;
@@ -76,7 +76,7 @@ export function RecentlyConnected({
   );
 }
 
-function ClientChip({ row }: { row: McpOAuthClientRow }) {
+function ClientChip({ row }: { row: McpOAuthGrant }) {
   return (
     <span className="flex items-center gap-2">
       <ClientIcon

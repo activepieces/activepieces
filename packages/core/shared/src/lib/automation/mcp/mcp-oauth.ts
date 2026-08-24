@@ -56,7 +56,7 @@ export const McpOAuthClientConnectsFrom = z.enum(['local', 'remote'])
 
 export type McpOAuthClientConnectsFrom = z.infer<typeof McpOAuthClientConnectsFrom>
 
-export const McpOAuthClientRow = z.object({
+export const McpOAuthGrant = z.object({
     id: z.string(),
     clientKey: McpOAuthClientKey,
     clientName: z.string().nullable(),
@@ -67,17 +67,17 @@ export const McpOAuthClientRow = z.object({
     lastUsedAt: z.string().nullable(),
 })
 
-export type McpOAuthClientRow = z.infer<typeof McpOAuthClientRow>
+export type McpOAuthGrant = z.infer<typeof McpOAuthGrant>
 
-export const ListMcpOAuthClientsRequestQuery = z.object({
+export const ListMcpOAuthGrantsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
 })
 
-export type ListMcpOAuthClientsRequestQuery = z.infer<typeof ListMcpOAuthClientsRequestQuery>
+export type ListMcpOAuthGrantsRequestQuery = z.infer<typeof ListMcpOAuthGrantsRequestQuery>
 
-export const RevokeMcpOAuthClientsRequestBody = z.object({
+export const RevokeMcpOAuthGrantsRequestBody = z.object({
     ids: z.array(ApId).min(1).max(100),
 })
 
-export type RevokeMcpOAuthClientsRequestBody = z.infer<typeof RevokeMcpOAuthClientsRequestBody>
+export type RevokeMcpOAuthGrantsRequestBody = z.infer<typeof RevokeMcpOAuthGrantsRequestBody>

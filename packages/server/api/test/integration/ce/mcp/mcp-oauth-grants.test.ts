@@ -60,13 +60,13 @@ describe('MCP OAuth connected clients', () => {
         ctx = await createTestContext(app!)
     })
 
-    describe('GET /v1/mcp-oauth/clients/me', () => {
+    describe('GET /v1/mcp-oauth/grants/me', () => {
         it('lists only the callers own live grants, classified, with the project name', async () => {
             const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
             const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/api/mcp/auth_callback'] })
             await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: ['cursor://anysphere.cursor-retrieval/oauth/callback'] })
 
-            const response = await ctx.get('/v1/mcp-oauth/clients/me')
+            const response = await ctx.get('/v1/mcp-oauth/grants/me')
 
             expect(response.statusCode).toBe(200)
             const { data } = response.json()
@@ -85,7 +85,7 @@ describe('MCP OAuth connected clients', () => {
             const elsewhere = await createTestContext(app!)
             const id = await grantAccess({ userId: ctx.user.id, projectId: elsewhere.project.id, redirectUris: ['https://claude.ai/x'] })
 
-            const { data } = (await ctx.get('/v1/mcp-oauth/clients/me')).json()
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants/me')).json()
 
             expect(data).toHaveLength(1)
             expect(data[0]).toMatchObject({ id, projectId: elsewhere.project.id })
@@ -95,7 +95,7 @@ describe('MCP OAuth connected clients', () => {
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'], expiresAt: YESTERDAY() })
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'], revoked: true })
 
-            const response = await ctx.get('/v1/mcp-oauth/clients/me')
+            const response = await ctx.get('/v1/mcp-oauth/grants/me')
 
             expect(response.json().data).toHaveLength(0)
         })
@@ -103,20 +103,20 @@ describe('MCP OAuth connected clients', () => {
         it('renders a platform-wide grant with no project name', async () => {
             await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: ['http://localhost:1455/callback/abc'] })
 
-            const { data } = (await ctx.get('/v1/mcp-oauth/clients/me')).json()
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants/me')).json()
 
             expect(data[0]).toMatchObject({ clientKey: 'codex', connectsFrom: 'local', projectId: null, projectName: null })
         })
     })
 
-    describe('POST /v1/mcp-oauth/clients/me/revoke', () => {
+    describe('POST /v1/mcp-oauth/grants/me/revoke', () => {
         it('revokes the callers own grant, which then leaves the list', async () => {
             const id = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
 
-            const response = await ctx.post('/v1/mcp-oauth/clients/me/revoke', { ids: [id] })
+            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [id] })
 
             expect(response.statusCode).toBe(204)
-            expect((await ctx.get('/v1/mcp-oauth/clients/me')).json().data).toHaveLength(0)
+            expect((await ctx.get('/v1/mcp-oauth/grants/me')).json().data).toHaveLength(0)
             expect(await db.findOneBy('mcp_oauth_token', { id })).toMatchObject({ revoked: true })
         })
 
@@ -125,7 +125,7 @@ describe('MCP OAuth connected clients', () => {
             const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
             const theirs = await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
 
-            const response = await ctx.post('/v1/mcp-oauth/clients/me/revoke', { ids: [mine, theirs] })
+            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [mine, theirs] })
 
             expect(response.statusCode).toBe(403)
             expect(await db.findOneBy('mcp_oauth_token', { id: mine })).toMatchObject({ revoked: false })
@@ -133,7 +133,7 @@ describe('MCP OAuth connected clients', () => {
         })
 
         it('rejects an empty batch', async () => {
-            const response = await ctx.post('/v1/mcp-oauth/clients/me/revoke', { ids: [] })
+            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [] })
 
             expect(response.statusCode).toBe(400)
         })

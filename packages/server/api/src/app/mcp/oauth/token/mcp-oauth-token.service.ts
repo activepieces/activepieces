@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { McpOAuthClientRow, McpOAuthToken } from '@activepieces/shared'
+import { McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -133,7 +133,7 @@ export const mcpOAuthTokenService = {
         await repo().update({ refreshToken: hashRefreshToken(refreshToken), clientId }, { revoked: true })
     },
 
-    async listForUser({ userId, platformId, cursor, limit }: ListForUserParams): Promise<SeekPage<McpOAuthClientRow>> {
+    async listForUser({ userId, platformId, cursor, limit }: ListForUserParams): Promise<SeekPage<McpOAuthGrant>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: McpOAuthTokenEntity,
@@ -169,7 +169,7 @@ export const mcpOAuthTokenService = {
             }
         })
 
-        return paginationHelper.createPage<McpOAuthClientRow>(rows, nextCursor)
+        return paginationHelper.createPage<McpOAuthGrant>(rows, nextCursor)
     },
 
     async revokeForUser({ ids, userId, platformId }: RevokeForUserParams): Promise<void> {

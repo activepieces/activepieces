@@ -6,15 +6,15 @@ import {
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
-import { mcpClientsApi } from './mcp-clients-api';
+import { mcpGrantsApi } from './mcp-grants-api';
 
-const MY_CLIENTS_QUERY_KEY = ['mcp-oauth-clients-me'];
+const MY_GRANTS_QUERY_KEY = ['mcp-oauth-grants-me'];
 
-export const mcpClientsQueries = {
-  useMyClients() {
+export const mcpGrantsQueries = {
+  useMyGrants() {
     const query = useInfiniteQuery({
-      queryKey: MY_CLIENTS_QUERY_KEY,
-      queryFn: ({ pageParam }) => mcpClientsApi.listMine({ cursor: pageParam }),
+      queryKey: MY_GRANTS_QUERY_KEY,
+      queryFn: ({ pageParam }) => mcpGrantsApi.listMine({ cursor: pageParam }),
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
@@ -27,14 +27,14 @@ export const mcpClientsQueries = {
   },
 };
 
-export const mcpClientsMutations = {
+export const mcpGrantsMutations = {
   useRevokeMine() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (ids: string[]) => mcpClientsApi.revokeMine({ ids }),
+      mutationFn: (ids: string[]) => mcpGrantsApi.revokeMine({ ids }),
       onSuccess: () => {
         toast.success(t('Access ends within 15 minutes.'));
-        queryClient.invalidateQueries({ queryKey: MY_CLIENTS_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: MY_GRANTS_QUERY_KEY });
       },
       onError: () => {
         toast.error(t('Could not revoke access. Try again.'));

@@ -1,4 +1,4 @@
-import { McpOAuthClientRow } from '@activepieces/shared';
+import { McpOAuthGrant } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowLeft, Plug, Unplug } from 'lucide-react';
 
@@ -26,12 +26,12 @@ import { formatUtils } from '@/lib/format-utils';
 
 import { ClientIcon } from './connect-steps';
 import { mcpClientIdentity } from './mcp-client-identity';
-import { mcpClientsMutations, mcpClientsQueries } from './mcp-clients-hooks';
+import { mcpGrantsMutations, mcpGrantsQueries } from './mcp-grants-hooks';
 
 export function ConnectedClients({ onBack }: { onBack: () => void }) {
   const { rows, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    mcpClientsQueries.useMyClients();
-  const revoke = mcpClientsMutations.useRevokeMine();
+    mcpGrantsQueries.useMyGrants();
+  const revoke = mcpGrantsMutations.useRevokeMine();
 
   return (
     <div className="mx-auto flex w-full max-w-[1198px] flex-col gap-5 bg-background px-6 py-8 lg:px-12">
@@ -99,7 +99,7 @@ function ClientRow({
   row,
   onRevoke,
 }: {
-  row: McpOAuthClientRow;
+  row: McpOAuthGrant;
   onRevoke: () => Promise<void>;
 }) {
   const label = mcpClientIdentity.label(row.clientKey, row.clientName);
@@ -149,6 +149,6 @@ function ClientRow({
   );
 }
 
-function scopeLabel(row: McpOAuthClientRow): string {
+function scopeLabel(row: McpOAuthGrant): string {
   return row.projectName ?? t('All projects');
 }
