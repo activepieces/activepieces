@@ -48,10 +48,17 @@ Go to **Platform Admin** → **AI Center**, pick a provider, and add your key. T
 
 ## Cost control and logging
 
-Route through a gateway such as **OpenRouter** or **Cloudflare AI Gateway** to:
+
+Spend on your own key goes to your provider, so put a gateway in front of it when you want limits and an audit trail:
 
 - Set rate limits and budgets
 - Log and monitor every AI request
 - Track usage across projects
 
-You can also add multiple providers and choose which model each agent or step uses, so expensive models stay on the work that needs them.
+**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone, and self-hosted routers are all fine.
+
+**Azure** and **AWS Bedrock** give you the same thing through your cloud account's own quotas and logs.
+
+<Tip>
+You can add several providers at once and pick the model per agent or per step, so the expensive models only run on the work that needs them.
+</Tip>
