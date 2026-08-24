@@ -12,7 +12,7 @@ export const updateCrmContactByIdAction = createAction({
   displayName: 'Update a CRM Contact (By ID)',
   description: 'Update the name or tags of a CRM contact, entered directly rather than picked from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale (comma-separated), not merged. Idempotent: re-running with the same values converges the contact to the same state.', idempotent: true },
+  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale, not merged. Idempotent: re-running with the same values converges the contact to the same state.', idempotent: true },
   outputSchema: crmContactOutputSchema,
   props: {
     contactId: Property.ShortText({
@@ -25,9 +25,9 @@ export const updateCrmContactByIdAction = createAction({
       description: 'Leave empty to keep the current name unchanged. Set to a blank value to clear it.',
       required: false,
     }),
-    tags: Property.ShortText({
+    tags: Property.Array({
       displayName: 'Tags',
-      description: 'Replaces all existing tags. Comma-separated (e.g. vip, lead). Leave empty to keep current tags unchanged.',
+      description: 'Replaces all existing tags (e.g. vip, lead). Leave untouched to keep current tags unchanged.',
       required: false,
     }),
   },
@@ -37,7 +37,7 @@ export const updateCrmContactByIdAction = createAction({
 
     const body: Record<string, unknown> = {};
     if (name !== undefined && name !== null) body['name'] = name;
-    if (tags !== undefined && tags !== null) body['tags'] = tags;
+    if (tags !== undefined) body['tags'] = tags.join(',');
 
     const response = await whatsscaleClient(
       auth,

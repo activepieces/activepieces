@@ -23,9 +23,9 @@ export const postTextStatusAction = createAction({
       description: 'The status text to post.',
       required: true,
     }),
-    backgroundColor: Property.ShortText({
+    backgroundColor: Property.Color({
       displayName: 'Background Color',
-      description: 'Hex color (e.g. #25D366). Leave empty for the default.',
+      description: 'Leave empty for the default WhatsApp green.',
       required: false,
     }),
   },

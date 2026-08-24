@@ -12,7 +12,7 @@ export const createCrmContactAction = createAction({
   displayName: 'Create a CRM Contact',
   description: 'Add a new contact to your WhatsScale CRM',
   audience: 'both',
-  aiMetadata: { description: 'Create a new WhatsScale CRM contact from a phone number (with country code), optionally setting a name and comma-separated tags. Not idempotent: calling it again may produce a duplicate contact, so look the phone up first with Find a CRM Contact by Phone if you need to avoid duplicates.', idempotent: false },
+  aiMetadata: { description: 'Create a new WhatsScale CRM contact from a phone number (with country code), optionally setting a name and a list of tags. Not idempotent: calling it again may produce a duplicate contact, so look the phone up first with Find a CRM Contact by Phone if you need to avoid duplicates.', idempotent: false },
   outputSchema: crmContactOutputSchema,
   props: {
     phone: Property.ShortText({
@@ -25,9 +25,9 @@ export const createCrmContactAction = createAction({
       description: 'Full name of the contact (e.g. John Smith)',
       required: false,
     }),
-    tags: Property.ShortText({
+    tags: Property.Array({
       displayName: 'Tags',
-      description: 'Comma-separated tags (e.g. vip, customer, lead). Tags are automatically lowercased.',
+      description: 'e.g. vip, customer, lead. Tags are automatically lowercased.',
       required: false,
     }),
   },
@@ -37,7 +37,7 @@ export const createCrmContactAction = createAction({
 
     const body: Record<string, unknown> = { phone };
     if (name) body['name'] = name;
-    if (tags) body['tags'] = tags;
+    if (tags && tags.length > 0) body['tags'] = tags.join(',');
 
     const response = await whatsscaleClient(auth, HttpMethod.POST, '/api/crm/contacts', body);
     return flattenCrmContact(response.body as ConductorCrmContact);

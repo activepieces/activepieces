@@ -44,7 +44,7 @@ export const listCrmContactsAction = createAction({
         }
         try {
           const response = await whatsscaleClient(
-            (auth as any).secret_text,
+            auth.secret_text,
             HttpMethod.GET,
             '/make/crm/tags',
             undefined
@@ -76,11 +76,20 @@ export const listCrmContactsAction = createAction({
       displayName: 'Limit',
       description: 'Max results to return. Default 50.',
       required: false,
+      display: 'stepper',
+      defaultValue: 50,
+      min: 1,
+      max: 150,
+      step: 1,
     }),
     page: Property.Number({
       displayName: 'Page',
       description: 'Page number. Default 1.',
       required: false,
+      display: 'stepper',
+      defaultValue: 1,
+      min: 1,
+      step: 1,
     }),
   },
   async run(context) {

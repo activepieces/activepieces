@@ -23,12 +23,13 @@ export const sendLocationManualAction = createAction({
       displayName: 'Recipient Type',
       description: 'Who this location is being sent to.',
       required: true,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Contact (Phone Number)', value: ChatType.CONTACT },
-          { label: 'Group', value: ChatType.GROUP },
-          { label: 'Channel', value: ChatType.CHANNEL },
-          { label: 'CRM Contact', value: ChatType.CRM_CONTACT },
+          { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
+          { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
+          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
+          { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
     }),
@@ -62,7 +63,7 @@ export const sendLocationManualAction = createAction({
       RecipientType.MANUAL,
       session,
       recipient,
-      chatType as ChatType,
+      chatType,
     );
 
     const body: Record<string, unknown> = { ...recipientBody, latitude, longitude };
