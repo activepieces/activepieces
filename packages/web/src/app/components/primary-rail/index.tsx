@@ -18,8 +18,6 @@ import {
   Lock,
   LogOut,
   PanelLeftClose,
-  Pin,
-  PinOff,
   Search,
   Settings,
   Shield,
@@ -59,7 +57,6 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -368,7 +365,6 @@ function RailNavButton({
 }
 
 function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
-  const { pinnedProjectId, toggle } = usePinnedProjects();
   const { data: projects } = projectCollectionUtils.useAll();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -390,9 +386,8 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
     return null;
   }
 
-  const sorted = sortProjects({
+  const ordered = orderProjects({
     projects,
-    pinnedProjectId,
     lastUsed: lastUsedByProject(),
     sort,
   });
@@ -418,10 +413,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div
-      className={cn(
-        'group/pinned mt-2 flex flex-col gap-0.5',
-        collapsed && 'items-center',
-      )}
+      className={cn('mt-2 flex flex-col gap-0.5', collapsed && 'items-center')}
     >
       <div
         className={cn(
@@ -449,91 +441,82 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
           </div>
         </div>
       )}
-      {sorted.map((project) => {
-        const name = getProjectName(project);
-        const isTeam = project.type === ProjectType.TEAM;
-        const palette =
-          isTeam && project.icon
-            ? PROJECT_COLOR_PALETTE[project.icon.color]
-            : null;
-        const active = location.pathname.includes(`/projects/${project.id}`);
-        const isPinned = pinnedProjectId === project.id;
-
-        const badge = (
-          <span
-            className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
-            style={
-              palette
-                ? { backgroundColor: palette.color, color: palette.textColor }
-                : undefined
-            }
-          >
-            {isTeam ? (
-              name.charAt(0).toUpperCase()
-            ) : (
-              <Lock className="size-3 text-sidebar-foreground/70" />
-            )}
-          </span>
-        );
-
-        const row = (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              openProject({ projectId: project.id, name });
-            }}
-            aria-label={name}
-            className={cn(
-              'group/pin flex items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-              collapsed
-                ? 'size-9 cursor-pointer justify-center'
-                : 'h-9 w-full px-3',
-              active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
-            )}
-          >
-            {badge}
-            {!collapsed && (
-              <>
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {name}
-                </span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  aria-label={isPinned ? t('Unpin') : t('Pin')}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggle(project.id);
-                  }}
-                  className={cn(
-                    'shrink-0 rounded p-0.5 text-sidebar-foreground/60 hover:text-sidebar-foreground',
-                    isPinned ? 'block' : 'hidden group-hover/pin:block',
-                  )}
-                >
-                  {isPinned ? (
-                    <PinOff className="size-3.5" />
-                  ) : (
-                    <Pin className="size-3.5" />
-                  )}
-                </span>
-              </>
-            )}
-          </button>
-        );
-
-        if (!collapsed) {
-          return <div key={project.id}>{row}</div>;
-        }
-
-        return (
-          <Tooltip key={project.id}>
-            <TooltipTrigger asChild>{row}</TooltipTrigger>
-            <TooltipContent side="right">{name}</TooltipContent>
-          </Tooltip>
-        );
-      })}
+      {ordered.map((project) => (
+        <ProjectRow
+          key={project.id}
+          project={project}
+          collapsed={collapsed}
+          active={location.pathname.includes(`/projects/${project.id}`)}
+          onOpen={openProject}
+        />
+      ))}
     </div>
+  );
+}
+
+function ProjectRow({
+  project,
+  collapsed,
+  active,
+  onOpen,
+}: {
+  project: ProjectWithLimits;
+  collapsed: boolean;
+  active: boolean;
+  onOpen: (params: { projectId: string; name: string }) => void;
+}) {
+  const name = getProjectName(project);
+  const isTeam = project.type === ProjectType.TEAM;
+  const palette =
+    isTeam && project.icon ? PROJECT_COLOR_PALETTE[project.icon.color] : null;
+
+  const badge = (
+    <span
+      className="flex size-[18px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-bold"
+      style={
+        palette
+          ? { backgroundColor: palette.color, color: palette.textColor }
+          : undefined
+      }
+    >
+      {isTeam ? (
+        name.charAt(0).toUpperCase()
+      ) : (
+        <Lock className="size-3 text-sidebar-foreground/70" />
+      )}
+    </span>
+  );
+
+  const row = (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpen({ projectId: project.id, name });
+      }}
+      aria-label={name}
+      className={cn(
+        'flex items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
+        active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
+      )}
+    >
+      {badge}
+      {!collapsed && (
+        <span className="min-w-0 flex-1 truncate text-left">{name}</span>
+      )}
+    </button>
+  );
+
+  if (!collapsed) {
+    return row;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{row}</TooltipTrigger>
+      <TooltipContent side="right">{name}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -571,7 +554,6 @@ function PinnedSortMenu({
           active={sort === 'alphabetical'}
           onClick={() => onChange('alphabetical')}
         />
-        <DropdownMenuSeparator />
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -635,21 +617,23 @@ function compareProjects({
   };
 }
 
-function sortProjects({
+function orderProjects({
   projects,
-  pinnedProjectId,
   lastUsed,
   sort,
 }: {
   projects: ProjectWithLimits[];
-  pinnedProjectId: string | null;
   lastUsed: Record<string, number>;
   sort: PinnedSort;
 }): ProjectWithLimits[] {
   const compare = compareProjects({ sort, lastUsed });
-  const pinned = projects.filter((project) => project.id === pinnedProjectId);
-  const rest = projects.filter((project) => project.id !== pinnedProjectId);
-  return [...pinned, ...rest.sort(compare)];
+  const personal = projects.filter(
+    (project) => project.type !== ProjectType.TEAM,
+  );
+  const others = projects.filter(
+    (project) => project.type === ProjectType.TEAM,
+  );
+  return [...personal.sort(compare), ...others.sort(compare)];
 }
 
 function RailAccountRow({ collapsed }: { collapsed: boolean }) {
