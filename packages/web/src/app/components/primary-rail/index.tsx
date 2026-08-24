@@ -1,5 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import {
+  ApEdition,
+  ApFlagId,
   isNil,
   PROJECT_COLOR_PALETTE,
   ProjectType,
@@ -11,6 +13,7 @@ import { t } from 'i18next';
 import {
   Bot,
   ChartLine,
+  ChevronsUpDown,
   Compass,
   Lock,
   LogOut,
@@ -47,7 +50,11 @@ import {
 } from '@/components/ui/tooltip';
 import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
-import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import {
+  getProjectName,
+  PlatformSwitcher,
+  projectCollectionUtils,
+} from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { usePinnedProjects } from '@/features/workspace/lib/pinned-projects';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
@@ -168,6 +175,10 @@ function RailHeader({
 }) {
   const branding = flagsHooks.useWebsiteBranding();
   const { setOpen: setSearchOpen } = useGlobalSearch();
+  const { embedState } = useEmbedding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
+  const showSwitcher = edition === ApEdition.CLOUD && !embedState.isEmbedded;
 
   if (collapsed) {
     return (
@@ -212,7 +223,7 @@ function RailHeader({
   }
 
   return (
-    <div className="flex items-center justify-between px-2">
+    <div className="flex items-center gap-1 px-2">
       <Tooltip>
         <TooltipTrigger asChild>
           <Link
@@ -230,7 +241,27 @@ function RailHeader({
         <TooltipContent side="right">{branding.websiteName}</TooltipContent>
       </Tooltip>
 
-      <div className="flex items-center gap-0.5">
+      {showSwitcher ? (
+        <div className="min-w-0 flex-1">
+          <PlatformSwitcher>
+            <button
+              type="button"
+              className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left hover:bg-sidebar-accent"
+            >
+              <span className="flex-1 truncate text-sm font-medium">
+                {currentPlatform?.name ?? t('platform')}
+              </span>
+              <ChevronsUpDown className="ml-auto size-3 shrink-0" />
+            </button>
+          </PlatformSwitcher>
+        </div>
+      ) : (
+        <h1 className="min-w-0 flex-1 truncate text-sm font-medium">
+          {branding.websiteName}
+        </h1>
+      )}
+
+      <div className="flex shrink-0 items-center gap-0.5">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
