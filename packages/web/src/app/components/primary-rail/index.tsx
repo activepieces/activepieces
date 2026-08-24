@@ -19,6 +19,7 @@ import {
   Lock,
   LogOut,
   PanelLeftClose,
+  Pin,
   PinOff,
   Search,
   Settings,
@@ -369,7 +370,7 @@ function RailNavButton({
 }
 
 function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
-  const { pinnedIds, unpin, showAll, setShowAll } = usePinnedProjects();
+  const { pinnedIds, toggle, showAll, setShowAll } = usePinnedProjects();
   const { data: projects } = projectCollectionUtils.useAll();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -456,6 +457,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
             ? PROJECT_COLOR_PALETTE[project.icon.color]
             : null;
         const active = location.pathname.includes(`/projects/${project.id}`);
+        const isPinned = pinnedIds.includes(project.id);
 
         const badge = (
           <span
@@ -496,20 +498,25 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
                 <span className="min-w-0 flex-1 truncate text-left">
                   {name}
                 </span>
-                {!showAll && (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t('Unpin')}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      unpin(project.id);
-                    }}
-                    className="hidden shrink-0 rounded p-0.5 text-sidebar-foreground/60 hover:text-sidebar-foreground group-hover/pin:block"
-                  >
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isPinned ? t('Unpin') : t('Pin')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggle(project.id);
+                  }}
+                  className={cn(
+                    'shrink-0 rounded p-0.5 text-sidebar-foreground/60 hover:text-sidebar-foreground',
+                    isPinned ? 'block' : 'hidden group-hover/pin:block',
+                  )}
+                >
+                  {isPinned ? (
                     <PinOff className="size-3.5" />
-                  </span>
-                )}
+                  ) : (
+                    <Pin className="size-3.5" />
+                  )}
+                </span>
               </>
             )}
           </button>
