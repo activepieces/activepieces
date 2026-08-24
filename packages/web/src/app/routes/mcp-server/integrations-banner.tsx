@@ -58,27 +58,26 @@ export function IntegrationsBanner() {
   }
 
   return (
-    <div className="flex flex-col gap-6 border-t bg-muted/30 pb-9 pt-8">
-      <div className="flex flex-col gap-1.5 px-6 lg:px-14">
-        <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
-          {t('Your AI gets all of this')}
-        </h2>
-        <p className="max-w-[560px] text-sm text-muted-foreground">
-          {t(
-            'Slack, Gmail, HubSpot, Notion, GitHub and {count}+ more pieces — plus every flow you’ve built, ready to run.',
-            { count: Math.floor((pieces?.length ?? 0) / 10) * 10 },
-          )}
-        </p>
-      </div>
-      <div className="relative pl-6 lg:pl-14">
-        <div className="flex flex-col gap-2.5 overflow-hidden">
+    <div className="border-t bg-muted/30 pb-9 pt-8">
+      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-6">
+        <div className="flex flex-col gap-1.5 px-6 lg:px-14">
+          <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
+            {t('Your AI gets all of this')}
+          </h2>
+          <p className="max-w-[560px] text-sm text-muted-foreground">
+            {t(
+              'Slack, Gmail, HubSpot, Notion, GitHub and {count}+ more pieces — plus every flow you’ve built, ready to run.',
+              { count: Math.floor((pieces?.length ?? 0) / 10) * 10 },
+            )}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2.5 overflow-hidden pl-6 [mask-image:linear-gradient(to_right,#000_88%,transparent)] lg:pl-14">
           <TileRow logos={logos.filter((_, index) => index % 2 === 0)} />
           <TileRow
             logos={logos.filter((_, index) => index % 2 === 1)}
             className="pl-8"
           />
         </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-muted/95 to-transparent" />
       </div>
     </div>
   );

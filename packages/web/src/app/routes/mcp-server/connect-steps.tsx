@@ -96,8 +96,8 @@ function ConnectLanding({
   ).filter((client): client is ConnectableClient => client !== undefined);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-background">
-      <div className="flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
+    <div className="flex flex-col bg-background">
+      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
           <h1 className="max-w-[455px] text-[40px] font-bold leading-[46px] tracking-[-0.035em]">
             {t('One link for everywhere you use AI.')}
@@ -178,49 +178,53 @@ function AllClients({
   );
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-background">
-      <div className="flex flex-col gap-4.5 border-b px-6 pb-6 pt-8 lg:px-12">
-        <BackLink label={t('Back')} onClick={onBack} />
-        <div className="flex flex-wrap items-end gap-6">
-          <div className="flex flex-1 flex-col gap-1.5">
-            <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
-              {t('Where do you want to use it?')}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t(
-                'Pick a client for step-by-step setup, or copy the link and paste it wherever you like.',
-              )}
-            </p>
+    <div className="flex flex-col bg-background">
+      <div className="border-b">
+        <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+          <BackLink label={t('Back')} onClick={onBack} />
+          <div className="flex flex-wrap items-end gap-6">
+            <div className="flex flex-1 flex-col gap-1.5">
+              <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
+                {t('Where do you want to use it?')}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  'Pick a client for step-by-step setup, or copy the link and paste it wherever you like.',
+                )}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2.5 rounded-[9px] border bg-muted/40 py-2 pl-3.5 pr-2">
+              <span className="font-mono text-xs text-muted-foreground">
+                {shortServerUrl(serverUrl)}
+              </span>
+              <CopyButton textToCopy={serverUrl} variant="default" size="sm">
+                {t('Copy')}
+              </CopyButton>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2.5 rounded-[9px] border bg-muted/40 py-2 pl-3.5 pr-2">
-            <span className="font-mono text-xs text-muted-foreground">
-              {shortServerUrl(serverUrl)}
-            </span>
-            <CopyButton textToCopy={serverUrl} variant="default" size="sm">
-              {t('Copy')}
-            </CopyButton>
+          <div className="relative flex items-center">
+            <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t('Search {total} clients', {
+                total: clients.length,
+              })}
+              className="h-11 pl-10 pr-36"
+              autoFocus
+            />
+            <Button
+              variant="link"
+              className="absolute right-1.5 h-auto text-[12.5px] font-semibold"
+              onClick={() => onSelect('unknown')}
+            >
+              {t('Client not listed?')}
+            </Button>
           </div>
-        </div>
-        <div className="relative flex items-center">
-          <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={t('Search {total} clients', { total: clients.length })}
-            className="h-11 pl-10 pr-36"
-            autoFocus
-          />
-          <Button
-            variant="link"
-            className="absolute right-1.5 h-auto text-[12.5px] font-semibold"
-            onClick={() => onSelect('unknown')}
-          >
-            {t('Client not listed?')}
-          </Button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-7 px-6 py-7 lg:px-12">
+      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-7 px-6 py-7 lg:px-12">
         {mcpClientCatalog.groups().map((group) => {
           const groupClients = matches.filter(
             (client) => client.group === group.key,
@@ -327,29 +331,31 @@ function ClientInstructions({
   onBrowseAll: () => void;
 }) {
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-background">
-      <div className="flex flex-col gap-4.5 border-b px-6 pb-6 pt-8 lg:px-12">
-        <BackLink label={t('All clients')} onClick={onBack} />
-        <div className="flex flex-wrap items-center gap-4">
-          <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
-              {client.name}
-            </h1>
-            <span className="text-[13.5px] text-muted-foreground">
-              {client.kind}
-            </span>
+    <div className="flex flex-col bg-background">
+      <div className="border-b">
+        <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+          <BackLink label={t('All clients')} onClick={onBack} />
+          <div className="flex flex-wrap items-center gap-4">
+            <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
+                {client.name}
+              </h1>
+              <span className="text-[13.5px] text-muted-foreground">
+                {client.kind}
+              </span>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <a href={client.docsUrl} target="_blank" rel="noreferrer">
+                <ExternalLink />
+                {t('{client} docs', { client: client.name })}
+              </a>
+            </Button>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href={client.docsUrl} target="_blank" rel="noreferrer">
-              <ExternalLink />
-              {t('{client} docs', { client: client.name })}
-            </a>
-          </Button>
         </div>
       </div>
 
-      <div className="flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
+      <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
         <div className="flex min-w-0 flex-1 flex-col">
           {client.steps.map((step, index) => (
             <ConnectStepDetails

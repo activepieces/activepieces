@@ -34,42 +34,46 @@ export function RecentlyConnected({
     .slice(0, MAX_SHOWN);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 border-t px-6 py-5 lg:px-14">
-      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-        {t('Recently connected')}
-      </span>
+    <div className="border-t">
+      <div className="mx-auto w-full max-w-[1198px] flex flex-wrap items-center gap-4 px-6 py-5 lg:px-14">
+        <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          {t('Recently connected')}
+        </span>
 
-      {recent.length === 0 ? (
-        <>
-          <span className="flex items-center gap-2.5 text-[13px] text-muted-foreground">
-            <Plug className="size-4" />
-            {t('No clients yet — the first one to use the link shows up here.')}
-          </span>
-          <Button
-            variant="link"
-            className="ml-auto h-auto p-0 text-[13px] font-semibold"
-            onClick={onPickClient}
-          >
-            {t('Pick a client')}
-          </Button>
-        </>
-      ) : (
-        <>
-          {recent.map((row, index) => (
-            <div key={row.id} className="flex items-center gap-4">
-              {index > 0 && <span className="h-4 w-px bg-border" />}
-              <ClientChip row={row} />
-            </div>
-          ))}
-          <Button
-            variant="link"
-            className="ml-auto h-auto p-0 text-[13px] font-semibold"
-            onClick={onManageConnections}
-          >
-            {t('Manage connections')}
-          </Button>
-        </>
-      )}
+        {recent.length === 0 ? (
+          <>
+            <span className="flex items-center gap-2.5 text-[13px] text-muted-foreground">
+              <Plug className="size-4" />
+              {t(
+                'No clients yet — the first one to use the link shows up here.',
+              )}
+            </span>
+            <Button
+              variant="link"
+              className="ml-auto h-auto p-0 text-[13px] font-semibold"
+              onClick={onPickClient}
+            >
+              {t('Pick a client')}
+            </Button>
+          </>
+        ) : (
+          <>
+            {recent.map((row, index) => (
+              <div key={row.id} className="flex items-center gap-4">
+                {index > 0 && <span className="h-4 w-px bg-border" />}
+                <ClientChip row={row} />
+              </div>
+            ))}
+            <Button
+              variant="link"
+              className="ml-auto h-auto p-0 text-[13px] font-semibold"
+              onClick={onManageConnections}
+            >
+              {t('Manage connections')}
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function ConnectedClients({ onBack }: { onBack: () => void }) {
   const revokeForProject = mcpClientsMutations.useRevokeForProject(projectId);
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border bg-background px-6 py-8 lg:px-12">
+    <div className="mx-auto flex w-full max-w-[1198px] flex-col gap-5 bg-background px-6 py-8 lg:px-12">
       <button
         type="button"
         onClick={onBack}

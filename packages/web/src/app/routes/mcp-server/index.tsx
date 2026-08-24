@@ -14,7 +14,7 @@ export default function McpServerPage() {
   return (
     <div className="flex w-full flex-col gap-2">
       <PageHeader showSidebarToggle={true} title={t('MCP')} />
-      <div className="w-full px-4 pb-10 sm:px-6">
+      <div className="w-full">
         {isManagingConnections ? (
           <ConnectedClients onBack={() => setIsManagingConnections(false)} />
         ) : (
