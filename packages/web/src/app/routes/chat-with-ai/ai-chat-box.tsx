@@ -199,7 +199,10 @@ function ChatBoxContent({
     !isAwaitingLoad &&
     !hasSentMessage;
 
-  const isFirstRun = personalization.status === ChatPersonalizationStatus.UNSET;
+  const isFirstRun =
+    personalization.personalStatus === ChatPersonalizationStatus.UNSET;
+  const companyLocked =
+    isFirstRun && (personalization.companyInput ?? '').trim().length > 0;
   const showOnboardingCard =
     isEmpty && !incognito && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
@@ -224,6 +227,8 @@ function ChatBoxContent({
       companyInput: personalization.companyInput,
       profile: personalization.profile,
       prefill: personalization.prefill,
+      personalStatus:
+        personalization.personalStatus ?? ChatPersonalizationStatus.UNSET,
     },
     platformName: platform?.name,
   });
@@ -236,7 +241,7 @@ function ChatBoxContent({
     setPromptOpen(false);
     personalization.start({
       role: answers.role,
-      company: answers.companyDomain ?? answers.company,
+      company: companyLocked ? '' : answers.companyDomain ?? answers.company,
     });
     void handleSend(
       t(
@@ -385,6 +390,7 @@ function ChatBoxContent({
                 initialRole={initialAnswers.role}
                 initialCompany={initialAnswers.company}
                 initialCompanyDomain={initialAnswers.companyDomain}
+                companyLocked={companyLocked}
                 onComplete={handleOnboardingComplete}
                 onDismiss={handleOnboardingDismiss}
               />

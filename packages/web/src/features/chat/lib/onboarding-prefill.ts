@@ -1,4 +1,5 @@
 import {
+  ChatPersonalizationStatus,
   ChatPersonalizationView,
   chatPersonalizationUtils,
 } from '@activepieces/shared';
@@ -9,13 +10,17 @@ function resolveInitialAnswers({
 }: {
   view: Pick<
     ChatPersonalizationView,
-    'roleInput' | 'companyInput' | 'profile' | 'prefill'
+    'roleInput' | 'companyInput' | 'profile' | 'prefill' | 'personalStatus'
   >;
   platformName: string | null | undefined;
 }): InitialOnboardingAnswers {
-  const { roleInput, companyInput, profile, prefill } = view;
+  const { roleInput, companyInput, profile, prefill, personalStatus } = view;
+  const answeredThemselves =
+    personalStatus !== ChatPersonalizationStatus.UNSET;
   return {
-    role: roleInput ?? profile?.userRole ?? prefill?.role ?? '',
+    role: answeredThemselves
+      ? roleInput ?? profile?.userRole ?? prefill?.role ?? ''
+      : prefill?.role ?? '',
     company:
       companyInput ??
       chatPersonalizationUtils.companyFromPlatformName(platformName) ??

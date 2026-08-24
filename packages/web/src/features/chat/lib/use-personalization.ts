@@ -79,6 +79,7 @@ export function usePersonalization({ enabled }: { enabled: boolean }) {
   }, [shouldLazyUpgrade]);
 
   const status = query.data?.status ?? null;
+  const personalStatus = query.data?.personalStatus ?? null;
   const companyInput = active ? query.data?.companyInput ?? null : null;
   const roleInput = active ? query.data?.roleInput ?? null : null;
   const prefill = active ? query.data?.prefill ?? null : null;
@@ -99,6 +100,7 @@ export function usePersonalization({ enabled }: { enabled: boolean }) {
       });
     queryClient.setQueryData(QUERY_KEY, {
       status: ChatPersonalizationStatus.PENDING,
+      personalStatus: ChatPersonalizationStatus.PENDING,
       scope: ChatPersonalizationScope.COMPANY,
       useCases: [],
       profile: null,
@@ -111,6 +113,7 @@ export function usePersonalization({ enabled }: { enabled: boolean }) {
   const reset = () => {
     queryClient.setQueryData(QUERY_KEY, {
       status: ChatPersonalizationStatus.SKIPPED,
+      personalStatus: ChatPersonalizationStatus.SKIPPED,
       scope: ChatPersonalizationScope.COMPANY,
       useCases: [],
       profile: null,
@@ -125,6 +128,7 @@ export function usePersonalization({ enabled }: { enabled: boolean }) {
 
   return {
     status,
+    personalStatus,
     isResolving: active && query.isLoading,
     useCases: active ? readyUseCases : null,
     profile: active ? query.data?.profile ?? null : null,
@@ -146,6 +150,7 @@ function isResearchingStatus(status: ChatPersonalizationStatus | undefined) {
 
 export type PersonalizationState = {
   status: ChatPersonalizationStatus | null;
+  personalStatus: ChatPersonalizationStatus | null;
   useCases: PersonalizationUseCase[] | null;
   isResearching: boolean;
 };

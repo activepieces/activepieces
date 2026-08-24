@@ -22,6 +22,7 @@ export function OnboardingQuestionCard({
   initialRole = '',
   initialCompany = '',
   initialCompanyDomain = null,
+  companyLocked = false,
   active = true,
   submitLabel,
   onComplete,
@@ -30,6 +31,7 @@ export function OnboardingQuestionCard({
   initialRole?: string;
   initialCompany?: string;
   initialCompanyDomain?: string | null;
+  companyLocked?: boolean;
   active?: boolean;
   submitLabel?: string;
   onComplete: (answers: OnboardingAnswers) => void;
@@ -63,11 +65,12 @@ export function OnboardingQuestionCard({
     .suggestRoles({ query: role, limit: 5 })
     .map((value) => ({ value }));
   const companySuggestions = useCompanySuggestions({
-    query: company,
+    query: companyLocked ? '' : company,
     email: user?.email,
   });
 
-  const valid = role.trim().length > 0 && company.trim().length > 0;
+  const valid =
+    role.trim().length > 0 && (companyLocked || company.trim().length > 0);
 
   const focusField =
     initialRole.trim().length === 0
@@ -113,25 +116,29 @@ export function OnboardingQuestionCard({
             autoFocus={focusField === 'role'}
           />
           <span>{t('at')}</span>
-          <OnboardingPill
-            inputRef={companyRef}
-            value={company}
-            onChange={(text) => {
-              setTouched(true);
-              setCompany(text);
-              setCompanyDomain(null);
-            }}
-            examples={COMPANY_EXAMPLES}
-            suggestions={companySuggestions}
-            onPickSuggestion={(suggestion) => {
-              setTouched(true);
-              setCompany(suggestion.value);
-              setCompanyDomain(suggestion.domain ?? null);
-            }}
-            onEnter={submit}
-            ariaLabel={t('Your company, industry, or website')}
-            autoFocus={focusField === 'company'}
-          />
+          {companyLocked ? (
+            <span className="text-foreground/80">{company}</span>
+          ) : (
+            <OnboardingPill
+              inputRef={companyRef}
+              value={company}
+              onChange={(text) => {
+                setTouched(true);
+                setCompany(text);
+                setCompanyDomain(null);
+              }}
+              examples={COMPANY_EXAMPLES}
+              suggestions={companySuggestions}
+              onPickSuggestion={(suggestion) => {
+                setTouched(true);
+                setCompany(suggestion.value);
+                setCompanyDomain(suggestion.domain ?? null);
+              }}
+              onEnter={submit}
+              ariaLabel={t('Your company, industry, or website')}
+              autoFocus={focusField === 'company'}
+            />
+          )}
         </div>
       }
     >
