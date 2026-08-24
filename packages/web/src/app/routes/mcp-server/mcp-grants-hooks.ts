@@ -1,6 +1,8 @@
+import { ListMcpOAuthGrantsRequestQuery } from '@activepieces/shared';
 import {
-  useInfiniteQuery,
+  keepPreviousData,
   useMutation,
+  useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -8,33 +10,27 @@ import { toast } from 'sonner';
 
 import { mcpGrantsApi } from './mcp-grants-api';
 
-const MY_GRANTS_QUERY_KEY = ['mcp-oauth-grants-me'];
+const GRANTS_QUERY_KEY = ['mcp-oauth-grants'];
 
 export const mcpGrantsQueries = {
-  useMyGrants() {
-    const query = useInfiniteQuery({
-      queryKey: MY_GRANTS_QUERY_KEY,
-      queryFn: ({ pageParam }) => mcpGrantsApi.listMine({ cursor: pageParam }),
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
+  useGrants(request: ListMcpOAuthGrantsRequestQuery) {
+    return useQuery({
+      queryKey: [...GRANTS_QUERY_KEY, request],
+      queryFn: () => mcpGrantsApi.list(request),
+      placeholderData: keepPreviousData,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
-
-    return {
-      ...query,
-      rows: query.data?.pages.flatMap((page) => page.data) ?? [],
-    };
   },
 };
 
 export const mcpGrantsMutations = {
-  useRevokeMine() {
+  useRevoke() {
     const queryClient = useQueryClient();
     return useMutation({
-      mutationFn: (ids: string[]) => mcpGrantsApi.revokeMine({ ids }),
+      mutationFn: (ids: string[]) => mcpGrantsApi.revoke({ ids }),
       onSuccess: () => {
         toast.success(t('Access ends within 15 minutes.'));
-        queryClient.invalidateQueries({ queryKey: MY_GRANTS_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: GRANTS_QUERY_KEY });
       },
       onError: () => {
         toast.error(t('Could not revoke access. Try again.'));

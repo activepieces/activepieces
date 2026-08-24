@@ -1,37 +1,46 @@
-import { SeekPage } from '@activepieces/core-utils'
 import {
     ListMcpOAuthGrantsRequestQuery,
-    McpOAuthGrant,
+    ListMcpOAuthGrantsResponse,
     PrincipalType,
     RevokeMcpOAuthGrantsRequestBody,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { userService } from '../../../user/user-service'
 import { mcpOAuthTokenService } from './mcp-oauth-token.service'
 
 export const mcpOAuthGrantsController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get('/v1/mcp-oauth/grants/me', ListMyClientsRequest, async (req): Promise<SeekPage<McpOAuthGrant>> => {
-        return mcpOAuthTokenService.listForUser({
-            userId: req.principal.id,
+    app.get('/v1/mcp-oauth/grants', ListGrantsRequest, async (req): Promise<ListMcpOAuthGrantsResponse> => {
+        return mcpOAuthTokenService.listGrants({
             platformId: req.principal.platform.id,
+            userId: await resolveScopedUserId(req),
+            projectIds: req.query.projectIds,
+            memberIds: req.query.memberIds,
+            clientKeys: req.query.clientKeys,
             cursor: req.query.cursor,
             limit: req.query.limit,
         })
     })
 
-    app.post('/v1/mcp-oauth/grants/me/revoke', RevokeMyClientsRequest, async (req, reply) => {
-        await mcpOAuthTokenService.revokeForUser({
+    app.post('/v1/mcp-oauth/grants/revoke', RevokeGrantsRequest, async (req, reply) => {
+        await mcpOAuthTokenService.revokeGrants({
             ids: req.body.ids,
-            userId: req.principal.id,
             platformId: req.principal.platform.id,
+            userId: await resolveScopedUserId(req),
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
-const ListMyClientsRequest = {
+async function resolveScopedUserId(req: FastifyRequest): Promise<string | null> {
+    const user = await userService(req.log).getOneOrFail({ id: req.principal.id })
+    return userService(req.log).isUserPrivileged(user) ? null : req.principal.id
+}
+
+const ListGrantsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
@@ -41,7 +50,7 @@ const ListMyClientsRequest = {
     },
 }
 
-const RevokeMyClientsRequest = {
+const RevokeGrantsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },

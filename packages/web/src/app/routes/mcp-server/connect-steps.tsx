@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
+import { ClientIcon } from './client-icon';
 import { IntegrationsBanner } from './integrations-banner';
 import {
   ClientGroup,
@@ -183,7 +184,7 @@ function ClientBrowser({
             />
             <Button
               variant="link"
-              className="absolute right-1.5 h-auto text-[12.5px] font-semibold"
+              className="absolute right-3.5 h-auto text-[12.5px] font-semibold"
               onClick={() => nav.showClient('unknown')}
             >
               {t('Client not listed?')}
@@ -541,23 +542,4 @@ function shortServerUrl(serverUrl: string): string {
   } catch {
     return serverUrl;
   }
-}
-
-export function ClientIcon({
-  icon,
-  className = 'size-8',
-}: {
-  icon: string;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-[9px] border bg-background',
-        className,
-      )}
-    >
-      <img src={icon} alt="" className="size-[62%]" />
-    </span>
-  );
 }

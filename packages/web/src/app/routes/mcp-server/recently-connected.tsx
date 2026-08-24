@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatUtils } from '@/lib/format-utils';
 
-import { ClientIcon } from './connect-steps';
+import { ClientIcon } from './client-icon';
 import { mcpClientBranding } from './mcp-client-branding';
 import { mcpGrantsQueries } from './mcp-grants-hooks';
 import { useMcpNav } from './mcp-nav';
@@ -16,7 +16,8 @@ const MAX_SHOWN = 3;
 
 export function RecentlyConnected() {
   const nav = useMcpNav();
-  const { rows, isLoading } = mcpGrantsQueries.useMyGrants();
+  const { data, isLoading } = mcpGrantsQueries.useGrants({ limit: 100 });
+  const rows = data?.data ?? [];
 
   if (isLoading) {
     return null;
@@ -62,7 +63,7 @@ export function RecentlyConnected() {
             <Button
               variant="link"
               className="ml-auto h-auto p-0 text-[13px] font-semibold"
-              onClick={nav.showConnected}
+              onClick={nav.showConnections}
             >
               {t('Manage connections')}
             </Button>

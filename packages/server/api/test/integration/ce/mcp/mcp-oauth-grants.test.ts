@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { DefaultProjectRole } from '@activepieces/shared'
+import { DefaultProjectRole, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../../helpers/db'
@@ -12,9 +12,14 @@ let ctx: TestContext
 const IN_30_DAYS = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 const YESTERDAY = () => new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-async function grantAccess({ userId, projectId, redirectUris, expiresAt = IN_30_DAYS(), revoked = false }: {
+const CLAUDE_REDIRECT = 'https://claude.ai/api/mcp/auth_callback'
+const CURSOR_REDIRECT = 'cursor://anysphere.cursor-retrieval/oauth/callback'
+const CODEX_REDIRECT = 'http://localhost:1455/callback/abc'
+
+async function grantAccess({ userId, projectId, platformId, redirectUris, expiresAt = IN_30_DAYS(), revoked = false }: {
     userId: string
     projectId: string | null
+    platformId?: string
     redirectUris: string[]
     expiresAt?: string
     revoked?: boolean
@@ -40,7 +45,7 @@ async function grantAccess({ userId, projectId, redirectUris, expiresAt = IN_30_
         clientId,
         userId,
         projectId,
-        platformId: ctx.platform.id,
+        platformId: platformId ?? ctx.platform.id,
         scopes: ['mcp'],
         expiresAt,
         revoked,
@@ -49,6 +54,10 @@ async function grantAccess({ userId, projectId, redirectUris, expiresAt = IN_30_
         updated: new Date().toISOString(),
     })
     return id
+}
+
+async function promoteToOperator(memberCtx: TestContext): Promise<void> {
+    await db.update('user', memberCtx.user.id, { platformRole: PlatformRole.OPERATOR })
 }
 
 describe('MCP OAuth connected clients', () => {
@@ -60,82 +69,175 @@ describe('MCP OAuth connected clients', () => {
         ctx = await createTestContext(app!)
     })
 
-    describe('GET /v1/mcp-oauth/grants/me', () => {
-        it('lists only the callers own live grants, classified, with the project name', async () => {
+    describe('GET /v1/mcp-oauth/grants scope', () => {
+        it('lists every members grant on the platform for a platform admin', async () => {
             const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/api/mcp/auth_callback'] })
-            await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: ['cursor://anysphere.cursor-retrieval/oauth/callback'] })
+            const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            const theirs = await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
 
-            const response = await ctx.get('/v1/mcp-oauth/grants/me')
+            const response = await ctx.get('/v1/mcp-oauth/grants')
 
             expect(response.statusCode).toBe(200)
-            const { data } = response.json()
-            expect(data).toHaveLength(1)
-            expect(data[0]).toMatchObject({
-                id: mine,
-                clientKey: 'claude',
-                projectId: ctx.project.id,
-                projectName: ctx.project.displayName,
-                lastUsedAt: null,
-            })
+            const { data, facets } = response.json()
+            expect(data.map((row: { id: string }) => row.id).sort()).toEqual([mine, theirs].sort())
+            expect(facets.total).toBe(2)
         })
 
-        it('lists a grant scoped to another project, since the list is not project-scoped', async () => {
-            const elsewhere = await createTestContext(app!)
-            const id = await grantAccess({ userId: ctx.user.id, projectId: elsewhere.project.id, redirectUris: ['https://claude.ai/x'] })
+        it('lists every members grant for a platform operator', async () => {
+            const operator = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.VIEWER })
+            await promoteToOperator(operator)
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            await grantAccess({ userId: operator.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
 
-            const { data } = (await ctx.get('/v1/mcp-oauth/grants/me')).json()
+            const { data } = (await operator.get('/v1/mcp-oauth/grants')).json()
+
+            expect(data).toHaveLength(2)
+        })
+
+        it('lists only their own grants for a non-privileged member', async () => {
+            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            const theirs = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+
+            const { data, facets } = (await member.get('/v1/mcp-oauth/grants')).json()
 
             expect(data).toHaveLength(1)
-            expect(data[0]).toMatchObject({ id, projectId: elsewhere.project.id })
+            expect(data[0]).toMatchObject({ id: theirs, clientKey: 'cursor' })
+            expect(facets.total).toBe(1)
+        })
+
+        it('never crosses a platform boundary', async () => {
+            const elsewhere = await createTestContext(app!)
+            await grantAccess({ userId: elsewhere.user.id, projectId: elsewhere.project.id, platformId: elsewhere.platform.id, redirectUris: [CLAUDE_REDIRECT] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants')).json()
+
+            expect(data).toHaveLength(0)
         })
 
         it('hides expired and already-revoked grants', async () => {
-            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'], expiresAt: YESTERDAY() })
-            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'], revoked: true })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], expiresAt: YESTERDAY() })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], revoked: true })
 
-            const response = await ctx.get('/v1/mcp-oauth/grants/me')
+            const { data, facets } = (await ctx.get('/v1/mcp-oauth/grants')).json()
 
-            expect(response.json().data).toHaveLength(0)
+            expect(data).toHaveLength(0)
+            expect(facets.total).toBe(0)
         })
 
-        it('renders a platform-wide grant with no project name', async () => {
-            await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: ['http://localhost:1455/callback/abc'] })
+        it('renders a platform-wide grant with no project name, and the member who signed in', async () => {
+            await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: [CODEX_REDIRECT] })
 
-            const { data } = (await ctx.get('/v1/mcp-oauth/grants/me')).json()
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants')).json()
 
-            expect(data[0]).toMatchObject({ clientKey: 'codex', projectId: null, projectName: null })
+            expect(data[0]).toMatchObject({
+                clientKey: 'codex',
+                projectId: null,
+                projectName: null,
+                member: { id: ctx.user.id, email: ctx.userIdentity.email },
+            })
         })
     })
 
-    describe('POST /v1/mcp-oauth/grants/me/revoke', () => {
-        it('revokes the callers own grant, which then leaves the list', async () => {
-            const id = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
+    describe('GET /v1/mcp-oauth/grants facets and filters', () => {
+        it('counts the whole scope by client, member and project', async () => {
+            const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: [CLAUDE_REDIRECT] })
+            await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
 
-            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [id] })
+            const { facets } = (await ctx.get('/v1/mcp-oauth/grants')).json()
+
+            expect(facets.total).toBe(3)
+            expect(sumCounts(facets.byClient)).toBe(3)
+            expect(sumCounts(facets.byMember)).toBe(3)
+            expect(sumCounts(facets.byProject)).toBe(3)
+            expect(facets.byClient.find((bucket: { clientKey: string }) => bucket.clientKey === 'claude').count).toBe(2)
+            expect(facets.byProject.find((bucket: { projectId: string | null }) => bucket.projectId === null).count).toBe(1)
+        })
+
+        it('keeps the facet counts over the whole scope while the rows are filtered', async () => {
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+
+            const { data, facets } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['cursor'] })).json()
+
+            expect(data).toHaveLength(1)
+            expect(data[0].clientKey).toBe('cursor')
+            expect(facets.total).toBe(2)
+        })
+
+        it('returns an empty page, not everything, when no client matches the key', async () => {
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['windsurf'] })).json()
+
+            expect(data).toHaveLength(0)
+        })
+
+        it('filters by member', async () => {
+            const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            const theirs = await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants', { memberIds: [other.user.id] })).json()
+
+            expect(data).toHaveLength(1)
+            expect(data[0].id).toBe(theirs)
+        })
+
+        it('filters platform-wide grants by the platform-wide sentinel', async () => {
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            const platformWide = await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: [CODEX_REDIRECT] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants', { projectIds: ['platform-wide'] })).json()
+
+            expect(data).toHaveLength(1)
+            expect(data[0].id).toBe(platformWide)
+        })
+    })
+
+    describe('POST /v1/mcp-oauth/grants/revoke', () => {
+        it('revokes a grant, which then leaves the list', async () => {
+            const id = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+
+            const response = await ctx.post('/v1/mcp-oauth/grants/revoke', { ids: [id] })
 
             expect(response.statusCode).toBe(204)
-            expect((await ctx.get('/v1/mcp-oauth/grants/me')).json().data).toHaveLength(0)
+            expect((await ctx.get('/v1/mcp-oauth/grants')).json().data).toHaveLength(0)
             expect(await db.findOneBy('mcp_oauth_token', { id })).toMatchObject({ revoked: true })
         })
 
-        it('writes nothing at all when one id in the batch is not the callers', async () => {
+        it('lets a platform admin revoke another members grant', async () => {
             const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
-            const theirs = await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: ['https://claude.ai/x'] })
+            const theirs = await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
 
-            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [mine, theirs] })
+            const response = await ctx.post('/v1/mcp-oauth/grants/revoke', { ids: [theirs] })
+
+            expect(response.statusCode).toBe(204)
+            expect(await db.findOneBy('mcp_oauth_token', { id: theirs })).toMatchObject({ revoked: true })
+        })
+
+        it('writes nothing at all when one id in a members batch is not theirs', async () => {
+            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+            const theirs = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            const mine = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+
+            const response = await member.post('/v1/mcp-oauth/grants/revoke', { ids: [theirs, mine] })
 
             expect(response.statusCode).toBe(403)
-            expect(await db.findOneBy('mcp_oauth_token', { id: mine })).toMatchObject({ revoked: false })
             expect(await db.findOneBy('mcp_oauth_token', { id: theirs })).toMatchObject({ revoked: false })
+            expect(await db.findOneBy('mcp_oauth_token', { id: mine })).toMatchObject({ revoked: false })
         })
 
         it('rejects an empty batch', async () => {
-            const response = await ctx.post('/v1/mcp-oauth/grants/me/revoke', { ids: [] })
+            const response = await ctx.post('/v1/mcp-oauth/grants/revoke', { ids: [] })
 
             expect(response.statusCode).toBe(400)
         })
     })
-
 })
+
+function sumCounts(buckets: { count: number }[]): number {
+    return buckets.reduce((total, bucket) => total + bucket.count, 0)
+}

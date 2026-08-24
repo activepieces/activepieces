@@ -421,6 +421,7 @@ import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000
 import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
 import { AddFilePlatformIdIndex1829000000000 } from './migration/postgres/1829000000000-AddFilePlatformIdIndex'
 import { AddMcpOAuthTokenClientListing1830000000000 } from './migration/postgres/1830000000000-AddMcpOAuthTokenClientListing'
+import { AddMcpOAuthTokenPlatformListing1831000000000 } from './migration/postgres/1831000000000-AddMcpOAuthTokenPlatformListing'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -857,6 +858,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropChatbot1828000000000,
         AddFilePlatformIdIndex1829000000000,
         AddMcpOAuthTokenClientListing1830000000000,
+        AddMcpOAuthTokenPlatformListing1831000000000,
     ]
     return migrations
 }

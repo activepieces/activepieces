@@ -1,5 +1,6 @@
-import { ApId, BaseModelSchema } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { UserWithMetaInformation } from '../../core/user/user'
 
 export const McpOAuthClient = z.object({
     ...BaseModelSchema,
@@ -58,15 +59,37 @@ export const McpOAuthGrant = z.object({
     clientName: z.string().nullable(),
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
+    member: UserWithMetaInformation,
     created: z.string(),
     lastUsedAt: z.string().nullable(),
 })
 
 export type McpOAuthGrant = z.infer<typeof McpOAuthGrant>
 
+export const McpOAuthGrantFacets = z.object({
+    total: z.number(),
+    byMember: z.array(z.object({ member: UserWithMetaInformation, count: z.number() })),
+    byClient: z.array(z.object({ clientKey: McpOAuthClientKey, clientName: z.string().nullable(), count: z.number() })),
+    byProject: z.array(z.object({ projectId: z.string().nullable(), projectName: z.string().nullable(), count: z.number() })),
+})
+
+export type McpOAuthGrantFacets = z.infer<typeof McpOAuthGrantFacets>
+
+export const ListMcpOAuthGrantsResponse = z.object({
+    data: z.array(McpOAuthGrant),
+    next: z.string().nullable(),
+    previous: z.string().nullable(),
+    facets: McpOAuthGrantFacets,
+})
+
+export type ListMcpOAuthGrantsResponse = z.infer<typeof ListMcpOAuthGrantsResponse>
+
 export const ListMcpOAuthGrantsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
+    projectIds: OptionalArrayFromQuery(z.string()),
+    memberIds: OptionalArrayFromQuery(ApId),
+    clientKeys: OptionalArrayFromQuery(McpOAuthClientKey),
 })
 
 export type ListMcpOAuthGrantsRequestQuery = z.infer<typeof ListMcpOAuthGrantsRequestQuery>
@@ -76,3 +99,5 @@ export const RevokeMcpOAuthGrantsRequestBody = z.object({
 })
 
 export type RevokeMcpOAuthGrantsRequestBody = z.infer<typeof RevokeMcpOAuthGrantsRequestBody>
+
+export const PLATFORM_WIDE_GRANT_FILTER_VALUE = 'platform-wide'

@@ -20,6 +20,7 @@ type DropdownFilterProps = {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
+    count?: number;
   }[];
 };
 
