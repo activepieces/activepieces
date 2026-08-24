@@ -2484,7 +2484,7 @@
   "Could not save this key": "Could not save this key",
   "Who am I teaming up with?": "Who am I teaming up with?",
   "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.": "I'm your AI teammate — research, emails, whole automations, run end to end. Tell me who you are and I'll line up examples built just for you.",
-  "I'm a {role} at {company}. Show me what you could take off my plate.": "I'm a {role} at {company}. Show me what you could take off my plate.",
+  "I work at {company} and my role is: {role}. What can you take off my plate?": "I work at {company} and my role is: {role}. What can you take off my plate?",
   "I'm a": "I'm a",
   "at": "at",
   "Your role": "Your role",
@@ -2507,7 +2507,5 @@
   "Recently used": "Recently used",
   "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
   "Show all projects": "Show all projects",
-  "Sort pinned projects": "Sort pinned projects",
-  "Unpin": "Unpin",
-  "Pin": "Pin"
+  "Sort pinned projects": "Sort pinned projects"
 }
