@@ -58,7 +58,7 @@ export function ConnectSteps({
 
   if (isBrowsingAll) {
     return (
-      <AllClients
+      <ClientBrowser
         clients={clients}
         serverUrl={serverUrl}
         onSelect={setSelectedKey}
@@ -157,7 +157,7 @@ function ConnectLanding({
   );
 }
 
-function AllClients({
+function ClientBrowser({
   clients,
   serverUrl,
   onSelect,
@@ -358,7 +358,7 @@ function ClientInstructions({
       <div className="mx-auto w-full max-w-[1198px] flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
         <div className="flex min-w-0 flex-1 flex-col">
           {client.steps.map((step, index) => (
-            <ConnectStepDetails
+            <ConnectStepRow
               key={step.title}
               number={index + 1}
               step={step}
@@ -411,7 +411,7 @@ function ClientInstructions({
   );
 }
 
-function ConnectStepDetails({
+function ConnectStepRow({
   number,
   step,
   config,
@@ -425,7 +425,7 @@ function ConnectStepDetails({
   isPublicUrl: boolean;
 }) {
   const blockedByPrivateUrl =
-    step.action?.requiresPublicUrl === true && !isPublicUrl;
+    step.action?.requiresInternetReachableUrl === true && !isPublicUrl;
 
   return (
     <div className="flex gap-4">
