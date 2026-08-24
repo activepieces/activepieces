@@ -1,10 +1,11 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, ColorName, FlowActionType, FlowTriggerType, PauseType } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, FlowActionType, FlowTriggerType, PauseType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
 import { WaitpointStatus } from '../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -14,8 +15,10 @@ const RUNS_URL = '/api/v1/agents/runs'
 
 let app: FastifyInstance
 
+const originalJobQueue = jobQueueModule.jobQueue
+
 beforeAll(async () => {
-    app = await setupTestEnvironment()
+    app = await setupTestEnvironment({ fresh: true })
 })
 
 afterAll(async () => {
@@ -155,7 +158,7 @@ describe('a flow step that links a saved agent', () => {
         const response = await startRun(mine, { agentId: theirAgent.externalId })
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('not in this project')
+        expect(JSON.stringify(response.json())).toContain('not available to this project')
     })
 
     it('refuses a step that both links an agent and carries its own tools', async () => {
@@ -248,6 +251,18 @@ describe('a flow step that links a saved agent', () => {
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
     })
 
+    it('refuses an agent the project cannot all see, since nobody is watching the run', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED, sharedWithUserIds: [] })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        const response = await startRun(ctx, { agentId: agent.externalId })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('not available to this project')
+    })
+
     it('refuses an agent that belongs to a sibling step, not the one the waitpoint names', async () => {
         const ctx = await context()
         const mine = await createAgent(ctx)
@@ -268,6 +283,67 @@ describe('a flow step that links a saved agent', () => {
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
+    })
+})
+
+describe('what the linked run actually sends to the worker', () => {
+    let addSpy: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+        addSpy = vi.fn()
+        vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({
+            ...originalJobQueue(log),
+            add: addSpy,
+        }))
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('sends the agent\'s instructions, tools, model and step budget, not the step\'s own', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, {
+            instructions: 'Sort the inbox.',
+            maxSteps: 7,
+            tools: [{ type: AgentToolType.PIECE, toolName: 'read_inbox', pieceMetadata: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'gmail_search_mail' } }],
+        })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        const response = await startRun(ctx, {
+            agentId: agent.externalId,
+            provider: AIProviderName.ANTHROPIC,
+            modelName: 'claude-x',
+            maxSteps: 99,
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job).toBeDefined()
+        expect(job.data.promptOverride).toEqual({ system: 'Sort the inbox.' })
+        expect(job.data.modelName).toBe('gpt-5')
+        expect(job.data.provider).toBe(AIProviderName.OPENAI)
+        expect(job.data.maxSteps).toBe(7)
+        expect(job.data.tools.map((tool: { toolName: string }) => tool.toolName)).toEqual(['read_inbox'])
+        expect(job.data.source).toBe(AgentRunSource.FLOW_STEP)
+    })
+
+    it('leaves an unlinked step running its own config, with no instructions of ours', async () => {
+        const ctx = await context()
+
+        const response = await startRun(ctx, {
+            provider: AIProviderName.OPENAI,
+            modelName: 'gpt-5',
+            maxSteps: 99,
+            tools: [],
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job).toBeDefined()
+        expect(job.data.promptOverride).toBeUndefined()
+        expect(job.data.modelName).toBe('gpt-5')
+        expect(job.data.maxSteps).toBe(99)
     })
 })
 

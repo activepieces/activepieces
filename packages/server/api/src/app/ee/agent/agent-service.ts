@@ -153,8 +153,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
-    async getOneByExternalId({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<Agent | null> {
-        return agentRepo().findOneBy({ projectId, externalId })
+    async getOneByExternalId({ projectId, externalId, visibility }: { projectId: ProjectId, externalId: string, visibility: AgentVisibility }): Promise<Agent | null> {
+        return agentRepo().findOneBy({ projectId, externalId, visibility })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {

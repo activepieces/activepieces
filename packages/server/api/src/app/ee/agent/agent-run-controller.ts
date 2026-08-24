@@ -1,6 +1,6 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AgentVisibility, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -58,7 +58,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: linked?.providerConfigId ?? providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
@@ -110,9 +110,9 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     if (isNil(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
     }
-    const agent = await agentService(log).getOneByExternalId({ projectId, externalId })
+    const agent = await agentService(log).getOneByExternalId({ projectId, externalId, visibility: AgentVisibility.PROJECT })
     if (isNil(agent)) {
-        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The agent this step runs is not in this project. Pick an agent that lives here, or create one.' } })
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The agent this step runs is not available to this project. A flow runs unattended, so a step can only run an agent the whole project can see.' } })
     }
     if (isNil(agent.published)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Publish "${agent.displayName}" before a flow can run it: a flow runs the published version, so there is nothing to run yet.` } })
