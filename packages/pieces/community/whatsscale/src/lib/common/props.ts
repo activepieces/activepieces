@@ -216,7 +216,7 @@ export const whatsscaleProps = {
           HttpMethod.GET,
           '/make/crm/contacts'
         );
-        const contacts = response.body;
+        const contacts = response.body as { label: string; value: string }[];
         if (!contacts || contacts.length === 0) {
           return {
             disabled: true,
@@ -224,13 +224,7 @@ export const whatsscaleProps = {
             placeholder: 'No CRM contacts found',
           };
         }
-        return {
-          disabled: false,
-          options: contacts.map((contact: any) => ({
-            label: contact.name,
-            value: contact.id,
-          })),
-        };
+        return { disabled: false, options: contacts };
       } catch (e) {
         console.debug(e);
         return {
