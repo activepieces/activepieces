@@ -15,7 +15,7 @@ export const sendLocationManualAction = createAction({
   displayName: 'Send a Location (By ID)',
   description: 'Send GPS coordinates to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'both',
-  aiMetadata: { description: 'Sends a GPS location to a recipient identified directly by ID rather than a builder dropdown, with an optional place name. Not idempotent: each call sends another location message.', idempotent: false },
+  aiMetadata: { description: 'Sends a GPS location to a recipient identified directly by ID rather than a builder dropdown, with an optional place name. WhatsApp does not support locations in channels, so channel is not offered as a recipient type. Not idempotent: each call sends another location message.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
@@ -28,7 +28,6 @@ export const sendLocationManualAction = createAction({
         options: [
           { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
           { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },
-          { label: 'Channel', value: ChatType.CHANNEL, description: 'A WhatsApp Channel by ID', icon: 'send' },
           { label: 'CRM Contact', value: ChatType.CRM_CONTACT, description: 'A WhatsScale CRM contact by ID', icon: 'tag' },
         ],
       },
@@ -36,7 +35,7 @@ export const sendLocationManualAction = createAction({
     recipient: Property.ShortText({
       displayName: 'Recipient ID',
       description:
-        'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
+        'Contact: phone number with country code. Group: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
       required: true,
     }),
     latitude: Property.Number({
