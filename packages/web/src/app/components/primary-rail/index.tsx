@@ -3,6 +3,7 @@ import {
   ApEdition,
   ApFlagId,
   isNil,
+  PlatformRole,
   PROJECT_COLOR_PALETTE,
   ProjectType,
   ProjectWithLimits,
@@ -51,6 +52,7 @@ import {
 import { SidebarUsageLimits } from '@/features/billing';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
+  CreateProjectButton,
   getProjectName,
   PlatformSwitcher,
   projectCollectionUtils,
@@ -369,8 +371,13 @@ function RailNavButton({
 function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
   const { pinnedIds, unpin, showAll, setShowAll } = usePinnedProjects();
   const { data: projects } = projectCollectionUtils.useAll();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const location = useLocation();
   const navigate = useNavigate();
+  const showCreateProject =
+    platform.plan.billedTeamProjectsLimit !== 0 &&
+    currentUser?.platformRole === PlatformRole.ADMIN;
   const [sort, setSort] = useState<PinnedSort>(() =>
     readStoredSort(localStorage.getItem(PINNED_SORT_KEY)),
   );
@@ -421,13 +428,24 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
           <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
             {listingEverything ? t('Projects') : t('Pinned projects')}
           </span>
-          <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover/pinned:opacity-100">
-            <PinnedSortMenu
-              sort={sort}
-              onChange={changeSort}
-              showAll={listingEverything}
-              onShowAllChange={setShowAll}
-            />
+          <div className="ml-auto flex items-center gap-0.5">
+            {showCreateProject && (
+              <CreateProjectButton
+                variant="icon"
+                projects={projects ?? []}
+                onCreate={(project) => {
+                  navigate(`/projects/${project.id}/automations`);
+                }}
+              />
+            )}
+            <div className="opacity-0 transition-opacity group-hover/pinned:opacity-100">
+              <PinnedSortMenu
+                sort={sort}
+                onChange={changeSort}
+                showAll={listingEverything}
+                onShowAllChange={setShowAll}
+              />
+            </div>
           </div>
         </div>
       )}
