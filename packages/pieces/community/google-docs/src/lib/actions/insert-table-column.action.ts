@@ -7,6 +7,7 @@ import { insertTableColumnActionOutputSchema } from '../output-schemas';
 export const insertTableColumn = createAction({
   auth: googleDocsAuth,
   name: 'insert_table_column',
+  classification: 'WRITE',
   displayName: 'Insert Table Column',
   description: 'Insert a column into an existing table in a Google Docs document',
   audience: 'ai',

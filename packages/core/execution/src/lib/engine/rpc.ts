@@ -41,6 +41,7 @@ export function createRpcClient<T extends Contract>(
 export function createRpcServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
     socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
@@ -49,6 +50,7 @@ export function createRpcServer<T extends Contract>(
             ack(result)
         }
         catch (error) {
+            log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
             ack({ __rpcError: error instanceof Error ? error.message : String(error) })
         }
     })
@@ -69,13 +71,22 @@ export function createNotifyClient<T extends Contract>(
 export function createNotifyServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
-    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown }) => {
-        const handler = handlers[msg.method as keyof T]
-        handler(msg.payload)
+    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown } | null | undefined) => {
+        const handler = handlers[msg?.method as keyof T]
+        if (typeof handler !== 'function') {
+            log?.error({ rpc: { method: String(msg?.method) } }, 'Notify received for unknown method, ignoring')
+            return
+        }
+        handler(msg?.payload)
     })
 }
 
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
     return typeof value === 'object' && value !== null && '__rpcError' in value
+}
+
+type RpcLog = {
+    error(obj: unknown, msg: string): void
 }

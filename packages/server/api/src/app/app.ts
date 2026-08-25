@@ -18,6 +18,7 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { otpModule } from './authentication/otp/otp-module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -36,7 +37,6 @@ import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
@@ -102,7 +102,6 @@ import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
-import { teamsBotModule } from './teams-bot/teams-bot.module'
 import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -216,7 +215,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
-    await app.register(teamsBotModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
@@ -384,6 +382,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
+            await app.register(otpModule)
             break
     }
 

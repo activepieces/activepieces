@@ -55,4 +55,39 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
     );
     expect(hasMention).toBe(true);
   });
+
+  describe('references inside quotes keep their mention node', () => {
+    it.each([
+      '"{{step_4[\'output\'][\'result\']}}"',
+      '"{{step_4["output"]["result"]}}"',
+      "'{{step_4.result}}'",
+      'fullText contains "{{step_4.result}}',
+      'ap-formula-v1::{upper("{{step_1.name}}")}::ap-formula-v1',
+    ])('renders a mention for %j', (input) => {
+      const paragraphs = convert(input);
+      const hasMention = paragraphs[0].content.some(
+        (node) => node.type === 'mention',
+      );
+      expect(hasMention).toBe(true);
+    });
+
+    it.each([
+      '"{{step_4[\'output\'][\'result\']}}"',
+      '"{{step_4["output"]["result"]}}"',
+      '"{{step_1.name}} upper(x)"',
+      'ap-formula-v1::{upper("(CEO); still inside")}::ap-formula-v1',
+      'ap-formula-v1::{upper("pre {{step_1.name}} post")}::ap-formula-v1',
+      'ap-formula-v1::{upper("(a) {{step_1.name}} (b); x")}::ap-formula-v1',
+      'ap-formula-v1::{concat("{{a"}}; lower(x))}::ap-formula-v1',
+      'ap-formula-v1::{upper("literal {{ braces }} here")}::ap-formula-v1',
+      'ap-formula-v1::{upper({{step_1["a\'b"]}}; x)}::ap-formula-v1',
+      "ap-formula-v1::{upper('pre {{step_1['output']['a\\'b']}} and lower(x)')}::ap-formula-v1",
+    ])('round-trips %j losslessly', (input) => {
+      const back = textMentionUtils.convertTiptapJsonToText({
+        type: 'doc',
+        content: convert(input),
+      });
+      expect(back).toBe(input);
+    });
+  });
 });

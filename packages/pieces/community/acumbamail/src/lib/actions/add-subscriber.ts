@@ -11,6 +11,7 @@ import { acumbamailCommon } from '../common';
 export const addUpdateSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_add_update_subscriber',
+  classification: 'WRITE',
   displayName: 'Add/Update Subscriber',
   description:
     'Adds a new subscriber to a subscriber list of your choosing.Can be used to update an existing subscriber too.',

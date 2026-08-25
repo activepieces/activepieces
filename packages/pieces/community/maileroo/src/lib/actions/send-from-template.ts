@@ -8,6 +8,7 @@ import { buildAttachmentList, toEmailObjects } from '../common';
 export const sendFromTemplate = createAction({
   auth: mailerooAuth,
   name: 'sendFromTemplate',
+  classification: 'WRITE',
   displayName: 'Send Email using Template',
   description: 'Sends an email from an existing template.',
   audience: 'both',

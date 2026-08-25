@@ -20,7 +20,7 @@ export const apRetryRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         permission: Permission.WRITE_RUN,
         description: 'Retry a failed flow run. FROM_FAILED_STEP resumes at failure point, ON_LATEST_VERSION re-runs entirely.',
         inputSchema: retryRunInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { flowRunId, strategy } = retryRunInput.parse(args)

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createAContact = createAction({
   auth: aircallAuth,
   name: 'createAContact',
+  classification: 'WRITE',
   displayName: 'Create a Contact',
   description:'Creates a new contact.',
   audience: 'both',

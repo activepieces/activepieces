@@ -7,6 +7,7 @@ import { checklistOutputSchema } from '../../output-schemas';
 export const clickupUpdateChecklistItem = createAction({
   auth: clickupAuth,
   name: 'clickup_update_checklist_item',
+  classification: 'WRITE',
   description: 'Edit, resolve, or nest a ClickUp checklist item',
   audience: 'ai',
   aiMetadata: {

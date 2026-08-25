@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const clickupAddTaskDependencyAi = createAction({
   auth: clickupAuth,
   name: 'clickup_add_task_dependency',
+  classification: 'WRITE',
   description: 'Add a dependency between two tasks',
   audience: 'ai',
   aiMetadata: {

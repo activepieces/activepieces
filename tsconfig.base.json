@@ -1070,6 +1070,12 @@
       "@activepieces/piece-quickbooks": [
         "packages/pieces/community/quickbooks/src/index.ts"
       ],
+      "@activepieces/piece-quickbooks-desktop-conductor": [
+        "packages/pieces/community/quickbooks-desktop-conductor/src/index.ts"
+      ],
+      "@activepieces/piece-quickbooks-sandbox": [
+        "packages/pieces/community/quickbooks-sandbox/src/index.ts"
+      ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
       ],

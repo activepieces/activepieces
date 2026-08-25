@@ -6,6 +6,7 @@ import { eventOutputSchema } from '../output-schemas';
 export const aiCreateEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_create_event',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description:
     'Create a new event on a Google Calendar with structured fields (title, start/end, location, description, attendees, color) and an optional Google Meet link.',

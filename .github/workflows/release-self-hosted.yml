@@ -115,6 +115,17 @@ jobs:
           image: ghcr.io/activepieces/activepieces:${{ inputs.tag }}
           version: ${{ inputs.tag }}
 
+      - name: Notify on-call channel
+        if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_ON_CALL_WEBHOOK }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"📦 **Self-hosted $TAG released**\\n\\n**Docker image:** \`activepieces/activepieces:$TAG\` (also on ghcr.io)\\n**Changelog:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/$TAG\\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "$WEBHOOK"
+
   sync-version-to-main:
     needs: release
     if: ${{ !cancelled() && needs.release.result == 'success' }}

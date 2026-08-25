@@ -31,6 +31,7 @@ const ALL_COLUMNS = 'all_columns';
 export const newOrUpdatedRowTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'google-sheets-new-or-updated-row',
+	classification: 'READ',
 	displayName: 'New or Updated Row',
 	description: 'Triggers when a new row is added or modified in a spreadsheet.',
 	aiMetadata: {

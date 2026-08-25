@@ -2,8 +2,9 @@ import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
+import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -18,7 +19,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { ProjectDashboardSidebar } from '../sidebar/dashboard';
+import { PrimaryRail } from '../primary-rail';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
 
@@ -53,9 +54,7 @@ export function ProjectDashboardLayout({
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
-  if (isNil(currentProjectId) || currentProjectId === '') {
-    return <Navigate to="/sign-in" replace />;
-  }
+  const hasNoProject = isNil(currentProjectId) || currentProjectId === '';
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -79,24 +78,40 @@ export function ProjectDashboardLayout({
       icon: CompassIcon,
       hasPermission: true,
     },
+    {
+      to: '/agents',
+      label: t('Agents'),
+      show: !isEmbedded,
+      icon: BotIcon,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
+    hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  const inner = (
+    <GlobalSearchProvider>
+      <ProjectDashboardLayoutInner
+        hideHeader={hideHeader}
+        isEmbedded={isEmbedded}
+        currentProjectId={currentProjectId ?? ''}
+      >
+        {children}
+      </ProjectDashboardLayoutInner>
+      {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+    </GlobalSearchProvider>
+  );
+
+  if (hasNoProject) {
+    return inner;
+  }
+
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <GlobalSearchProvider>
-        <ProjectDashboardLayoutInner
-          hideHeader={hideHeader}
-          isEmbedded={isEmbedded}
-          currentProjectId={currentProjectId}
-        >
-          {children}
-        </ProjectDashboardLayoutInner>
-        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      </GlobalSearchProvider>
+    <ProjectChangedRedirector currentProjectId={currentProjectId!}>
+      {inner}
     </ProjectChangedRedirector>
   );
 }
@@ -115,31 +130,37 @@ function ProjectDashboardLayoutInner({
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider defaultOpen={false} hoverMode={!searchOpen}>
-      {!isEmbedded && <ProjectDashboardSidebar />}
-      <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div
-          className={cn(
-            'flex-1 flex flex-col overflow-hidden',
-            !isEmbedded && 'pr-2 pt-3 pb-3',
-          )}
-        >
+    <div className="flex h-full w-full overflow-hidden">
+      {!isEmbedded && <PrimaryRail />}
+      <SidebarProvider
+        defaultOpen={false}
+        hoverMode={!searchOpen}
+        className="flex-1 min-w-0 w-auto will-change-transform"
+      >
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div
-            id="dashboard-content-container"
             className={cn(
-              'relative flex flex-col h-full bg-background overflow-clip',
-              !isEmbedded &&
-                'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              'flex-1 flex flex-col overflow-hidden',
+              !isEmbedded && 'pr-2 pt-3 pb-3',
             )}
           >
-            {!hideHeader && (
-              <ProjectDashboardLayoutHeader key={currentProjectId} />
-            )}
-            <CreditsUsageAlert />
-            <div className="flex-1 overflow-auto">{children}</div>
+            <div
+              id="dashboard-content-container"
+              className={cn(
+                'relative flex flex-col h-full bg-background overflow-clip',
+                !isEmbedded &&
+                  'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              )}
+            >
+              {!hideHeader && (
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
+              )}
+              <CreditsUsageAlert />
+              <div className="flex-1 overflow-auto">{children}</div>
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

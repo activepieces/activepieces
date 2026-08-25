@@ -20,6 +20,13 @@ function isPaidPlan(planName: string | null | undefined): planName is string {
   return !isNil(planName) && planName !== PlanName.FREE;
 }
 
+function isYearlyPlan(info: IsYearlyPlanInfo): boolean {
+  if (info.planInterval === 'one_off') {
+    return info.creditsResetInterval === 'year';
+  }
+  return info.planInterval === 'year';
+}
+
 function percentUsed({ used, total }: PercentUsedParams): number {
   if (isNil(total) || total <= 0) {
     return 0;
@@ -168,6 +175,7 @@ function formatTimeUntil(value: string): string {
 
 export const billingUtils = {
   isPaidPlan,
+  isYearlyPlan,
   percentUsed,
   creditsSeverity,
   formatCredits,
@@ -179,6 +187,11 @@ export const billingUtils = {
 };
 
 export const BILLING_DATE_FORMAT = 'MMM D, YYYY';
+
+export type IsYearlyPlanInfo = Pick<
+  PlatformBillingInformation,
+  'planInterval' | 'creditsResetInterval'
+>;
 
 export type CreditsSeverity = 'default' | 'warning' | 'error';
 

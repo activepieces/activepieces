@@ -1,13 +1,13 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
+import { pieceRunner } from '../core/piece/piece-runner'
+import { triggerRunner } from '../core/piece/trigger-runner'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
-import { pieceLoader } from '../helper/piece-loader'
-import { triggerHelper } from '../helper/trigger-helper'
 import { utils } from '../utils'
 import { collectSensitiveOutputPaths } from '../variables/output-sensitive-paths'
 import { resolveJobPayload } from './utils/resolve-job-payload'
@@ -143,16 +143,16 @@ async function collectTriggerSensitivePaths({ trigger, payload, devPieces }: Col
     if (trigger.type !== FlowTriggerType.PIECE || isNil(trigger.settings.triggerName)) {
         return undefined
     }
-    const { data } = await tryCatch(() => pieceLoader.getPieceAndTriggerOrThrow({
+    const { data: description } = await tryCatch(() => pieceRunner.describe({
         pieceName: trigger.settings.pieceName,
         pieceVersion: trigger.settings.pieceVersion,
-        triggerName: trigger.settings.triggerName!,
         devPieces,
     }))
-    if (isNil(data)) {
+    const pieceTrigger = description?.metadata.triggers[trigger.settings.triggerName]
+    if (isNil(pieceTrigger)) {
         return undefined
     }
-    return collectSensitiveOutputPaths(data.pieceTrigger.outputSchema, payload)
+    return collectSensitiveOutputPaths(pieceTrigger.outputSchema, payload)
 }
 
 async function buildFailedTriggerContext({ input, baseContext, error, constants }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
@@ -209,7 +209,7 @@ async function runOrReturnPayload(input: ResolvedBeginExecuteFlowOperation, cons
     if (!input.executeTrigger) {
         return input.triggerPayload as TriggerPayload
     }
-    const newPayload = await triggerHelper.executeTrigger({
+    const newPayload = await triggerRunner.executeTrigger({
         params: {
             ...input,
             hookType: TriggerHookType.RUN,

@@ -22,6 +22,7 @@ import { newItemTriggerOutputSchema } from '../output-schemas';
 
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
+  classification: 'READ',
   displayName: 'New Item In Feed',
   description: 'Runs when a new item is added in the RSS feed',
   aiMetadata: {

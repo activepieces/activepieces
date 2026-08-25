@@ -9,6 +9,7 @@ import { secretIdDropdown } from '../common/props';
 export const getSecretValue = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'getSecretValue',
+  classification: 'READ',
   displayName: 'Get Secret Value',
   description: 'Retrieves a secret value.',
   audience: 'both',

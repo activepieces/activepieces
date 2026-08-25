@@ -5,6 +5,7 @@ import { makeClient } from '../common/client';
 export const linearRemovedProject = createTrigger({
   auth: linearAuth,
   name: 'removed_project',
+  classification: 'READ',
   displayName: 'Removed Project',
   description: 'Triggers when an existing Linear project is removed',
   aiMetadata: {

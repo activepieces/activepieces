@@ -23,6 +23,7 @@ import { updateMultipleRowsActionOutputSchema } from '../output-schemas';
 export const updateMultipleRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'update-multiple-rows',
+  classification: 'WRITE',
   displayName: 'Update Multiple Rows',
   description: 'Updates multiple rows in a specific spreadsheet.',
   audience: 'human',

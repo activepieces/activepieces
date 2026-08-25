@@ -5,6 +5,7 @@ import { twilioAuth } from '../..';
 export const twilioPhoneNumberLookup = createAction({
   auth: twilioAuth,
   name: 'phone_number_lookup',
+  classification: 'READ',
   description: 'Lookup information about a phone number.',
   audience: 'both',
   aiMetadata: { description: 'Looks up carrier and line-type intelligence for a single phone number via the Twilio Lookup API. Use to validate or enrich a number (e.g. detect mobile vs landline, carrier) before messaging or calling it. Read-only and idempotent.', idempotent: true },

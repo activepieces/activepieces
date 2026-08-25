@@ -71,18 +71,17 @@ export const flowRunProgressReporter = {
             })
         })
     },
-    createOutputContext: (params: CreateOutputContextParams): OutputContext => {
-        const { engineConstants, outputSchema } = params
+    createOutputContext: ({ internalApiUrl, engineToken, projectId, flowRunId, outputSchema }: CreateOutputContextParams): OutputContext => {
         return {
             update: async (updateParams: { data: unknown }) => {
                 const sensitivePaths = collectSensitiveOutputPaths(outputSchema, updateParams.data)
                 const redactedOutput = applySensitivePaths(updateParams.data, sensitivePaths)
                 const { error } = await tryCatch(() => engineRunApi.updateStepProgress({
-                    apiUrl: engineConstants.internalApiUrl,
-                    engineToken: engineConstants.engineToken,
+                    apiUrl: internalApiUrl,
+                    engineToken,
                     request: {
-                        projectId: engineConstants.projectId,
-                        runId: engineConstants.flowRunId,
+                        projectId,
+                        runId: flowRunId,
                         output: redactedOutput,
                     },
                 }))
@@ -247,8 +246,11 @@ type UpdateStepProgressParams = {
 }
 
 type CreateOutputContextParams = {
-    engineConstants: EngineConstants
-    outputSchema: OutputSchema | undefined
+    internalApiUrl: string
+    engineToken: string
+    projectId: string
+    flowRunId: string
+    outputSchema?: OutputSchema
 }
 
 type ExtractStepResponse = {

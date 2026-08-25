@@ -119,6 +119,7 @@ const polling: Polling<KlaviyoAuthValue, Record<string, unknown>> = {
 export const newProfileTrigger = createTrigger({
   auth: klaviyoAuth,
   name: 'newProfile',
+  classification: 'READ',
   displayName: 'New Profile',
   description: 'Triggers when a new profile is created in Klaviyo.',
   aiMetadata: {

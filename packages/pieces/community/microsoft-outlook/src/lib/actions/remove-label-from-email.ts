@@ -2,14 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { messageIdDropdown } from '../common/props';
+import { messageActionOutputSchema } from '../output-schemas';
 
 export const removeLabelFromEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'removeLabelFromEmail',
+	classification: 'WRITE',
 	displayName: 'Remove Label from Email',
 	description: 'Removes a category (label) from an email message.',
 	audience: 'both',
 	aiMetadata: { description: 'Removes one or more Outlook categories (labels) from a specific message, leaving any other categories intact. Use this to untag or reclassify an email. Idempotent: re-running with the same categories yields the same final label set.', idempotent: true },
+	outputSchema: messageActionOutputSchema,
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',

@@ -16,6 +16,7 @@ import { watchRunsTriggerOutputSchema } from '../output-schemas';
 export const watchTaskRunsTrigger = createTrigger({
   auth: apifyAuth,
   name: 'watchTaskRunsTrigger',
+  classification: 'READ',
   displayName: 'Watch Task Runs',
   description: 'Triggers a Flow on Apify Actor task run events',
   outputSchema: watchRunsTriggerOutputSchema,

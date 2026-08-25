@@ -18,11 +18,15 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
-    mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
+    mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
     mockFindOne: vi.fn().mockResolvedValue(null),
     mockTrack: vi.fn().mockResolvedValue(undefined),
     mockSendConversationUpdate: vi.fn(),
+}))
+
+const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+    mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
 }))
 
 const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
@@ -86,11 +90,13 @@ type QueryBuilderMock = {
     set: (values: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
-    execute: () => Promise<{ affected: number }>
+    returning: (columns: string) => QueryBuilderMock
+    execute: () => Promise<{ raw?: unknown[] }>
 }
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
+        assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         resolveFastModel: () => ({}),
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
@@ -103,6 +109,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                     set: (values) => { mockSet(values); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    returning: () => builder,
                     execute: mockExecute,
                 }
                 return builder
@@ -220,7 +227,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('does not bill when the fenced save was rejected (preempted by a newer run)', async () => {
-        mockExecute.mockResolvedValue({ affected: 0 })
+        mockExecute.mockResolvedValue({ raw: [] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -230,7 +237,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('bills under the owning run id when the save landed', async () => {
-        mockExecute.mockResolvedValue({ affected: 1 })
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -239,13 +246,13 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
         expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
     })
 
-    it('still bills when affected is undefined (driver reports no row count)', async () => {
+    it('does not bill when the write returned nothing, on any driver', async () => {
         mockExecute.mockResolvedValue({})
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
 
-        expect(mockTrack).toHaveBeenCalledTimes(1)
+        expect(mockTrack).not.toHaveBeenCalled()
     })
 })
 
@@ -285,6 +292,8 @@ async function callUpdateProjectContext(input: { conversationId: string, runId?:
 describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
     beforeEach(() => {
         mockSet.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockResolvedValue(undefined)
     })
 
     it('refuses to move a flow-step run to another project', async () => {
@@ -308,6 +317,14 @@ describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its
         await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
 
         expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('keeps a chat run out of a project its running key excludes', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own', platformId: 'plat-1' })
+        mockAssertProjectSwitchKeepsKey.mockRejectedValue(new Error('key not available there'))
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
     })
 })
 
