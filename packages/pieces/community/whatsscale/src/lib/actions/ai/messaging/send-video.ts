@@ -17,7 +17,7 @@ export const sendVideoManualAction = createAction({
   displayName: 'Send a Video (By ID)',
   description: 'Send a video to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends a video to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable video URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another video.', idempotent: false },
+  aiMetadata: { description: 'Sends a video to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set chatType to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable video URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another video.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,

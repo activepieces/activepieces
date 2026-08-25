@@ -16,7 +16,7 @@ export const sendImageManualAction = createAction({
   displayName: 'Send an Image (By ID)',
   description: 'Send an image to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends an image to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable image URL or a file from a previous step. Not idempotent: each call delivers another image.', idempotent: false },
+  aiMetadata: { description: 'Sends an image to a recipient identified directly by ID rather than a builder dropdown, with an optional caption. Set chatType to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable image URL or a file from a previous step. Not idempotent: each call delivers another image.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,

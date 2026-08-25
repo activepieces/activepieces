@@ -17,7 +17,7 @@ export const sendDocumentManualAction = createAction({
   displayName: 'Send a Document (By ID)',
   description: 'Send a document to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends a document/file to a recipient identified directly by ID rather than a builder dropdown, with an optional display filename and caption. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable document URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another document.', idempotent: false },
+  aiMetadata: { description: 'Sends a document/file to a recipient identified directly by ID rather than a builder dropdown, with an optional display filename and caption. Set chatType to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Takes either a directly downloadable document URL or a file from a previous step; the send completes asynchronously. Not idempotent: each call delivers another document.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,

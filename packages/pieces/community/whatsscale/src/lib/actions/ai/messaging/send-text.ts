@@ -15,7 +15,7 @@ export const sendTextManualAction = createAction({
   displayName: 'Send a Text Message (By ID)',
   description: 'Send a text message to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Sends a text message to a recipient identified directly by ID rather than a builder dropdown. Set recipient_type to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Not idempotent: each call sends another message.', idempotent: false },
+  aiMetadata: { description: 'Sends a text message to a recipient identified directly by ID rather than a builder dropdown. Set chatType to contact (phone number with country code), group or channel (bare ID, no @ suffix needed), or crm_contact (WhatsScale CRM contact ID). Not idempotent: each call sends another message.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,

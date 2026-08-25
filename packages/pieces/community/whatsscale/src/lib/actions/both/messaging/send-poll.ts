@@ -15,7 +15,7 @@ export const sendPollManualAction = createAction({
   displayName: 'Send a Poll (By ID)',
   description: 'Send an interactive poll to a contact, group, channel, or CRM contact by ID rather than picking from a list.',
   audience: 'both',
-  aiMetadata: { description: 'Sends an interactive poll (2-12 options) to a recipient identified directly by ID rather than a builder dropdown. Set multiple_answers to allow more than one option to be selected. Not idempotent: each call sends another poll.', idempotent: false },
+  aiMetadata: { description: 'Sends an interactive poll (2-12 options) to a recipient identified directly by ID rather than a builder dropdown. Set multipleAnswers to allow more than one option to be selected. Not idempotent: each call sends another poll.', idempotent: false },
   outputSchema: sendMessageResultOutputSchema,
   props: {
     session: whatsscaleProps.session,
