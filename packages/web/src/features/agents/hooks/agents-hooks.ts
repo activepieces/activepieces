@@ -1,7 +1,5 @@
 import {
   Agent,
-  ApEdition,
-  agentVisibility,
   ApFlagId,
   CreateAgentRequest,
   DraftAgentRequest,
@@ -29,13 +27,8 @@ export const useAgentsEnabled = (): boolean => {
 
 export const useAgentsAvailable = (): boolean => {
   const releaseEnabled = useAgentsEnabled();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
-  return agentVisibility.resolveAgentsEnabled({
-    edition: edition ?? ApEdition.CLOUD,
-    releaseEnabled,
-    planAgentsEnabled: platform.plan.agentsEnabled,
-  });
+  return releaseEnabled && platform.plan.agentsEnabled;
 };
 
 export const useAgentsNavVisible = (): boolean => {

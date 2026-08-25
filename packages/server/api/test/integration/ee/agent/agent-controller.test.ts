@@ -37,7 +37,6 @@ async function createAgent(ctx: TestContext, overrides: Record<string, unknown> 
 }
 
 beforeAll(async () => {
-    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
 })
 
@@ -499,20 +498,11 @@ describe('agent routes coexist with the chat routes already on /v1/agents', () =
 })
 
 describe('agent feature gate', () => {
-    it('keeps serving a self-host that turned agents on, whatever the billing entitlement says', async () => {
+    it('refuses every agent route once the platform loses the entitlement', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         const plan = await db.findOneByOrFail<{ id: string }>('platform_plan', { platformId: ctx.platform.id })
         await db.update('platform_plan', plan.id, { agentsEnabled: false })
-
-        expect((await ctx.get('/v1/agents')).statusCode).toBe(StatusCodes.OK)
-        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
-    })
-
-    it('refuses every agent route once the release flag is off, entitlement or not', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx)
-        delete process.env.AP_AGENTS_ENABLED
 
         expect((await ctx.get('/v1/agents')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents', agentBody(ctx.project.id))).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
@@ -522,7 +512,5 @@ describe('agent feature gate', () => {
         expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-
-        process.env.AP_AGENTS_ENABLED = 'true'
     })
 })
