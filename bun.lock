@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.141.0",
+      "version": "0.142.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -5870,7 +5870,7 @@
     },
     "packages/pieces/community/microsoft-teams-bot": {
       "name": "@activepieces/piece-microsoft-teams-bot",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10759,6 +10759,7 @@
       "devDependencies": {
         "@activepieces/piece-facebook-leads": "workspace:*",
         "@activepieces/piece-intercom": "workspace:*",
+        "@activepieces/piece-microsoft-teams-bot": "workspace:*",
         "@activepieces/piece-slack": "workspace:*",
         "@activepieces/piece-square": "workspace:*",
         "@faker-js/faker": "8.2.0",
