@@ -425,6 +425,7 @@ import { AddAiProviderScopes1830000000000 } from './migration/postgres/183000000
 import { AddChatPersonalization1831000000000 } from './migration/postgres/1831000000000-AddChatPersonalization'
 import { BackfillChatPersonalizationForExistingUsers1832000000000 } from './migration/postgres/1832000000000-BackfillChatPersonalizationForExistingUsers'
 import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/postgres/1833000000000-ClearRoleFromCompanyPersonalization'
+import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -865,6 +866,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddChatPersonalization1831000000000,
         BackfillChatPersonalizationForExistingUsers1832000000000,
         ClearRoleFromCompanyPersonalization1833000000000,
+        AddAutoCreatePersonalProjectsToPlatform1834000000000,
     ]
     return migrations
 }
