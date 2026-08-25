@@ -15,6 +15,7 @@ const CONVERSATIONS_URL = '/v1/agents/conversations'
 const CONFIGURED_MODEL = 'anthropic/claude-haiku-4.5'
 
 beforeAll(async () => {
+    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
 })
 

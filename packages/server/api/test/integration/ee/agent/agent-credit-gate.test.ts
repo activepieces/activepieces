@@ -10,6 +10,7 @@ import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/
 let app: FastifyInstance
 
 beforeAll(async () => {
+    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
 })
 
