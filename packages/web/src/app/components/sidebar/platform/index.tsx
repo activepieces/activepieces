@@ -73,6 +73,7 @@ export function PlatformSidebar() {
       to: '/platform/setup/ai-capabilities',
       label: t('AI Capabilities'),
       icon: SparklesIcon,
+      locked: edition === ApEdition.COMMUNITY,
     },
     {
       to: '/platform/setup/mcp',

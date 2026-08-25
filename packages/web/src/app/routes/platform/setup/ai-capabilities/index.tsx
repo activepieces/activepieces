@@ -1,6 +1,8 @@
 import {
   AiToolCapability,
   AiToolConfigWithoutSensitiveData,
+  ApEdition,
+  ApFlagId,
   PlatformRole,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -14,6 +16,7 @@ import {
   aiToolConfigMutations,
   aiToolConfigQueries,
 } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -31,6 +34,7 @@ const CAPABILITY_ICON: Record<AiToolCapability, LucideIcon> = {
 export default function AiCapabilitiesPage() {
   const { data: configs, refetch } = aiToolConfigQueries.useAiToolConfigs();
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
 
@@ -44,7 +48,10 @@ export default function AiCapabilitiesPage() {
   return (
     <LockedFeatureGuard
       featureKey="UNIVERSAL_AI"
-      locked={currentUser?.platformRole !== PlatformRole.ADMIN}
+      locked={
+        currentUser?.platformRole !== PlatformRole.ADMIN ||
+        edition === ApEdition.COMMUNITY
+      }
       lockTitle={t('Unlock AI Capabilities')}
       lockDescription={t(
         'Give the AI assistant web search, scraping, and image generation by connecting the services you choose.',
