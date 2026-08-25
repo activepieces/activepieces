@@ -2,10 +2,12 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { findContactActionOutputSchema } from '../output-schemas';
 
 export const findContact = createAction({
 	auth: sendinblueAuth,
 	name: 'find_contact',
+	outputSchema: findContactActionOutputSchema,
 	classification: 'READ',
 	displayName: 'Find Contact',
 	description: 'Check whether a contact exists in Brevo and fetch its details.',

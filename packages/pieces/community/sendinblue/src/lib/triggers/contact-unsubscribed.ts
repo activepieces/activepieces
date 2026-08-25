@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE } from './samples';
+import { contactUnsubscribedTriggerOutputSchema } from '../output-schemas';
 
 export const contactUnsubscribed = brevoRegisterTrigger({
 	name: 'contact_unsubscribed',
@@ -19,4 +20,5 @@ export const contactUnsubscribed = brevoRegisterTrigger({
 		date: '2026-08-25 11:05:00',
 		ts: 1787655900,
 	},
+	outputSchema: contactUnsubscribedTriggerOutputSchema,
 });

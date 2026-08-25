@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE, brevoSamples } from './samples';
+import { emailClickedTriggerOutputSchema } from '../output-schemas';
 
 export const emailClicked = brevoRegisterTrigger({
 	name: 'email_clicked',
@@ -14,4 +15,5 @@ export const emailClicked = brevoRegisterTrigger({
 		event: 'click',
 		link: 'https://example.com/product',
 	},
+	outputSchema: emailClickedTriggerOutputSchema,
 });

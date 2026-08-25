@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE, brevoSamples } from './samples';
+import { emailOpenedTriggerOutputSchema } from '../output-schemas';
 
 export const emailOpened = brevoRegisterTrigger({
 	name: 'email_opened',
@@ -10,4 +11,5 @@ export const emailOpened = brevoRegisterTrigger({
 	type: 'transactional',
 	events: ['opened'],
 	sampleData: { ...brevoSamples.engagement, event: 'opened' },
+	outputSchema: emailOpenedTriggerOutputSchema,
 });

@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE } from './samples';
+import { contactUpdatedTriggerOutputSchema } from '../output-schemas';
 
 export const contactUpdated = brevoRegisterTrigger({
 	name: 'contact_updated',
@@ -22,4 +23,5 @@ export const contactUpdated = brevoRegisterTrigger({
 			},
 		],
 	},
+	outputSchema: contactUpdatedTriggerOutputSchema,
 });

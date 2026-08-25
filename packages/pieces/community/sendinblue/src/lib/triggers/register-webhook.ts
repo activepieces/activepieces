@@ -1,5 +1,6 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
+	OutputSchema,
 	TriggerStrategy,
 	createTrigger,
 	isNil,
@@ -15,6 +16,7 @@ export const brevoRegisterTrigger = ({
 	type,
 	events,
 	sampleData,
+	outputSchema,
 }: BrevoTriggerParams) =>
 	createTrigger({
 		auth: sendinblueAuth,
@@ -26,6 +28,7 @@ export const brevoRegisterTrigger = ({
 		type: TriggerStrategy.WEBHOOK,
 		props: {},
 		sampleData,
+		outputSchema,
 		async onEnable(context) {
 			const webhook = await brevoCommon.apiCall<BrevoWebhookResponse>({
 				apiKey: context.auth.secret_text,
@@ -79,6 +82,7 @@ export type BrevoTriggerParams = {
 	type: BrevoWebhookType;
 	events: string[];
 	sampleData: unknown;
+	outputSchema: OutputSchema;
 };
 
 export type BrevoWebhookResponse = {

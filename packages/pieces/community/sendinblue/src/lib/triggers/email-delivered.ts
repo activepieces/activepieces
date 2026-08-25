@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE, brevoSamples } from './samples';
+import { emailDeliveredTriggerOutputSchema } from '../output-schemas';
 
 export const emailDelivered = brevoRegisterTrigger({
 	name: 'email_delivered',
@@ -14,4 +15,5 @@ export const emailDelivered = brevoRegisterTrigger({
 		event: 'delivered',
 		reason: 'sent',
 	},
+	outputSchema: emailDeliveredTriggerOutputSchema,
 });

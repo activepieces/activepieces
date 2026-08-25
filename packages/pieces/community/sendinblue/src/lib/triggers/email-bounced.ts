@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE, brevoSamples } from './samples';
+import { emailBouncedTriggerOutputSchema } from '../output-schemas';
 
 export const emailBounced = brevoRegisterTrigger({
 	name: 'email_bounced',
@@ -15,4 +16,5 @@ export const emailBounced = brevoRegisterTrigger({
 		event: 'soft_bounce',
 		reason: 'Unable to find MX of domain example.invalid',
 	},
+	outputSchema: emailBouncedTriggerOutputSchema,
 });

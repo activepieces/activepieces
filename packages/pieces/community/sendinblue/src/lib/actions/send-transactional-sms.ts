@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { sendTransactionalSmsActionOutputSchema } from '../output-schemas';
 
 export const sendTransactionalSms = createAction({
 	auth: sendinblueAuth,
 	name: 'send_transactional_sms',
+	outputSchema: sendTransactionalSmsActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Transactional SMS',
 	description: 'Send a transactional SMS from your Brevo account.',

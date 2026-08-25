@@ -3,10 +3,12 @@ import { createAction, Property, isNil } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { sendTransactionalEmailActionOutputSchema } from '../output-schemas';
 
 export const sendTransactionalEmail = createAction({
 	auth: sendinblueAuth,
 	name: 'send_transactional_email',
+	outputSchema: sendTransactionalEmailActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Transactional Email',
 	description: 'Send an email from your Brevo account with HTML or plain text content.',

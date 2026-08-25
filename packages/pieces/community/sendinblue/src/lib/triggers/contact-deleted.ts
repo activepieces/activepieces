@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE } from './samples';
+import { contactDeletedTriggerOutputSchema } from '../output-schemas';
 
 export const contactDeleted = brevoRegisterTrigger({
 	name: 'contact_deleted',
@@ -16,4 +17,5 @@ export const contactDeleted = brevoRegisterTrigger({
 		date: '2026-08-25T11:04:17.82511Z',
 		ts: 1787655857,
 	},
+	outputSchema: contactDeletedTriggerOutputSchema,
 });

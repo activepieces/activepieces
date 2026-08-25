@@ -1,5 +1,6 @@
 import { brevoRegisterTrigger } from './register-webhook';
 import { WEBHOOK_ID_NOTE } from './samples';
+import { contactAddedToListTriggerOutputSchema } from '../output-schemas';
 
 export const contactAddedToList = brevoRegisterTrigger({
 	name: 'contact_added_to_list',
@@ -17,4 +18,5 @@ export const contactAddedToList = brevoRegisterTrigger({
 		date: '2026-08-25 11:02:27',
 		ts: 1787655747,
 	},
+	outputSchema: contactAddedToListTriggerOutputSchema,
 });
