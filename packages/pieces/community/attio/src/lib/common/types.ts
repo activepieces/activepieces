@@ -158,6 +158,7 @@ export interface ObjectWebhookPayload {
 			workspace_id: string;
 			object_id: string;
 			record_id: string;
+			attribute_id?: string;
 		};
 	}>;
 }

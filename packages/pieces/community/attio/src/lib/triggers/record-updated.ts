@@ -8,6 +8,12 @@ import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'updated-record-trigger';
 
+type TriggerData = {
+	webhookId: string;
+	WebhookSecret: string;
+	attributeId?: string;
+};
+
 export const recordUpdatedTrigger = createTrigger({
 	name: 'record_updated',
 	classification: 'READ',
@@ -38,6 +44,29 @@ export const recordUpdatedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	sampleData: {},
 	async onEnable(context) {
+		const { objectTypeId, filter_attribute } = context.propsValue;
+
+		// Attio emits one record.updated event per changed attribute, including
+		// writes made by its own system actor. Resolve the selected attribute's id
+		// so the webhook subscription only receives events about that attribute --
+		// the event id is the only place that says WHICH attribute changed.
+		let attributeId: string | undefined;
+		if (filter_attribute) {
+			const attribute = await attioApiCall<{ data: { id: { attribute_id: string } } }>({
+				accessToken: context.auth.secret_text,
+				method: HttpMethod.GET,
+				resourceUri: `/objects/${objectTypeId}/attributes/${filter_attribute}`,
+			});
+			attributeId = attribute.data.id.attribute_id;
+		}
+
+		const conditions = [
+			{ field: 'id.object_id', operator: 'equals', value: objectTypeId },
+		];
+		if (attributeId) {
+			conditions.push({ field: 'id.attribute_id', operator: 'equals', value: attributeId });
+		}
+
 		const response = await attioApiCall<{ data: WebhookResponse }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
@@ -48,30 +77,21 @@ export const recordUpdatedTrigger = createTrigger({
 					subscriptions: [
 						{
 							event_type: 'record.updated',
-							filter: {
-								$and: [
-									{
-										field: 'id.object_id',
-										operator: 'equals',
-										value: context.propsValue.objectTypeId,
-									},
-								],
-							},
+							filter: { $and: conditions },
 						},
 					],
 				},
 			},
 		});
 
-		await context.store.put<{ webhookId: string; WebhookSecret: string }>(TRIGGER_KEY, {
+		await context.store.put<TriggerData>(TRIGGER_KEY, {
 			webhookId: response.data.id.webhook_id,
 			WebhookSecret: response.data.secret,
+			attributeId,
 		});
 	},
 	async onDisable(context) {
-		const webhookData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
-			TRIGGER_KEY,
-		);
+		const webhookData = await context.store.get<TriggerData>(TRIGGER_KEY);
 		if (!isNil(webhookData) && webhookData.webhookId) {
 			await attioApiCall({
 				accessToken: context.auth.secret_text,
@@ -98,9 +118,7 @@ export const recordUpdatedTrigger = createTrigger({
 		return filtered.slice(0, 5);
 	},
 	async run(context) {
-		const triggerData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
-			TRIGGER_KEY,
-		);
+		const triggerData = await context.store.get<TriggerData>(TRIGGER_KEY);
 
 		const webhookSecret = triggerData?.WebhookSecret;
 		const webhookSignatureHeader = context.payload.headers['attio-signature'];
@@ -114,6 +132,20 @@ export const recordUpdatedTrigger = createTrigger({
 		const event = payload.events?.[0];
 
 		if (!event) return [];
+
+		// Second line of defence behind the subscription filter (and the only one
+		// for triggers enabled by an older version of this piece, whose stored
+		// data has no attributeId): drop events about other attributes before
+		// re-fetching. Checking the record's current state below cannot tell which
+		// attribute changed, so without this every update to a record whose
+		// filtered field already matches would fire the flow again.
+		if (
+			triggerData?.attributeId &&
+			event.id.attribute_id &&
+			event.id.attribute_id !== triggerData.attributeId
+		) {
+			return [];
+		}
 
 		const recordId = event.id.record_id;
 
