@@ -111,7 +111,15 @@ export async function executeFlowTest({ flowId, projectId, userId, stepName, tri
         }
     }
 
-    return { content: [{ type: 'text', text: warning + formatRunResult(completedRun) }], structuredContent: { usedMockTriggerData } }
+    return {
+        content: [{ type: 'text', text: warning + formatRunResult(completedRun) }],
+        structuredContent: {
+            usedMockTriggerData,
+            runId: completedRun.id,
+            status: completedRun.status,
+            failedStepName: completedRun.failedStep?.name ?? null,
+        },
+    }
 }
 
 export async function executePieceActionRun({
