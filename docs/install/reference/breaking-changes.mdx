@@ -8,6 +8,18 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The Agents routes now require `AP_AGENTS_ENABLED`, and self-hosts no longer need the billing entitlement
+
+Agents was gated on two things at once: the `AP_AGENTS_ENABLED` environment flag, and the `agentsEnabled` entitlement on the platform's plan. Only a billing provider ever writes that entitlement, and reading the plan refreshes it from what the provider granted — so on a self-host it always returned to `false`, and turning the environment flag on produced a navigation item behind an upgrade wall and an API that answered `402`, with nothing explaining why.
+
+Each gate now applies where it belongs. `AP_AGENTS_ENABLED` decides whether Agents exists on a deployment, on every edition. The plan entitlement is consulted only on Cloud, where a billing provider owns it. On Community and Enterprise, the environment flag alone turns Agents on.
+
+#### What you need to do
+
+If you self-host and want Agents, set `AP_AGENTS_ENABLED=true`; nothing else is needed and no database editing is required. If you self-host and do *not* want Agents, leave the flag unset, which is the default.
+
+The tightening to be aware of: the `/v1/agents` routes previously answered whenever the plan entitlement was present, even on a deployment where Agents was switched off. They now also require `AP_AGENTS_ENABLED`. If you call those routes from a script or an API key on a deployment that has not set the flag, set it.
+
 #### A new workspace is named after the company in the sign-up email
 
 Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
