@@ -5,6 +5,10 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync:
     if: github.repository == 'activepieces/activepieces'
