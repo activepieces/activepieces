@@ -224,6 +224,38 @@ describe('AI provider key status', () => {
         expect(forced).toBe('unreachable')
     })
 
+    it('keeps a key active when a failure lands right after a success, and takes it later', async () => {
+        const key = await azureKey('overlapping')
+        const health = aiProviderHealth(app!.log)
+        const failure = { statusCode: 401, body: 'invalid api key' }
+
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 } })
+        const raced = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: failure })
+        expect(raced).toBeNull()
+        expect((await statusOf(key.id)).status).toBe('active')
+
+        await db.update('ai_provider', key.id, { statusUpdated: new Date(Date.now() - 60_000).toISOString() })
+        const settled = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: failure })
+
+        expect(settled).toBe('rejected')
+        expect((await statusOf(key.id)).status).toBe('rejected')
+    })
+
+    it('lets an admin recheck cut through the recent-success grace', async () => {
+        const key = await azureKey('recheck-through-grace')
+        const health = aiProviderHealth(app!.log)
+
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 } })
+        const forced = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+            throttled: false,
+        })
+
+        expect(forced).toBe('rejected')
+    })
+
     it('lets the next call correct a status a late observation got wrong', async () => {
         const key = await azureKey('raced')
         const health = aiProviderHealth(app!.log)
