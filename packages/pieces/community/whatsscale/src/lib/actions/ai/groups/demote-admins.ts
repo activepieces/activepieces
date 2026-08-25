@@ -8,7 +8,7 @@ import { toParticipantJids, ConductorParticipantResult, flattenParticipantResult
 
 export const demoteGroupAdminsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_demote_group_admins',
+  name: 'whatsscale_demote_group_admins_by_id',
   classification: 'WRITE',
   displayName: 'Demote Group Admins (By ID)',
   description: 'Revoke admin rights from one or more group members by group ID.',

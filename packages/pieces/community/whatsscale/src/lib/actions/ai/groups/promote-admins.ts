@@ -8,7 +8,7 @@ import { toParticipantJids, ConductorParticipantResult, flattenParticipantResult
 
 export const promoteGroupAdminsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_promote_group_admins',
+  name: 'whatsscale_promote_group_admins_by_id',
   classification: 'WRITE',
   displayName: 'Promote Group Admins (By ID)',
   description: 'Grant admin rights to one or more group members by group ID.',

@@ -7,7 +7,7 @@ import { whatsscaleProps } from '../../../common/props';
 
 export const listGroupParticipantsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_list_group_participants',
+  name: 'whatsscale_list_group_participants_by_id',
   classification: 'SEARCH',
   displayName: 'List Group Participants (By ID)',
   description: 'List the members of a WhatsApp group and their roles, by group ID.',

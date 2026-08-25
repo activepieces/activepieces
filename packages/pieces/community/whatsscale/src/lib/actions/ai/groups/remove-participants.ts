@@ -8,7 +8,7 @@ import { toParticipantJids, ConductorParticipantResult, flattenParticipantResult
 
 export const removeGroupParticipantsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_remove_group_participants',
+  name: 'whatsscale_remove_group_participants_by_id',
   classification: 'WRITE',
   displayName: 'Remove Participants from a Group (By ID)',
   description: 'Remove (kick) one or more people from a WhatsApp group by group ID.',

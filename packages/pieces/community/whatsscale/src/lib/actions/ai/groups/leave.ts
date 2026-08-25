@@ -6,7 +6,7 @@ import { whatsscaleProps } from '../../../common/props';
 
 export const leaveGroupAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_leave_group',
+  name: 'whatsscale_leave_group_by_id',
   classification: 'DESTRUCTIVE',
   displayName: 'Leave a Group (By ID)',
   description: 'Make the connected session leave a WhatsApp group by group ID.',

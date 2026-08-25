@@ -8,7 +8,7 @@ import { toParticipantJids, ConductorParticipantResult, flattenParticipantResult
 
 export const addGroupParticipantsAction = createAction({
   auth: whatsscaleAuth,
-  name: 'whatsscale_add_group_participants',
+  name: 'whatsscale_add_group_participants_by_id',
   classification: 'WRITE',
   displayName: 'Add Participants to a Group (By ID)',
   description: 'Add one or more people to a WhatsApp group by group ID.',
