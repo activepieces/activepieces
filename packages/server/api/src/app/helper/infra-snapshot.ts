@@ -170,7 +170,7 @@ async function withStatsConnection<T>(read: (runner: QueryRunner) => Promise<T>)
     const { data, error } = await tryCatch(async () => {
         await runner.connect()
         await runner.startTransaction()
-        await runner.query(`SET LOCAL statement_timeout = '${STATS_STATEMENT_TIMEOUT}'`)
+        await runner.query('SELECT set_config($1, $2, true)', ['statement_timeout', STATS_STATEMENT_TIMEOUT])
         const result = await read(runner)
         await runner.commitTransaction()
         return result
