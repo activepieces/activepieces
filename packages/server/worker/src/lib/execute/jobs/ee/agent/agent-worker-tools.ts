@@ -714,6 +714,16 @@ function createAgentSurfaceTools({ executeTool }: {
             },
         }),
 
+        ap_publish_agent: tool({
+            description: 'Publish a saved agent so flows and chats run the current draft. Call it when the user asks you to make their changes live, never on your own initiative — the draft is what you edit, the published version is what runs unattended. Say what went live afterwards.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_publish_agent', toolInput)
+            },
+        }),
+
         ap_update_agent: tool({
             description: 'Change a saved agent\'s name, description or instructions. Use it when the user wants their existing agent to behave differently, instead of creating a second one. Send the full new instructions, not a diff — they replace what is there. This edits the draft, so flows keep running the published version until the user publishes it.',
             inputSchema: z.object({

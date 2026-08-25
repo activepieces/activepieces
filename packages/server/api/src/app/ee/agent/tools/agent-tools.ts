@@ -254,6 +254,29 @@ async function listAgentsForChat({ platformId, projectId, userId, log }: {
     }))
 }
 
+async function publishAgentFromChat({ toolInput, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const agentId = nonEmpty(toolInput.agentId)
+    if (isNil(agentId)) {
+        return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
+    }
+    const { data: published, error } = await tryCatch(() => agentService(log).publish({ id: agentId, projectId, userId }))
+    if (!isNil(error) || isNil(published)) {
+        return { error: 'Could not publish that agent. It may not exist in this project, or it may still need instructions — open it and check.' }
+    }
+    return {
+        agentId: published.id,
+        displayName: published.displayName,
+        published: true,
+        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${published.id}` }),
+        note: `"${published.displayName}" is live: every flow that runs it picks this version up on its next run. Tell the user what went live, and link them to the url above so they can review or roll it back.`,
+    }
+}
+
 function nonEmpty(value: unknown): string | undefined {
     const trimmed = isString(value) ? value.trim() : ''
     return trimmed.length === 0 ? undefined : trimmed
@@ -448,6 +471,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         }
         case 'ap_list_agents':
         case 'ap_update_agent':
+        case 'ap_publish_agent':
         case 'ap_create_agent': {
             const unavailable = await agentsUnavailable({ platformId, log })
             if (!isNil(unavailable)) {
@@ -467,6 +491,9 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
             if (toolName === 'ap_update_agent') {
                 return updateAgentFromChat({ toolInput, projectId, userId, log })
+            }
+            if (toolName === 'ap_publish_agent') {
+                return publishAgentFromChat({ toolInput, projectId, userId, log })
             }
             return createAgentFromChat({ toolInput, projectId, userId, log })
         }

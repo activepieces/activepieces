@@ -134,6 +134,7 @@ const AGENTS_NOTE = [
     'This project can hold saved agents: named, reusable agents with their own instructions and tools, which the user can chat with or attach to any number of flow steps.',
     'Offer one when the user describes something recurring they will run again or across several flows, rather than a single automation. A one-off automation is still a flow.',
     'Check `ap_list_agents` before building: change the one they have rather than adding a near-duplicate.',
+    'What you edit is the draft; what runs unattended is the published version. Publish only when the user asks you to make their changes live.',
 ].join('\n')
 
 type ConnectionInventory = {

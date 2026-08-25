@@ -11,6 +11,7 @@ const {
     mockList,
     mockUpdate,
     mockGetOneOrThrow,
+    mockPublish,
 } = vi.hoisted(() => ({
     mockGetUserProjects: vi.fn(),
     mockGetConversationOrThrow: vi.fn(),
@@ -21,6 +22,7 @@ const {
     mockList: vi.fn(),
     mockUpdate: vi.fn(),
     mockGetOneOrThrow: vi.fn(),
+    mockPublish: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', async (importOriginal) => {
@@ -49,7 +51,7 @@ vi.mock('../../../../../src/app/mcp/mcp-permissions', () => ({
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-service', () => ({
-    agentService: () => ({ create: mockCreate, list: mockList, update: mockUpdate, getOneOrThrow: mockGetOneOrThrow }),
+    agentService: () => ({ create: mockCreate, list: mockList, update: mockUpdate, getOneOrThrow: mockGetOneOrThrow, publish: mockPublish }),
 }))
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
@@ -80,6 +82,7 @@ describe('the chat tools that build agents', () => {
         mockList.mockResolvedValue({ data: [] })
         mockGetOneOrThrow.mockResolvedValue({ id: 'agent-1', draft: { instructions: 'Old brief.', tools: [], maxSteps: 20 }, published: null })
         mockUpdate.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: null })
+        mockPublish.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: { instructions: 'Sort the inbox.' } })
     })
 
     it('refuses when the instance has agents turned off, so chat cannot offer a surface nobody has', async () => {
@@ -191,6 +194,36 @@ describe('the chat tools that build agents', () => {
 
         expect(result).toEqual({ error: expect.stringContaining('Nothing to change') })
         expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('needs write permission to publish, and says what went live', async () => {
+        mockCheck.mockReturnValueOnce({ content: [{ type: 'text', text: 'no permission' }] })
+
+        const denied = await runTool('ap_publish_agent', { agentId: 'agent-1' })
+
+        expect(mockCheck).toHaveBeenCalledWith(Permission.WRITE_AGENT, 'ap_publish_agent')
+        expect(denied).toEqual({ content: [{ type: 'text', text: 'no permission' }] })
+        expect(mockPublish).not.toHaveBeenCalled()
+
+        const allowed = await runTool('ap_publish_agent', { agentId: 'agent-1' })
+
+        expect(mockPublish).toHaveBeenCalledWith({ id: 'agent-1', projectId: 'proj-1', userId: 'user-1' })
+        expect(allowed).toEqual(expect.objectContaining({ published: true, note: expect.stringContaining('is live') }))
+    })
+
+    it('reports a refused publish instead of telling the user it went live', async () => {
+        mockPublish.mockRejectedValue(new Error('An agent needs instructions before it can be published'))
+
+        const result = await runTool('ap_publish_agent', { agentId: 'agent-1' })
+
+        expect(result).toEqual({ error: expect.stringContaining('Could not publish') })
+    })
+
+    it('will not publish without knowing which agent', async () => {
+        const result = await runTool('ap_publish_agent', { agentId: '  ' })
+
+        expect(result).toEqual({ error: expect.stringContaining('Which agent') })
+        expect(mockPublish).not.toHaveBeenCalled()
     })
 
     it('reports whether each listed agent is published, since a flow can only run a published one', async () => {
