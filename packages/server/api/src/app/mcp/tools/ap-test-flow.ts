@@ -17,7 +17,7 @@ export const apTestFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBase
         permission: Permission.WRITE_FLOW,
         description: 'Test a flow end-to-end in the test environment. Requires a configured trigger. Waits up to 120s. Pass triggerTestData to provide mock trigger output when no sample data exists.',
         inputSchema: testFlowInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: true },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { flowId, triggerTestData } = testFlowInput.parse(args)

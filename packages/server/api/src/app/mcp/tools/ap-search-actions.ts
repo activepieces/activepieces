@@ -9,7 +9,7 @@ export const apSearchActionsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         title: 'ap_search_actions',
         description: 'Find piece actions by natural-language task description (e.g. "send a message to a Slack channel"). Returns the most semantically relevant actions ranked by similarity — lightweight rows only — or an empty list when nothing in the catalog is relevant (it does not force a match). Always available: when no embedding model is configured it falls back to a keyword catalog search (response "mode":"keyword", lexical not semantic). Each row carries a `connected` flag indicating whether this project already has a connection for the piece. Optionally scope to a single piece with `pieceName`. This is the discovery step: take a result\'s pieceName + actionName to ap_get_piece_props for its input schema, then ap_run_action to execute it.',
         inputSchema: searchActionsInput.shape,
-        annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { query, limit, pieceName } = searchActionsInput.parse(args)
