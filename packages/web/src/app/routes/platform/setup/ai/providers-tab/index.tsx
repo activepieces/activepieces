@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,6 @@ import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
-import { KeyStatusBadge } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -57,6 +57,7 @@ export function ProvidersTab() {
   const [editing, setEditing] = useState<
     AIProviderWithoutSensitiveData | undefined
   >(undefined);
+  const [credentialsVersion, setCredentialsVersion] = useState(0);
   const [dialogProvider, setDialogProvider] = useState<
     AIProviderName | undefined
   >(undefined);
@@ -84,10 +85,14 @@ export function ProvidersTab() {
   const { mutate: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
       onSuccess: () => refetch(),
-    });
-  const { mutate: recheckProvider, isPending: isRechecking } =
-    aiProviderMutations.useRecheckAiProvider({
-      onSuccess: () => refetch(),
+      onError: (error) => {
+        const data = error.response?.data;
+        toast.error(
+          t(
+            data?.params?.message ?? data?.message ?? 'Could not save this key',
+          ),
+        );
+      },
     });
 
   const openConfig = (id: string) => {
@@ -119,7 +124,9 @@ export function ProvidersTab() {
     ]);
     if (createdId) {
       openConfig(createdId);
+      return;
     }
+    setCredentialsVersion((version) => version + 1);
   };
   const selectChatConfig = (configId: string) => {
     const row = (providers ?? []).find((config) => config.id === configId);
@@ -143,13 +150,11 @@ export function ProvidersTab() {
     return (
       <>
         <ConfigDetail
-          key={activeConfig.id}
+          key={`${activeConfig.id}:${credentialsVersion}`}
           config={activeConfig}
           info={activeInfo}
           projects={projects}
           isSaving={isSaving}
-          isRechecking={isRechecking}
-          onRecheck={() => recheckProvider(activeConfig.id)}
           onSave={(request) =>
             updateProvider({ providerId: activeConfig.id, request })
           }
@@ -379,7 +384,6 @@ function ConfigRow({
               {t('Chat')}
             </span>
           )}
-          <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>

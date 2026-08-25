@@ -3,14 +3,17 @@ import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { PageCollection } from '@microsoft/microsoft-graph-client';
+import { replyEmailActionOutputSchema } from '../output-schemas';
 
 export const replyEmailAction = createAction({
   auth: microsoftOutlookAuth,
   name: 'reply-email',
+  classification: 'WRITE',
   displayName: 'Reply to Email',
   description: 'Reply to an outlook email.',
   audience: 'both',
   aiMetadata: { description: 'Replies to an existing Outlook message (identified by message ID), supporting added CC/BCC recipients and attachments. Set the Create Draft flag to stage the reply without sending; otherwise it is sent immediately. Not idempotent when sending: each call creates and dispatches a new reply.', idempotent: false },
+  outputSchema: replyEmailActionOutputSchema,
   props: {
     messageId: Property.Dropdown({
       auth: microsoftOutlookAuth,
@@ -99,9 +102,9 @@ export const replyEmailAction = createAction({
   },
   async run(context) {
     const { replyBody, bodyFormat, messageId, draft } = context.propsValue;
-    const ccRecipients = context.propsValue.ccRecipients as string[];
-    const bccRecipients = context.propsValue.bccRecipients as string[];
-    const attachments = context.propsValue.attachments as Array<{
+    const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
+    const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
+    const attachments = (context.propsValue.attachments ?? []) as Array<{
       file: ApFile;
       fileName: string;
     }>;

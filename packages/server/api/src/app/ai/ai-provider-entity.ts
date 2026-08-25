@@ -1,5 +1,5 @@
 import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
-import { AIProviderConfig, AiProviderKeyStatus, AiProviderModelScope, AiProviderProjectScope, Platform } from '@activepieces/shared'
+import { AIProviderConfig, AiProviderModelScope, AiProviderProjectScope, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { z } from 'zod'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
@@ -17,9 +17,6 @@ const AIProviderEncrypted = z.object({
     modelIds: z.array(z.string()).default([]),
     projectScope: AiProviderProjectScope.default('all'),
     projectIds: z.array(z.string()).default([]),
-    status: AiProviderKeyStatus.default('active'),
-    statusReason: z.string().nullable(),
-    statusUpdated: z.string().nullable(),
 })
 type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
@@ -66,6 +63,7 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: String,
             array: true,
             nullable: false,
+            default: '{}',
         },
         projectScope: {
             type: String,
@@ -76,25 +74,19 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: String,
             array: true,
             nullable: false,
-        },
-        status: {
-            type: String,
-            nullable: false,
-            default: 'active',
-        },
-        statusReason: {
-            type: String,
-            nullable: true,
-        },
-        statusUpdated: {
-            type: 'timestamp with time zone',
-            nullable: true,
+            default: '{}',
         },
     },
     indices: [
         {
             name: 'idx_ai_provider_platform_id_provider',
             columns: ['platformId', 'provider'],
+        },
+        {
+            name: 'idx_ai_provider_platform_id_managed',
+            columns: ['platformId'],
+            where: `provider = '${AIProviderName.ACTIVEPIECES}'`,
+            unique: true,
         },
         {
             name: 'idx_ai_provider_project_ids_gin',

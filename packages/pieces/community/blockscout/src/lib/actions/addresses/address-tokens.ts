@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressTokens = createAction({
   name: 'get_address_tokens',
+  classification: 'SEARCH',
   displayName: 'Get Address Tokens',
   description: 'Get list of tokens owned by an address with filtering options',
   audience: 'both',

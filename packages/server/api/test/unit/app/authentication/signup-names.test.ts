@@ -1,3 +1,4 @@
+import { chatPersonalizationUtils } from '@activepieces/shared'
 import { signupNames } from '../../../../src/app/authentication/lib/signup-names'
 
 describe('signupNames', () => {
@@ -85,6 +86,110 @@ describe('signupNames', () => {
 
             expect(name).toMatch(safeString)
             expect(name.length).toBeLessThanOrEqual(100)
+        })
+    })
+
+    describe('generated platform names are recognised as personal defaults', () => {
+        it.each([
+            ['Ahmad'],
+            ['Chris'],
+            ["Ahmad's"],
+            ['Ahmad Bin'],
+            [''],
+        ])('detects the name generated for %s', (firstName) => {
+            const generated = signupNames.platformNameFromPerson({ firstName, email: 'ahmad.tash@gmail.com' })
+
+            expect(chatPersonalizationUtils.isPersonalDefaultPlatformName(generated)).toBe(true)
+            expect(chatPersonalizationUtils.companyFromPlatformName(generated)).toBeNull()
+        })
+
+        it('detects the whole-fallback name', () => {
+            const generated = signupNames.platformNameFromPerson({ firstName: '', email: '___@gmail.com' })
+
+            expect(generated).toBe('My Platform')
+            expect(chatPersonalizationUtils.isPersonalDefaultPlatformName(generated)).toBe(true)
+        })
+    })
+
+    describe('companyNameFromWorkEmail', () => {
+        it.each([
+            ['ahmad@activepieces.com', 'Activepieces'],
+            ['ahmad@acme-widgets.com', 'Acme Widgets'],
+            ['ahmad@mail.activepieces.com', 'Activepieces'],
+            ['ahmad@activepieces.co.uk', 'Activepieces'],
+            ['ahmad@eu.activepieces.co.uk', 'Activepieces'],
+            ['ahmad@activepieces.io', 'Activepieces'],
+        ])('reads the company out of %s -> %s', (email, expected) => {
+            expect(signupNames.companyNameFromWorkEmail(email)).toBe(expected)
+        })
+
+        it.each([
+            ['ahmad@gmail.com'],
+            ['ahmad@googlemail.com'],
+            ['ahmad@outlook.com'],
+            ['ahmad@hotmail.com'],
+            ['ahmad@yahoo.com'],
+            ['ahmad@yahoo.co.uk'],
+            ['ahmad@icloud.com'],
+            ['ahmad@proton.me'],
+            ['ahmad@qq.com'],
+        ])('refuses the consumer provider %s', (email) => {
+            expect(signupNames.companyNameFromWorkEmail(email)).toBeNull()
+        })
+
+        it.each([
+            ['ahmad'],
+            ['ahmad@'],
+            ['ahmad@localhost'],
+            ['ahmad@...'],
+            [''],
+        ])('refuses the unusable address %s', (email) => {
+            expect(signupNames.companyNameFromWorkEmail(email)).toBeNull()
+        })
+
+        it('never produces a name the platform name rule rejects', () => {
+            const safeString = new RegExp('^[^./]+$')
+
+            expect(signupNames.companyNameFromWorkEmail('a@activepieces.com')).toMatch(safeString)
+        })
+    })
+
+    describe('platformNameFromSignup', () => {
+        it('prefers the company over the person on a work address', () => {
+            expect(
+                signupNames.platformNameFromSignup({ firstName: 'Ahmad', email: 'ahmad@activepieces.com' }),
+            ).toBe('Activepieces')
+        })
+
+        it.each([
+            ['Ahmad', 'ahmad@gmail.com', "Ahmad's Platform"],
+            ['Chris', 'chris@yahoo.com', "Chris's Platform"],
+            ['', 'ahmad.tash@gmail.com', "Ahmad's Platform"],
+        ])('falls back to the person for %s at %s', (firstName, email, expected) => {
+            expect(signupNames.platformNameFromSignup({ firstName, email })).toBe(expected)
+        })
+
+        it('uses the whole fallback when neither the company, the name, nor the address yields a word', () => {
+            expect(
+                signupNames.platformNameFromSignup({ firstName: '', email: '___@gmail.com' }),
+            ).toBe('My Platform')
+        })
+
+        it('stays inside the platform name limit on a very long company domain', () => {
+            const name = signupNames.platformNameFromSignup({
+                firstName: '',
+                email: `a@${'w'.repeat(120)}.com`,
+            })
+
+            expect(name.length).toBeLessThanOrEqual(100)
+        })
+
+        it('never produces a name the platform name rule rejects', () => {
+            const safeString = new RegExp('^[^./]+$')
+
+            for (const email of ['a@activepieces.com', 'a@gmail.com', 'a@sub.acme-co.co.uk']) {
+                expect(signupNames.platformNameFromSignup({ firstName: 'J./Smith', email })).toMatch(safeString)
+            }
         })
     })
 

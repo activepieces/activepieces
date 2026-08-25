@@ -51,6 +51,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 
 export const newOrUpdatedTaskTrigger = createTrigger({
 	name: 'new_or_updated_task',
+	classification: 'READ',
 	displayName: 'New or Updated Task',
 	description: 'Triggers when a new task is created or an existing task is updated.',
 	aiMetadata: {

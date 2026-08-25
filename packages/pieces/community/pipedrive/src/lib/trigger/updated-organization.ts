@@ -78,6 +78,7 @@ interface GetOrganizationResponseV2 {
 export const updatedOrganizationTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'updated-organization',
+	classification: 'READ',
 	displayName: 'Updated Organization',
 	description: 'Triggers when an existing organization is updated.',
 	aiMetadata: {

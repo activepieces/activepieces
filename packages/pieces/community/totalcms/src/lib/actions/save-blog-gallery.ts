@@ -9,6 +9,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveBlogGalleryAction = createAction({
   name: 'save_blog_gallery',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Blog Post Gallery Image',
   description: 'Save image to Total CMS blog post gallery',

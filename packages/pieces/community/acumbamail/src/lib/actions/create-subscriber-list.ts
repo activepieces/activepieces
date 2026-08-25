@@ -11,6 +11,7 @@ import { acumbamailCommon } from '../common';
 export const createSubscriberListAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_create_subscriber_list',
+  classification: 'WRITE',
   displayName: 'Create Subscriber List',
   description: 'Creates a new subscriber list.',
   audience: 'both',

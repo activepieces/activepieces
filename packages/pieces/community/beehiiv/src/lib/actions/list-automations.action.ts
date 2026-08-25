@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const listAutomationsAction = createAction({
 	auth: beehiivAuth,
 	name: 'list_automations',
+	classification: 'SEARCH',
 	displayName: 'List Automations',
 	description: 'Retrieves a list of automations for a publication.',
 	audience: 'both',

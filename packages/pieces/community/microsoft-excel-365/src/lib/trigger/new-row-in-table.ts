@@ -113,6 +113,7 @@ const polling: Polling<
 export const newRowInTableTrigger = createTrigger({
     auth: excelAuth,
     name: 'new_row_in_table',
+    classification: 'READ',
     displayName: 'New Row in Table',
     description: 'Fires when a new row is added to a table within a worksheet.',
     aiMetadata: {

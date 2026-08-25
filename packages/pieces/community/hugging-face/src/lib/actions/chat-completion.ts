@@ -7,6 +7,7 @@ import { huggingFaceAuth } from '../auth';
 export const chatCompletion = createAction({
   audience: 'both',
   name: 'chat_completion',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Chat Completion',
   description:

@@ -6,6 +6,7 @@ import { chargebeeRequest, cleanObject } from '../common/client';
 
 export const createSubscription = createAction({
   name: 'create_subscription',
+  classification: 'WRITE',
   auth: chargebeeAuth,
   displayName: 'Create Subscription',
   description:

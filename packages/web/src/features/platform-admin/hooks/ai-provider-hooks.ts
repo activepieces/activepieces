@@ -17,9 +17,9 @@ export const aiProviderKeys = {
   forProject: (projectId: string | null) =>
     ['ai-providers', projectId] as const,
   configModels: (configId?: string) =>
-    (configId === undefined
-      ? ['ai-provider-config-models']
-      : ['ai-provider-config-models', configId]) as const,
+    configId === undefined
+      ? (['ai-provider-config-models'] as const)
+      : (['ai-provider-config-models', configId] as const),
 };
 
 export const aiProviderQueries = {
@@ -71,12 +71,6 @@ export const aiProviderMutations = {
       }) => aiProviderApi.update(providerId, request),
       onSuccess,
       onError,
-    });
-  },
-  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
-    return useMutation({
-      mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
-      onSuccess,
     });
   },
   useToggleChatProvider: ({ onSuccess }: { onSuccess: () => void }) => {

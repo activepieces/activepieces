@@ -29,6 +29,7 @@ describe('resolveFastModel', () => {
         mockGetChatProvider.mockClear().mockResolvedValue(null)
         mockGetConfigOrThrow.mockClear().mockResolvedValue({
             provider: AIProviderName.OPENROUTER,
+            configId: 'config-1',
             auth: { apiKey: 'k' },
             config: {},
         })
@@ -40,6 +41,12 @@ describe('resolveFastModel', () => {
         expect(mockGetChatProvider).not.toHaveBeenCalled()
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope })
         expect(model).toMatchObject({ provider: AIProviderName.OPENROUTER, modelId: 'anthropic/claude-haiku-4.5' })
+    })
+
+    it('asks for the pinned key when the run names one', async () => {
+        await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, providerConfigId: 'config-2', scope, log })
+
+        expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope, configId: 'config-2' })
     })
 
     it('still refuses when no provider is named and the platform has no chat provider', async () => {

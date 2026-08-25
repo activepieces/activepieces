@@ -40,6 +40,7 @@ interface GetNoteResponseV2 {
 export const newNoteTrigger = createTrigger({
     auth: pipedriveAuth,
     name: 'new-note',
+    classification: 'READ',
     displayName: 'New Note',
     description: 'Triggers when a new note is created.',
     aiMetadata: {

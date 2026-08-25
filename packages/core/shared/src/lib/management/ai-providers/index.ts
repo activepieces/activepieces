@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum AIProviderModelType {
@@ -103,6 +103,9 @@ export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
+export const OpenAiCompatibleVendorConfig = z.object({})
+export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -128,6 +131,7 @@ export const AIProviderConfig = z.union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    OpenAiCompatibleVendorConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -192,6 +196,42 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         config: MistralProviderConfig,
         auth: MistralProviderAuthConfig,
     }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.XAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.DEEPSEEK),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ZAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.QWEN),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MINIMAX),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MOONSHOT),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
 ])
 
 export const AIProvider = z.object({
@@ -218,16 +258,20 @@ export const AIProviderWithoutSensitiveData = z.object({
     modelIds: z.array(z.string()),
     projectScope: AiProviderProjectScope,
     projectIds: z.array(z.string()),
-    status: AiProviderKeyStatus,
-    statusReason: z.string().nullable(),
-    statusUpdated: z.string().nullable(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
+
+export const ProjectAIProviderKey = z.object({
+    id: z.string(),
+    name: z.string(),
+})
+export type ProjectAIProviderKey = z.infer<typeof ProjectAIProviderKey>
 
 export const ProjectAIProvider = z.object({
     provider: z.nativeEnum(AIProviderName),
     name: z.string(),
     enabledForChat: z.boolean(),
+    keys: z.array(ProjectAIProviderKey),
 })
 export type ProjectAIProvider = z.infer<typeof ProjectAIProvider>
 
@@ -256,8 +300,8 @@ export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
 
 export const GetProviderConfigResponse = z.object({
-    id: z.string(),
     provider: z.nativeEnum(AIProviderName),
+    configId: z.string(),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
     platformId: z.string(),
@@ -372,6 +416,7 @@ export {
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
+    OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'

@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AiProviderKeyStatus, AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -34,6 +34,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             platformId,
             provider,
             scope: { type: 'project', projectId: request.principal.projectId },
+            ...spreadIfDefined('configId', request.query.configId),
         })
     })
     app.get('/:provider/models', ListModels, async (request) => {
@@ -41,6 +42,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             provider: request.params.provider,
             scope: { type: 'project', projectId: request.projectId },
+            ...spreadIfDefined('configId', request.query.configId),
         })
     })
     app.post('/', CreateAIProvider, async (request) => {
@@ -50,13 +52,6 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).update(platformId, request.params.id, request.body)
-    })
-    app.post('/:id/recheck', RecheckAIProvider, async (request) => {
-        const status = await aiProviderService(app.log).recheck({
-            platformId: request.principal.platform.id,
-            providerId: request.params.id,
-        })
-        return { status }
     })
     app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -104,6 +99,9 @@ const GetAIProviderConfig = {
         params: z.object({
             provider: z.nativeEnum(AIProviderName),
         }),
+        querystring: z.object({
+            configId: z.string().optional(),
+        }),
     },
 }
 
@@ -117,6 +115,7 @@ const ListModels = {
         }),
         querystring: z.object({
             projectId: z.string().optional(),
+            configId: z.string().optional(),
         }),
         response: {
             [StatusCodes.OK]: z.array(AIProviderModel),
@@ -142,20 +141,6 @@ const UpdateAIProvider = {
             id: z.string(),
         }),
         body: UpdateAIProviderRequest,
-    },
-}
-
-const RecheckAIProvider = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        params: z.object({
-            id: z.string(),
-        }),
-        response: {
-            [StatusCodes.OK]: z.object({ status: AiProviderKeyStatus }),
-        },
     },
 }
 

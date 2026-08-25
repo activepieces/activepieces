@@ -6,6 +6,7 @@ import { heygenAuth } from '../common/auth';
 export const retrieveVideoStatusAction = createAction({
   auth: heygenAuth,
   name: 'retrieve_video_status',
+  classification: 'READ',
   displayName: 'Retrieve Video Status',
   description: 'Retrieve the status and details of a video using its ID.',
   audience: 'both',

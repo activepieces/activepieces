@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addProductToDealAction = createAction({
     auth: pipedriveAuth,
     name: 'add-product-to-deal',
+    classification: 'WRITE',
     displayName: 'Add Product to Deal',
     description: 'Adds a product to a deal.',
     audience: 'both',

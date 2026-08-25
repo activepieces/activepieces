@@ -5,6 +5,7 @@ import { getTaskLastRunDatasetItemsActionOutputSchema } from '../output-schemas'
 
 export const apifyGetTaskLastRunDatasetItems = createAction({
   name: 'apify_get_task_last_run_dataset_items',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Task Last Run Dataset Items',
   description: 'Retrieves the dataset items of a task\'s most recent run by task ID.',

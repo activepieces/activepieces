@@ -1,5 +1,4 @@
 import {
-  AiProviderKeyStatus,
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
@@ -18,9 +17,14 @@ export const aiProviderApi = {
       '/v1/ai-providers/configs',
     );
   },
-  listModelsForProvider(provider: string, projectId: string) {
+  listModelsForProvider(
+    provider: string,
+    projectId: string,
+    configId?: string,
+  ) {
     return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`, {
       projectId,
+      ...(configId === undefined ? {} : { configId }),
     });
   },
   listModelsForConfig(configId: string) {
@@ -32,12 +36,6 @@ export const aiProviderApi = {
     return api.post<AIProviderWithoutSensitiveData>(
       '/v1/ai-providers',
       request,
-    );
-  },
-  recheck(providerId: string) {
-    return api.post<{ status: AiProviderKeyStatus }>(
-      `/v1/ai-providers/${providerId}/recheck`,
-      {},
     );
   },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {

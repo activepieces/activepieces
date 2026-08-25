@@ -2,12 +2,12 @@ import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AIProviderModelType, DefaultProjectRole, PrincipalType, ProviderModelConfig } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockProject, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 
 let app: FastifyInstance | null = null
 let ctx: TestContext
@@ -232,7 +232,10 @@ describe('AI Providers API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             for (const entry of response?.json()) {
-                expect(Object.keys(entry).sort()).toEqual(['enabledForChat', 'name', 'provider'])
+                expect(Object.keys(entry).sort()).toEqual(['enabledForChat', 'keys', 'name', 'provider'])
+                for (const key of entry.keys) {
+                    expect(Object.keys(key).sort()).toEqual(['id', 'name'])
+                }
             }
         })
 
@@ -397,7 +400,7 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Scoped',
-                config: customConfig('https://scoped.example.com'),
+                config: { baseUrl: 'https://scoped.example.com', apiKeyHeader: 'Authorization', models: [] },
                 projectScope: 'selected',
                 projectIds: [ctx.project.id],
                 created: '2026-08-01T00:00:00.000Z',
@@ -436,7 +439,7 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Except this project',
-                config: customConfig('https://except.example.com'),
+                config: { baseUrl: 'https://except.example.com', apiKeyHeader: 'Authorization', models: [] },
                 projectScope: 'except',
                 projectIds: [ctx.project.id],
             })
@@ -516,6 +519,30 @@ describe('AI Providers API', () => {
             expect(chatRows).toHaveLength(1)
             expect(chatRows[0].id).toBe(second.id)
             expect(chatRows[0].id).not.toBe(first.id)
+        })
+
+        it('reports a provider as chat-enabled even when the chat key is not the ranking winner', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Chat key, ranked last',
+                config: customConfig('https://chat.example.com'),
+                enabledForChat: true,
+                created: '2026-08-01T00:00:00.000Z',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Newer key, ranked first',
+                config: customConfig('https://newer.example.com'),
+                created: '2026-08-10T00:00:00.000Z',
+            })
+
+            const response = await engineGet('/api/v1/ai-providers', ctx.project.id)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const customRow = response?.json().find((p: { provider: string }) => p.provider === AIProviderName.CUSTOM)
+            expect(customRow.enabledForChat).toBe(true)
         })
 
         it('lists a specific key models through the admin configuration route', async () => {
@@ -635,6 +662,295 @@ describe('AI Providers API', () => {
             const adminResponse = await ctx.get(`/v1/ai-providers/configs/${restricted.id}/models`)
             expect(adminResponse?.statusCode).toBe(StatusCodes.OK)
             expect(adminResponse?.json().map((m: { id: string }) => m.id).sort()).toEqual(['model-a', 'model-b'])
+        })
+
+        it('carries every eligible key of a provider on its single project-list entry', async () => {
+            const first = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Key A',
+                config: customConfig('https://a.example.com'),
+            })
+            const second = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Key B',
+                config: customConfig('https://b.example.com'),
+            })
+
+            const response = await engineGet('/api/v1/ai-providers', ctx.project.id)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const customRow = response?.json().find((p: { provider: string }) => p.provider === AIProviderName.CUSTOM)
+            expect(customRow.name).toBe('OpenAI Compatible')
+            expect(customRow.keys.map((key: { id: string }) => key.id).sort()).toEqual([first.id, second.id].sort())
+            expect(customRow.keys.map((key: { name: string }) => key.name).sort()).toEqual(['Key A', 'Key B'])
+        })
+    })
+
+    describe('pinning a specific key', () => {
+        const customConfig = (baseUrl: string, models: ProviderModelConfig[] = []) => ({
+            baseUrl,
+            apiKeyHeader: 'Authorization',
+            models,
+        })
+
+        const engineGet = async (path: string, projectId: string) => {
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId,
+                platform: { id: ctx.platform.id },
+            })
+            return app!.inject({
+                method: 'GET',
+                url: path,
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+        }
+
+        it('serves the named key rather than the deterministic winner', async () => {
+            const older = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Older',
+                config: customConfig('https://older.example.com'),
+                created: '2026-08-01T00:00:00.000Z',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Newer',
+                config: customConfig('https://newer.example.com'),
+                created: '2026-08-10T00:00:00.000Z',
+            })
+
+            const pinned = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${older.id}`, ctx.project.id)
+            expect(pinned?.statusCode).toBe(StatusCodes.OK)
+            expect(pinned?.json().config.baseUrl).toBe('https://older.example.com')
+            expect(pinned?.json().configId).toBe(older.id)
+
+            const automatic = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
+            expect(automatic?.json().config.baseUrl).toBe('https://newer.example.com')
+        })
+
+        it('refuses a key whose project scope excludes the caller project', async () => {
+            const excluded = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Other project only',
+                config: customConfig('https://other.example.com'),
+                projectScope: 'selected',
+                projectIds: [apId()],
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'This project',
+                config: customConfig('https://mine.example.com'),
+            })
+
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${excluded.id}`, ctx.project.id)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('refuses a key that belongs to another provider than the path names', async () => {
+            const openai = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.OPENAI,
+                displayName: 'OpenAI key',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Custom key',
+                config: customConfig('https://custom.example.com'),
+            })
+
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${openai.id}`, ctx.project.id)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('applies the named key model allow-list', async () => {
+            const models = [
+                { modelId: 'model-a', modelName: 'Model A', modelType: AIProviderModelType.TEXT },
+                { modelId: 'model-b', modelName: 'Model B', modelType: AIProviderModelType.TEXT },
+            ]
+            const restricted = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Restricted',
+                config: customConfig('https://restricted.example.com', models),
+                modelScope: 'selected',
+                modelIds: ['model-a'],
+                created: '2026-08-01T00:00:00.000Z',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Unrestricted',
+                config: customConfig('https://unrestricted.example.com', models),
+                created: '2026-08-10T00:00:00.000Z',
+            })
+
+            const pinned = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models?configId=${restricted.id}`, ctx.project.id)
+            expect(pinned?.statusCode).toBe(StatusCodes.OK)
+            expect(pinned?.json().map((m: { id: string }) => m.id)).toEqual(['model-a'])
+
+            const automatic = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
+            expect(automatic?.json().map((m: { id: string }) => m.id).sort()).toEqual(['model-a', 'model-b'])
+        })
+    })
+
+    describe('key names are unique per provider', () => {
+        const customConfig = (baseUrl: string) => ({
+            baseUrl,
+            apiKeyHeader: 'Authorization',
+            models: [],
+        })
+
+        const createCustom = (displayName: string, baseUrl: string) => ctx.post('/v1/ai-providers', {
+            provider: AIProviderName.CUSTOM,
+            displayName,
+            config: customConfig(baseUrl),
+            auth: { apiKey: 'test-key' },
+        })
+
+        it('rejects a second key of the same provider with the same name', async () => {
+            expect((await createCustom('Anthropic key', 'https://one.example.com'))?.statusCode).toBe(StatusCodes.OK)
+
+            const duplicate = await createCustom('  anthropic KEY ', 'https://two.example.com')
+
+            expect(duplicate?.statusCode).toBe(StatusCodes.CONFLICT)
+        })
+
+        it('allows the same name on a different provider', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.OPENAI,
+                displayName: 'Shared name',
+            })
+
+            const response = await createCustom('Shared name', 'https://one.example.com')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('allows the same credentials under two different names', async () => {
+            expect((await createCustom('Key one', 'https://one.example.com'))?.statusCode).toBe(StatusCodes.OK)
+            expect((await createCustom('Key two', 'https://two.example.com'))?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('rejects renaming a key onto another key of the same provider', async () => {
+            const first = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Taken',
+                config: customConfig('https://one.example.com'),
+            })
+            const second = await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Free',
+                config: customConfig('https://two.example.com'),
+            })
+
+            const clash = await ctx.post(`/v1/ai-providers/${second.id}`, { displayName: 'Taken' })
+            expect(clash?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            const sameName = await ctx.post(`/v1/ai-providers/${first.id}`, { displayName: 'Taken' })
+            expect(sameName?.statusCode).toBe(StatusCodes.OK)
+        })
+    })
+
+    describe('keyServesScope (a run that changes project mid-turn)', () => {
+        it('refuses the project a running key is scoped away from', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'This project only',
+                config: { baseUrl: 'https://scoped.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'selected',
+                projectIds: [ctx.project.id],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(false)
+        })
+
+        it('lets a key its owner left open to every project follow the switch', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Every project',
+                config: { baseUrl: 'https://open.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'all',
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(true)
+        })
+
+        it('refuses when any key the run could be holding excludes the target project', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Open chat key',
+                config: { baseUrl: 'https://open-chat.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'all',
+            })
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Pinned to this project',
+                config: { baseUrl: 'https://pinned.example.com', apiKeyHeader: 'Authorization', models: [] },
+                projectScope: 'selected',
+                projectIds: [ctx.project.id],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'project', projectId: apId() },
+            })
+
+            expect(serves).toBe(false)
+        })
+
+        it('refuses to drop a restricted key out of project scope altogether', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'All but one',
+                config: { baseUrl: 'https://except.example.com', apiKeyHeader: 'Authorization', models: [] },
+                enabledForChat: true,
+                projectScope: 'except',
+                projectIds: [apId()],
+            })
+
+            const serves = await aiProviderService(app!.log).keyServesScope({
+                platformId: ctx.platform.id,
+                resolvedFor: { type: 'project', projectId: ctx.project.id },
+                target: { type: 'platform' },
+            })
+
+            expect(serves).toBe(false)
         })
     })
 })

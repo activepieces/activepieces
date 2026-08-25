@@ -8,14 +8,17 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'update-custome-object',
+	classification: 'WRITE',
 	displayName: 'Update Custom Object',
 	description: 'Updates a custom object in Hubspot.',
 	audience: 'both',
 	aiMetadata: { description: 'Updates properties on an existing custom-object record identified by its custom object type and record ID, then returns the refreshed record. Use to modify a known custom-object record; for standard CRM objects use the dedicated update actions instead. Idempotent: applying the same property values converges to the same record state.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		customObjectId: Property.ShortText({

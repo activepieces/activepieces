@@ -70,6 +70,7 @@ interface GetDealResponseV2 {
 export const newDeal = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new_deal',
+	classification: 'READ',
 	displayName: 'New Deal',
 	description: 'Triggers when a new deal is created.',
 	aiMetadata: {

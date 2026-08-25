@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { paymentMethodListOutputSchema } from '../output-schemas';
 export const stripeListCustomerPaymentMethods = createAction({
   name: 'list_customer_payment_methods',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Customer Payment Methods (Agent)',
   description: "List a customer's attached payment methods.",
