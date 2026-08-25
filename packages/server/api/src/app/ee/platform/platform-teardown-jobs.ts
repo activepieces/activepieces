@@ -1,7 +1,7 @@
 import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull } from 'typeorm'
+import { IsNull, ObjectLiteral, Repository } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -11,18 +11,24 @@ import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { batchDeleteByFlowId } from '../../flows/flow/flow.jobs'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
+import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { McpOAuthAuthorizationCodeEntity } from '../../mcp/oauth/code/mcp-oauth-code.entity'
 import { McpOAuthTokenEntity } from '../../mcp/oauth/token/mcp-oauth-token.entity'
 import { PieceMetadataEntity } from '../../pieces/metadata/piece-metadata-entity'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
+import { FieldEntity } from '../../tables/field/field.entity'
+import { CellEntity } from '../../tables/record/cell.entity'
+import { recordRepo, tableRepo } from '../../tables/table/table.service'
 import { ToolSearchIndexEntity } from '../../tool-search/tool-search-index.entity'
+import { TriggerEventEntity } from '../../trigger/trigger-events/trigger-event.entity'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { userRepo } from '../../user/user-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
 import { VariableEntity } from '../../variable/variable.entity'
 import { apiKeyService } from '../api-keys/api-key-service'
+import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { ProjectRoleEntity } from '../projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../signing-key/signing-key-entity'
 import { ConcurrencyPoolEntity } from './concurrency-pool/concurrency-pool.entity'
@@ -37,6 +43,9 @@ const mcpOAuthCodeRepo = repoFactory(McpOAuthAuthorizationCodeEntity)
 const variableRepo = repoFactory(VariableEntity)
 const concurrencyPoolRepo = repoFactory(ConcurrencyPoolEntity)
 const toolSearchIndexRepo = repoFactory(ToolSearchIndexEntity)
+const cellRepo = repoFactory(CellEntity)
+const fieldRepo = repoFactory(FieldEntity)
+const triggerEventRepo = repoFactory(TriggerEventEntity)
 
 export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
@@ -52,6 +61,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         const projectIds = await listProjectIdsByPlatform(platformId)
         for (const projectId of projectIds) {
+            await cleanProjectDescendants({ projectId })
             await projectRepo().delete({ id: projectId, platformId })
         }
 
@@ -66,6 +76,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await concurrencyPoolRepo().delete({ platformId })
         await toolSearchIndexRepo().delete({ platformId })
 
+        await batchDeleteBy(auditLogRepo(), 'audit_event', '"platformId" = :platformId', { platformId })
         await platformRepo().delete({ id: platformId })
 
         const identityIds = await deletePlatformUsers(platformId)
@@ -173,6 +184,35 @@ async function deleteUnreferencedIdentities(identityIds: string[]): Promise<void
         await userIdentityRepository().delete({ id: identityId })
     }
 }
+
+export async function cleanProjectDescendants({ projectId }: { projectId: string }): Promise<void> {
+    await batchDeleteBy(cellRepo(), 'cell', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(recordRepo(), 'record', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(fieldRepo(), 'field', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(tableRepo(), 'table', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(flowRunRepo(), 'flow_run', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(triggerEventRepo(), 'trigger_event', '"projectId" = :projectId', { projectId })
+    await batchDeleteBy(fileRepo(), 'file', '"projectId" = :projectId', { projectId })
+}
+
+async function batchDeleteBy(
+    repo: Repository<ObjectLiteral>,
+    tableName: string,
+    whereClause: string,
+    params: Record<string, unknown>,
+): Promise<void> {
+    let deleted: number
+    do {
+        const result = await repo
+            .createQueryBuilder()
+            .delete()
+            .where(`id IN (SELECT id FROM "${tableName}" WHERE ${whereClause} LIMIT ${BATCH_DELETE_CHUNK_SIZE})`, params)
+            .execute()
+        deleted = result.affected ?? 0
+    } while (deleted > 0)
+}
+
+const BATCH_DELETE_CHUNK_SIZE = 5000
 
 type DrainFlowsParams = {
     flows: Flow[]
