@@ -22,8 +22,10 @@ Every server log line is an **evlog wide event** — one self-contained JSON obj
 | `db.statement` | 15m, leader | `pg_stat_statements` top-20, or `available: false` |
 | `redis.command` | 15m, leader | per-command calls, `usecPerCall`, p50/p99 |
 
-Leader election is a plain `SET key host EX ttl NX` on Redis, TTL just under the interval — cluster-wide
-numbers are identical on every replica, so exactly one emits them per tick.
+Leader election is `SET <key>:<bucket> host EX ttl NX` on Redis, where `bucket = floor(now / interval)` —
+cluster-wide numbers are identical on every replica, so exactly one emits them per window. Keying on the
+wall-clock bucket rather than on a bare TTL matters: replica timers are phase-shifted, so a TTL that
+expires even slightly before the next tick lets a second replica claim and emit inside the same window.
 
 ## Gotchas
 

@@ -11,8 +11,6 @@ import { AppSystemProp } from './system/system-props'
 
 const FAST_INTERVAL_MS = 60_000
 const SLOW_INTERVAL_MS = 900_000
-const FAST_CLAIM_TTL_SECONDS = 55
-const SLOW_CLAIM_TTL_SECONDS = 870
 const STATS_STATEMENT_TIMEOUT = '5s'
 const TOP_ROWS = 20
 const TOP_COMMANDS = 15
@@ -34,7 +32,7 @@ function schedule({ intervalMs, tick, log }: ScheduleParams): void {
 }
 
 async function fastTick(): Promise<void> {
-    const claimed = await claimTick({ key: 'infra-metrics:fast', ttlSeconds: FAST_CLAIM_TTL_SECONDS })
+    const claimed = await claimTick({ key: 'infra-metrics:fast', intervalMs: FAST_INTERVAL_MS })
     if (!claimed) {
         return
     }
@@ -49,7 +47,7 @@ async function fastTick(): Promise<void> {
 }
 
 async function slowTick(): Promise<void> {
-    const claimed = await claimTick({ key: 'infra-metrics:slow', ttlSeconds: SLOW_CLAIM_TTL_SECONDS })
+    const claimed = await claimTick({ key: 'infra-metrics:slow', intervalMs: SLOW_INTERVAL_MS })
     if (!claimed) {
         return
     }
@@ -63,10 +61,12 @@ async function slowTick(): Promise<void> {
     }
 }
 
-async function claimTick({ key, ttlSeconds }: ClaimTickParams): Promise<boolean> {
+async function claimTick({ key, intervalMs }: ClaimTickParams): Promise<boolean> {
+    const bucket = Math.floor(Date.now() / intervalMs)
+    const ttlSeconds = Math.ceil(intervalMs / 1000) * 2
     const { data } = await tryCatch(async () => {
         const client = await redisConnections.useExisting()
-        return client.set(key, os.hostname(), 'EX', ttlSeconds, 'NX')
+        return client.set(`${key}:${bucket}`, os.hostname(), 'EX', ttlSeconds, 'NX')
     })
     return data === 'OK'
 }
@@ -308,5 +308,5 @@ type ScheduleParams = {
 
 type ClaimTickParams = {
     key: string
-    ttlSeconds: number
+    intervalMs: number
 }
