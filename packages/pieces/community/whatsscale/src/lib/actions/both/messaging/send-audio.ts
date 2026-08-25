@@ -37,7 +37,7 @@ export const sendAudioManualAction = createAction({
     recipient: Property.ShortText({
       displayName: 'Recipient ID',
       description:
-        'Contact: phone number with country code. Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
+        'Contact: the phone number in international format, digits only (e.g. 31649931832 — no +, spaces or dashes). Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID. A full chat ID is also accepted and passed through unchanged, so the Chat ID returned by Check WhatsApp Number (31649931832@c.us) or by a previous send (31649931832@s.whatsapp.net) can be fed straight in.',
       required: true,
     }),
     audioUrl: Property.File({

@@ -38,7 +38,7 @@ export const sendTextManualAction = createAction({
       displayName: 'Recipient ID',
       required: true,
       description:
-        'Contact: phone number with country code (e.g. +31649931832). Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID.',
+        'Contact: the phone number in international format, digits only (e.g. 31649931832 — no +, spaces or dashes). Group/Channel: the bare ID, no @ suffix needed. CRM Contact: the CRM contact ID. A full chat ID is also accepted and passed through unchanged, so the Chat ID returned by Check WhatsApp Number (31649931832@c.us) or by a previous send (31649931832@s.whatsapp.net) can be fed straight in.',
     }),
     text: Property.LongText({
       displayName: 'Message',
