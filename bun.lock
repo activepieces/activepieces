@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -117,7 +116,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.14.0",
+      "version": "0.13.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10796,7 +10795,6 @@
       },
       "devDependencies": {
         "@types/node": "24.11.0",
-        "esbuild": "0.28.1",
         "form-data": "4.0.6",
         "vitest": "3.2.6",
       },
