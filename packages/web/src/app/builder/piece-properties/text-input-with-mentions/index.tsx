@@ -10,6 +10,7 @@ type TextInputWithMentionsProps = {
   enableMarkdown?: boolean;
   autoFocus?: boolean;
   outputFormat?: 'text' | 'html';
+  minHeightClassName?: string;
 };
 
 export const TextInputWithMentions = (props: TextInputWithMentionsProps) => {
