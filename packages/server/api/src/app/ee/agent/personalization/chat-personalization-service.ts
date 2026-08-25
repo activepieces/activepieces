@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import {
     ApEdition,
     ChatPersonalization,
@@ -76,7 +76,6 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             domain = companyRow?.domain ?? null
             companyText = companyRow?.companyText ?? null
         }
-        const effectiveRole = role ?? companyRow?.role ?? null
 
         if (!personalize || (isNil(domain) && isNil(companyText))) {
             const cleared = {
@@ -93,7 +92,6 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
         const inputsChanged = (companyRow?.domain ?? null) !== domain
             || (companyRow?.companyText ?? null) !== companyText
-            || (companyRow?.role ?? null) !== effectiveRole
 
         if (
             companyRow?.status === ChatPersonalizationStatus.SKIPPED
@@ -105,17 +103,14 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
                 personalizationRepo().update({ platformId, userId, useCases: Not(IsNull()) }, { status: ChatPersonalizationStatus.READY }),
             ])
             log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] Restored stored personalization')
-            return this.getEffectiveView({ platformId, userId })
+            return this.upsertUserScope({ platformId, userId, companyRow, role })
         }
 
-        if (!isNil(companyRow)) {
+        if (!isNil(companyRow) && !inputsChanged) {
             const fresh = Date.now() - new Date(companyRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const inFlight = IN_FLIGHT_STATUSES.includes(companyRow.status)
-            if (inFlight && fresh && !inputsChanged) {
-                return this.getEffectiveView({ platformId, userId })
-            }
-            if (companyRow.status === ChatPersonalizationStatus.READY && !inputsChanged) {
-                return this.getEffectiveView({ platformId, userId })
+            if ((inFlight && fresh) || companyRow.status === ChatPersonalizationStatus.READY) {
+                return this.upsertUserScope({ platformId, userId, companyRow, role })
             }
         }
 
@@ -124,12 +119,12 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             await writeCompanyRow({
                 platformId,
                 existing: companyRow,
-                patch: { domain, companyText, role: effectiveRole, status: ChatPersonalizationStatus.SKIPPED },
+                patch: { domain, companyText, status: ChatPersonalizationStatus.SKIPPED },
             })
             await writeUserRow({
                 platformId,
                 userId,
-                patch: { domain, companyText, role: effectiveRole, status: ChatPersonalizationStatus.SKIPPED },
+                patch: { domain, companyText, role, status: ChatPersonalizationStatus.SKIPPED },
             })
             return this.getEffectiveView({ platformId, userId })
         }
@@ -141,7 +136,6 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             patch: {
                 domain,
                 companyText,
-                role: effectiveRole,
                 status: ChatPersonalizationStatus.PENDING,
                 researchToken,
                 ...(inputsChanged ? { profile: null, useCases: null } : {}),
@@ -154,7 +148,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             patch: {
                 domain,
                 companyText,
-                role: effectiveRole,
+                role,
                 status: ChatPersonalizationStatus.PENDING,
                 researchToken,
                 ...(inputsChanged ? { profile: null, useCases: null } : {}),
@@ -167,11 +161,11 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             scope: ChatPersonalizationScope.COMPANY,
             website: domain,
             companyText,
-            role: effectiveRole,
+            role,
             researchToken,
             log,
         })
-        log.info({ platform: { id: platformId }, user: { id: userId }, domain, companyText, role: effectiveRole }, '[chatPersonalization] Company research enqueued')
+        log.info({ platform: { id: platformId }, user: { id: userId }, domain, companyText, role }, '[chatPersonalization] Company research enqueued')
         return this.getEffectiveView({ platformId, userId })
     },
 
@@ -181,10 +175,14 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         if (!isNil(userRow)) {
             const fresh = Date.now() - new Date(userRow.updated).getTime() < RESEARCH_STALENESS_TIMEOUT_MS
             const terminal = [ChatPersonalizationStatus.READY, ChatPersonalizationStatus.SKIPPED].includes(userRow.status)
-            if (terminal || fresh) {
+            const roleChanged = !isNil(role) && role !== userRow.role
+            if (terminal || (fresh && !roleChanged)) {
+                if (roleChanged) {
+                    await personalizationRepo().update({ platformId, userId }, { role })
+                }
                 return this.getEffectiveView({ platformId, userId })
             }
-            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, role })
+            await personalizationRepo().update({ platformId, userId }, { status: ChatPersonalizationStatus.PENDING, researchToken, ...spreadIfDefined('role', role) })
         }
         else {
             const { error } = await tryCatch(() => personalizationRepo().insert({
@@ -233,13 +231,13 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         ])
         const personalStatus = userRow?.status ?? ChatPersonalizationStatus.UNSET
         if (userRow?.status === ChatPersonalizationStatus.READY) {
-            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, personalStatus, prefill: null })
+            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: companyRow ?? userRow, role: userRow.role ?? null, personalStatus, prefill: null })
         }
         if (!isNil(companyRow)) {
-            return toView({ row: companyRow, scope: ChatPersonalizationScope.COMPANY, inputsRow: companyRow, personalStatus, prefill: null })
+            return toView({ row: companyRow, scope: ChatPersonalizationScope.COMPANY, inputsRow: companyRow, role: userRow?.role ?? null, personalStatus, prefill: null })
         }
         if (!isNil(userRow)) {
-            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: userRow, personalStatus, prefill: null })
+            return toView({ row: userRow, scope: ChatPersonalizationScope.USER, inputsRow: userRow, role: userRow.role ?? null, personalStatus, prefill: null })
         }
         await startPrefillLookup({ platformId, userId, log })
         return {
@@ -261,7 +259,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             log.info({ platform: { id: platformId }, user: { id: userId }, scope }, '[chatPersonalization] Claim lost, duplicate research job exits')
             return { claimed: false }
         }
-        const userRow = scope === ChatPersonalizationScope.USER ? await findRow({ platformId, userId }) : null
+        const userRow = await findRow({ platformId, userId })
         const [provider, user, platform, companyRow, enabledTools] = await Promise.all([
             agentHelpers.resolveChatProvider({ platformId, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             userService(log).getMetaInformation({ id: userId }),
@@ -282,7 +280,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             platformName: platform.name,
             website: companyRow?.domain ?? null,
             companyText: companyRow?.companyText ?? null,
-            role: userRow?.role ?? companyRow?.role ?? null,
+            role: userRow?.role ?? null,
             companyProfile: (companyRow?.status === ChatPersonalizationStatus.READY ? companyRow.profile : null) ?? null,
             webSearch,
         }
@@ -770,10 +768,11 @@ function validateResult({ input, log }: { input: SavePersonalizationResultReques
     return { status: ChatPersonalizationStatus.READY, profile: profile.data, useCases: useCases.data }
 }
 
-function toView({ row, scope, inputsRow, personalStatus, prefill }: {
+function toView({ row, scope, inputsRow, role, personalStatus, prefill }: {
     row: ChatPersonalization
     scope: ChatPersonalizationScope
     inputsRow: ChatPersonalization
+    role: string | null
     personalStatus: ChatPersonalizationStatus
     prefill: PersonalizationPrefill | null
 }): ChatPersonalizationView {
@@ -784,7 +783,7 @@ function toView({ row, scope, inputsRow, personalStatus, prefill }: {
         useCases: row.useCases ?? [],
         profile: row.profile ?? null,
         companyInput: inputsRow.companyText ?? inputsRow.domain ?? null,
-        roleInput: inputsRow.role ?? null,
+        roleInput: role,
         prefill,
     }
 }
