@@ -1,6 +1,6 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentIcon, agentToolClassification, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -352,18 +352,110 @@ async function updateAgentFromChat({ toolInput, projectId, userId, log }: {
             ...(isNil(instructions) ? {} : { draft: { ...existing.draft, instructions } }),
         },
     })
+    const changed = [
+        ...(isNil(displayName) ? [] : ['displayName']),
+        ...(isNil(description) ? [] : ['description']),
+        ...(isNil(instructions) ? [] : ['instructions']),
+    ]
+    return afterDraftChange({ agent: updated, changed, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+async function addAgentToolFromChat({ toolInput, projectId, platformId, userId, log }: {
+    toolInput: Record<string, unknown>
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const agentId = nonEmpty(toolInput.agentId)
+    const pieceName = nonEmpty(toolInput.pieceName)
+    const actionName = nonEmpty(toolInput.actionName)
+    if (isNil(agentId) || isNil(pieceName) || isNil(actionName)) {
+        return { error: 'Adding a tool needs the agentId, the piece name and the action name.' }
+    }
+    const { data: existing, error: readError } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
+    if (!isNil(readError) || isNil(existing)) {
+        return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
+    }
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const piece = await pieceMetadataService(log).get({ name: normalizedPiece, projectId, platformId })
+    const action = piece?.actions[actionName]
+    if (isNil(piece) || isNil(action)) {
+        return { error: `${normalizedPiece} has no action called "${actionName}". Look it up with ap_research_pieces before adding it.` }
+    }
+    if (existing.draft.tools.some((tool) => tool.type === AgentToolType.PIECE && tool.toolName === actionName)) {
+        return { error: `${existing.displayName} already has ${actionName}. Nothing to add.` }
+    }
+    const connectionExternalId = nonEmpty(toolInput.connectionExternalId)
+    if (!isNil(connectionExternalId)) {
+        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: connectionExternalId })
+        if (isNil(connection)) {
+            return { error: 'No connection with that externalId in this project. Call ap_list_connections and pass one of those.' }
+        }
+        if (mcpUtils.normalizePieceName(connection.pieceName) !== normalizedPiece) {
+            return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
+        }
+    }
+    const tool: AgentTool = {
+        type: AgentToolType.PIECE,
+        toolName: actionName,
+        pieceMetadata: {
+            pieceName: normalizedPiece,
+            pieceVersion: piece.version,
+            actionName,
+            ...(isNil(connectionExternalId) ? {} : { predefinedInput: { auth: connectionExternalId, fields: {} } }),
+        },
+    }
+    const updated = await agentService(log).update({
+        id: agentId,
+        projectId,
+        userId,
+        request: { draft: { ...existing.draft, tools: [...existing.draft.tools, tool] } },
+    })
+    return afterDraftChange({ agent: updated, changed: [`tool ${actionName}`], publish: toolInput.publish === true, projectId, userId, log })
+}
+
+// A publish reads the draft it is about to copy, so a publish issued alongside an edit can copy the
+// version from before it. Both edits go through here instead, where the publish happens after.
+async function afterDraftChange({ agent, changed, publish, projectId, userId, log }: {
+    agent: Agent
+    changed: string[]
+    publish: boolean
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const url = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${agent.id}` })
+    if (!publish) {
+        return {
+            agentId: agent.id,
+            displayName: agent.displayName,
+            changed,
+            published: false,
+            url,
+            note: isNil(agent.published)
+                ? 'Saved to the draft. This agent is not published, so nothing runs it yet — publish it when the user is ready.'
+                : 'Saved to the draft. Flows and chats keep running the published version until this is published, so do not tell the user the change is live.',
+        }
+    }
+    const { data: published, error } = await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, userId }))
+    if (!isNil(error) || isNil(published)) {
+        return {
+            agentId: agent.id,
+            displayName: agent.displayName,
+            changed,
+            published: false,
+            url,
+            note: 'The change is saved to the draft but publishing it failed, so nothing is live yet. Tell the user to publish it from the url above.',
+        }
+    }
     return {
-        agentId: updated.id,
-        displayName: updated.displayName,
-        changed: [
-            ...(isNil(displayName) ? [] : ['displayName']),
-            ...(isNil(description) ? [] : ['description']),
-            ...(isNil(instructions) ? [] : ['instructions']),
-        ],
-        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${updated.id}` }),
-        note: isNil(updated.published)
-            ? 'Saved to the draft. This agent is not published, so nothing runs it yet.'
-            : 'Saved to the draft. Flows and chats keep running the published version until the user publishes this change — tell them that, and link them to the url above.',
+        agentId: published.id,
+        displayName: published.displayName,
+        changed,
+        published: true,
+        url,
+        note: `"${published.displayName}" is live with this change: every flow that runs it picks it up on its next run.`,
     }
 }
 
@@ -472,6 +564,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_list_agents':
         case 'ap_update_agent':
         case 'ap_publish_agent':
+        case 'ap_add_agent_tool':
         case 'ap_create_agent': {
             const unavailable = await agentsUnavailable({ platformId, log })
             if (!isNil(unavailable)) {
@@ -494,6 +587,9 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             }
             if (toolName === 'ap_publish_agent') {
                 return publishAgentFromChat({ toolInput, projectId, userId, log })
+            }
+            if (toolName === 'ap_add_agent_tool') {
+                return addAgentToolFromChat({ toolInput, projectId, platformId, userId, log })
             }
             return createAgentFromChat({ toolInput, projectId, userId, log })
         }

@@ -1,4 +1,5 @@
 import { Permission } from '@activepieces/core-utils'
+import { AgentToolType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
@@ -12,6 +13,8 @@ const {
     mockUpdate,
     mockGetOneOrThrow,
     mockPublish,
+    mockPieceGet,
+    mockConnectionGet,
 } = vi.hoisted(() => ({
     mockGetUserProjects: vi.fn(),
     mockGetConversationOrThrow: vi.fn(),
@@ -23,6 +26,8 @@ const {
     mockUpdate: vi.fn(),
     mockGetOneOrThrow: vi.fn(),
     mockPublish: vi.fn(),
+    mockPieceGet: vi.fn(),
+    mockConnectionGet: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', async (importOriginal) => {
@@ -48,6 +53,14 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 
 vi.mock('../../../../../src/app/mcp/mcp-permissions', () => ({
     resolvePermissionChecker: async () => ({ check: mockCheck }),
+}))
+
+vi.mock('../../../../../src/app/pieces/metadata/piece-metadata-service', () => ({
+    pieceMetadataService: () => ({ get: mockPieceGet }),
+}))
+
+vi.mock('../../../../../src/app/app-connection/app-connection-service/app-connection-service', () => ({
+    appConnectionService: () => ({ getOneWithoutValue: mockConnectionGet }),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-service', () => ({
@@ -83,6 +96,8 @@ describe('the chat tools that build agents', () => {
         mockGetOneOrThrow.mockResolvedValue({ id: 'agent-1', draft: { instructions: 'Old brief.', tools: [], maxSteps: 20 }, published: null })
         mockUpdate.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: null })
         mockPublish.mockResolvedValue({ id: 'agent-1', displayName: 'Inbox triage', published: { instructions: 'Sort the inbox.' } })
+        mockPieceGet.mockResolvedValue({ version: '0.9.1', actions: { gmail_search_mail: { name: 'gmail_search_mail' } } })
+        mockConnectionGet.mockResolvedValue({ pieceName: '@activepieces/piece-gmail' })
     })
 
     it('refuses when the instance has agents turned off, so chat cannot offer a surface nobody has', async () => {
@@ -170,7 +185,7 @@ describe('the chat tools that build agents', () => {
 
         const result = await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.' })
 
-        expect(result).toEqual(expect.objectContaining({ note: expect.stringContaining('until the user publishes') }))
+        expect(result).toEqual(expect.objectContaining({ note: expect.stringContaining('do not tell the user the change is live') }))
     })
 
     it('refuses an agent the user cannot see, rather than reporting a change it did not make', async () => {
@@ -224,6 +239,96 @@ describe('the chat tools that build agents', () => {
 
         expect(result).toEqual({ error: expect.stringContaining('Which agent') })
         expect(mockPublish).not.toHaveBeenCalled()
+    })
+
+    it('publishes after the edit when asked to make a change live, never alongside it', async () => {
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.', publish: true })
+
+        expect(mockUpdate).toHaveBeenCalled()
+        expect(mockPublish).toHaveBeenCalledWith({ id: 'agent-1', projectId: 'proj-1', userId: 'user-1' })
+        expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(mockPublish.mock.invocationCallOrder[0])
+        expect(result).toEqual(expect.objectContaining({ published: true }))
+    })
+
+    it('does not claim a change is live when the publish after it failed', async () => {
+        mockPublish.mockRejectedValue(new Error('needs instructions'))
+
+        const result = await runTool('ap_update_agent', { agentId: 'agent-1', instructions: 'New brief.', publish: true })
+
+        expect(result).toEqual(expect.objectContaining({ published: false, note: expect.stringContaining('nothing is live yet') }))
+    })
+
+    it('gives an agent a piece action, pinned to the version it resolved', async () => {
+        const result = await runTool('ap_add_agent_tool', {
+            agentId: 'agent-1',
+            pieceName: '@activepieces/piece-gmail',
+            actionName: 'gmail_search_mail',
+            connectionExternalId: 'conn-1',
+        })
+
+        const draft = mockUpdate.mock.calls[0]?.[0]?.request?.draft
+        expect(draft.tools).toEqual([{
+            type: AgentToolType.PIECE,
+            toolName: 'gmail_search_mail',
+            pieceMetadata: {
+                pieceName: '@activepieces/piece-gmail',
+                pieceVersion: '0.9.1',
+                actionName: 'gmail_search_mail',
+                predefinedInput: { auth: 'conn-1', fields: {} },
+            },
+        }])
+        expect(result).toEqual(expect.objectContaining({ changed: ['tool gmail_search_mail'] }))
+    })
+
+    it('refuses an action the piece does not have, rather than storing a tool that cannot run', async () => {
+        mockPieceGet.mockResolvedValue({ version: '0.9.1', actions: {} })
+
+        const result = await runTool('ap_add_agent_tool', { agentId: 'agent-1', pieceName: '@activepieces/piece-gmail', actionName: 'invented_action' })
+
+        expect(result).toEqual({ error: expect.stringContaining('no action called') })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('refuses a connection for a different app', async () => {
+        mockConnectionGet.mockResolvedValue({ pieceName: '@activepieces/piece-slack' })
+
+        const result = await runTool('ap_add_agent_tool', {
+            agentId: 'agent-1',
+            pieceName: '@activepieces/piece-gmail',
+            actionName: 'gmail_search_mail',
+            connectionExternalId: 'conn-slack',
+        })
+
+        expect(result).toEqual({ error: expect.stringContaining('not @activepieces/piece-gmail') })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('refuses a connection that is not in the project', async () => {
+        mockConnectionGet.mockResolvedValue(null)
+
+        const result = await runTool('ap_add_agent_tool', {
+            agentId: 'agent-1',
+            pieceName: '@activepieces/piece-gmail',
+            actionName: 'gmail_search_mail',
+            connectionExternalId: 'conn-elsewhere',
+        })
+
+        expect(result).toEqual({ error: expect.stringContaining('No connection with that externalId') })
+        expect(mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('will not add the same action twice', async () => {
+        mockGetOneOrThrow.mockResolvedValue({
+            id: 'agent-1',
+            displayName: 'Inbox triage',
+            draft: { instructions: 'Sort.', tools: [{ type: AgentToolType.PIECE, toolName: 'gmail_search_mail', pieceMetadata: {} }] },
+            published: null,
+        })
+
+        const result = await runTool('ap_add_agent_tool', { agentId: 'agent-1', pieceName: '@activepieces/piece-gmail', actionName: 'gmail_search_mail' })
+
+        expect(result).toEqual({ error: expect.stringContaining('already has gmail_search_mail') })
+        expect(mockUpdate).not.toHaveBeenCalled()
     })
 
     it('reports whether each listed agent is published, since a flow can only run a published one', async () => {

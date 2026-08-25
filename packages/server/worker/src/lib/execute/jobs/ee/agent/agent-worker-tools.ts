@@ -714,8 +714,22 @@ function createAgentSurfaceTools({ executeTool }: {
             },
         }),
 
+        ap_add_agent_tool: tool({
+            description: 'Give a saved agent a piece action it can call, so it can actually do the work rather than only reason about it. Look the action up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection) and pass the connection the user already has for that app. Adding a tool edits the draft, so pass publish: true when the user wants it live. Say what the agent can now do.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
+                pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+                actionName: z.string().describe('Action name within that piece, e.g. "gmail_search_mail"'),
+                connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
+                publish: z.boolean().optional().describe('Make the agent live with this tool in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_add_agent_tool', toolInput)
+            },
+        }),
+
         ap_publish_agent: tool({
-            description: 'Publish a saved agent so flows and chats run the current draft. Call it when the user asks you to make their changes live, never on your own initiative — the draft is what you edit, the published version is what runs unattended. Say what went live afterwards.',
+            description: 'Publish a saved agent so flows and chats run whatever its draft currently holds. Use it only when nothing else in this turn is changing the agent — if you are also editing it, call ap_update_agent with publish: true instead, or the version you publish may be the one from before your edit. Never publish on your own initiative. Say what went live afterwards.',
             inputSchema: z.object({
                 agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
             }),
@@ -725,12 +739,13 @@ function createAgentSurfaceTools({ executeTool }: {
         }),
 
         ap_update_agent: tool({
-            description: 'Change a saved agent\'s name, description or instructions. Use it when the user wants their existing agent to behave differently, instead of creating a second one. Send the full new instructions, not a diff — they replace what is there. This edits the draft, so flows keep running the published version until the user publishes it.',
+            description: 'Change a saved agent\'s name, description or instructions, and optionally publish the result. Use it when the user wants their existing agent to behave differently, instead of creating a second one. Send the full new instructions, not a diff — they replace what is there. Pass publish: true when the user wants the change live, so the change and the publish happen together; never call ap_publish_agent alongside this one.',
             inputSchema: z.object({
                 agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
                 displayName: z.string().optional(),
                 description: z.string().optional(),
                 instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
+                publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
             }),
             execute: async (toolInput) => {
                 return executeTool('ap_update_agent', toolInput)
