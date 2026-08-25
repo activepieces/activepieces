@@ -5,7 +5,6 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
-import { aiProviderHealth } from '../../ai/ai-provider-health'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -187,7 +186,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 
 function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
     return async (signal) => {
-        const { error } = await tryCatch(() => aiProviderHealth(log).record({ platformId, providerId, signal }))
+        const { error } = await tryCatch(() => aiProviderService(log).recordKeyObservation({ platformId, providerId, signal }))
         if (!isNil(error)) {
             log.warn({ error, aiProvider: { id: providerId } }, '[agentHelpers#reportKeyOutcome] Could not record key status')
         }

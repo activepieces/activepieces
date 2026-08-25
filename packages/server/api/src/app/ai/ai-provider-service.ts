@@ -1,8 +1,10 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
+import { getAiProviderConfirmKey } from '../database/redis/keys'
+import { distributedStore } from '../database/redis-connections'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
@@ -17,6 +19,8 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
+
+const CONFIRM_DOWNGRADE_DEDUP_SECONDS = 60
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -173,6 +177,27 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             id: providerId,
         })
     },
+    async recordKeyObservation({ platformId, providerId, signal }: { platformId: PlatformId, providerId: string, signal: ProviderOutcomeSignal }): Promise<void> {
+        const status = classifyProviderOutcome(signal)
+        if (status === 'no_change') {
+            return
+        }
+        const aiProvider = await aiProviderRepo().findOneBy({ id: providerId, platformId })
+        if (isNil(aiProvider)) {
+            return
+        }
+        const demotesHealthyKey = status !== 'active' && aiProvider.status === 'active'
+        if (!demotesHealthyKey || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
+            await aiProviderHealth(log).record({ platformId, providerId, signal })
+            return
+        }
+        await distributedStore.runOnceWithin(
+            getAiProviderConfirmKey(providerId),
+            CONFIRM_DOWNGRADE_DEDUP_SECONDS,
+            () => this.recheck({ platformId, providerId }),
+        )
+    },
+
     async recheck({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AiProviderKeyStatus> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
@@ -401,7 +426,7 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
     if (!modelsCache.has(cacheKey) || 'models' in config) {
         const { data, error } = await tryCatch(() => aiProviders[provider].listModels(auth, config))
         if (!isNil(error) || isNil(data)) {
-            await aiProviderHealth(log).record({ platformId, providerId: aiProvider.id, signal: toProviderOutcomeSignal(error) })
+            await aiProviderService(log).recordKeyObservation({ platformId, providerId: aiProvider.id, signal: toProviderOutcomeSignal(error) })
             throw error
         }
         modelsCache.set(cacheKey, data.map(model => ({

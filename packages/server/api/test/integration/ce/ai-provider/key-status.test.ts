@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { vi } from 'vitest'
 import { aiProviderHealth } from '../../../../src/app/ai/ai-provider-health'
+import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
@@ -135,7 +136,7 @@ describe('AI provider key status', () => {
     it('turns a rejected secret into rejected, then back to active once an admin rechecks it', async () => {
         const key = await azureKey('rotated')
 
-        mockSendRequest.mockRejectedValueOnce(httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } }))
+        mockSendRequest.mockRejectedValue(httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
 
         const rejected = await statusOf(key.id)
@@ -166,7 +167,7 @@ describe('AI provider key status', () => {
     it('reads the provider billing as out of credits, not as an outage', async () => {
         const key = await azureKey('unpaid')
 
-        mockSendRequest.mockRejectedValueOnce(httpFailure(429, {
+        mockSendRequest.mockRejectedValue(httpFailure(429, {
             error: { code: 'insufficient_quota', message: 'You exceeded your current quota, please check your plan and billing details.' },
         }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
@@ -188,7 +189,7 @@ describe('AI provider key status', () => {
     it('reads a provider outage as unreachable', async () => {
         const key = await azureKey('down')
 
-        mockSendRequest.mockRejectedValueOnce(httpFailure(503, { error: { message: 'Service Unavailable' } }))
+        mockSendRequest.mockRejectedValue(httpFailure(503, { error: { message: 'Service Unavailable' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
 
         expect((await statusOf(key.id)).status).toBe('unreachable')
@@ -197,12 +198,12 @@ describe('AI provider key status', () => {
     it('does not refresh an unchanged status inside the throttle window', async () => {
         const key = await azureKey('steady')
 
-        mockSendRequest.mockRejectedValueOnce(httpFailure(503, { error: { message: 'Service Unavailable' } }))
+        mockSendRequest.mockRejectedValue(httpFailure(503, { error: { message: 'Service Unavailable' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
         const first = await statusOf(key.id)
         expect(first.status).toBe('unreachable')
 
-        mockSendRequest.mockRejectedValueOnce(httpFailure(503, { error: { message: 'Service Unavailable' } }))
+        mockSendRequest.mockRejectedValue(httpFailure(503, { error: { message: 'Service Unavailable' } }))
         await ctx.get(`/v1/ai-providers/configs/${key.id}/models`)
         const second = await statusOf(key.id)
 
@@ -224,21 +225,46 @@ describe('AI provider key status', () => {
         expect(forced).toBe('unreachable')
     })
 
-    it('keeps a key active when a failure lands right after a success, and takes it later', async () => {
-        const key = await azureKey('overlapping')
-        const health = aiProviderHealth(app!.log)
-        const failure = { statusCode: 401, body: 'invalid api key' }
+    it('asks the provider before demoting a healthy key, and keeps it active when the answer is fine', async () => {
+        const key = await azureKey('one-off-failure')
+        mockSendRequest.mockResolvedValue({ body: { data: [] } })
 
-        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 } })
-        const raced = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: failure })
-        expect(raced).toBeNull()
+        await aiProviderService(app!.log).recordKeyObservation({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+        })
+
         expect((await statusOf(key.id)).status).toBe('active')
+    })
 
-        await db.update('ai_provider', key.id, { statusUpdated: new Date(Date.now() - 60_000).toISOString() })
-        const settled = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: failure })
+    it('demotes the key when the provider confirms the failure', async () => {
+        const key = await azureKey('really-broken')
+        mockSendRequest.mockRejectedValue(httpFailure(401, { error: { message: 'Access denied due to invalid subscription key' } }))
 
-        expect(settled).toBe('rejected')
+        await aiProviderService(app!.log).recordKeyObservation({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+        })
+
         expect((await statusOf(key.id)).status).toBe('rejected')
+    })
+
+    it('takes a reported recovery at once, without asking the provider', async () => {
+        const key = await azureKey('recovering')
+        await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401: old failure' })
+        mockSendRequest.mockRejectedValue(httpFailure(500, { error: { message: 'never called' } }))
+
+        await aiProviderService(app!.log).recordKeyObservation({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 200 },
+        })
+
+        const row = await statusOf(key.id)
+        expect(row.status).toBe('active')
+        expect(row.statusReason).toBeNull()
     })
 
     it('lets an admin recheck cut through the recent-success grace', async () => {

@@ -9,8 +9,6 @@ const MAX_REASON_LENGTH = 300
 
 const REFRESH_UNCHANGED_AFTER_MINUTES = 15
 
-const TRUST_RECENT_SUCCESS_SECONDS = 10
-
 export const aiProviderHealth = (log: FastifyBaseLogger) => ({
     async record({ platformId, providerId, signal, throttled = true }: RecordParams): Promise<AiProviderKeyStatus | null> {
         const status = classifyProviderOutcome(signal)
@@ -19,7 +17,6 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
         }
         const reason = status === 'active' ? null : buildReason(signal)
         const refreshAfterMinutes = throttled ? REFRESH_UNCHANGED_AFTER_MINUTES : 0
-        const trustRecentSuccessSeconds = throttled ? TRUST_RECENT_SUCCESS_SECONDS : 0
         const rows = await aiProviderRepo().query(
             `UPDATE "ai_provider"
              SET "status" = $1, "statusReason" = $2, "statusUpdated" = now()
@@ -27,12 +24,8 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
                AND ("status" <> $1
                     OR "statusUpdated" IS NULL
                     OR "statusUpdated" <= now() - make_interval(mins => $5))
-               AND ($1 = 'active'
-                    OR "status" <> 'active'
-                    OR "statusUpdated" IS NULL
-                    OR "statusUpdated" <= now() - make_interval(secs => $6))
              RETURNING "status"`,
-            [status, reason, providerId, platformId, refreshAfterMinutes, trustRecentSuccessSeconds],
+            [status, reason, providerId, platformId, refreshAfterMinutes],
         )
 
         const applied = Array.isArray(rows) && rows.length > 0
