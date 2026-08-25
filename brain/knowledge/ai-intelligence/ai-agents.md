@@ -4,11 +4,11 @@ icon: 🤖
 
 # AI Agents
 
-A flow step type (backed by `@activepieces/piece-agent`) that runs an LLM-driven autonomous loop. Given a prompt, tools, an AI provider/model, and optional structured-output fields, it runs a ReAct-style loop (up to `maxSteps`) where the model can call any configured tool before producing a final answer.
+A flow step type (the `run_agent` action of `@activepieces/piece-ai`) that runs an LLM-driven autonomous loop. Given a prompt, tools, an AI provider/model, and optional structured-output fields, it runs a ReAct-style loop (up to `maxSteps`) where the model can call any configured tool before producing a final answer.
 
 ### How it works
 
-- No backend entity of its own — the whole configuration lives inside the flow version's step settings. The step is a `PIECE` action on `@activepieces/piece-agent`; `settings.input` holds `agentTools`, `structuredOutput`, `prompt`, `maxSteps`, `aiProviderModel` (`{ provider, model }`), and optional `webSearch`.
+- A step either carries its own configuration in the flow version's step settings — `settings.input` holds `agentTools`, `structuredOutput`, `prompt`, `maxSteps` and `aiProviderModel` (`{ provider, model, configId }`) — or stores the `externalId` of a saved **Agent** (`agent` table, `ee/agent/agent-entity.ts`) under `agentId` and carries nothing else. A linked step is resolved at run start, so improving the agent improves the next run of every flow using it. The two are exclusive: a step that sends both is refused.
 - Configured entirely in the Flow Builder (`web/src/app/builder/step-settings/agent-settings/`); a test panel runs a single agent step. `AgentTimeline` renders `AgentStepBlock[]` from the output as markdown blocks + expandable tool-call cards.
 
 ### Tool types (AgentTool discriminated union)

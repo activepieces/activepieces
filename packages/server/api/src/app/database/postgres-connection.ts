@@ -424,7 +424,8 @@ import { AddFilePlatformIdIndex1829000000000 } from './migration/postgres/182900
 import { AddAiProviderScopes1830000000000 } from './migration/postgres/1830000000000-AddAiProviderScopes'
 import { AddChatPersonalization1831000000000 } from './migration/postgres/1831000000000-AddChatPersonalization'
 import { BackfillChatPersonalizationForExistingUsers1832000000000 } from './migration/postgres/1832000000000-BackfillChatPersonalizationForExistingUsers'
-import { AddAgentIdsGinIndexToFlowVersion1833000000000 } from './migration/postgres/1833000000000-AddAgentIdsGinIndexToFlowVersion'
+import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/postgres/1833000000000-ClearRoleFromCompanyPersonalization'
+import { AddAgentIdsGinIndexToFlowVersion1834000000000 } from './migration/postgres/1834000000000-AddAgentIdsGinIndexToFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -864,7 +865,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProviderScopes1830000000000,
         AddChatPersonalization1831000000000,
         BackfillChatPersonalizationForExistingUsers1832000000000,
-        AddAgentIdsGinIndexToFlowVersion1833000000000,
+        ClearRoleFromCompanyPersonalization1833000000000,
+        AddAgentIdsGinIndexToFlowVersion1834000000000,
     ]
     return migrations
 }

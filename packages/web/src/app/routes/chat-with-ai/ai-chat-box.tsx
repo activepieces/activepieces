@@ -245,7 +245,7 @@ function ChatBoxContent({
     });
     void handleSend(
       t(
-        "I'm a {role} at {company}. Show me what you could take off my plate.",
+        'I work at {company} and my role is: {role}. What can you take off my plate?',
         { role: answers.role, company: answers.company },
       ),
       undefined,
