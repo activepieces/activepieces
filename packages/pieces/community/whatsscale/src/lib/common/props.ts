@@ -89,7 +89,13 @@ export const whatsscaleProps = {
             placeholder: 'No contacts found',
           };
         }
-        return { disabled: false, options: contacts };
+        return {
+          disabled: false,
+          options: contacts.map((contact) => ({
+            label: toContactLabel(contact),
+            value: contact.value,
+          })),
+        };
       } catch (e) {
         console.debug(e);
         return {
@@ -376,7 +382,13 @@ export const whatsscaleProps = {
             placeholder: 'No phone-number contacts found',
           };
         }
-        return { disabled: false, options: contacts };
+        return {
+          disabled: false,
+          options: contacts.map((contact) => ({
+            label: toContactLabel(contact),
+            value: contact.value,
+          })),
+        };
       } catch (e) {
         console.debug(e);
         return {
@@ -388,6 +400,17 @@ export const whatsscaleProps = {
     },
   }),
 };
+
+function toContactLabel(contact: { label: string; value: string }): string {
+  const [id, domain] = contact.value.split('@');
+  const name = contact.label?.trim();
+  const hasName = Boolean(name) && name !== id;
+  if (domain === 'lid') {
+    return hasName ? `${name} (hidden number)` : `Hidden number (${id})`;
+  }
+  const phone = `+${id}`;
+  return hasName ? `${name} (${phone})` : phone;
+}
 
 function toParticipantLabel(participant: GroupParticipantOption): string {
   const phone = toParticipantPhone(participant);
