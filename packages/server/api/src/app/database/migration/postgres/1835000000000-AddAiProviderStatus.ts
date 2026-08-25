@@ -1,8 +1,8 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddAiProviderStatus1834000000000 implements Migration {
-    name = 'AddAiProviderStatus1834000000000'
+export class AddAiProviderStatus1835000000000 implements Migration {
+    name = 'AddAiProviderStatus1835000000000'
     breaking = false
     release = '0.88.4'
 
