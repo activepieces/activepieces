@@ -4,6 +4,7 @@ import { googleGeminiAuth } from '../auth';
 import { getGeminiVideoModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
+import { createVideoActionOutputSchema } from '../output-schemas';
 
 export const createVideoAction = createAction({
   audience: 'both',
@@ -120,6 +121,7 @@ export const createVideoAction = createAction({
       },
     }),
   },
+  outputSchema: createVideoActionOutputSchema,
   async run(context) {
     const {
       model,

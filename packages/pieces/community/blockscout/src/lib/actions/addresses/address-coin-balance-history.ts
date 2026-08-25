@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressCoinBalanceHistory = createAction({
   name: 'get_address_coin_balance_history',
+  classification: 'SEARCH',
   displayName: 'Get Address Coin Balance History',
   description: 'Get list of coin balance changes for an address',
   audience: 'both',

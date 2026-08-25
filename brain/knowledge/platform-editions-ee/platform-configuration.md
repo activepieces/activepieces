@@ -17,6 +17,7 @@ A **Platform** is the top-level tenant namespace in Activepieces. Every install 
 - `GET /v1/platforms/assets/:id` — public asset download.
 
 ### Gotchas
+- **The platform name is editable on every edition, even though it lives inside the Appearance section.** `appearance-section.tsx` computes `brandingLocked = !platform.plan.customAppearanceEnabled` and passes `disabled={brandingLocked}` to the logo, icon, favicon and theme-colour inputs, but **not** to the `Platform Name` input, and `formdata.append('name', name)` sits outside the `if (!brandingLocked)` block. So a Community or unlicensed platform can rename itself at Settings > Platform > Setup > General while every other field on that form is locked. Reading the file top-down makes the whole section look gated; it is per-field. `UpdatePlatformRequestBody.name` is likewise ungated on the API and only validated against `SAFE_STRING_PATTERN` (no `.` or `/`).
 - Per-project piece/action/trigger visibility is done via **piece sets**, NOT the platform.
 - On GET for USER principals, `plan.chatEnabled` is rewritten to effective per-user chat visibility, and `licenseKey` is nulled for embedded users.
 - Updating SAML config clears the cached SAML client (`invalidateSamlClientCache`).

@@ -19,6 +19,7 @@ import { certopusAuth } from '../auth';
 export const createCredential = createAction({
   auth: certopusAuth,
   name: 'create_credential',
+  classification: 'WRITE',
   displayName: 'Create Credential',
   description: 'Create a credential',
   audience: 'both',

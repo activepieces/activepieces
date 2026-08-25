@@ -11,6 +11,7 @@ import {
 
 export const createEntryAction = createAction({
 	name: 'create_entry',
+	classification: 'WRITE',
 	displayName: 'Create List Entry',
 	description: 'Add a record to a specified list.',
 	audience: 'both',

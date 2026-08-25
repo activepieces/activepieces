@@ -137,10 +137,12 @@ const selectAgentFormComponentForProperty = (
     case AgentPieceProps.AI_PROVIDER_MODEL: {
       const provider = (field.value as AgentProviderModel).provider;
       const model = (field.value as AgentProviderModel).model;
+      const configId = (field.value as AgentProviderModel).configId;
       return (
         <AIModelSelector
           defaultModel={model}
           defaultProvider={provider}
+          defaultConfigId={configId}
           onChange={field.onChange}
           disabled={disabled}
         />
