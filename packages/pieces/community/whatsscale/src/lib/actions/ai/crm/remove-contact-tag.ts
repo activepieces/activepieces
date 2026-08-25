@@ -12,7 +12,7 @@ export const removeCrmContactTagByIdAction = createAction({
   displayName: 'Remove a Tag from a CRM Contact (By ID)',
   description: 'Remove a single tag from a CRM contact, entered directly rather than picked from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Detach one tag from a WhatsScale CRM contact identified by contact ID. Reverses Add a Tag to a CRM Contact; idempotent since the end state is the tag being absent. The contact itself is left intact.', idempotent: true },
+  aiMetadata: { description: 'Detach one tag from a WhatsScale CRM contact identified by contact ID. Reverses Add a Tag to a CRM Contact; idempotent since the end state is the tag being absent. The contact itself is left intact. Its twin Remove a Tag from a CRM Contact makes the identical call but sources the contact from a builder dropdown instead of a free-text ID.', idempotent: true },
   outputSchema: crmContactOutputSchema,
   props: {
     contactId: Property.ShortText({

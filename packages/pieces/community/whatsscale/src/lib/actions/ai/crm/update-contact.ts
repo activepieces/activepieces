@@ -12,7 +12,7 @@ export const updateCrmContactByIdAction = createAction({
   displayName: 'Update a CRM Contact (By ID)',
   description: 'Update the name or tags of a CRM contact, entered directly rather than picked from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale, not merged. Idempotent: re-running with the same values converges the contact to the same state.', idempotent: true },
+  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale, not merged. Idempotent: re-running with the same values converges the contact to the same state. Its twin Update a CRM Contact makes the identical call but sources the contact from a builder dropdown instead of a free-text ID.', idempotent: true },
   outputSchema: crmContactOutputSchema,
   props: {
     contactId: Property.ShortText({

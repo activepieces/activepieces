@@ -12,7 +12,7 @@ export const getCrmContactByIdAction = createAction({
   displayName: 'Get a CRM Contact (By ID)',
   description: 'Retrieve a CRM contact by ID, entered directly rather than picked from a list.',
   audience: 'ai',
-  aiMetadata: { description: 'Fetch a single WhatsScale CRM contact by its contact ID. Read-only; pick this when you already hold the ID (e.g. from List CRM Contacts), versus Find a CRM Contact by Phone when you only have the phone number.', idempotent: true },
+  aiMetadata: { description: 'Fetch a single WhatsScale CRM contact by its contact ID. Read-only; pick this when you already hold the ID (e.g. from List CRM Contacts), versus Find a CRM Contact by Phone when you only have the phone number. Its twin Get a CRM Contact makes the identical call but sources the contact from a builder dropdown instead of a free-text ID.', idempotent: true },
   outputSchema: crmContactOutputSchema,
   props: {
     contactId: Property.ShortText({
