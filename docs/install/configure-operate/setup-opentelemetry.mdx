@@ -29,6 +29,36 @@ The gauge covers all queues, including dedicated worker-group queues. Each data 
 Outbound requests from the app go through an SSRF filter that blocks private, loopback, and link-local IPs. If your OTLP collector resolves to a private IP (for example an in-cluster collector), add its IP or CIDR to the `AP_SSRF_ALLOW_LIST` environment variable.
 </Warning>
 
+## Infrastructure Metrics
+
+The app container emits periodic wide events describing Postgres and Redis, so the same drain that
+receives your logs also receives operational metrics — no separate metrics pipeline required. Set
+`AP_INFRA_METRICS_ENABLED=false` to turn them off.
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `AP_INFRA_METRICS_ENABLED` | Emit periodic Postgres and Redis metric events | `true` |
+
+| Event | Interval | Contents |
+|-------|----------|----------|
+| `system.snapshot` | 60s, every replica | Process memory, event-loop delay, BullMQ queue counts, and Postgres pool usage (`pgPoolTotal`, `pgPoolIdle`, `pgPoolWaiting`) |
+| `db.snapshot` | 60s, one replica | `pg_stat_database` counters (commits, rollbacks, buffer hits/reads, deadlocks, temp bytes) plus a `pg_stat_activity` rollup (active, idle-in-transaction, longest running query, ungranted locks) |
+| `redis.snapshot` | 60s, one replica | Memory, fragmentation, evictions, keyspace hits/misses, connected and blocked clients, total keys and keys with no TTL |
+| `db.table` | 15m, one replica | Top 20 tables by sequential-scan volume: `seqScan`, `seqTupRead`, `idxScan`, live/dead tuples, heap cache hits, total and index size |
+| `db.index` | 15m, one replica | Non-unique indexes over 10&nbsp;MB that have never been scanned |
+| `db.statement` | 15m, one replica | Top 20 statements by total execution time, when the `pg_stat_statements` extension is installed; otherwise a single event with `available: false` |
+| `redis.command` | 15m, one replica | Top 15 commands by call count, with `usecPerCall` and latency percentiles |
+
+Cluster-wide events are emitted by a single replica per interval (elected through Redis), so scaling the
+app does not multiply them. Counters are reported raw and cumulative — take the difference between two
+events to get a rate. Metric collection runs with a 5-second statement timeout and never blocks or fails
+a request.
+
+<Note>
+`db.statement` reports the query text `pg_stat_statements` stores, which has literals replaced by
+placeholders and is truncated to 300 characters. Activepieces never installs the extension for you.
+</Note>
+
 ## Sampling Variables
 
 | Variable | Description | Default Value |

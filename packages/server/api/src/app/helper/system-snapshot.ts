@@ -1,8 +1,9 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
 import { createLogger } from '@activepieces/server-utils'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, isNil, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { databaseConnection } from '../database/database-connection'
 import { jobQueue } from '../workers/job-queue/job-queue'
 import { appMachineCache } from './app-machine-cache'
 import { otelQueueMetrics, QueueCounts } from './otel-queue-metrics'
@@ -13,6 +14,28 @@ const NANOS_PER_MS = 1e6
 
 function mbRounded(bytes: number): number {
     return Math.round(bytes / (1024 * 1024))
+}
+
+function readPoolStats(): Record<string, number> {
+    const { data } = tryCatchSync((): Record<string, number> => {
+        const { driver } = databaseConnection()
+        if (!('master' in driver) || !isPgPoolLike(driver.master)) {
+            return {}
+        }
+        return {
+            pgPoolTotal: driver.master.totalCount,
+            pgPoolIdle: driver.master.idleCount,
+            pgPoolWaiting: driver.master.waitingCount,
+        }
+    })
+    return data ?? {}
+}
+
+function isPgPoolLike(value: unknown): value is PgPoolLike {
+    return typeof value === 'object' && !isNil(value)
+        && 'totalCount' in value && typeof value.totalCount === 'number'
+        && 'idleCount' in value && typeof value.idleCount === 'number'
+        && 'waitingCount' in value && typeof value.waitingCount === 'number'
 }
 
 async function buildQueueCounts(log: FastifyBaseLogger): Promise<QueueCounts | null> {
@@ -49,6 +72,7 @@ export const systemSnapshot = {
                     memHeapTotalMb: mbRounded(mem.heapTotal),
                     eventLoopDelayP99Ms,
                     queueCounts: queueCounts ?? { queueCountsError: true },
+                    ...readPoolStats(),
                 })
                 // Emit with _forceKeep to bypass info-level sampling — snapshots are
                 // operational metrics and must always reach the drain regardless of
@@ -73,4 +97,10 @@ export const systemSnapshot = {
             void tick() 
         }, SNAPSHOT_INTERVAL_MS).unref()
     },
+}
+
+type PgPoolLike = {
+    totalCount: number
+    idleCount: number
+    waitingCount: number
 }

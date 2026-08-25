@@ -14,3 +14,5 @@ argument being had again in six months, and it is the part nobody remembers with
 
 This folder is an ordinary folder. It has an `index.md` because every folder page does, and the decisions inside
 it are its children. Nothing special-cases it.
+- **Old flows move forward by re-pinning the version, never by re-packaging** — why re-bundling a pinned piece buys 12–25% and the version has to move instead
+- **Operational metrics ride the log drain, not a metrics pipeline** — why Postgres/Redis gauges are wide events in ClickHouse instead of OTLP

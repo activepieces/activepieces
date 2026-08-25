@@ -78,6 +78,7 @@ import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
 import { exceptionHandler } from './helper/exception-handler'
+import { infraSnapshot } from './helper/infra-snapshot'
 import { clientLogsModule } from './helper/logs/client-logs.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { rejectedPromiseHandler } from './helper/promise-handler'
@@ -435,6 +436,7 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
 
     assertReleaseReadable(app.log)
     systemSnapshot.start({ log: app.log })
+    infraSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')
     if (environment === ApEnvironment.DEVELOPMENT) {

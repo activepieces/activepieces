@@ -46,6 +46,10 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 
 `activepieces benchmark` load-tests the sync-webhook path and attributes latency to queue-wait vs service-time. Auto-discovers deployment shape (`GET /v1/worker-machines`) and drives load = execution slots (so a healthy deploy shows \~zero queue-wait; any reported queue-wait is a real finding). Authoritative latency is server/worker-measured (`FlowRun.timeline` QUEUE/PROVISION/BOOT/RUN + `/v1/health/diagnostics` in-region DB/Redis/S3 RTT); client-side numbers are observational only (cross-region). Auth via platform API key. Infra-diagnostics block is self-hosted only (`FEATURE_DISABLED` on Cloud). New App Instance Registry: apps self-register into Redis `appMachines` on their snapshot tick (no inbound healthcheck), kept separate from worker slots.
 
+### Logs & Operational Metrics
+
+Server logs are evlog **wide events** — one JSON object per request. One remote drain wins (Axiom → HyperDX → Loki → BetterStack → OTLP); production uses HyperDX, which is what lands them in **ClickHouse**. Info is sampled, so periodic gauges must carry `_forceKeep: true`. `system.snapshot` is the existing 60s metrics tick (api + worker). See *Logs & Operational Metrics*.
+
 ## Pages
 
 - **Tables** — Field / Record / Cell and TableWebhooks
@@ -54,3 +58,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Knowledge Base** — documents chunked into vector embeddings for AI search
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
+- **Logs & Operational Metrics** — wide events, drains, and the 60s snapshot tick
