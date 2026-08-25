@@ -45,14 +45,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import {
+  AIModelSelector,
+  AgentStructuredOutput,
+  useAgentsAvailable,
+} from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -514,7 +517,7 @@ const ConfigurePanel = ({
 
 const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
-  const { platform } = platformHooks.useCurrentPlatform();
+  const agentsAvailable = useAgentsAvailable();
   const [configureOpen, setConfigureOpen] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -544,7 +547,7 @@ const AgentEditorContent = () => {
   };
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
-    enabled: agentId !== undefined && platform.plan.agentsEnabled,
+    enabled: agentId !== undefined && agentsAvailable,
   });
 
   if (isLoading || agent === undefined) {
@@ -684,10 +687,10 @@ const AgentEditorContent = () => {
 };
 
 const AgentEditorPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const agentsAvailable = useAgentsAvailable();
   return (
     <LockedFeatureGuard
-      locked={!platform.plan.agentsEnabled}
+      locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
       featureKey="AGENTS"
