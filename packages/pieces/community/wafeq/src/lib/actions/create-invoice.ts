@@ -10,6 +10,12 @@ export const createInvoice = createAction({
   name: 'create_invoice',
   displayName: 'Create Invoice',
   description: 'Create a new sales invoice for a customer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a sales (B2B) invoice in Wafeq for a customer contact, with line items, currency, tax handling, and a status (Draft/Sent/Finalized). Choose this for standard customer billing; use Create Simplified Invoice for retail/walk-in sales and Create Quote for estimates. Requires an existing contact ID and a unique invoice_number (reusing one is rejected). Not idempotent — each call posts a new invoice.',
+    idempotent: false,
+  },
   props: {
     contact: wafeqProps.contactDropdown({
       displayName: 'Customer',

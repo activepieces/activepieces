@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createReply } from './lib/actions/create-reply';
 import { newReview } from './lib/triggers/new-review';
 
@@ -12,7 +12,7 @@ export const googleAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
-  scope: ['https://www.googleapis.com/auth/business.manage'],
+  scope: ['https://www.googleapis.com/auth/business.manage', 'email'],
 });
 
 export const googleBusiness = createPiece({

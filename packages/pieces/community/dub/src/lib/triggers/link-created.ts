@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { dubAuth } from '../auth';
 
 export const linkCreated = createTrigger({
@@ -11,6 +11,10 @@ export const linkCreated = createTrigger({
   name: 'link_created',
   displayName: 'Link Created',
   description: 'Triggers in real time whenever a new short link is created in your Dub workspace.',
+  aiMetadata: {
+    description:
+      'Fires in real time whenever a new short link is created in the Dub workspace, delivering the newly created link record. Use to react to link creation, regardless of whether the link was made via the API, dashboard, or another integration.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     md: Property.MarkDown({

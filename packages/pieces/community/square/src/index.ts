@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import crypto from 'crypto';
 import { triggers } from './lib/triggers';
 import { squareAuth } from './lib/auth';

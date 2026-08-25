@@ -15,6 +15,8 @@ export const locationUpdateAction = createAction({
   name: 'locationUpdate',
   displayName: 'Resources - Locations - Update',
   description: 'Update a location.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing AMPECO charging location by its numeric ID, covering localized names/descriptions, geoposition, address, working hours, timezone, tags, and roaming/external IDs. Use to edit a known location; to add a new one use the Create action instead. Geoposition latitude and longitude are always required; setting fields to supplied values converges to the same state, so it is idempotent.', idempotent: true },
   props: {
         
   location: Property.Number({

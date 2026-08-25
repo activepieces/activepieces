@@ -9,8 +9,13 @@ const TRIGGER_SCOPE = 'store/order/updated';
 export const orderUpdated = createTrigger({
   auth: bigcommerceAuth,
   name: 'orderUpdated',
+  classification: 'READ',
   displayName: 'Order Updated',
   description: 'Triggers when an order is updated',
+  aiMetadata: {
+    description:
+      'Fires when an existing order is updated in the BigCommerce store (any change to the order, not just its status). The event identifies the affected order; pair with Get Order for full details.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

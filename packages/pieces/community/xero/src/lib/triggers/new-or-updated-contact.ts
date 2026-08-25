@@ -14,6 +14,9 @@ export const xeroNewOrUpdatedContact = createTrigger({
   name: 'xero_new_or_updated_contact',
   displayName: 'New or Updated Contact',
   description: 'Fires when a contact is created or updated (via Xero webhooks).',
+  aiMetadata: {
+    description: 'Fires when a contact is created or updated in the connected Xero organisation. Delivered through a Xero webhook on the CONTACT category filtered to CREATE and UPDATE events; the verified payload event optionally enriched with the full contact record (name, email, addresses, contact ID) fetched from Xero. Fires on both new contacts and edits to existing ones; use the New Contact trigger if only creations are wanted.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookInstructions: Property.MarkDown({

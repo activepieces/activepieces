@@ -9,8 +9,13 @@ const TRIGGER_SCOPE = 'store/product/created';
 export const productCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'productCreated',
+  classification: 'READ',
   displayName: 'Product Created',
   description: 'Triggers when a new product is created',
+  aiMetadata: {
+    description:
+      'Fires when a new product is added to the BigCommerce store catalog. The event identifies the new product.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

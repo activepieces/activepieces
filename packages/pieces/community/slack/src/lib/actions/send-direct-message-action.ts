@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import {
   profilePicture,
   text,
@@ -13,13 +13,18 @@ import {
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { chatPostMessageOutputSchema } from '../output-schemas';
 
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'send_direct_message',
+  classification: 'WRITE',
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
+  audience: 'human',
+  aiMetadata: { description: 'Send a direct message to a single user by user ID, with optional Block Kit blocks, custom username/icon, and link unfurling. Each call posts a new DM, so it is not idempotent. Use this to message one person privately; use Send Message To A Channel to post in a channel.', idempotent: false },
+  outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
     text,

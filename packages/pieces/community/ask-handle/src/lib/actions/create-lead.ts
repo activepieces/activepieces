@@ -6,8 +6,11 @@ import { askHandleApiCall } from '../common/client';
 export const createLead = createAction({
   auth: askHandleAuth,
   name: 'create_lead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Create a new lead',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new lead record in AskHandle from optional contact and context fields (nickname, email, phone, device, originating page title, referrer). Use to capture a prospect. Not idempotent — each call creates a separate lead, with no de-duplication on email or phone.', idempotent: false },
   props: {
     nickname: Property.ShortText({
       displayName: 'Nickname',

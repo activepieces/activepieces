@@ -8,6 +8,8 @@ export const addOrRemoveTagOnConversationAction = createAction({
 	name: 'add-or-remove-tag-on-conversation',
 	displayName: 'Add/Remove Tag on Conversation',
 	description: 'Attach or remove a tag from a specific conversation.',
+	audience: 'both',
+	aiMetadata: { description: 'Tag or untag a conversation by conversation ID and tag ID; set the Untag flag to remove rather than add. Mutates the conversation, so it is not idempotent. Requires an existing tag ID (use List Tags to discover one).', idempotent: false },
 	props: {
 		conversationId: conversationIdProp('Conversation ID', true),
 		tagId: tagIdProp('Tag', true),

@@ -8,6 +8,11 @@ export const triggerWorkflow = createAction({
   name: 'trigger_workflow',
   displayName: 'Trigger Workflow',
   description: 'Trigger a Knock notification workflow for one or more recipients.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Triggers a Knock notification workflow (identified by its workflow key) to deliver notifications to one or more recipient user IDs, optionally attaching template data, an actor, and a tenant. Choose this to send notifications to users; the recipients must already exist in Knock or be identified inline. Not idempotent — each call enqueues a fresh notification run.',
+    idempotent: false,
+  },
   props: {
     workflowKey: Property.ShortText({
       displayName: 'Workflow Key',

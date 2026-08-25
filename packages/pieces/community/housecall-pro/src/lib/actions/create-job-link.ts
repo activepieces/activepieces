@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createJobLink = createAction({
   auth: housecallProAuth,
   name: "create_job_link",
+  classification: 'WRITE',
   displayName: "Create Job Link",
   description: "Create a new job link",
+  audience: 'both',
+  aiMetadata: { description: "Attach a titled hyperlink (title + URL) to a Housecall Pro job identified by job ID. Not idempotent: repeated calls add duplicate links to the job.", idempotent: false },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

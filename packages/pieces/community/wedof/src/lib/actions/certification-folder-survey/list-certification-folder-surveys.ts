@@ -11,6 +11,12 @@ import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common
     name: 'listCertificationFolderSurveys',
     displayName: 'Liste les enquêtes selon des critères',
     description: "Récupérer l'ensemble des enquêtes de l'organisme de l'utilisateur connecté",
+    audience: 'both',
+    aiMetadata: {
+      description:
+        "Lists the certification surveys belonging to the connected user's organization, filterable by certification (certifInfo) and survey state, with paging and sort order. Read-only and safe to repeat. Use to find surveys by criteria; to fetch the survey of one known certification folder use the get-survey action instead.",
+      idempotent: true,
+    },
     props: {
       certifInfo: Property.ShortText({
         displayName: 'N° certifInfo',

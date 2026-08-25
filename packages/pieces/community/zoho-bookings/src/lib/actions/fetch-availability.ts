@@ -8,6 +8,12 @@ export const fetchAvailability = createAction({
   name: 'fetchAvailability',
   displayName: 'Fetch Availability',
   description: 'Fetch availability of appointments across services',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up open appointment slots for a service in a Zoho Bookings workspace on a given date. Scope the lookup to exactly one of staff, group, or resource (the call fails if none is supplied). Use this before booking to find valid times. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     workspace_id: Property.Dropdown({
       auth: zohoBookingsAuth,

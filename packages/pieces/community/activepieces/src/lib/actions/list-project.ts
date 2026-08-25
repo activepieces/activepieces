@@ -8,9 +8,16 @@ import { activePieceAuth } from '../auth';
 
 export const listProject = createAction({
   name: 'list_project',
+  classification: 'SEARCH',
   auth: activePieceAuth,
   displayName: 'List Projects',
   description: 'List all projects',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List all projects accessible to the authenticated Activepieces platform API key. Use to discover existing projects or resolve a project id before updating one. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<string[]>({

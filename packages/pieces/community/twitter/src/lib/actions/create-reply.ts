@@ -6,15 +6,18 @@ import {
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from '../..';
 import { twitterCommon } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const createReply = createAction({
     auth: twitterAuth,
   
     name: 'create-reply',
+    classification: 'WRITE',
     displayName: 'Create Reply',
     description: 'Reply to a tweet.',
+    audience: 'both',
+    aiMetadata: { description: 'Posts a reply to an existing tweet on X/Twitter, optionally attaching up to three images. Use this when responding to a specific tweet rather than creating a standalone post; requires the target tweet ID and non-empty reply text. Not idempotent — each call publishes a separate new reply.', idempotent: false },
     props: {
       tweet_id: Property.LongText({
         displayName: 'Tweet ID',
@@ -28,7 +31,7 @@ export const createReply = createAction({
     },
     async run(context) {
       await propsValidation.validateZod(context.propsValue, {
-        text: z.string().min(1),
+        text: z.string().check(z.minLength(1)),
       });
 
       const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =

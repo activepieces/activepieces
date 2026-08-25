@@ -11,6 +11,12 @@ export const createQuote = createAction({
   displayName: 'Create Quote',
   description:
     'Send a customer a quote (also called an estimate). Quotes can later be converted into an invoice with the "Convert Quote to Invoice" action.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a customer quote/estimate in Wafeq with line items, currency, and tax handling, in Draft or Sent status. Choose this to propose pricing before billing; once accepted, turn it into an invoice with Convert Quote to Invoice rather than re-keying. Requires an existing customer contact ID and a unique quote_number. Not idempotent — each call creates a new quote.',
+    idempotent: false,
+  },
   props: {
     contact: wafeqProps.contactDropdown({
       displayName: 'Customer',

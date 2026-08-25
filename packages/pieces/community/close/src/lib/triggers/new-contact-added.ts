@@ -12,6 +12,9 @@ export const newContactAdded = createTrigger({
 	name: 'new_contact_added',
 	displayName: 'New Contact Added',
 	description: 'Triggers when a new contact is created.',
+	aiMetadata: {
+		description: 'Fires when a new contact (person) is created in Close CRM, via a registered webhook on the contact-created event. Emits the full contact record, including its parent lead ID. Use to react whenever a person is added to the CRM.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

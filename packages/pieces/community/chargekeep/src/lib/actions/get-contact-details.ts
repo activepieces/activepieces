@@ -4,8 +4,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getContactDetails = createAction({
   name: 'getContactDetails',
+  classification: 'READ',
   displayName: 'Get Contact Details',
   description: 'Get Contact Details',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up and returns a single contact record from the ChargeKeep/Sperse CRM. Identify the contact by any of Contact ID, Contact Xref, Affiliate Code, User ID, or User Email (all optional, so pass whichever identifier you have). Use to fetch contact details before acting on them; read-only and safe to repeat.', idempotent: true },
   auth: chargekeepAuth,
   props: {
     contactId: Property.Number({

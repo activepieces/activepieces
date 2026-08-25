@@ -8,8 +8,15 @@ import { accountId, fromAddress } from '../common/props';
 export const sendEmailAction = createAction({
 	auth: zohoMailAuth,
 	name: 'send_email',
+	classification: 'WRITE',
 	displayName: 'Send Email',
 	description: 'Sends an email.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Sends a new email from a Zoho Mail account to one recipient, with optional CC/BCC, read receipt, and a single file attachment; body is sent as HTML or plain text per the chosen format. Use to dispatch outbound mail. Not idempotent: each call sends a separate message.',
+		idempotent: false,
+	},
 	props: {
 		accountId: accountId({ displayName: 'Account', required: true }),
 		fromAddress: fromAddress({ displayName: 'From Email Address', required: true }),

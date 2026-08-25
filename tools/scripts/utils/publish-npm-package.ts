@@ -31,10 +31,15 @@ function assertNoSemverRanges(packageJsonPath: string): void {
   }
 }
 
-function assertNoUnresolvedWorkspaceDeps(packageJsonPath: string): void {
+// Final, bullet-proof publish gate. A published piece is a self-contained bundle: every
+// @activepieces/* library (shared, framework, common, core-*) is inlined and NONE of them is
+// published to npm, and there must be no unresolved workspace:* dep. So refuse to publish if any
+// dependency is either still a workspace:* range OR an @activepieces/* package — regardless of how
+// it leaked into the manifest. This catches bundler/manifest regressions before they hit the registry.
+function assertNoUnpublishableDeps(packageJsonPath: string): void {
   const json = JSON.parse(readFileSync(packageJsonPath).toString())
   const depFields = ['dependencies', 'devDependencies', 'peerDependencies'] as const
-  const unresolved: string[] = []
+  const offending: string[] = []
 
   for (const field of depFields) {
     const deps: Record<string, string> | undefined = json[field]
@@ -43,14 +48,16 @@ function assertNoUnresolvedWorkspaceDeps(packageJsonPath: string): void {
     }
     for (const [name, version] of Object.entries(deps)) {
       if (version.startsWith('workspace:')) {
-        unresolved.push(`${field}.${name}: ${version}`)
+        offending.push(`${field}.${name}: ${version} (unresolved workspace dependency)`)
+      } else if (name.startsWith('@activepieces/')) {
+        offending.push(`${field}.${name}: ${version} (must be bundled, never published)`)
       }
     }
   }
 
-  if (unresolved.length > 0) {
+  if (offending.length > 0) {
     throw new Error(
-      `[publishPackage] refusing to publish ${json.name}@${json.version} — unresolved workspace dependencies:\n  ${unresolved.join('\n  ')}`,
+      `[publishPackage] refusing to publish ${json.name}@${json.version} — unpublishable dependencies:\n  ${offending.join('\n  ')}`,
     )
   }
 }
@@ -72,18 +79,17 @@ export const publishNpmPackage = async (path: string): Promise<void> => {
   }
   const { version } = await readPackageJson(path)
 
-  // Pins all dependency versions (including transitive) from bun.lock.
-  // For pieces built via CLI or prepare-pieces-for-publish, this already ran during build — calling it
-  // again is idempotent. For shared/common/framework, this is the only place it runs before publish.
-  preparePieceDistForPublish(path)
+  // Bundles the piece into a self-contained artifact and rewrites the manifest (strips the
+  // @activepieces/* + workspace deps that are now inlined). MUST be awaited — it copies the
+  // source package.json (with workspace:* deps) before the async bundle+rewrite, so reading the
+  // manifest before it resolves would see the un-stripped deps and fail the assertion below.
+  await preparePieceDistForPublish(path)
 
   const json = JSON.parse(readFileSync(`${outputPath}/package.json`).toString())
   json.version = version
-  json.main = './src/index.js'
-  json.types = './src/index.d.ts'
   writeFileSync(`${outputPath}/package.json`, JSON.stringify(json, null, 2))
 
-  assertNoUnresolvedWorkspaceDeps(`${outputPath}/package.json`)
+  assertNoUnpublishableDeps(`${outputPath}/package.json`)
   assertNoSemverRanges(`${outputPath}/package.json`)
 
   execSync(`npm publish --access public --tag latest`, { cwd: outputPath, stdio: 'inherit' })

@@ -5,7 +5,7 @@ import { generateNewsKnowledgeGraph } from './lib/actions/generate-news-knowledg
 import { getArticleById } from './lib/actions/get-article-by-id';
 import { asknewsChatCompletion } from './lib/actions/asknews-chat-completion';
 import { searchStories } from './lib/actions/search-stories';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createANewsletter } from './lib/actions/create-a-newsletter';
 import { updateANewsletter } from './lib/actions/update-a-newsletter';

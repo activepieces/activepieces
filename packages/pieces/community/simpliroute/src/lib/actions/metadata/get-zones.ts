@@ -8,6 +8,8 @@ export const get_zones = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Zones',
     description: 'Retrieve the list of zones available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all geographic zones defined in the account, returning their ids and names. Use to resolve a zone reference before assigning it to clients or visits. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/zones/`;

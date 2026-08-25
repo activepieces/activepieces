@@ -5,8 +5,11 @@ import { biginApiService } from '../common/request';
 export const searchPipelineRecord = createAction({
   auth: biginAuth,
   name: 'searchPipelineRecord',
+  classification: 'SEARCH',
   displayName: 'Search Pipeline Record',
   description: 'Searches deals by name via criteria or word',
+  audience: 'both',
+  aiMetadata: { description: 'Searches pipeline records (deals) in Bigin CRM and returns matches. Choose between Criteria mode (matches the Deal Name with equals or starts-with) and Word mode (a free-text word search across the module). Use to find a deal by name before referencing or updating it. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Search Mode',

@@ -6,10 +6,17 @@ import { robotIdDropdown, taskIdDropdown } from '../common/props';
 
 export const getTaskDetailsAction = createAction({
   name: 'get-task-details',
+  classification: 'READ',
   auth: browseAiAuth,
   displayName: 'Get Task Details',
   description:
     'Retrieves the details of a specific task executed by a Browse AI robot.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full record of one previously-run Browse AI scraping task by robot ID and task ID, including its status and any captured/extracted data. Use to check the outcome or pull results of a known task. Requires both the robot ID and the task ID; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     robotId: robotIdDropdown,
     taskId: taskIdDropdown,

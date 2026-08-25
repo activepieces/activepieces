@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobAppointment = createAction({
   auth: housecallProAuth,
   name: "delete_job_appointment",
+  classification: 'DESTRUCTIVE',
   displayName: "Delete appointment",
   description: "Delete a job appointment",
+  audience: 'both',
+  aiMetadata: {
+    description: "Permanently delete an appointment from a Housecall Pro job, identified by job ID and appointment ID. Idempotent on the target since the appointment ends up gone; a repeat call on an already-deleted appointment simply has no further effect. Destructive and not reversible.",
+    idempotent: true,
+  },
   props: {
     appointment_id: Property.ShortText({
       displayName: "Appointment ID",

@@ -7,6 +7,9 @@ export const followupAfterAutoreply = createTrigger({
   name: 'followup_after_autoreply',
   displayName: 'Follow-up After Autoreply',
   description: 'Triggers when a follow-up is scheduled after an autoreply',
+  aiMetadata: {
+    description: 'Fires when Woodpecker schedules a follow-up to a prospect after detecting an earlier autoreply (e.g. resuming outreach once an out-of-office period ends). Represents a follow-up-resumption event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'followup_after_autoreply',

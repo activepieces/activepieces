@@ -7,6 +7,9 @@ export const eventEnded = createSessionsUsWebhookTrigger({
   name: 'event_ended',
   displayName: 'Event Ended',
   description: 'Triggered when an event ends.',
+  aiMetadata: {
+    description: 'Fires when an event finishes (the live event concludes). The payload includes the underlying session, the event id and slug, and the owning participant.',
+  },
   trigger: SessionsUsWebhookTrigger.EVENT_ENDED,
   storeKey: 'sessions_event_ended_trigger',
   sampleData: {

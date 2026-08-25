@@ -33,6 +33,9 @@ export const pagePartiallyAcceptedTrigger = createTrigger({
   name: 'page_partially_accepted',
   displayName: 'Page Partially Accepted',
   description: 'Triggers when a Qwilr page is partially accepted',
+  aiMetadata: {
+    description: 'Fires when a recipient partially accepts a Qwilr page (some but not all accept blocks completed), indicating partial agreement on a multi-option proposal. Use to track in-progress deals or nudge for full acceptance.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

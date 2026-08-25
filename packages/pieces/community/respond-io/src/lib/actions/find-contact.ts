@@ -8,6 +8,8 @@ export const findContact = createAction({
   name: 'find_contact',
   displayName: 'Find Contact',
   description: 'Search for contacts by name, email, or phone number in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Respond.io contacts by a free-text term matching name, email, or phone, returning matching contacts. Use to resolve a contact to its ID before acting on it, or to look up contacts. Supports a result limit (1-99, default 10) and cursor-based pagination. Read-only and idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search Term',

@@ -2,10 +2,7 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
-import {
-    assertNotNullOrUndefined,
-    isNil,
-} from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import { z } from 'zod'
 import { RedisType } from '../database/redis/types'
@@ -61,6 +58,16 @@ export const encryptUtils = {
             iv: iv.toString('hex'),
             data: encrypted,
         }
+    },
+    hmacString: async (inputString: string): Promise<string> => {
+        const secret = await encryptUtils.getEncryptionKey()
+        assertNotNullOrUndefined(secret, 'secret')
+        return crypto.createHmac('sha256', Buffer.from(secret, 'binary')).update(inputString).digest('hex')
+    },
+    digestsMatch: (stored: string, candidate: string): boolean => {
+        const left = Buffer.from(stored, 'utf8')
+        const right = Buffer.from(candidate, 'utf8')
+        return left.length === right.length && crypto.timingSafeEqual(left, right)
     },
     getEncryptionKey: async (): Promise<string | null> => {
         const secret = system.get(AppSystemProp.ENCRYPTION_KEY) ?? null

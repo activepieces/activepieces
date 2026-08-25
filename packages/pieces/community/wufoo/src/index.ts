@@ -10,7 +10,7 @@ import { findSubmissionByFieldAction } from './lib/actions/find-submission-by-fi
 import { getEntryDetailsAction } from './lib/actions/get-entry-details';
 import { newFormEntryTrigger } from './lib/triggers/new-form-entry';
 import { newFormTrigger } from './lib/triggers/new-form';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { wufooAuth } from './lib/auth';
 
 export const wufoo = createPiece({

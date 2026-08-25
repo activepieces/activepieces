@@ -5,8 +5,15 @@ import { aidbaseClient } from '../common/client';
 export const addWebsite = createAction({
   auth: aidbaseAuth,
   name: 'add_website',
+  classification: 'WRITE',
   displayName: 'Add Website',
   description: 'Adds a website URL as a knowledge source for Aidbase.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Registers a website URL as a new knowledge source in Aidbase so its content can later be trained on and answered from. Use when ingesting a web page or site into the knowledge base; requires the website URL. Not idempotent: each call creates a new knowledge source even for the same URL.',
+    idempotent: false,
+  },
 
   props: {
     website_url: Property.ShortText({

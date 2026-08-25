@@ -8,8 +8,11 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_crm_contact',
+  classification: 'WRITE',
   displayName: 'Send a Message to a CRM Contact',
   description: 'Send a text message to a contact from your WhatsScale CRM',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a text message to a contact stored in the WhatsScale CRM, identified by CRM contact ID chosen from the dropdown. Pick this when the recipient is a managed CRM record; use the plain contact, group, manual-entry, or channel text variants for non-CRM recipients. Not idempotent: each call sends another message.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     crmContact: whatsscaleProps.crmContact,

@@ -7,14 +7,23 @@ import {
 import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 
+import { payoutOutputSchema } from '../output-schemas';
 export const stripeRetrievePayout = createAction({
   name: 'retrieve_payout',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve a Payout',
   description: 'Retrieves the details of an existing payout by its ID.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single Stripe payout (funds sent to your bank account) by its payout ID (e.g., po_...). Use to check a payout\'s status, amount, or arrival date. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     payout_id: stripeCommon.payout, 
   },
+  outputSchema: payoutOutputSchema,
   async run(context) {
     const { payout_id } = context.propsValue;
 

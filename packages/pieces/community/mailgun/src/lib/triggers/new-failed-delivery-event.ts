@@ -5,6 +5,10 @@ export const newFailedDeliveryEvent = createMailgunWebhookTrigger({
   displayName: 'New Failed Delivery Event',
   description:
     'Triggers when an email temporarily fails to deliver in Mailgun (will be retried)',
+  aiMetadata: {
+    description:
+      'Fires when Mailgun records a temporary delivery failure (soft bounce) for an email, which Mailgun will automatically retry. Represents a single transient failure with its reason and SMTP details; distinct from a permanent hard bounce.',
+  },
   eventType: 'temporary_fail',
   testEventFilter: { event: 'failed', severity: 'temporary' },
   sampleData: {

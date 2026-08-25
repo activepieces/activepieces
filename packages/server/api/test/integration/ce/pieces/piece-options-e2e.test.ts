@@ -9,6 +9,7 @@
  *   - bun must be available for piece installation
  *   - Redis (in-memory via AP_REDIS_TYPE=MEMORY) is started automatically
  */
+import { apDayjs } from '@activepieces/server-utils'
 import {
     FlowTriggerType,
     FlowVersionState,
@@ -18,6 +19,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { worker } from '../../../../../worker/src/lib/worker'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -28,8 +30,6 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
-import { worker } from '../../../../../worker/src/lib/worker'
-import { apDayjs } from '@activepieces/server-utils'
 
 let app: FastifyInstance
 let apiUrl: string

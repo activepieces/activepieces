@@ -8,6 +8,8 @@ export const createEvent = createAction({
   auth: wealthboxAuth,
   displayName: 'Create Event',
   description: 'Creates a calendar event linked to contact. Schedule advisory meetings on behalf of clients.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar event in Wealthbox with title, start/end times, location, invitees, category, and an optional linked contact. Use to schedule a meeting or appointment; requires a title and both start and end date-times. Not idempotent: each call creates a separate event and can re-send email invitations.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Event Title',

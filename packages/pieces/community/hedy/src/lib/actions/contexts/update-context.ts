@@ -11,6 +11,11 @@ export const updateContext = createAction({
   name: 'update-context',
   displayName: 'Update Session Context',
   description: 'Update an existing session context.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Update fields on an existing Hedy session context identified by a context ID (must be prefixed with "ctx_"); only the fields you provide are changed, and at least one must be supplied. Idempotent: repeating the same update leaves the context in the same state.',
+    idempotent: true,
+  },
   props: {
     contextId: commonProps.contextId,
     title: Property.ShortText({

@@ -1,4 +1,4 @@
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import axios, {
   AxiosError,
   AxiosRequestConfig,
@@ -9,17 +9,22 @@ import axios, {
 import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { chatDebug } from '@/lib/chat-debug-logger';
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
 
 export const API_BASE_URL = isRunningCloudInDevMode
   ? 'https://cloud.activepieces.com'
-  : window.location.origin;
+  : typeof window !== 'undefined'
+  ? window.location.origin
+  : '';
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
   '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
+  '/v1/authentication/otp/request',
+  '/v1/authentication/otp/verify',
   '/v1/authn/local/verify-email',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',
@@ -61,6 +66,7 @@ function request<TResponse>(
     resolvedUrl.replace(API_URL, '').startsWith(route),
   );
 
+  const startedAt = performance.now();
   return axios({
     url: resolvedUrl,
     ...config,
@@ -73,12 +79,25 @@ function request<TResponse>(
       ),
     },
   })
-    .then((response) =>
-      config.responseType === 'blob'
+    .then((response) => {
+      logChatHttp({
+        url: resolvedUrl,
+        config,
+        startedAt,
+        status: response.status,
+      });
+      return config.responseType === 'blob'
         ? response.data
-        : (response.data as TResponse),
-    )
+        : (response.data as TResponse);
+    })
     .catch((error) => {
+      logChatHttp({
+        url: resolvedUrl,
+        config,
+        startedAt,
+        status: isAxiosError(error) ? error.response?.status : undefined,
+        error,
+      });
       if (
         isAxiosError(error) &&
         !ignroedGlobalErrorHandlerRoutes.includes(url)
@@ -87,6 +106,47 @@ function request<TResponse>(
       }
       throw error;
     });
+}
+
+// Mirrors chat HTTP calls into the debug logger so a chat run reconstructs
+// from the request side too. Skips the ingest endpoint to avoid recursion.
+function logChatHttp({
+  url,
+  config,
+  startedAt,
+  status,
+  error,
+}: {
+  url: string;
+  config: AxiosRequestConfig;
+  startedAt: number;
+  status?: number;
+  error?: unknown;
+}): void {
+  if (!chatDebug.isEnabled()) return;
+  const path = url.replace(API_URL, '');
+  if (!path.startsWith('/v1/agents') || path.startsWith('/v1/logs')) return;
+  const conversationId = path.match(/\/v1\/chat\/conversations\/([^/?]+)/)?.[1];
+  const fields = {
+    http: {
+      method: (config.method ?? 'GET').toUpperCase(),
+      path,
+      status,
+      durationMs: Math.round(performance.now() - startedAt),
+    },
+    ...(conversationId ? { conversation: { id: conversationId } } : {}),
+  };
+  if (error !== undefined) {
+    chatDebug.error(
+      {
+        ...fields,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      'chat http request failed',
+    );
+  } else {
+    chatDebug.info(fields, 'chat http request');
+  }
 }
 
 function getToken(
@@ -115,6 +175,22 @@ export const api = {
   },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
+  },
+  extractServerErrorMessage(error: unknown, fallback: string): string {
+    if (api.isError(error)) {
+      const data = error.response?.data as ApErrorParams | undefined;
+      const message =
+        data?.params && 'message' in data.params
+          ? data.params.message
+          : undefined;
+      if (typeof message === 'string' && message.length > 0) {
+        return message;
+      }
+    }
+    if (error instanceof Error && error.message.length > 0) {
+      return error.message;
+    }
+    return fallback;
   },
   any: <TResponse>(url: string, config?: AxiosRequestConfig) =>
     request<TResponse>(url, config),

@@ -9,6 +9,8 @@ export const updateWorker = createAction({
   name: 'update_worker',
   displayName: 'Update Worker',
   description: 'Update an existing worker',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Onfleet worker (driver) by worker ID, changing fields such as name, team membership, capacity, or display name. Not idempotent: it patches the live worker and reassigning teams replaces the prior set. Use create-worker to add a new driver.', idempotent: false },
   props: {
     worker: common.worker,
     name: Property.ShortText({

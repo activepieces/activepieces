@@ -1,5 +1,4 @@
 import {
-  AuthenticationType,
   httpClient,
   HttpMessageBody,
   HttpMethod,
@@ -7,9 +6,10 @@ import {
   HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { Property } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
+import { githubAuthHelpers, GithubAuthValue, isAppAuth } from './auth-helpers';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
@@ -30,8 +30,7 @@ export const githubCommon = {
           placeholder: 'please authenticate first',
         };
       }
-      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      const repositories = await getUserRepo(authProp);
+      const repositories = await getUserRepo(auth);
       return {
         disabled: false,
         options: repositories.map((repo) => {
@@ -66,7 +65,7 @@ export const githubCommon = {
           number: number;
           title: string;
         }>({
-          accessToken: auth.access_token,
+          auth: auth as GithubAuthValue,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/milestones`,
         });
@@ -98,7 +97,7 @@ export const githubCommon = {
         }
         const { owner, repo } = repository as RepositoryProp;
         const branches = await githubPaginatedApiCall<{ name: string }>({
-          accessToken: auth.access_token,
+          auth: auth as GithubAuthValue,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/branches`,
         });
@@ -130,17 +129,16 @@ export const githubCommon = {
           };
         }
         const { owner, repo } = repository as RepositoryProp;
-        // Fetch open issues from the repository
         const issues = await githubPaginatedApiCall<{
           number: number;
           title: string;
           pull_request?: Record<string, any>;
         }>({
-          accessToken: auth.access_token,
+          auth: auth as GithubAuthValue,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/issues`,
           query: {
-            state: 'open', // We will list open issues
+            state: 'open',
           },
         });
         return {
@@ -202,9 +200,8 @@ export const githubCommon = {
             placeholder: 'please authenticate first and select repo',
           };
         }
-        const authProp: OAuth2PropertyValue = auth;
         const { owner, repo } = repository as RepositoryProp;
-        const assignees = await getAssignee(authProp, owner, repo);
+        const assignees = await getAssignee(auth, owner, repo);
         return {
           disabled: false,
           options: assignees.map((assignee) => {
@@ -231,9 +228,8 @@ export const githubCommon = {
             placeholder: 'please authenticate first and select repo',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
         const { owner, repo } = repository as RepositoryProp;
-        const labels = await listIssueLabels(authProp, owner, repo);
+        const labels = await listIssueLabels(auth, owner, repo);
         return {
           disabled: false,
           options: labels.map((label) => {
@@ -245,67 +241,243 @@ export const githubCommon = {
         };
       },
     }),
+  workflowDropdown: ({
+    description = 'The workflow to select.',
+    required = false,
+  }: { description?: string; required?: boolean } = {}) =>
+    Property.Dropdown<{ id: number; path: string }, boolean, typeof githubAuth>(
+      {
+        auth: githubAuth,
+        displayName: 'Workflow',
+        description,
+        required,
+        refreshers: ['repository'],
+        options: async ({ auth, repository }) => {
+          if (!auth || !repository) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please select a repository first',
+            };
+          }
+          const { owner, repo } = repository as RepositoryProp;
+          const workflows = await getWorkflows(
+            auth as GithubAuthValue,
+            owner,
+            repo
+          );
+          return {
+            disabled: false,
+            options: workflows.map((workflow) => {
+              return {
+                label: `${workflow.name} (${workflow.path})`,
+                value: { id: workflow.id, path: workflow.path },
+              };
+            }),
+          };
+        },
+      }
+    ),
+  refDropdown: ({
+    displayName,
+    description,
+    required = false,
+    include = ['branches', 'tags'],
+  }: {
+    displayName?: string;
+    description?: string;
+    required?: boolean;
+    include?: ('branches' | 'tags')[];
+  } = {}) => {
+    const includesBranches = include.includes('branches');
+    const includesTags = include.includes('tags');
+    const refLabel =
+      includesBranches && includesTags
+        ? 'Branch or Tag'
+        : includesBranches
+        ? 'Branch'
+        : 'Tag';
+
+    return Property.Dropdown({
+      auth: githubAuth,
+      displayName: displayName ?? refLabel,
+      description:
+        description ??
+        `The ${refLabel.toLowerCase()} to select.${
+          includesBranches && includesTags
+            ? ' If a branch and a tag share the same name, GitHub resolves the tag.'
+            : ''
+        }`,
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const [branches, tags] = await Promise.all([
+          includesBranches
+            ? githubPaginatedApiCall<{ name: string }>({
+                auth: auth as GithubAuthValue,
+                method: HttpMethod.GET,
+                resourceUri: `/repos/${owner}/${repo}/branches`,
+              })
+            : [],
+          includesTags
+            ? githubPaginatedApiCall<{ name: string }>({
+                auth: auth as GithubAuthValue,
+                method: HttpMethod.GET,
+                resourceUri: `/repos/${owner}/${repo}/tags`,
+              })
+            : [],
+        ]);
+        return {
+          disabled: false,
+          options: [
+            ...branches.map((branch) => ({
+              label: `${branch.name} (branch)`,
+              value: branch.name,
+            })),
+            ...tags.map((tag) => ({
+              label: `${tag.name} (tag)`,
+              value: tag.name,
+            })),
+          ],
+        };
+      },
+    });
+  },
 };
 
-async function getUserRepo(authProp: OAuth2PropertyValue) {
-  const response = await githubPaginatedApiCall<{
-    id: number;
-    name: string;
-    owner: { login: string };
-  }>({
-    accessToken: authProp.access_token,
+async function getUserRepo(auth: GithubAuthValue): Promise<RepoSummary[]> {
+  if (isAppAuth(auth)) {
+    return getInstallationRepos(auth);
+  }
+  return githubPaginatedApiCall<RepoSummary>({
+    auth,
     method: HttpMethod.GET,
     resourceUri: '/user/repos',
   });
-  return response;
 }
 
-async function getAssignee(
-  authProp: OAuth2PropertyValue,
-  owner: string,
-  repo: string
-) {
-  const response = await githubPaginatedApiCall<{ id: number; login: string }>({
-    accessToken: authProp.access_token,
+async function getInstallationRepos(
+  auth: GithubAuthValue
+): Promise<RepoSummary[]> {
+  const repos: RepoSummary[] = [];
+  const qs: RequestParams = { page: 1, per_page: 100 };
+  while (true) {
+    const response = await githubApiCall<{
+      total_count: number;
+      repositories: RepoSummary[];
+    }>({
+      auth,
+      method: HttpMethod.GET,
+      resourceUri: '/installation/repositories',
+      query: qs,
+    });
+    repos.push(...response.body.repositories);
+    const linkHeader = response.headers?.link;
+    if (isNil(linkHeader) || !linkHeader.includes(`rel="next"`)) {
+      break;
+    }
+    qs.page = (qs.page as number) + 1;
+  }
+  return repos;
+}
+
+async function getAssignee(auth: GithubAuthValue, owner: string, repo: string) {
+  return githubPaginatedApiCall<{ id: number; login: string }>({
+    auth,
     method: HttpMethod.GET,
     resourceUri: `/repos/${owner}/${repo}/assignees`,
   });
-  return response;
 }
 
 async function listIssueLabels(
-  authProp: OAuth2PropertyValue,
+  auth: GithubAuthValue,
   owner: string,
   repo: string
 ) {
-  const response = await githubPaginatedApiCall<{ id: number; name: string }>({
-    accessToken: authProp.access_token,
+  return githubPaginatedApiCall<{ id: number; name: string }>({
+    auth,
     method: HttpMethod.GET,
     resourceUri: `/repos/${owner}/${repo}/labels`,
   });
-  return response;
 }
 
-export interface RepositoryProp {
-  repo: string;
-  owner: string;
+async function getWorkflows(
+  auth: GithubAuthValue,
+  owner: string,
+  repo: string
+): Promise<WorkflowSummary[]> {
+  return githubPaginatedApiCall<
+    WorkflowSummary,
+    { total_count: number; workflows: WorkflowSummary[] }
+  >({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/repos/${owner}/${repo}/actions/workflows`,
+    extractItems: (body) => body.workflows,
+  });
 }
 
-export type RequestParams = Record<
-  string,
-  string | number | string[] | undefined
->;
+export async function getRepoEnvironments(
+  auth: GithubAuthValue,
+  owner: string,
+  repo: string
+): Promise<EnvironmentSummary[]> {
+  return githubPaginatedApiCall<
+    EnvironmentSummary,
+    { total_count: number; environments: EnvironmentSummary[] }
+  >({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/repos/${owner}/${repo}/environments`,
+    extractItems: (body) => body.environments,
+  });
+}
 
-export type GithubApiCallParams = {
-  accessToken: string;
-  method: HttpMethod;
-  resourceUri: string;
-  query?: RequestParams;
-  body?: any;
-};
+export async function getRepoFileContent(
+  auth: GithubAuthValue,
+  owner: string,
+  repo: string,
+  path: string,
+  ref?: string
+): Promise<string> {
+  const response = await githubApiCall<{ content: string; encoding: string }>({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/repos/${owner}/${repo}/contents/${path}`,
+    query: ref ? { ref } : undefined,
+  });
+  if (response.body.encoding !== 'base64') {
+    throw new Error(
+      `Unexpected encoding "${response.body.encoding}" returned for ${path}`
+    );
+  }
+  return Buffer.from(response.body.content, 'base64').toString('utf-8');
+}
+
+export async function getWorkflowRun(
+  auth: GithubAuthValue,
+  owner: string,
+  repo: string,
+  runId: number
+): Promise<WorkflowRun> {
+  const response = await githubApiCall<WorkflowRun>({
+    auth,
+    method: HttpMethod.GET,
+    resourceUri: `/repos/${owner}/${repo}/actions/runs/${runId}`,
+  });
+  return response.body;
+}
 
 export async function githubApiCall<T extends HttpMessageBody>({
-  accessToken,
+  auth,
   method,
   resourceUri,
   query,
@@ -322,28 +494,32 @@ export async function githubApiCall<T extends HttpMessageBody>({
     }
   }
 
+  const token = await githubAuthHelpers.getBearerToken(auth);
+
   const request: HttpRequest = {
     method,
     url: baseUrl + resourceUri,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: accessToken,
+    headers: {
+      Authorization: `Bearer ${token}`,
     },
     queryParams: qs,
     body,
   };
 
-  const response = await httpClient.sendRequest<T>(request);
-  return response;
+  return httpClient.sendRequest<T>(request);
 }
 
-export async function githubPaginatedApiCall<T extends HttpMessageBody>({
-  accessToken,
+export async function githubPaginatedApiCall<
+  T extends HttpMessageBody,
+  R extends HttpMessageBody = T[]
+>({
+  auth,
   method,
   resourceUri,
   query,
   body,
-}: GithubApiCallParams): Promise<T[]> {
+  extractItems,
+}: GithubApiCallParams & { extractItems?: (body: R) => T[] }): Promise<T[]> {
   const qs = query ? query : {};
 
   qs.page = 1;
@@ -353,18 +529,66 @@ export async function githubPaginatedApiCall<T extends HttpMessageBody>({
   let hasMoreItems = true;
 
   do {
-    const response = await githubApiCall<T[]>({
-      accessToken,
+    const response = await githubApiCall<R>({
+      auth,
       method,
       resourceUri,
       query: qs,
       body,
     });
     qs.page = qs.page + 1;
-    resultData.push(...response.body);
+    const items = extractItems
+      ? extractItems(response.body)
+      : (response.body as unknown as T[]);
+    resultData.push(...items);
     const linkHeader = response.headers?.link;
     hasMoreItems = !isNil(linkHeader) && linkHeader.includes(`rel="next"`);
   } while (hasMoreItems);
 
   return resultData;
 }
+
+export interface RepositoryProp {
+  repo: string;
+  owner: string;
+}
+
+export type RequestParams = Record<
+  string,
+  string | number | string[] | undefined
+>;
+
+export type GithubApiCallParams = {
+  auth: GithubAuthValue;
+  method: HttpMethod;
+  resourceUri: string;
+  query?: RequestParams;
+  body?: any;
+};
+
+type RepoSummary = {
+  id: number;
+  name: string;
+  owner: { login: string };
+};
+
+type WorkflowSummary = {
+  id: number;
+  name: string;
+  path: string;
+  state: string;
+};
+
+type EnvironmentSummary = {
+  id: number;
+  name: string;
+};
+
+export type WorkflowRun = {
+  id: number;
+  status: string;
+  conclusion: string | null;
+  html_url: string;
+  url: string;
+  [key: string]: unknown;
+};

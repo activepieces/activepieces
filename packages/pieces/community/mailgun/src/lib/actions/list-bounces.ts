@@ -9,6 +9,12 @@ export const listBounces = createAction({
   displayName: 'List Bounces',
   description:
     'Retrieve the list of bounced email addresses for a Mailgun domain. Useful for cleanup after delivery issues or spam attacks.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List the addresses on a Mailgun domain\'s bounce suppression list, up to a result cap. Use to review or export bounced recipients, often before cleaning up the suppression list. Idempotent: a read-only listing.',
+    idempotent: true,
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     limit: Property.Number({

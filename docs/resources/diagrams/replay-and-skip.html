@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{display:inline-block;width:fit-content;padding:38px 44px 30px;background:#fff}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:nowrap}
+.row+.row{margin-top:18px}
+.label{width:172px;flex:0 0 auto;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.045em;color:#94a3b8}
+.box{display:flex;flex-direction:column;padding:9px 15px;border-radius:11px;border:1px solid #e6eaf0;background:#fff;white-space:nowrap}
+.box .t{font-size:14.5px;font-weight:700;color:#0f172a;line-height:1.15}
+.box .s{font-size:11.5px;font-weight:550;color:#94a3b8;margin-top:2px;letter-spacing:.01em}
+.box.green{border-color:#bbf7d0;background:#f0fdf4}
+.box.green .t{color:#15803d}
+.box.green.skip{border-style:dashed;background:#f6fdf8}
+.box.red{border-color:#fecaca;background:#fef2f2}
+.box.red .t{color:#b91c1c}
+.box.amber{border-color:#fde68a;background:#fffbeb}
+.box.amber .t{color:#b45309}
+.box.purple{border-color:#ddd0fa;background:#f6f1fe}
+.box.purple .t{color:#6d28d9}
+.arrow{color:#cbd5e1;font-size:17px;flex:0 0 auto}
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:26px;padding-top:20px;border-top:1px solid #eef2f7;font-size:12.5px;color:#64748b;font-weight:500}
+.legend span .d{font-size:15px;font-weight:800;margin-right:6px;vertical-align:-1px}
+</style></head><body>
+<div class="stage">
+
+  <div class="row">
+    <span class="label">First attempt</span>
+    <div class="box green"><span class="t">&#10003; Trigger</span><span class="s">logged</span></div>
+    <span class="arrow">&rarr;</span>
+    <div class="box green"><span class="t">&#10003; Step 2</span><span class="s">logged</span></div>
+    <span class="arrow">&rarr;</span>
+    <div class="box red"><span class="t">&#9889; Step 3</span><span class="s">worker dies</span></div>
+  </div>
+
+  <div class="row">
+    <span class="label">Resume, fresh worker</span>
+    <div class="box green skip"><span class="t">&#10003; Trigger</span><span class="s">skipped</span></div>
+    <span class="arrow">&rarr;</span>
+    <div class="box green skip"><span class="t">&#10003; Step 2</span><span class="s">skipped</span></div>
+    <span class="arrow">&rarr;</span>
+    <div class="box amber"><span class="t">&#8635; Step 3</span><span class="s">re-runs</span></div>
+    <span class="arrow">&rarr;</span>
+    <div class="box purple"><span class="t">&#9654; Step 4</span><span class="s">runs fresh</span></div>
+  </div>
+
+  <div class="legend">
+    <span><span class="d" style="color:#16a34a">&bull;</span>reused from log</span>
+    <span><span class="d" style="color:#d97706">&bull;</span>in-flight step re-runs</span>
+    <span><span class="d" style="color:#8142E3">&bull;</span>continues fresh</span>
+  </div>
+
+</div>
+</body></html>

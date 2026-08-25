@@ -13,8 +13,13 @@ const STORE_KEY = '_chargebee_subscription_cancelled_webhook_id';
 export const subscriptionCancelled = createTrigger({
   auth: chargebeeAuth,
   name: 'subscription_cancelled',
+  classification: 'READ',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a subscription_cancelled event — a subscription has been cancelled (immediately or at end of term). The payload carries the cancelled subscription with its customer and invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

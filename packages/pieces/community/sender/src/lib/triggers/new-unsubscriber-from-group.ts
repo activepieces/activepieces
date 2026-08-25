@@ -6,8 +6,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newUnsubscriberFromGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber_from_group',
+  classification: 'READ',
   displayName: 'New Unsubscriber From Group',
   description: 'Fires when a subscriber is removed/unsubscribed from a specific group',
+  aiMetadata: {
+    description: 'Fires when a subscriber is removed from or unsubscribes from one specific group/list (identified by group ID) in the connected Sender account, representing that contact leaving the monitored group.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     groupId: Property.ShortText({

@@ -5,6 +5,10 @@ export const envelopeVoided = createEnvelopeEventTrigger({
   displayName: 'Signing Request Cancelled',
   description:
     'Triggers when the sender cancels an in-progress signing request before everyone has signed.',
+  aiMetadata: {
+    description:
+      'Fires when the sender voids (cancels) an in-progress DocuSign envelope before all recipients have signed. Represents the sender-initiated termination of a signing request, as opposed to a recipient declining.',
+  },
   docusignEvent: 'envelope-voided',
   sampleData: {
     event: 'envelope-voided',

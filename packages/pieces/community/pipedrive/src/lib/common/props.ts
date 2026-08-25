@@ -8,7 +8,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { GetField, StageWithPipelineInfo } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { context } from '@opentelemetry/api';
 
 /**

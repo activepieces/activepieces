@@ -50,6 +50,9 @@ export const newAgentConversationMessageTrigger = createTrigger({
   name: 'new_agent_conversation_message',
   displayName: 'New Agent Conversation Message',
   description: 'Triggers when a new message appears in a specific agent\'s conversation',
+  aiMetadata: {
+    description: 'Fires when a new message (from the user or the assistant) is added to a specific Cursor agent\'s conversation, identified by agent id.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     agentId: agentDropdown,

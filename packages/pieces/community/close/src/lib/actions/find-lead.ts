@@ -9,6 +9,11 @@ export const findLead = createAction({
 	name: 'find_lead',
 	displayName: 'Find Lead',
 	description: 'Search for leads with advanced filtering options',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches leads in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — lead name, a related contact email, or status label — and the match mode controls how the query string is compared. Use to look up leads by a known attribute before creating or updating related records. Read-only and idempotent. Requires a search query value.',
+		idempotent: true,
+	},
 	props: {
 		search_type: Property.StaticDropdown({
 			displayName: 'Search Type',

@@ -13,9 +13,14 @@ const STORE_KEY = '_chargebee_payment_failed_webhook_id';
 export const paymentFailed = createTrigger({
   auth: chargebeeAuth,
   name: 'payment_failed',
+  classification: 'READ',
   displayName: 'Payment Failed',
   description:
     'Triggers when a payment attempt fails. Useful for dunning and retry workflows.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a payment_failed event — an attempt to collect a payment failed. Useful for driving dunning and retry workflows. The payload carries the failed transaction with the related invoice, customer, and subscription.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

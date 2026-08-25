@@ -18,7 +18,8 @@ import {
 	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { isNil, MarkdownVariant } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -29,6 +30,7 @@ type Props = {
 };
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -96,8 +98,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const dealStageUpdatedTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'deal-stage-updated',
+	classification: 'READ',
 	displayName: 'Updated Deal Stage',
 	description: 'Triggers when a deal enters a specified stage.',
+	aiMetadata: {
+		description:
+			'Fires when a deal moves into the configured pipeline stage in HubSpot. Each event represents one deal that entered the selected stage since the last poll, returning the deal record with properties such as name, amount, close date, and stage entry date. Tracked by the date the deal entered the current stage.',
+	},
 	props: {
 		pipelineId: pipelineDropdown({
 			objectType: OBJECT_TYPE.DEAL,
@@ -123,20 +130,13 @@ export const dealStageUpdatedTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

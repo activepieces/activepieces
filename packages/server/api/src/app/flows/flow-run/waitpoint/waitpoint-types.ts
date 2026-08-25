@@ -1,4 +1,5 @@
-import { ApId, FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
+import { ApId } from '@activepieces/core-utils'
+import { FlowRunStatus, PauseType, RespondResponse, WaitpointVersion } from '@activepieces/shared'
 
 enum WaitpointStatus {
     PENDING = 'PENDING',
@@ -60,7 +61,7 @@ type CompleteParams = {
 
 type CompleteResult = {
     completedExisting: boolean
-    waitpoint: Waitpoint
+    waitpoint: Waitpoint | null
 }
 
 type HandleResumeSignalParams = {

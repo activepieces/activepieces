@@ -85,6 +85,9 @@ export const newAdInSpyder = createTrigger({
   name: 'newAdInSpyder',
   displayName: 'New Ad in Spyder',
   description: 'Triggers when new ads are added for a brand in Spyder.',
+  aiMetadata: {
+    description: 'Fires when Foreplay Spyder detects a newly tracked ad for the specified brand, optionally narrowed by filters such as platform, format, niche, market, language, and live-only status. Each event represents one newly surfaced ad for that brand.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'ad_123456789',

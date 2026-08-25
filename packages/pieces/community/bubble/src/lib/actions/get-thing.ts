@@ -11,8 +11,11 @@ import { bubbleCommon } from '../common';
 export const bubbleGetThingAction = createAction({
   auth: bubbleAuth,
   name: 'bubble_get_thing',
+  classification: 'READ',
   displayName: 'Get Thing',
   description: 'Get a thing by id',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single record ("thing") of a given data type from a Bubble app by its unique id, via the Bubble Data API. Use to read the current values of one known record. Read-only and idempotent.', idempotent: true },
   props: {
     typename: bubbleCommon.typename,
     thing_id: bubbleCommon.thing_id,

@@ -1,31 +1,18 @@
+import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
-    EngineResponse,
-    ErrorCode,
-    GetPieceRequestParams,
-    GetPieceRequestQuery,
-    GetPieceRequestWithScopeParams,
-    isNil,
-    ListPiecesRequestQuery,
-    LocalesEnum,
-    PieceCategory,
-    PieceOptionRequest,
-    Principal,
-    PrincipalType,
-    RegistryPiecesRequestQuery,
-    SampleDataFileType,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
+import { filterActionsByAudience } from './utils'
 
 export const pieceModule: FastifyPluginAsyncZod = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -54,27 +41,24 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
         }
-        const includeTags = query.includeTags ?? false
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             includeHidden: query.includeHidden ?? false,
             projectId,
             platformId,
-            includeTags,
             categories: query.categories,
             searchQuery: query.searchQuery,
             sortBy: query.sortBy,
             orderBy: query.orderBy,
             suggestionType: query.suggestionType,
             locale: query.locale as LocalesEnum | undefined,
+            audience: query.audience,
         })
-        return pieceMetadataSummary.map((piece) => {
-            return {
-                ...piece,
-                i18n: undefined,
-            }
-        })
+        return pieceMetadataSummary.map((piece) => ({
+            ...piece,
+            i18n: undefined,
+        }))
     })
 
     app.get(
@@ -87,12 +71,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
+            const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
+            const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -104,12 +91,15 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
-            return pieceMetadataService(req.log).getOrThrow({
+            const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: decodedName,
                 version,
                 locale: req.query.locale as LocalesEnum | undefined,
             })
+            const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
+            const visiblePiece = applyVisibilityPolicy({ policy, piece })
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -122,6 +112,14 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync({ publishCacheRefresh: true }))
+
+    app.delete('/:id', DeletePieceRequest, async (req, reply) => {
+        await pieceMetadataService(req.log).delete({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
 
     app.post(
         '/options',
@@ -155,6 +153,26 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 
 function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.ONBOARDING ? undefined : principal.platform?.id
+}
+
+function filterModelActionsByAudience(piece: PieceMetadataModel, audience: PieceAudienceFilter | undefined): PieceMetadataModel {
+    return {
+        ...piece,
+        actions: filterActionsByAudience(piece.actions, audience),
+    }
+}
+
+function applyVisibilityPolicy({ policy, piece }: { policy: Awaited<ReturnType<typeof resolveVisibility>>, piece: PieceMetadataModel }): PieceMetadataModel {
+    if (isNil(policy)) {
+        return piece
+    }
+    if (!policy.isPieceVisible(piece.name)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { message: `piece_metadata_not_found pieceName=${piece.name}` },
+        })
+    }
+    return policy.filterPieceComponents(piece)
 }
 
 const RegistryPiecesRequest = {
@@ -219,5 +237,17 @@ const OptionsPieceRequest = {
 const SyncPiecesRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const DeletePieceRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['pieces'],
+        params: z.object({
+            id: z.string(),
+        }),
     },
 }

@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { downloadView } from './lib/actions/download-view';
 import { runExtractRefreshTask } from './lib/actions/run-extract-refresh-task';
 import { refreshWorkbook } from './lib/actions/refresh-workbook';

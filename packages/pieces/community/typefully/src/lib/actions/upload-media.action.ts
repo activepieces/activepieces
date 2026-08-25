@@ -10,6 +10,12 @@ export const uploadMediaAction = createAction({
 	displayName: 'Upload Media',
 	description:
 		'Uploads a media file (image, video, GIF, or PDF) to Typefully. Returns a media ID that can be used when creating drafts.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Uploads a media file (image, video, GIF, or PDF) to a Typefully social set and returns a media ID to reference when attaching media to drafts created via Create Draft Advanced. Use as a prerequisite step before building a draft that includes media. Requires the social set ID and the file. Each call uploads a new file, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		file: Property.File({

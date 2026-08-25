@@ -1,11 +1,11 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
-  ErrorCode,
-  isNil,
   SignInRequest,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -13,10 +13,11 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -36,7 +37,7 @@ const SignInSchema = z.object({
 
 type SignInSchema = z.infer<typeof SignInSchema>;
 
-const SignInForm: React.FC = () => {
+const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
@@ -50,9 +51,9 @@ const SignInForm: React.FC = () => {
 
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
-  const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -62,7 +63,8 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
-      if (isNil(data.projectId)) {
+
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }
@@ -73,6 +75,10 @@ const SignInForm: React.FC = () => {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
         )?.code;
+        capture({
+          name: TelemetryEventName.SIGN_IN_FAILED,
+          payload: { errorCode: errorCode ?? 'UNKNOWN' },
+        });
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -122,12 +128,12 @@ const SignInForm: React.FC = () => {
     form.setError('root.serverError', {
       message: undefined,
     });
+    capture({
+      name: TelemetryEventName.SIGN_IN_SUBMITTED,
+      payload: { method: 'email' },
+    });
     mutate(data);
   };
-
-  if (!userCreated) {
-    return <Navigate to="/sign-up" />;
-  }
 
   return (
     <>
@@ -164,14 +170,25 @@ const SignInForm: React.FC = () => {
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
-                  {edition !== ApEdition.COMMUNITY && (
-                    <Link
-                      to="/forget-password"
-                      className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
-                    >
-                      {t('Forgot your password?')}
-                    </Link>
-                  )}
+                  {edition !== ApEdition.COMMUNITY &&
+                    // Inside the auth card the reset flow is another step, not
+                    // another page — the caller hands us a handler for it.
+                    (onForgotPassword ? (
+                      <button
+                        type="button"
+                        onClick={onForgotPassword}
+                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                      >
+                        {t('Forgot your password?')}
+                      </button>
+                    ) : (
+                      <Link
+                        to="/forget-password"
+                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                      >
+                        {t('Forgot your password?')}
+                      </Link>
+                    ))}
                 </div>
                 <div className="relative">
                   <Input
@@ -235,3 +252,7 @@ const SignInForm: React.FC = () => {
 SignInForm.displayName = 'SignIn';
 
 export { SignInForm };
+
+type SignInFormProps = {
+  onForgotPassword?: () => void;
+};

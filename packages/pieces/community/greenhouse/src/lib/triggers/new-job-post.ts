@@ -82,6 +82,10 @@ export const newJobPostTrigger = createTrigger({
   name: 'new_job_post',
   displayName: 'New Job Post',
   description: 'Triggers when a new job post is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new job post is created in Greenhouse — a public or internal posting tied to a job, including its location, board, and live/active state. Polls for newly created job posts.',
+  },
   props: {},
   sampleData: {
     id: 123,

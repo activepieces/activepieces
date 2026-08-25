@@ -6,6 +6,8 @@ export const convertFrequencyAction = createAction({
   name: 'convert_frequency',
   displayName: 'Convert Frequency',
   description: 'Convert frequency measurements between different units',
+  audience: 'both',
+  aiMetadata: { description: 'Convert a single frequency value between hertz, kilohertz, megahertz, and gigahertz. Use only for frequency; other quantities have their own dedicated convert actions. Read-only calculation that returns the same result for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'Unit Conversion',
   props: {

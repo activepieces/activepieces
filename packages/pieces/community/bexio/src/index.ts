@@ -3,7 +3,7 @@ import {
   createPiece,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { BexioClient } from './lib/common/client';
 import { createManualEntryAction } from './lib/actions/create-manual-entry';
 import { createCompanyAction } from './lib/actions/create-company';

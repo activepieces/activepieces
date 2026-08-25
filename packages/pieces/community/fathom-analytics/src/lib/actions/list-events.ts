@@ -6,6 +6,8 @@ export const listEvents = createAction({
   name: 'list_events',
   displayName: 'List Events',
   description: 'List all custom events (goals) for a specific site.',
+  audience: 'both',
+  aiMetadata: { description: 'List the custom events (conversion goals) defined on a Fathom Analytics site, identified by site ID, with optional cursor pagination and a per-page limit. Use it to discover event IDs and names before aggregating event metrics or creating new goals. Read-only and safe to repeat.', idempotent: true },
   auth: fathomAuth,
   props: {
     site_id: Property.ShortText({

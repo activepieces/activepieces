@@ -7,8 +7,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updateProfile = createAction({
   auth: klaviyoAuth,
   name: 'updateProfile',
+  classification: 'WRITE',
   displayName: 'Update Profile',
   description: 'Update existing profile data and preferences.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing Klaviyo profile by its profile ID, overwriting only the supplied identity, location, and custom-property fields. Use when modifying a known profile; the profile ID is required, so resolve it first (e.g. via Find Profile by Email/Phone). Idempotent: re-running with the same input leaves the profile in the same state.',
+    idempotent: true,
+  },
   props: {
     profile_id: profileIdDropdown,
     email: Property.ShortText({

@@ -9,6 +9,8 @@ export const create_route = createAction({
     auth: simplirouteAuth,
     displayName: 'Create Route',
     description: 'Create a new route manually by assigning vehicle, driver and date.',
+    audience: 'both',
+    aiMetadata: { description: 'Manually create a route under an existing plan, assigning a vehicle, driver, planned date, estimated time window and start/end locations. Use to build a route by hand rather than via automatic planning; not idempotent, so each call creates another route. Requires the parent plan UUID and the vehicle/driver ids.', idempotent: false },
     props: {
         vehicle: Property.Number({ displayName: 'vehicle', description: 'Vehicle ID for the route.', required: true }),
         driver: Property.Number({ displayName: 'driver', description: 'Driver ID for the route.', required: true }),

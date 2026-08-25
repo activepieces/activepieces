@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import * as actions from './lib/actions';
 import { assemblyaiAuth } from './lib/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const assemblyai = createPiece({
   displayName: 'AssemblyAI',

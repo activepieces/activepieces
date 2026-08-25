@@ -6,8 +6,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const findUserAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-user',
+	classification: 'SEARCH',
 	displayName: 'Find User',
 	description: 'Finds a user by name or email.',
+	audience: 'both',
+	aiMetadata: { description: 'Search Pipedrive account users (team members, not CRM persons) by name or by email address. Pick this to resolve an owner or assignee to a user ID; choose the search-by field to match either a name or an email term. Read-only and may return multiple matches.', idempotent: true },
 	props: {
 		field: Property.StaticDropdown({
 			displayName: 'Field to search by',

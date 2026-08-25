@@ -8,6 +8,8 @@ export const askSpace = createAction({
   name: 'askSpace',
   displayName: 'Ask Space',
   description: 'Ask anything to a Space',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a question or message to a Medullar Space identified by its UUID and returns the AI agent\'s response grounded in that Space. The chat mode selects which agent answers (general agent, Grok-backed agent, fact-check, researcher, sales researcher, or search), and an optional deep-analysis flag trades speed for accuracy. If no chat UUID is given a new chat is created automatically; supplying one continues that conversation. Not idempotent: each call posts a message and generates a fresh response.', idempotent: false },
   props: {
     spaceId: medullarPropsCommon.spaceId,
     chatId: medullarPropsCommon.chatId,

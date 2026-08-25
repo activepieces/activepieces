@@ -8,6 +8,12 @@ export const runAWorkflow = createAction({
   name: 'runAWorkflow',
   displayName: 'Run a Workflow',
   description: 'Execute a Leap AI workflow and return the run ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts execution of a Leap AI workflow identified by its workflow ID, optionally passing input variables and a webhook URL to receive results on completion. Returns a run ID to track progress; pair with "Get a Workflow Run" to poll for status and results. Each call launches a new run, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     workflow_id: Property.ShortText({
       displayName: 'Workflow ID',

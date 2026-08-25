@@ -5,8 +5,11 @@ import { browserlessCommon } from '../common/client';
 
 export const scrapeUrl = createAction({
     name: 'scrape_url',
+    classification: 'READ',
     displayName: 'Scrape URL',
     description: 'Extract content from a web page',
+    audience: 'both',
+    aiMetadata: { description: 'Loads a web page in a headless browser and extracts the elements matched by the CSS selectors you supply. Use to pull specific text or attributes from a page rather than capturing an image; both the page URL and at least one element selector are required. Read-only: re-running with the same input re-scrapes the page and returns equivalent data without side effects.', idempotent: true },
     auth: browserlessAuth,
     props: {
         url: Property.ShortText({

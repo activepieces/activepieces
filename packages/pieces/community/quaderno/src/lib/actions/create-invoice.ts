@@ -8,6 +8,12 @@ export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
   description: 'Create a new invoice in Quaderno',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Issues a new invoice in Quaderno via POST, embedding the customer contact and a single line item (description, quantity, unit cost) with currency and issue date, plus optional invoice number, due date, and tags. Use when an agent needs to bill a customer. Requires issue date, currency, customer first name, and item details. Not idempotent — each call creates another invoice even if the invoice number repeats.',
+    idempotent: false,
+  },
   props: {
     issueDate: Property.ShortText({
       displayName: 'Issue Date',

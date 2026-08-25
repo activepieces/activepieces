@@ -6,6 +6,8 @@ export const getOAuth2ProvidersAction = createAction({
   name: 'get_oauth2_providers',
   displayName: 'Get OAuth2 Providers',
   description: 'Get the OAuth2 providers available for your user account',
+  audience: 'both',
+  aiMetadata: { description: 'List the OAuth2 identity providers available for the authenticated Zoo user account. Read-only and repeatable; takes no input.', idempotent: true },
   auth: zooAuth,
   // category: 'Users',
   props: {},

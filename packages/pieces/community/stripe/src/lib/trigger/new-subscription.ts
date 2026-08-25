@@ -3,15 +3,22 @@ import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { stripeCommon } from '../common';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeNewSubscription = createTrigger({
   auth: stripeAuth,
   name: 'new_subscription',
+  classification: 'READ',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is made',
+  aiMetadata: {
+    description:
+      'Fires when a new subscription is created in Stripe (the customer.subscription.created event), emitting the new subscription. Use to react to a customer starting recurring billing, such as provisioning access or sending an onboarding flow.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MWMJXKZ0dZRqLEKJX80JXfv',
     object: 'subscription',

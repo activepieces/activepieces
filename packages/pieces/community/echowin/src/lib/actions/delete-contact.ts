@@ -8,6 +8,12 @@ export const deleteContact = createAction({
   name: 'deleteContact',
   displayName: 'Delete Contact',
   description: 'Delete a contact by ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a contact from the Echowin CRM, identified by its unique contact ID. Use when removing a known contact; obtain the ID from a find/list step first. Idempotent in effect — once the contact is gone, repeating the call leaves it absent.',
+    idempotent: true,
+  },
   props: {
     contactId: Property.ShortText({
       displayName: 'Contact ID',

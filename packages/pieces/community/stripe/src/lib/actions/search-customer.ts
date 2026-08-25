@@ -3,11 +3,19 @@ import { stripeAuth } from '../..';
 import { stripeCommon } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Customer',
   description: 'Search for a customer in stripe by email',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Looks up Stripe customers matching a given email address. Use to find an existing customer record before creating, updating, or charging one, to avoid duplicates. Read-only and idempotent; matches on the exact email.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -15,6 +23,7 @@ export const stripeSearchCustomer = createAction({
       required: true,
     }),
   },
+  outputSchema: customerSearchOutputSchema,
   async run(context) {
     const customer = {
       email: context.propsValue.email,

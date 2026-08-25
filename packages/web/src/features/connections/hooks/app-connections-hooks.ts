@@ -1,22 +1,33 @@
 import {
+  ApErrorParams,
+  ErrorCode,
+  isNil,
+  SeekPage,
+} from '@activepieces/core-utils';
+import {
   getAuthPropertyForValue,
   PieceAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  ApErrorParams,
   AppConnectionScope,
+  AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  ErrorCode,
-  isNil,
   ListAppConnectionsRequestQuery,
+  PLACEHOLDER_CONNECTION_TYPE,
   ReplaceAppConnectionsRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/api/project-members-api';
@@ -75,10 +86,11 @@ export const appConnectionsMutations = {
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isNameUnique = await isConnectionNameUnique(
+        const isNameUnique = await isConnectionNameUnique({
           isGlobalConnection,
-          formValues.displayName,
-        );
+          displayName: formValues.displayName,
+          projectId: formValues.projectId,
+        });
         if (
           !isNameUnique &&
           reconnectConnection?.displayName !== formValues.displayName &&
@@ -89,6 +101,11 @@ export const appConnectionsMutations = {
         if (isGlobalConnection) {
           if (formValues.projectIds.length === 0) {
             throw new NoProjectSelected();
+          }
+          if (formValues.type === PLACEHOLDER_CONNECTION_TYPE) {
+            throw new Error(
+              'Placeholder connections are only supported at the project scope.',
+            );
           }
           return globalConnectionsApi.upsert({
             ...formValues,
@@ -209,10 +226,10 @@ export const appConnectionsMutations = {
         connectionId: string;
         displayName: string;
       }) => {
-        const existingConnection = await isConnectionNameUnique(
-          false,
+        const existingConnection = await isConnectionNameUnique({
+          isGlobalConnection: false,
           displayName,
-        );
+        });
         if (!existingConnection && displayName !== currentName) {
           throw new ConnectionNameAlreadyExists();
         }
@@ -238,6 +255,44 @@ export const appConnectionsMutations = {
     });
   },
 
+  useRevalidateConnection: () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (connectionId: string) =>
+        appConnectionsApi.revalidate(connectionId),
+      onSuccess: (connection) => {
+        queryClient.setQueriesData<SeekPage<AppConnectionWithoutSensitiveData>>(
+          { queryKey: ['app-connections'] },
+          (page) =>
+            page && {
+              ...page,
+              data: page.data.map((row) =>
+                row.id === connection.id
+                  ? { ...row, status: connection.status }
+                  : row,
+              ),
+            },
+        );
+        if (connection.status === AppConnectionStatus.ACTIVE) {
+          toast.success(t('Success'), {
+            description: t('Connection is working.'),
+            duration: 3000,
+          });
+        } else {
+          toast.error(t('Connection failed'), {
+            description: t(
+              'This connection is no longer working. Reconnect it.',
+            ),
+            duration: 3000,
+          });
+        }
+      },
+      onError: () => {
+        internalErrorToast();
+      },
+    });
+  },
+
   useReplaceConnections: ({
     setDialogOpen,
     refetch,
@@ -253,7 +308,21 @@ export const appConnectionsMutations = {
         setDialogOpen(false);
         refetch();
       },
-      onError: () => {
+      onError: (error) => {
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          if (
+            apError?.code === ErrorCode.VALIDATION ||
+            apError?.code === ErrorCode.AUTHORIZATION
+          ) {
+            toast.error(t('Error'), {
+              description: t(
+                apError.params.message ?? 'Failed to replace connections',
+              ),
+            });
+            return;
+          }
+        }
         toast.error(t('Error'), {
           description: t('Failed to replace connections'),
         });
@@ -306,6 +375,22 @@ export const appConnectionsQueries = {
       enabled,
       staleTime,
     });
+  },
+
+  useListSearchParams: () => {
+    const { search } = useLocation();
+    return useMemo(() => {
+      const sp = new URLSearchParams(search);
+      const limitParam = sp.get(LIMIT_QUERY_PARAM);
+      return {
+        cursor: sp.get(CURSOR_QUERY_PARAM) ?? undefined,
+        limit: limitParam ? parseInt(limitParam) : 10,
+        displayName: sp.get('displayName') ?? undefined,
+        ownerEmails: sp.getAll('owner'),
+        status: sp.getAll('status') as AppConnectionStatus[],
+        pieceName: sp.get('pieceName') ?? undefined,
+      };
+    }, [search]);
   },
 
   useConnectionsOwners: () => {

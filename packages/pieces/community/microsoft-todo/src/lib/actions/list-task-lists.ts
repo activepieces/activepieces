@@ -7,8 +7,11 @@ import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 export const listTaskListsAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'list_task_lists',
+	classification: 'SEARCH',
 	displayName: 'List Task Lists',
 	description: 'Returns a list of all task lists.',
+	audience: 'both',
+	aiMetadata: { description: 'List all of the authenticated user\'s Microsoft To Do task lists, paging through all results. Use to discover available lists or to resolve a list id before creating, reading, or filtering tasks. Takes no input. Read-only and idempotent.', idempotent: true },
 	props: {},
 	async run(context) {
 		const { auth } = context;

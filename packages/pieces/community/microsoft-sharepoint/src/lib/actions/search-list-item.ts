@@ -9,6 +9,11 @@ export const findListItemAction = createAction({
   name: 'microsoft_sharepoint_search_list_item',
   displayName: 'Find List Item',
   description: 'Finds a item in a list based on name.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up items in a SharePoint list by exact Title match on a given site, returning the matching items with their fields. Use to resolve a list item ID (or confirm existence) before updating or deleting it. Read-only and idempotent; matches only the Title column, not arbitrary fields.',
+    idempotent: true,
+  },
   props: {
     siteId: microsoftSharePointCommon.siteId,
     listId: microsoftSharePointCommon.listId,

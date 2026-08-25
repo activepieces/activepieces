@@ -1,14 +1,17 @@
-import { groupBy, PieceSyncMode, PieceType, tryCatch } from '@activepieces/shared'
+import { groupBy, tryCatch } from '@activepieces/core-utils'
+import { apVersionUtil } from '@activepieces/server-utils'
+import { PieceAudienceFilter, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
-import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
-import { AppSystemProp, apVersionUtil } from '../helper/system/system-props'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { PIECE_METADATA_REFRESH_CHANNEL, PieceMetadataRefreshMessage, PieceMetadataRefreshType } from './metadata/piece-cache'
+import { isToolSearchEnabled } from '../tool-search/tool-search-flag'
+import { toolSearchReindexJob } from '../tool-search/tool-search-reindex.job'
+import { pieceCache } from './metadata/piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
@@ -49,14 +52,24 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 },
             }), listCloudPieces()])
             log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
-            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
+            const { added, fetchFailed } = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
                 added,
+                fetchFailed,
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
+
+            // React to the catalog-change signal: enqueue an async tool-search reconcile (never inline
+            // — embedding must not block sync). The hash-gate means an unchanged catalog re-embeds
+            // nothing, so this is cheap; only fire when something changed AND the engine is enabled —
+            // without the flag guard a delta would enqueue a reconcile even when tool-search is off,
+            // which (if an OpenAI key exists but pgvector does not) crashes silently on every change.
+            if ((added > 0 || deleted > 0) && isToolSearchEnabled()) {
+                rejectedPromiseHandler(toolSearchReindexJob(log).enqueue({ type: 'all' }), log)
+            }
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -71,17 +84,24 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<{ added: number, fetchFailed: number }> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
+    let added = 0
+    let fetchFailed = 0
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
-            const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
+            const queryParams = new URLSearchParams({ audience: PieceAudienceFilter.ALL })
+            if (piece.version) {
+                queryParams.append('version', piece.version)
+            }
+            const url = `${CLOUD_API_URL}/${piece.name}?${queryParams.toString()}`
             const response = await fetch(url)
             if (!response.ok) {
-                log.warn({ pieceName: piece.name, version: piece.version, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+                log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+                fetchFailed++
                 return
             }
             const pieceMetadata = await response.json()
@@ -92,22 +112,24 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 publishCacheRefresh: false,
             }))
             if (error) {
-                log.debug({ pieceName: piece.name, version: piece.version }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+                log.debug({ piece: { name: piece.name, version: piece.version } }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
+            }
+            else {
+                added++
             }
         }))
     }
-    if (newPiecesToFetch.length > 0) {
-        const message: PieceMetadataRefreshMessage = { type: PieceMetadataRefreshType.BULK_SYNC }
-        await pubsub.publish(PIECE_METADATA_REFRESH_CHANNEL, JSON.stringify(message))
+    if (added > 0) {
+        await pieceCache(log).invalidate()
     }
-    return newPiecesToFetch.length
+    return { added, fetchFailed }
 }
 
 
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', apVersionUtil.getCurrentRelease())
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)

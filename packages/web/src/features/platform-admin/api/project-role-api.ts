@@ -1,9 +1,8 @@
+import { ProjectRole, SeekPage } from '@activepieces/core-utils';
 import {
   ProjectMemberWithUser,
   CreateProjectRoleRequestBody,
   UpdateProjectRoleRequestBody,
-  ProjectRole,
-  SeekPage,
   ListProjectMembersForProjectRoleRequestQuery,
 } from '@activepieces/shared';
 

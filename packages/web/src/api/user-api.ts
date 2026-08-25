@@ -1,10 +1,13 @@
-import { UpdateMeResponse, UserWithBadges } from '@activepieces/shared';
+import {
+  UpdateMeResponse,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
 export const userApi = {
   getUserById(id: string) {
-    return api.get<UserWithBadges>(`/v1/users/${id}`);
+    return api.get<UserWithMetaInformation>(`/v1/users/${id}`);
   },
   updateMe(profilePicture?: File): Promise<UpdateMeResponse> {
     const formData = new FormData();

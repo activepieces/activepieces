@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { linkupAuth } from './lib/common/auth';
 import { search } from './lib/actions/search';
 import { fetch } from './lib/actions/fetch';

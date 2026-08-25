@@ -1,13 +1,16 @@
 import { openaiAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
-import { notLLMs } from '../common/common';
+import { isLLM } from '../common/common';
 
 export const extractStructuredDataAction = createAction({
+  audience: 'both',
 	auth: openaiAuth,
 	name: 'extract-structured-data',
+	classification: 'READ',
 	displayName: 'Extract Structured Data from Text',
 	description: 'Returns structured data from provided unstructured text.',
+	aiMetadata: { description: 'Pulls a caller-defined set of named fields out of one block of unstructured text and returns them as a flat object, with each field declared as text, number, or boolean and optionally marked to fail the step when it is absent. Use it to turn prose, emails, or documents into machine-readable values; prefer analyze_sentiment or classify_text for a judgement about the text and ask_chatgpt for free-form output. Requires the text plus at least one field definition, and the step errors when the model returns no extraction at all. Not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
 	props: {
 		model: Property.Dropdown({
   auth: openaiAuth,
@@ -28,8 +31,7 @@ export const extractStructuredDataAction = createAction({
 						apiKey: auth.secret_text,
 					});
 					const response = await openai.models.list();
-					// We need to get only LLM models
-					const models = response.data.filter((model) => !notLLMs.includes(model.id));
+					const models = response.data.filter((model) => isLLM(model.id));
 					return {
 						disabled: false,
 						options: models.map((model) => {
@@ -129,11 +131,20 @@ export const extractStructuredDataAction = createAction({
 		});
 
 		const toolCallsResponse = response.choices[0].message.tool_calls;
-		if (toolCallsResponse) {
-			return JSON.parse(toolCallsResponse[0].function.arguments);
-		} else {
+		if (!toolCallsResponse || toolCallsResponse.length === 0) {
 			throw new Error(JSON.stringify({
 				message: "OpenAI couldn't extract the fields from the above text."
+			}));
+		}
+		const rawArgs = toolCallsResponse[0].function.arguments;
+		try {
+			return JSON.parse(rawArgs);
+		} catch (parseError) {
+			// The model returned a non-JSON string in the function arguments — surface the raw payload
+			// so users can inspect it rather than getting a vague "Unexpected token" error.
+			throw new Error(JSON.stringify({
+				message: 'OpenAI returned invalid JSON for the extracted fields.',
+				raw: rawArgs,
 			}));
 		}
 	},

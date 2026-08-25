@@ -1,4 +1,9 @@
 import {
+  deepMergeAndCast,
+  isNil,
+  isManualPieceTrigger,
+} from '@activepieces/core-utils';
+import {
   PieceAuthProperty,
   PiecePropertyMap,
   piecePropertiesUtils,
@@ -11,10 +16,8 @@ import {
   PieceAction,
   PieceTrigger,
   FlowTrigger,
-  deepMergeAndCast,
   BranchExecutionType,
   RouterExecutionType,
-  isNil,
   flowStructureUtil,
   StepSettings,
   RouterActionSettingsWithValidation,
@@ -23,7 +26,6 @@ import {
   DEFAULT_SAMPLE_DATA_SETTINGS,
   FlowVersion,
   FlowOperationType,
-  isManualPieceTrigger,
   AUTHENTICATION_PROPERTY_NAME,
 } from '@activepieces/shared';
 import { useRef } from 'react';
@@ -332,7 +334,7 @@ const MAX_PIECE_SELECTOR_LIST_HEIGHT = 300 as const;
 const MIN_PIECE_SELECTOR_LIST_HEIGHT = 100 as const;
 const SEARCH_INPUT_DIV_HEIGHT = 113 as const;
 const PIECE_ITEM_HEIGHT = 48 as const;
-const ACTION_OR_TRIGGER_ITEM_HEIGHT = 41 as const;
+const ACTION_OR_TRIGGER_ITEM_HEIGHT = 54 as const;
 const CATEGORY_ITEM_HEIGHT = 28 as const;
 export const PIECE_SELECTOR_ELEMENTS_HEIGHTS = {
   MAX_PIECE_SELECTOR_LIST_HEIGHT,
@@ -376,4 +378,5 @@ export const pieceSelectorUtils = {
   removeHiddenActions,
   getStepNameFromOperationType,
   isManualTrigger: isManualPieceTrigger,
+  PIECE_SELECTOR_CLIPPING_THRESHOLD: 20 as const,
 };

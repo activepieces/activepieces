@@ -7,9 +7,12 @@ import { domainIdDropdown, linkIdDropdown, folderIdDropdown } from '../common/pr
 export const updateShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'update-short-link',
+  classification: 'WRITE',
   displayName: 'Update Short Link',
   description:
     "Update an existing short link's original URL, path, title, or other properties using its link ID.",
+  audience: 'both',
+  aiMetadata: { description: "Updates properties of an existing short link identified by its link ID — destination URL, path/slug, title, folder, UTM tags, expiration, cloaking, A/B split, and analytics integrations. Use to modify a link you already created rather than making a new one. Only the fields you set are changed; idempotent — re-sending the same values keyed on the link ID yields the same result.", idempotent: true },
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,

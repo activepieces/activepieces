@@ -4,9 +4,9 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { getLists } from './api';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export type SendyAuthType = AppConnectionValueForAuthProperty<typeof sendyAuth>;
 
@@ -44,9 +44,9 @@ export const sendyAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       await propsValidation.validateZod(auth, {
-        domain: z.string().url(),
-        apiKey: z.string().min(1).regex(/^\S+$/),
-        brandId: z.string().regex(/^[0-9]+$/),
+        domain: z.string().check(z.url()),
+        apiKey: z.string().check(z.minLength(1), z.regex(/^\S+$/)),
+        brandId: z.string().check(z.regex(/^[0-9]+$/)),
       });
       await validateAuth({
         type: AppConnectionType.CUSTOM_AUTH,

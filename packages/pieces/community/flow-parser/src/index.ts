@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { flowParserAuth } from './lib/common/auth';
 import { uploadDocument } from './lib/actions/upload-document';
 import { newParsedDocumentByTemplate } from './lib/triggers/new-parsed-document-by-template';

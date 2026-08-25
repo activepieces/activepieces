@@ -9,6 +9,10 @@ export const newTask = createTrigger({
   name: 'newTask',
   displayName: 'New Task',
   description: 'Triggers when a new task is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new task is created in Copper CRM, via a Copper webhook. Emits the newly created task record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

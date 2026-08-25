@@ -33,8 +33,12 @@ const polling: Polling<
 export const newAgent = createTrigger({
   auth: AgentXAuth,
   name: "new_agent",
+  classification: 'READ',
   displayName: "New Agent",
   description: "Triggers when a new AgentX agent is created.",
+  aiMetadata: {
+    description: 'Fires when a new agent is created on the AgentX account, emitting the newly created agent. Polls periodically and only surfaces agents created after the trigger was enabled.',
+  },
   props: {},
   sampleData: {
     _id: "agt_1234567890abcdef",

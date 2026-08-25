@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { baremetricsApiCall } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const BAREMETRICS_SCOPES = [
   'read',

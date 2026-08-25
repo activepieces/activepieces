@@ -5,8 +5,14 @@ import { makeClient } from '../common';
 export const addTagToContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_tag',
+  classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Adds the tag to the contact.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds one or more tags to an existing VBOUT contact identified by email. Use to label or segment a contact. Accepts a list of tag names; not idempotent, as it appends tags on each call.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

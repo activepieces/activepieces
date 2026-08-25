@@ -3,13 +3,15 @@ import { zohoDeskApiCall } from '../common';
 import { zohoDeskAuth } from '../common/auth';
 import { organizationId } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const findContactAction = createAction({
 	auth: zohoDeskAuth,
 	name: 'find-contact',
 	displayName: 'Find Contact',
 	description: 'Finds an existing contact by email.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches a Zoho Desk organization for contacts matching an exact email address, returning whether any were found along with the matches. Use to resolve a contact (e.g. before creating or routing a ticket) when you have the email rather than an ID; requires the organization ID and email. Read-only and idempotent.', idempotent: true },
 	props: {
 		orgId: organizationId({ displayName: 'Organization', required: true }),
 		email: Property.ShortText({

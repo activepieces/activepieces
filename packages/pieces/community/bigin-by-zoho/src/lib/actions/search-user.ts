@@ -5,8 +5,11 @@ import { biginApiService } from '../common/request';
 export const searchUser = createAction({
   auth: biginAuth,
   name: 'searchUser',
+  classification: 'SEARCH',
   displayName: 'Search User',
   description: 'Locate users by email.',
+  audience: 'both',
+  aiMetadata: { description: 'Finds Bigin CRM org users whose email contains the given term (case-insensitive substring match), filtering client-side over the user list; an optional user-type filter (e.g. active, admin, current user) and pagination narrow the fetched set. Use to resolve a user id for assigning records as owner. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

@@ -6,6 +6,11 @@ export const getEmotionResults = createAction({
   name: 'get_emotion_results',
   displayName: 'Get Emotion Results',
   description: 'Retrieve emotion analysis predictions from a completed batch job',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch the predictions and current state of a Hume AI Expression Measurement batch job by its job ID. Use after starting a job with Analyze Emotions from URL to poll for and collect results; the job may still be processing if not yet complete. This is a read-only lookup and is idempotent.',
+    idempotent: true,
+  },
   auth: humeAiAuth,
   props: {
     jobId: Property.ShortText({

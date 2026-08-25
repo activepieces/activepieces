@@ -1,0 +1,39 @@
+---
+title: "Crash Recovery"
+description: "Runs survive crashes, deploys, and evictions. Completed work is never repeated, queued work is never dropped."
+icon: "shield-check"
+---
+
+When infrastructure fails mid-flow, your runs survive. A worker can crash, get OOM-killed, be evicted, or be rolled in a deploy, and the run continues on another worker. It picks up where it left off, without repeating completed work and without being dropped.
+
+<Note>
+These guarantees describe the [recommended production setup](/install/configure-operate/production-setup): one flow per worker (`AP_WORKER_CONCURRENCY=1`), S3 file storage, and a reused engine process. They are converging with the shipped defaults. Activepieces Cloud upholds the same guarantees through a different sandbox mechanism; see [Sandboxing](/install/architecture/sandboxing).
+</Note>
+
+Three promises follow from one mechanism:
+
+## Completed steps never re-run
+
+Once a step's output is checkpointed, no crash, deploy, pause, or retry runs it again. On resume, every completed step is skipped and its recorded output reused. Only work that hadn't finished yet executes.
+
+## A queued run always runs
+
+Once a run is on the queue it executes, even if the worker holding it dies, is evicted, or loses its lease mid-run. Work is never silently dropped by Activepieces — the queue itself inherits the durability of your Redis (see [Disaster Recovery](/install/guarantees/disaster-recovery)).
+
+## Roll workers without draining
+
+Because runs are durable and re-queued automatically, you can restart, redeploy, or evict workers mid-flow. No drain window, no graceful-shutdown hook, no in-flight runs lost.
+
+## How it's enforced
+
+All three come from one mechanism. Every run has a **run log**, a checkpoint of each completed step persisted to Postgres/S3. Workers are stateless, so when one dies its run is re-queued and a healthy worker replays the log, skipping completed steps and resuming at the interruption point. See [Durable Execution](/install/architecture/durable-execution) for how replay and skip work.
+
+## Where it stops
+
+- **The in-flight step re-runs.** The single step executing when the worker died is re-run from the last checkpoint, because its output never reached the log. If it fired an external side effect before crashing, that effect can happen twice. Make external side effects idempotent where it matters; everything before the interrupted step is guaranteed not to repeat.
+- **At-least-once, not exactly-once.** That in-flight step is the one place a replay can repeat work.
+- **Redis durability is yours.** Queued runs live in Redis. A Redis that loses its dataset loses queued jobs — including async webhooks already acknowledged with a `200` — so use a managed Redis or enable persistence. [Disaster Recovery](/install/guarantees/disaster-recovery) scopes the exposure and gives the recovery runbook.
+
+## Governing configuration
+
+The replay guarantee is inherent to the engine. No flag enables or disables it, and the checkpoint cadence is fixed at 15 seconds. What you own is the durability of the backing stores: managed Postgres, S3, and Redis (see [Production Setup](/install/configure-operate/production-setup)).

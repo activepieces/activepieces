@@ -1,5 +1,6 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import { AIProviderName, isNil, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { aiProviderService } from '../../ai/ai-provider-service'
@@ -17,7 +18,7 @@ export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         title: 'ap_setup_guide',
         description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
         inputSchema: setupGuideInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { topic, pieceName } = setupGuideInput.parse(args)
@@ -28,7 +29,7 @@ export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 return await aiProviderGuide(mcp, log)
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_setup_guide failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_setup_guide failed')
                 return mcpUtils.mcpToolError('Failed to generate setup guide', err)
             }
         },
@@ -68,7 +69,7 @@ async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
     })
 
     if (isNil(piece)) {
-        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_list_pieces to find valid piece names.` }] }
+        return { content: [{ type: 'text', text: `❌ Piece "${pieceName}" not found. Use ap_research_pieces to find valid piece names.` }] }
     }
 
     const rawAuth = piece.auth
@@ -77,12 +78,20 @@ async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
     }
 
     const authOptions = Array.isArray(rawAuth) ? rawAuth : [rawAuth]
+
+    if (authOptions.length > 1) {
+        const lines: string[] = [`How to connect "${piece.displayName}" (${authOptions.length} methods available):`, '']
+        for (let i = 0; i < authOptions.length; i++) {
+            lines.push(`**Option ${i + 1}: ${formatAuthTypeName(authOptions[i].type)}**`)
+            lines.push(...formatAuthSteps({ auth: authOptions[i], displayName: piece.displayName }))
+            lines.push('')
+        }
+        return { content: [{ type: 'text', text: lines.join('\n') }] }
+    }
+
     const auth = authOptions[0]
     const authType = auth.type
     const lines: string[] = [`How to connect "${piece.displayName}":`, '']
-    if (authOptions.length > 1) {
-        lines.push(`Note: This piece supports ${authOptions.length} authentication methods. Showing the primary one.`, '')
-    }
 
     switch (authType) {
         case PropertyType.OAUTH2:
@@ -145,9 +154,43 @@ async function connectionGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
     return { content: [{ type: 'text', text: lines.join('\n') }] }
 }
 
+function formatAuthTypeName(type: string): string {
+    switch (type) {
+        case PropertyType.OAUTH2: return 'OAuth2'
+        case PropertyType.SECRET_TEXT: return 'API Key'
+        case PropertyType.BASIC_AUTH: return 'Basic Auth (username/password)'
+        case PropertyType.CUSTOM_AUTH: return 'Custom Auth'
+        default: return type
+    }
+}
+
+function formatAuthSteps({ auth, displayName }: { auth: Record<string, unknown>, displayName: string }): string[] {
+    const steps: string[] = []
+    switch (auth.type) {
+        case PropertyType.OAUTH2:
+            steps.push(`1. Go to Settings → Connections → "+ New Connection" → "${displayName}"`, '2. Click "Connect" — OAuth popup opens', '3. Log in and authorize')
+            break
+        case PropertyType.SECRET_TEXT:
+            steps.push(`1. Go to Settings → Connections → "+ New Connection" → "${displayName}"`, `2. Enter your API key${'description' in auth && auth.description ? ` (${auth.description})` : ''}`, '3. Click Save')
+            break
+        case PropertyType.BASIC_AUTH:
+            steps.push(`1. Go to Settings → Connections → "+ New Connection" → "${displayName}"`, '2. Enter username and password', '3. Click Save')
+            break
+        case PropertyType.CUSTOM_AUTH: {
+            const props = (auth.props ?? {}) as Record<string, { displayName?: string, required?: boolean }>
+            const fields = Object.entries(props).map(([key, p]) => `  - ${p.displayName ?? key}${p.required !== false ? ' (required)' : ' (optional)'}`)
+            steps.push(`1. Go to Settings → Connections → "+ New Connection" → "${displayName}"`, '2. Fill in:', ...fields, '3. Click Save')
+            break
+        }
+        default:
+            steps.push(`1. Go to Settings → Connections → "+ New Connection" → "${displayName}"`, '2. Follow the on-screen instructions')
+    }
+    return steps
+}
+
 async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
     const project = await projectService(log).getOneOrThrow(mcp.projectId)
-    const providers = await aiProviderService(log).listProviders(project.platformId)
+    const providers = await aiProviderService(log).listForProject({ platformId: project.platformId, projectId: mcp.projectId })
 
     const lines: string[] = []
 

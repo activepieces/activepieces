@@ -1,13 +1,13 @@
 import {
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpHeaders,
   HttpMessageBody,
   HttpMethod,
   HttpRequest,
   HttpResponse,
   QueryParams,
+  toFailsafeOutput,
 } from '@activepieces/pieces-common';
 import { httpOauth2Auth } from '../..';
 import {
@@ -15,17 +15,19 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isNil } from '@activepieces/pieces-framework';
 import FormData from 'form-data';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
+import { ProxyAgent } from 'undici';
 
 export const httpOauth2RequestAction = createAction({
+  audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
+  classification: 'WRITE',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
+  aiMetadata: { description: 'Calls any HTTP endpoint with an OAuth 2.0 bearer token injected from the connection, choosing the method (GET/POST/PUT/PATCH/DELETE) and body mode (none, JSON, raw, or form-data), optionally routing through an HTTP proxy or returning the error text instead of throwing when the failsafe option is on. Prefer it over the core HTTP piece Send HTTP Request action only when the target API needs a managed OAuth2 token that Activepieces refreshes; it requires an OAuth2 connection set up with the authorize URL, token URL, and scopes, plus a full request URL. Not idempotent in general: the effect depends on the chosen method, and non-GET calls can create or change data on each call.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -227,19 +229,60 @@ export const httpOauth2RequestAction = createAction({
           proxyUrl = `http://${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
         }
 
-        const httpsAgent = new HttpsProxyAgent(proxyUrl);
-        const axiosClient = axios.create({
-          httpsAgent,
-        });
+        const proxyAgent = new ProxyAgent(proxyUrl);
 
-        const proxied_response = await axiosClient.request(request);
-        return handleResponse(proxied_response.data);
+        const proxyUrlWithParams = new URL(request.url);
+        for (const [key, value] of Object.entries(
+          (request.queryParams as Record<string, string>) ?? {}
+        )) {
+          proxyUrlWithParams.searchParams.append(key, value);
+        }
+
+        const proxyHeaders: Record<string, string> = {
+          Authorization: `Bearer ${auth.access_token}`,
+        };
+        for (const [key, value] of Object.entries(request.headers ?? {})) {
+          if (value !== undefined) {
+            proxyHeaders[key] = Array.isArray(value) ? value.join(', ') : value;
+          }
+        }
+
+        let proxyBody: BodyInit | undefined;
+        if (
+          request.method !== HttpMethod.GET &&
+          request.method !== HttpMethod.HEAD &&
+          !isNil(request.body)
+        ) {
+          if (request.body instanceof FormData) {
+            proxyBody = request.body.getBuffer();
+          } else if (typeof request.body === 'string') {
+            proxyBody = request.body;
+          } else {
+            proxyBody = JSON.stringify(request.body);
+            if (!('Content-Type' in proxyHeaders) && !('content-type' in proxyHeaders)) {
+              proxyHeaders['Content-Type'] = 'application/json';
+            }
+          }
+        }
+
+        const proxiedResponse = await fetch(proxyUrlWithParams.toString(), {
+          method: request.method.toString(),
+          headers: proxyHeaders,
+          body: proxyBody,
+          dispatcher: proxyAgent,
+        } as RequestInit & { dispatcher: ProxyAgent });
+
+        const proxyContentType = proxiedResponse.headers.get('content-type') ?? '';
+        const proxyData = proxyContentType.includes('application/json')
+          ? await proxiedResponse.json()
+          : await proxiedResponse.text();
+        return handleResponse(proxyData);
       }
       const response = await httpClient.sendRequest(request);
       return handleResponse(response);
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return toFailsafeOutput({ error, requestBody: request.body });
       }
 
       throw error;

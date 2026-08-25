@@ -6,6 +6,8 @@ export const kclCompletionsAction = createAction({
   name: 'kcl_completions',
   displayName: 'KCL Code Completions',
   description: 'Get code completions for KCL (Kernel Configuration Language)',
+  audience: 'both',
+  aiMetadata: { description: 'Generate KCL (Zoo Kernel Configuration Language) code completions from a prompt using Zoo\'s ML model. Pick when authoring or extending KCL scripts for CAD geometry. Output varies between calls (non-deterministic) and is tunable via temperature, max tokens, and stop sequences.', idempotent: false },
   auth: zooAuth,
   // category: 'Machine Learning (ML)',
   props: {

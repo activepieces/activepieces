@@ -6,7 +6,7 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 import { getGraphBaseUrl } from './microsoft-cloud';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { excelAuth } from '../auth';
 import { getDrivePath } from './helpers';
 

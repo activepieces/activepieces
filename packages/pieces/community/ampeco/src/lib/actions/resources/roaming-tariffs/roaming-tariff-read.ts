@@ -15,6 +15,8 @@ export const roamingTariffReadAction = createAction({
   name: 'roamingTariffRead',
   displayName: 'Resources - Roaming Tariffs - Read',
   description: 'Get a Roaming Tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single roaming tariff by its numeric ID. Use when you already know the ID and need its details; read-only and safe to retry. To search or browse multiple tariffs use the listing action instead.', idempotent: true },
   props: {
         
   roamingTariff: Property.Number({

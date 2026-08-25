@@ -1,13 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall } from '../common';
+import { GithubAuthValue, isAppAuth } from '../common/auth-helpers';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createGistActionOutputSchema } from '../output-schemas';
 
 export const githubCreateGistAction = createAction({
   auth: githubAuth,
   name: 'github_create_gist',
+  classification: 'WRITE',
   displayName: 'Create Gist',
-  description: 'Create a GitHub Gist',
+  description:
+    'Create a GitHub Gist. Requires an OAuth or personal access token connection — Gists cannot be created with GitHub App authentication.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a GitHub Gist (a standalone code/text snippet) containing a single named file with the given content, public or secret. Use to share a snippet outside any repository. Requires an OAuth or personal access token connection — it throws an error under GitHub App authentication. Not idempotent: each call creates a new gist.',
+    idempotent: false,
+  },
 
   props: {
     description: Property.ShortText({
@@ -36,7 +46,14 @@ export const githubCreateGistAction = createAction({
     }),
   },
 
+  outputSchema: createGistActionOutputSchema,
   async run({ auth, propsValue }) {
+    if (isAppAuth(auth as GithubAuthValue)) {
+      throw new Error(
+        'Create Gist is not available with GitHub App authentication. The GitHub Gists API requires a user token — App installation tokens cannot create gists. Use an OAuth or personal access token connection instead.'
+      );
+    }
+
     const { description, public: isPublic, filename, content } = propsValue;
 
     const body = {
@@ -50,7 +67,7 @@ export const githubCreateGistAction = createAction({
     };
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/gists`,
       body,

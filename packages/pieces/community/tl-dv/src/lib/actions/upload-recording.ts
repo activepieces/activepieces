@@ -8,6 +8,11 @@ export const uploadRecording = createAction({
   name: 'upload_recording',
   displayName: 'Upload Recording',
   description: 'Import a meeting or recording from a URL',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Imports an external recording into tl;dv by ingesting it from a publicly accessible media URL (.mp3/.mp4/.wav/.m4a/.mkv/.mov/.avi/.wma/.flac), queuing it for transcription and processing. Use to bring a recording hosted elsewhere into tl;dv. Each call creates a new import job (not idempotent); set dryRun to validate the import without persisting it.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Meeting Name',

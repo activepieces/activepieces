@@ -6,8 +6,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newUnsubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber',
+  classification: 'READ',
   displayName: 'New Unsubscriber',
   description: 'Fires when someone unsubscribes globally',
+  aiMetadata: {
+    description: 'Fires when a subscriber unsubscribes globally from the connected Sender account, representing the contact that opted out of all communications.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

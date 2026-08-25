@@ -9,6 +9,12 @@ export const deleteADocument = createAction({
   name: 'deleteADocument',
   displayName: 'Delete a document',
   description: 'Deletes the specified document and places it in the Trash',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Deletes an Omni document by its ID, moving it to the Trash. Use to remove a document the agent has located. Effectively idempotent: once the document is trashed, repeating the call with the same ID has no further effect (subsequent calls may error if the ID no longer resolves).',
+    idempotent: true,
+  },
   props: {
     documentId: documentIdDropdown,
   },

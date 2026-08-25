@@ -1,9 +1,10 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
-import { z } from 'zod';
+import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/pieces-framework';
+import * as z from 'zod/mini'
 import qs from 'qs';
+import { findRecordsActionOutputSchema } from '../output-schemas';
 type FieldInfo = {
   id: string;
   type: FieldType;
@@ -11,9 +12,12 @@ type FieldInfo = {
 };
 
 export const findRecords = createAction({
+  audience: 'both',
   name: 'tables-find-records',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Find records in a table with filters.',
+  aiMetadata: { description: 'Queries rows in an Activepieces Table, optionally narrowing them with a list of column/operator/value filter conditions and an optional row limit. This is the main way to read or search a table and to resolve the record IDs needed by Get Record, Update Record, or Delete Record(s); use Get Record when the record ID is already known. Requires the table ID; with no filters it returns every row, and filter values are type-checked against the column, so number and date columns reject unparseable values; on date and date & time columns the gt/gte/lt/lte operators compare chronologically while eq/neq compare the stored text exactly; read-only and idempotent.', idempotent: true },
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,
@@ -88,6 +92,7 @@ export const findRecords = createAction({
       },
     }),
   },
+  outputSchema: findRecordsActionOutputSchema,
   async run(context) {
     const { table_id: tableExternalId, limit, filters } = context.propsValue;
     const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
@@ -101,24 +106,25 @@ export const findRecords = createAction({
       const value = filter.value;
       const fieldType = filter.field.type;
 
-      let schema: Record<string, z.ZodType>;
+      let schema: Record<string, z.core.$ZodType>;
       switch (fieldType) {
         case FieldType.NUMBER:
           schema = {
-            value: z.union([z.number(), z.string().transform(val => {
+            value: z.union([z.number(), z.pipe(z.string(), z.transform(val => {
               const num = Number(val);
               if (isNaN(num)) throw new Error(`Invalid number for field "${filter.field.name}"`);
               return num;
-            })]),
+            }))]),
           };
           break;
         case FieldType.DATE:
+        case FieldType.DATETIME:
           schema = {
-            value: z.union([z.date(), z.string().transform(val => {
+            value: z.union([z.date(), z.pipe(z.string(), z.transform(val => {
               const date = new Date(val);
               if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${filter.field.name}"`);
               return date;
-            })]),
+            }))]),
           };
           break;
         default:

@@ -6,6 +6,9 @@ export const workbookRefreshEventTrigger = createTrigger({
   name: 'workbook_refresh_event',
   displayName: 'Workbook Refresh Event',
   description: 'Triggers when a workbook refresh event occurs (started, succeeded, or failed)',
+  aiMetadata: {
+    description: 'Fires when a workbook extract refresh reaches a chosen stage on the Tableau site — refresh started, succeeded, or failed, selected via the Event Type. Use to react to the progress or outcome of a workbook refresh; the payload identifies the affected workbook.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {

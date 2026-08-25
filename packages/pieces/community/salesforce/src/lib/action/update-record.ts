@@ -8,6 +8,8 @@ export const updateRecord = createAction({
     name: 'update_record',
     displayName: 'Update Record',
     description: 'Updates an existing record.',
+    audience: 'both',
+    aiMetadata: { description: 'Update an existing record of any object, selected by object type and record ID, with a JSON map of fields to change; only supplied fields are modified and the record must already exist. The standard update action — use a stable record ID, not an external ID (use Batch/Bulk Upsert for external-ID matching).', idempotent: false },
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,

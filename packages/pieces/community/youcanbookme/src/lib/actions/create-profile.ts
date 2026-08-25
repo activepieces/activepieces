@@ -5,8 +5,15 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createprofile = createAction({
   auth: youcanbookmeAuth,
   name: 'create-profile',
+  classification: 'WRITE',
   displayName: 'Create Profile',
   description: 'Create a new profile in YouCanBookMe',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new YouCanBookMe booking profile under a given account, setting properties such as title, subdomain, time zone, locale, and logo. Use when an agent needs to provision a fresh scheduling page. Requires the account ID and a profile title; not idempotent — each call creates a new profile.',
+    idempotent: false,
+  },
   props: {
     accountId: Property.ShortText({
       displayName: 'Account ID',

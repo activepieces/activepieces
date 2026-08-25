@@ -8,6 +8,8 @@ export const deleteContactAction = createAction({
   name: 'delete-contact',
   displayName: 'Delete Contact',
   description: 'Permanently delete contact from all mailing lists',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes a contact, identified by email, from every SendPulse mailing list (address book) in the account at once. Use to fully purge a contact rather than unsubscribe from a single list. Destructive but idempotent — once deleted, repeating the call leaves the contact absent.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

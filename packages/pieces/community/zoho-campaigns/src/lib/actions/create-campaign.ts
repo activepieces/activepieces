@@ -7,6 +7,12 @@ export const createCampaign = createAction({
   displayName: 'Create Campaign',
   description:
     'Create a new campaign with campaign name, subject, topic, sender name/address, and mailing list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new draft email campaign in Zoho Campaigns with the given name, subject, sender name/address, topic, and target mailing list(s). Use to set up a campaign before sending or cloning it. Not idempotent: each call creates a separate campaign even with identical inputs.',
+    idempotent: false,
+  },
   props: zohoCampaignsCommon.createCampaignProperties(),
   async run({ auth, propsValue }) {
     const location = auth.props?.['location'] as string || 'zoho.com';

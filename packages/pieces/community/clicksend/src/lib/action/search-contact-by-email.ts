@@ -10,7 +10,14 @@ function isValidEmail(email: string) {
 export const clicksendFindContactByEmailAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_by_email',
+  classification: 'READ',
   description: 'Finds contact by email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches a specific ClickSend contact list for a contact whose email exactly matches the given address, paging through the whole list until a match is found. Choose this to look up or verify a contact by email before updating or messaging them. Requires a valid email and the target list id; read-only and idempotent.',
+    idempotent: true,
+  },
   displayName: 'Find Contact by Email',
   props: {
     contact_list_id: clicksendCommon.contact_list_id,

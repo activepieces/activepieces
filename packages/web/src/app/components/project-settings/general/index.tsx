@@ -39,6 +39,7 @@ export type FormValues = {
   icon: ProjectIcon;
   externalId?: string;
   maxConcurrentJobs?: number | null;
+  activeFlowsLimit?: number | null;
   sensitive?: boolean;
 };
 
@@ -199,52 +200,90 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
               )}
             />
           )}
-        {platformRole === PlatformRole.ADMIN && (
-          <FormField
-            name="maxConcurrentJobs"
-            render={({ field }) => (
-              <FormItem>
-                <Label
-                  htmlFor="maxConcurrentJobs"
-                  className="text-sm font-medium"
-                >
-                  {t('Max Concurrent Jobs')}
-                </Label>
-                <ClearableInput
-                  {...field}
-                  id="maxConcurrentJobs"
-                  type="number"
-                  min={1}
-                  placeholder={
-                    defaultConcurrentJobsLimit
-                      ? t('Default ({value})', {
-                          value: defaultConcurrentJobsLimit,
-                        })
-                      : t('Default')
-                  }
-                  value={field.value ?? ''}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value ? Number(e.target.value) : null,
-                    )
-                  }
-                  onClear={() => field.onChange(null)}
-                  disabled={form.formState.disabled || !isRateLimiterEnabled}
-                />
-                <FormDescription className="text-xs text-muted-foreground">
-                  {isRateLimiterEnabled === false
-                    ? t(
-                        'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
+        {!platform.plan.workerGroupsEnabled &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="maxConcurrentJobs"
+              render={({ field }) => (
+                <FormItem>
+                  <Label
+                    htmlFor="maxConcurrentJobs"
+                    className="text-sm font-medium"
+                  >
+                    {t('Max Concurrent Jobs')}
+                  </Label>
+                  <ClearableInput
+                    {...field}
+                    id="maxConcurrentJobs"
+                    type="number"
+                    min={1}
+                    placeholder={
+                      defaultConcurrentJobsLimit
+                        ? t('Default ({value})', {
+                            value: defaultConcurrentJobsLimit,
+                          })
+                        : t('Default')
+                    }
+                    value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : null,
                       )
-                    : t(
-                        'Maximum number of flows that can run at the same time for this project',
-                      )}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+                    }
+                    onClear={() => field.onChange(null)}
+                    disabled={form.formState.disabled || !isRateLimiterEnabled}
+                  />
+                  <FormDescription className="text-xs text-muted-foreground">
+                    {isRateLimiterEnabled === false
+                      ? t(
+                          'The rate limiting feature is disabled. Enable the PROJECT_RATE_LIMITER_ENABLED environment variable to use this feature.',
+                        )
+                      : t(
+                          'Maximum number of flows that can run at the same time for this project',
+                        )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        {platform.plan.billedTeamProjectsLimit !== 0 &&
+          platformRole === PlatformRole.ADMIN && (
+            <FormField
+              name="activeFlowsLimit"
+              render={({ field }) => (
+                <FormItem>
+                  <Label
+                    htmlFor="activeFlowsLimit"
+                    className="text-sm font-medium"
+                  >
+                    {t('Active Flows Limit')}
+                  </Label>
+                  <ClearableInput
+                    {...field}
+                    id="activeFlowsLimit"
+                    type="number"
+                    min={1}
+                    placeholder={t('Unlimited')}
+                    value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : null,
+                      )
+                    }
+                    onClear={() => field.onChange(null)}
+                    disabled={form.formState.disabled}
+                  />
+                  <FormDescription className="text-xs text-muted-foreground">
+                    {t(
+                      'Maximum number of enabled flows in this project. Leave empty for no limit.',
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
       </div>
     </Form>
   );

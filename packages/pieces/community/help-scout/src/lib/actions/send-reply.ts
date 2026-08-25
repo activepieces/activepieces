@@ -9,6 +9,12 @@ export const sendReply = createAction({
   name: 'send_reply',
   displayName: 'Send Reply',
   description: 'Sends a reply in an existing conversation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a customer-facing reply thread to an existing Help Scout conversation identified by conversation ID. Use after locating the target conversation to respond to a customer; can optionally be saved as a draft instead of sent. Not idempotent — each call appends a new reply.',
+    idempotent: false,
+  },
   props: {
     conversationId: conversationIdDropdown,
     text: Property.LongText({

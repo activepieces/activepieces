@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { sendEmail } from './lib/actions/send-email';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const azureCommunicationServiceAuth = PieceAuth.SecretText({
   displayName: 'Connection string',

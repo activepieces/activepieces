@@ -7,8 +7,11 @@ import { bitlinkDropdown, groupGuid } from '../common/props';
 export const updateBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'update_bitlink',
+  classification: 'WRITE',
   displayName: 'Update Bitlink',
   description: 'Modify properties of an existing Bitlink.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates properties of an existing Bitlink identified by its Bitlink ID, including title, archive status, tags (overwrites existing), and mobile app deeplinks. Use to edit or re-tag a known short link; at least one field must be provided. Idempotent: applying the same values repeatedly yields the same final state.', idempotent: true },
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,

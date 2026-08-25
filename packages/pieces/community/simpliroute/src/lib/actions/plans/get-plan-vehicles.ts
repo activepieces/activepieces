@@ -8,6 +8,8 @@ export const get_plan_vehicles = createAction({
     auth: simplirouteAuth,
     displayName: 'Get vehicles with routes on date',
     description: 'Returns the vehicles that have planned routes on the indicated date.',
+    audience: 'both',
+    aiMetadata: { description: 'Look up which vehicles have planned routes on a specific date. Read-only and idempotent; use when you need the routed-vehicle subset for a day rather than the full plan or the entire vehicle fleet.', idempotent: true },
     props: {
         planned_date: Property.ShortText({ displayName: 'planned_date', description: 'Planned date (YYYY-MM-DD).', required: true }),
     },

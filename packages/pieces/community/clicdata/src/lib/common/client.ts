@@ -5,7 +5,7 @@ import {
   HttpRequest,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const DEFAULT_API_VERSION = '2022.01';
 const BASE_URL = 'https://api.clicdata.com';

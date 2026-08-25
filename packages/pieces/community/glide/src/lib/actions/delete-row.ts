@@ -10,6 +10,11 @@ export const deleteRowAction = createAction({
   name: 'delete-row',
   displayName: 'Delete Row',
   description: 'Delete a row from a Glide Big Table.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently remove a single row from a Glide Big Table, targeted by table ID and the specific row ID. Requires a known row ID (look one up first via Get Rows if needed). Idempotent on a stable row ID — the end state is the row no longer existing, and re-running has no further effect.',
+    idempotent: true,
+  },
   props: {
     tableId: glideProps.tableId(),
     rowId: Property.ShortText({

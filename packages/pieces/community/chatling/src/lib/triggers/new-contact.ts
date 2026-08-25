@@ -60,8 +60,13 @@ const polling: Polling<
 export const newContact = createTrigger({
   auth: chatlingAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact/Lead',
   description: 'Triggers when a new contact or lead is collected by the chatbot.',
+  aiMetadata: {
+    description:
+      'Fires when the selected Chatling chatbot collects a new contact or lead. Each event represents one newly captured contact with its details (name, email, phone, company, and similar fields). Polls the chatbot\'s contacts on an interval, deduplicating by creation time.',
+  },
   props: {
     chatbotId: chatbotIdDropdown,
   },

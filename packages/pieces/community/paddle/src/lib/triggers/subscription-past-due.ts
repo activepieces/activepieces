@@ -9,6 +9,10 @@ export const subscriptionPastDue = createTrigger({
   displayName: 'Subscription Past Due',
   description:
     'Triggers when a subscription goes past due — start dunning flows or restrict features.',
+  aiMetadata: {
+    description:
+      'Fires on the Paddle subscription.past_due event, when a subscription enters past-due status because a renewal payment was not collected. Represents a subscription at risk of cancellation, useful for dunning flows or restricting features.',
+  },
   props: {},
   sampleData: {
     event_id: 'evt_01abc125',

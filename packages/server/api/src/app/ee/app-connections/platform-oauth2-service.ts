@@ -1,11 +1,6 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { PropertyType } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    AppConnectionType,
-    ErrorCode,
-    isNil,
-    PlatformOAuth2ConnectionValue,
-} from '@activepieces/shared'
+import { AppConnectionType, PlatformOAuth2ConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import {
     ClaimOAuth2Request,

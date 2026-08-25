@@ -13,6 +13,8 @@ export const googleAds = createAction({
   displayName: 'Google Ads',
   description:
     'Generate quality ads that rank in search results and drive more traffic',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written Google search ad copy via Writesonic from a product name, with optional description and target search term plus engine/language/copy-count controls. Use when an agent needs paid-search ad creative for a product. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     product_name: Property.ShortText({
       displayName: 'Product Name',

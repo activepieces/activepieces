@@ -1,5 +1,6 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 import { t } from 'i18next';
+import { ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -27,8 +28,23 @@ const ActionErrorHandlingForm = React.memo(
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<FlowAction | FlowTrigger>();
 
+    if (hideContinueOnFailure === true && hideRetryOnFailure === true) {
+      return null;
+    }
+
     return (
-      <div className={cn('grid', GAP_SIZE_FOR_STEP_SETTINGS)}>
+      <div
+        className={cn(
+          'flex flex-col border-t border-border pt-4',
+          GAP_SIZE_FOR_STEP_SETTINGS,
+        )}
+      >
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <ShieldAlert className="size-4" />
+          <span className="text-[13px] font-semibold tracking-[-0.005em] text-muted-foreground">
+            {t('Error handling')}
+          </span>
+        </div>
         {hideContinueOnFailure !== true && (
           <FormField
             name="settings.errorHandlingOptions.continueOnFailure.value"
@@ -37,7 +53,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="continueOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -47,11 +63,11 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Continue on Failure')}</span>
+                  <span>{t('Add Error Handler')}</span>
                 </FormLabel>
                 <ReadMoreDescription
                   text={t(
-                    'Enable this option to skip this step and continue the flow normally if it fails.',
+                    'Adds Success and Failure branches, errors go into Failure.',
                   )}
                 />
               </FormItem>
@@ -66,7 +82,7 @@ const ActionErrorHandlingForm = React.memo(
               <FormItem>
                 <FormLabel
                   htmlFor="retryOnFailure"
-                  className="flex items-center gap-1 h-7.5 max-h-7.5"
+                  className="flex items-center gap-2.5 h-7.5 max-h-7.5"
                 >
                   <FormControl>
                     <Switch
@@ -76,12 +92,10 @@ const ActionErrorHandlingForm = React.memo(
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <span className="ml-2">{t('Retry on Failure')}</span>
+                  <span>{t('Retry on Failure')}</span>
                 </FormLabel>
                 <ReadMoreDescription
-                  text={t(
-                    'Automatically retry up to four attempts when failed.',
-                  )}
+                  text={t('Retries up to 4 times before failing the step.')}
                 />
               </FormItem>
             )}

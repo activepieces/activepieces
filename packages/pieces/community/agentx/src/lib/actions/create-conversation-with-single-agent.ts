@@ -8,8 +8,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createConversationWithSingleAgent = createAction({
   auth: AgentXAuth,
   name: 'createConversationWithSingleAgent',
+  classification: 'WRITE',
   displayName: 'Create Conversation With Single Agent',
   description: 'Create a new conversation with a specific Agent by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Opens a new conversation thread with a specific AgentX agent (identified by agent ID), choosing the conversation type (chat, search, or ecommerce). Use this to begin an interaction before sending messages; it does not send any message itself. Each call starts a fresh conversation, so calling it repeatedly creates multiple separate conversations (not idempotent).', idempotent: false },
   props: {
     agentId: AgentIdDropdown,
     type: Property.StaticDropdown({

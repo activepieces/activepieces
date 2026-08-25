@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { renderTemplate } from './actions/renderTemplate.action';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { generatebannersAuth } from './src/index';
 export const generatebanners = createPiece({
   minimumSupportedRelease: '0.30.0',

@@ -6,9 +6,16 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const searchNews = createAction({
   auth: asknewsAuth,
   name: 'searchNews',
+  classification: 'SEARCH',
   displayName: 'Search News',
   description:
     'Search for enriched real-time news articles from the past 48 hours or historical archive',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches enriched news articles via the AskNews API, defaulting to recent coverage but able to query the historical archive (60+ days) instead when historical is set. The query can be keywords, a question, or a paragraph, and the search method switches between keyword, semantic natural-language, or hybrid matching; filter by category and recency. Choose this to find or retrieve current/past news on a topic. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

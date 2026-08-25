@@ -9,6 +9,12 @@ export const getDisposableEmailCheck = createAction({
   displayName: 'Check Disposable Email',
   description:
     'Check if an email address belongs to a disposable email service (0 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Check whether an email address belongs to a disposable/temporary email provider. Read-only, free, and safe to retry. Use to validate or filter sign-up and lead emails before further enrichment; this only flags disposability and does not return profile data.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

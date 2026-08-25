@@ -1,4 +1,4 @@
-import z from 'zod';
+import * as z from 'zod/mini'
 
 // Common validation schemas for dropdown options
 const orderOptions = z.enum([
@@ -70,80 +70,80 @@ const brandOrderOptions = z.enum(['most_ranked', 'least_ranked']);
 
 // Action Schemas (Zod objects for validation)
 export const findAdsSchema = z.object({
-  query: z.string().optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  order: orderOptions.optional(),
-  live: liveStatusOptions.optional(),
-  display_format: z.array(displayFormatOptions).optional(),
-  publisher_platform: z.array(publisherPlatformOptions).optional(),
-  niches: z.array(nicheOptions).optional(),
-  market_target: z.array(marketTargetOptions).optional(),
-  languages: z.array(languageOptions).optional(),
-  cursor: z.string().optional(),
-  limit: z.number().min(1).max(250).optional(),
+  query: z.optional(z.string()),
+  start_date: z.optional(z.string()),
+  end_date: z.optional(z.string()),
+  order: z.optional(orderOptions),
+  live: z.optional(liveStatusOptions),
+  display_format: z.optional(z.array(displayFormatOptions)),
+  publisher_platform: z.optional(z.array(publisherPlatformOptions)),
+  niches: z.optional(z.array(nicheOptions)),
+  market_target: z.optional(z.array(marketTargetOptions)),
+  languages: z.optional(z.array(languageOptions)),
+  cursor: z.optional(z.string()),
+  limit: z.optional(z.number().check(z.minimum(1), z.maximum(250))),
 });
 
 export const getAdByIdSchema = z.object({
-  ad_id: z.string().min(1, 'Ad ID is required'),
+  ad_id: z.string().check(z.minLength(1, 'Ad ID is required')),
 });
 
 export const getAdsByPageSchema = z.object({
-  page_id: z.string().min(1, 'Page ID is required'),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  order: orderOptions.optional(),
-  live: liveStatusOptions.optional(),
-  display_format: z.array(displayFormatOptions).optional(),
-  publisher_platform: z.array(publisherPlatformOptions).optional(),
-  niches: z.array(nicheOptions).optional(),
-  market_target: z.array(marketTargetOptions).optional(),
-  languages: z.array(languageOptions).optional(),
-  cursor: z.string().optional(),
-  limit: z.number().min(1).max(250).optional(),
+  page_id: z.string().check(z.minLength(1, 'Page ID is required')),
+  start_date: z.optional(z.string()),
+  end_date: z.optional(z.string()),
+  order: z.optional(orderOptions),
+  live: z.optional(liveStatusOptions),
+  display_format: z.optional(z.array(displayFormatOptions)),
+  publisher_platform: z.optional(z.array(publisherPlatformOptions)),
+  niches: z.optional(z.array(nicheOptions)),
+  market_target: z.optional(z.array(marketTargetOptions)),
+  languages: z.optional(z.array(languageOptions)),
+  cursor: z.optional(z.string()),
+  limit: z.optional(z.number().check(z.minimum(1), z.maximum(250))),
 });
 
 export const findBrandsSchema = z.object({
-  query: z.string().min(1, 'Brand name is required'),
-  limit: z.number().min(1).max(10).optional(),
+  query: z.string().check(z.minLength(1, 'Brand name is required')),
+  limit: z.optional(z.number().check(z.minimum(1), z.maximum(10))),
 });
 
 export const findBoardsSchema = z.object({
-  offset: z.number().min(0).optional(),
-  limit: z.number().min(1).max(10).optional(),
+  offset: z.optional(z.number().check(z.minimum(0))),
+  limit: z.optional(z.number().check(z.minimum(1), z.maximum(10))),
 });
 
 // Trigger Schemas
 export const newAdInBoardSchema = z.object({
-  board_id: z.string().min(1, 'Board ID is required'),
-  polling_interval: z.number().min(1).max(1440).optional(),
-  live: liveStatusOptions.optional(),
-  display_format: z.array(displayFormatOptions).optional(),
-  publisher_platform: z.array(publisherPlatformOptions).optional(),
-  niches: z.array(nicheOptions).optional(),
-  market_target: z.array(marketTargetOptions).optional(),
-  languages: z.array(languageOptions).optional(),
+  board_id: z.string().check(z.minLength(1, 'Board ID is required')),
+  polling_interval: z.optional(z.number().check(z.minimum(1), z.maximum(1440))),
+  live: z.optional(liveStatusOptions),
+  display_format: z.optional(z.array(displayFormatOptions)),
+  publisher_platform: z.optional(z.array(publisherPlatformOptions)),
+  niches: z.optional(z.array(nicheOptions)),
+  market_target: z.optional(z.array(marketTargetOptions)),
+  languages: z.optional(z.array(languageOptions)),
 });
 
 export const newAdInSpyderSchema = z.object({
-  brand_id: z.string().min(1, 'Brand ID is required'),
-  polling_interval: z.number().min(1).max(1440).optional(),
-  live: liveStatusOptions.optional(),
-  display_format: z.array(displayFormatOptions).optional(),
-  publisher_platform: z.array(publisherPlatformOptions).optional(),
-  niches: z.array(nicheOptions).optional(),
-  market_target: z.array(marketTargetOptions).optional(),
-  languages: z.array(languageOptions).optional(),
+  brand_id: z.string().check(z.minLength(1, 'Brand ID is required')),
+  polling_interval: z.optional(z.number().check(z.minimum(1), z.maximum(1440))),
+  live: z.optional(liveStatusOptions),
+  display_format: z.optional(z.array(displayFormatOptions)),
+  publisher_platform: z.optional(z.array(publisherPlatformOptions)),
+  niches: z.optional(z.array(nicheOptions)),
+  market_target: z.optional(z.array(marketTargetOptions)),
+  languages: z.optional(z.array(languageOptions)),
 });
 
 export const newSwipefileAdSchema = z.object({
-  polling_interval: z.number().min(1).max(1440).optional(),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  live: liveStatusOptions.optional(),
-  display_format: z.array(displayFormatOptions).optional(),
-  publisher_platform: z.array(publisherPlatformOptions).optional(),
-  niches: z.array(nicheOptions).optional(),
-  market_target: z.array(marketTargetOptions).optional(),
-  languages: z.array(languageOptions).optional(),
+  polling_interval: z.optional(z.number().check(z.minimum(1), z.maximum(1440))),
+  start_date: z.optional(z.string()),
+  end_date: z.optional(z.string()),
+  live: z.optional(liveStatusOptions),
+  display_format: z.optional(z.array(displayFormatOptions)),
+  publisher_platform: z.optional(z.array(publisherPlatformOptions)),
+  niches: z.optional(z.array(nicheOptions)),
+  market_target: z.optional(z.array(marketTargetOptions)),
+  languages: z.optional(z.array(languageOptions)),
 });

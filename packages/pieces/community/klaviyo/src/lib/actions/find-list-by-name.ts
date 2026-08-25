@@ -17,8 +17,14 @@ interface KlaviyoList {
 export const findListByName = createAction({
   auth: klaviyoAuth,
   name: 'findListByName',
+  classification: 'SEARCH',
   displayName: 'Find List by Name',
   description: 'Find lists by name with optional additional data',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up Klaviyo lists by an exact name match and returns the matching lists with their IDs. Use to resolve a list name into a list ID before actions that require one (add/remove/subscribe). Requires a list name; matching is exact, not partial. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     search_query: Property.LongText({
       displayName: 'List Name(s)',

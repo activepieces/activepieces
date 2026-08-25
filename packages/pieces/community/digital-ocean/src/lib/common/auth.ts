@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { digitalOceanApiCall } from './client';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const digitalOceanAuth = [
   PieceAuth.OAuth2({

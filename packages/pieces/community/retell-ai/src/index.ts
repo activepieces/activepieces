@@ -9,7 +9,7 @@ import { getPhoneNumber } from './lib/actions/get-phone-number';
 import { getVoice } from './lib/actions/get-voice';
 import { getAgent } from './lib/actions/get-agent';
 import { newCallTrigger } from './lib/triggers/new-call';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const retellAi = createPiece({
   displayName: "Retell AI",

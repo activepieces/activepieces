@@ -8,6 +8,8 @@ export const findPerson = createAction({
   name: 'find_person',
   displayName: 'Find Person',
   description: 'Finds a person based on person_id',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single MeisterTask person (user) by their numeric person ID. Use to resolve a known ID into the person\'s details such as name and email. Read-only and idempotent; requires the exact person ID — it does not search by name.', idempotent: true },
   props: {
     person_id: Property.Number({
       displayName: 'Person ID',

@@ -11,6 +11,8 @@ export const sendSMSAction = createAction({
   name: 'send-sms',
   displayName: 'Send SMS',
   description: 'Sends an SMS message via Bird Channels API.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an outbound SMS text message to a phone number through the Bird (MessageBird) Channels API, using the workspace and channel configured in the connection. Choose this to deliver a text message to a single recipient; the recipient must be an E.164 phone number including country code. Optionally schedule it for a future UTC timestamp instead of sending immediately. Not idempotent — each call sends (or schedules) a new message.', idempotent: false },
   props: {
     recipient: Property.ShortText({
       displayName: 'Recipient',

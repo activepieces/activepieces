@@ -39,8 +39,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof appfollowAuth>, 
 export const newTag = createTrigger({
   auth: appfollowAuth,
   name: 'newTag',
+  classification: 'READ',
   displayName: 'New Tag',
   description: 'Triggered when a new tag is added',
+  aiMetadata: {
+    description:
+      'Fires when a new tag is added to the AppFollow account. Each event represents a single newly created tag with its name, category, and color.',
+  },
   props,
   sampleData: {
     tag: 't0021',

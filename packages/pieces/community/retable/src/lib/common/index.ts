@@ -9,7 +9,7 @@ import {
   RetableProject,
   RetableTable,
 } from './models';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { retableAuth } from '../..';
 
 export const retableCommon = {

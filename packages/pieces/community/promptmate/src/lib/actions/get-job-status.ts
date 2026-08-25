@@ -8,6 +8,8 @@ export const getJobStatus = createAction({
   name: 'get_job_status',
   displayName: 'Get Job Status and Result',
   description: 'Retrieve the status and results of a PromptMate app job',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the current status and any available results for a single PromptMate app job, given its appId and jobId (the jobId comes from a prior run-app call). Use it to poll a submitted job until it completes and to fetch its output; optionally restrict to the default result fields only. Read-only and safe to repeat.', idempotent: true },
   props: {
     appId: Property.Dropdown({
       displayName: 'App',

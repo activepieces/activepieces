@@ -7,6 +7,8 @@ export const upsertVector = createAction({
   name: 'upsert_vector',
   displayName: 'Upsert Vector',
   description: 'Upsert vectors into a namespace. Overwrites existing vectors with the same ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Writes (inserts or overwrites) vectors into a namespace of a Pinecone index, accepting either a single vector or a batch of vectors supplied as structured rows, chosen via the input method. Use to store or refresh embeddings keyed by ID; each vector requires an ID and numeric values. Idempotent: because writes are keyed on the vector ID, repeating the same call overwrites the same records to the same state without creating duplicates.', idempotent: true },
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',

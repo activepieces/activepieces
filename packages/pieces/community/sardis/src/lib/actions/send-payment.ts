@@ -8,6 +8,12 @@ export const sendPaymentAction = createAction({
   auth: sardisAuth,
   displayName: 'Send Payment',
   description: 'Execute a policy-controlled payment from a Sardis wallet.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a stablecoin payment from a Sardis wallet to a recipient address or merchant identifier, subject to the wallet\'s spending policies. Choose this to actually move funds; to test a payment against policy without moving money, use Check Policy instead. Not idempotent — each call submits a new transfer, so do not retry blindly on an unclear failure. Requires the source wallet ID, recipient, and amount; token defaults to USDC and chain to Base.',
+    idempotent: false,
+  },
   props: {
     walletId: sardisCommon.walletId,
     to: Property.ShortText({

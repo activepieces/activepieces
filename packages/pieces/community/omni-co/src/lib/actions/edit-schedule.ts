@@ -10,6 +10,12 @@ export const editSchedule = createAction({
   displayName: 'Edit schedule',
   description:
     'Updates a scheduled task. Only properties included will be updated',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Omni dashboard schedule, identified by its UUID, replacing its cadence, format, and destination settings. Use to modify a recurring delivery the agent has located rather than recreating it. Idempotent: applying the same values to the same schedule yields the same end state.',
+    idempotent: true,
+  },
   props: {
     scheduleId: scheduleIdDropdown,
     name: Property.ShortText({

@@ -14,8 +14,12 @@ import {
 export const newProject = createTrigger({
   auth: togglTrackAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Fires when a new project is added.',
+  aiMetadata: {
+    description: 'Fires when a new project is created in the configured Toggl Track workspace, delivering the created project (id, name, client association, billing/color settings). Delivered via a Toggl webhook the user must set up manually.',
+  },
   props: {
     workspace_id: togglCommon.workspace_id,
     setupInstructions: Property.MarkDown({

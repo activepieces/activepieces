@@ -1,4 +1,5 @@
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, isNil, PopulatedFlow } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../../flows/flow/flow.service'
 import { projectService } from '../../../../project/project-service'
@@ -11,6 +12,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 projectId,
             },
             externalId: flow.externalId,
+            emitEvents: false,
         })
         return this.updateFlowInProject(createdFlow, flow, projectId)
     },
@@ -33,6 +35,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             projectId,
             platformId: project.platformId,
             userId: null,
+            emitEvents: false,
             operation: {
                 type: FlowOperationType.IMPORT_FLOW,
                 request: {
@@ -50,6 +53,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 projectId,
                 platformId: project.platformId,
                 userId: null,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -76,6 +80,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 projectId,
                 platformId: project.platformId,
                 userId: null,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,
                     request: {
@@ -98,7 +103,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         if (!flow) {
             return
         }
-        await flowService(log).delete({ id: flowId, projectId })
+        await flowService(log).delete({ id: flowId, projectId, emitEvents: false })
     },
 })
 

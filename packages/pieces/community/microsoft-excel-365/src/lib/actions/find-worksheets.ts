@@ -9,8 +9,11 @@ import { WorkbookWorksheet } from '@microsoft/microsoft-graph-types';
 export const findWorksheetAction = createAction({
   auth: excelAuth,
   name: 'find-worksheet',
+  classification: 'SEARCH',
   displayName: 'Find Worksheet',
   description: 'Finds an existing worksheet by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Search a workbook for worksheets whose name matches a search string, returning a found flag plus the matching sheets. By default matches sheets that contain the string (case-insensitive); enable Exact Match for an exact-name match only. Use to locate a sheet by name; to list every sheet use Get Worksheets. Read-only and idempotent.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

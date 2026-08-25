@@ -4,7 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { asanaCreateTaskAction } from './lib/actions/create-task';
 import { asanaAuth } from './lib/auth';
 

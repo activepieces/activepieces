@@ -13,6 +13,8 @@ export const charegPointShareDeleteAction = createAction({
   name: 'charegPointShareDelete',
   displayName: 'Resources - Charge Points - Chareg Point Share Delete',
   description: 'Delete an Share.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently remove a share from a charge point, identified by the charge point ID and the share ID, revoking that shared access. Destructive and irreversible; effectively idempotent since deleting an already-removed share has no further effect, though it may return a not-found error. Confirm both IDs before calling.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

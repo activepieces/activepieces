@@ -9,6 +9,10 @@ export const updatedProject = createTrigger({
   name: 'updatedProject',
   displayName: 'Updated Project',
   description: 'Triggers when a project is updated.',
+  aiMetadata: {
+    description:
+      'Fires when an existing project is modified in Copper CRM (any field change), via a Copper webhook. Emits the updated project record.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

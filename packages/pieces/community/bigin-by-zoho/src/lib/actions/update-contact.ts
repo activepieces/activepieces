@@ -12,8 +12,11 @@ import { handleDropdownError } from '../common/helpers';
 export const updateContact = createAction({
   auth: biginAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Select and update an existing Contact record.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing contact (person) record in Bigin CRM, identified by selecting the contact; its current fields are prepopulated and any you set are overwritten (owner, associated company, tags, and module-defined fields). Use to modify a person who already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
 
   props: {
     contactId: Property.Dropdown({

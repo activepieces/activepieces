@@ -20,6 +20,8 @@ export const findRecords = createAction({
     name: 'find_records',
     displayName: 'Find Records',
     description: 'Find records in a specified Insightly object',
+    audience: 'both',
+    aiMetadata: { description: 'Searches a chosen Insightly CRM object (Contact, Lead, Opportunity, etc.) for records where a given field matches a value, optionally capped by a limit. Use to locate records by a known field value (e.g. an email or name) rather than by ID. Read-only and idempotent. Requires the matching Insightly pod (e.g. "na1"), the field to search, and the value to match.', idempotent: true },
     props: {
         pod: Property.ShortText({
             displayName: 'Pod',

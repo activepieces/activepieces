@@ -9,6 +9,8 @@ export const sendAPrompt = createAction({
   name: 'sendAPrompt',
   displayName: 'Send a Prompt',
   description: 'Send a message to a Guidelite Assistant',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a message to a specified GuideLite AI assistant and returns its reply. Provide a conversationId to continue an existing conversation, or omit it to start a new one. Each call posts a new message and produces a fresh assistant response, so it is not idempotent.', idempotent: false },
   props: {
     assistantId: assistantIdDropdown,
     message: Property.LongText({

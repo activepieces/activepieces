@@ -13,8 +13,13 @@ const triggerNameInStore = 'calendly_invitee_created_trigger';
 export const calendlyInviteeCreated = createTrigger({
   auth: calendlyAuth,
   name: 'invitee_created',
+  classification: 'READ',
   displayName: 'Event Scheduled',
   description: 'Triggers when a new Calendly event is scheduled',
+  aiMetadata: {
+    description:
+      'Fires when an invitee schedules a new Calendly event (a booking is created). Emits the new event including the invitee details (name, email), the event URI, scheduling timestamps, and the event status set to "active".',
+  },
   props: {
     scope: calendlyCommon.scope,
   },

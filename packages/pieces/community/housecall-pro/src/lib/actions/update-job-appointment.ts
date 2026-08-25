@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const updateJobAppointment = createAction({
   auth: housecallProAuth,
   name: "update_job_appointment",
+  classification: 'WRITE',
   displayName: "Update Appointment",
   description: "Update job appointment",
+  audience: 'both',
+  aiMetadata: { description: "Update an existing appointment on a Housecall Pro job, replacing its start/end times, dispatched-employee list, and optional arrival window. Requires both the job ID and the appointment ID. Idempotent: re-applying the same values yields the same appointment state. Use create-appointment to add a new appointment rather than modify one.", idempotent: true },
   props: {
     appointment_id: Property.ShortText({
       displayName: "Appointment ID",

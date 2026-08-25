@@ -5,8 +5,11 @@ import { BexioClient } from '../common/client';
 export const updatePersonAction = createAction({
   auth: bexioAuth,
   name: 'update_person',
+  classification: 'WRITE',
   displayName: 'Update Person',
   description: 'Update an existing person contact',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing person-type contact in Bexio identified by its contact id; only supplied fields change. Use to modify a known individual; pick Create Person to add a new one or Update Company for an organization. Resolve the contact id with Find Company or a contact lookup first. Idempotent: re-sending the same values converges to the same contact state.', idempotent: true },
   props: {
     contact_id: Property.Dropdown({
       auth: bexioAuth,

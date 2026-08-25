@@ -7,6 +7,8 @@ export const sendReviewInvite = createAction({
   name: 'sendReviewInvite',
   displayName: 'Send Review Invite',
   description: 'Sends a review invite to your customer.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a Cloutly review-invitation to a customer via email and/or SMS, scoped to a specific business and review campaign. Use to solicit a review from a customer after a purchase or interaction. Requires businessId and campaignId, plus at least one of email or phone number to deliver the invite; an optional delay defers sending by N days. Not idempotent — each call dispatches a new invite.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

@@ -8,6 +8,11 @@ export const deleteSecret = createAction({
   name: 'delete_secret',
   displayName: 'Delete Secret',
   description: 'Delete a secret from HashiCorp Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Remove the secret stored at a path in a HashiCorp Vault secrets engine (mount); on KV v2 engines this deletes the metadata and all versions at that path. Use to revoke or clean up credentials. Requires the secrets-engine mount name and the path. Idempotent: deleting an already-missing path still reports success rather than erroring.',
+    idempotent: true,
+  },
   props: {
     secretEngine: Property.ShortText({
       displayName: 'Secret Engine',

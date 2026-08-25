@@ -38,6 +38,9 @@ export const newOrUpdatedContact = createTrigger({
   displayName: 'New or Updated Contact',
   description:
     'Triggers when a contact is created or updated in Microsoft 365 People.',
+  aiMetadata: {
+    description: 'Fires when a contact in the authenticated user\'s Microsoft 365 People (Outlook) address book is created or modified. Polls periodically and emits each contact whose last-modified time is newer than the previous check, so both brand-new contacts and edits to existing ones surface through this single trigger.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

@@ -4,9 +4,12 @@ import { cmsAuth } from '../auth';
 
 export const saveTextAction = createAction({
   name: 'save_text',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Text Content',
   description: 'Save text content to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a text-type CMS field in Total CMS, identified by its CMS ID (slug), to the supplied text content. Use to write or update a stored text/HTML value. Idempotent: the value is keyed on the slug, so repeating with the same text leaves the same result.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

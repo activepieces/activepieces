@@ -7,9 +7,12 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeDetails = createAction({
   auth: socialkitAuth,
   name: 'get_youtube_details',
+  classification: 'READ',
   displayName: 'Get YouTube Details',
   description:
     'Get detailed information about any YouTube video including title, description, view count, likes, dislikes, duration, and channel information.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up metadata and statistics for a single YouTube video (title, description, view/like/dislike counts, duration, channel info) given its watch URL. Use to enrich or inspect a known video. Read-only and idempotent; requires a valid YouTube video URL.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',

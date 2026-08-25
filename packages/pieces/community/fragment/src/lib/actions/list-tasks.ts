@@ -8,6 +8,8 @@ export const listTasks = createAction({
   name: 'list_tasks',
   displayName: 'List Tasks',
   description: 'Retrieves a list of tasks from.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists tasks from Fragment, optionally filtered by status (TODO/STARTED/DONE) and assignee, and capped by a limit (default 50). Omit the filters to return recent tasks across all statuses. Use to discover task UIDs or survey tasks before acting on them. Read-only and idempotent.', idempotent: true },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',

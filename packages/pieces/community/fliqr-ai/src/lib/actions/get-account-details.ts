@@ -10,6 +10,8 @@ export const getFliqrAccountDetails = createAction({
   auth: fliqrAuth,
   displayName: 'Get Business Account details',
   description: 'Get basic account details of business',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the basic profile/details of the authenticated Fliqr AI business account (the account that owns the connected API token). Use to retrieve account identity or configuration before acting on the account. Read-only; repeating the call is safe.', idempotent: true },
   props: {},
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({

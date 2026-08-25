@@ -5,8 +5,11 @@ import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
 export const createEntity = createAction({
   auth: base44Auth,
   name: 'create_entity',
+  classification: 'WRITE',
   displayName: 'Create Entity',
   description: 'Creates an entity (record) in your Base44 app',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new record of a given entity type in a Base44 app, with the field values supplied as a JSON object. Use when you need to add a new item (e.g. a Product, User, or Order) to a Base44 database. Requires the exact entity-type name and matching field data; each call inserts a fresh record, so it is not idempotent. Service access uses the configured token when present, otherwise the user session.', idempotent: false },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

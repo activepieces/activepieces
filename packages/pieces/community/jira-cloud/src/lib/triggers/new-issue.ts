@@ -39,6 +39,10 @@ export const newIssue = createTrigger({
   name: 'new_issue',
   displayName: 'New Issue',
   description: 'Triggers when a new issue is created',
+  aiMetadata: {
+    description:
+      'Fires when a new Jira issue is created, optionally limited to issues matching a JQL filter. Each event represents one newly created issue with its full field data (summary, project, type, status, reporter, etc.). Polling-based; events arrive on the next poll, not instantly.',
+  },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {

@@ -7,6 +7,8 @@ export const createCase = createAction({
   name: 'create_case',
   displayName: 'Create Case',
   description: 'Creates a new case in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new MyCase case with the given name plus optional stage, practice area, client/company/staff associations, and billing details. Case name must be unique and stage/practice-area values must already exist in MyCase. Not idempotent: calling twice creates two cases, so use Find or Create Case when you want to avoid duplicates, or Update Case to modify an existing one.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Case Name',

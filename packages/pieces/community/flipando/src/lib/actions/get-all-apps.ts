@@ -9,6 +9,12 @@ export const getAllApps = createAction({
   displayName: 'Get All Apps',
   description:
     'Retrieves all the applications created by the authenticated user.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the Flipando AI applications owned by the authenticated account (capped at 20 results). Use it to discover available app IDs before running an app or to enumerate what the account can execute. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     const apiKey = context.auth.secret_text;

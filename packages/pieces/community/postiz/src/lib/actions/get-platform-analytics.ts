@@ -9,6 +9,11 @@ export const getPlatformAnalytics = createAction({
   displayName: 'Get Platform Analytics',
   description:
     'Retrieve analytics (followers, impressions, engagement) for a connected channel',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves channel-level analytics (followers, impressions, engagement and their change) for a connected channel over a configurable lookback window in days. Use to report on overall account performance rather than a single post. Requires the channel integration id (resolve via List Channels). Idempotent — a read-only lookup.',
+    idempotent: true,
+  },
   props: {
     integration: postizCommon.integrationDropdown,
     days: Property.Number({

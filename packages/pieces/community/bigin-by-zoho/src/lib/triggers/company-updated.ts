@@ -8,8 +8,12 @@ const CACHE_KEY = 'bigin_company_updated_trigger';
 export const companyUpdated = createTrigger({
   auth: biginAuth,
   name: 'companyUpdated',
+  classification: 'READ',
   displayName: 'Company Updated',
   description: 'Triggers when a company record is updated',
+  aiMetadata: {
+    description: 'Fires when an existing company (account) record is edited in Bigin CRM, via an Accounts.edit webhook. Represents a change to an organization already in the CRM.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

@@ -6,8 +6,15 @@ import { callGraphApi, groupDropdown } from '../common';
 export const deleteGroupAction = createAction({
     auth: azureAdAuth,
     name: 'delete_group',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Group',
     description: 'Deletes an Azure AD group by ID.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Permanently deletes an Azure AD group by its object ID, removing its memberships with it. Destructive and not idempotent — a repeat call fails with 404 once the group is gone, so confirm the target with Get Group by ID before deleting.',
+        idempotent: false,
+    },
     props: {
         groupId: groupDropdown,
     },

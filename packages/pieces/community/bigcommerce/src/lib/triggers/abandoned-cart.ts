@@ -9,8 +9,13 @@ const TRIGGER_SCOPE = 'store/cart/abandoned';
 export const abandonedCart = createTrigger({
   auth: bigcommerceAuth,
   name: 'abandonedCart',
+  classification: 'READ',
   displayName: 'Abandoned Cart',
   description: 'Triggers when a cart is abandoned',
+  aiMetadata: {
+    description:
+      'Fires when a shopper abandons a cart in the BigCommerce store (the cart sits inactive without checkout completing). The event identifies the affected cart; use it to drive abandoned-cart recovery flows.',
+  },
   props: {},
   sampleData:{
     producer: 'stores/dxqdddcaklwsso',

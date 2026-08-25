@@ -8,6 +8,8 @@ export const completeTaskAction = createAction({
 	name: 'taskade-complete-task',
 	displayName: 'Complete Task',
 	description: 'Complete a task in a project.',
+	audience: 'both',
+	aiMetadata: { description: 'Marks an existing Taskade task as completed within a given project. Use when an agent needs to check off or close out a task; requires the project id and task id. Idempotent, since re-running leaves the task in the same completed state.', idempotent: true },
 	props: {
 		workspace_id: taskadeProps.workspace_id,
 		folder_id: taskadeProps.folder_id,

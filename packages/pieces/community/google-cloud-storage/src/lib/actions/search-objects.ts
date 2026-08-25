@@ -9,6 +9,8 @@ export const searchObjects = createAction({
   name: 'search_objects',
   displayName: 'Search Objects',
   description: 'Search objects by criteria. Perfect for finding files in your bucket.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists objects in a bucket, optionally narrowed by name prefix, glob pattern, delimiter (for hierarchical/folder listing), or object versions; with no filters it returns all objects. Use to find files or enumerate bucket contents, and pass the returned page token to paginate. Idempotent read that does not modify storage. Requires the bucket name.', idempotent: true },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

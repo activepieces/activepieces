@@ -8,8 +8,11 @@ import { mondayAuth } from '../auth';
 export const uploadFileToColumnAction = createAction({
   auth: mondayAuth,
   name: 'monday_upload_file_to_column',
+  classification: 'WRITE',
   displayName: 'Upload File to Column',
   description: 'Upload a file to a column in Monday.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file (from URL or base64) and attaches it to a file-type column on a monday.com item, identified by board, item, and file column id. Use to add an attachment to an item. Not idempotent: each call uploads and attaches another copy.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

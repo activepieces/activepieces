@@ -3,7 +3,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 
 export const openapiController = async (fastify: FastifyInstance) => {
     fastify.get('/', GetOpenApiParams, async () => {
-        return JSON.stringify(fastify.swagger(), null, 2)
+        return fastify.swagger()
     })
 }
 

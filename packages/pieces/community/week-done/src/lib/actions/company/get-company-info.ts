@@ -12,6 +12,8 @@ export const getCompanyInfoAction = createAction({
   name: 'get_company_info',
   displayName: 'Get Company Info',
   description: 'Get company configuration and settings.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the authenticated account\'s Weekdone company configuration and settings. Takes no input. Read-only and idempotent.', idempotent: true },
   props: {},
   async run({ auth }) {
     return weekdoneApiCall({

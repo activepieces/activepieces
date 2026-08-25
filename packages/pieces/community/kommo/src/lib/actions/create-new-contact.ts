@@ -15,6 +15,8 @@ export const createContactAction = createAction({
   name: 'create_contact',
   displayName: 'Create New Contact',
   description: 'Add a new contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in a Kommo CRM account with name, optional email/phone (stored as custom fields), responsible user, and tags. Use when adding a person not already in the CRM; consider finding the contact first to avoid duplicates. Not idempotent — each call creates a separate contact even with identical input.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Full Name',

@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createEntity } from "./lib/actions/create-entity";
 import { findOrCreateEntity } from "./lib/actions/find-or-create-entity";
 import { findEntity } from "./lib/actions/find-entity";

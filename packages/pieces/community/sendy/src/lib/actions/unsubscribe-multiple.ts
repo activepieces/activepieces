@@ -5,7 +5,7 @@ import {
 import { unsubscribe } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const unsubscribeMultipleAction = createAction({
@@ -13,6 +13,8 @@ export const unsubscribeMultipleAction = createAction({
   auth: sendyAuth,
   displayName: 'Unsubscribe Multiple Lists',
   description: 'Unsubscribe a subscriber from multiple lists',
+  audience: 'both',
+  aiMetadata: { description: 'Marks the same subscriber, identified by email, as unsubscribed across several Sendy lists in one call, iterating over each selected list while keeping the records. Use to opt a contact out of multiple lists at once; for a single list use Unsubscribe. Requires the lists and a valid email; repeating the call on already-unsubscribed lists has no further effect, so it is idempotent.', idempotent: true },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,
@@ -31,7 +33,7 @@ export const unsubscribeMultipleAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     const returnValues: any[] = [];

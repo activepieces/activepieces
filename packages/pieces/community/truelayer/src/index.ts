@@ -46,7 +46,7 @@ import { getPaymentRefund } from './lib/action/payments/get-payment-refund';
 
 import { searchPaymentProviders } from './lib/action/payments-providers/search-payment-providers';
 import { getPaymentProvider } from './lib/action/payments-providers/get-payment-provider';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const paymentsApiV3Payments = createPiece({
   displayName: 'TrueLayer',

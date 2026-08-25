@@ -34,6 +34,9 @@ export const chatClosed = createTrigger({
   name: 'chatClosed',
   displayName: 'Chat Closed',
   description: 'Fires when a chat is closed.',
+  aiMetadata: {
+    description: 'Fires when a TimelinesAI WhatsApp chat is marked closed (resolved/archived). Polls for chats in the closed state and emits each newly closed conversation.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.POLLING,

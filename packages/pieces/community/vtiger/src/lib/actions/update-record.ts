@@ -25,6 +25,8 @@ export const updateRecord = createAction({
   auth: vtigerAuth,
   displayName: 'Update Record',
   description: 'Update a Record',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Vtiger record, identified by its id within a given module (element type), with the supplied field values. Choose this to modify a known record. Idempotent: re-running with the same fields leaves the record in the same state.', idempotent: true },
   props: {
     elementType: elementTypeProperty,
     id: Property.Dropdown({
@@ -296,16 +298,6 @@ export const updateRecord = createAction({
             ...record,
           }),
         },
-      });
-
-      console.debug({
-        operation: 'update',
-        sessionName: instance.sessionId ?? instance.sessionName,
-        elementType: elementType,
-        element: JSON.stringify({
-          id: id,
-          ...record,
-        }),
       });
 
       return response.body;

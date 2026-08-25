@@ -9,6 +9,8 @@ export const markFinishedAction = createAction({
   displayName: 'Mark Contact as Finished',
   description:
     'Mark a contact as finished so they no longer receive emails in any campaign. Use this when you have completed all outreach to that contact.',
+  audience: 'both',
+  aiMetadata: { description: 'Mark a contact (by email) as finished so they no longer receive emails in any campaign, signalling that all outreach to them is complete. Use to close out a contact whose sequence is done (vs. Mark Contact as Replied, which pauses specifically because they responded). Requires only the contact email. Idempotent: repeating leaves the contact in the finished state.', idempotent: true },
   auth: replyIoAuth,
   props: {
     email: Property.ShortText({

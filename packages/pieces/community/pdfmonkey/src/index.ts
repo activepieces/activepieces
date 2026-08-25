@@ -3,7 +3,7 @@ import { pdfmonkeyAuth } from './lib/common/auth';
 import { generateDocumentAction } from './lib/actions/generate-document';
 import { deleteDocumentAction } from './lib/actions/delete-document';
 import { findDocumentAction } from './lib/actions/find-document';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 import { documentGeneratedTrigger } from './lib/triggers/document-generated';

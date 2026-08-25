@@ -41,6 +41,9 @@ export const taskUpdatedTrigger = createTrigger({
 	name: 'task_updated',
 	displayName: 'Task Updated',
 	description: 'Triggers when a task is updated.',
+	aiMetadata: {
+		description: 'Fires when an existing Fragment task is modified, emitting the updated task. Polls for tasks ordered by update time, so each run yields tasks changed since the last check; it also fires for newly created tasks since creation counts as an update.',
+	},
 	props: {},
 	type: TriggerStrategy.POLLING,
 

@@ -6,8 +6,14 @@ import { heygenAuth } from '../common/auth';
 export const listAvatarsAction = createAction({
   auth: heygenAuth,
   name: 'list_avatars',
+  classification: 'SEARCH',
   displayName: 'List Avatars',
   description: 'Retrieve a list of all available avatars.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves all avatars available to the account. Use to discover avatar IDs before composing or generating a video. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run({ auth }) {
     return await heygenApiCall({

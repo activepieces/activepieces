@@ -7,6 +7,11 @@ export const sendMessage = createAction({
   name: 'sendMessage',
   displayName: 'Send Message',
   description: 'Send a message to an Orimon chatbot and get a response',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Send a text message to an Orimon chatbot for a given tenant and return the bot\'s reply. Use to drive a conversational exchange with the chatbot. Requires the tenant ID (from the bot configuration page URL); each call posts a new message and generates a fresh conversation session, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     tenantId: Property.ShortText({
       displayName: 'Tenant ID',

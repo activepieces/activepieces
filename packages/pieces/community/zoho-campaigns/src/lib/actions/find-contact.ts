@@ -7,6 +7,12 @@ export const findContact = createAction({
   name: 'findContact',
   displayName: 'Find Contact',
   description: 'Look up an existing contact by email address.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches subscribers of a given mailing list and returns those whose email contains the supplied value (case-insensitive partial match); an empty email value effectively returns all contacts in the list, optionally filtered by subscription status and paginated. Use to resolve a contact or browse list members. Read-only and idempotent; throws if no contact matches.',
+    idempotent: true,
+  },
   props: zohoCampaignsCommon.findContactProperties(),
   async run({ auth, propsValue }) {
     const location = auth.props?.['location'] as string || 'zoho.com';

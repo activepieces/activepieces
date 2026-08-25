@@ -17,7 +17,6 @@ import { ServerIcon } from '@/components/icons/server';
 import { Settings2Icon } from '@/components/icons/settings2';
 import { ShieldIcon } from '@/components/icons/shield';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
 import { WebhookIcon } from '@/components/icons/webhook';
@@ -50,12 +49,6 @@ export const STATIC_PAGES: StaticPage[] = [
     href: '/impact',
     icon: ChartLineIcon,
   },
-  {
-    id: 'page-leaderboard',
-    label: 'Leaderboard',
-    href: '/leaderboard',
-    icon: TrophyIcon,
-  },
   // Platform Admin pages
   {
     id: 'page-platform-projects',
@@ -73,15 +66,15 @@ export const STATIC_PAGES: StaticPage[] = [
   },
   {
     id: 'page-platform-ai',
-    label: 'Platform Admin — AI Providers',
+    label: 'Platform Admin — AI Center',
     href: '/platform/setup/ai',
     icon: BotIcon,
     requiresPlatformAdmin: true,
   },
   {
     id: 'page-platform-branding',
-    label: 'Platform Admin — Branding',
-    href: '/platform/setup/branding',
+    label: 'Platform Admin — General',
+    href: '/platform/setup/general',
     icon: PaletteIcon,
     requiresPlatformAdmin: true,
   },
@@ -116,7 +109,7 @@ export const STATIC_PAGES: StaticPage[] = [
   {
     id: 'page-platform-embedding',
     label: 'Platform Admin — Embedding',
-    href: '/platform/security/signing-keys',
+    href: '/platform/security/embed',
     icon: FrameIcon,
     requiresPlatformAdmin: true,
   },

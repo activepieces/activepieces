@@ -15,6 +15,8 @@ export const chargePointEvseUnlockAction = createAction({
   name: 'chargePointEvseUnlock',
   displayName: 'Actions - Charge Point - EVSE Unlock',
   description: 'Unlock an EVSE.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP UnlockConnector command to release the cable lock on a specific EVSE (connector) of a charge point. Use when a driver cannot remove their cable and the connector needs to be unlocked remotely. Unlocking an already-unlocked connector is harmless, so it is safe to retry.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

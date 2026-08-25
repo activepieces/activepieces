@@ -4,10 +4,12 @@ import {
   CohereChatRequest,
   CohereChatResponse,
   CohereErrorResponse,
+  CohereModelsResponse,
 } from '../common/types';
 import { cohereAuth } from '../auth';
 
 const COHERE_CHAT_URL = 'https://api.cohere.com/v2/chat';
+const COHERE_MODELS_URL = 'https://api.cohere.com/v1/models';
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
 
@@ -58,32 +60,61 @@ async function generateWithRetry(
 }
 
 export const generateText = createAction({
+  audience: 'both',
   auth: cohereAuth,
   name: 'generate_text',
   displayName: 'Generate Text',
   description: 'Generate a text response using Cohere AI Chat API',
+  aiMetadata: { description: 'Runs a single-turn completion against Cohere\'s v2 Chat API - one user prompt in, one generated message out - with optional model, temperature, and max-token controls. This is the only purpose-built action in the Cohere piece and covers only chat-style generation, not multi-turn conversation history, embeddings, rerank, or classify; use the piece\'s Custom API Call action to reach those Cohere endpoints. Requires a prompt and a chat-capable model name. Not idempotent: each call bills a fresh generation and the wording varies unless temperature is set to 0.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Prompt',
       description: 'The user message to send to the model',
       required: true,
     }),
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       description: 'The Cohere model to use for generation',
       required: true,
       defaultValue: 'command-a-03-2025',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Command A (03-2025)', value: 'command-a-03-2025' },
-          {
-            label: 'Command R+ (08-2024)',
-            value: 'command-r-plus-08-2024',
-          },
-          { label: 'Command R (08-2024)', value: 'command-r-08-2024' },
-          { label: 'Command R7B (12-2024)', value: 'command-r7b-12-2024' },
-        ],
+      auth: cohereAuth,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Enter your API key first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await httpClient.sendRequest<CohereModelsResponse>({
+            method: HttpMethod.GET,
+            url: COHERE_MODELS_URL,
+            headers: {
+              Authorization: `Bearer ${auth.secret_text}`,
+            },
+            queryParams: {
+              page_size: '1000',
+              endpoint: 'chat',
+            },
+          });
+
+          const options = response.body.models.map((model) => ({
+            label: model.name,
+            value: model.name,
+          }));
+
+          return { disabled: false, options };
+        } catch {
+          return {
+            disabled: true,
+            options: [],
+            placeholder:
+              "Couldn't load models, check your API key or try again.",
+          };
+        }
       },
     }),
     temperature: Property.Number({

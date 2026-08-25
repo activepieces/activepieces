@@ -7,6 +7,8 @@ export const existsTask = createAction({
   name: 'exists_task',
   displayName: 'Check Task Existence',
   description: 'Verify if a Task Already Exists',
+  audience: 'both',
+  aiMetadata: { description: 'Checks whether a task with the given task/ticket number already exists in Invoice Ninja, returning a truthy/falsy result. Use to guard against duplicate task creation before calling Create Task. Read-only and idempotent.', idempotent: true },
   props: {
     number: Property.LongText({
       displayName: 'Task or Ticket Number (alphanumeric)',

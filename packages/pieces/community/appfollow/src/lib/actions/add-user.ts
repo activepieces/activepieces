@@ -6,8 +6,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addUser = createAction({
   auth: appfollowAuth,
   name: 'addUser',
+  classification: 'WRITE',
   displayName: 'Add user',
   description: 'Adds a new user to the Appfollow account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new user in the AppFollow account with a name, email, and role. Use to grant someone access to the account. Not idempotent: each call adds another user, so repeating it may create duplicates.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

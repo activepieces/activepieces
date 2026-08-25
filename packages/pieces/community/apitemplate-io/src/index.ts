@@ -7,7 +7,7 @@ import { deleteObject } from './lib/actions/delete-object';
 import { listObjects } from './lib/actions/list-objects';
 import { createPdfFromHtml } from './lib/actions/create-pdf-from-html';
 import { createPdfFromUrl } from './lib/actions/create-pdf-from-url';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { ApitemplateAuthConfig, ApitemplateRegion, getRegionalBaseUrl } from './lib/common/client';
 

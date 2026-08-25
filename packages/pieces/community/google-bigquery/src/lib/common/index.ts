@@ -1,4 +1,4 @@
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import {
   AppConnectionValueForAuthProperty,
   OAuth2PropertyValue,
@@ -6,11 +6,14 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { google } from 'googleapis';
+import { JWT } from 'google-auth-library';
 
 export const BASE_URL = 'https://bigquery.googleapis.com/bigquery/v2';
 
-export const bigQueryScopes = ['https://www.googleapis.com/auth/bigquery'];
+export const bigQueryScopes = [
+  'https://www.googleapis.com/auth/bigquery',
+  'email',
+];
 
 export const bigQueryAuth = [
   PieceAuth.OAuth2({
@@ -56,7 +59,7 @@ export const bigQueryAuth = [
               'Service account JSON must contain "client_email" and "private_key" fields',
           };
         }
-        const jwtClient = new google.auth.JWT({
+        const jwtClient = new JWT({
           email: parsed.client_email,
           key: parsed.private_key,
           scopes: bigQueryScopes,
@@ -83,7 +86,7 @@ export type BigQueryAuthValue = AppConnectionValueForAuthProperty<
 export async function getAccessToken(auth: BigQueryAuthValue): Promise<string> {
   if (auth.type === AppConnectionType.CUSTOM_AUTH) {
     const parsed = JSON.parse(auth.props.serviceAccountJson);
-    const jwtClient = new google.auth.JWT({
+    const jwtClient = new JWT({
       email: parsed.client_email,
       key: parsed.private_key,
       scopes: bigQueryScopes,

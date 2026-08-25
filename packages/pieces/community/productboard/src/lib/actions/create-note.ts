@@ -10,6 +10,8 @@ export const createNote = createAction({
     name: 'create_note',
     displayName: 'Create Note',
     description: 'Creates a new note in Productboard',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new feedback note in Productboard from a title and HTML content, optionally attaching it to a user (by email) or a company (by domain) — these two attachments are mutually exclusive — plus optional source/display-url metadata and tags. Use to capture customer feedback or external input into the inbox. Not idempotent: each call creates a separate note.', idempotent: false },
     auth: productboardAuth,
     props: {
         title: Property.ShortText({

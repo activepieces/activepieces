@@ -8,6 +8,8 @@ export const deleteContractWorkspace = createAction({
     name: 'delete_contract_workspace',
     displayName: 'Delete Contract Workspace',
     description: 'Delete a contract workspace in SAP Ariba Contracts.',
+    audience: 'both',
+    aiMetadata: { description: 'Delete a contract workspace by its contract ID from a SAP Ariba Contracts realm, acting on behalf of a user (requires realm, user, and password adapter). Use to permanently remove a workspace. Idempotent: once deleted, repeating the call leaves the workspace gone.', idempotent: true },
     props: {
         realm: Property.ShortText({
             displayName: 'Realm',

@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowTriggerType,
   FlowVersionState,
   StepOutputStatus,
   flowStructureUtil,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
@@ -20,6 +20,8 @@ import { pieceSelectorUtils } from '@/features/pieces';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
+
+import { StepNodeBadgeContainer } from './step-node-badge-container';
 type DraftStepStatus =
   | 'invalid'
   | 'testing'
@@ -147,17 +149,16 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
   }
 
   const config = draftStatusConfig[status];
+  const badgeClassName = flowRunUtils.getStatusContainerClassName(
+    config.variant,
+    true,
+  );
 
   return (
-    <div className="absolute right-[1px] h-[20px] -top-[28px]">
+    <StepNodeBadgeContainer>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={flowRunUtils.getStatusContainerClassName(
-              config.variant,
-              true,
-            )}
-          >
+          <div className={badgeClassName}>
             {config.icon}
             <div>{config.text}</div>
           </div>
@@ -173,7 +174,7 @@ const ApStepNodeStatusInDraft = ({ stepName }: { stepName: string }) => {
           </TooltipContent>
         )}
       </Tooltip>
-    </div>
+    </StepNodeBadgeContainer>
   );
 };
 

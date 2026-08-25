@@ -8,6 +8,8 @@ export const getDroplet = createAction({
   name: 'get_droplet',
   displayName: 'Get Droplet',
   description: 'Retrieve details about a specific Droplet.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches full details (status, region, size, networks, tags) for a single Droplet on the DigitalOcean account, identified by its numeric Droplet id. Use when you have a Droplet id and need its current state. Read-only and idempotent.', idempotent: true },
   props: {
     droplet_id: Property.Dropdown({
       displayName: 'Droplet',

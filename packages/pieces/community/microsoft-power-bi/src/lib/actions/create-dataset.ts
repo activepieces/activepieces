@@ -20,6 +20,8 @@ export const createDatasetAction = createAction({
     name: 'create_dataset',
     displayName: 'Create Dataset',
     description: 'Create a new dataset in Power BI with custom schema (Push, Streaming, or PushStreaming mode).',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new Power BI dataset in the user\'s default workspace, defining its tables and column schema. Choose this to provision a fresh push/streaming dataset before pushing rows into it. The defaultMode prop selects between Push, Streaming, and PushStreaming behavior, and the tables prop must be a JSON array of table definitions (each with a name and typed columns). Not idempotent: each call creates a new dataset even if one with the same name already exists.', idempotent: false },
     props: {
         dataset_name: Property.ShortText({
             displayName: 'Dataset Name',

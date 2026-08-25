@@ -14,6 +14,8 @@ export const tariffSetDisplayInformationAction = createAction({
   name: 'tariffSetDisplayInformation',
   displayName: 'Actions - Tariffs - Set Display Information',
   description: 'Apply a Tariff Display Information to tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the text shown on a charge point\'s display for a tariff, covering the eligible-user price, total-cost summary, and (base tariffs only) default and offline default price information. Idempotent: overwrites the tariff\'s display fields with the supplied values.', idempotent: true },
   props: {
         
   tariff: Property.Number({

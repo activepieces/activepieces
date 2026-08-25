@@ -7,6 +7,8 @@ export const createDeepResearchTaskAction = createAction({
   name: 'create_deep_research_task',
   displayName: 'Create Deep Research Task',
   description: 'Create an asynchronous deep research task that searches multiple sources and generates detailed reports.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts a long-running, asynchronous deep-research task that searches multiple sources and produces a detailed report; mode trades depth for time (fast, standard, or heavy up to ~90 min). Use for thorough multi-source investigation rather than a quick lookup; the call returns a task to poll or be notified about via webhook, not the finished report. Each call creates a new task, so it is not idempotent.', idempotent: false },
   auth: valyuAuth,
   props: {
     query: Property.LongText({

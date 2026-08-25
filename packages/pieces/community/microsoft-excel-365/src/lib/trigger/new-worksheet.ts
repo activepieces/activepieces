@@ -66,8 +66,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { st
 export const newWorksheetTrigger = createTrigger({
   auth: excelAuth,
   name: 'new_worksheet',
+  classification: 'READ',
   displayName: 'New Worksheet',
   description: 'Fires when a new worksheet is created in a workbook.',
+  aiMetadata: {
+    description: 'Fires when a new worksheet (tab) is added to the selected Excel workbook. Each event represents one newly created worksheet and returns its id, name, position, and visibility. Use this to react to sheets being added to a workbook.',
+  },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

@@ -1,0 +1,29 @@
+{
+  "name": "@activepieces/ai-providers",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "sideEffects": false,
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
+    "@ai-sdk/amazon-bedrock": "5.0.38",
+    "@ai-sdk/anthropic": "4.0.25",
+    "@ai-sdk/azure": "4.0.26",
+    "@ai-sdk/google": "4.0.29",
+    "@ai-sdk/openai": "4.0.25",
+    "@ai-sdk/openai-compatible": "3.0.18",
+    "@openrouter/ai-sdk-provider": "3.0.0",
+    "ai": "7.0.44"
+  },
+  "devDependencies": {
+    "tslib": "2.6.2",
+    "vitest": "3.2.6"
+  }
+}

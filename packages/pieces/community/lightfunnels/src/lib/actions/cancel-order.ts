@@ -7,6 +7,8 @@ export const cancelOrder = createAction({
   name: 'cancel_order',
   displayName: 'Cancel Order',
   description: 'Cancel an order',
+  audience: 'both',
+  aiMetadata: { description: 'Cancels a Lightfunnels order by ID with a required reason, optionally notifying the customer and/or issuing a refund. Use to void an order; the order ID must reference an existing, cancellable order. Mutating and not idempotent — refund/notification side effects may recur if re-invoked on an already-cancelled order.', idempotent: false },
   props: {
     orderId: Property.ShortText({
       displayName: 'Order ID',

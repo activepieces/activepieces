@@ -8,6 +8,8 @@ export const findOrCreateAttachment = createAction({
   name: 'find_or_create_attachment',
   displayName: 'Find or Create Attachment',
   description: 'Finds an attachment by searching, or creates one if it doesn\'t exist',
+  audience: 'both',
+  aiMetadata: { description: 'Ensure an attachment with a given name exists on a MeisterTask task: returns the existing attachment if one matches the name exactly (case-insensitive), otherwise uploads the supplied file under that name. Use to attach a file at most once. Idempotent on the name — repeat calls return the existing attachment rather than uploading again. Requires the task ID, a name, and the file.', idempotent: true },
   props: {
     task_id: meisterTaskCommon.task_id,
     name: Property.ShortText({

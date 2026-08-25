@@ -15,6 +15,10 @@ export const personAddedOrUpdated = createTrigger({
   name: 'person_added_or_updated',
   displayName: 'Person Added or Updated',
   description: 'Triggers when a person has been added or updated',
+  aiMetadata: {
+    description:
+      'Fires whenever a person (client or contact) is created or modified in MyCase, delivering the full person payload including name, contact details, address, contact group, people group, notes, birthdate, associated cases, and custom fields. Use to keep contact and client records in sync as they change.',
+  },
   props: {},
   sampleData: {
     id: 12345,

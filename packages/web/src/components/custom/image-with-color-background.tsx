@@ -20,6 +20,8 @@ const ImageWithColorBackground = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
+  // Drop crossOrigin on error so logos on CORS-less hosts still render (without the tint).
+  const [useCrossOrigin, setUseCrossOrigin] = useState(true);
 
   const handleLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -45,9 +47,13 @@ const ImageWithColorBackground = ({
   );
 
   const handleError = useCallback(() => {
+    if (useCrossOrigin) {
+      setUseCrossOrigin(false);
+      return;
+    }
     setHasError(true);
     setIsLoading(false);
-  }, []);
+  }, [useCrossOrigin]);
 
   const { className, border, ...rest } = props;
 
@@ -76,7 +82,8 @@ const ImageWithColorBackground = ({
         <img
           src={src}
           alt={alt}
-          crossOrigin="anonymous"
+          crossOrigin={useCrossOrigin ? 'anonymous' : undefined}
+          key={useCrossOrigin ? 'cors' : 'no-cors'}
           onLoad={handleLoad}
           onError={handleError}
           className={cn(

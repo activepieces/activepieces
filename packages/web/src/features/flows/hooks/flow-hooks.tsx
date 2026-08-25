@@ -1,5 +1,10 @@
 import {
   ApErrorParams,
+  isNil,
+  ErrorCode,
+  SeekPage,
+} from '@activepieces/core-utils';
+import {
   ApFlagId,
   FlowOperationType,
   FlowStatus,
@@ -10,10 +15,8 @@ import {
   PopulatedFlow,
   FlowTrigger,
   FlowTriggerType,
-  isNil,
-  ErrorCode,
-  SeekPage,
   Template,
+  TelemetryEventName,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
@@ -29,6 +32,7 @@ import { toast } from 'sonner';
 
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { useSocket } from '@/components/providers/socket-provider';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
 import { foldersApi } from '@/features/folders/api/folders-api';
@@ -78,6 +82,7 @@ export const flowHooks = {
     );
     const { openDialog } = useApErrorDialogStore();
     const queryClient = useQueryClient();
+    const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
         if (change === 'publish') {
@@ -104,6 +109,10 @@ export const flowHooks = {
             queryKey: ['flow-approval-requests'],
           });
           setIsPublishing?.(false);
+          capture({
+            name: TelemetryEventName.FLOW_PUBLISHED,
+            payload: { flowId: flow.id },
+          });
         }
         onSuccess?.(flow);
       },
@@ -148,6 +157,13 @@ export const flowHooks = {
               standardOutput: params.standardOutput || '',
             },
           });
+        } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
+          toast.error(t('Active flows limit reached'), {
+            description: t(
+              'You have reached the maximum number of active flows. Disable another flow or increase the limit.',
+            ),
+            duration: 5000,
+          });
         } else {
           internalErrorToast();
         }
@@ -182,6 +198,9 @@ export const flowHooks = {
             },
           );
         }
+      },
+      onError: () => {
+        toast.error(t('Failed to export flows'));
       },
     });
   },
@@ -260,17 +279,29 @@ export const flowHooks = {
       },
     });
   },
-  useGetFlow: (flowId: string) => {
+  useGetFlow: ({
+    flowId,
+    versionId,
+    enabled = true,
+  }: {
+    flowId: string;
+    versionId?: string;
+    enabled?: boolean;
+  }) => {
     return useQuery({
-      queryKey: ['flow', flowId],
+      queryKey: flowHooks.createFlowQueryKeys({ flowId, versionId }),
       queryFn: async () => {
         try {
-          return await flowsApi.get(flowId);
+          return await flowsApi.get(
+            flowId,
+            versionId ? { versionId } : undefined,
+          );
         } catch (err) {
           console.error(err);
           return null;
         }
       },
+      enabled: enabled && !!flowId,
       staleTime: 0,
     });
   },
@@ -420,9 +451,10 @@ export const flowHooks = {
     return await flowsApi.update(flow.id, {
       type: FlowOperationType.IMPORT_FLOW,
       request: {
-        displayName: templateFlow.displayName,
+        displayName: flow.version.displayName,
         trigger: updatedTrigger,
         schemaVersion: templateFlow.schemaVersion,
+        notes: templateFlow.notes,
       },
     });
   },
@@ -524,6 +556,13 @@ export const flowHooks = {
       onError,
     });
   },
+  createFlowQueryKeys: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string | undefined;
+  }) => ['flow', flowId, versionId],
 };
 
 type UseChangeFlowStatusParams = {

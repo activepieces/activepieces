@@ -7,8 +7,11 @@ import { whatsscaleProps } from '../../common/props';
 export const removeCrmContactTagAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_remove_crm_contact_tag',
+  classification: 'WRITE',
   displayName: 'Remove a Tag from a CRM Contact',
   description: 'Remove a single tag from a CRM contact',
+  audience: 'both',
+  aiMetadata: { description: 'Detach one tag from a WhatsScale CRM contact identified by contact ID. Reverses Add a Tag to a CRM Contact; idempotent since the end state is the tag being absent. The contact itself is left intact.', idempotent: true },
   props: {
     contactId: whatsscaleProps.crmContact,
     tag: whatsscaleProps.crmTag,

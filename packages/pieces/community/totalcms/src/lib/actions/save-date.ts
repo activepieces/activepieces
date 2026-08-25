@@ -4,9 +4,12 @@ import { cmsAuth } from '../auth';
 
 export const saveDateAction = createAction({
   name: 'save_date',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Date Content',
   description: 'Save date content to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a date-type CMS field in Total CMS, identified by its CMS ID (slug), to a given Unix timestamp. Use to write or update a stored date value. Idempotent: the value is keyed on the slug, so repeating with the same timestamp leaves the same result.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

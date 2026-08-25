@@ -59,8 +59,13 @@ const polling: Polling<
 export const newConversation = createTrigger({
   auth: chatlingAuth,
   name: 'new_conversation',
+  classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new conversation is started by a customer.',
+  aiMetadata: {
+    description:
+      'Fires when a customer starts a new conversation with the selected Chatling chatbot. Each event represents one newly created conversation, including its contact and initial messages. Polls the chatbot\'s conversations on an interval, deduplicating by creation time.',
+  },
   props: {
     chatbotId: chatbotIdDropdown,
   },

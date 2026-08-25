@@ -9,6 +9,11 @@ export const sendAMessage = createAction({
   name: 'sendAMessage',
   displayName: 'Send a Message',
   description: 'Send a message to a space or direct conversation.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts a new message to a Google Chat space or direct conversation. Reply within a thread by supplying a thread, or send to a specific person privately by enabling the private option and naming the viewer. Use to push a notification or chat reply. Each call posts a new message; supply a custom message ID to deduplicate retries, otherwise repeated calls create duplicates.',
+    idempotent: false,
+  },
   props: {
     spaceId: allSpacesDropdown({ refreshers: ['auth'], required: true }),
     text: Property.LongText({

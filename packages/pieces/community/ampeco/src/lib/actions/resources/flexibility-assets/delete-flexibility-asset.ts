@@ -14,6 +14,8 @@ export const deleteFlexibilityAssetAction = createAction({
   name: 'deleteFlexibilityAsset',
   displayName: 'Resources - Flexibility Assets - Delete',
   description: 'Delete a flexibility asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a flexibility asset by its numeric ID. Destructive and not idempotent in effect: the first call removes the asset, subsequent calls for the same ID fail because it no longer exists. Use only when the asset should be fully removed; to merely take it offline, update its status to disabled instead.', idempotent: false },
   props: {
         
   flexibilityAsset: Property.Number({

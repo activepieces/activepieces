@@ -17,6 +17,8 @@ export const deleteItemAction = createAction({
   name: 'delete_item',
   displayName: 'Delete Item',
   description: 'Delete an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a Weekdone item by its ID; the user/team/period filters only help locate the item. Destructive and not reversible. Not idempotent: a repeat call fails once the item is gone.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

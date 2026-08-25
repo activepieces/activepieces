@@ -10,8 +10,11 @@ import { BikaAuth } from '../auth';
 export const updateRecordAction = createAction({
 	auth: BikaAuth,
 	name: 'bika_update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in database.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates the fields of an existing Bika.ai record identified by its record ID, within a given space and database. Use when modifying a known record; provide only the fields to change (read-only field types are ignored). Idempotent: repeating with the same input leaves the record in the same state.', idempotent: true },
 	props: {
 		space_id: BikaCommon.space_id,
 		database_id: BikaCommon.database_id,

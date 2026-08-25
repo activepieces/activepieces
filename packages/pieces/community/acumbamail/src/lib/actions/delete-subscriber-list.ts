@@ -11,8 +11,15 @@ import { acumbamailCommon } from '../common';
 export const deleteSubscriberListAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_delete_subscriber_list',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Subscriber List',
   description: 'Deletes an existing subscriber list.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes an entire Acumbamail subscriber list, identified by its list id, removing the list and its subscriber memberships. Use only when the whole list should be discarded, not to remove an individual contact (use Remove Subscriber for that). Idempotent on the stable list id: once deleted, repeating the call leaves the list absent.',
+    idempotent: true,
+  },
   props: {
     listId: acumbamailCommon.listId,
   },

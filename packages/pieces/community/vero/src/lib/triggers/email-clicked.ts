@@ -9,6 +9,10 @@ export const emailClicked = createTrigger({
   name: 'emailClicked',
   displayName: 'Email Clicked',
   description: 'Triggered when an email is clicked',
+  aiMetadata: {
+    description:
+      'Fires when a recipient clicks a link inside an email sent through Vero, representing link engagement for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

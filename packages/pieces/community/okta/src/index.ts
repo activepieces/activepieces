@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { oktaAuth } from './lib/common/common';
 import { createUserAction } from './lib/actions/create-user';
 import { activateUserAction } from './lib/actions/activate-user';

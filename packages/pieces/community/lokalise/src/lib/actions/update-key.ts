@@ -9,6 +9,8 @@ export const updateKey = createAction({
   name: 'updateKey',
   displayName: 'Update Key',
   description: 'Update properties of a key in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Update properties of an existing translation key (name, description, platforms, tags, plural/hidden/archived flags, context, character limit) identified by project ID and key ID. Idempotent: re-sending the same field values leaves the key in the same state, though enabling Merge Tags appends tags rather than replacing them.', idempotent: true },
   props: {
     projectId: projectDropdown,
     keyId: keyIdProp,

@@ -1,7 +1,7 @@
 
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addProspectToCampaign } from './lib/actions/add-prospect-to-campaign';
 import { addProspectToList } from './lib/actions/add-prospect-to-list';
 import { blacklistDomain } from './lib/actions/blacklist-domain';

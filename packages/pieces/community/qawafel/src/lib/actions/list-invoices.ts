@@ -19,6 +19,12 @@ export const listInvoices = createAction({
   displayName: 'List Invoices',
   description:
     'Get invoices, optionally filtered by status, customer, or creation date. Returns up to 500 invoices (5 pages of 100).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists invoices (up to 500). Use to browse or search invoices: leave filters blank for all, or narrow by invoice state (draft, pushed, sent, paid, rejected, void), customer merchant id, or creation date. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     state: Property.StaticDropdown<string>({
       displayName: 'Status (filter)',

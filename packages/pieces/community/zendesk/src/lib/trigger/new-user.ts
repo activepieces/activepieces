@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_user_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskUser {
   id: number;
   name: string;
@@ -66,8 +60,12 @@ interface ZendeskUser {
 
 export const newUser = createTrigger({
   name: 'new_user',
+  classification: 'READ',
   displayName: 'New User',
   description: 'Fires when a new user is created. Uses Zendesk event webhook (no Trigger needed).',
+  aiMetadata: {
+    description: 'Fires when a new user is created in Zendesk. Represents a newly added account; can optionally be scoped to a single role (end-user, agent, or admin), otherwise fires for all roles. Uses a Zendesk event-type webhook registered automatically, so no manual Zendesk Trigger setup is needed.',
+  },
   auth: zendeskAuth,
   props: {
     user_role: Property.StaticDropdown({

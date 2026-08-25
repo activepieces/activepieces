@@ -6,6 +6,9 @@ export const viewDeletedTrigger = createTrigger({
   name: 'view_deleted',
   displayName: 'View Deleted',
   description: 'Triggers when a workbook view is deleted',
+  aiMetadata: {
+    description: 'Fires when a view within a workbook is deleted on the Tableau site. Represents a single view-deletion event and carries the deleted view\'s name and ID.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

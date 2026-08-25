@@ -6,8 +6,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createProfile = createAction({
   auth: klaviyoAuth,
   name: 'createProfile',
+  classification: 'WRITE',
   displayName: 'Create Profile',
   description: 'Add new user profile with email/SMS subscription options',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new profile (contact) in Klaviyo with identity, location, and custom-property attributes. Use when adding a person who is not yet in Klaviyo; to modify someone who already exists use Update Profile. Requires at least one identifier (email, phone number, or external ID); not idempotent, so each call creates a profile.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

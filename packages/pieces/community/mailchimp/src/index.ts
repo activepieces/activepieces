@@ -13,8 +13,11 @@ import { findCampaign } from './lib/actions/find-campaign';
 import { findCustomer } from './lib/actions/find-customer';
 import { findTag } from './lib/actions/find-tag';
 import { findSubscriber } from './lib/actions/find-subscriber';
+import { createTag } from './lib/actions/create-tag';
+import { sendCampaign } from './lib/actions/send-campaign';
+import { createCustomEvent } from './lib/actions/create-custom-event';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { mailChimpSubscribeTrigger } from './lib/triggers/subscribe-trigger';
 import { mailChimpUnsubscriberTrigger } from './lib/triggers/unsubscribe-trigger';
 import { mailChimpNewCampaignTrigger } from './lib/triggers/new-campaign-trigger';
@@ -56,6 +59,9 @@ export const mailchimp = createPiece({
     findCustomer,
     findTag,
     findSubscriber,
+    createTag,
+    sendCampaign,
+    createCustomEvent,
   ],
   triggers: [
     mailChimpSubscribeTrigger, 

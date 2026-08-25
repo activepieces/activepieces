@@ -2,15 +2,20 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { callClickSendApi } from '../common';
 import { clicksendAuth } from '../..';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new_incoming_sms_trigger';
 
 export const clicksendNewIncomingSms = createTrigger({
   auth: clicksendAuth,
   name: 'new_incoming_sms',
+  classification: 'READ',
   displayName: 'New Incoming SMS',
   description: 'Triggers when a new SMS message is received.',
+  aiMetadata: {
+    description:
+      'Fires when ClickSend receives an inbound SMS to any of the account dedicated numbers, delivering the incoming message and its sender, recipient, and content details. Represents a new reply or inbound text arriving at the account.',
+  },
   props: {},
 
   type: TriggerStrategy.WEBHOOK,

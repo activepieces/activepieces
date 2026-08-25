@@ -14,6 +14,8 @@ export const deletePaymentTerminalAction = createAction({
   name: 'deletePaymentTerminal',
   displayName: 'Resources - Payment Terminals - Delete Payment Terminal',
   description: 'Delete a payment terminal.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently remove a payment terminal identified by its id. Destructive but idempotent: once deleted, repeating the call has no further effect (the terminal is already gone). Use getPaymentTerminal first to confirm you have the right terminal.', idempotent: true },
   props: {
         
   paymentTerminal: Property.ShortText({

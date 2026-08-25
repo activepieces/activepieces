@@ -15,6 +15,8 @@ export const tariffsListingAction = createAction({
   name: 'tariffsListing',
   displayName: 'Resources - Tariffs - Listing',
   description: 'Get all tariff. Also you could use the "tariffGroupId" and the "userId" to "resolve" the concrete tariff within a group that would be applied to the specified user.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO tariffs, optionally filtered by tariff group, type, or managing partner, with auto-pagination available. A distinct resolve mode: pass a tariff group ID together with a user ID to return the single concrete tariff that would apply when that user charges (omit the user for the anonymous-charging tariff). Read-only and idempotent.', idempotent: true },
   props: {
         
   filter__tariffGroupId: Property.Number({

@@ -7,6 +7,8 @@ export const submitPaymentsProviderReturnParameters = createAction({
   name: 'submit-payments-provider-return-parameters',
   displayName: 'Submit payments return parameters',
   description: 'Submit direct return query and fragment parameters returned from the provider.',
+  audience: 'both',
+  aiMetadata: { description: 'Forward the query and fragment parameters TrueLayer returned to your direct redirect URI back to TrueLayer to continue the payment/payout authorization flow. Use only when handling a provider redirect return; pass an idempotency key to make retries safe. Not a read or status-check operation.', idempotent: false },
   props: {
     IdempotencyKeyHeader: Property.ShortText({
       displayName: 'Idempotency Key Header',

@@ -6,14 +6,17 @@ import {
 } from '@activepieces/pieces-framework';
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai';
 import { calculateMessagesTokenSize, exceedsHistoryLimit, reduceContextSize } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+  audience: 'both',
     auth: azureOpenaiAuth,
     name: 'ask_gpt',
+    classification: 'READ',
     displayName: 'Ask GPT',
     description: 'Ask ChatGPT anything you want!',
+    aiMetadata: { description: 'Sends a prompt to a chat model deployed on your own Azure OpenAI resource and returns the generated answer text; leave the memory key empty for a stateless one-off question, or set one to share a conversation history across runs and flows so follow-up turns keep context. Requires the Azure deployment name (your own deployment, not a public model id) and a max-tokens value, so pick this only when the workflow must run through Azure OpenAI rather than the vendor-hosted OpenAI, Anthropic, or Google Gemini pieces. Not idempotent: every call is a fresh non-deterministic billed completion, and it appends to the stored history whenever a memory key is set.', idempotent: false },
     props: {
         deploymentId: Property.ShortText({
             displayName: 'Deployment Name',
@@ -80,9 +83,9 @@ export const askGpt = createAction({
         const auth = context.auth.props;
 
         await propsValidation.validateZod(propsValue, {
-            temperature: z.number().min(0).max(1.0).optional(),
-            frequencyPenalty: z.number().min(-2.0).max(2.0).optional(),
-            presencePenalty: z.number().min(-2.0).max(2.0).optional(),
+            temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
+            frequencyPenalty: z.optional(z.number().check(z.minimum(-2.0), z.maximum(2.0))),
+            presencePenalty: z.optional(z.number().check(z.minimum(-2.0), z.maximum(2.0))),
         });
 
         const openai = new OpenAIClient(

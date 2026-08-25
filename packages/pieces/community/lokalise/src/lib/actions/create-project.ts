@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'createProject',
   displayName: 'Create Project',
   description: 'Create a new project in your Lokalise team',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new localization project in your Lokalise team, optionally setting its type, base language, and target team. Use when starting a new translation workspace. Not idempotent: repeating the call creates duplicate projects.', idempotent: false },
   props: {
     projectName: Property.ShortText({
       displayName: 'Project Name',

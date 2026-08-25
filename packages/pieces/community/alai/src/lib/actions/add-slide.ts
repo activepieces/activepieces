@@ -6,8 +6,15 @@ import { presentationId } from '../common/props';
 export const addSlide = createAction({
   auth: alaiAuth,
   name: 'addSlide',
+  classification: 'WRITE',
   displayName: 'Add Slide',
   description: 'Add a new slide to an existing presentation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generate and insert a new AI-authored slide into an existing Alai presentation, given the presentation ID and the slide content/topic; optional slide order controls where it lands (a numeric index, or "end" to append). Use this to extend a deck after it has been generated. Not idempotent: each call appends another slide.',
+    idempotent: false,
+  },
   props: {
     presentationId: presentationId,
     slide_context: Property.LongText({

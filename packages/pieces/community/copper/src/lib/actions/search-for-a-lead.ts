@@ -12,6 +12,12 @@ export const searchForALead = createAction({
   name: 'searchForALead',
   displayName: 'Search for a Lead',
   description: 'Lookup a lead using match criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches leads in Copper CRM, filtering by any combination of name, email, phone, assignee, status, customer source, location, tags, socials, monetary value, interaction counts/dates, and creation/modification dates, with sorting and paging; can optionally include already-converted leads. Use to find one or more leads; with no filters it lists leads across the account. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

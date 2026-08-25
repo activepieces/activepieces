@@ -1,39 +1,102 @@
 import { AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@activepieces/server-utils', () => ({
-    safeHttp: { retryingAxios: { post: vi.fn() } },
+const { mockAxiosRequest } = vi.hoisted(() => ({
+    mockAxiosRequest: vi.fn(),
 }))
 
-import { mcpToolValidator } from '../../../../src/app/agents/mcp-tool-validator'
-import { safeHttp } from '@activepieces/server-utils'
+vi.mock('@activepieces/server-utils', async () => {
+    const { buildAuthHeaders, McpProtocol: McpProtocolValues } = await import('@activepieces/shared')
+    const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js')
+    const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js')
 
-type AxiosCall = { url: string, body: string, config: AxiosConfigLike }
-type AxiosConfigLike = { headers?: Record<string, string>, maxRedirects?: number, timeout?: number }
+    function normalizeRequestHeaders(headers: RequestInit['headers']): Record<string, string> {
+        if (!headers) {
+            return {}
+        }
+        if (headers instanceof Headers) {
+            const result: Record<string, string> = {}
+            headers.forEach((value, key) => {
+                result[key] = value
+            })
+            return result
+        }
+        if (Array.isArray(headers)) {
+            return Object.fromEntries(headers)
+        }
+        const result: Record<string, string> = {}
+        for (const [key, value] of Object.entries(headers)) {
+            if (typeof value === 'string') {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
+    function testSafeFetch(extraHeaders: Record<string, string>): typeof fetch {
+        return async (input, init) => {
+            const url = input instanceof URL ? input.toString() : (typeof input === 'string' ? input : input.url)
+            const response = await mockAxiosRequest({
+                method: init?.method ?? 'GET',
+                url,
+                headers: { ...extraHeaders, ...normalizeRequestHeaders(init?.headers) },
+                data: init?.body,
+                responseType: 'arraybuffer',
+                validateStatus: () => true,
+                timeout: 15_000,
+                maxContentLength: 64 * 1024,
+                maxBodyLength: 64 * 1024,
+            })
+            return new Response(Buffer.from(response.data), { status: response.status, headers: response.headers })
+        }
+    }
+
+    return {
+        safeHttp: { axios: { request: mockAxiosRequest } },
+        mcpTransport: {
+            isHttpUrl: (value: string) => value.startsWith('http://') || value.startsWith('https://'),
+            createTransport: ({ protocol, serverUrl, auth }: { protocol: McpProtocol, serverUrl: string, auth: Parameters<typeof buildAuthHeaders>[0] }) => {
+                const headers = buildAuthHeaders(auth)
+                const url = new URL(serverUrl)
+                const fetch = testSafeFetch(headers)
+                return protocol === McpProtocolValues.SSE
+                    ? new SSEClientTransport(url, { requestInit: { headers }, fetch })
+                    : new StreamableHTTPClientTransport(url, { requestInit: { headers }, fetch })
+            },
+        },
+    }
+})
+
+import { mcpToolValidator } from '../../../../src/app/agents/mcp-tool-validator'
+
+type AxiosCall = { url: string, body: Record<string, unknown>, config: AxiosConfigLike }
+type AxiosConfigLike = { headers?: Record<string, string>, maxRedirects?: number, timeout?: number, maxContentLength?: number, maxBodyLength?: number }
 
 const JSON_HEADERS = { 'content-type': 'application/json' }
 const SSE_HEADERS = { 'content-type': 'text/event-stream' }
 
 describe('mcpToolValidator.validateAgentMcpTool', () => {
     beforeEach(() => {
-        vi.mocked(safeHttp.retryingAxios.post).mockReset()
+        mockAxiosRequest.mockReset()
     })
 
     afterEach(() => {
         vi.restoreAllMocks()
     })
 
-    it('returns tool names from a tools/list JSON response', async () => {
-        mockJsonRpcServer({ tools: [{ name: 'a' }, { name: 'b' }] })
+    it('returns tool names from a streamable tools/list response', async () => {
+        mockJsonRpcServer({ tools: [tool('a'), tool('b')] }, { forceSse: true })
 
-        const result = await mcpToolValidator.validateAgentMcpTool(buildTool())
+        const result = await mcpToolValidator.validateAgentMcpTool(
+            buildTool({ protocol: McpProtocol.STREAMABLE_HTTP }),
+        )
 
         expect(result.error).toBeUndefined()
         expect(result.toolNames).toEqual(['a', 'b'])
     })
 
     it('parses an SSE tools/list response', async () => {
-        mockJsonRpcServer({ tools: [{ name: 'streamed' }] }, { forceSse: true })
+        mockJsonRpcServer({ tools: [tool('streamed')] }, { forceSse: true })
 
         const result = await mcpToolValidator.validateAgentMcpTool(
             buildTool({ protocol: McpProtocol.STREAMABLE_HTTP }),
@@ -46,7 +109,9 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     it('sends initialize → notifications/initialized → tools/list in order', async () => {
         mockJsonRpcServer({ tools: [] })
 
-        await mcpToolValidator.validateAgentMcpTool(buildTool())
+        await mcpToolValidator.validateAgentMcpTool(
+            buildTool({ protocol: McpProtocol.STREAMABLE_HTTP }),
+        )
 
         const methods = capturedCalls().map((c) => c.body.method)
         expect(methods).toEqual([
@@ -56,20 +121,33 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
         ])
     })
 
-    it('disables redirects and sets a 64KB response cap', async () => {
+    it('preserves HeadersInit values from the streamable transport request', async () => {
         mockJsonRpcServer({ tools: [] })
 
-        await mcpToolValidator.validateAgentMcpTool(buildTool())
+        await mcpToolValidator.validateAgentMcpTool(
+            buildTool({ protocol: McpProtocol.STREAMABLE_HTTP }),
+        )
+
+        const initializeCall = capturedCalls()[0]
+        expect(initializeCall.config.headers?.['accept']).toBe('application/json, text/event-stream')
+        expect(initializeCall.config.headers?.['content-type']).toBe('application/json')
+    })
+
+    it('sets a 64KB response cap and timeout on streamable validation requests', async () => {
+        mockJsonRpcServer({ tools: [] })
+
+        await mcpToolValidator.validateAgentMcpTool(
+            buildTool({ protocol: McpProtocol.STREAMABLE_HTTP }),
+        )
 
         const call = capturedCalls()[0]
-        expect(call.config.maxRedirects).toBe(0)
         expect(call.config.maxContentLength).toBe(64 * 1024)
         expect(call.config.maxBodyLength).toBe(64 * 1024)
         expect(call.config.timeout).toBe(15_000)
     })
 
     it('collapses any downstream failure to a single generic error', async () => {
-        vi.mocked(safeHttp.retryingAxios.post).mockRejectedValue(
+        mockAxiosRequest.mockRejectedValue(
             Object.assign(new Error('ENOTFOUND attacker.example'), { code: 'ENOTFOUND' }),
         )
 
@@ -81,7 +159,7 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     })
 
     it('rejects malformed URLs without dialing', async () => {
-        const spy = vi.mocked(safeHttp.retryingAxios.post)
+        const spy = mockAxiosRequest
 
         const result = await mcpToolValidator.validateAgentMcpTool(
             buildTool({ serverUrl: 'not a url' }),
@@ -93,7 +171,7 @@ describe('mcpToolValidator.validateAgentMcpTool', () => {
     })
 
     it('rejects non-http(s) URLs without dialing', async () => {
-        const spy = vi.mocked(safeHttp.retryingAxios.post)
+        const spy = mockAxiosRequest
 
         const result = await mcpToolValidator.validateAgentMcpTool(
             buildTool({ serverUrl: 'file:///etc/passwd' }),
@@ -162,20 +240,23 @@ function buildTool(overrides: Partial<DefaultTool> = {}): DefaultTool {
 }
 
 function capturedCalls(): AxiosCall[] {
-    return vi.mocked(safeHttp.retryingAxios.post).mock.calls.map(([url, body, config]) => ({
-        url: String(url),
-        body: typeof body === 'string' ? JSON.parse(body) : body,
-        config: (config ?? {}) as AxiosConfigLike & { maxRedirects?: number, maxContentLength?: number, maxBodyLength?: number, timeout?: number },
-    }))
+    return mockAxiosRequest.mock.calls.map(([config]) => {
+        const requestConfig = config as { url: string, data?: string } & AxiosConfigLike
+        return {
+            url: String(requestConfig.url),
+            body: requestConfig.data ? JSON.parse(requestConfig.data) : {},
+            config: requestConfig,
+        }
+    })
 }
 
 function mockJsonRpcServer(
-    { tools }: { tools: Array<{ name: string }> },
+    { tools }: { tools: Array<{ name: string, inputSchema: Record<string, unknown> }> },
     { forceSse = false }: { forceSse?: boolean } = {},
 ): void {
-    vi.mocked(safeHttp.retryingAxios.post).mockImplementation(async (...args: unknown[]) => {
-        const rawBody = args[1]
-        const body = typeof rawBody === 'string' ? JSON.parse(rawBody) : {}
+    mockAxiosRequest.mockImplementation(async (config) => {
+        const requestConfig = config as { data?: string }
+        const body = requestConfig.data ? JSON.parse(requestConfig.data) : {}
         if (body.method === 'initialize') {
             const payload = {
                 jsonrpc: '2.0',
@@ -196,12 +277,21 @@ function mockJsonRpcServer(
     })
 }
 
-function makeResponse(payload: unknown, sse: boolean): { data: string, headers: Record<string, string> } {
+
+function tool(name: string): { name: string, inputSchema: Record<string, unknown> } {
+    return {
+        name,
+        inputSchema: { type: 'object', properties: {} },
+    }
+}
+
+function makeResponse(payload: unknown, sse: boolean): { data: string, headers: Record<string, string>, status: number } {
     if (sse) {
         return {
             data: `event: message\ndata: ${JSON.stringify(payload)}\n\n`,
             headers: SSE_HEADERS,
+            status: 200,
         }
     }
-    return { data: JSON.stringify(payload), headers: JSON_HEADERS }
+    return { data: JSON.stringify(payload), headers: JSON_HEADERS, status: 200 }
 }

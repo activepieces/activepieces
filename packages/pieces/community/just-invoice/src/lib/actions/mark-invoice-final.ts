@@ -8,6 +8,8 @@ export const markInvoiceFinal = createAction({
   name: 'mark_invoice_final',
   displayName: 'Mark Invoice Final',
   description: 'Marks an invoice currently in draft as final and ready to accept payment',
+  audience: 'both',
+  aiMetadata: { description: 'Transitions a draft JustInvoice invoice (by ID or invoice number) to final status so it can accept payment. Use after a draft invoice is ready to issue. Idempotent: an invoice already final stays final.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

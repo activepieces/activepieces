@@ -7,6 +7,12 @@ export const addContact = createAction({
   displayName: 'Add Contact',
   auth: krispcallAuth,
   description: 'Add contact in Krispcall',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a contact in the connected KrispCall account, keyed by phone number. Use when an agent needs to register a new contact (name, company, email, address are optional; only the contact number is required). Not idempotent — calling it again with the same number creates or re-submits another contact entry.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

@@ -10,9 +10,14 @@ const triggerHooks = createWebhookTriggerHooks({
 
 export const rowCreatedTrigger = createTrigger({
   name: 'baserow_row_created',
+  classification: 'READ',
   auth: baserowAuth,
   displayName: 'New Row',
   description: 'Triggers when a new row is created in a Baserow table.',
+  aiMetadata: {
+    description:
+      'Fires when a new row is added to the selected Baserow table, emitting one event per created row. Use to react to individual new records; for the batch form use New Rows (Batch).',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

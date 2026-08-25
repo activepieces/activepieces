@@ -9,6 +9,12 @@ export const createProspectAction = createAction({
   name: 'create_prospect',
   displayName: 'Create Prospect',
   description: 'Create a new prospect in Klenty.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new prospect (contact) in Klenty from an email and first name plus optional contact fields. Use to add a lead to a Klenty account before enrolling them in outreach. Not idempotent: each call posts a new prospect, so repeating it may create duplicates — to modify an existing prospect use Update Prospect instead.',
+    idempotent: false,
+  },
   auth: klentyAuth,
   props: {
     email: Property.ShortText({

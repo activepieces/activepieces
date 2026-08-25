@@ -4,7 +4,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { addAttachmentAction } from './lib/actions/add-attachment';
 import { completeTaskAction } from './lib/actions/complete-task';

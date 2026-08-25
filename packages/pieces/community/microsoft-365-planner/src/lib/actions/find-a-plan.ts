@@ -6,6 +6,11 @@ export const findAPlan = createAction({
   name: 'findAPlan',
   displayName: 'Find a Plan',
   description: 'Finds a plan by field.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches across the authenticated user\'s Planner plans and returns those whose title contains the given text (case-insensitive substring match). Use to resolve a plan name into its plan ID before acting on it. Read-only and idempotent; the title input is required.',
+    idempotent: true,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

@@ -14,7 +14,7 @@ export type MetricCardProps = {
   title: string;
   value: React.ReactNode;
   description: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   iconColor: string;
   iconBgColor: string;
 };

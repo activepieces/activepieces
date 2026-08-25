@@ -11,6 +11,12 @@ export const findPurchaseOrder = createAction({
 	name: 'find_purchase_order',
 	displayName: 'Find Purchase Order',
 	description: 'Finds a purchase order by ID in Workday using WQL.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Looks up a single purchase order by its ID via a Workday Query Language (WQL) query against the purchaseOrders dataset. Use to resolve or verify a purchase order when you already have its ID. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		purchaseOrderId: Property.ShortText({
 			displayName: 'Purchase Order ID',

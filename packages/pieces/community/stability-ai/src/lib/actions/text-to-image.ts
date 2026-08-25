@@ -11,6 +11,12 @@ export const textToImage = createAction({
   name: 'text-to-image',
   displayName: 'Text to Image',
   description: 'Generate an image using a text prompt',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Generates one or more images from a text prompt using a Stable Diffusion engine (selectable via the required Engine ID, e.g. SDXL or older v1/v2 models). Use to create original imagery from a description; optionally steer output with a style preset, dimensions, sampling steps, and prompt-adherence (cfg_scale). Not idempotent: each call invokes the generative model and returns fresh images, so repeating the same input yields different results.',
+    idempotent: false,
+  },
   props: {
     prompt: Property.ShortText({
       displayName: 'Prompt',

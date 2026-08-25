@@ -8,6 +8,8 @@ export const addOrUpdateContact = createAction({
     name: 'add_or_update_contact',
     displayName: 'Add / Update Contact',
     description: 'Adds a new contact to a list or updates an existing contact if one exists.',
+    audience: 'both',
+    aiMetadata: { description: 'Upserts a contact into an EmailOctopus list by email address: creates it if absent, otherwise updates its fields, status, and tags. Use to ensure a subscriber exists or to set/refresh their details in one call. Requires the target list id and email; supplied tags are merged in (existing tags are not removed). Idempotent — repeating with the same input converges to the same contact state.', idempotent: true },
     props: {
         list_id: emailOctopusProps.listId(),
         email_address: Property.ShortText({

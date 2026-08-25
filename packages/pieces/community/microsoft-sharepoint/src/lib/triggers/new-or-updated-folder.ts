@@ -92,6 +92,9 @@ export const newOrUpdatedFolderTrigger = createTrigger({
 	name: 'new_or_updated_folder',
 	displayName: 'New or Updated Folder',
 	description: 'Triggers when a folder is created or updated (e.g., name change).',
+	aiMetadata: {
+		description: 'Fires when a subfolder is created or modified (such as a rename) directly inside one monitored parent folder of a SharePoint drive, based on its last-modified time (polling). Each event represents one new or changed folder.',
+	},
 	props: {
 		siteId: microsoftSharePointCommon.siteId,
 		driveId: microsoftSharePointCommon.driveId,

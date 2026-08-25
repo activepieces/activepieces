@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Starts a new project with description and organizer. Launch project-based onboarding when new clients sign up.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project record in Wealthbox with a name, description, optional organizer, visibility, and custom fields. Use to start a tracked initiative such as client onboarding; requires both a name and a description. Not idempotent: each call creates a separate project.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Project Name',

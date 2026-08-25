@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { veroAuth } from './lib/common/auth';
 import { aliasAUser } from './lib/actions/alias-a-user';
 import { createOrUpdateUser } from './lib/actions/create-or-update-user';

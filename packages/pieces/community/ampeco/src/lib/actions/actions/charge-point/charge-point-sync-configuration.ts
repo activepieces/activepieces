@@ -15,6 +15,8 @@ export const chargePointSyncConfigurationAction = createAction({
   name: 'chargePointSyncConfiguration',
   displayName: 'Actions - Charge Point - Sync Configuration',
   description: 'Send a partial or full sync configuration request to the chargepoint. You will get back a requerstId that you can monitor the status of using the ChargePointSyncConfigurationNotification. Please note that calling this action should not be required, as each time the charge point boots the configuration is automatically synced.',
+  audience: 'both',
+  aiMetadata: { description: 'Request the charge point to report its OCPP configuration, either for specific keys or all keys when none are listed, returning a request id you track via the sync-configuration notification. This is a read/sync query and does not change device settings (use set-configuration to write a key), so it is safe to repeat. Rarely needed since config syncs automatically on boot.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

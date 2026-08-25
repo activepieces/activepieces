@@ -8,6 +8,8 @@ export const addToList = createAction({
   name: 'add_to_list',
   displayName: 'Add to List',
   description: 'Adds a contact OR a company to a CRM list. The list type must match (Contact lists accept contacts, Company lists accept companies). Idempotent — returns already_in_list:true if already present.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a single member to a CRM list by list ID — provide exactly one of a contact ID or a company ID (not both, not neither), and the member type must match the list type. Idempotent — adding a member already on the list is a no-op rather than an error.', idempotent: true },
   props: {
     listId: Property.ShortText({
       displayName: 'List ID',

@@ -7,6 +7,8 @@ export const revokeMandate = createAction({
   name: 'revoke-mandate',
   displayName: 'Revoke Mandate',
   description: 'Revoke a mandate. This API must be called using a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently revoke a mandate so no further payments can be taken under it, using a backend bearer token. Use to cancel a recurring-payment authorization. This is a destructive state change on the mandate; re-running after success has no further effect but should be treated as one-time.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

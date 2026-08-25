@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { google } from 'googleapis';
+import { gmail as googleGmail } from '@googleapis/gmail';
 import { parseStream, convertAttachment } from '../common/data';
 
 async function enrichNewConversation({
@@ -135,6 +135,7 @@ function extractParticipants(messages: any[]): {
 export const gmailNewConversationTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_conversation',
+  classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new email conversation (thread) begins',
   props: {
@@ -162,7 +163,7 @@ export const gmailNewConversationTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
     const authClient = await createGoogleClient(context.auth);
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const profile = await gmail.users.getProfile({ userId: 'me' });
     await context.store.put('lastHistoryId', profile.data.historyId);
@@ -174,7 +175,7 @@ export const gmailNewConversationTrigger = createTrigger({
   },
   run: async (context) => {
     const authClient = await createGoogleClient(context.auth);
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const lastHistoryId = await context.store.get('lastHistoryId');
     const processedThreads =
@@ -322,7 +323,7 @@ export const gmailNewConversationTrigger = createTrigger({
   },
   test: async (context) => {
     const authClient = await createGoogleClient(context.auth);
-    const gmail = google.gmail({ version: 'v1', auth: authClient });
+    const gmail = googleGmail({ version: 'v1', auth: authClient });
 
     const maxAge = (context.propsValue.maxAgeHours || 24) * 60 * 60 * 1000;
     const cutoffSeconds = Math.floor((Date.now() - maxAge) / 1000);

@@ -15,6 +15,8 @@ export const contactDetailsReadAction = createAction({
   name: 'contactDetailsRead',
   displayName: 'Resources - Contact Details - Contact Details Read',
   description: 'Get the contact details.',
+  audience: 'both',
+  aiMetadata: { description: 'Read the account-level contact details (email and phone) for the authenticated account. Takes no parameters and is read-only and safe to repeat.', idempotent: true },
   props: {
   },
   async run(context): Promise<ContactDetailsReadResponse> {

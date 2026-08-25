@@ -7,6 +7,8 @@ export const getJournalBatch = createAction({
     name: 'get_journal_batch',
     displayName: 'Get Journal Batch',
     description: 'Retrieves details of a specific journal batch by ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch one general-ledger journal batch by its JeBatchId, optionally expanding child resources such as journal headers, errors, action logs, attachments, or descriptive flexfields. Read-only and idempotent. Use when you already have the batch ID; to search by name, status, or period use Find Journal Batches first.', idempotent: true },
     props: {
         jeBatchId: Property.ShortText({
             displayName: 'Journal Batch ID',

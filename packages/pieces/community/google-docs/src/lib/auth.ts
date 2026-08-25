@@ -1,12 +1,12 @@
 import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { AppConnectionType } from '@activepieces/pieces-framework';
+import { JWT, OAuth2Client } from 'google-auth-library';
 
 export const googleDocsScopes = [
 	'https://www.googleapis.com/auth/documents',
 	'https://www.googleapis.com/auth/drive.readonly',
 	'https://www.googleapis.com/auth/drive',
+	'email',
 ];
 
 export const googleDocsAuth = [PieceAuth.OAuth2({
@@ -58,7 +58,7 @@ export async function createGoogleClient(auth: GoogleDocsAuthValue): Promise<OAu
 		} catch {
 			throw new Error('Invalid Service Account JSON Key. Please provide a valid JSON string.');
 		}
-		return new google.auth.JWT({
+		return new JWT({
 			email: serviceAccount.client_email,
 			key: serviceAccount.private_key,
 			scopes: googleDocsScopes,

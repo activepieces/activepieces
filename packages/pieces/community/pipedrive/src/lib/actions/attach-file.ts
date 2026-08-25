@@ -7,8 +7,15 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 export const attachFileAction = createAction({
 	auth: pipedriveAuth,
 	name: 'attach-file',
+	classification: 'WRITE',
 	displayName: 'Attach File',
 	description: 'Uploads a file and attaches it to a deal,person,organization,activity or product.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Uploads a file and attaches it to one or more CRM records by supplying any of the optional deal, person, organization, product, or activity IDs. Use to add documents or images to existing records; requires the file content and a file name. Not idempotent: each call uploads and creates a separate file attachment.',
+		idempotent: false,
+	},
 	props: {
 		file: Property.File({
 			displayName: 'File',

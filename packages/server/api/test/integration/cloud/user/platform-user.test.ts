@@ -1,13 +1,6 @@
 
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    Permission,
-    PlatformRole,
-    PrincipalType,
-    RoleType,
-    UserIdentityProvider,
-    UserStatus,
-} from '@activepieces/shared'
+import { Permission, RoleType } from '@activepieces/core-utils'
+import { PlatformRole, PrincipalType, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -19,6 +12,7 @@ import {
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

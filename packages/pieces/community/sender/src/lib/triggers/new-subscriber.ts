@@ -5,8 +5,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_subscriber',
+  classification: 'READ',
   displayName: 'New Subscriber',
   description: 'Fires when a subscriber is added to any group or to account',
+  aiMetadata: {
+    description: 'Fires when a new subscriber is added anywhere in the connected Sender account (to any group or to the account directly), representing the new contact.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

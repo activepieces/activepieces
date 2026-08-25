@@ -7,6 +7,12 @@ export const cloneCampaign = createAction({
   name: 'cloneCampaign',
   displayName: 'Clone Campaign',
   description: 'Clone an existing campaign, optionally renaming.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Duplicates an existing Zoho Campaigns campaign (identified by its campaign key) into a new draft, optionally overriding name, subject, sender name/address, reply-to, and encoding. Use to reuse a prior campaign as a starting point. Not idempotent: each call produces a new campaign.',
+    idempotent: false,
+  },
   props: zohoCampaignsCommon.cloneCampaignProperties(),
   async run({ auth, propsValue }) {
     const location = auth.props?.['location'] as string || 'zoho.com';

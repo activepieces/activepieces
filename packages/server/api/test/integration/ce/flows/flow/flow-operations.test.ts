@@ -1,9 +1,10 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 import {
     FlowActionType,
+    flowOperations,
     FlowOperationType,
     FlowStatus,
     FlowTriggerType,
+    FlowVersion,
     FlowVersionState,
     PackageType,
     PieceType,
@@ -13,6 +14,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../../helpers/db'
+import { describeWithAuth } from '../../../../helpers/describe-with-auth'
 import {
     createMockFlow,
     createMockFlowVersion,
@@ -20,7 +22,7 @@ import {
     createMockPieceMetadata,
 } from '../../../../helpers/mocks'
 import { createTestContext } from '../../../../helpers/test-context'
-import { describeWithAuth } from '../../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -656,6 +658,152 @@ describe('Flow Operations API', () => {
             const body = response?.json()
             expect(body.version.displayName).toBe('Imported Flow')
             expect(body.version.state).toBe(FlowVersionState.DRAFT)
+        })
+
+        it('rejects an imported flow whose nested step name is a path traversal', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: 'Malicious Flow',
+                    trigger: {
+                        type: FlowTriggerType.EMPTY,
+                        name: 'trigger',
+                        displayName: 'Select Trigger',
+                        settings: {},
+                        valid: false,
+                        nextAction: {
+                            type: FlowActionType.CODE,
+                            displayName: 'Code Step',
+                            name: '../../common/node_modules/bufferutil',
+                            settings: {
+                                input: {},
+                                sourceCode: {
+                                    code: 'export const code = async () => { return true; }',
+                                    packageJson: '{}',
+                                },
+                            },
+                            valid: true,
+                            skip: false,
+                        },
+                    },
+                    schemaVersion: null,
+                    notes: null,
+                },
+            })
+
+            // ErrorCode.VALIDATION maps to 409 in the API error handler (the convention for
+            // rejected-invalid-input across the codebase); the point is the import is rejected
+            // and the traversal name is never persisted.
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            // The traversal step must never reach the flow version.
+            const afterImport = await ctx.get(`/v1/flows/${flow.id}`)
+            const persisted: PopulatedFlow = afterImport?.json()
+            expect(persisted.version.trigger.nextAction).toBeUndefined()
+        })
+    })
+
+    describe('POST /v1/flows/:id draft creation rollback', () => {
+        it('should not leave an orphaned empty draft when importing into the new draft fails', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const lockedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                valid: true,
+            })
+            await db.save('flow_version', lockedVersion)
+
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementationOnce(() => {
+                throw new RangeError('Maximum call stack size exceeded')
+            })
+
+            try {
+                const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'New Name' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+                const orphanedDraft = await db.findOneBy('flow_version', {
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(orphanedDraft).toBeNull()
+
+                const remainingVersion = await db.findOneByOrFail<FlowVersion>('flow_version', {
+                    flowId: mockFlow.id,
+                })
+                expect(remainingVersion.id).toBe(lockedVersion.id)
+                expect(remainingVersion.state).toBe(FlowVersionState.LOCKED)
+            }
+            finally {
+                applySpy.mockRestore()
+            }
+        })
+
+        it('should delete the newly created draft when the user operation fails after a successful import', async () => {
+            const ctx = await createTestContext(app!)
+
+            const mockFlow = createMockFlow({
+                projectId: ctx.project.id,
+                status: FlowStatus.DISABLED,
+            })
+            await db.save('flow', mockFlow)
+
+            const lockedVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                state: FlowVersionState.LOCKED,
+                valid: true,
+            })
+            await db.save('flow_version', lockedVersion)
+
+            const originalApply = flowOperations.apply
+            const applySpy = vi.spyOn(flowOperations, 'apply').mockImplementation((flowVersion, operation) => {
+                if (operation.type === FlowOperationType.CHANGE_NAME && operation.request.displayName === 'Renamed by user') {
+                    throw new Error('user operation failed')
+                }
+                return originalApply(flowVersion, operation)
+            })
+
+            try {
+                const response = await ctx.post(`/v1/flows/${mockFlow.id}`, {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'Renamed by user' },
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+
+                const leftoverDraft = await db.findOneBy('flow_version', {
+                    flowId: mockFlow.id,
+                    state: FlowVersionState.DRAFT,
+                })
+                expect(leftoverDraft).toBeNull()
+
+                const remainingVersion = await db.findOneByOrFail<FlowVersion>('flow_version', {
+                    flowId: mockFlow.id,
+                })
+                expect(remainingVersion.id).toBe(lockedVersion.id)
+                expect(remainingVersion.state).toBe(FlowVersionState.LOCKED)
+            }
+            finally {
+                applySpy.mockRestore()
+            }
         })
     })
 

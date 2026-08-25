@@ -7,6 +7,8 @@ export const getList = createAction({
   name: 'getList',
   displayName: 'Get List',
   description: 'Gets a paginated list of records from a collection',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a single page of records from a PocketBase collection, controlled by page and per-page size, with optional filter expression, sort, and field selection. Use when you want bounded results or to iterate page by page; for the entire collection in one call use Get Full List instead. Read-only and idempotent.', idempotent: true },
   auth: pocketbaseAuth,
   props: {
     collection: Property.ShortText({

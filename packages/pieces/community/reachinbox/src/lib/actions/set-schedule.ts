@@ -8,6 +8,12 @@ export const setSchedule = createAction({
   name: 'setSchedule',
   displayName: 'Set Schedule',
   description: 'Update the schedule for a specific Campaign',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sets the sending schedule for a ReachInbox campaign: active date range, daily start/end times, timezone, and which weekdays are enabled. Use to control when a campaign sends. Requires a campaign id; idempotent since it replaces the schedule with the supplied values.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,

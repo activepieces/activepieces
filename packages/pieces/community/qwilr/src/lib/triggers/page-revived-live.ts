@@ -33,6 +33,9 @@ export const pageRevivedLiveTrigger = createTrigger({
   name: 'page_revived_live',
   displayName: 'Page Revived Live',
   description: 'Triggers when a Qwilr page is revived to live status',
+  aiMetadata: {
+    description: 'Fires when a previously disabled or expired Qwilr page is revived back to live status, making it accessible again. Use to react when an old proposal is reactivated for a recipient.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

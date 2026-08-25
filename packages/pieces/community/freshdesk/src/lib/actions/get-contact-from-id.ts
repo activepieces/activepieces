@@ -5,8 +5,11 @@ import { freshdeskAuth } from '../..';
 export const getContactFromID = createAction({
   auth: freshdeskAuth,
   name: 'get_contact_from_id',
+  classification: 'READ',
   displayName: 'Get Contact from ID',
   description: 'Get contacts details from Freshdesk using ID number.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of a single Freshdesk contact by its numeric contact ID. Use when you already have a specific contact ID and need its record; to look up contacts by email, phone, or other attributes use Get Freshdesk Contacts instead. Requires a valid contact ID. Read-only and idempotent.', idempotent: true },
 
   props: {
     contactid: Property.ShortText({

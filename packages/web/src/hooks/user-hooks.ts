@@ -1,4 +1,5 @@
-import { isNil, UserWithBadges } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { UserWithMetaInformation } from '@activepieces/shared';
 import {
   QueryClient,
   useMutation,
@@ -14,7 +15,7 @@ export const userHooks = {
     const userId = authenticationSession.getCurrentUserId();
     const token = authenticationSession.getToken();
     const expired = authenticationSession.isJwtExpired(token!);
-    return useSuspenseQuery<UserWithBadges | null, Error>({
+    return useSuspenseQuery<UserWithMetaInformation | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
         // Skip user data fetch if JWT is expired to prevent redirect to sign-in page

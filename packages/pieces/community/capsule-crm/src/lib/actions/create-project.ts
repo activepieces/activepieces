@@ -14,8 +14,15 @@ import {
 export const createProjectAction = createAction({
   auth: capsuleCrmAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new Project in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new project (case) in Capsule CRM tied to a required party (contact), with optional links to an opportunity, stage, owner, team, tags, and custom fields. Use to open a new piece of work for a contact. Not idempotent: each call creates a separate project, so repeating it produces duplicates.',
+    idempotent: false,
+  },
   props: {
     partyId: Property.Dropdown({
       auth: capsuleCrmAuth,

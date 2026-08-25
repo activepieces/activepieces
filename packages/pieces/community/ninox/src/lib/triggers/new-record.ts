@@ -56,6 +56,9 @@ export const newRecord = createTrigger({
 	name: 'newRecord',
 	displayName: 'New Record',
 	description: 'Triggers when a new record is created in a table.',
+	aiMetadata: {
+		description: 'Fires when a new record is added to the selected Ninox table (team, database, and table), polling for records created since the last seen one. Represents a newly created row.',
+	},
 	props,
 	sampleData: {
 		id: 10,

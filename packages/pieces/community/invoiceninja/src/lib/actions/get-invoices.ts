@@ -7,6 +7,8 @@ export const getInvoices = createAction({
   name: 'getinvoices_task',
   displayName: 'Get Invoices',
   description: 'Gets data for invoices.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves invoices from Invoice Ninja filtered by status (unpaid, paid, overdue, or all) and optionally by client id, capped by a max-results limit. Use to list or report on invoices; omitting the client id returns invoices across all clients. Read-only and idempotent.', idempotent: true },
 
   props: {
     invoiceStatus: Property.StaticDropdown({

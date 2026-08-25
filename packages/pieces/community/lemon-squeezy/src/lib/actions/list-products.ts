@@ -5,8 +5,11 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetch
 
 export const listProducts = createAction({
   name: 'list_products',
+  classification: 'SEARCH',
   displayName: 'List Products',
   description: 'Retrieve a paginated list of products from your Lemon Squeezy store.',
+  audience: 'both',
+  aiMetadata: { description: 'List products from Lemon Squeezy, optionally scoped to one store (leave the store empty to span all stores) with page-based pagination. Use to enumerate a catalog or look up products before referencing a variant in a checkout. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
   props: {
     storeId: Property.Dropdown({

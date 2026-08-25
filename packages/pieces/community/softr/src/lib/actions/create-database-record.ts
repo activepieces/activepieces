@@ -3,7 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { SoftrAuth } from '../common/auth';
 import { makeRequest, transformRecordFields } from '../common/client';
 import { databaseIdDropdown, tableFields, tableIdDropdown } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { TableField } from '../common/types';
 
 export const createDatabaseRecord = createAction({
@@ -11,6 +11,8 @@ export const createDatabaseRecord = createAction({
 	name: 'createDatabaseRecord',
 	displayName: 'Create Database Record',
 	description: 'Creates a new record.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new record in a chosen table of a Softr database, populating the supplied field values (empty values are dropped). Use to add a row when no matching record needs to be located first. Not idempotent — each call appends a new record.', idempotent: false },
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,

@@ -13,8 +13,13 @@ const STORE_KEY = '_chargebee_payment_succeeded_webhook_id';
 export const paymentSucceeded = createTrigger({
   auth: chargebeeAuth,
   name: 'payment_succeeded',
+  classification: 'READ',
   displayName: 'Payment Succeeded',
   description: 'Triggers when a payment is successfully collected.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a payment_succeeded event — a payment was successfully collected. The payload carries the transaction along with the related invoice, customer, and subscription.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

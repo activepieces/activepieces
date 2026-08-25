@@ -75,8 +75,12 @@ const polling: Polling<Base44AuthType, { entityType: string; eventType: string }
 export const entityEvent = createTrigger({
   auth: base44Auth,
   name: 'entity_event',
+  classification: 'READ',
   displayName: 'Entity Event',
   description: 'Triggers when an entity is created or updated',
+  aiMetadata: {
+    description: 'Fires when a record of a chosen entity type is created or updated in a Base44 app, polling on the selected event type (created vs. updated). Each emitted item represents one new or recently changed record of that entity type.',
+  },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

@@ -7,7 +7,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { cometApiAuth } from '../common/auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { modelIdDropdown } from '../common/props';
 
 interface CometApiChatResponse {
@@ -36,9 +36,15 @@ interface ChatMessage {
 }
 
 export const askCometApiAction = createAction({
+  audience: 'both',
   name: 'ask-cometapi',
   displayName: 'Ask CometAPI',
   description: 'Sends a prompt to any AI model supported by CometAPI.',
+  aiMetadata: {
+    description:
+      'Sends a single-turn chat completion (one prompt plus an optional system message, with no multi-turn history) to any model in the CometAPI catalog, which fronts OpenAI, Anthropic, Gemini and other vendors behind one key. Requires a model id chosen from CometAPI\'s live model list, and accepts temperature, top_p and max tokens as optional sampling controls; pick it when the model should be selectable at runtime rather than fixed to a single vendor, and use this piece\'s Custom API Call for any other CometAPI endpoint such as image generation or embeddings. Not idempotent: each call runs a fresh generation and consumes tokens.',
+    idempotent: false,
+  },
   auth: cometApiAuth,
   props: {
     model: modelIdDropdown,
@@ -76,9 +82,9 @@ export const askCometApiAction = createAction({
   async run(context) {
     // Validate input parameters
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      topP: z.number().min(0).max(1).optional(),
-      maxTokens: z.number().positive().optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      topP: z.optional(z.number().check(z.minimum(0), z.maximum(1))),
+      maxTokens: z.optional(z.number().check(z.positive())),
     });
 
     const { model, prompt, systemMessage, temperature, maxTokens, topP } =

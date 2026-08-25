@@ -26,6 +26,11 @@ export const listSessionHighlights = createAction({
   name: 'list-session-highlights',
   displayName: 'List Session Highlights',
   description: 'Retrieve highlights for a specific session.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the highlights captured during one specific Hedy session, identified by a session ID (must be prefixed with "sess_"). Use when you have a session and want only its highlights, rather than browsing all highlights. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sessionId: commonProps.sessionId,
     returnAll: commonProps.returnAll,

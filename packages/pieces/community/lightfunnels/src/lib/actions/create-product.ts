@@ -7,6 +7,8 @@ export const createProduct = createAction({
   name: 'create_product',
   displayName: 'Create Product',
   description: 'Create a new product',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new product in Lightfunnels with a title, price, and required options and variants arrays (each variant maps option values). Use to add a catalog item; not for updating an existing product. Not idempotent — each call creates a separate product even with identical input.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

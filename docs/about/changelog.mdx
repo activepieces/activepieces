@@ -4,6 +4,69 @@ description: "A log of all notable changes to Activepieces"
 icon: "code-commit"
 ---
 
+<Update label="August 2026" description="AI-Ready Pieces: Tool Search, AI Metadata & Audience">
+
+### AI-ready pieces: tool search, AI metadata, and audience
+
+The piece catalog is now built for AI agents as much as for humans. An agent connected
+through the [MCP server](/mcp/overview) can find the right action across hundreds of
+pieces by describing the task — then inspect its schema and run it.
+
+**Tool search**
+
+- **Search by task, not by name**: the new `ap_search_actions` and `ap_search_triggers`
+  MCP tools take a plain-language description (*"send a message to a Slack channel"*)
+  and return the most relevant actions or triggers, ranked by semantic similarity.
+  See [Tool Search](/mcp/tool-search).
+- **Honest no-match**: results below a relevance threshold are dropped rather than
+  padded, so agents don't grab a wrong tool when nothing fits.
+- **Self-host ready**: turn it on with `AP_TOOL_SEARCH_ENABLED`; semantic ranking uses
+  an OpenAI key, with a keyword fallback when none is configured.
+
+**AI metadata & audience**
+
+- **Agent-oriented descriptions**: actions and triggers across the catalog carry
+  `aiMetadata` — a description written for agents plus an idempotency declaration for
+  safe retries. See [AI Metadata](/build-pieces/piece-reference/ai-metadata).
+- **Audience targeting**: actions can target humans, agents, or both — the visual
+  builder shows the human view while agents discover the AI view, so agent-only
+  atomic actions don't clutter the piece selector.
+- **Output schemas**: pieces can declare a labelled, formatted presentation of their
+  step output, driving the builder's data selector and output viewer.
+  See [Output Schema](/build-pieces/piece-reference/output-schema).
+
+</Update>
+
+<Update label="June 2026" description="Production Setup: Lightweight Workers, Bundled Pieces & Predictable Scaling">
+
+### Production setup: lightweight workers, bundled pieces, and predictable scaling
+
+A ground-up overhaul of how Activepieces runs in production. The new shape is sized from a single number, your peak concurrent flows, and every piece of it is cheaper to run and easier to reason about. See the updated [Production Setup](/install/configure-operate/production-setup).
+
+**Workers**
+
+- **New lightweight worker image**: a dedicated, slimmer Docker image for the execution tier.
+- **One flow per worker**: run workers at `AP_WORKER_CONCURRENCY=1` so each worker handles a single flow at a time. Recommended size is **0.5 vCPU / 1 GB** per worker; about 300 MB is warm-process overhead, leaving ~700 MB for the flow.
+- **No noisy neighbours**: every flow gets its own guaranteed CPU and memory slice, so one flow can't starve or crash another. See [Reserved Resources](/install/guarantees/reserved-resources).
+- **Less to provision**: the pre-warm feature and worker persistent disks are no longer required; each worker fills its cache lazily and reaches steady-state on its own.
+
+**Pieces & flows**
+
+- **Pieces are now bundled**: each piece (and its dependencies) is compiled into a single small artifact, KB-scale instead of multi-megabyte module trees. Bundling is applied uniformly, so existing pieces shrink too.
+- **Faster cold boot**: less code to compile and only a trivial amount of ephemeral disk needed per run.
+- **Served from S3**: flow bundles and pieces are served and cached from your in-region object store (npm registry stays as a fallback), cutting install time from seconds to under 100 ms. See [S3 Storage](/install/configure-operate/setup-s3).
+
+**Scaling**
+
+- **Arithmetic scaling**: for every 10 workers, add 1 app (a **1:10** app-to-worker ratio).
+- **Measured**: throughput scales near-linearly through 80 workers / 8 apps (484 req/s warm) and keeps climbing to 777 req/s at 160 workers, though the per-worker rate tapers as the database takes more of the load. Full methodology in the [Benchmark](/install/architecture/benchmark).
+
+**Worker Groups**
+
+Reserve dedicated worker capacity for specific projects. A worker group is a **floor**, capacity a project's runs can always claim and no other project can take, complementing the soft-cap **ceiling** that limits how much a project may use. Shield your critical projects from noisy neighbours. See [Worker Groups](/install/configure-operate/worker-groups).
+
+</Update>
+
 <Update label="April 2026" description="Waitpoints — Durable Pause & Resume for Flow Runs">
 
 ### Waitpoints — durable pause and resume for flow runs

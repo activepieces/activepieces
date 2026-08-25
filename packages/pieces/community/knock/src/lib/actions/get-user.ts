@@ -8,6 +8,11 @@ export const getUser = createAction({
   name: 'get_user',
   displayName: 'Get User',
   description: 'Retrieve a user from Knock by their ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches a single Knock user record by its unique user ID. Choose this to look up an existing recipient profile. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

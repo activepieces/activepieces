@@ -9,9 +9,12 @@ import { ChatType } from '../../common/types';
 export const sendTextManualAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_manual',
+  classification: 'WRITE',
   displayName: 'Send a Message (Manual Entry)',
   description:
     'Send a text message by entering a phone number or group ID manually',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a text message to a recipient typed in directly rather than picked from a list. Set the send-to type to Contact (then a phone number with country code) or Group (then a bare group ID). Pick this when you already hold the raw number/ID; use the contact, group, CRM-contact, or channel text variants when selecting from session lists. Not idempotent: each call sends another message.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     chatType: Property.StaticDropdown({

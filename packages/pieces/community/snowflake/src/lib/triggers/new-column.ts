@@ -78,6 +78,10 @@ export const newColumnTrigger = createTrigger({
   displayName: 'New Column',
   description:
     'Triggers when a new column is added to the selected table. Checked by polling every few minutes.',
+  aiMetadata: {
+    description:
+      "Fires when a new column is added to the selected Snowflake table, detected by polling the table's column list and emitting columns appended since the last check. Each newly added column produces one event with its name, data type, and constraints.",
+  },
   props,
   sampleData: {
     column_name: 'EMAIL',

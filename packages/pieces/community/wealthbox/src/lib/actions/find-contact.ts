@@ -8,6 +8,8 @@ export const findContact = createAction({
   auth: wealthboxAuth,
   displayName: 'Find Contact',
   description: 'Locate a contact by name, email, phone, or advanced filters. Comprehensive contact search with dynamic filtering options.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Wealthbox contacts by name, email, phone, external id, or filters (type, tags, active status, update date). Supplying a Contact ID alone fetches that single record directly; otherwise it runs a filtered list query and can return all matches or just the first. Use to look up an existing contact or resolve its id before another call; at least one criterion is required. Idempotent: read-only, no data is modified.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

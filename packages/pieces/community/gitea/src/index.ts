@@ -3,7 +3,7 @@ import {
   createPiece,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { giteaAuth } from './lib/auth';
 import { newCommit } from './lib/triggers/new-commit';
 import { newIssue } from './lib/triggers/new-issue';

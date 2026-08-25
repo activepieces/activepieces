@@ -8,6 +8,11 @@ export const findReferral = createAction({
   name: 'find_referral',
   displayName: 'Find Referral',
   description: 'Get details of a specific referral by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single referral by its PromoteKit referral ID. Use when you already have the exact ID and need that referral\'s details; to discover IDs, list referrals first. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     referral_id: Property.ShortText({
       displayName: 'Referral ID',

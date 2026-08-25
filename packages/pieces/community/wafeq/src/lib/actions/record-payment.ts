@@ -15,6 +15,12 @@ export const recordPayment = createAction({
   displayName: 'Record Payment',
   description:
     'Record money received from a customer (paying an invoice) or money sent to a supplier (paying a bill).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a payment in Wafeq and applies it against a document. A "payment for" selector switches the target between a single invoice, bill, or credit note picked from a list, or an Advanced mode that splits one payment across multiple documents by ID. Choose this to settle or partially settle amounts owed; requires the amount, currency, and the bank/cash/card account the money moved through. Not idempotent — each call posts a new payment.',
+    idempotent: false,
+  },
   props: {
     payment_for: Property.StaticDropdown({
       displayName: 'What is this payment for?',

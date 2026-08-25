@@ -14,6 +14,12 @@ export const updateCertificationFolder = createAction({
   displayName: 'Mettre à jour un dossier de certification',
   description:
     "Met à jour certaines informations modifiables d'un dossier de certification",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Update editable fields on an existing Wedof certification folder (e.g. enrollment/exam dates, exam type and place, funding type, access modality, tags, pricing, certificate details) without changing its state — use the dedicated declare/transition actions to move state. You choose which fields to write; only those are sent. Targets the folder by externalId and is an idempotent field write.",
+    idempotent: true,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',

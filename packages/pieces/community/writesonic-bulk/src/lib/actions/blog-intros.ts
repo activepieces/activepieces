@@ -10,6 +10,8 @@ export const blogIntros = createAction({
   name: 'blogIntros',
   displayName: 'Blog Intros',
   description: 'Generate enticing blog article introductions',
+  audience: 'both',
+  aiMetadata: { description: 'Generates AI-written blog article introductions from a blog title or topic via Writesonic, controlled by engine/language/copy-count settings. Use when an agent needs an opening paragraph to kick off a blog post. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     blog_title: Property.ShortText({
       displayName: 'Blog title',

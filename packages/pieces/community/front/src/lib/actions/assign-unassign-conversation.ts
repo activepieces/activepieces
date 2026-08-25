@@ -9,6 +9,12 @@ export const assignUnassignConversation = createAction({
   name: 'assignUnassignConversation',
   displayName: 'Assign/Unassign Conversation',
   description: 'Assign a conversation to a teammate or remove assignment.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Set or clear the assignee of a Front conversation: provide a teammate ID to assign it, or leave the assignee empty to unassign. Use for routing or ownership changes. Idempotent: assigning to the same teammate (or leaving unassigned) does not change the result.',
+    idempotent: true,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     assignee_id: teammateIdDropdown,

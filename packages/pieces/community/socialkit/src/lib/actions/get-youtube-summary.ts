@@ -7,8 +7,11 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeSummary = createAction({
   auth: socialkitAuth,
   name: 'get_youtube_summary',
+  classification: 'READ',
   displayName: 'Get YouTube Summary',
   description: 'Generates an AI-powered summary of a YouTube video.',
+  audience: 'both',
+  aiMetadata: { description: 'Returns an AI-generated summary of a YouTube video given its watch URL. Use when you want the gist of a video without processing the raw transcript yourself. The summary is derived server-side from the video; the call is read-only and idempotent for a given URL.', idempotent: true },
   props: {
     url: Property.ShortText({
       displayName: 'YouTube Video URL',

@@ -8,6 +8,10 @@ export const bookingRescheduled = createTrigger({
   displayName: 'Booking Rescheduled',
   description:
     'Triggered when Customer reschedules a booking on the same booking page and Customer reschedules a booking following a request from the User to reschedule',
+  aiMetadata: {
+    description:
+      'Fires when a customer reschedules a booking on the same booking page, including reschedules made in response to a user request. The event carries the rescheduled booking with its contact and owner details. For reschedules onto a different booking page, use the Booking Canceled Then Rescheduled trigger.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

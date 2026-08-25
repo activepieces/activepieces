@@ -1,5 +1,5 @@
 import { AuthenticationType, HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import type {
 	TallyForm,

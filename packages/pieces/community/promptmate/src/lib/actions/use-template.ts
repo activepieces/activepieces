@@ -7,6 +7,8 @@ export const useTemplate = createAction({
   name: 'use_template',
   displayName: 'Use Template',
   description: 'Create an app from a specific PromptMate template',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new PromptMate app from a template, identified by its templateId. Use it to provision an app from a prebuilt template before running it. Not idempotent — each call creates a new app.', idempotent: false },
   props: {
     templateId: Property.ShortText({
       displayName: 'Template ID',

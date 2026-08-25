@@ -1,9 +1,5 @@
-import {
-    AppConnectionStatus,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { AppConnectionStatus, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -44,7 +40,7 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
             displayName: listConnectionsSchema.shape.displayName,
             status: listConnectionsSchema.shape.status,
         },
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const params = listConnectionsSchema.parse(args ?? {})
@@ -61,11 +57,22 @@ export const apListConnectionsTool = (mcp: ProjectScopedMcpServer, log: FastifyB
                     externalIds: undefined,
                 })
                 const lines = connections.data.map(c => `- externalId: ${c.externalId} | displayName: "${c.displayName}" | piece: ${c.pieceName} | status: ${c.status} | scope: ${c.scope}`)
+                const structured = {
+                    connections: connections.data.map(c => ({
+                        externalId: c.externalId,
+                        displayName: c.displayName,
+                        pieceName: c.pieceName,
+                        status: c.status,
+                        scope: c.scope,
+                    })),
+                    count: connections.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `✅ Listed ${lines.length} connection(s):\n${lines.join('\n')}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {

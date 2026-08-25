@@ -1,12 +1,5 @@
-import {
-    FlowOperationRequest,
-    FlowOperationType,
-    flowStructureUtil,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowOperationRequest, FlowOperationType, flowStructureUtil, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -18,7 +11,7 @@ const deleteStepInput = z.object({
     stepName: z.string(),
 })
 
-export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_delete_step',
         permission: Permission.WRITE_FLOW,
@@ -26,8 +19,9 @@ export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         inputSchema: {
             flowId: z.string().describe('The id of the flow'),
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
+            displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete Send Email step"). Must include what the action does and the target name.'),
         },
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, stepName } = deleteStepInput.parse(args)
 
@@ -60,7 +54,8 @@ export const apDeleteStepTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
                 await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

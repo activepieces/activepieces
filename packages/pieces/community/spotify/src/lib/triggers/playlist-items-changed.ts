@@ -8,8 +8,12 @@ import { createHash } from 'crypto';
 
 export default createTrigger({
   name: 'playlist_items_changed',
+  classification: 'READ',
   displayName: 'Playlist Items Changed',
   description: 'Triggers when the items of a playlist change',
+  aiMetadata: {
+    description: 'Fires when the set of tracks in the watched playlist (identified by its id) changes between polls — items added, removed, or reordered. Represents a detected change to the playlist contents, emitting the full current item list.',
+  },
   auth: spotifyCommon.authentication,
   type: TriggerStrategy.POLLING,
   props: {

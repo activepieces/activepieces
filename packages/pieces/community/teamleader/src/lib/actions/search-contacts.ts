@@ -7,6 +7,8 @@ export const searchContacts = createAction({
     name: 'search_contacts',
     displayName: 'Search Contacts',
     description: 'List or filter contacts',
+    audience: 'both',
+    aiMetadata: { description: 'Look up contacts in Teamleader, optionally narrowing by a free-text term, email, company, status, tags, or updated-since date, with paging and sorting. With no filters it lists all contacts; supply filters to find specific matches (e.g. resolve a contact ID by email before updating or linking). Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({

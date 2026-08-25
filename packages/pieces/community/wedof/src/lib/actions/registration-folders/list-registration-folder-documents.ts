@@ -8,6 +8,12 @@ export const getRegistrationFolderDocuments = createAction({
   name: 'getRegistrationFolderDocuments',
   displayName: "Liste des documents d'un dossier de formation",
   description: "Récupérer la liste de documents d'un dossier de formation à partir de son n° de dossier",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Lists all documents/files attached to a single Wedof training registration folder, identified by its folder ID. Read-only and safe to repeat. Use to enumerate the documents on one specific folder; this is not a folder search and does not return document contents.",
+    idempotent: true,
+  },
   props: {
     Id: Property.ShortText({
       displayName: 'N° du dossier de formation',

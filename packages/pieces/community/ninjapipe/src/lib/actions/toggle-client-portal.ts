@@ -8,6 +8,8 @@ export const toggleClientPortal = createAction({
   name: 'toggle_client_portal',
   displayName: 'Toggle Client Portal',
   description: 'Enable or disable client portal access for a contact. When enabling, NinjaPipe auto-generates a secure password and returns it in the response.',
+  audience: 'both',
+  aiMetadata: { description: 'Turns client portal access on or off for a given contact via the Enable toggle; the Enable mode optionally sets a portal email and provisions a fresh auto-generated password. Pick this to grant or revoke a customer-facing login. Re-running with the same toggle leaves access in the same on/off state, though enabling again may rotate the password.', idempotent: true },
   props: {
     contactId: ninjapipeCommon.contactDropdownRequired,
     enable: Property.Checkbox({

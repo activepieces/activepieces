@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     DefaultProjectRole,
     EngineResponseStatus,
@@ -15,6 +14,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { userInteractionWatcher } from '../../../../src/app/workers/user-interaction-watcher'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const PIECE_NAME = 'testing-before-new-ci-discord'
 const PIECE_VERSION = '0.4.4'

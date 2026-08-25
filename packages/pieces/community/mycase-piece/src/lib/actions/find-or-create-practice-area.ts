@@ -7,6 +7,8 @@ export const findOrCreatePracticeArea = createAction({
   name: 'find_or_create_practice_area',
   displayName: 'Find or Create Practice Area',
   description: 'Finds a practice area by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the MyCase practice area matching the given name (case-insensitive), creating it only if no match exists. Use to guarantee a practice area exists before assigning it to a case; repeat calls with the same name converge to one record rather than duplicating.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Practice Area Name',

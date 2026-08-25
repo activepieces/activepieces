@@ -1,8 +1,8 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   Alert,
   CreateAlertParams,
   ListAlertsParams,
-  SeekPage,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

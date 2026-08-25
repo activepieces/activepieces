@@ -8,6 +8,12 @@ export const resolveIncidentAction = createAction({
   displayName: 'Resolve or Close Incident',
   description:
     'Move an incident to Resolved or Closed with a close code and resolution notes',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Transitions a specific incident to either the Resolved or the Closed state (selectable), writing the close code and resolution notes. Use this specialized action instead of a raw record update when closing out an incident. Idempotent: re-applying the same resolution to the same incident leaves it in the same state. Requires the incident sys_id, the target resolution, a close code, and resolution notes.',
+    idempotent: true,
+  },
   props: {
     incident_sys_id: Property.ShortText({
       displayName: 'Incident sys_id',

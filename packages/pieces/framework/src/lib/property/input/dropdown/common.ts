@@ -1,19 +1,23 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 
 
 export const DropdownOption = z.object({
     label: z.string(),
     value: z.unknown(),
+    description: z.optional(z.string()),
+    icon: z.optional(z.string()),
 })
 
 export type DropdownOption<T> = {
     label: string;
     value: T;
+    description?: string;
+    icon?: string;
 }
 
 export const DropdownState = z.object({
-    disabled: z.boolean().optional(),
-    placeholder: z.string().optional(),
+    disabled: z.optional(z.boolean()),
+    placeholder: z.optional(z.string()),
     options: z.array(DropdownOption)
 })
 

@@ -65,8 +65,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newEngagementTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-engagement',
+	classification: 'READ',
 	displayName: 'New Engagement',
 	description: 'Triggers when a new engagement is created.',
+	aiMetadata: {
+		description:
+			'Fires when a new engagement (interaction) is created in HubSpot, optionally filtered to a single type: Note, Task, Meeting, Email, or Call. Polls the Engagements API and emits each engagement with its metadata and associations to contacts, companies, and deals. Represents a logged activity or touchpoint on a CRM record.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({
@@ -100,18 +105,10 @@ export const newEngagementTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

@@ -19,6 +19,12 @@ export const generateContent = createAction({
   name: 'generate_content',
   displayName: 'Generate Content',
   description: 'Call a Gemini model on Vertex AI to generate a text response.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a prompt (with optional system instruction) to a Gemini model on Google Vertex AI and returns the generated text. Multimodal: you can attach files, public image URLs, or a YouTube video URL for the model to analyze alongside the prompt. Use for free-form text generation, summarization, extraction, or analysis of supplied media. Requires a Vertex AI service-account credential and a region/model selection. Not idempotent — each call is a fresh generation and output varies (especially with non-zero temperature).',
+    idempotent: false,
+  },
   props: {
     location: Property.Dropdown({
       displayName: 'Location',

@@ -70,8 +70,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newEmailEventTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-email-event',
+	classification: 'READ',
 	displayName: 'New Email Event',
 	description: 'Triggers when all,or specific new email event is available.',
+	aiMetadata: {
+		description:
+			'Fires when a new marketing-email event occurs in HubSpot, optionally filtered to a single event type (sent, delivered, open, click, bounce, dropped, deferred, processed, status change, or spam report). Each event represents one email engagement record with its recipient and timestamp. Polls the email events API by timestamp.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({
@@ -125,18 +130,10 @@ export const newEmailEventTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

@@ -8,6 +8,8 @@ export const markInvoicePaid = createAction({
   name: 'mark_invoice_paid',
   displayName: 'Mark Invoice Paid',
   description: 'Marks an existing final invoice as paid',
+  audience: 'both',
+  aiMetadata: { description: 'Marks a final JustInvoice invoice (by ID or invoice number) as paid. Use to record that payment for an issued invoice has been received. Idempotent: an invoice already marked paid stays paid.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

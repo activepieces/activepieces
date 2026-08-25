@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getCustomer = createAction({
   auth: housecallProAuth,
   name: "get_customer",
+  classification: 'READ',
   displayName: "Get Customer",
   description: "Retrieves the customer by ID.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Fetch one Housecall Pro customer by its customer ID, optionally expanding attachments and do-not-service status. Read-only and repeatable. Requires a known customer ID; it does not search by name or email.",
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

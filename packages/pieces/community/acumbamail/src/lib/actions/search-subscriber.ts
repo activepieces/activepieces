@@ -10,9 +10,16 @@ import {
 export const searchSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_search_subscriber',
+  classification: 'READ',
   displayName: 'Search Subscriber',
   description:
     "Returns the subscriber's advanced data in each list to which they belong.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a single contact by email across the Acumbamail account and returns their detailed subscriber data for every list they belong to. Use to check whether an address is subscribed and retrieve its per-list membership details before adding, updating, or removing it. Requires the subscriber email. Idempotent: read-only lookup with no side effects.',
+    idempotent: true,
+  },
   props: {
     subscriber: Property.ShortText({
       displayName: 'Subscriber Email',

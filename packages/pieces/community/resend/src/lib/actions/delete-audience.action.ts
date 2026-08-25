@@ -1,0 +1,27 @@
+import { createAction } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { resendAuth } from '../..';
+import { resendProps } from '../common/props';
+import { deleteAudienceOutputSchema } from '../output-schemas';
+
+export const deleteAudience = createAction({
+  name: 'delete_audience',
+  classification: 'DESTRUCTIVE',
+  auth: resendAuth,
+  displayName: 'Delete Audience',
+  outputSchema: deleteAudienceOutputSchema,
+  description: 'Permanently delete an audience and all its contacts',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes an entire audience and all of its contacts from Resend, identified by audience ID. Use this to remove a whole mailing list; this is destructive and cannot be undone. Effectively idempotent — once deleted, repeating the call has no further effect.', idempotent: true },
+  props: {
+    audience_id: resendProps.audienceId,
+  },
+  async run({ auth, propsValue }) {
+    const response = await httpClient.sendRequest<{ object: string; id: string; deleted: boolean }>({
+      method: HttpMethod.DELETE,
+      url: `https://api.resend.com/audiences/${propsValue.audience_id}`,
+      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
+    });
+    return response.body;
+  },
+});

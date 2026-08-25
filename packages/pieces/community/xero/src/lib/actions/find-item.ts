@@ -13,6 +13,12 @@ export const xeroFindItem = createAction({
   name: 'xero_find_item',
   displayName: 'Find Item',
   description: 'Finds an item by name or code.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a Xero item by exact code or exact name, with optional ordering. Read-only and idempotent; use it to confirm an item exists or resolve its details before referencing it on a line item or creating a duplicate. Both search modes require an exact match.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({

@@ -3,15 +3,19 @@ import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
 import { beehiivApiCall, WebhookPayload } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'user-unsubscribes-trigger';
 
 export const userUnsubscribesTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_user_unsubscribes',
+	classification: 'READ',
 	displayName: 'User Unsubscribes',
 	description: 'Triggers when a user unsubscribes.',
+	aiMetadata: {
+		description: 'Fires when a subscriber is removed/unsubscribed from the selected beehiiv publication (subscription.deleted event), emitting the affected subscription record.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

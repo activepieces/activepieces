@@ -71,6 +71,10 @@ export const newConversationStateChange = createTrigger({
   name: 'newConversationStateChange',
   displayName: 'New Conversation State Change',
   description: 'Triggers when a conversation changes to a specified state.',
+  aiMetadata: {
+    description:
+      'Fires when the selected Front conversation transitions into a chosen status (open, archived, deleted, assigned, or unassigned). Represents a single conversation reaching that state and emits the full conversation object, letting an agent react to lifecycle changes such as a ticket being resolved, reopened, or routed to a teammate.',
+  },
   props,
   sampleData: {
     _links: {

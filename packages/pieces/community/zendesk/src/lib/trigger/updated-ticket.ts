@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_updated_ticket_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskOrganization {
   id: number;
   name: string;
@@ -38,8 +32,12 @@ interface ZendeskTicket {
 
 export const updatedTicket = createTrigger({
   name: 'updated_ticket',
+  classification: 'READ',
   displayName: 'Updated Ticket',
   description: 'Fires when an existing ticket is updated. Requires a Zendesk Trigger with Notify active webhook.',
+  aiMetadata: {
+    description: 'Fires when an existing ticket is updated in Zendesk (any change such as status, priority, assignee, or comment), delivered via a registered webhook. Can optionally be scoped to a single organization, otherwise fires for all. Requires a Zendesk Trigger configured to notify the active webhook.',
+  },
   auth: zendeskAuth,
   props: {
     organization_id: Property.Dropdown({

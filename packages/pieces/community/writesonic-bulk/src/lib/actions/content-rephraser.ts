@@ -14,6 +14,8 @@ export const contentRephraser = createAction({
   displayName: 'Content Rephraser',
   description:
     'Rephrase content in a different voice and style to appeal to different readers',
+  audience: 'both',
+  aiMetadata: { description: 'Rewrites supplied text into a different voice and style via Writesonic, with an optional tone-of-voice setting and engine/language/copy-count controls. Use when an agent needs to reword existing content rather than generate from a topic. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     content_to_rephrase: Property.LongText({
       displayName: 'Original Content',

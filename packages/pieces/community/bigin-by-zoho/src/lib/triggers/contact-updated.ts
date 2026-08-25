@@ -8,8 +8,12 @@ const CACHE_KEY = 'bigin_updated_contact_trigger';
 export const contactUpdated = createTrigger({
   auth: biginAuth,
   name: 'contactUpdated',
+  classification: 'READ',
   displayName: 'Contact Updated',
   description: 'Triggers when a contact is updated',
+  aiMetadata: {
+    description: 'Fires when an existing contact (person) record is edited in Bigin CRM, via a Contacts.edit webhook. Represents a change to a person already in the CRM.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

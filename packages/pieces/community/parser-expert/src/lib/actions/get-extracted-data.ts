@@ -8,6 +8,11 @@ export const getExtractedData = createAction({
   name: 'get_extracted_data',
   displayName: 'Get Extracted Data',
   description: 'Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches the extracted/parsed data for a previously uploaded document, keyed by the parser ID returned from Upload Document plus its bucket ID. Use this to poll for or read results after an upload; the response includes a status (pending, parsed, or error), so an agent may need to retry until parsing completes. Idempotent: a read-only lookup with no side effects.',
+    idempotent: true,
+  },
   props: {
     parser_id: Property.ShortText({
       displayName: 'Parser ID',

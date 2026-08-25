@@ -10,6 +10,9 @@ export const meetingReady = createTrigger({
   name: 'meeting_ready',
   displayName: 'Meeting Ready',
   description: 'Triggers when a meeting has finished processing and is ready',
+  aiMetadata: {
+    description: 'Fires when a tl;dv meeting has finished processing and is ready, delivering the meeting metadata (id, name, date, duration, organizer, invitees, URL) via a webhook the user configures in tl;dv for the MeetingReady event.',
+  },
   props: {
     webhookInstructions: Property.MarkDown({
       value: `

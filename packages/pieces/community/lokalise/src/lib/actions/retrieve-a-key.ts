@@ -9,6 +9,8 @@ export const retrieveAKey = createAction({
   name: 'retrieveAKey',
   displayName: 'Retrieve a key',
   description: 'Retrieve detailed information about a specific key in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the details of a single translation key, including its translations and metadata, by project ID and key ID. Use to inspect a key before updating or referencing it. Read-only and idempotent.', idempotent: true },
   props: {
     projectId: projectDropdown,
     keyId: keyIdProp,

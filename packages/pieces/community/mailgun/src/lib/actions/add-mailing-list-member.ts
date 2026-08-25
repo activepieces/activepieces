@@ -8,6 +8,12 @@ export const addMailingListMember = createAction({
   name: 'add_mailing_list_member',
   displayName: 'Add Mailing List Member',
   description: 'Add a new member to a Mailgun mailing list',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add a subscriber to a Mailgun mailing list, identified by the list address, with an optional display name and custom variables. The "Update If Exists" toggle controls the duplicate mode: when enabled it upserts on the member email (idempotent), and when disabled a repeat add for the same address returns an error. Choose this to grow or update a mailing list.',
+    idempotent: true,
+  },
   props: {
     list: mailgunCommon.mailingListDropdown,
     address: Property.ShortText({

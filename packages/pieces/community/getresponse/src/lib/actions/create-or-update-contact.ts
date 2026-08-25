@@ -16,6 +16,12 @@ export const createOrUpdateContactAction = createAction({
   displayName: 'Create or Update Contact',
   description:
     'Creates a contact or updates the existing contact with the same email in the selected campaign.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a GetResponse contact in a campaign keyed on email: looks up the campaign for a contact with the given email, then updates it if found or creates it otherwise (the result reports which operation ran). Use this rather than Create Contact to avoid duplicate subscribers. Requires a campaign ID and an email; effectively idempotent for the same email and campaign.',
+    idempotent: true,
+  },
   props: {
     campaignId: getresponseProps.campaign(),
     email: Property.ShortText({

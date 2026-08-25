@@ -12,7 +12,15 @@ export type EmailSender = {
 const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
     const env = system.get(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.PRODUCTION) {
+    // The automated test suite must never send real mail.
+    if (env === ApEnvironment.TESTING) {
+        return logEmailSender(log)
+    }
+
+    // Production always sends; any other environment (e.g. local dev) also sends once SMTP
+    // is actually configured, so a deliberately-configured mail server really delivers. With
+    // no SMTP configured we fall back to the log sender, preserving zero-setup dev behavior.
+    if (env === ApEnvironment.PRODUCTION || smtpEmailSender(log).isSmtpConfigured()) {
         return smtpEmailSender(log)
     }
 
@@ -45,21 +53,32 @@ type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
 }>
 
 type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
-    issueUrl: string
+    runUrl: string
+    projectName: string
     flowName: string
-    isIssue: string
     createdAt: string
-}>
-
-type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
-    badgeTitle: string
-    badgeDescription: string
-    badgeImageUrl: string
-    firstName: string
+    failedStepDisplayName: string
+    failedStepNumber: string
+    failedStepMessage: string
 }>
 
 type ScimUserWelcomeTemplateData = BaseEmailTemplateData<'scim-user-welcome', {
     loginLink: string
+}>
+
+type LoginCodeTemplateData = BaseEmailTemplateData<'login-code', {
+    code: string
+}>
+
+type ChatNotificationTemplateData = BaseEmailTemplateData<'chat-notification', {
+    subject: string
+    body: string
+    senderName: string
+    senderEmail: string
+}>
+
+type PlatformDeletedTemplateData = BaseEmailTemplateData<'platform-deleted', {
+    purgeDate: string
 }>
 
 export type EmailTemplateData =
@@ -68,11 +87,14 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | BadgeAwardedTemplateData
   | ScimUserWelcomeTemplateData
+  | ChatNotificationTemplateData
+  | PlatformDeletedTemplateData
+  | LoginCodeTemplateData
 
 type SendArgs = {
     emails: string[]
     platformId: string | undefined
     templateData: EmailTemplateData
+    replyTo?: string
 }

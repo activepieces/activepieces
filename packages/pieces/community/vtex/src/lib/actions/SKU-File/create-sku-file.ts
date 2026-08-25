@@ -8,6 +8,12 @@ export const createSkuFile = createAction({
   name: 'create-sku-file',
   displayName: 'Create New Sku File',
   description: 'Create a new SKU File to your catalog',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attach an image file to an existing SKU in a VTEX store catalog, identified by the SKU ID, from a publicly accessible image URL. Requires the image URL, name, and whether it is the main image. Not idempotent: each call attaches another image to the SKU.',
+    idempotent: false,
+  },
   props: {
     SkuId: Property.Number({
       displayName: 'Sku ID',

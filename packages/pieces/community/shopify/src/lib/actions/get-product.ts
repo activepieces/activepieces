@@ -7,6 +7,8 @@ export const getProductAction = createAction({
   name: 'get_product',
   displayName: 'Get Product',
   description: `Get existing product.`,
+  audience: 'both',
+  aiMetadata: { description: 'Look up a single product by its product ID. Read-only and repeatable; use to fetch the details of one known product rather than to search or list products.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Product',

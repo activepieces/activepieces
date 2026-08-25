@@ -6,8 +6,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getDraftInvoiceByCustomerName = createAction({
   auth: bokioAuth,
   name: 'getDraftInvoiceByCustomerName',
+  classification: 'SEARCH',
   displayName: 'Get Draft Invoice by Customer Name',
   description: 'Get all draft invoices for a customer by customer name',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a Bokio customer by exact name and returns their draft invoices with pagination. Use when you have a customer name (not an ID) and want their pending draft invoices; returns an empty result if no customer matches. Idempotent read-only lookup.', idempotent: true },
   props: {
     customerName: Property.ShortText({
       displayName: 'Customer Name',

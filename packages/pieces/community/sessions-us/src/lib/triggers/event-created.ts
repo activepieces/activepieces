@@ -7,6 +7,9 @@ export const eventCreated = createSessionsUsWebhookTrigger({
   name: 'event_created',
   displayName: 'Event Created',
   description: 'Triggered when a new event is created.',
+  aiMetadata: {
+    description: 'Fires when a new event (a public, registration-based gathering) is created on Sessions.us, while still in draft before it is published. The payload includes the underlying session, the event id and slug, and the owning participant.',
+  },
   trigger: SessionsUsWebhookTrigger.EVENT_CREATED,
   storeKey: 'sessions_event_created_trigger',
   sampleData: {

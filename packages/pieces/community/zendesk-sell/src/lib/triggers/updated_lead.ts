@@ -48,6 +48,9 @@ export const updatedLead = createTrigger({
     name: 'updated_lead',
     displayName: 'Updated Lead',
     description: 'Fires when an existing lead record is updated (polls for updates).',
+    aiMetadata: {
+      description: 'Fires when an existing lead is modified in Zendesk Sell. Each event represents one lead whose fields (such as status or contact details) changed, discovered by polling sorted by last-updated time.',
+    },
     props: {},
     sampleData: {
         "id": 1,

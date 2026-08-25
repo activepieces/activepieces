@@ -1,6 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { getCampaigns } from './api';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export type BonjoroAuthType = { apiKey: string };
@@ -17,7 +17,7 @@ export const bonjoroAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       await propsValidation.validateZod(auth, {
-        apiKey: z.string().min(1),
+        apiKey: z.string().check(z.minLength(1)),
       });
       await validateAuth(auth);
       return {

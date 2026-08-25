@@ -6,8 +6,11 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const googleTrendsApi = createAction({
   auth: scrapelessApiAuth,
   name: 'google_trends_api',
+  classification: 'SEARCH',
   displayName: 'Google Trends',
   description: 'Access popular keyword and interest data from Google Trends.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches Google Trends data for one or more keywords via Scrapeless, with the data type selecting what to return (e.g. interest over time, compared breakdown by region, related queries). Choose this to analyze keyword popularity or interest trends over a date range. Note that interest_over_time and compared_breakdown_by_region accept up to 5 comma-separated queries while other data types accept only one. Read-only and idempotent with no side effects.', idempotent: true },
 
   props: {
     q: Property.ShortText({

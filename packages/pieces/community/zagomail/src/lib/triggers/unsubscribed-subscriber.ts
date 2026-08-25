@@ -3,7 +3,7 @@ import { zagomailAuth } from '../auth';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from '../common/request';
 import { StoredWebhookId, WebhookResponse } from '../common/constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const CACHE_KEY = 'zagomail_unsubscribed_subscriber_trigger_store';
 
@@ -12,6 +12,9 @@ export const unsubscribedSubscriber = createTrigger({
   name: 'unsubscribedSubscriber',
   displayName: 'Unsubscribed Subscriber',
   description: 'Triggers when subscriber is unsubscribed.',
+  aiMetadata: {
+    description: 'Fires when a subscriber unsubscribes from a Zagomail list, representing a contact opting out of further mailings. The event payload includes the subscriber UID, list UID, email, status, and custom fields.',
+  },
   props: {},
   sampleData: {
     action: 'subscriber-unsubscribe',

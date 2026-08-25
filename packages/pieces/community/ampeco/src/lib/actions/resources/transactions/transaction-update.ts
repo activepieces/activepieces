@@ -15,6 +15,8 @@ export const transactionUpdateAction = createAction({
   name: 'transactionUpdate',
   displayName: 'Resources - Transactions - Update',
   description: 'Update a non-finalised transaction.',
+  audience: 'both',
+  aiMetadata: { description: 'Modify an existing transaction identified by its id, changing its status, amount, payment method, or references. Idempotent: applies the supplied fields to that one transaction. Only works on non-finalised transactions; finalised ones cannot be edited. Use transactionsCreate to record a new transaction.', idempotent: true },
   props: {
         
   transaction: Property.ShortText({

@@ -7,12 +7,21 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
+import { findPinActionOutputSchema } from '../output-schemas';
 
 export const findPin = createAction({
   auth: pinterestAuth,
   name: 'findPin',
+  classification: 'SEARCH',
+  outputSchema: findPinActionOutputSchema,
   displayName: 'Find Pin by Title/Keyword',
   description: 'Search for Pins using title, description, or keywords.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; supports a max-results cap and pagination via a bookmark token.",
+    idempotent: true,
+  },
   props: {
     ad_account_id: adAccountIdDropdown,
     query: Property.ShortText({

@@ -8,6 +8,8 @@ export const getContact = createAction({
   name: 'get_contact',
   displayName: 'Get Contact',
   description: 'Retrieves a contact by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single contact by its ID. Read-only lookup for inspecting one known contact; to search or enumerate contacts (e.g. find one by email) use the list-contacts action instead.', idempotent: true },
   props: {
     contactId: ninjapipeCommon.contactDropdownRequired,
   },

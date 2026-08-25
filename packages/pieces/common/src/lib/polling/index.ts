@@ -1,5 +1,5 @@
-import { AppConnectionValueForAuthProperty, FilesService, Store } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { AppConnectionValueForAuthProperty, FilesService, ServerContext, Store } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/core-utils';
 
 
 interface TimebasedPolling<AuthValue, PropsValue> {
@@ -9,6 +9,7 @@ interface TimebasedPolling<AuthValue, PropsValue> {
     store: Store;
     propsValue: PropsValue;
     lastFetchEpochMS: number;
+    server?: ServerContext;
   }) => Promise<
     {
       epochMilliSeconds: number;
@@ -25,6 +26,7 @@ interface LastItemPolling<AuthValue extends AppConnectionValueForAuthProperty<an
     files?: FilesService;
     propsValue: PropsValue;
     lastItemId: unknown;
+    server?: ServerContext;
   }) => Promise<
     {
       id: unknown;
@@ -51,12 +53,14 @@ export const pollingHelper = {
       propsValue,
       maxItemsToPoll,
       files,
+      server,
     }: {
       store: Store;
       auth: AuthValue;
       propsValue: PropsValue;
       files: FilesService;
       maxItemsToPoll?: number;
+      server?: ServerContext;
     }
   ): Promise<unknown[]> {
     switch (polling.strategy) {
@@ -70,6 +74,7 @@ export const pollingHelper = {
           auth,
           propsValue,
           lastFetchEpochMS: lastEpochMilliSeconds,
+          server,
         });
         const newLastEpochMilliSeconds = items.reduce(
           (acc, item) => Math.max(acc, item.epochMilliSeconds),
@@ -88,6 +93,7 @@ export const pollingHelper = {
           propsValue,
           lastItemId,
           files,
+          server,
         });
 
         const lastItemIndex = items.findIndex((f) => f.id === lastItemId);
@@ -116,19 +122,28 @@ export const pollingHelper = {
       store,
       auth,
       propsValue,
-    }: { store: Store; auth: AuthValue; propsValue: PropsValue }
+      server,
+      isRepublish,
+    }: { store: Store; auth: AuthValue; propsValue: PropsValue; server?: ServerContext; isRepublish?: boolean }
   ): Promise<void> {
     switch (polling.strategy) {
       case DedupeStrategy.TIMEBASED: {
+        if (isRepublish && !isNil(await store.get<number>('lastPoll'))) {
+          break;
+        }
         await store.put('lastPoll', Date.now());
         break;
       }
       case DedupeStrategy.LAST_ITEM: {
+        if (isRepublish && !isNil(await store.get('lastItem'))) {
+          break;
+        }
         const items = await polling.items({
           store,
           auth,
           propsValue,
           lastItemId: null,
+          server,
         });
         const lastItemId = items?.[0]?.id;
         if (!isNil(lastItemId)) {
@@ -157,7 +172,8 @@ export const pollingHelper = {
       propsValue,
       store,
       files,
-    }: { store: Store; auth: AuthValue; propsValue: PropsValue, files: FilesService }
+      server,
+    }: { store: Store; auth: AuthValue; propsValue: PropsValue, files: FilesService; server?: ServerContext }
   ): Promise<unknown[]> {
     let items = [];
     switch (polling.strategy) {
@@ -167,6 +183,7 @@ export const pollingHelper = {
           auth,
           propsValue,
           lastFetchEpochMS: 0,
+          server,
         });
         break;
       }
@@ -177,6 +194,7 @@ export const pollingHelper = {
           propsValue,
           lastItemId: null,
           files,
+          server,
         });
         break;
       }

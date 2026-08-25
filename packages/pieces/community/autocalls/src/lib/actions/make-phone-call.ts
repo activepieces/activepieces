@@ -6,8 +6,11 @@ import { baseApiUrl } from '../..';
 export const makePhoneCall = createAction({
   auth:autocallsAuth,
   name: 'makePhoneCall',
+  classification: 'WRITE',
   displayName: 'Make Phone Call',
   description: "Call a customer by it's phone number using an assistant from our platform.",
+  audience: 'both',
+  aiMetadata: { description: 'Places an outbound AI phone call to a single customer phone number using a selected Autocalls outbound assistant, passing template variables (e.g. customer_name) into the conversation. Use to dial one contact on demand rather than enrolling them in a campaign. Requires a valid outbound assistant id and a phone number; each call dials again, so it is not idempotent.', idempotent: false },
   props: {
     assistant: Property.Dropdown({
       auth: autocallsAuth,

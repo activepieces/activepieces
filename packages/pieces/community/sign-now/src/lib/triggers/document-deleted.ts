@@ -9,6 +9,10 @@ export const documentDeletedTrigger = createTrigger({
   name: 'document_deleted',
   displayName: 'Document Deleted',
   description: 'Triggers when a document has been deleted.',
+  aiMetadata: {
+    description:
+      'Fires when a document is deleted from the connected SignNow account, signaling that the document is no longer available.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

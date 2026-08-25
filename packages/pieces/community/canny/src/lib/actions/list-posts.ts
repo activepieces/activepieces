@@ -6,8 +6,15 @@ import { cannyRequest, cleanBody } from '../common/client';
 export const listPostsAction = createAction({
   auth: cannyAuth,
   name: 'list_posts',
+  classification: 'SEARCH',
   displayName: 'List Posts',
   description: 'Returns a list of posts for a board, with optional filtering and sorting.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists Canny posts, optionally scoped to one board or queried across all boards when no board is given, with optional search text, status filter, sort order, and pagination (limit/skip). Use to discover or search posts rather than fetch one known post by ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     boardID: Property.Dropdown({
       auth: cannyAuth,

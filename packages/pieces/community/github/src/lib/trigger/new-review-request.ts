@@ -12,8 +12,13 @@ interface WebhookInformation {
 export const newReviewRequestTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_review_request',
+  classification: 'READ',
   displayName: 'New Review Request',
   description: 'Triggers when you are requested to review a pull request.',
+  aiMetadata: {
+    description:
+      'Fires when a review is requested on a pull request in the chosen repository (pull_request event with action review_requested). Represents a reviewer being asked to review a PR.',
+  },
 
   props: {
     repository: githubCommon.repositoryDropdown,
@@ -25,7 +30,7 @@ export const newReviewRequestTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -52,7 +57,7 @@ export const newReviewRequestTrigger = createTrigger({
 
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

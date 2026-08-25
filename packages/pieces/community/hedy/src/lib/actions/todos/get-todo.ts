@@ -11,6 +11,11 @@ export const getTodo = createAction({
   name: 'get-todo',
   displayName: 'Get Todo',
   description: 'Retrieve a specific todo by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single todo from a Hedy session by its ID. Requires both the owning session ID (prefixed "sess_") and the todo ID. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sessionId: commonProps.sessionId,
     todoId: commonProps.todoId,

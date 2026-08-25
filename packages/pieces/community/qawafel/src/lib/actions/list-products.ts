@@ -8,6 +8,12 @@ export const listProducts = createAction({
   displayName: 'List Products',
   description:
     'Get products from your catalog, with optional filters by type, supplier, SKU, and active status. Returns up to 500 products (5 pages of 100).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists products from the Qawafel catalog (up to 500). Use to browse or look up products: leave all filters blank to fetch every product, or narrow by type (sale/purchase), supplier id, active status, creation date, or an exact SKU to resolve a single product. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     type: Property.StaticDropdown<'sale' | 'purchase'>({
       displayName: 'Product Type (filter)',

@@ -6,9 +6,16 @@ import { chargebeeRequest, cleanObject } from '../common/client';
 
 export const createCustomer = createAction({
   name: 'create_customer',
+  classification: 'WRITE',
   auth: chargebeeAuth,
   displayName: 'Create Customer',
   description: 'Create a customer in Chargebee.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new customer record in Chargebee, optionally with contact details, billing address, tax/VAT settings, and metadata. Use when an agent needs to register a customer before subscribing or invoicing them. All fields are optional, including the customer ID (auto-generated if omitted). Not idempotent — each call creates a new customer unless a custom ID is supplied that already exists.',
+    idempotent: false,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Customer ID',

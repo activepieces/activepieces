@@ -11,6 +11,8 @@ export const createFeature = createAction({
     name: 'create_feature',
     displayName: 'Create Feature',
     description: 'Create a new feature in Productboard',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new feature (or subfeature) in Productboard under a chosen parent (a product/component for a feature, or another feature for a subfeature). Use to add roadmap items programmatically; requires a name, description, status, and a valid parent id matching the selected parent type. Not idempotent: each call creates a distinct feature.', idempotent: false },
     auth: productboardAuth,
     props: {
         name: Property.ShortText({

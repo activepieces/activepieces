@@ -14,7 +14,7 @@ import { mollieNewInvoice } from './lib/triggers/new-invoice';
 import { mollieNewPayment } from './lib/triggers/new-payment';
 import { mollieNewRefund } from './lib/triggers/new-refund';
 import { mollieNewChargeback } from './lib/triggers/new-chargeback';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { mollieAuth } from './lib/auth';
 
 export const mollie = createPiece({

@@ -13,7 +13,7 @@
         "./src/*"
       ],
       "@activepieces/shared": [
-        "../../packages/shared/src"
+        "../../packages/core/shared/src"
       ],
       "@activepieces/pieces-framework": [
         "../../packages/pieces/framework/src"

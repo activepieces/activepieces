@@ -9,6 +9,8 @@ export const copyContentObjectAction = createAction({
   name: 'copy_content_object',
   displayName: 'Copy Content Object',
   description: 'Copy an object optionally with all its descendants',
+  audience: 'both',
+  aiMetadata: { description: 'Copy a content-store object into a destination container within the IBM Cognos content tree, optionally including all of its descendants (recursive, on by default). Use to duplicate reports, dashboards, or folders. Source and destination must differ. Not idempotent: each call creates a new copy.', idempotent: false },
   props: {
     sourceId: contentObjectDropdown,
     destinationId: {

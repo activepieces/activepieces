@@ -2,12 +2,20 @@ import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { issueActionOutputSchema } from '../output-schemas';
 
 export const githubGetIssueInformation = createAction({
   auth: githubAuth,
   name: 'getIssueInformation',
+  classification: 'READ',
   displayName: 'Get issue information',
   description: 'Grabs information from a specific issue',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single issue in a repository by its issue number. Use when you already know the issue number and need its current state, title, body, labels, or assignees. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     issue_number: Property.Number({
@@ -16,12 +24,13 @@ export const githubGetIssueInformation = createAction({
       required: true,
     }),
   },
+  outputSchema: issueActionOutputSchema,
   async run({ auth, propsValue }) {
     const issue_number = propsValue.issue_number;
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/repos/${owner}/${repo}/issues/${issue_number}`,
     });

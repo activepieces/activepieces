@@ -171,10 +171,7 @@ function ReasoningContent({
     >
       <div
         ref={innerRef}
-        className={cn(
-          'text-muted-foreground prose prose-sm dark:prose-invert',
-          contentClassName,
-        )}
+        className={cn('text-muted-foreground', contentClassName)}
       >
         {content}
       </div>

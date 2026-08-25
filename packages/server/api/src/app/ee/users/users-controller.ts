@@ -1,14 +1,5 @@
-import {
-    AP_MAXIMUM_PROFILE_PICTURE_SIZE,
-    ApId,
-    ApMultipartFile,
-    FileType,
-    isNil,
-    PrincipalType,
-    PROFILE_PICTURE_ALLOWED_TYPES,
-    UpdateMeResponse,
-    UserWithBadges,
-} from '@activepieces/shared'
+import { ApId, ApMultipartFile, isNil } from '@activepieces/core-utils'
+import { AP_MAXIMUM_PROFILE_PICTURE_SIZE, FileType, PrincipalType, PROFILE_PICTURE_ALLOWED_TYPES, SERVICE_KEY_SECURITY_OPENAPI, UpdateMeResponse, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -18,7 +9,7 @@ import { fileService } from '../../file/file.service'
 import { userService } from '../../user/user-service'
 
 export const usersController: FastifyPluginAsyncZod = async (app) => {
-    app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithBadges> => {
+    app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithMetaInformation> => {
         const userId = req.params.id
         const platformId = req.principal.platform.id
         return userService(req.log).getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
@@ -30,8 +21,13 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
         const identityId = user.identityId
         const platformId = req.principal.platform.id
 
+        const part = await req.file()
+        const profilePicture: ApMultipartFile | undefined = isNil(part)
+            ? undefined
+            : { filename: part.filename, data: await part.toBuffer(), type: 'file', mimetype: part.mimetype }
+
         const imageUrl = await fileService(app.log).uploadPublicAsset({
-            file: req.body.profilePicture,
+            file: profilePicture,
             type: FileType.USER_PROFILE_PICTURE,
             platformId,
             allowedMimeTypes: PROFILE_PICTURE_ALLOWED_TYPES,
@@ -60,15 +56,18 @@ export const usersController: FastifyPluginAsyncZod = async (app) => {
 
 const GetUserByIdRequest = {
     schema: {
+        tags: ['users'],
+        description: 'Get a user by id',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: z.object({
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: UserWithBadges,
+            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
     config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -78,9 +77,6 @@ const UpdateMeRequest = {
     },
     schema: {
         consumes: ['multipart/form-data'],
-        body: z.object({
-            profilePicture: ApMultipartFile.optional(),
-        }),
         response: {
             [StatusCodes.OK]: UpdateMeResponse,
         },

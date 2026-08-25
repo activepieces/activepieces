@@ -7,6 +7,8 @@ export const saveUserAccountPayment = createAction({
   name: 'save-user-account-payment',
   displayName: 'Save Payment Account',
   description: 'Save the account details associated with a payment for subsequent re-use. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Save the payer\'s account details from a payment so they can be reused for future payments. Use after a successful payment to store the account for repeat use. This writes new stored-account state and is not a read; callable with the payment resource token or a backend bearer token.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

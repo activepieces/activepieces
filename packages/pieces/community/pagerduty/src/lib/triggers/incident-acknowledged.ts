@@ -7,6 +7,10 @@ export const incidentAcknowledged = createTrigger({
   name: 'incidentAcknowledged',
   displayName: 'Incident Acknowledged',
   description: 'Triggers when an incident is acknowledged.',
+  aiMetadata: {
+    description:
+      'Fires when a PagerDuty incident is acknowledged, on the incident.acknowledged webhook event. Represents a responder taking ownership of an incident, carrying the incident details and the acknowledging agent.',
+  },
   props: {
     instruction : instructionProp
   },

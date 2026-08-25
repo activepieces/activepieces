@@ -9,6 +9,12 @@ export const enrichCreatorByEmail = createAction({
   displayName: 'Enrich Creator by Email',
   description:
     'Enrich creator data by email address with advanced mode including all social medias and full profile stats',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up and enrich a creator/influencer profile from a known email address, returning their connected social accounts and profile stats. Choose this when you have an email and want the matching creator data; use the by-handle action instead when you only have a social handle. Optionally filter results by minimum follower count or exclude specific platforms. This is a read-only lookup and is idempotent.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

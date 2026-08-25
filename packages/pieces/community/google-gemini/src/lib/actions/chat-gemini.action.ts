@@ -5,16 +5,20 @@ import {
   createAction,
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { googleGeminiAuth } from '../auth';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { propsValidation } from '@activepieces/pieces-common';
+import { chatGeminiActionOutputSchema } from '../output-schemas';
 
 export const chatGemini = createAction({
+  audience: 'both',
   auth: googleGeminiAuth,
   name: 'chat_gemini',
+  classification: 'READ',
   displayName: 'Chat Gemini',
   description: 'Chat with Google Gemini',
+  aiMetadata: { description: 'Sends a prompt as one turn of a Gemini chat and returns the reply, with two modes: supply a memory key (max 128 characters) to load and persist the conversation history in project storage so later runs remember earlier turns, or leave it empty for a stateless single turn. Pick it over generate_content when the exchange spans multiple runs and must retain context; generate_content is the better choice for one-shot generation or when a built-in tool such as Google Search or File Search is needed. Not idempotent: each call produces a new reply and, when a memory key is set, rewrites the stored history.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',
@@ -37,9 +41,10 @@ export const chatGemini = createAction({
       required: false,
     }),
   },
+  outputSchema: chatGeminiActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      memoryKey: z.string().max(128).optional(),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const { model, prompt, memoryKey } = propsValue;  

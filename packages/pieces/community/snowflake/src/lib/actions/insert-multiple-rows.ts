@@ -14,6 +14,12 @@ export const insertMultipleRowsAction = createAction({
   displayName: 'Insert Multiple Rows',
   description:
     'Insert multiple rows into a Snowflake table in a single operation.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Bulk-inserts an array of rows into a Snowflake table in one INSERT statement. Use when adding several records at once (e.g. mapping an array from a previous step); for a single record use Insert Row. Every row object must share the same set of column keys as the first row. Not idempotent: each call appends the rows again, duplicating them unless the table enforces uniqueness.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

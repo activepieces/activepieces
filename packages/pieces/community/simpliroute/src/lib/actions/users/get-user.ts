@@ -8,6 +8,8 @@ export const get_user = createAction({
     auth: simplirouteAuth,
     displayName: 'Get User',
     description: 'Retrieve information of a specific user by ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve a single user/driver by its ID. Read-only and idempotent. Use when you already know the user ID; to list all drivers use the get-drivers action.', idempotent: true },
     props: {
         user_id: Property.Number({ 
             displayName: 'user_id', 

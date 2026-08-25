@@ -12,6 +12,12 @@ export const updatePartnership = createAction({
   name: 'updatePartnership',
   displayName: 'Mettre à jour le partenariat',
   description: 'Permet de mettre à jour le partenariat',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Update an existing Wedof certification partnership, identified by the certification's certifInfo and the partner's SIRET. You select which fields to change (state, habilitation, compliance, comment, pending activation/revocation/suspension flags, amount, tags, metadata, training zones, skill sets); only those are sent. Idempotent field write, not a create — use create-partnership to establish a new partnership.",
+    idempotent: true,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',

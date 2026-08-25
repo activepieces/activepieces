@@ -8,6 +8,8 @@ export const createCompany = createAction({
   name: 'create_company',
   displayName: 'Create Company',
   description: 'Creates a new company.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new company (CRM account) in NinjaPipe with optional industry, contact details, address, status, owner, notes, and custom fields. Only Name is required. Not idempotent: each call adds another company, so check List Companies first to avoid duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({ displayName: 'Name', required: true }),
     industry: Property.ShortText({ displayName: 'Industry', required: false }),

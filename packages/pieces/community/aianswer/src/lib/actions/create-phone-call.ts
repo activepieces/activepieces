@@ -5,9 +5,12 @@ import { aiAnswerConfig } from '../common/models';
 
 export const createPhoneCall = createAction({
   name: 'createPhoneCall',
+  classification: 'WRITE',
   auth: aiAnswerAuth,
   displayName: 'Create Phone Call',
   description: 'Create a phone call to customer from Agent',
+  audience: 'both',
+  aiMetadata: { description: 'Immediately places an outbound phone call from an AI Answer agent to a destination phone number. Use when an agent should call a customer right now; for a future-dated call use the schedule call action instead. Requires a valid agent ID and an E.164-formatted number with country code (e.g. +919876543210); optional key-value details can be attached. Not idempotent — each call places a new phone call.', idempotent: false },
   props: {
     agentID: Property.ShortText({
       displayName: 'Agent ID',

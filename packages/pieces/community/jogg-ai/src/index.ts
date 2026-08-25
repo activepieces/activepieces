@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createAiAvatarPhoto } from './lib/actions/create-ai-avatar-photo';
 import { createAvatarVideo } from './lib/actions/create-avatar-video';
 import { createProductFromUrl } from './lib/actions/create-product-from-url';

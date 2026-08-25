@@ -9,6 +9,9 @@ export const newOutgoingMessageTrigger = createTrigger({
   name: 'new_outgoing_message',
   displayName: 'New Outgoing Message',
   description: 'Triggers when a message is sent from Respond.io.',
+  aiMetadata: {
+    description: 'Fires when a message is sent out from Respond.io to a contact (by an agent, automation, or API), delivering the message and its contact. Use to react to outbound messages; for messages received from contacts use the New Incoming Message trigger. Requires manually configuring a message.sent webhook in Respond.io.',
+  },
   auth: respondIoAuth,
   props: {
     webhookInstructions: Property.MarkDown({

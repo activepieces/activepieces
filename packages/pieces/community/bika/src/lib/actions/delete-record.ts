@@ -8,8 +8,11 @@ import { BikaAuth } from '../auth';
 export const deleteRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes a record in database by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a single record from a Bika.ai database by its record ID, within a given space and database. Use to permanently remove a known record. Idempotent in effect: once removed, repeating the call leaves the record absent.', idempotent: true },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,

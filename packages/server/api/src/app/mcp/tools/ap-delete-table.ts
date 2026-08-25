@@ -1,4 +1,5 @@
-import { McpToolDefinition, Permission, ProjectScopedMcpServer } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { tableService } from '../../tables/table/table.service'
@@ -6,6 +7,7 @@ import { mcpUtils } from './mcp-utils'
 
 const deleteTableInput = z.object({
     tableId: z.string().describe('The ID of the table to delete. Use ap_list_tables to find it.'),
+    displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete Customer Emails table"). Must include what the action does and the target name.'),
 })
 
 export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
@@ -14,7 +16,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
         permission: Permission.WRITE_TABLE,
         description: 'Permanently delete a table and all its data.',
         inputSchema: deleteTableInput.shape,
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId } = deleteTableInput.parse(args)
@@ -37,7 +39,7 @@ export const apDeleteTableTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseL
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_delete_table failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_delete_table failed')
                 return mcpUtils.mcpToolError('Failed to delete table', err)
             }
         },

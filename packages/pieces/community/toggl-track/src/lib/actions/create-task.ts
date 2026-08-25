@@ -6,8 +6,11 @@ import { togglCommon } from '../common';
 export const createTask = createAction({
   auth: togglTrackAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new task under a project.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task under a specific project in a Toggl Track workspace, given workspace ID, project ID, and task name. Use when an agent needs a sub-item of a project to track time against. Not idempotent: each call creates a new task even if one with the same name exists.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
     project_id: togglCommon.project_id,

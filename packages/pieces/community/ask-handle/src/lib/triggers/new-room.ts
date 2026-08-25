@@ -10,8 +10,12 @@ const BASE_URL = 'https://dashboard.askhandle.com/api/v1';
 export const newRoomTrigger = createTrigger({
   auth: askHandleAuth,
   name: 'new_room',
+  classification: 'READ',
   displayName: 'New Room',
   description: 'Triggers when a new room is created',
+  aiMetadata: {
+    description: 'Fires when a new chat room (conversation) is created in AskHandle, including its label, name, and rating. Use to react when a fresh conversation thread begins.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

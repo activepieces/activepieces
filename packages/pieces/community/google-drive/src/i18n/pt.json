@@ -67,6 +67,7 @@
   "Timeout (in seconds)": "Tempo limite (em segundos)",
   "Follow redirects": "Seguir redirecionamentos",
   "The name of the new folder": "O nome da nova pasta",
+  "The Drive folder to target. Leave empty to use the root of My Drive. Type in the box to search your Drive by folder name. If the folder still isn't listed, switch this field to 'Dynamic value' (the toggle next to the field) and paste the folder ID — you can copy it from the folder's URL in Drive, after /folders/ (e.g. https://drive.google.com/drive/folders/<FOLDER_ID>).": "A pasta Drive ao destino. Deixe em branco para usar a raiz do meu Drive. Digite a caixa para procurar o nome da sua Drive por pasta. Se a pasta ainda não estiver listada, mude este campo para 'Valor dinâmico' (os botões ao lado do campo) e cole o ID da pasta — você pode copiá-lo a partir do URL da pasta na Drive, após /folders/ (e. . https://drive.google.com/drive/folders/<FOLDER_ID>).",
   "Determines if folders from Team Drives should be included in the results.": "Determina se as pastas do Team Drives devem ser incluídas nos resultados.",
   "The name of the new text file": "O nome do novo arquivo de texto",
   "The text content to add to file": "O conteúdo do texto a ser adicionado ao arquivo",

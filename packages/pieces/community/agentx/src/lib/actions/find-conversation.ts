@@ -7,9 +7,12 @@ import { AgentIdDropdown, ConversationIdDropdown } from "../common/dropdown";
 export const findConversation = createAction({
   auth: AgentXAuth,
   name: "find_conversation",
+  classification: 'SEARCH',
   displayName: "Find Conversation",
   description:
     "Looks up an existing conversation by Agent ID (optionally by conversation ID or Name).",
+  audience: 'both',
+  aiMetadata: { description: "Lists conversations belonging to a specific AgentX agent (by agent ID); optionally filter to a single conversation by exact conversation ID, or by name (a partial, case-insensitive match against the name derived from the conversation's first message). Leave both filters blank to return all of the agent's conversations. Use this to resolve a conversation ID before sending or finding messages. Read-only and idempotent.", idempotent: true },
   props: {
     agentId: AgentIdDropdown,
     conversationId: Property.ShortText({

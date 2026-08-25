@@ -8,6 +8,8 @@ export const findUser = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Find a staff user by email',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up Ghost staff users (authors/admins, not members) filtered by an exact email address and returns the matches. Use to resolve a staff user id, e.g. to set as a post author. Read-only and idempotent.', idempotent: true },
   auth: ghostAuth,
   props: {
     email: Property.ShortText({

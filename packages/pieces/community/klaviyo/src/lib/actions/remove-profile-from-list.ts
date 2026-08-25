@@ -7,8 +7,14 @@ import { makeRequest, normalizeProfileIds } from '../common/client';
 export const removeProfileFromList = createAction({
   auth: klaviyoAuth,
   name: 'removeProfileFromList',
+  classification: 'WRITE',
   displayName: 'Remove Profile from List',
   description: 'Remove profiles from a specific list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Removes one or more profiles (by profile ID) from a Klaviyo list, ending their membership without changing subscription consent. Use to take profiles off a list; requires a list ID and at least one profile ID (max 1000 per call). Idempotent, since removing a profile that is not a member is a no-op.',
+    idempotent: true,
+  },
   props: {
     list_id: listIdDropdown,
     profile_ids: profileIdsMultiSelectDropdown,

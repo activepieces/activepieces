@@ -59,6 +59,9 @@ export const updatedTicket = createTrigger({
   name: 'updated_ticket',
   displayName: 'Updated Ticket',
   description: 'Triggers when an existing ticket is updated in Freshservice.',
+  aiMetadata: {
+    description: 'Fires when an existing ticket is modified in Freshservice (e.g. status, priority, assignment, or content change), representing the latest state of that ticket. Polls newest-first by last-updated time across all tickets in the account.',
+  },
   props: {},
   sampleData: {
     id: 1,

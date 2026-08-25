@@ -31,7 +31,7 @@ Minimal post-deploy liveness checks against a real running environment. Implemen
 | Layer | Lives in |
 |---|---|
 | Unit | `packages/server/api/test/unit/`, most of `packages/server/worker/test/lib/`, engine `test/variables/` + `test/helper/` + `test/utils.test.ts` + `test/network/ssrf-guard.test.ts` |
-| Integration | `packages/server/api/test/integration/{ce,ee,cloud}/`, `packages/server/worker/test/e2e/` (see warning below), engine `test/handler/` + `test/core/code/` + `test/piece-context/` + `test/operations/` |
+| Integration | `packages/server/api/test/integration/{ce,ee,cloud}/`, engine `test/handler/` + `test/core/code/` + `test/piece-context/` + `test/operations/` |
 | E2E | `packages/tests-e2e/` |
 | Smoke | `smoke-test/` |
 
@@ -58,7 +58,7 @@ Minimal post-deploy liveness checks against a real running environment. Implemen
 ## Common pitfalls
 
 <Warning>
-The four files in `packages/server/worker/test/e2e/` are **privileged integration tests**, not full-stack E2E. They exercise the engine SSRF guard plus iptables lockdown plus egress proxy against real Linux kernel primitives, inside a single package. The folder is named `e2e/` for historical reasons; under this taxonomy they belong to the Integration layer. See `packages/server/worker/test/README.md` for the full story.
+The engine SSRF guard is unit-tested in `packages/server/engine/test/network/ssrf-guard.test.ts` — its `dns.lookup` / `Socket.connect` monkey-patches run fully in-process, no privileged infra needed. The former privileged `packages/server/worker/test/e2e/` suite (egress proxy + iptables lockdown) was removed along with those out-of-process layers.
 </Warning>
 
 <Tip>
@@ -71,7 +71,6 @@ If you are tempted to mock a database, a queue, or a kernel primitive, and your 
 - **`packages/server/api/test/integration/ce/authentication/password-hasher.test.ts`** — pure bcrypt/scrypt logic, no `setupTestEnvironment`, no DB, no Fastify. Target: move to `packages/server/api/test/unit/app/authentication/`.
 - **`packages/server/engine/test/handler/*.test.ts`** (13 files) — load real `@activepieces/piece-http`, `@activepieces/piece-data-mapper`, etc. and make real outbound HTTP calls from the executor. Target: relabel as integration (either move to a new `test/integration/` subtree, or document in the engine test README that the flat folder mixes unit and integration).
 - **`packages/server/engine/test/core/code/v8-isolate-code-sandbox.test.ts`** — runs a real V8 isolate. Target: same as above (integration).
-- **`packages/server/worker/test/e2e/*.e2e.test.ts`** (4 files) — privileged integration, not full-stack E2E. Target: rename folder to `test/integration/` (or similar) and drop the `.e2e.` infix.
 - **`packages/server/worker/test/piece-installer.test.ts`** — does real filesystem work against temp dirs; borderline integration. Target: decide on a threshold (temp-dir I/O alone = unit, vs. temp-dir I/O + subprocess = integration) and relabel accordingly.
 - **Duplication: `api/test/integration/ce/flows/flow/flow.test.ts` vs `api/test/integration/cloud/flow/flow.test.ts`** — both assert identical "Create flow" shapes; only role-permission checks differ. Target: extract the shared CRUD assertions into CE and keep only the cloud-specific role permutations under `cloud/`.
 
@@ -79,9 +78,8 @@ This list is a backlog, not a to-do list for this playbook. Tackle items opportu
 
 ## What is NOT duplication (defense-in-depth)
 
-- SSRF is tested at three layers (egress proxy, iptables lockdown, engine SSRF guard). Each defends a different attack surface — keep all three.
 - Flow execution is tested at engine (pure logic), API integration (queue + worker dispatch), and smoke (post-deploy liveness). Each owns different failure modes.
-- Sandbox isolation is tested at engine (V8 code sandbox), worker (process orchestration), and worker `test/e2e/` (real kernel egress). Distinct concerns.
+- Sandbox isolation is tested at engine (V8 code sandbox) and worker (process orchestration). Distinct concerns.
 
 ## Related documentation
 

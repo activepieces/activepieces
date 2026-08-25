@@ -7,6 +7,8 @@ export const findPracticeArea = createAction({
   name: 'find_practice_area',
   displayName: 'Find Practice Area',
   description: 'Searches for practice areas with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase practice areas, optionally filtering by last-updated date and limiting page size. Use to resolve a practice-area name to its ID or browse available practice areas. Read-only and idempotent. To add a missing practice area, use Create Practice Area.', idempotent: true },
   props: {
     updated_after: Property.DateTime({
       displayName: 'Updated After',

@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/shared'
+import { tryCatch } from '@activepieces/core-utils';
 import { safeHttp } from './safe-http'
 
 export const onCallService = (log: OnCallLogger, webhookUrl: string | undefined) => ({

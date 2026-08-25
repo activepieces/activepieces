@@ -12,8 +12,13 @@ interface WebhookInformation {
 export const newCollaboratorTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_collaborator',
+  classification: 'READ',
   displayName: 'New Collaborator',
   description: 'Triggers when a new collaborator is added to a repository.',
+  aiMetadata: {
+    description:
+      'Fires when a collaborator is added to the chosen repository (member event with action added; other member events are ignored). Represents a user gaining access to the repo.',
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
   },
@@ -42,7 +47,7 @@ export const newCollaboratorTrigger = createTrigger({
     const { repo, owner } = context.propsValue.repository!;
 
     const response = await githubApiCall<{ id: number }>({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/hooks`,
       body: {
@@ -72,7 +77,7 @@ export const newCollaboratorTrigger = createTrigger({
     );
     if (webhook !== null && webhook !== undefined) {
       await githubApiCall({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.DELETE,
         resourceUri: `/repos/${webhook.owner}/${webhook.repo}/hooks/${webhook.webhookId}`,
       });

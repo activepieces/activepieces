@@ -6,6 +6,9 @@ export const newScreen = createTrigger({
   name: 'newScreen',
   displayName: 'New Screen',
   description: 'Triggered when a new screen is created in a project',
+  aiMetadata: {
+    description: 'Fires when a new screen is added to a Zeplin project, delivering the screen details plus its project context. Requires the corresponding webhook to be configured in the Zeplin dashboard.',
+  },
   props: {},
   sampleData: {
     event: 'project.screen',

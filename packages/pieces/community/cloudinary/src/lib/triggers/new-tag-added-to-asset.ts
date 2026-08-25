@@ -77,8 +77,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>,
 export const newTagAddedToAsset = createTrigger({
     auth: cloudinaryAuth,
     name: 'new_tag_added_to_asset',
+    classification: 'READ',
     displayName: 'New Tag Added to Asset',
     description: 'Triggers when a tag is added to an asset in Cloudinary.',
+    aiMetadata: {
+      description: 'Fires when an existing Cloudinary asset has its tags updated, detected via the asset tags-updated timestamp, optionally scoped to a resource type and folder. Each event represents one asset whose tags changed.',
+    },
     props,
     sampleData: {
         "asset_id": "d78ae88939e267ca6f3b5a352648259d",

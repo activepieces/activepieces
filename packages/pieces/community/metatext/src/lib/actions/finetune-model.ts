@@ -8,6 +8,8 @@ export const finetuneModel = createAction({
   name: 'finetune_model',
   displayName: 'Fine-tune Model',
   description: 'Initiate a fine-tuning job for your model',
+  audience: 'both',
+  aiMetadata: { description: 'Start a new Metatext fine-tuning job for a project, training a base model on the project data for a chosen task type (classification, extraction, or generation). Use when you want to kick off model training rather than run inference. Requires the project ID, task type, and base model name; optional hyperparameters tune the run. Not idempotent: each call launches a separate training job.', idempotent: false },
   props: {
     project_id: Property.ShortText({
       displayName: 'Project ID',

@@ -11,6 +11,12 @@ export const createSimplifiedInvoice = createAction({
   displayName: 'Create Simplified Invoice',
   description:
     'Create a simplified (retail) tax invoice — used for walk-in / over-the-counter sales, especially in Saudi Arabia under ZATCA. Use a regular invoice for B2B sales instead.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a simplified (retail/B2C) tax invoice in Wafeq for walk-in or over-the-counter sales, especially under Saudi ZATCA rules. Choose this for point-of-sale receipts where the customer is optional; use Create Invoice for B2B sales to a named contact. Requires line items and the account the money was received into; invoice_number can be auto-generated. Not idempotent — each call creates a new invoice.',
+    idempotent: false,
+  },
   props: {
     invoice_date: Property.DateTime({
       displayName: 'Sale Date',

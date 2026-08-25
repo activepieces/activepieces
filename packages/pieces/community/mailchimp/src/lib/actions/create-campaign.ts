@@ -8,8 +8,11 @@ import { MailchimpClient, CampaignCreateData, CampaignContentData } from '../com
 export const createCampaign = createAction({
   auth: mailchimpAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new Mailchimp campaign',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new draft campaign of a chosen type (regular, plain-text, A/B, RSS, or variate) targeting an audience (list), and optionally sets its content from inline HTML, a hosted URL, or a template depending on the selected content type. Use to set up a campaign for later sending; this does not send it. Not idempotent: each call creates a distinct campaign.', idempotent: false },
   props: {
     campaign_type: Property.StaticDropdown({
       displayName: 'Campaign Type',

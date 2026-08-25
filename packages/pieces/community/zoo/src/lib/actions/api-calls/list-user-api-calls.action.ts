@@ -6,6 +6,8 @@ export const listUserApiCallsAction = createAction({
   name: 'list_user_api_calls',
   displayName: 'List User API Calls',
   description: 'List API calls made by your user account',
+  audience: 'both',
+  aiMetadata: { description: 'List API calls in the authenticated user\'s history, with optional limit/offset paging. Use the user scope here; for calls billed to the whole organization use list-org-api-calls, and to fetch one known call use get-user-api-call. Read-only with no side effects.', idempotent: true },
   auth: zooAuth,
   // category: 'API Calls',
   props: {

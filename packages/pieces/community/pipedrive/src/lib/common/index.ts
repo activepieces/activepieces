@@ -7,7 +7,7 @@ import {
 	HttpRequest,
 } from '@activepieces/pieces-common';
 import { GetField, PaginatedV2Response, PaginatedV1Response, RequestParams } from './types';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 type FlexibleQueryParams = Record<

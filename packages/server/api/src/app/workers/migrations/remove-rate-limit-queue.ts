@@ -1,4 +1,5 @@
-import { isNil, RATE_LIMIT_PRIORITY } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { RATE_LIMIT_PRIORITY } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'

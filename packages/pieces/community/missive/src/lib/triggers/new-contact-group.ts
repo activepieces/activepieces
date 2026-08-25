@@ -9,6 +9,9 @@ export const newContactGroup = createTrigger({
   name: 'new_contact_group',
   displayName: 'New Contact Group',
   description: 'Triggers when new contact groups are created',
+  aiMetadata: {
+    description: 'Fires when a new contact group or organization is created within a Missive contact book. Delivered via a manually configured Missive webhook rule; each event carries the group details (name, kind, contact book, creator). Use to react to the creation of contact groupings.',
+  },
   auth: missiveAuth,
   props: {
     setupInstructions: Property.MarkDown({

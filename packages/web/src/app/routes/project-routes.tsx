@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/core-utils';
 import React, { Suspense } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -6,38 +6,58 @@ import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { ApTableStateProvider } from '@/features/tables';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { routesThatRequireProjectId } from '@/lib/route-utils';
 
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
+import { AgentsFlagGuard } from '../guards/agents-flag-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
 import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
-const FlowBuilderPage = React.lazy(() =>
-  import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
+const AgentEditorPage = lazyWithRetry(
+  () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
+  'agent-editor',
 );
-const AnalyticsPage = React.lazy(() => import('./impact'));
-const LeaderboardPage = React.lazy(() => import('./leaderboard'));
-const ProjectReleasesPage = React.lazy(() =>
-  import('./project-release').then((m) => ({
-    default: m.ProjectReleasesPage,
-  })),
+const FlowBuilderPage = lazyWithRetry(
+  () => import('./flows/id').then((m) => ({ default: m.FlowBuilderPage })),
+  'flow-builder',
 );
-const ViewRelease = React.lazy(() => import('./project-release/view-release'));
-const RunsPage = React.lazy(() =>
-  import('./runs').then((m) => ({ default: m.RunsPage })),
+const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
+const ProjectReleasesPage = lazyWithRetry(
+  () =>
+    import('./project-release').then((m) => ({
+      default: m.ProjectReleasesPage,
+    })),
+  'project-releases',
 );
-const FlowRunPage = React.lazy(() =>
-  import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
+const ViewRelease = lazyWithRetry(
+  () => import('./project-release/view-release'),
+  'view-release',
 );
-const AppConnectionsPage = React.lazy(() =>
-  import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
+const RunsPage = lazyWithRetry(
+  () => import('./runs').then((m) => ({ default: m.RunsPage })),
+  'runs',
 );
-const ApTableEditorPage = React.lazy(() =>
-  import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
+const FlowRunPage = lazyWithRetry(
+  () => import('./runs/id').then((m) => ({ default: m.FlowRunPage })),
+  'flow-run',
+);
+const AppConnectionsPage = lazyWithRetry(
+  () =>
+    import('./connections').then((m) => ({ default: m.AppConnectionsPage })),
+  'connections',
+);
+const VariablesPage = lazyWithRetry(
+  () => import('./variables').then((m) => ({ default: m.VariablesPage })),
+  'variables',
+);
+const ApTableEditorPage = lazyWithRetry(
+  () => import('./tables/id').then((m) => ({ default: m.ApTableEditorPage })),
+  'table-editor',
 );
 
 const SettingsRerouter = () => {
@@ -69,6 +89,22 @@ const automationsPagePermissions = [
 ];
 
 export const projectRoutes = [
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.singleAgent,
+    element: (
+      <AgentsFlagGuard>
+        <ProjectDashboardLayout>
+          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+            <PageTitle title="Agent">
+              <SuspenseWrapper>
+                <AgentEditorPage />
+              </SuspenseWrapper>
+            </PageTitle>
+          </RoutePermissionGuard>
+        </ProjectDashboardLayout>
+      </AgentsFlagGuard>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
     element: (
@@ -184,6 +220,20 @@ export const projectRoutes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.variables,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_VARIABLE}>
+          <PageTitle title="Variables">
+            <SuspenseWrapper>
+              <VariablesPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.releases,
     element: (
       <ProjectDashboardLayout>
@@ -224,18 +274,6 @@ export const projectRoutes = [
         <PageTitle title="Impact">
           <SuspenseWrapper>
             <AnalyticsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <SuspenseWrapper>
-            <LeaderboardPage />
           </SuspenseWrapper>
         </PageTitle>
       </ProjectDashboardLayout>

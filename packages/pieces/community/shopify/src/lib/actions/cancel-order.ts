@@ -7,6 +7,8 @@ export const cancelOrderAction = createAction({
   name: 'cancel_order',
   displayName: 'Cancel Order',
   description: `Cancel an order.`,
+  audience: 'both',
+  aiMetadata: { description: 'Cancel an existing Shopify order by its ID, which may trigger refunds and restocking per store settings. Use to void or back out an order; distinct from Close Order, which only marks a fulfilled order complete. Cancelling an already-cancelled order is rejected, so it is not safely repeatable.', idempotent: false },
   props: {
     orderId: Property.Number({
       displayName: 'Order',

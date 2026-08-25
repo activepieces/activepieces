@@ -15,6 +15,9 @@ export const objectUpdated = createTrigger({
   name: 'object_updated',
   displayName: 'Object Updated',
   description: 'Triggers when an existing object is updated in a bucket',
+  aiMetadata: {
+    description: 'Fires when the metadata of an existing object in the configured bucket is updated, optionally limited to objects whose name starts with a given prefix. Represents a change to an existing file\'s metadata; delivered via a Cloud Pub/Sub push notification (OBJECT_METADATA_UPDATE event).',
+  },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

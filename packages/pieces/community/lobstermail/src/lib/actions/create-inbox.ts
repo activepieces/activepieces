@@ -12,6 +12,8 @@ export const createInbox = createAction({
   name: 'create_inbox',
   displayName: 'Create Inbox',
   description: 'Create a new email inbox on LobsterMail.',
+  audience: 'both',
+  aiMetadata: { description: 'Provisions a new LobsterMail email inbox and returns its id and address. Use when an agent needs a fresh address to send or receive mail. Optionally set a username/local-part and custom domain (custom domains need a Tier 2+ account); leave both empty to auto-generate a random address. Not idempotent — each call provisions a separate inbox.', idempotent: false },
   props: {
     displayName: Property.ShortText({
       displayName: 'Display Name',

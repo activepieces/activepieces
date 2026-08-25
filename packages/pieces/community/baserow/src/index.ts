@@ -2,7 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createRowAction } from './lib/actions/create-row';
 import { deleteRowAction } from './lib/actions/delete-row';
 import { getRowAction } from './lib/actions/get-row';
@@ -51,17 +51,17 @@ export const baserow = createPiece({
   authors: ["kishanprmr", "MoShizzle", "abuaboud", 'bst1n', 'sanket-a11y', 'onyedikachi-david'],
   actions: [
     createRowAction,
-    deleteRowAction,
     getRowAction,
     listRowsAction,
-    updateRowAction,
     findRowAction,
+    updateRowAction,
+    upsertRowAction,
+    deleteRowAction,
     cleanRowAction,
-    aggregateFieldAction,
     batchCreateRowsAction,
     batchUpdateRowsAction,
     batchDeleteRowsAction,
-    upsertRowAction,
+    aggregateFieldAction,
     uploadFileAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {

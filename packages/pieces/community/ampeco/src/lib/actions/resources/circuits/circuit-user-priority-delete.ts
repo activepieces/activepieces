@@ -14,6 +14,8 @@ export const circuitUserPriorityDeleteAction = createAction({
   name: 'circuitUserPriorityDelete',
   displayName: 'Resources - Circuits - Circuit User Priority Delete',
   description: 'Delete a circuit&#x27;s user priority.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently remove a user-priority rule from an AMPECO circuit, identified by circuit ID plus user-priority ID. Destructive and not reversible. Idempotent in effect once removed (repeat calls target an already-deleted record), but the first call removes the rule, so confirm the IDs before running.', idempotent: false },
   props: {
         
   circuit: Property.Number({

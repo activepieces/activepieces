@@ -21,6 +21,8 @@ export const tariffCreateAction = createAction({
   name: 'tariffCreate',
   displayName: 'Resources - Tariffs - Create',
   description: 'Create new tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO charging tariff, defining its pricing model (e.g. free, flat rate, duration+energy, time-of-day, peak/average power levels, or optimised dynamic pricing) along with fees, idle rules, restrictions, and display text. Not idempotent: each call creates a distinct tariff. The chosen type governs which pricing fields apply; to change an existing tariff use the update action instead.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

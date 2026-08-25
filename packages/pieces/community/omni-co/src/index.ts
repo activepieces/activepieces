@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { omniAuth } from './lib/common/auth';
 import { createADocument } from './lib/actions/create-a-document';
 import { createASchedule } from './lib/actions/create-a-schedule';

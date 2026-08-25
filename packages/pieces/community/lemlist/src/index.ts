@@ -12,6 +12,7 @@ import { removeLeadFromUnsubscribeList } from './lib/actions/remove-lead-from-un
 import { removeLeadFromACampaign } from './lib/actions/remove-lead-from-a-campaign';
 import { unsubscribeALead } from './lib/actions/unsubscribe-a-lead';
 import { addLeadToACampaign } from './lib/actions/add-lead-to-a-campaign';
+import { addCustomVariablesOnLead } from './lib/actions/add-custom-variables-on-lead';
 import { updateLeadFromCampaign } from './lib/actions/update-lead-from-campaign';
 import { searchLead } from './lib/actions/search-lead';
 
@@ -32,6 +33,7 @@ export const lemlist = createPiece({
     removeLeadFromACampaign,
     unsubscribeALead,
     addLeadToACampaign,
+    addCustomVariablesOnLead,
     updateLeadFromCampaign,
     searchLead,
   ],

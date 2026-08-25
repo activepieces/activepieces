@@ -9,6 +9,8 @@ export const deleteSpace = createAction({
   name: 'deleteSpace',
   displayName: 'Delete Space',
   description: 'Delete an existing Space.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a Medullar Space identified by its UUID, along with its associated content. Use to remove a Space the user no longer needs. Destructive and not safely repeatable: a second call for the same UUID targets an already-removed Space.', idempotent: false },
   props: {
     spaceId: medullarPropsCommon.spaceId,
   },

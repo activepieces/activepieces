@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createOrUpdateSubscriber } from './lib/actions/create-or-update-subscription';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { triggers } from './triggers/triggers';

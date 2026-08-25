@@ -8,6 +8,8 @@ export const getWorkflowRunStatusAction = createAction({
 	name: 'get_workflow_run_status',
 	displayName: 'Get Workflow Run Status',
 	description: 'Retrieves the status of a workflow execution.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up the current status of a single Copy.ai workflow run, identified by its workflow ID and run ID. Use this to poll a run started by Run Workflow until it completes before fetching its outputs. Read-only and idempotent.', idempotent: true },
 	props: {
 		workflowId: Property.ShortText({
 			displayName: 'Workflow ID',

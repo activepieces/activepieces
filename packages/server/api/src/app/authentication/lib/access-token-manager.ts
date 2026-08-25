@@ -1,7 +1,10 @@
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, apId, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { ALL_PRINCIPAL_TYPES, EnginePrincipal, Principal, PrincipalType, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { jwtUtils } from '../../helper/jwt-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { userService } from '../../user/user-service'
 import { userIdentityService } from '../user-identity/user-identity-service'
 
@@ -27,10 +30,11 @@ export const accessTokenManager = (log: FastifyBaseLogger) => ({
 
         const secret = await jwtUtils.getJwtSecret()
 
+        const retentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
         return jwtUtils.sign({
             payload: enginePrincipal,
             key: secret,
-            expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
+            expiresInSeconds: dayjs.duration(retentionDays, 'day').asSeconds(),
         })
     },
 

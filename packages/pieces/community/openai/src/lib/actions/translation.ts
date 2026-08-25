@@ -8,11 +8,15 @@ import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { baseUrl } from '../common/common';
+import { translateActionOutputSchema } from '../output-schemas';
 
 export const translateAction = createAction({
+  audience: 'both',
   name: 'translate',
+  classification: 'READ',
   displayName: 'Translate Audio',
   description: 'Translate audio to text using whisper-1 model',
+  aiMetadata: { description: 'Turns an uploaded audio file into English text with the whisper-1 model, translating from whatever language was spoken; there is no target-language option, the output is always English. Pick the sibling transcribe action when the transcript must stay in the original language, and note this handles audio input only - it cannot translate a text string. Requires an audio file; not idempotent: each call re-runs the model and the wording can vary slightly.', idempotent: false },
   auth: openaiAuth,
   props: {
     audio: Property.File({
@@ -21,6 +25,7 @@ export const translateAction = createAction({
       description: 'Audio file to translate',
     }),
   },
+  outputSchema: translateActionOutputSchema,
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
@@ -44,11 +49,7 @@ export const translateAction = createAction({
         ...headers,
       },
     };
-    try {
-      const response = await httpClient.sendRequest(request);
-      return response.body;
-    } catch (e) {
-      throw new Error(`Error while execution:\n${e}`);
-    }
+    const response = await httpClient.sendRequest(request);
+    return response.body;
   },
 });

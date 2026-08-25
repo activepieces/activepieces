@@ -1,14 +1,5 @@
-import {
-    CreateRecordsRequest,
-    DeleteRecordsRequest,
-    ListRecordsRequest,
-    Permission,
-    PopulatedRecord,
-    PrincipalType,
-    SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
-    UpdateRecordRequest,
-} from '@activepieces/shared'
+import { Permission, SeekPage } from '@activepieces/core-utils'
+import { CreateRecordsRequest, DeleteRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -66,13 +57,14 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
     })
 
     fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
-        const deletedRecords = await recordService.delete({
+        const { records: deletedRecords } = await recordService.delete({
             ids: request.body.ids,
             projectId: request.projectId,
+            tableId: request.body.tableId,
         })
         await reply.status(StatusCodes.OK).send([])
         await recordSideEffects(fastify.log).handleRecordsEvent({
-            tableId: deletedRecords[0]?.tableId,
+            tableId: request.body.tableId,
             projectId: request.projectId,
             records: deletedRecords,
             logger: request.log,
@@ -93,7 +85,7 @@ export const recordController: FastifyPluginAsyncZod = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -113,7 +105,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),

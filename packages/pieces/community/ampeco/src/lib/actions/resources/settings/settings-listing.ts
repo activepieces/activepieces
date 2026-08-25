@@ -15,6 +15,8 @@ export const settingsListingAction = createAction({
   name: 'settingsListing',
   displayName: 'Resources - Settings - Settings Listing',
   description: 'Get all settings.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve all account/platform settings. Read-only and idempotent; takes no input. Use to inspect the current configuration values exposed by the AMPECO instance.', idempotent: true },
   props: {
   },
   async run(context): Promise<SettingsListingResponse> {

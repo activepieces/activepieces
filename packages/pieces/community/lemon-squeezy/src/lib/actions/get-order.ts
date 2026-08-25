@@ -5,8 +5,11 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, fetchOrderOptions } fro
 
 export const getOrder = createAction({
   name: 'get_order',
+  classification: 'READ',
   displayName: 'Get Order',
   description: 'Retrieve the details of a specific order by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of one Lemon Squeezy order by its order ID. Use when you already have an order ID and need its complete record; to discover orders by store, email, or status first, use List Orders. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
   props: {
     orderId: Property.Dropdown({

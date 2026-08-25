@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { mailercheckAuth } from './lib/common/auth';
 import { verifyAnEmailAddress } from './lib/actions/verify-an-email-address';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const mailercheck = createPiece({

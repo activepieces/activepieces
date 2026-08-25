@@ -9,6 +9,12 @@ export const cancelSubscription = createAction({
   displayName: 'Cancel Subscription',
   description:
     "Cancel a customer's existing subscription. This will prevent the subscription from making any additional charges and unbind the customer from the plan.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Cancels a PayWhirl subscription so it stops billing the customer. Target the subscription either by its subscription ID or by customer ID (one of the two is required). Use when ending recurring billing for a customer. Not idempotent: this mutates billing state, so guard against repeated calls.",
+    idempotent: false,
+  },
   props: {
     subscription_id: Property.Number({
       displayName: 'Subscription ID',

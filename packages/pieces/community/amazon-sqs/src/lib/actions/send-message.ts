@@ -4,9 +4,12 @@ import { SQS } from '@aws-sdk/client-sqs';
 
 export const sendMessage = createAction({
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Message',
   auth: amazonSqsAuth,
   description: '',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a single message to an Amazon SQS queue identified by its full queue URL, with the message body as plain text. Use to enqueue work or events for downstream consumers polling the queue. Not idempotent: each call enqueues a separate message, so retrying will produce duplicate messages.', idempotent: false },
   props: {
     queueUrl: Property.ShortText({
       displayName: 'Queue URL',

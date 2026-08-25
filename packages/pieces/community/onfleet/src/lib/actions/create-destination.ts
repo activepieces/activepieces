@@ -13,6 +13,8 @@ export const createDestination = createAction({
   name: 'create_destination',
   displayName: 'Create Destination',
   description: 'Create a new destination',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a standalone Onfleet destination (an address) with optional notes, given either structured address fields or a single unparsed address string. Not idempotent: calling it repeatedly creates duplicate destinations. Useful for pre-building an address to reference on a task.', idempotent: false },
   props: {
     destination: common.destination,
     unparsedDestination: common.unparsedDestination,

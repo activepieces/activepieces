@@ -31,6 +31,12 @@ export const getSummary = createAction({
   name: 'getSummary',
   displayName: 'Get Summary',
   description: 'Get a summary of campaign analytics within a date range.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves account-wide outreach analytics (totals and rates for sent, opens, clicks, and replies) aggregated across all campaigns for a date range. Use for an overall performance summary rather than a single campaign. Requires start/end dates in YYYY-MM-DD format; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     startDate: Property.ShortText({
       displayName: 'Start Date',

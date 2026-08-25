@@ -15,6 +15,8 @@ export default createAction({
   name: 'delete_document',
   displayName: 'Delete Document',
   description: 'Remove a document by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Remove a single Couchbase document by its key from a given bucket/scope/collection. Use to permanently delete a known record. Effectively idempotent on end state (the document ends up absent), though a repeat call on an already-deleted ID errors with a not-found.', idempotent: true },
   props: {
     bucket: couchbaseCommonProps.bucket,
     scope: couchbaseCommonProps.scope,

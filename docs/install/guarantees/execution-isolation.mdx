@@ -1,0 +1,33 @@
+---
+title: "Execution Isolation"
+description: "User code in one flow can't read another flow's code, memory, environment, or files"
+icon: "lock"
+---
+
+User code in one flow **cannot** read another flow's code, memory, environment, or files. Each flow executes in its own isolated environment.
+
+<Note>
+This is one of the Activepieces execution guarantees for the [recommended production setup](/install/configure-operate/production-setup). For the full scope and Cloud parity, see [Crash Recovery](./crash-recovery).
+</Note>
+
+## How it's enforced
+
+Two layers stack:
+
+- **Sandbox.** Each flow's code runs inside a sandbox chosen by `AP_EXECUTION_MODE`: V8/code isolation for multi-tenant, or kernel-namespace isolation. See [Sandboxing](/install/architecture/sandboxing) for how each mode works and its trade-offs.
+- **One flow per worker.** At `AP_WORKER_CONCURRENCY=1` there is only ever one flow in a container, so even the container's filesystem and memory belong to a single flow.
+
+## Where it stops
+
+This is **execution** isolation between flows: code, memory, and filesystem. It is distinct from **tenant data isolation** at the query layer (every database query scoped to `projectId` / `platformId`), which is an application-level guarantee enforced in the API, not by the sandbox. For that, see the security documentation.
+
+Choosing the right sandbox is the most important security decision for multi-tenant deployments; a weaker `AP_EXECUTION_MODE` narrows this guarantee.
+
+## Governing configuration
+
+| Variable | Recommended | Effect |
+|---|---|---|
+| `AP_EXECUTION_MODE` | V8 / code sandboxing for multi-tenant | How user code is isolated from the host and other flows |
+| `AP_WORKER_CONCURRENCY` | `1` | One flow per container, no shared filesystem or memory |
+
+See [Sandboxing Mode](/install/configure-operate/sandboxing) to set the value.

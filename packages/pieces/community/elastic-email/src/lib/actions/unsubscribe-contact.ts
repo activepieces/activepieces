@@ -9,6 +9,12 @@ export const unsubscribeContactAction = createAction({
   displayName: 'Unsubscribe Contact',
   description:
     'Unsubscribe one or more email addresses from future emails in Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Marks one or more email addresses as unsubscribed in Elastic Email so they no longer receive future emails. Use to honor opt-out or suppression requests. Idempotent: re-running with the same addresses leaves them unsubscribed with no additional effect.',
+    idempotent: true,
+  },
   auth: elasticEmailAuth,
   props: {
     emails: Property.Array({

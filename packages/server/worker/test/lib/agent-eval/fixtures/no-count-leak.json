@@ -1,0 +1,25 @@
+{
+    "id": "no-count-leak",
+    "description": "Capability: the assistant conveys broad integration coverage without citing a specific hardcoded number (says 'hundreds', not '400+'). Pins the dropped count so it doesn't creep back into user-facing text. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "How many different apps can you connect to?"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "no_hardcoded_count",
+            "rubric": "The assistant conveys that it supports a large number of integrations WITHOUT stating a specific hardcoded number or exact count of integrations. Saying 'hundreds', 'a huge range', or describing the breadth qualitatively is a PASS. Citing any specific numeric integration count (e.g. '400', '400+', 'over 400', 'around 350') is a FAIL. Naming the product/brand is fine. (An unrelated number, like a count of the user's own connected apps, is not what this checks — only a hardcoded total-integrations figure fails.)",
+            "expectedLabel": "pass"
+        }
+    ]
+}

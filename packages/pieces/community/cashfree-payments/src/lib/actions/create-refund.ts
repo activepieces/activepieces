@@ -5,8 +5,14 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const createRefund = createAction({
   auth: cashfreePaymentsAuth,
   name: 'create-refund',
+  classification: 'DESTRUCTIVE',
   displayName: 'Create Refund',
   description: 'Initiate a refund for a Cashfree order. Refunds can only be initiated within six months of the original transaction.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Initiates a refund against an existing Cashfree order, identified by its Order ID, for a specified refund amount (must not exceed the original transaction) and a caller-supplied Refund ID. Use this to return money to a customer for a completed payment; refunds are only allowed within six months of the original transaction. Each call moves money so it is not idempotent, though passing the same Refund ID (or the optional Idempotency Key header) lets Cashfree deduplicate retries.',
+    idempotent: false,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

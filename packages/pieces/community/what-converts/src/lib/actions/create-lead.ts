@@ -8,6 +8,8 @@ export const createLeadAction = createAction({
   name: 'create_lead',
   displayName: 'Create Lead',
   description: 'Create a new lead in WhatConverts.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new lead in a WhatConverts account, capturing contact details, lead type, attribution (source/medium), and optional quote/sales values. Use when an agent needs to record an inbound lead or conversion in WhatConverts. Requires the target account and profile; the lead type is mandatory. Not idempotent — each call creates a separate lead and can optionally send a notification email.', idempotent: false },
   props: {
     account_id: whatConvertsProps.account_id(),
     profile_id: whatConvertsProps.profile_id(),

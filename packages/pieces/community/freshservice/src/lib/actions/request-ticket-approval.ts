@@ -9,6 +9,11 @@ export const requestTicketApproval = createAction({
   name: 'request_ticket_approval',
   displayName: 'Request Ticket Approval',
   description: 'Requests approval for a ticket from a specified agent.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Sends an approval request on a Freshservice ticket to a designated approver agent. Use when a ticket needs sign-off before proceeding; requires the ticket id and the approver agent id, and optionally sets whether all approvers or any one must approve. Not idempotent — each call raises a new approval request.',
+    idempotent: false,
+  },
   props: {
     ticket_id: freshserviceCommon.ticket(true),
     approver_id: freshserviceCommon.agent(true),

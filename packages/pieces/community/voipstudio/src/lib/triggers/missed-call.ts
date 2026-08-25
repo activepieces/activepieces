@@ -8,6 +8,10 @@ export const missedCall = createTrigger({
   name: 'missedCall',
   displayName: 'Missed Call',
   description: 'Triggered when an incoming call is not answered (missed call)',
+  aiMetadata: {
+    description:
+      'Fires when an incoming VoIPstudio call goes unanswered, representing a missed call with its source, destination, and no-answer cause. Requires the Missed Call webhook event to be enabled in the VoIPstudio integrations panel.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `

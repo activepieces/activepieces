@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { tldvAuth } from "./lib/common/auth";
 import { uploadRecording } from "./lib/actions/upload-recording";
 import { listMeetings } from "./lib/actions/list-meetings";

@@ -8,6 +8,12 @@ export const findAccount = createAction({
   name: 'findAccount',
   displayName: 'Find Account',
   description: 'List company accounts and optionally filter by email domain or external ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List Front company accounts, optionally narrowing the results by email domain or external ID. Use to look up an account ID before updating it or to enumerate accounts. Read-only and idempotent: it never modifies data.',
+    idempotent: true,
+  },
   props: {
     email_domain: Property.ShortText({
       displayName: 'Email Domain',

@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { queryAgentAction } from './lib/actions/query-agent';
 import { queryDatastoretAction } from './lib/actions/query-datastore';
 import { uploadFileAction } from './lib/actions/upload-file';

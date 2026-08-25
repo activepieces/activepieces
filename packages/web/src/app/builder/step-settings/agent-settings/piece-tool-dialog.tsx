@@ -1,4 +1,5 @@
-import { AgentTool, isNil, mcpToolNameUtils } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { AgentTool, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';

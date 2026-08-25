@@ -9,6 +9,12 @@ export const uploadDocumentAction = createAction({
   displayName: 'Upload Document',
   description:
     'Uploads a document to your SignNow account. Supports PDF, Word, PowerPoint, Excel, images, and more.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a file (PDF, Word, PowerPoint, Excel, image, and more, up to 50 MB) into SignNow as a new document and returns its document ID for later signing or invite steps. Optionally parse simple text tags in the file into fillable fields. Use this as the first step before sending an invite on an ad-hoc file. Each call creates a separate document, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'File',

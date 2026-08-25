@@ -1,0 +1,11 @@
+{
+  "Online appointment scheduling: receive appointment confirmation and cancellation events via webhook.": "Planification de rendez-vous en ligne : recevez une confirmation de rendez-vous et des événements d'annulation via le webhook.",
+  "Appointment Event": "Événement de rendez-vous",
+  "Fires when an appointment is confirmed or cancelled in iMeetify.": "Tire lorsqu'un rendez-vous est confirmé ou annulé dans iMeetify.",
+  "Markdown": "Markdown",
+  "Event Type": "Type d'événement",
+  "\n**Setup Instructions**\n\n1. In iMeetify, open **Integrations > More > Webhook** and click **Config**.\n2. Fill in the form:\n   - **Webhook Name:** any label (e.g. `Activepieces`)\n   - **URL:** `{{webhookUrl}}`\n   - **Authentication Key:** click **Generate Key** to create one (kept inside iMeetify)\n   - **Events:** select **Appointment Confirmation** and/or **Appointment Cancellation**\n3. Click **Save**. iMeetify requires an HTTPS URL — the URL above is already secure.\n\nThis trigger will only fire when the in": "\n**Setup Instructions**\n\n1. In iMeetify, open **Integrations > More > Webhook** and click **Config**.\n2. Fill in the form:\n   - **Webhook Name:** any label (e.g. `Activepieces`)\n   - **URL:** `{{webhookUrl}}`\n   - **Authentication Key:** click **Generate Key** to create one (kept inside iMeetify)\n   - **Events:** select **Appointment Confirmation** and/or **Appointment Cancellation**\n3. Click **Save**. iMeetify requires an HTTPS URL — the URL above is already secure.\n\nThis trigger will only fire when the incoming event matches the **Event Type** selected below.\n",
+  "Choose which event to listen for. Other event types received on this URL will be ignored.": "Choisir quel événement écouter. Les autres types d'événements reçus sur cette URL seront ignorés.",
+  "Appointment Confirmation": "Confirmation du rendez-vous",
+  "Appointment Cancellation": "Annulation du rendez-vous"
+}

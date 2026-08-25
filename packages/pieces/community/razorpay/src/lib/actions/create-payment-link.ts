@@ -10,6 +10,8 @@ export const createPaymentlink = createAction({
   auth: razorpayAuth,
   displayName: 'Create Payment Link',
   description: 'Create a payment link',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Razorpay payment link for a given amount and currency, optionally notifying the customer by SMS and/or email. Use to collect a one-off payment from a customer; amount is specified in major currency units (e.g. rupees) and is converted to the smallest unit internally. Not idempotent — each call generates a new payment link.', idempotent: false },
   props: {
     amount: Property.Number({
       displayName: 'Amount',

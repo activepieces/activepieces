@@ -1,0 +1,36 @@
+{
+    "id": "guard-duplicate-flow-not-agent",
+    "description": "Anti-over-correction guard: when the user explicitly names an existing automation and asks to duplicate/clone IT, the agent must copy that flow — NOT read it as 'build an autonomous agent / digital twin'. Pins that the self-as-agent capability did not bleed into literal flow-duplication requests.",
+    "kind": "regression",
+    "initialMessages": [],
+    "userTurns": [
+        "clone my \"Daily lead sync to HubSpot\" automation so I can tweak the copy"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "flows": [
+                    { "id": "flow_aa11", "name": "Daily lead sync to HubSpot", "projectId": "eval-project", "status": "ENABLED" },
+                    { "id": "flow_bb22", "name": "Invoice reminder emails", "projectId": "eval-project", "status": "ENABLED" }
+                ]
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "duplicates_named_flow_not_agent",
+            "rubric": "The user explicitly named an existing automation ('Daily lead sync to HubSpot') and asked to clone/duplicate IT so they can tweak the copy. PASS when the reply commits to duplicating that specific flow (making a copy of the automation's definition). FAIL when the reply instead reads it as a request to build an autonomous AI agent / digital twin / a thing that embodies the user, or fragments it into something other than copying the named flow. Here 'clone' genuinely means copy-the-flow because the user named a concrete automation — the self-as-agent reading would be wrong.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

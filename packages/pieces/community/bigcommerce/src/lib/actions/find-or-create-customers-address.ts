@@ -6,8 +6,15 @@ import { bigCommerceApiService } from '../common/requests';
 export const findOrCreateCustomersAddress = createAction({
   auth: bigcommerceAuth,
   name: 'findOrCreateCustomersAddress',
+  classification: 'WRITE',
   displayName: 'Find or Create Customer’s Address',
   description: 'Finds or creates a customer’s address',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'For a given customer_id, looks up that customer’s addresses and returns the one matching the supplied address line 1, city, and postal code if it exists, otherwise creates a new address from the supplied details. Use instead of Create Customer Address when the address may already be on file, to avoid duplicates. Idempotent: repeated calls reuse the matching address rather than appending duplicates.',
+    idempotent: true,
+  },
   props: {
     customer_id: customerDropdown({
       required: true,

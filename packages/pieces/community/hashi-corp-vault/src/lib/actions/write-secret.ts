@@ -8,6 +8,11 @@ export const writeSecret = createAction({
   name: 'write_secret',
   displayName: 'Write Secret',
   description: 'Write a secret to HashiCorp Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Store key-value data at a secret path in a HashiCorp Vault secrets engine (mount), creating the secret or overwriting the data there. Use to persist credentials or config the flow generated. Requires the secrets-engine mount name, the path, and the secret data as a JSON object. On KV v2 engines this records a new secret version each call, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     secretEngine: Property.ShortText({
       displayName: 'Secret Engine',

@@ -1,4 +1,5 @@
-import { FlowRunStatus, isNil, McpToolDefinition, Permission, ProjectScopedMcpServer, RunEnvironment } from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowRunStatus, McpToolDefinition, ProjectScopedMcpServer, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -21,7 +22,7 @@ export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
         permission: Permission.READ_RUN,
         description: 'List recent flow runs with optional filters. Returns run ID, status, timestamps, and failed step info.',
         inputSchema: listRunsInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, status, environment, limit } = listRunsInput.parse(args)
@@ -41,19 +42,37 @@ export const apListRunsTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogg
                 })
 
                 if (result.data.length === 0) {
-                    return { content: [{ type: 'text', text: 'No flow runs found matching the criteria.' }] }
+                    return {
+                        content: [{ type: 'text', text: 'No flow runs found matching the criteria.' }],
+                        structuredContent: { runs: [], count: 0 },
+                    }
                 }
 
                 const lines = result.data.map(run => formatRunSummary(run))
+                const structured = {
+                    runs: result.data.map(run => ({
+                        id: run.id,
+                        flowId: run.flowId,
+                        status: run.status,
+                        environment: run.environment,
+                        created: run.created,
+                        duration: run.startTime && run.finishTime
+                            ? `${((new Date(run.finishTime).getTime() - new Date(run.startTime).getTime()) / 1000).toFixed(1)}s`
+                            : null,
+                        failedStepName: run.failedStep?.name ?? null,
+                    })),
+                    count: result.data.length,
+                }
                 return {
                     content: [{
                         type: 'text',
                         text: `Flow runs (${result.data.length}):\n\n${lines.join('\n')}`,
                     }],
+                    structuredContent: structured,
                 }
             }
             catch (err) {
-                log.error({ err, projectId: mcp.projectId }, 'ap_list_runs failed')
+                log.error({ error: err, project: { id: mcp.projectId } }, 'ap_list_runs failed')
                 return mcpUtils.mcpToolError('Failed to list runs', err)
             }
         },

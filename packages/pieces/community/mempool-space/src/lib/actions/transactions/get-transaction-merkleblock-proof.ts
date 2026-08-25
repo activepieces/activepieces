@@ -7,6 +7,8 @@ export const getTransactionMerkleblockProof = createAction({
   name: 'get_transaction_merkleblock_proof',
   displayName: 'Get Transaction Merkleblock Proof',
   description: 'Get the merkle block proof for a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Get the merkleblock-encoded inclusion proof for a confirmed transaction by its ID. Pick this for the Bitcoin merkleblock hex format; use Get Transaction Merkle Proof for the structured merkle-path form. Read-only.', idempotent: true },
   // category: 'Transactions',
   props: {
     txid: Property.ShortText({

@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_new_ticket_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskOrganization {
   id: number;
   name: string;
@@ -30,8 +24,12 @@ interface ZendeskPayload {
 
 export const newTicket = createTrigger({
   name: 'new_ticket',
+  classification: 'READ',
   displayName: 'New Ticket',
   description: 'Fires when a new ticket is created (optionally filtered by organization). Requires a Zendesk Trigger with Notify active webhook.',
+  aiMetadata: {
+    description: 'Fires when a new ticket is created in Zendesk, delivered via a registered webhook. Represents a freshly opened support ticket; can optionally be scoped to a single organization, otherwise fires for all. Requires a Zendesk Trigger configured to notify the active webhook.',
+  },
   auth: zendeskAuth,
   props: {
     organization_id: Property.Dropdown({

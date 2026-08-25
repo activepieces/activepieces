@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import { pandadocAuth, pandadocClient } from '../common';
 
 export const documentCompleted = createTrigger({
@@ -12,6 +12,9 @@ export const documentCompleted = createTrigger({
   displayName: 'Document Completed',
   description:
     'Triggers when a document is completed.',
+  aiMetadata: {
+    description: 'Fires when a PandaDoc document is completed — i.e. it reaches the completed state or all recipients finish signing. Optionally scoped to specific templates and/or folders. Represents a fully executed/signed document.',
+  },
   auth: pandadocAuth,
   props: {
     template_filter: Property.MultiSelectDropdown({

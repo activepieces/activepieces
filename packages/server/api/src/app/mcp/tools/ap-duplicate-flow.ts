@@ -1,10 +1,5 @@
-import {
-    FlowOperationType,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowCreatorType, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,7 +11,7 @@ const duplicateFlowInput = z.object({
     name: z.string().optional(),
 })
 
-export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_duplicate_flow',
         permission: Permission.WRITE_FLOW,
@@ -25,7 +20,7 @@ export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             flowId: z.string().describe('The id of the flow to duplicate. Use ap_list_flows to find it.'),
             name: z.string().optional().describe('Name for the duplicated flow. Defaults to "Copy of {original name}".'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, name } = duplicateFlowInput.parse(args)
@@ -42,6 +37,8 @@ export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
 
                 const newFlow = await flowService(log).create({
                     projectId: mcp.projectId,
+                    ownerId: userId,
+                    createdBy: { type: FlowCreatorType.MCP, id: mcp.id },
                     request: {
                         displayName,
                         projectId: mcp.projectId,
@@ -52,7 +49,7 @@ export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                     const updatedFlow = await flowService(log).update({
                         id: newFlow.id,
                         projectId: mcp.projectId,
-                        userId: null,
+                        userId: userId ?? null,
                         platformId: project.platformId,
                         operation: {
                             type: FlowOperationType.IMPORT_FLOW,
@@ -74,7 +71,7 @@ export const apDuplicateFlowTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 }
                 catch (importErr) {
                     try {
-                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId })
+                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId, previousFlow: newFlow, userId })
                     }
                     catch { /* best-effort cleanup */ }
                     return mcpUtils.mcpToolError('Flow duplication failed', importErr)

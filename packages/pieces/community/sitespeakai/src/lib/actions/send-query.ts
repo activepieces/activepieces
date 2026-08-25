@@ -10,6 +10,12 @@ export const sendQuery = createAction({
   displayName: 'Send Query',
   description:
     'Sends a query to the specified chatbot and retrieves a response.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Asks a SiteSpeakAI chatbot a question and returns its AI-generated answer. Use to query a knowledge-base bot for a single prompt; optionally continue a prior thread by passing a conversation ID, and choose markdown or HTML response format. Not idempotent: each call generates a fresh answer and adds a turn to the conversation.',
+    idempotent: false,
+  },
   props: {
     chatbotId: chatbotIdDropdown,
     prompt: Property.LongText({

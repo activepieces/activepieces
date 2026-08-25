@@ -1,14 +1,25 @@
 import {
   ApEdition,
   ApFlagId,
+  WorkerGroupScope,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Server, Clock, Cpu, MemoryStick, HardDrive, Zap } from 'lucide-react';
+import {
+  Server,
+  Clock,
+  Cpu,
+  MemoryStick,
+  HardDrive,
+  Zap,
+  Layers,
+  Activity,
+} from 'lucide-react';
 import prettyBytes from 'pretty-bytes';
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
@@ -25,6 +36,7 @@ import {
   CardFooter,
   CardHeader,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -32,15 +44,34 @@ import {
 } from '@/components/ui/tooltip';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useTimeAgo } from '@/hooks/use-time-ago';
 import { cn } from '@/lib/utils';
 
+import { SandboxesPopover } from './sandboxes-popover';
+import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
+
+type TabValue = 'health' | 'worker-groups';
 
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { platform } = platformHooks.useCurrentPlatform();
   const isCloud = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') as TabValue) || 'health';
+
+  const setTab = (tab: TabValue) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'health') {
+      newParams.delete('tab');
+    } else {
+      newParams.set('tab', tab);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
 
   const fleetType = workersData?.[0]?.type;
 
@@ -50,83 +81,110 @@ export default function WorkersPage() {
         description={t('Check the health of your workers')}
         title={t('Workers')}
       ></DashboardPageHeader>
-      {isCloud && fleetType === WorkerMachineType.SHARED && (
-        <Alert variant="primary">
-          <Zap size={16} />
-          <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {t(
-              'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
-            )}
-          </AlertDescription>
-          <AlertAction>
-            <RequestTrial
-              featureKey="DEDICATED_WORKERS"
-              buttonVariant="default"
-              buttonSize="xs"
-            />
-          </AlertAction>
-        </Alert>
-      )}
-      {isCloud && fleetType === WorkerMachineType.DEDICATED && (
-        <Alert variant="success">
-          <Zap size={16} />
-          <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {t(
-              'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
 
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {[0, 1, 2].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="h-4 w-28 bg-muted rounded" />
-                  <div className="h-5 w-16 bg-muted rounded-full" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="h-3 w-full bg-muted rounded" />
-                <div className="h-3 w-full bg-muted rounded" />
-                <div className="h-3 w-full bg-muted rounded" />
-              </CardContent>
-              <CardFooter>
-                <div className="h-4 w-full bg-muted rounded" />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setTab(value as TabValue)}
+        className="w-full"
+      >
+        <TabsList variant="outline" className="border-b w-full">
+          <TabsTrigger variant="outline" value="health">
+            <Activity className="w-4 h-4 mr-2" />
+            {t('Health')}
+          </TabsTrigger>
+          {platform.plan.workerGroupsEnabled && (
+            <TabsTrigger variant="outline" value="worker-groups">
+              <Layers className="w-4 h-4 mr-2" />
+              {t('Worker groups')}
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-      {!isLoading && (workersData ?? []).length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
-          <Server className="size-14" />
-          <p className="font-medium text-foreground">{t('No workers found')}</p>
-          <p className="text-sm text-center max-w-sm">
-            {t(
-              "You don't have any workers yet. Spin up new workers to execute your automations",
+        <TabsContent value="health">
+          <div className="flex flex-col gap-4 pt-4">
+            {isCloud && fleetType === WorkerMachineType.SHARED && (
+              <Alert variant="primary">
+                <Zap size={16} />
+                <AlertTitle>{t('Upgrade to Dedicated Workers')}</AlertTitle>
+                <AlertDescription className="text-xs">
+                  {t(
+                    'Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.',
+                  )}
+                </AlertDescription>
+                <AlertAction>
+                  <RequestTrial
+                    featureKey="DEDICATED_WORKERS"
+                    buttonVariant="default"
+                    buttonSize="xs"
+                  />
+                </AlertAction>
+              </Alert>
             )}
-          </p>
-        </div>
-      )}
+            {isCloud && fleetType === WorkerMachineType.DEDICATED && (
+              <Alert variant="success">
+                <Zap size={16} />
+                <AlertTitle>{t('Dedicated Workers Active')}</AlertTitle>
+                <AlertDescription className="text-xs">
+                  {t(
+                    'Your workers run exclusively for your platform. The execution pool stays warm with no sandboxing overhead, so your automations start instantly.',
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
 
-      {!isLoading && (workersData ?? []).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(workersData ?? []).map((worker, index) => (
-            <WorkerCard
-              key={worker.id}
-              worker={worker}
-              index={index}
-              isCloud={isCloud}
-            />
-          ))}
-        </div>
-      )}
+            {isLoading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {[0, 1, 2].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="h-4 w-28 bg-muted rounded" />
+                        <div className="h-5 w-16 bg-muted rounded-full" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="h-3 w-full bg-muted rounded" />
+                      <div className="h-3 w-full bg-muted rounded" />
+                      <div className="h-3 w-full bg-muted rounded" />
+                    </CardContent>
+                    <CardFooter>
+                      <div className="h-4 w-full bg-muted rounded" />
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {!isLoading && (workersData ?? []).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+                <Server className="size-14" />
+                <p className="font-medium text-foreground">
+                  {t('No workers found')}
+                </p>
+                <p className="text-sm text-center max-w-sm">
+                  {t(
+                    "You don't have any workers yet. Spin up new workers to execute your automations",
+                  )}
+                </p>
+              </div>
+            )}
+
+            {!isLoading && (workersData ?? []).length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {(workersData ?? []).map((worker, index) => (
+                  <WorkerCard key={worker.id} worker={worker} index={index} />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {platform.plan.workerGroupsEnabled && (
+          <TabsContent value="worker-groups">
+            <WorkerAssignmentsTab />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }
@@ -162,7 +220,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
   );
 }
 
-function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
+function WorkerCard({ worker, index }: WorkerCardProps) {
   const timeAgo = useTimeAgo(new Date(worker.updated));
   const isOnline = worker.status === WorkerMachineStatus.ONLINE;
 
@@ -178,6 +236,8 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
 
   const usedRamBytes = totalAvailableRamInBytes * (ramUsagePercentage / 100);
   const usedDiskBytes = diskInfo.used;
+
+  const sandboxes = worker.information.sandboxes ?? [];
 
   const version = workerProps.version ?? 'v0.39.4';
 
@@ -201,37 +261,55 @@ function WorkerCard({ worker, index, isCloud }: WorkerCardProps) {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {isCloud && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+                worker.workerGroupId ? (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/40 bg-primary/10 text-primary"
+                  >
+                    <Layers className="size-3 shrink-0" />
+                    {worker.workerGroupId.replaceAll('_', ' ')}
+                  </Badge>
+                ) : (
                   <Badge
                     variant={
-                      worker.type === WorkerMachineType.DEDICATED
+                      worker.workerGroupScope === WorkerGroupScope.PLATFORM
                         ? 'success'
                         : 'secondary'
                     }
                   >
-                    {worker.type === WorkerMachineType.DEDICATED
+                    {worker.workerGroupScope === WorkerGroupScope.PLATFORM
                       ? t('Dedicated')
                       : t('Shared')}
                   </Badge>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  {worker.type === WorkerMachineType.DEDICATED
-                    ? t(
-                        'This worker runs exclusively for your platform with no sandboxing overhead.',
-                      )
-                    : t(
-                        'This worker is shared across platforms and uses strict sandboxing for isolation.',
-                      )}
-                </TooltipContent>
-              </Tooltip>
-            )}
+                )}
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                {worker.workerGroupScope === WorkerGroupScope.PROJECT &&
+                worker.workerGroupId
+                  ? t(
+                      'This worker runs the projects assigned to the {group} group.',
+                      {
+                        group: worker.workerGroupId.replaceAll('_', ' '),
+                      },
+                    )
+                  : worker.workerGroupScope === WorkerGroupScope.PLATFORM
+                  ? t(
+                      'This worker runs exclusively for your platform with no sandboxing overhead.',
+                    )
+                  : t(
+                      'This worker is shared across platforms and uses strict sandboxing for isolation.',
+                    )}
+              </TooltipContent>
+            </Tooltip>
             <Badge variant={isOnline ? 'success' : 'destructive'}>
               {t(worker.status.toLowerCase())}
             </Badge>
             <WorkerConfigsPopover workerProps={workerProps} />
+            <SandboxesPopover sandboxes={sandboxes} />
           </div>
         </div>
       </CardHeader>
@@ -292,5 +370,4 @@ type StatBarProps = { label: React.ReactNode; value: number; detail?: string };
 type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;
-  isCloud: boolean;
 };

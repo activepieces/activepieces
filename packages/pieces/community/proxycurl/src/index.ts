@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getPersonProfileAction } from './lib/actions/get-person-profile';
 import { getCompanyProfileAction } from './lib/actions/get-company-profile';
 import { searchPeopleAction } from './lib/actions/search-people';

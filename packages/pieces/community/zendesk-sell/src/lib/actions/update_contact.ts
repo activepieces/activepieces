@@ -9,6 +9,8 @@ export const updateContact = createAction({
     name: 'update_contact',
     displayName: 'Update Contact',
     description: 'Update fields of an existing contact.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates fields on an existing Zendesk Sell contact identified by contact ID; only the fields you supply are changed. Use to revise contact details such as name, email, phone, owner, tags, or customer status. Idempotent — re-sending the same field values leaves the contact in the same state.', idempotent: true },
     props: {
         contact_id: zendeskSellCommon.contact(true), 
         name: Property.ShortText({

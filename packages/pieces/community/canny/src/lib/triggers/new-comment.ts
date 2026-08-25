@@ -4,6 +4,10 @@ export const newCommentTrigger = createCannyTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when a new comment is created on a post.',
+  aiMetadata: {
+    description:
+      'Fires when a new comment is added to any Canny post, delivering the comment along with its author and parent post. Use to react to discussion activity on feedback.',
+  },
   eventType: 'comment.created',
   sampleData: {
     created: '2026-04-06T11:05:00.000Z',

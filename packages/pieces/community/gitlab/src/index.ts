@@ -4,7 +4,7 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createIssueAction } from './lib/actions/create-issue-action';
 import { issuesEventTrigger } from './lib/trigger/issue-event';
 import { gitlabAuth } from './lib/auth';

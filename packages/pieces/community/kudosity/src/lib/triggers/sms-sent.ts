@@ -7,6 +7,10 @@ export const smsSent = createTrigger({
   name: 'smsSent',
   displayName: 'SMS Sent',
   description: 'Triggered when an SMS sent',
+  aiMetadata: {
+    description:
+      'Fires when an outbound SMS reaches the SENT status in Kudosity (an SMS_STATUS event with status SENT), confirming a message left the platform toward the carrier.',
+  },
   props: {},
   sampleData: {
     event_type: 'SMS_STATUS',

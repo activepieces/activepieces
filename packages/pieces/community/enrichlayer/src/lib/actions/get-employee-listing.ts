@@ -9,6 +9,12 @@ export const getEmployeeListing = createAction({
   displayName: 'List Company Employees',
   description:
     'Get a list of employees of a company (3 credits per employee returned)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List a company\'s employees from its professional-network URL, filterable by employment status (current/past/all), country, and sortable by tenure. Read-only and safe to retry. Use this for a broad roster; to target a specific job title use Search Company Employees, and for just a head count use Get Employee Count. Boolean role filtering, sorting, and profile enrichment add credits.',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'Company URL',

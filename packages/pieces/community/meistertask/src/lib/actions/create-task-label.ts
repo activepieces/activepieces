@@ -8,6 +8,8 @@ export const createTaskLabel = createAction({
   name: 'create_task_label',
   displayName: 'Create Task Label',
   description: 'Creates a new task label',
+  audience: 'both',
+  aiMetadata: { description: 'Attach an existing project label to a specific task in MeisterTask, creating the task-label association. Use to tag a task with an already-defined label; requires the task ID and the label ID. Not idempotent — each call adds another label association.', idempotent: false },
   props: {
     project: meisterTaskCommon.project,
     task_id: meisterTaskCommon.task_id,

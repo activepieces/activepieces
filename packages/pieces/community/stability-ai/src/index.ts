@@ -4,7 +4,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { textToImage } from './lib/actions/text-to-image';
 
 export const stabilityAiAuth = PieceAuth.CustomAuth({

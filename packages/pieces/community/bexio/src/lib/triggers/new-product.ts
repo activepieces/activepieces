@@ -72,8 +72,12 @@ const polling: Polling<
 export const newProductTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_product',
+  classification: 'READ',
   displayName: 'New Product',
   description: 'Triggers when a new product is created',
+  aiMetadata: {
+    description: 'Fires when a new product (article) is created in Bexio. Polls the article list and emits each newly added product, including its codes, names, pricing, stock levels, and accounting references. Use to react to additions to the product catalog.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

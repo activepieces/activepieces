@@ -5,8 +5,11 @@ import { redditAuth } from '../auth';
 export const editRedditPost = createAction({
   auth: redditAuth,
   name: 'editRedditPost',
+  classification: 'WRITE',
   displayName: 'Edit Post',
   description: 'Edits the content of an existing Reddit post.',
+  audience: 'both',
+  aiMetadata: { description: 'Replaces the text body of an existing self post owned by the authenticated account, identified by post ID. Use it to update a post you previously created; it only edits text posts, not link or media posts. Requires the post ID (with or without the t3_ prefix) and the new content. Idempotent — repeating with the same content leaves the post in the same state.', idempotent: true },
   props: {
     post_id: Property.ShortText({
       displayName: 'Post ID',

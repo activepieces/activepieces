@@ -7,8 +7,12 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newDealNoteTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_deal_note',
+	classification: 'READ',
 	displayName: 'New Deal Note',
 	description: 'Triggers when a new deal note is created.',
+	aiMetadata: {
+		description: 'Fires when a note is added to a deal. The payload includes the note text and the associated deal.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

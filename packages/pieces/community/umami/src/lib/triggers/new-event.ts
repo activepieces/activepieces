@@ -72,6 +72,10 @@ export const newEvent = createTrigger({
   displayName: 'New Event',
   description:
     'Triggers when a new custom event is recorded on a website.',
+  aiMetadata: {
+    description:
+      'Fires when a new custom event is recorded on the selected Umami-tracked website, polling the events feed since the last run. Each fire represents one tracked event (name, URL path, timestamp).',
+  },
   props,
   sampleData: {
     id: 'abc123',

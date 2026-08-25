@@ -8,7 +8,7 @@ import { updateLink } from './lib/actions/update-link';
 import { deleteLink } from './lib/actions/delete-link';
 import { linkClicked } from './lib/triggers/link-clicked';
 import { linkCreated } from './lib/triggers/link-created';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const dub = createPiece({
   displayName: 'Dub',

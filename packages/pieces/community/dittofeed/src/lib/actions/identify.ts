@@ -7,6 +7,8 @@ export const identifyAction = createAction({
   auth: dittofeedAuth,
   displayName: 'Identify User',
   description: 'Identify a user in Dittofeed.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an identify event to Dittofeed that links a userId to a set of traits (e.g. email, name, attributes), creating or updating that user profile in the customer data platform. Use to register a new user or attach/refresh trait data before tracking activity. Requires a userId; each call posts a new event with a unique messageId, so it is not idempotent.', idempotent: false },
   props: {
     userId: Property.ShortText({
       displayName: 'User ID',

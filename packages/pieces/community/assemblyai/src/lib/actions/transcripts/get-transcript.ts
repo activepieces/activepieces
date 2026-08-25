@@ -5,10 +5,17 @@ import { transcriptIdProp } from './shared-props';
 
 export const getTranscript = createAction({
   name: 'getTranscript',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript',
   description: 'Retrieves a transcript by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single existing transcript by its ID, including its status and transcribed text. Use this to poll or read back a transcript created by the Transcribe action. Requires a valid transcript ID; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     id: transcriptIdProp,
   },

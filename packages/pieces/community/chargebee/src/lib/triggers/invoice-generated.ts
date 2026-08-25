@@ -13,8 +13,13 @@ const STORE_KEY = '_chargebee_invoice_generated_webhook_id';
 export const invoiceGenerated = createTrigger({
   auth: chargebeeAuth,
   name: 'invoice_generated',
+  classification: 'READ',
   displayName: 'Invoice Generated',
   description: 'Triggers when a new invoice is generated for a subscription.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records an invoice_generated event — a new invoice has been created (for a subscription or one-time charge). The payload carries the generated invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

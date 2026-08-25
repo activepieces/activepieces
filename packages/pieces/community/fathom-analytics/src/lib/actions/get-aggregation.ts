@@ -13,6 +13,8 @@ export const getAggregation = createAction({
   displayName: 'Get Aggregation',
   description:
     'Generate a custom analytics aggregation report. Supports flexible grouping, filtering, and date ranges.',
+  audience: 'both',
+  aiMetadata: { description: 'Run a custom analytics aggregation report over a Fathom Analytics site, returning chosen metrics with optional date-range, date/field grouping, filters, sorting, and limit. Operates in two modes set by entity type: "pageview" aggregates page traffic (requires the site ID in entity_id), while "event" aggregates a specific conversion goal (requires both site_id and the event ID in entity_name). Use it to answer traffic or conversion questions; read-only and safe to repeat.', idempotent: true },
   auth: fathomAuth,
   props: {
     entity: Property.StaticDropdown({

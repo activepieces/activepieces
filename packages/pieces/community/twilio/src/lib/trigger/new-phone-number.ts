@@ -100,8 +100,12 @@ const polling: Polling<
 export const twilioNewPhoneNumber = createTrigger({
   auth: twilioAuth,
   name: 'new_phone_number',
+  classification: 'READ',
   displayName: 'New Phone Number',
   description: 'Triggers when you add a new phone number to your account.',
+  aiMetadata: {
+    description: 'Fires when a new phone number is provisioned on the Twilio account. Each event represents one newly added incoming phone number with its capabilities and configuration.',
+  },
   props: {},
   sampleData: {
     sid: 'PNXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',

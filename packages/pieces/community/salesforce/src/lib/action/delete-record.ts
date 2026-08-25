@@ -8,6 +8,8 @@ export const deleteRecord = createAction({
     name: 'delete_record',
     displayName: 'Delete Record',
     description: 'Deletes an existing record in an object.',
+    audience: 'both',
+    aiMetadata: { description: 'Delete a single record of any object by its ID. Destructive and irreversible from here; not idempotent, since a repeat call on an already-deleted ID errors. Use this generic delete for objects without a dedicated one (Delete Opportunity exists separately).', idempotent: false },
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,

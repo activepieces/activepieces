@@ -8,6 +8,12 @@ export const enrollAContactIntoACourse = createAction({
   name: 'enrollAContactIntoACourse',
   displayName: 'Enroll a Contact Into a Course',
   description: 'Create an enrollment for a contact in a course.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls a ClickFunnels contact into a specific course, granting them access to its content. Use to give a contact course access programmatically. Requires the workspace, course, and contact. Not idempotent — each call creates a new enrollment record.',
+    idempotent: false,
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

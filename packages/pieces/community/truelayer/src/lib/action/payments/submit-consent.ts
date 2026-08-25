@@ -7,6 +7,8 @@ export const submitConsent = createAction({
   name: 'submit-consent',
   displayName: 'Submit Consent',
   description: 'Submit the consent given by the user. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Advance a payment\'s authorization flow by recording the user\'s consent. Use only when the flow has reached a consent step. This mutates flow state and is not safe to repeat; it is one of several authorization-flow steps (provider, scheme, form, account selection).', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

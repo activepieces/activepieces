@@ -126,21 +126,18 @@ export const SearchableSelect = <T,>({
     const option = options[optionIndex];
     onChange(option.value);
   };
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      onClose?.();
+    }
+    if (refreshOnSearch && searchTerm.length > 0) {
+      refreshOnSearch('');
+      setSearchTerm('');
+    }
+    setOpen(nextOpen);
+  };
   return (
-    <Popover
-      modal={true}
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose?.();
-        }
-        if (refreshOnSearch && searchTerm.length > 0) {
-          refreshOnSearch('');
-          setSearchTerm('');
-        }
-        setOpen(open);
-      }}
-    >
+    <Popover modal={true} open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         asChild
         className={cn({
@@ -163,7 +160,7 @@ export const SearchableSelect = <T,>({
             aria-expanded={open}
             className={cn('w-full justify-between', triggerClassName)}
             onClick={(e) => {
-              setOpen(!open);
+              handleOpenChange(!open);
               e.preventDefault();
             }}
           >
@@ -205,6 +202,12 @@ export const SearchableSelect = <T,>({
         </div>
       </PopoverTrigger>
       <PopoverContent
+        onPointerDownOutside={(e) => {
+          const target = e.detail.originalEvent.target;
+          if (target instanceof Node && triggerRef.current?.contains(target)) {
+            e.preventDefault();
+          }
+        }}
         style={{
           maxWidth: triggerWidth,
           minWidth: triggerWidth,

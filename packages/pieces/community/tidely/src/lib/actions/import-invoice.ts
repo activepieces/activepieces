@@ -8,6 +8,12 @@ export const importInvoice = createAction({
   name: 'importInvoice',
   displayName: 'Import Invoice',
   description: 'Create, update, or delete an invoice in Tidely',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Imports an invoice into Tidely via its open-api import endpoint. Provide an Invoice ID to upsert/match an existing invoice, or omit it to create a new one on each call. Use to push invoice data (number, contact, dates, amounts, type) from an external source into Tidely. Requires invoice number, contact name, invoice date, type, net and gross amounts, and currency. Not idempotent without a stable Invoice ID — repeating without one creates duplicates.",
+    idempotent: false,
+  },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

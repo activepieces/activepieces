@@ -14,6 +14,8 @@ export const configurationTemplateApplyToChargePointsAction = createAction({
   name: 'configurationTemplateApplyToChargePoints',
   displayName: 'Actions - Configuration Template - Apply To Charge Points',
   description: 'Apply a configuration template to charge points.',
+  audience: 'both',
+  aiMetadata: { description: 'Push a configuration template to a set of charge points by id. Set shouldPersist=true to re-enforce the template on every charge point boot. Effectively idempotent: applying the same template to the same charge points converges them to the template\'s configuration.', idempotent: true },
   props: {
         
   template: Property.Number({

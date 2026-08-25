@@ -20,6 +20,9 @@ export const newCampaignCreation = createTrigger({
     name: 'new_campaign_creation',
     displayName: 'New Campaign Creation Result',
     description: "Triggers when the campaign is created.",
+    aiMetadata: {
+      description: 'Fires when Respaid finishes processing a campaign import, reporting the outcome: which imported invoice records were accepted (valid) versus rejected (invalid, e.g. bad email), and a link to the processing report. Use to react to the result of creating a collection campaign.',
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

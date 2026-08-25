@@ -4,13 +4,17 @@ import {
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 export const taskStarted = createTrigger({
   auth: onfleetAuth,
   name: 'task_started',
   displayName: 'Task Started',
   description: 'Triggers when a task is started',
+  aiMetadata: {
+    description:
+      'Fires when a worker begins an Onfleet task, meaning the assigned driver has started en route to the task destination. Represents the transition of a task into the active in-progress state, useful for starting live-tracking notifications. The payload includes the full task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

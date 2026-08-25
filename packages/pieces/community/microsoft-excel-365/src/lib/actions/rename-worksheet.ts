@@ -14,8 +14,11 @@ The new name for the worksheet. The name must adhere to the following rules:
 export const renameWorksheetAction = createAction({
   auth: excelAuth,
   name: 'rename_worksheet',
+  classification: 'WRITE',
   displayName: 'Rename Worksheet',
   description: 'Change the name of an existing worksheet.',
+  audience: 'both',
+  aiMetadata: { description: 'Rename an existing worksheet (tab) within a workbook. Use to relabel a sheet without altering its contents. Effectively idempotent — applying the same target name leaves the sheet in the same state. The new name must be non-blank, 31 characters or fewer, avoid the characters / \\ ? * : [ ], and cannot be the reserved name "History".', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

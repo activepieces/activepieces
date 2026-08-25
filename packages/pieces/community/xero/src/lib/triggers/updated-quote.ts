@@ -99,6 +99,9 @@ export const xeroUpdatedQuote = createTrigger({
   name: 'xero_updated_quote',
   displayName: 'Updated Quote',
   description: 'Fires when a quote is created or updated.',
+  aiMetadata: {
+    description: 'Fires when a quote is created or updated in the connected Xero organisation. Polls the Xero Quotes endpoint and emits a quote whenever its UpdatedDateUTC advances beyond the last seen value, so it fires on both new quotes and subsequent edits, optionally filtered by status (DRAFT, SENT, ACCEPTED, DECLINED, INVOICED, DELETED), contact, quote number, or date/expiry range. Each item is a full quote record (number, status, contact, line items, totals).',
+  },
   props: {
     tenant_id: props.tenant_id,
     statuses: Property.StaticMultiSelectDropdown({

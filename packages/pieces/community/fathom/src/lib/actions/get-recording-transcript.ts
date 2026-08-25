@@ -6,6 +6,8 @@ export const getRecordingTranscript = createAction({
   name: 'getRecordingTranscript',
   displayName: 'Get Recording Transcript',
   description: 'Get the AI-generated transcript of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the full transcript of a single Fathom meeting recording, identified by its recording ID. Use when you need the verbatim spoken content rather than the summary. Read-only and repeatable; optionally supply a destination URL to have Fathom POST the transcript there instead of returning it inline. Requires API Key auth (not available under OAuth2).', idempotent: true },
   auth: fathomAuth,
   props: {
     recording_id: Property.Dropdown({

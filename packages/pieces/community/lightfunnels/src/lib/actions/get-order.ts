@@ -7,6 +7,8 @@ export const getOrder = createAction({
   name: 'get_order',
   displayName: 'Get Order',
   description: 'Retrieve a specific order by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single Lightfunnels order by its node ID, including line items, payments, refunds, customer, and shipping/billing addresses. Use when you have an order ID and need its complete record; use List Orders first if you only have other criteria. Read-only and idempotent.', idempotent: true },
   props: {
     orderId: Property.ShortText({
       displayName: 'Order ID',

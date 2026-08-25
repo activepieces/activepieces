@@ -10,8 +10,11 @@ import { prepareQuery } from '../common/client';
 export const findRecordsAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_records',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Finds records in database.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists records from a Bika.ai database, optionally narrowed by a filter expression (Bika filter-query-language); with no filter it returns all records up to the configured limits. Use to search or page through a table when you need multiple matching rows rather than a single known ID. Read-only and idempotent.', idempotent: true },
   props: {
     space_id: BikaCommon.space_id,
     database_id: BikaCommon.database_id,

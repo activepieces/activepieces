@@ -74,8 +74,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { s
 export const newPostCreated = createTrigger({
 	auth: circleAuth,
 	name: 'new_post_created',
+	classification: 'READ',
 	displayName: 'New Post Created',
 	description: 'Triggers when a new post is created in a specific space.',
+	aiMetadata: {
+		description: 'Fires when a new published post appears in the selected Circle space. Each event represents one newly published post in that space.',
+	},
 	props: {
 		space_id: spaceIdDropdown,
 	},

@@ -6,7 +6,7 @@ import { deleteAVisit } from './lib/actions/delete-a-visit';
 import { searchCustomers } from './lib/actions/search-customers';
 import { newOrUpdatedMessage } from './lib/triggers/new-or-updated-message';
 import { newOrUpdatedVisit } from './lib/triggers/new-or-updated-visit';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const waitwhile = createPiece({

@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createCustomerAddress = createAction({
   auth: housecallProAuth,
   name: "create_customer_address",
+  classification: 'WRITE',
   displayName: "Create an Address on a Customer",
   description: "Creates an address on a customer.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Add a new address to an existing Housecall Pro customer. Not idempotent: each call creates another address on the customer, so repeating can produce duplicates. Street, city, state, zip, and country are required.",
+    idempotent: false,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

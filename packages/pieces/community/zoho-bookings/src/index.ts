@@ -5,7 +5,7 @@ import { rescheduleAppointment } from './lib/actions/reschedule-appointment';
 import { bookAppointment } from './lib/actions/book-appointment';
 import { getAppointmentDetails } from './lib/actions/get-appointment-details';
 import { zohoBookingsAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const zohoBookings = createPiece({
   displayName: 'Zoho Bookings',

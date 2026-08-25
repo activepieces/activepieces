@@ -9,6 +9,12 @@ export const getSchoolProfile = createAction({
   displayName: 'Get School Profile',
   description:
     'Get structured data of a School Profile from a professional network URL (1 credit)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrich a single school or university into structured profile data given its professional-network school URL. Pick this when you already have the school URL and need its details; read-only and idempotent. Use Live Fetch to force a fresh fetch instead of cached data at a higher credit cost.',
+    idempotent: true,
+  },
   props: {
     url: Property.ShortText({
       displayName: 'School URL',

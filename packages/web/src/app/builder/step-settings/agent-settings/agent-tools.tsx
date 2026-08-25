@@ -1,4 +1,5 @@
-import { AgentToolType, AIProviderName } from '@activepieces/shared';
+import { AIProviderName } from '@activepieces/core-utils';
+import { AgentToolType } from '@activepieces/shared';
 import type {
   AgentKnowledgeBaseTool,
   AgentPieceTool,
@@ -6,7 +7,6 @@ import type {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { ControllerRenderProps } from 'react-hook-form';
 
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -30,10 +30,15 @@ const icons = [
 ];
 
 interface AgentToolsProps {
-  toolsField: ControllerRenderProps;
+  toolsField: AgentFormField;
   disabled?: boolean;
   selectedProvider?: AIProviderName;
 }
+
+type AgentFormField = {
+  value: unknown;
+  onChange: (value: AgentTool[]) => void;
+};
 
 export const AgentTools = ({
   disabled,

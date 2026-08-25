@@ -12,8 +12,14 @@ import FormData from 'form-data';
 
 export const uploadFile = createAction({
 	name: 'upload_file',
+	classification: 'WRITE',
 	displayName: 'Upload File',
 	description: 'Uploads a file and attaches it to a record.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Uploads a file and attaches it to a file-type field on an existing SmartSuite record. Use when an agent needs to add an attachment or image to a known record; requires the solution, table, record ID, a target field that is a file field, and the file contents. Not idempotent — each call appends another attachment to the field.',
+		idempotent: false,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

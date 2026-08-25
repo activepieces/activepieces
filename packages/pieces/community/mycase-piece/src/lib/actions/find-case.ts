@@ -7,6 +7,8 @@ export const findCase = createAction({
   name: 'find_case',
   displayName: 'Find Case',
   description: 'Searches for cases with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'List or search MyCase legal cases, optionally filtering by open/closed status and last-updated date, and selecting which client and custom-field columns to include. Use to look up cases or resolve a case to its ID before linking it to other records. Read-only and idempotent.', idempotent: true },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',

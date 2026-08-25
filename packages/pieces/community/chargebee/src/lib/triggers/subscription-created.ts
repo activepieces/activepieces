@@ -13,8 +13,13 @@ const STORE_KEY = '_chargebee_subscription_created_webhook_id';
 export const subscriptionCreated = createTrigger({
   auth: chargebeeAuth,
   name: 'subscription_created',
+  classification: 'READ',
   displayName: 'Subscription Created',
   description: 'Triggers when a new subscription is created for a customer.',
+  aiMetadata: {
+    description:
+      'Fires when Chargebee records a subscription_created event — a new subscription has been created for a customer. The payload carries the subscription along with its customer and (if applicable) invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -1,15 +1,6 @@
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, secureApId, SeekPage } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import {
-    ActivepiecesError,
-    apId,
-
-    ApiKey,
-    ApiKeyResponseWithValue,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    isNil,
-    secureApId,
-    SeekPage } from '@activepieces/shared'
+import { ApiKey, ApiKeyResponseWithValue } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ApiKeyEntity } from './api-key-entity'
 
@@ -75,6 +66,9 @@ export const apiKeyService = {
             id,
         })
     },
+    async deleteAllByPlatformId({ platformId }: DeleteAllParams): Promise<void> {
+        await repo().delete({ platformId })
+    },
 }
 
 export function generateApiKey() {
@@ -94,6 +88,10 @@ type AddParams = {
 
 type DeleteParams = {
     id: string
+    platformId: string
+}
+
+type DeleteAllParams = {
     platformId: string
 }
 

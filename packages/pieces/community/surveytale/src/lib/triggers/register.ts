@@ -1,7 +1,7 @@
 import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common'
 import { SURVEYTALE_BASE_URL, surveyTaleAuth } from '../auth'
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/pieces-framework';
 import { surveyIdProp } from '../common/props'
 
 export const surveyTaleRegisterTrigger = ({
@@ -10,18 +10,24 @@ export const surveyTaleRegisterTrigger = ({
     eventType,
     description,
     sampleData,
+    aiMetadata,
 }: {
     name: string
     displayName: string
     eventType: string
     description: string
     sampleData: unknown
+    aiMetadata?: { description: string }
 }) =>
     createTrigger({
         auth: surveyTaleAuth,
         name: `surveytale_trigger_${name}`,
         displayName,
         description,
+        aiMetadata: aiMetadata ?? {
+            description:
+                'Fires when a SurveyTale survey-response webhook event occurs for the selected surveys. The event represents a change to a survey response (such as a response being created, updated, or finished), and the payload contains the response record including its id, surveyId, finished flag, collected answer data, respondent person attributes, and timestamps.',
+        },
         props: {
             surveyIds: surveyIdProp,
         },

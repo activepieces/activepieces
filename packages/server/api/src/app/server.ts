@@ -1,8 +1,11 @@
 import path from 'path'
-import { ApEnvironment, apId, ApMultipartFile, spreadIfDefined } from '@activepieces/shared'
+import { apId, spreadIfDefined } from '@activepieces/core-utils'
+import { apLogger, evlogFastify, useWideEventLogger, wideEvent } from '@activepieces/server-utils'
+import { ApEnvironment, maxSocketHttpBufferSizeBytes } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
-import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
+import fastifyHttpProxy from '@fastify/http-proxy'
+import fastifyMultipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import fastify, { FastifyInstance } from 'fastify'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -11,10 +14,13 @@ import { validatorCompiler } from 'fastify-type-provider-zod'
 import qs from 'qs'
 import { Socket } from 'socket.io'
 import { getAdapter, setupApp } from './app'
+import { oidcDiscoveryController } from './core/security/oidc/oidc-discovery.controller'
 import { websocketService } from './core/websockets.service'
 import { healthModule } from './health/health.module'
-import { errorHandler } from './helper/error-handler'
+import { embedSecurity } from './helper/embed-security'
+import { enrichWideEventWithError, errorHandler } from './helper/error-handler'
 import { exceptionHandler } from './helper/exception-handler'
+import { networkUtils } from './helper/network-utils'
 import { rejectedPromiseHandler } from './helper/promise-handler'
 import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-props'
@@ -28,10 +34,12 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     app = await setupBaseApp()
 
     // MCP OAuth endpoints at domain root (required by MCP spec)
+    // OIDC discovery endpoints at domain root (required by OIDC spec)
     if (system.isApp()) {
         await app.register(mcpOAuthRootModule)
         await app.register(mcpOAuthHttpController, { prefix: '/mcp' })
         await app.register(mcpPlatformHttpController, { prefix: '/mcp/platform' })
+        await app.register(oidcDiscoveryController)
     }
 
     await app.register(async (apiApp) => {
@@ -44,7 +52,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     if (system.isApp()) {
         await app.register(fastifySocketIO, {
             cors: { origin: '*' },
-            maxHttpBufferSize: 1e8,
+            maxHttpBufferSize: maxSocketHttpBufferSizeBytes(system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)),
             path: '/api/socket.io',
             ...spreadIfDefined('adapter', await getAdapter()),
             transports: ['websocket'],
@@ -56,7 +64,39 @@ export const setupServer = async (): Promise<FastifyInstance> => {
                 .catch(() => next(new Error('Authentication error')))
         })
         app.io.on('connection', (socket: Socket) => rejectedPromiseHandler(websocketService.init(socket, app!.log), app!.log))
-        app.io.on('disconnect', (socket: Socket) => rejectedPromiseHandler(websocketService.onDisconnect(socket), app!.log))
+    }
+
+    if (system.isApp()) {
+        const posthogIngestionHost = 'https://us.i.posthog.com'
+        const posthogAssetsHost = 'https://us-assets.i.posthog.com'
+        await app.register(async (ingestScope) => {
+            ingestScope.removeAllContentTypeParsers()
+            ingestScope.addContentTypeParser('*', (_request, payload, done) => {
+                done(null, payload)
+            })
+            await ingestScope.register(fastifyHttpProxy, {
+                upstream: '',
+                prefix: '/ingest',
+                rewritePrefix: '',
+                replyOptions: {
+                    getUpstream: (originalReq) => {
+                        const url = originalReq.url ?? ''
+                        const isAsset = url.includes('/static') || url.includes('/array')
+                        return isAsset ? posthogAssetsHost : posthogIngestionHost
+                    },
+                    rewriteRequestHeaders: (originalReq, headers) => {
+                        const forwardedFor = originalReq.headers['x-forwarded-for']
+                        if (forwardedFor === undefined) {
+                            return headers
+                        }
+                        return {
+                            ...headers,
+                            'x-forwarded-for': Array.isArray(forwardedFor) ? forwardedFor.join(', ') : forwardedFor,
+                        }
+                    },
+                },
+            })
+        })
     }
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
@@ -64,16 +104,16 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         const frontendPath = path.resolve(process.cwd(), 'dist/packages/web')
         await app.register(fastifyStatic, {
             root: frontendPath,
-            setHeaders: (res, filepath) => {
+            setHeaders: (reply, filepath) => {
                 const normalized = filepath.replace(/\\/g, '/')
                 if (normalized.endsWith('.html')) {
-                    void res.setHeader('Cache-Control', 'no-cache')
+                    void reply.header('Cache-Control', 'no-cache')
                 }
                 else if (normalized.includes('/assets/')) {
-                    void res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+                    void reply.header('Cache-Control', 'public, max-age=31536000, immutable')
                 }
                 else {
-                    void res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
+                    void reply.header('Cache-Control', 'public, max-age=0, must-revalidate')
                 }
             },
         })
@@ -92,9 +132,15 @@ export const setupServer = async (): Promise<FastifyInstance> => {
         return reply.code(404).send({ statusCode: 404, error: 'Not Found', message: 'Route not found' })
     })
 
-    app.addHook('onSend', async (_request, reply) => {
+    app.addHook('onSend', async (request, reply) => {
         void reply.header('X-Content-Type-Options', 'nosniff')
         void reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+        if (!reply.hasHeader('Content-Security-Policy')) {
+            const frameAncestors = await embedSecurity(request.log).getFrameAncestorsHeader({
+                hostname: networkUtils.getRequestHost(request),
+            })
+            void reply.header('Content-Security-Policy', frameAncestors)
+        }
     })
 
     return app
@@ -105,7 +151,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     const flowRunLogSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB)
     const app = fastify({
         disableRequestLogging: true,
-        querystringParser: qs.parse,
+        querystringParser: (str) => qs.parse(str, { arrayLimit: 1000 }),
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 120000,
@@ -130,17 +176,13 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         }
     })
 
+    // No attachFieldsToBody: consumers read files/fields explicitly via request.file()/parts(),
+    // so large uploads (webhook files) can stream to storage instead of being buffered whole.
+    // A route whose schema expects ApMultipartFile on the body must attach
+    // attachMultipartFieldsToBody (helper/multipart-body.ts) itself, or its validation will fail.
     await app.register(fastifyMultipart, {
-        attachFieldsToBody: 'keyValues',
-        async onFile(part: MultipartFile) {
-            const apFile: ApMultipartFile = {
-                filename: part.filename,
-                data: await part.toBuffer(),
-                type: 'file',
-                mimetype: part.mimetype,
-            };
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (part as any).value = apFile
+        limits: {
+            fileSize: fileSizeLimit * 1024 * 1024,
         },
     })
     exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
@@ -167,6 +209,45 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         { parseAs: 'string' },
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
+
+    // Forward the generated request id (req_<apId>) into the header the evlog plugin reads.
+    // This hook runs before the evlog plugin's own onRequest hook so the id is available.
+    app.addHook('onRequest', (request, _reply, done) => {
+        request.headers['x-request-id'] = request.id
+        done()
+    })
+
+    // Fastify runs onError hooks before the custom error handler, and the evlog
+    // plugin emits (seals) the wide event from its own onError hook — so error
+    // enrichment must happen here, before the plugin's hook, not in errorHandler.
+    app.addHook('onError', (_request, _reply, error, done) => {
+        enrichWideEventWithError(error)
+        done()
+    })
+
+    await app.register(evlogFastify, {
+        exclude: [
+            '/api/v1/health',
+            '/api/v1/health/',
+        ],
+    })
+
+    // After evlog has set up its AsyncLocalStorage context, attach a structured
+    // FastifyBaseLogger to request.log so downstream code sees pino-compatible fields,
+    // and expose the wide-event logger for tenant-context enrichment in app.ts.
+    app.addHook('onRequest', (request, _reply, done) => {
+        try {
+            const wide = useWideEventLogger()
+            const structuredLog = apLogger.create({ bindings: {} })
+            Object.assign(request, { log: structuredLog })
+            wideEvent.run({ logger: wide, fn: () => done() })
+        }
+        catch {
+            // useWideEventLogger throws when the route is excluded from evlog (e.g. health check)
+            done()
+        }
+    })
+
     return app
 }
 

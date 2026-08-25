@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { oncehubAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { findContact } from './lib/actions/find-contact';
 import { createContact } from './lib/actions/create-contact';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

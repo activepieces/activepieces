@@ -6,8 +6,11 @@ import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 export const updateTaskListAction = createAction({
     auth: microsoftToDoAuth,
     name: 'update_task_list',
+    classification: 'WRITE',
     displayName: 'Update Task List',
     description: 'Updates an existing task list.',
+    audience: 'both',
+    aiMetadata: { description: 'Rename an existing Microsoft To Do task list, identified by its task list id, to a new display name. Use to change a list\'s title. Idempotent: re-sending the same name leaves the list in the same state. The new name is required and cannot be empty.', idempotent: true },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,

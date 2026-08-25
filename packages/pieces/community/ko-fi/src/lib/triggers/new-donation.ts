@@ -31,6 +31,10 @@ export const newDonation = createTrigger({
   name: 'new_donation',
   displayName: 'New Donation',
   description: 'Triggers when a new one-time donation is received on Ko-fi.',
+  aiMetadata: {
+    description:
+      'Fires when a supporter sends a one-time tip or donation to the connected Ko-fi creator account. Emits the donation event including the supporter name, email, message, amount, currency, and Ko-fi transaction ID. Use to thank supporters, log contributions, or trigger downstream notifications.',
+  },
   props: {
       instructions: Property.MarkDown({
         value:

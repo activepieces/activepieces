@@ -1,7 +1,7 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   ListTriggerEventsRequest,
   SaveTriggerEventRequest,
-  SeekPage,
   TestTriggerRequestBody,
   TriggerEventWithPayload,
 } from '@activepieces/shared';

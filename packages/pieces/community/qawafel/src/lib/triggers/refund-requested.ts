@@ -5,6 +5,10 @@ export const refundRequested = createQawafelEventTrigger({
   displayName: 'Refund / Credit Note Created',
   description:
     'Fires when a credit note is created against an invoice (i.e. a customer return or refund is initiated). Use it to alert your finance team or trigger a return workflow.',
+  aiMetadata: {
+    description:
+      'Fires when a credit note is created against an invoice in Qawafel (the credit_note.created event), representing an initiated customer return or refund. Each event references the originating invoice and the refunded line items, useful for finance alerts or a return workflow.',
+  },
   event: 'credit_note.created',
   sampleData: {
     id: 'cn_01jk5jtv3x6e5hjkfcwzvubejq',

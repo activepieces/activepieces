@@ -36,6 +36,10 @@ export const newPaymentReceived = createTrigger({
   displayName: 'New Payment Received',
   description:
     'Fires every time a payment is recorded in Wafeq. Great for celebrating revenue in Slack, triggering commission calculations, or sending the customer a receipt.',
+  aiMetadata: {
+    description:
+      'Fires when a new payment is recorded in Wafeq (polling by creation time), representing money received from a customer or paid to a supplier and applied to invoices, bills, or credit notes. Use to react to settlements — send receipts, notify a channel, or trigger commission logic.',
+  },
   props: {},
   sampleData: {
     id: 'pay_abc123',

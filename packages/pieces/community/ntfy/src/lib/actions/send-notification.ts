@@ -13,8 +13,11 @@ const encodeToRFC2047 = (text: string) => {
 export const sendNotification = createAction({
   auth: ntfyAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to ntfy',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a push notification to a ntfy topic on the configured ntfy server, optionally with a title, priority (1-5), tags, icon, click-through URL, action buttons, or scheduled delay. Choose this to alert a user or channel via ntfy. Requires a topic and message; each call sends a new notification (not idempotent).', idempotent: false },
   props: {
     topic: Property.ShortText({
       displayName: 'Topic',

@@ -8,6 +8,9 @@ export const memberDeleted = createTrigger({
   name: 'member_deleted',
   displayName: 'Member Deleted',
   description: 'Triggers when a member is deleted',
+  aiMetadata: {
+    description: 'Fires when a member is removed from the Ghost publication (member.deleted). Payload carries the deleted member record under the previous values.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

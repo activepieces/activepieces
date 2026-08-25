@@ -5,7 +5,7 @@ import {
     pipedriveApiCall,
     pipedriveCommon,
 } from '../common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 interface PipedriveNoteV2 {
     id: number;
@@ -40,8 +40,13 @@ interface GetNoteResponseV2 {
 export const newNoteTrigger = createTrigger({
     auth: pipedriveAuth,
     name: 'new-note',
+    classification: 'READ',
     displayName: 'New Note',
     description: 'Triggers when a new note is created.',
+    aiMetadata: {
+        description:
+            'Fires when a new note is created in Pipedrive. A note carries free-text content and may be linked to a deal, person, organization, or lead. Use to react whenever someone records a comment or annotation in the CRM.',
+    },
     props: {},
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {

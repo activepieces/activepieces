@@ -7,6 +7,8 @@ export const createDocument = createAction({
   name: 'create_document',
   displayName: 'Create Document',
   description: 'Creates a new document in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always creates a new document metadata record in MyCase, either as a firm document or attached to a specific case (firm vs case mode is selected by Document Type, and a case must be chosen in case mode). This registers the document and returns a pre-signed S3 upload URL; it does not upload file bytes itself. Not idempotent: each call creates another document record.', idempotent: false },
   props: {
     document_type: Property.StaticDropdown({
       displayName: 'Document Type',

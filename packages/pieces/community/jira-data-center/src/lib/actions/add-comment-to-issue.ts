@@ -9,6 +9,12 @@ export const addCommentToIssueAction = createAction({
 	name: 'add_issue_comment',
 	displayName: 'Add Issue Comment',
 	description: 'Adds a comment to an issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Posts a new comment on a Jira Data Center/Server issue. Use to add a note, update, or reply to an existing issue. Not idempotent — each call appends another comment.',
+		idempotent: false,
+	},
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

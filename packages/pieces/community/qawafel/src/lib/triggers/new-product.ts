@@ -5,6 +5,10 @@ export const newProduct = createQawafelEventTrigger({
   displayName: 'New Product Published',
   description:
     'Fires when a new product is created in Qawafel. Use it to mirror your catalog into Shopify, Salla, Zid, or your data warehouse.',
+  aiMetadata: {
+    description:
+      'Fires when a new product is created in the Qawafel catalog (the product.created event). Each event represents one newly added product, useful for mirroring the catalog into external storefronts or a data warehouse.',
+  },
   event: 'product.created',
   sampleData: {
     id: 'prod_01jk5jtv3x6e5hjkfcwzvubejq',

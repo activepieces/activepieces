@@ -4,12 +4,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { common, OnfleetWebhookTriggers } from '../common';
 import { onfleetAuth } from '../..';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const taskCloned = createTrigger({
   auth: onfleetAuth,
   name: 'task_cloned',
   displayName: 'Task Cloned',
   description: 'Triggers when a task is cloned',
+  aiMetadata: {
+    description:
+      'Fires when an Onfleet task is duplicated, creating a new task that copies the details of an existing one (commonly used for recurring or retried deliveries). Represents the creation of a cloned task derived from a source task. The payload includes the full cloned task object.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior

@@ -6,6 +6,8 @@ export const findClient = createAction({
   name: 'find_client',
   displayName: 'Get Client List',
   description: 'Returns list of clients associated with company. Search by phone number, email address, or name.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists clients of the SimplyBook.me company; an empty search string fetches all clients, while a non-empty value filters by phone, email, or name. Use to find a client or retrieve a client ID before booking, deleting, or filtering reports. Idempotent: read-only search with no side effects.', idempotent: true },
   props: {
     searchString: Property.ShortText({
       displayName: 'Search String',

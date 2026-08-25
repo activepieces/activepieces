@@ -14,8 +14,15 @@ import { bannerbearAuth } from '../auth';
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Renders a new image (or PDF) from a Bannerbear template by applying layer modifications (text, image URLs, ratings, charts, bar codes, colors). Choose this to programmatically generate branded graphics; requires a valid template UID and modifications matching that template\'s available layers. Not idempotent — each call submits a new render and produces a new image.',
+    idempotent: false,
+  },
   props: {
     template: Property.Dropdown({
       auth: bannerbearAuth,
@@ -158,7 +165,6 @@ export const bannerbearCreateImageAction = createAction({
     };
 
     const result = await httpClient.sendRequest<BannerbearTemplate>(request);
-    console.debug('Image creation complete', result);
 
     if (result.status === 200 || result.status === 202) {
       return result.body;

@@ -8,6 +8,12 @@ export const processInputText = createAction({
   name: 'processInputText',
   displayName: 'Process input text',
   description: 'Input text processed by the chatbot',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a question to a configured Denser.ai chatbot and returns its generated answer, optionally steered by a custom prompt, a chosen LLM model, and inline citations. Use it to query a Denser.ai knowledge-base chatbot for a natural-language response. Requires a question and the chatbot connection; not idempotent, since each call produces a freshly generated answer.',
+    idempotent: false,
+  },
   props: {
     question: Property.LongText({
       displayName: 'Question',

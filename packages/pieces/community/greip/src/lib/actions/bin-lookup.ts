@@ -8,6 +8,8 @@ export const binLookup = createAction({
   name: 'bin_lookup',
   displayName: 'BIN Lookup',
   description: 'Look up details of a Bank Identification Number (BIN) or Issuer Identification Number (IIN)',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the issuing bank, card scheme, type, and country behind a payment card from its BIN/IIN (the leading digits). Accepts either the first 6+ digits or a full card number (only the leading digits are used). Use for card validation or fraud-screening enrichment. Read-only lookup; safe to repeat.', idempotent: true },
   props: {
     bin: Property.ShortText({
       displayName: 'BIN/IIN',

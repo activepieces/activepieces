@@ -6,8 +6,11 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const findWorkbookAction = createAction({
   auth: excelAuth,
   name: 'find-workbook',
+  classification: 'SEARCH',
   displayName: 'Find Workbook',
   description: 'Finds an existing workbook by name.',
+  audience: 'both',
+  aiMetadata: { description: 'Search a OneDrive or SharePoint drive for an .xlsx workbook by exact file name (the .xlsx extension is added if omitted), returning a found flag plus matching files. Use to resolve a workbook id from a known name before other actions; to browse all workbooks use Get Workbooks. Read-only and idempotent.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

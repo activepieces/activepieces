@@ -7,6 +7,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact appears in the Insighto.ai account. Polls the contact list on a schedule and emits each contact it has not seen before.',
+  },
   props: {},
   auth: insightoAuth,
   sampleData: {

@@ -28,6 +28,8 @@ export const fountainGetApplicantDetails = createAction({
   auth: fountainAuth,
   displayName: 'Get Applicant Details',
   description: 'Get complete applicant information',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full record for a single applicant by their applicant ID. Use to look up a candidate\'s details, contact info, and current pipeline state. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.Dropdown({
       displayName: 'Applicant',

@@ -7,6 +7,8 @@ export const getUserInfo = createAction({
   name: 'get_user_info',
   displayName: 'Get User Information',
   description: 'Retrieve user information associated with the API key',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the account/user profile tied to the authenticated PromptMate API key. Use it to identify the current account or verify that credentials are valid. Takes no input; read-only and safe to repeat.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest({

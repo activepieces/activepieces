@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { runWorkflowAction } from './lib/actions/run-workflow';
 import { getWorkflowRunStatusAction } from './lib/actions/get-workflow-run-status';

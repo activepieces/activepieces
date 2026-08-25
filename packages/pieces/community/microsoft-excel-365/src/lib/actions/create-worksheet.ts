@@ -15,9 +15,12 @@ interface CreateWorksheetResponse {
 export const createWorksheetAction = createAction({
   auth: excelAuth,
   name: 'create_worksheet',
+  classification: 'WRITE',
   displayName: 'Create Worksheet',
   description:
     'Add a new worksheet (tab) to an existing workbook with optional default headers.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a new worksheet (tab) to an existing workbook, optionally writing a header row and creating an Excel table from it. Use to provision a sheet for new data; to add data to an existing sheet use the append/update actions. Not idempotent — re-running creates another worksheet (Excel auto-assigns a default name like Sheet1 when none is given).', idempotent: false },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

@@ -7,6 +7,10 @@ export const linkHit = createTrigger({
   name: 'linkHit',
   displayName: 'Link Hit',
   description: 'Triggered when a tracked link in a message is clicked',
+  aiMetadata: {
+    description:
+      'Fires when a recipient clicks a tracked link in a Kudosity message (a LINK_HIT event), signaling link engagement for an outbound SMS.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

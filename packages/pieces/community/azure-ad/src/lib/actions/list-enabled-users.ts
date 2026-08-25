@@ -6,8 +6,15 @@ import { callGraphApi, flattenUser } from '../common';
 export const listEnabledUsersAction = createAction({
     auth: azureAdAuth,
     name: 'list_enabled_users',
+    classification: 'SEARCH',
     displayName: 'List Enabled Users',
     description: 'Lists all enabled users in the directory, following nextLink for pagination.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Lists every enabled user in the directory, automatically following pagination until all pages are fetched. Read-only and idempotent, but can be slow and return very large results in big tenants — use Get Enabled Users when a single bounded page is enough.',
+        idempotent: true,
+    },
     props: {
         pageSize: Property.Number({
             displayName: 'Page Size',

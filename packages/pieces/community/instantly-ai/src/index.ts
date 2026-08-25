@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { createCampaignAction } from './lib/actions/create-campaign';
 import { createLeadListAction } from './lib/actions/create-lead-list';

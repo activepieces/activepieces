@@ -6,8 +6,14 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const updateRecord = createAction({
 	name: 'update_record',
+	classification: 'WRITE',
 	displayName: 'Update a Record',
 	description: 'Updates an existing record in the specified table',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Patches an existing SmartSuite record identified by its record ID, overwriting only the supplied field values against the live table schema. Use when an agent needs to change fields on a known record; requires the solution, table, record ID, and the fields to set. Idempotent — re-applying the same field values leaves the record in the same state.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { freeAgentCreateTask } from './lib/actions/create-task';
 import { freeAgentCreateContact } from './lib/actions/create-contact';
 import { freeAgentNewInvoiceTrigger } from './lib/triggers/new-invoice';

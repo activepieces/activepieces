@@ -5,8 +5,11 @@ import { makeClient, mondayCommon } from '../common';
 export const createGroupAction = createAction({
   auth: mondayAuth,
   name: 'monday_create_group',
+  classification: 'WRITE',
   displayName: 'Create Group',
   description: 'Creates a new group in board.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new group (section that holds items) on a monday.com board. Use to organize items under a named section before adding them. Not idempotent: each call creates a separate group even with the same name.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

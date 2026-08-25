@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { logrocketAuth } from './lib/common/auth';
 import { requestHighlights } from './lib/actions/request-highlights';
 import { identifyUser } from './lib/actions/identify-user';

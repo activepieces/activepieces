@@ -15,6 +15,8 @@ export const faqUpdateAction = createAction({
   name: 'faqUpdate',
   displayName: 'Resources - Faqs - Update',
   description: 'Update FAQs.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing FAQ entry identified by its numeric id, replacing its localized question and/or answer text. Targets one known entry (it does not create); idempotent when sending the same values. To add a new FAQ use Faq Create instead.', idempotent: true },
   props: {
         
   faq: Property.Number({

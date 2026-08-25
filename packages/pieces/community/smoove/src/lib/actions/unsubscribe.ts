@@ -9,6 +9,8 @@ export const unsubscribe = createAction({
   name: 'unsubscribe',
   displayName: 'Unsubscribe Subscriber',
   description: 'Unsubscribe a contact from all lists and move them to the "Unsubscribed" list',
+  audience: 'both',
+  aiMetadata: { description: 'Unsubscribe a Smoove contact from all lists and move them to the Unsubscribed list, recording a reason. Use to opt a subscriber out of all communications. Requires a contact ID; not idempotent — it posts a state-changing unsubscribe with a reason on each call.', idempotent: false },
   props: {
     contactId: contactIdDropdown,
     reason: Property.ShortText({

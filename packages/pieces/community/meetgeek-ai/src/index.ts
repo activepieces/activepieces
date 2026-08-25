@@ -7,7 +7,7 @@ import { getTranscript } from './lib/actions/get-transcript';
 import { uploadRecording } from './lib/actions/upload-recording';
 import { newMeeting } from './lib/triggers/new-meeting';
 import { meetgeekaiAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const meetgeekAi = createPiece({
   displayName: 'Meetgeek',

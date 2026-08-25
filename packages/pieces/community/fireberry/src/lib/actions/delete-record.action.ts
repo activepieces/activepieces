@@ -77,6 +77,8 @@ export const deleteRecordAction = createAction({
   name: 'delete_record',
   displayName: 'Delete Records',
   description: 'Delete records from Fireberry.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes one or more Fireberry records (max 20 per call) of a given object type, selected by their record IDs; requires the confirmation flag to be set. Use when removing known records. Not idempotent and irreversible: a repeat call on already-deleted IDs has no further effect but the deletion itself cannot be undone.', idempotent: false },
   auth: fireberryAuth,
   props: {
     objectType: objectTypeDropdown,

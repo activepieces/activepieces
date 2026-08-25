@@ -9,6 +9,12 @@ export const deleteRecordAction = createAction({
   name: 'delete-record',
   displayName: 'Delete Record',
   description: 'Deletes an existing record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a record of a chosen entity type from a Microsoft Dynamics 365 Business Central company, identified by company id, record type, and record id. Use to remove business data. Repeating the call is safe (the record is already gone), but it deletes on the matched record, so treat with care.',
+    idempotent: true,
+  },
   props: {
     company_id: commonProps.company_id,
     record_type: Property.StaticDropdown({

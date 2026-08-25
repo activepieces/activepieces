@@ -9,8 +9,11 @@ import crypto from 'crypto';
 export const archiveSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'archive_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Subscriber',
   description: 'Archive an existing audience member',
+  audience: 'both',
+  aiMetadata: { description: 'Archives a member from an audience (list); the identifier accepts an MD5 hash of the lowercase email, the raw email (auto-hashed), or a contact_id. Use to remove a contact from active sending while preserving their record. Idempotent: archiving an already-archived or absent member converges to the same state.', idempotent: true },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     subscriber_hash: Property.ShortText({

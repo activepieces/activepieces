@@ -14,6 +14,8 @@ export const userGroupDeleteAction = createAction({
   name: 'userGroupDelete',
   displayName: 'Resources - User Groups - Delete',
   description: 'Delete a user group.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO user group by its numeric ID. Effectively idempotent on the target (re-deleting an already-removed group leaves no group), but destructive and irreversible, so confirm the ID before running.', idempotent: true },
   props: {
         
   userGroup: Property.Number({

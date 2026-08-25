@@ -5,11 +5,18 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { listTestimonialsAction } from './lib/actions/list-testimonials';
 import { getTestimonialAction } from './lib/actions/get-testimonial';
 import { createTestimonialAction } from './lib/actions/create-testimonial';
+import { updateTestimonialAction } from './lib/actions/update-testimonial';
+import { deleteTestimonialAction } from './lib/actions/delete-testimonial';
+import { findTestimonialsAction } from './lib/actions/find-testimonials';
+import { fetchTestimonialAction } from './lib/actions/fetch-testimonial';
+import { addTestimonialAction } from './lib/actions/add-testimonial';
+import { modifyTestimonialAction } from './lib/actions/modify-testimonial';
+import { removeTestimonialAction } from './lib/actions/remove-testimonial';
 import { testimonialEventTrigger } from './lib/triggers/testimonial-event';
 import { SENJA_BASE_URL } from './lib/common';
 
@@ -41,7 +48,7 @@ export const senjaAuth = PieceAuth.SecretText({
 export const senja = createPiece({
   displayName: 'Senja',
   description: 'Collect, manage, and share testimonials with Senja.',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/senja.png',
   categories: [PieceCategory.MARKETING],
   auth: senjaAuth,
@@ -50,6 +57,13 @@ export const senja = createPiece({
     listTestimonialsAction,
     getTestimonialAction,
     createTestimonialAction,
+    updateTestimonialAction,
+    deleteTestimonialAction,
+    findTestimonialsAction,
+    fetchTestimonialAction,
+    addTestimonialAction,
+    modifyTestimonialAction,
+    removeTestimonialAction,
     createCustomApiCallAction({
       baseUrl: () => SENJA_BASE_URL,
       auth: senjaAuth,

@@ -4,7 +4,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { BasicAuthConnectionValue } from '@activepieces/shared';
+import { BasicAuthConnectionValue } from '@activepieces/pieces-framework';
 
 export const scenarioAuth = PieceAuth.BasicAuth({
   description:

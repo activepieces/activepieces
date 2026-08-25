@@ -7,8 +7,11 @@ import { callIdDropdown } from '../common/props';
 export const getCall = createAction({
   auth: aircallAuth,
   name: 'getCall',
+  classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieves details about a specific call.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of one Aircall call by its call ID, including the associated contact, short URLs, and call timeline. Use when you already have a call ID and need its complete record. Read-only and idempotent.', idempotent: true },
   props: {
     callId: callIdDropdown,
   },

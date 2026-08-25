@@ -14,6 +14,9 @@ export const dealAccepted = createTrigger({
   name: 'deal_accepted',
   displayName: 'Deal Won',
   description: 'Triggers when a deal is won/accepted',
+  aiMetadata: {
+    description: 'Fires when an existing deal is marked won/accepted in Teamleader, via the deal.won webhook. Emits the full deal record with won status. Use to react to closed-won opportunities, such as kicking off fulfillment or invoicing; for any new deal regardless of outcome use New Deal instead.',
+  },
   auth: teamleaderAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

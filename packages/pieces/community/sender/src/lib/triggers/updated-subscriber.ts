@@ -5,8 +5,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updatedSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'updated_subscriber',
+  classification: 'READ',
   displayName: 'Updated Subscriber',
   description: "Fires when a subscriber's data (fields) is updated",
+  aiMetadata: {
+    description: "Fires when an existing subscriber's data or custom fields are updated in the connected Sender account, representing the changed contact.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   getAuthPropertyForValue,
   PieceAuthProperty,
@@ -11,7 +12,6 @@ import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,11 +54,13 @@ import {
 } from '@/features/connections';
 import { formUtils } from '@/features/pieces';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { MutliAuthList, AuthListItem } from './multi-auth-list';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { OIDCConnectionSettings } from './oidc-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 function CreateOrEditConnectionSection({
@@ -70,7 +72,10 @@ function CreateOrEditConnectionSection({
   selectedAuth,
   onTryAnotherMethodButtonClicked,
   showTryAnotherMethodButton,
+  projectId: projectIdOverride,
+  presentation = 'dialog',
 }: CreateOrEditConnectionSectionProps) {
+  const isInline = presentation === 'inline';
   const formSchema = formUtils.buildConnectionSchema(
     selectedAuth.authProperty,
     {
@@ -87,6 +92,7 @@ function CreateOrEditConnectionSection({
   const { data: redirectUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const form = useForm<ConnectionFormValues>({
     defaultValues: {
       request: {
@@ -98,6 +104,7 @@ function CreateOrEditConnectionSection({
           oauth2App: selectedAuth.oauth2App,
           grantType: selectedAuth.grantType,
           redirectUrl: redirectUrl ?? '',
+          projectId: projectIdOverride ?? undefined,
         }),
         ...(isGlobalConnection ? { scope: AppConnectionScope.PLATFORM } : {}),
         projectIds: reconnectConnection?.projectIds ?? [],
@@ -124,33 +131,51 @@ function CreateOrEditConnectionSection({
       setOpen,
     });
 
+  // The OIDC issuer the server signs into the token's `iss` claim is derived from the
+  // server's configured public URL (AP_FRONTEND_URL), exposed here as the PUBLIC_URL flag —
+  // NOT the browser origin, which can differ behind a proxy/custom host and would make the
+  // provider URL the user registers in AWS mismatch the token issuer.
+  const publicOrigin = publicUrl ?? window.location.origin;
+  const oidcIssuerUrl = publicOrigin.replace(/\/$/, '');
+  const oidcIssuerHost = oidcIssuerUrl.replace(/^https?:\/\//, '');
+
   return (
     <>
-      <DialogHeader className="mb-0">
-        <DialogTitle className="px-5">
-          <div className="flex items-center gap-2">
-            {reconnectConnection
-              ? t('Reconnect {displayName} Connection', {
-                  displayName: reconnectConnection.displayName,
-                })
-              : t('Connect to {displayName}', {
-                  displayName: piece.displayName,
-                })}
-          </div>
-        </DialogTitle>
-      </DialogHeader>
+      {!isInline && (
+        <DialogHeader className="mb-0">
+          <DialogTitle className="px-5">
+            <div className="flex items-center gap-2">
+              {reconnectConnection
+                ? t('Reconnect {displayName} Connection', {
+                    displayName: reconnectConnection.displayName,
+                  })
+                : t('Connect to {displayName}', {
+                    displayName: piece.displayName,
+                  })}
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+      )}
 
       <Form {...form}>
         <form className="flex flex-col gap-3">
           <ScrollArea
-            className="px-2"
-            viewPortClassName="max-h-[calc(70vh-180px)] px-4 py-2 mb-1"
+            className={isInline ? '' : 'px-2'}
+            viewPortClassName={
+              isInline
+                ? 'max-h-[55vh] py-1'
+                : 'max-h-[calc(70vh-180px)] px-4 py-2 mb-1'
+            }
           >
             {' '}
             <ApMarkdown
               markdown={selectedAuth.authProperty.description}
               variables={{
                 redirectUrl: redirectUrl ?? '',
+                platformId: authenticationSession.getPlatformId() ?? '',
+                projectId: authenticationSession.getProjectId() ?? '',
+                frontendUrl: oidcIssuerUrl,
+                frontendHost: oidcIssuerHost,
               }}
             ></ApMarkdown>
             {selectedAuth.authProperty.description && (
@@ -229,16 +254,17 @@ function CreateOrEditConnectionSection({
           {errorMessage && (
             <FormError
               formMessageId="create-connection-server-error-message"
-              className="text-left px-6"
+              className={isInline ? 'text-left px-1' : 'text-left px-6'}
             >
               {errorMessage}
             </FormError>
           )}
-          <DialogFooter className="mt-0">
-            <div className="mx-5 flex gap-2 w-full">
+          {isInline ? (
+            <div className="mt-0 flex gap-2 w-full">
               {showTryAnotherMethodButton && (
                 <Button
                   variant="outline"
+                  size="sm"
                   type="button"
                   onClick={onTryAnotherMethodButtonClicked}
                 >
@@ -246,18 +272,43 @@ function CreateOrEditConnectionSection({
                 </Button>
               )}
               <div className="grow"></div>
-              <DialogClose asChild>
-                <Button variant="outline">{t('Cancel')}</Button>
-              </DialogClose>
               <Button
+                size="sm"
                 onClick={(e) => form.handleSubmit(() => upsertConnection())(e)}
                 loading={isPending}
                 type="submit"
               >
-                {t('Save')}
+                {reconnectConnection ? t('Reconnect') : t('Connect')}
               </Button>
             </div>
-          </DialogFooter>
+          ) : (
+            <DialogFooter className="mt-0">
+              <div className="mx-5 flex gap-2 w-full">
+                {showTryAnotherMethodButton && (
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={onTryAnotherMethodButtonClicked}
+                  >
+                    {t('Try another method')}
+                  </Button>
+                )}
+                <div className="grow"></div>
+                <DialogClose asChild>
+                  <Button variant="outline">{t('Cancel')}</Button>
+                </DialogClose>
+                <Button
+                  onClick={(e) =>
+                    form.handleSubmit(() => upsertConnection())(e)
+                  }
+                  loading={isPending}
+                  type="submit"
+                >
+                  {t('Save')}
+                </Button>
+              </div>
+            </DialogFooter>
+          )}
         </form>
       </Form>
     </>
@@ -280,6 +331,10 @@ function ConnectionSettings({ selectedAuth, piece }: ConnectionSettingsProps) {
         <CustomAuthConnectionSettings
           authProperty={selectedAuth.authProperty}
         />
+      );
+    case PropertyType.OIDC:
+      return (
+        <OIDCConnectionSettings authProperty={selectedAuth.authProperty} />
       );
     case PropertyType.OAUTH2:
       if (isNil(selectedAuth.grantType) || isNil(selectedAuth.oauth2App)) {
@@ -357,6 +412,7 @@ function CreateOrEditConnectionDialog({
   reconnectConnection,
   isGlobalConnection,
   externalIdComingFromSdk,
+  projectId: projectIdOverride,
 }: ConnectionDialogProps) {
   const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
     oauthAppsQueries.usePiecesOAuth2AppsMap();
@@ -391,12 +447,42 @@ function CreateOrEditConnectionDialog({
             reconnectConnection={reconnectConnection}
             isGlobalConnection={isGlobalConnection}
             externalIdComingFromSdk={externalIdComingFromSdk}
+            projectId={projectIdOverride}
           />
         )}
       </DialogContent>
     </Dialog>
   );
 }
+function CreateOrEditConnectionInline({
+  piece,
+  setOpen,
+  reconnectConnection,
+  isGlobalConnection,
+  externalIdComingFromSdk,
+  projectId: projectIdOverride,
+}: InlineConnectionProps) {
+  const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
+  if (loadingPiecesOAuth2AppsMap && hasOAuth2PieceAuth(piece)) {
+    return <SkeletonList numberOfItems={4} className="h-7" />;
+  }
+  return (
+    <CreateOrEditConnectionDialogContent
+      presentation="inline"
+      piece={piece}
+      piecesOAuth2AppsMap={piecesOAuth2AppsMap ?? {}}
+      setOpen={setOpen}
+      reconnectConnection={reconnectConnection}
+      isGlobalConnection={isGlobalConnection}
+      externalIdComingFromSdk={externalIdComingFromSdk}
+      projectId={projectIdOverride}
+    />
+  );
+}
+
+CreateOrEditConnectionInline.displayName = 'CreateOrEditConnectionInline';
+
 function hasOAuth2PieceAuth(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
 ) {
@@ -410,7 +496,11 @@ function hasOAuth2PieceAuth(
 }
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
-export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };
+export {
+  CreateOrEditConnectionDialog,
+  CreateOrEditConnectionDialogContent,
+  CreateOrEditConnectionInline,
+};
 
 function getInitallySelectedAuthProperty(
   auth: PieceAuthProperty[] | PieceAuthProperty,
@@ -481,7 +571,10 @@ type ConnectionDialogProps = {
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
   externalIdComingFromSdk?: string | null;
+  projectId?: string | null;
 };
+
+type InlineConnectionProps = Omit<ConnectionDialogProps, 'open'>;
 
 type CreateOrEditConnectionDialogContentProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
@@ -493,6 +586,8 @@ type CreateOrEditConnectionDialogContentProps = {
     open: boolean,
     connection?: AppConnectionWithoutSensitiveData,
   ) => void;
+  projectId?: string | null;
+  presentation?: 'dialog' | 'inline';
 };
 
 type CreateOrEditConnectionSectionProps =

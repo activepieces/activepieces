@@ -8,18 +8,22 @@ Prefer webhooks when the API supports them -- they are instant and use fewer res
 
 ## Polling Trigger
 
-Use when the API does NOT support webhooks. Activepieces polls every ~5 minutes.
+Use when the API has no webhook support. Activepieces polls every ~5 minutes.
 
 Two deduplication strategies:
 - **TIMEBASED** -- Each item has a timestamp; only items newer than last poll are returned
 - **LAST_ITEM** -- Each item has an ID; items after the last known ID are returned
+
+**Always pass the whole `context`** to `pollingHelper.onEnable` / `onDisable` / `poll` / `test` -- never a subset like `{ store, auth, propsValue }`. Every field on the helper's param type is optional, so a partial object type-checks and whatever you left out is dropped in silence. The set also grows: `onEnable` now reads `context.isRepublish` to keep the existing `lastPoll`/`lastItem` when a running flow is republished, so a subset call still resets the checkpoint and drops every event since the last poll.
+
+**Editing an existing polling trigger? Fix every `pollingHelper` call in the piece while you're there.** Most pieces in the repo still pass the subset — the SKILL.md carve-out explains why fix-on-touch beats a repo-wide codemod. Mention the fix in your PR description so it doesn't read as an unrelated change.
 
 ### TIMEBASED Polling (most common)
 
 ```typescript
 import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -29,7 +33,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof myAppAuth>, Reco
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       queryParams: {
         sort: 'created_at',
@@ -92,20 +96,18 @@ const polling: Polling<undefined, Record<string, never>> = {
 
 ### Polling with Props
 
-When the trigger has user-configurable props (e.g., filter by project):
+When the trigger has user-configurable props (e.g., a project filter), update the Polling generic type to include them:
 
 ```typescript
-const props = {
-  projectId: Property.Dropdown({ /* ... */ }),
-};
+const props = { projectId: Property.Dropdown({ /* ... */ }) };
 
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof myAppAuth>,
-  StaticPropsValue<typeof props>
+  StaticPropsValue<typeof props>  // ← add your props type here
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    // propsValue.projectId is available here
+    // propsValue.projectId is now available and typed
     const response = await httpClient.sendRequest<{ data: any[] }>({
       method: HttpMethod.GET,
       url: `https://api.example.com/v1/projects/${propsValue.projectId}/records`,
@@ -117,18 +119,9 @@ const polling: Polling<
     }));
   },
 };
-
-export const newRecordTrigger = createTrigger({
-  auth: myAppAuth,
-  name: 'new_record',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is created in a project',
-  props,
-  sampleData: {},
-  type: TriggerStrategy.POLLING,
-  // test, onEnable, onDisable, run -- same pattern as above
-});
 ```
+
+Pass `props` to `createTrigger` — everything else follows the same pattern as the basic TIMEBASED example above.
 
 ---
 
@@ -142,7 +135,7 @@ Use when the API supports webhook registration. The flow:
 ```typescript
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { myAppAuth } from '../../';
+import { myAppAuth } from '../auth';
 
 export const newRecordWebhookTrigger = createTrigger({
   auth: myAppAuth,
@@ -164,7 +157,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/webhooks',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       body: {
         url: context.webhookUrl,         // Activepieces provides this
@@ -183,7 +176,7 @@ export const newRecordWebhookTrigger = createTrigger({
         url: `https://api.example.com/v1/webhooks/${webhookId}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth as string,
+          token: context.auth.secret_text,
         },
       });
     }
@@ -201,7 +194,7 @@ export const newRecordWebhookTrigger = createTrigger({
       url: 'https://api.example.com/v1/records',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       queryParams: { limit: '5' },
     });
@@ -282,3 +275,9 @@ export const myTrigger = createTrigger({
 | `TriggerStrategy.POLLING` | API has no webhooks | Use `pollingHelper` with TIMEBASED or LAST_ITEM |
 | `TriggerStrategy.WEBHOOK` | API supports webhook registration | Register in `onEnable`, delete in `onDisable` |
 | `TriggerStrategy.APP_WEBHOOK` | OAuth2 apps with platform-level webhooks (Slack) | Use `context.app.createListeners()` |
+
+---
+
+## AI-Ready Metadata (required on new triggers)
+
+Every new trigger ships with `aiMetadata: { description }` — one or two sentences on when the event fires and what one payload represents. Triggers do **not** take `audience` (actions-only — a trigger is an event, not an agent-callable operation) and don't need `idempotent`. The field is additive and changes nothing for human users. See `ai-metadata.md`.

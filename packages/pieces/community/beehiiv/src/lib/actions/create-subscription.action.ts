@@ -7,8 +7,11 @@ import { beehiivApiCall } from '../common/client';
 export const createSubscriptionAction = createAction({
 	auth: beehiivAuth,
 	name: 'create_subscription',
+	classification: 'WRITE',
 	displayName: 'Create Subscription',
 	description: 'Creates a new subscription.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a new subscriber (by email) to a beehiiv publication, optionally setting tier, UTM attribution, custom fields, and enrolling them into automations on creation. Use to subscribe someone to a newsletter. Requires the publication ID and email; not idempotent — each call creates a subscription, and re-running may produce duplicate or reactivated subscribers.', idempotent: false },
 	props: {
 		publicationId: publicationId,
 		email: Property.ShortText({

@@ -7,6 +7,8 @@ export const detectTextAction = createAction({
     auth:hastewireAuth,
     displayName:'Detect Text',
     description:'Analyzes text and returns the likelihood of it being AI-generated or human-written.',
+    audience: 'both',
+    aiMetadata: { description: 'Runs AI-detection on a block of text via the Hastewire API, scoring how likely it is to be AI-generated versus human-written. Choose this to classify or vet content before acting on it; it only reads/analyzes the supplied text and does not modify or store it, so repeating the same input yields the same score.', idempotent: true },
     props:{
         text:Property.LongText({
             displayName:'Input Text',

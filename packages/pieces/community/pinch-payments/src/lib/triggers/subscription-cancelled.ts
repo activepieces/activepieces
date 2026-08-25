@@ -7,6 +7,9 @@ export const subscriptionCancelledTrigger = createTrigger({
   name: 'subscription_cancelled',
   displayName: 'Subscription Cancelled',
   description: 'Triggers when a subscription is cancelled',
+  aiMetadata: {
+    description: 'Fires when a recurring subscription is cancelled in Pinch Payments, ending future scheduled billing. Use to react to churn or to clean up access when a customer cancels.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {

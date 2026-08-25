@@ -10,6 +10,11 @@ export const getTranscript = createAction({
   displayName: 'Get Transcript',
   description:
     'Retrieves all transcript sentences for a meeting with pagination support',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch the full transcript (all sentences) for a single MeetGeek meeting by its meeting ID. Use when an agent needs the verbatim spoken content rather than a summary or highlights. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     meetingId: meetingIdDropdwon,
   },

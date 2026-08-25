@@ -1,5 +1,5 @@
 import { ActionContext, ArrayProperty, CheckboxProperty, createAction, PieceAuthProperty, Property, ShortTextProperty, StaticDropdownProperty } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
@@ -11,7 +11,7 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 	store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
 	await propsValidation.validateZod(context.propsValue, {
-		key: z.string().max(128),
+		key: z.string().check(z.maxLength(128)),
 	});
 	const { key, scope } = getScopeAndKey({
 		runId: context.run.id,
@@ -55,9 +55,12 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 }
 
 export const storageAddtoList = createAction({
+  audience: 'both',
 	name: 'add_to_list',
+	classification: 'WRITE',
 	displayName: 'Add To List',
 	description: 'Add Items to a list.',
+	aiMetadata: { description: 'Pushes items onto the array stored under a key, creating the list when the key is empty; an optional ignore-if-exists mode skips items already present, matched by deep equality. Use it to accumulate records across runs; prefer Put to replace the whole array, or Append when the stored value is a string. Requires the key (max 128 characters), a list of values, and the Store Scope, fails if the existing value is not an array, caps the stored list at 512 KB, and is not idempotent unless ignore-if-exists is on.', idempotent: false },
 	errorHandlingOptions: {
 		continueOnFailure: {
 			hide: true,

@@ -31,8 +31,12 @@ const polling: Polling<
 
 export const newBlogPost = createTrigger({
   name: 'new_blog_post',
+  classification: 'READ',
   displayName: 'New Blog Post',
   description: 'Triggers when a new blog post is published',
+  aiMetadata: {
+    description: 'Fires when a new blog post appears in the specified Total CMS blog (identified by its CMS ID). Polls the blog and emits one event per newly published post, deduplicated by permalink.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     slug: Property.ShortText({

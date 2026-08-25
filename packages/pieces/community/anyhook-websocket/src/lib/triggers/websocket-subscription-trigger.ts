@@ -5,8 +5,12 @@ import { websocketCommon } from '../common/common';
 export const websocketSubscriptionTrigger = createTrigger({
   auth: websocketCommon.auth,
   name: 'websocket_subscription_trigger',
+  classification: 'READ',
   displayName: 'New Websocket Subscription Event',
   description: 'Triggers on a new Websocket subscription event',
+  aiMetadata: {
+    description: 'Fires whenever the subscribed WebSocket server pushes a new message to the connection opened by this trigger. The event represents the raw message payload streamed from the endpoint after the subscription message was sent, enabling real-time reaction to live data feeds such as blockchain, market, or collection event streams.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     websocketUrl: Property.ShortText({

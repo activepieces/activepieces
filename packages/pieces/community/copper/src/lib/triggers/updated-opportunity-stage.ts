@@ -9,6 +9,10 @@ export const updatedOpportunityStage = createTrigger({
   name: 'updatedOpportunityStage',
   displayName: 'Updated Opportunity Stage',
   description: 'Triggers when an opportunity stage changes',
+  aiMetadata: {
+    description:
+      'Fires only when an opportunity moves to a different pipeline stage in Copper CRM (other opportunity edits are ignored), via a Copper webhook. Emits a stage-change event with the previous and current stage id and label.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

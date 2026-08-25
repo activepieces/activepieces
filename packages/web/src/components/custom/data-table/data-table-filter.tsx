@@ -71,9 +71,11 @@ export function DataTableFilter<TData, TValue>({
           }
 
           if (Array.isArray(filterValue)) {
-            filterValue.forEach((value) =>
-              newParams.append(paramKey as string, value),
-            );
+            filterValue.forEach((value) => {
+              if (paramKey) {
+                newParams.append(paramKey, value);
+              }
+            });
           } else if (typeof filterValue === 'object' && filterValue !== null) {
             if (filterValue.from) {
               newParams.append(

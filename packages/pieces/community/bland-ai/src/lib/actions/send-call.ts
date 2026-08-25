@@ -6,8 +6,15 @@ import { blandApiCall } from '../common/client';
 export const sendCall = createAction({
   auth: blandAiAuth,
   name: 'send_call',
+  classification: 'WRITE',
   displayName: 'Send Call',
   description: 'Initiate an AI phone call to a recipient.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Places an outbound AI voice call to a phone number (E.164 format, with country code) via Bland AI. Drive the conversation either by supplying free-text Task instructions for the agent or by referencing a pre-built Pathway ID (the Pathway overrides the Task). Use to actually start a call; not idempotent — each call triggers a new outbound dial.',
+    idempotent: false,
+  },
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',

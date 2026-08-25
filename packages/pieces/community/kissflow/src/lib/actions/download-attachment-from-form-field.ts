@@ -33,6 +33,12 @@ export const downloadAttachmentFromFormField = createAction({
   displayName: 'Download Attachment from Form Field',
   description:
     'Downloads a specific attachment from a form field of your process.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single attachment file stored on a form field of a Kissflow process item and returns it as a file. Use this to retrieve a known attachment by its identifiers; it requires the full address of the file (process ID, instance ID, activity instance ID, field ID, and attachment ID). Read-only and idempotent: repeating the call with the same IDs returns the same file without side effects.',
+    idempotent: true,
+  },
   auth: kissflowAuth,
   props: {
     processId: Property.ShortText({

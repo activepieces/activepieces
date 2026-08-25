@@ -1,47 +1,80 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { outsetaAuth } from './auth';
 
-// Actions
+// Actions — Retrieve
 import { getAccountAction } from './action/get-account';
 import { getPersonAction } from './action/get-person';
-import { getAccountPlanAction } from './action/get-account-plan';
-import { changeAccountPlanAction } from './action/change-account-plan';
-import { cancelSubscriptionAction } from './action/cancel-subscription';
-import { addAddonUsageAction } from './action/add-addon-usage';
+import { getDealAction } from './action/get-deal';
+import { getSubscriptionAction } from './action/get-subscription';
+import { getLastPaymentAction } from './action/get-last-payment';
+
+// Actions — Create / Find or Add
+import { createAccountAction } from './action/create-account';
+import { createDealAction } from './action/create-deal';
+import { findOrAddPersonAction } from './action/find-or-add-person';
+import { findOrAddDealAction } from './action/find-or-add-deal';
+
+// Actions — Update
 import { updateAccountAction } from './action/update-account';
 import { updatePersonAction } from './action/update-person';
-import { findOrAddPersonAction } from './action/find-or-add-person';
-import { findOrAddAccountAction } from './action/find-or-add-account';
-import { addPersonToAccountAction } from './action/add-person-to-account';
-import { addDealAction } from './action/add-deal';
-import { getDealAction } from './action/get-deal';
 import { updateDealAction } from './action/update-deal';
+
+// Actions — Delete
+import { deleteAccountAction } from './action/delete-account';
+import { deletePersonAction } from './action/delete-person';
 import { deleteDealAction } from './action/delete-deal';
-import { subscribeToEmailListAction } from './action/subscribe-to-email-list';
+
+// Actions — List
+import { listAccountsAction } from './action/list-accounts';
+import { listPersonsAction } from './action/list-persons';
+import { listDealsAction } from './action/list-deals';
+import { listPlansAction } from './action/list-plans';
+import { listAddOnsAction } from './action/list-addons';
+import { listDiscountsAction } from './action/list-discounts';
+import { listCasesAction } from './action/list-cases';
+import { listTransactionsAction } from './action/list-transactions';
+
+// Actions — Billing (Subscription)
+import { changeAccountPlanAction } from './action/change-account-plan';
+import { cancelSubscriptionAction } from './action/cancel-subscription';
+import { removeCancellationAction } from './action/remove-cancellation';
+import { addDiscountToSubscriptionAction } from './action/add-discount-to-subscription';
+import { addAddonUsageAction } from './action/add-addon-usage';
+import { addAddonToSubscriptionAction } from './action/add-addon-to-subscription';
+import { extendTrialSubscriptionAction } from './action/extend-trial-subscription';
+import { updatePaymentInformationAction } from './action/update-payment-information';
+
+// Actions — Billing (Catalog)
+import { createDiscountAction } from './action/create-discount';
+
+// Actions — Billing (Invoice)
+import { addInvoiceAction } from './action/add-invoice';
+import { addInvoicePaymentAction } from './action/add-invoice-payment';
+import { sendInvoiceEmailAction } from './action/send-invoice-email';
+import { processPaymentAction } from './action/process-payment';
+
+// Actions — CRM (Membership / Activity)
+import { manageAccountMembershipAction } from './action/manage-account-membership';
+import { updateAccountMembershipAction } from './action/update-account-membership';
 import { addCustomActivityAction } from './action/add-custom-activity';
 
+// Actions — Email
+import { manageEmailListSubscriptionAction } from './action/manage-email-list-subscription';
+import { sendConfirmationEmailAction } from './action/send-confirmation-email';
+
+// Actions — Support
+import { addCaseAction } from './action/add-case';
+import { addReplyAction } from './action/add-reply';
+
 // Triggers
-import { accountAddedTrigger } from './triggers/account-added';
-import { accountUpdatedTrigger } from './triggers/account-updated';
-import { accountDeletedTrigger } from './triggers/account-deleted';
-import { accountStageUpdatedTrigger } from './triggers/account-stage-updated';
-import { accountBillingInvoiceCreatedTrigger } from './triggers/account-billing-invoice-created';
-import { accountBillingInvoiceDeletedTrigger } from './triggers/account-billing-invoice-deleted';
-import { accountPaidSubscriptionCreatedTrigger } from './triggers/account-paid-subscription-created';
-import { accountSubscriptionStartedTrigger } from './triggers/account-subscription-started';
-import { accountSubscriptionAddOnsChangedTrigger } from './triggers/account-subscription-addons-changed';
-import { accountSubscriptionCancellationRequestedTrigger } from './triggers/account-subscription-cancellation-requested';
-import { accountSubscriptionPlanUpdatedTrigger } from './triggers/account-subscription-plan-updated';
-import { accountSubscriptionPaymentCollectedTrigger } from './triggers/account-subscription-payment-collected';
-import { accountSubscriptionPaymentDeclinedTrigger } from './triggers/account-subscription-payment-declined';
-import { accountSubscriptionRenewalExtendedTrigger } from './triggers/account-subscription-renewal-extended';
-import { personAddedTrigger } from './triggers/person-added';
-import { personUpdatedTrigger } from './triggers/person-updated';
-import { personDeletedTrigger } from './triggers/person-deleted';
-import { dealCreatedTrigger } from './triggers/deal-created';
-import { dealUpdatedTrigger } from './triggers/deal-updated';
+import { newAccountEventTrigger } from './triggers/new-account-event';
+import { newPersonEventTrigger } from './triggers/new-person-event';
+import { newDealEventTrigger } from './triggers/new-deal-event';
+import { newTaskEventTrigger } from './triggers/new-task-event';
+import { newPlanEventTrigger } from './triggers/new-plan-event';
+import { newAddOnEventTrigger } from './triggers/new-add-on-event';
 
 export const outseta = createPiece({
   displayName: 'Outseta',
@@ -52,47 +85,72 @@ export const outseta = createPiece({
   authors: ['bst1n', 'sanket-a11y'],
   categories: [PieceCategory.SALES_AND_CRM],
   triggers: [
-    accountAddedTrigger,
-    accountUpdatedTrigger,
-    accountDeletedTrigger,
-    accountStageUpdatedTrigger,
-    accountBillingInvoiceCreatedTrigger,
-    accountBillingInvoiceDeletedTrigger,
-    accountPaidSubscriptionCreatedTrigger,
-    accountSubscriptionStartedTrigger,
-    accountSubscriptionAddOnsChangedTrigger,
-    accountSubscriptionCancellationRequestedTrigger,
-    accountSubscriptionPlanUpdatedTrigger,
-    accountSubscriptionPaymentCollectedTrigger,
-    accountSubscriptionPaymentDeclinedTrigger,
-    accountSubscriptionRenewalExtendedTrigger,
-    personAddedTrigger,
-    personUpdatedTrigger,
-    personDeletedTrigger,
-    dealCreatedTrigger,
-    dealUpdatedTrigger,
+    newAccountEventTrigger,
+    newPersonEventTrigger,
+    newDealEventTrigger,
+    newTaskEventTrigger,
+    newPlanEventTrigger,
+    newAddOnEventTrigger,
   ],
   actions: [
-    findOrAddAccountAction,
-    findOrAddPersonAction,
+    // Retrieve
     getAccountAction,
     getPersonAction,
     getDealAction,
-    getAccountPlanAction,
+    getSubscriptionAction,
+    getLastPaymentAction,
+    // Create / Find or Add
+    createAccountAction,
+    createDealAction,
+    findOrAddPersonAction,
+    findOrAddDealAction,
+    // Update
     updateAccountAction,
     updatePersonAction,
     updateDealAction,
-    addDealAction,
-    addPersonToAccountAction,
-    addCustomActivityAction,
+    // Delete
+    deleteAccountAction,
+    deletePersonAction,
+    deleteDealAction,
+    // List
+    listAccountsAction,
+    listPersonsAction,
+    listDealsAction,
+    listPlansAction,
+    listAddOnsAction,
+    listDiscountsAction,
+    listCasesAction,
+    listTransactionsAction,
+    // Billing — Subscription
     changeAccountPlanAction,
     cancelSubscriptionAction,
+    removeCancellationAction,
+    addDiscountToSubscriptionAction,
     addAddonUsageAction,
-    subscribeToEmailListAction,
-    deleteDealAction,
+    addAddonToSubscriptionAction,
+    extendTrialSubscriptionAction,
+    updatePaymentInformationAction,
+    // Billing — Catalog
+    createDiscountAction,
+    // Billing — Invoice
+    addInvoiceAction,
+    addInvoicePaymentAction,
+    sendInvoiceEmailAction,
+    processPaymentAction,
+    // CRM — Membership / Activity
+    manageAccountMembershipAction,
+    updateAccountMembershipAction,
+    addCustomActivityAction,
+    // Email
+    manageEmailListSubscriptionAction,
+    sendConfirmationEmailAction,
+    // Support
+    addCaseAction,
+    addReplyAction,
+    // Custom API call
     createCustomApiCallAction({
       auth: outsetaAuth,
-      baseUrl: (auth) => `${auth.props.domain}/api/v1`,
+      baseUrl: (auth) => `${auth?.props?.domain}/api/v1`,
       authMapping: async (auth) => {
         const { apiKey, apiSecret } = auth.props;
         return {

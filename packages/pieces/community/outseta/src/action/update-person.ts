@@ -1,15 +1,25 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
-import { personUidDropdown } from '../common/dropdowns';
+import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
 
 export const updatePersonAction = createAction({
   name: 'update_person',
   auth: outsetaAuth,
   displayName: 'Update Person',
   description: 'Update an existing person in Outseta.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Outseta CRM person identified by UID, setting only the provided fields (email, name, phone, title, mailing address) via a PUT. Use to change a contact when you have its UID; requires at least one field. Idempotent: re-running with the same input leaves the person in the same state.',
+    idempotent: true,
+  },
   props: {
-    personUid: personUidDropdown(),
+    personUid: Property.ShortText({
+      displayName: 'Person UID',
+      description: 'The UID of the person to update.',
+      required: true,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
@@ -59,6 +69,7 @@ export const updatePersonAction = createAction({
       displayName: 'Country',
       required: false,
     }),
+    customProperties: customPropertiesProp('Person'),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -67,12 +78,13 @@ export const updatePersonAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    // Fetch full person first to avoid wiping fields with a partial PUT
-    // const person = await client.get<any>(
-    //   `/api/v1/crm/people/${context.propsValue.personUid}`
-    // );
-    const person: any = {};
-     console.log('Fetched person:', person);
+    // Fetch full person with nested objects expanded to avoid wiping on PUT.
+    // PersonAccount is the collection of join records linking this person to
+    // accounts — expanding it preserves memberships when we PUT back.
+    const person = await client.get<any>(
+      `/api/v1/crm/people/${context.propsValue.personUid}?fields=*,MailingAddress.*,Account.*,PersonAccount.*,PersonAccount.Account.*`
+    );
+
     let changed = false;
     if (context.propsValue.email) {
       person.Email = context.propsValue.email;
@@ -119,8 +131,21 @@ export const updatePersonAction = createAction({
       changed = true;
     }
 
+    if (context.propsValue.customProperties) {
+      mergeCustomProperties(person, context.propsValue.customProperties);
+      changed = true;
+    }
+
     if (!changed) {
       throw new Error('At least one field must be provided.');
+    }
+
+    // Defensive: ensure PersonAccount is a flat array on the way out, so we
+    // never PUT back a {items: [...]} envelope that the server might
+    // misinterpret as "no memberships" and wipe.
+    if (person.PersonAccount && !Array.isArray(person.PersonAccount)) {
+      person.PersonAccount =
+        person.PersonAccount.items ?? person.PersonAccount.Items ?? [];
     }
 
     const updatedPerson = await client.put<any>(

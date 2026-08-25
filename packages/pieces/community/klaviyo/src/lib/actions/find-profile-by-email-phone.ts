@@ -27,8 +27,14 @@ interface KlaviyoProfile {
 export const findProfileByEmailPhone = createAction({
   auth: klaviyoAuth,
   name: 'findProfileByEmailPhone',
+  classification: 'READ',
   displayName: 'Find Profile by Email/Phone',
   description: 'Find a profile using email or phone number.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up a Klaviyo profile by exact email address or phone number and returns matching profiles with their IDs. The search value is auto-detected as an email (must contain "@" and be valid) or a phone number (E.164 recommended). Use to resolve a contact into a profile ID before update/subscribe/list actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     search_query: Property.ShortText({
       displayName: 'Email or Phone Number',

@@ -1,12 +1,5 @@
-import {
-    FlowOperationRequest,
-    FlowOperationType,
-    FlowStatus,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { FlowOperationRequest, FlowOperationType, FlowStatus, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -18,7 +11,7 @@ const changeFlowStatusInput = z.object({
     status: z.enum(Object.values(FlowStatus) as [FlowStatus, ...FlowStatus[]]),
 })
 
-export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apChangeFlowStatusTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_change_flow_status',
         permission: Permission.UPDATE_FLOW_STATUS,
@@ -27,7 +20,7 @@ export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: Fastify
             flowId: z.string().describe('The id of the flow'),
             status: z.enum([FlowStatus.ENABLED, FlowStatus.DISABLED]).describe('The new status: ENABLED to activate the flow, DISABLED to pause it'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, status } = changeFlowStatusInput.parse(args)
 
@@ -48,6 +41,15 @@ export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: Fastify
                 }
             }
 
+            if (status === FlowStatus.DISABLED && flow.status === FlowStatus.DISABLED) {
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Flow "${flow.version.displayName}" is already disabled.`,
+                    }],
+                }
+            }
+
             const operation: FlowOperationRequest = {
                 type: FlowOperationType.CHANGE_STATUS,
                 request: { status },
@@ -57,7 +59,8 @@ export const apChangeFlowStatusTool = (mcp: ProjectScopedMcpServer, log: Fastify
                 await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

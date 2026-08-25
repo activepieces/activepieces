@@ -9,6 +9,12 @@ export const findContactByName = createAction({
   displayName: 'Find Contact ',
   description:
     'Get a paginated list of contacts and search by name, email, or phone number',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up contacts in the Echowin CRM. With a search value it filters contacts matching the given name, email, or phone number; leaving search empty returns the full paginated contact list. Use to resolve a contact or browse contacts. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     search: Property.ShortText({
       displayName: 'Search',

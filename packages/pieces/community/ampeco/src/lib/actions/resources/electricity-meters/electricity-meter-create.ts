@@ -15,6 +15,8 @@ export const electricityMeterCreateAction = createAction({
   name: 'electricityMeterCreate',
   displayName: 'Resources - Electricity Meters - Create',
   description: 'Create a new electricity meter.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new AMPECO electricity meter with a name and integration ID. Not idempotent: each call adds a separate meter, so re-running duplicates it. To change an existing meter, use the electricity meter update action instead.', idempotent: false },
   props: {
         
   name: Property.ShortText({

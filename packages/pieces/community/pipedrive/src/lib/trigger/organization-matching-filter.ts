@@ -9,7 +9,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { GetField } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
 
 interface PipedriveOrganizationV2 {
@@ -75,8 +75,13 @@ interface OrganizationListResponseV2 {
 export const organizationMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'organization-matching-filter',
+	classification: 'READ',
 	displayName: 'Organization Matching Filter',
 	description: 'Triggers when an organization newly matches a Pipedrive filter for the first time.',
+	aiMetadata: {
+		description:
+			'Fires when an organization (company) record first becomes a member of a selected Pipedrive filter — that is, the organization newly satisfies the filter conditions. Polls the filter and emits each organization the first time it appears; does not re-fire for organizations already in the filter.',
+	},
 	type: TriggerStrategy.POLLING,
 	props: {
 		filterId: filterIdProp('org', true),

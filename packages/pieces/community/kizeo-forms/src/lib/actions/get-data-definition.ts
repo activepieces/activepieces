@@ -9,6 +9,8 @@ export const getDataDefinition = createAction({
   name: 'get_data_definition', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Get Data Definition',
   description: 'Get the definition of a data',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single submitted data record (the answers) from a Kizeo Forms form by its form ID and data ID. Use to read back the contents of one specific submission. Read-only and idempotent.', idempotent: true },
   props: {
     formId: kizeoFormsCommon.formId,
     dataId: Property.Number({

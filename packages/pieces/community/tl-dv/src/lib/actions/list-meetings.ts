@@ -8,6 +8,11 @@ export const listMeetings = createAction({
   name: 'list_meetings',
   displayName: 'List Meetings',
   description: 'Search and list meetings',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists meetings from the tl;dv account, paginated. With an empty search query it returns all meetings; supplying a query filters to matches by name or content, and optional date range, participation, and internal/external type filters further narrow results. Use to discover meetings or find a meeting id to feed into other actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

@@ -5,8 +5,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const donateMoney = createAction({
   auth: oneclickimpactAuth,
   name: 'donateMoney',
+  classification: 'WRITE',
   displayName: 'Donate Money',
   description: ' Donate money to support environmental causes',
+  audience: 'both',
+  aiMetadata: { description: 'Makes a monetary donation to environmental causes through 1ClickImpact for an amount in USD (minimum $1.00, converted to cents internally), optionally attributed to a named customer email/name. Use to fund impact as part of a transaction or fulfillment flow. Not idempotent — each call records a new donation, so repeating it donates again.', idempotent: false },
   props: {
     amount: Property.Number({
       displayName: 'Amount (USD)',

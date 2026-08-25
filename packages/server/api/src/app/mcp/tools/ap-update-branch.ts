@@ -1,15 +1,5 @@
-import {
-    BranchCondition,
-    BranchExecutionType,
-    FlowActionType,
-    FlowOperationRequest,
-    FlowOperationType,
-    isNil,
-    McpToolDefinition,
-    Permission,
-    ProjectScopedMcpServer,
-    RouterActionSettings,
-} from '@activepieces/shared'
+import { isNil, Permission } from '@activepieces/core-utils'
+import { BranchCondition, BranchExecutionType, FlowActionType, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition, RouterActionSettings } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -24,7 +14,7 @@ const updateBranchInput = z.object({
     conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
-export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_branch',
         permission: Permission.WRITE_FLOW,
@@ -36,7 +26,7 @@ export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
             branchName: z.string().optional().describe('New display name for the branch'),
             conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('New conditions array (outer array = OR groups, inner array = AND conditions). Replaces the existing conditions entirely.'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, routerStepName, branchIndex, branchName, conditions } = updateBranchInput.parse(args)
@@ -51,6 +41,8 @@ export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 if (isNil(flow)) {
                     return { content: [{ type: 'text', text: '❌ Flow not found' }] }
                 }
+
+                const rewritten = mcpUtils.rewriteAllReferences({ conditions, trigger: flow.version.trigger })
 
                 const resolved = mcpUtils.resolveRouterStep({ stepName: routerStepName, trigger: flow.version.trigger })
                 if (resolved.error) {
@@ -89,7 +81,7 @@ export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                         ...targetBranch,
                         ...(branchName !== undefined && { branchName }),
                         // .min(1) and .superRefine on the input schema align the runtime shape with BranchCondition's discriminated union.
-                        ...(conditions !== undefined && { conditions: conditions as BranchCondition[][] }),
+                        ...(rewritten.conditions !== undefined && { conditions: rewritten.conditions as BranchCondition[][] }),
                     }
                 }
 
@@ -112,7 +104,8 @@ export const apUpdateBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

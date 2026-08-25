@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { blandAiAuth, BLAND_AI_BASE_URL } from './lib/auth';
 import { sendCall } from './lib/actions/send-call';
 import { getCallDetails } from './lib/actions/get-call-details';

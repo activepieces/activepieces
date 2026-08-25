@@ -12,6 +12,9 @@ export const newEmailTrigger = createTrigger({
   name: 'new_email',
   displayName: 'New Email Received',
   description: 'Triggers instantly when a new email is received in an inbox.',
+  aiMetadata: {
+    description: 'Fires via webhook the moment an inbound email arrives, optionally scoped to a single inbox. Each event represents one received message with sender, recipients, subject, preview, thread id, and an injection-risk score; fetch the full body with Get Email.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inbox_id: inboxIdDropdownOptional,

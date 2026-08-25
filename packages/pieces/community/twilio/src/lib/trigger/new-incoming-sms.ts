@@ -11,8 +11,12 @@ import { twilioAuth } from '../..';
 export const twilioNewIncomingSms = createTrigger({
   auth: twilioAuth,
   name: 'new_incoming_sms',
+  classification: 'READ',
   displayName: 'New Incoming SMS',
   description: 'Triggers when a new SMS message is received',
+  aiMetadata: {
+    description: 'Fires when an inbound SMS message is received on the specified Twilio phone number. Each event represents one incoming text message with its sender, body, and metadata.',
+  },
   props: {
     phone_number: twilioCommon.phone_number,
   },

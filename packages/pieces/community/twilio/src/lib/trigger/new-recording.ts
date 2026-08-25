@@ -81,8 +81,12 @@ const polling: Polling<
 export const twilioNewRecording = createTrigger({
     auth: twilioAuth,
     name: 'new_recording',
+    classification: 'READ',
     displayName: 'New Recording',
     description: 'Triggers when a new call recording is completed and available.',
+    aiMetadata: {
+      description: 'Fires when a new call recording becomes available on the Twilio account. Each event represents one completed recording, including its call SID, duration, and status.',
+    },
     props: {},
     sampleData: {
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

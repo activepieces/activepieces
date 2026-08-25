@@ -10,10 +10,15 @@ const triggerHooks = createWebhookTriggerHooks({
 
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
+  classification: 'READ',
   auth: baserowAuth,
   displayName: 'Updated Rows (Batch)',
   description:
     'Triggers when existing rows are updated in a Baserow table. Returns all rows from the event as a single batch.',
+  aiMetadata: {
+    description:
+      'Fires when one or more existing rows are updated in the selected Baserow table, delivering all changed rows (each with new and previous values) from a single update event together as one batch. Use to process bulk edits at once; for one event per row use Updated Row.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     table_id: baserowCommon.tableId(),

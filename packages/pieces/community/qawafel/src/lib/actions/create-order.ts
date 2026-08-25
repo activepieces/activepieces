@@ -10,6 +10,12 @@ export const createOrder = createAction({
   displayName: 'Create Completed Order',
   description:
     'Sync a completed (fulfilled) order into Qawafel. Use this to import historical or externally-completed orders from another storefront, ERP, or B2B portal — the order is created directly in **Fulfilled** state and skips the normal fulfilment workflow. Do **not** use this for new orders that still need to be confirmed, picked, and delivered.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Imports an already-completed order into Qawafel directly in Fulfilled state, skipping the normal confirm/pick/deliver workflow — meant for backfilling historical or externally-fulfilled orders, not for orders that still need to move through fulfilment. Requires a customer merchant id, line items, and a delivery address. Not idempotent: each call creates a new order.',
+    idempotent: false,
+  },
   props: {
     merchant_id: qawafelProps.merchantDropdown({
       displayName: 'Customer',

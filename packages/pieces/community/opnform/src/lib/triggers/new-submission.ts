@@ -7,6 +7,9 @@ export const opnformNewSubmission = createTrigger({
     name: 'new_submission',
     displayName: 'New Submission',
     description: 'Triggers when Opnform receives a new submission.',
+    aiMetadata: {
+        description: 'Fires whenever the specified OpnForm form receives a new submission (someone fills out and submits the form). The event payload contains the form title, slug, and the submitted answers keyed by field id, each with its value and field name. Use it to react to incoming form responses such as contact requests, signups, or survey answers.',
+    },
     props: {
         workspaceId: workspaceIdProp,
         formId: formIdProp,

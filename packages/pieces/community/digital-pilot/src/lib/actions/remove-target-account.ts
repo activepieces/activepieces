@@ -7,6 +7,8 @@ export const removeTargetAccountAction = createAction({
   name: 'remove_target_account',
   displayName: 'Remove Target Account',
   description: 'Remove a target account from a list',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a company domain from a specific DigitalPilot target-account list (identified by tag and list IDs), stopping it from being tracked as a high-priority account. Use to prune an account-based marketing target list. Requires the tag ID, list ID, and the account domain; idempotent, since removing an already-absent domain leaves the list membership unchanged.', idempotent: true },
   props: {
     tagId: tagIdProp,
     listId: listIdProp,

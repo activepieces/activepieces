@@ -8,6 +8,12 @@ export const addTarget = createAction({
   name: 'addTarget',
   displayName: 'Add Target',
   description: 'Add a new target to your Intruder account',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Registers a new scan target (a domain or IP address) in the Intruder account so it can be included in future vulnerability scans, optionally tagging it for organization. Use when an agent needs to onboard an asset before scanning it. Not idempotent: each call attempts to create another target for the given address.',
+    idempotent: false,
+  },
   props: {
     address: Property.ShortText({
       displayName: 'Target Address',

@@ -6,6 +6,11 @@ export const generateSpeechFromFile = createAction({
   name: 'generate_speech_from_file',
   displayName: 'Generate Speech from File',
   description: 'Convert audio file to speech using Hume AI\'s expressive text-to-speech technology',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Synthesize expressive speech from text via Hume AI and return a single downloadable audio file (mp3/wav/pcm). Like Generate Text to Speech but returns the raw audio file directly rather than JSON metadata; choose this when you just need the audio file output. Optionally steer the voice with a natural-language description. Each call generates fresh audio, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: humeAiAuth,
   props: {
     text: Property.LongText({

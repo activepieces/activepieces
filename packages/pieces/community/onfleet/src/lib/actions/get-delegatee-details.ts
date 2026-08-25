@@ -8,6 +8,8 @@ export const getDelegateeDetails = createAction({
   name: 'get_delegatee_details',
   displayName: 'Get Delegatee Details',
   description: 'Get details of a connected organization',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches details of a connected (delegatee) Onfleet organization by its organization ID. Read-only and idempotent. Use this for a partner/connected org you delegate to; to read your own organization use get-organization instead.', idempotent: true },
   props: {
     organization: Property.ShortText({
       displayName: 'Organization ID',

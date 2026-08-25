@@ -8,6 +8,8 @@ export const get_skills = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Skills',
     description: 'Retrieve the list of skills available in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all driver/vehicle skills defined in the account, returning their ids and names. Use to resolve a valid skill reference before requiring it on visits or assigning it to resources. Read-only and idempotent; takes no inputs.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/routes/skills/`;

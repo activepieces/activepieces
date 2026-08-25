@@ -15,6 +15,8 @@ export const termsAndPoliciesListingAction = createAction({
   name: 'termsAndPoliciesListing',
   displayName: 'Resources - Terms And Policies - Listing',
   description: 'Terms and policies / Listing.',
+  audience: 'both',
+  aiMetadata: { description: 'List terms-and-policies document versions, optionally filtered by document id and valid-from date. Read-only and idempotent. Use termsAndPoliciesRead when you already know a specific term version id.', idempotent: true },
   props: {
         
   filter__documentId: Property.Number({

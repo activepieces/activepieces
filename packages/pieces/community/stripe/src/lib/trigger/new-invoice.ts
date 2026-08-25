@@ -6,7 +6,7 @@ import {
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 type StripeWebhookPayload = {
@@ -17,12 +17,18 @@ type StripeWebhookPayload = {
   };
 };
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeNewInvoice = createTrigger({
   auth: stripeAuth,
   name: 'new_invoice',
+  classification: 'READ',
   displayName: 'New Invoice',
   description:
     'Fires when an invoice is created. Supports filters like status, customer, subscription.',
+  aiMetadata: {
+    description:
+      'Fires when an invoice is created in Stripe (the invoice.created event), emitting the new invoice. Optional filters narrow firing to a specific status, customer ID, or subscription ID. Use to react to newly issued invoices, for example to record or forward them.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',
@@ -51,6 +57,7 @@ export const stripeNewInvoice = createTrigger({
       required: false,
     }),
   },
+  outputSchema: invoiceOutputSchema,
   sampleData: {
     id: 'in_1MtHbELkdIwHu7ixl4OzzPMv',
     object: 'invoice',

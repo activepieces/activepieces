@@ -10,6 +10,9 @@ export const updatedFeature = createTrigger({
     name: 'updated_feature',
     displayName: 'Updated Feature',
     description: 'Triggers when an existing feature is updated in Productboard',
+    aiMetadata: {
+        description: 'Fires when an existing feature is updated in Productboard (feature.updated webhook event), representing a change to a feature\'s fields such as name, description, status, or archived state.',
+    },
     auth: productboardAuth,
     type: TriggerStrategy.WEBHOOK,
     props: {},

@@ -4,11 +4,21 @@ import { findCustomerAction } from "./actions/find-customer";
 import { findPaymentAction } from "./actions/find-payment";
 import { createInvoiceAction } from "./actions/create-invoice";
 import { createExpenseAction } from "./actions/create-expense";
+import { createBillAction } from "./actions/create-bill";
+import { createVendorAction } from "./actions/create-vendor";
+import { findVendorAction } from "./actions/find-vendor";
+import { findAccountAction } from "./actions/find-account";
+import { recordPaymentAction } from "./actions/record-payment";
+import { recordBillPaymentAction } from "./actions/record-bill-payment";
+import { readAgingReportAction } from "./actions/read-aging-report";
 import { newInvoice } from "./triggers/new-invoice";
 import { newExpense } from "./triggers/new-expense";
 import { newCustomer } from "./triggers/new-customer";
 import { newDeposit } from "./triggers/new-deposit";
 import { newTransfer } from "./triggers/new-transfer";
+import { newOrUpdatedInvoice } from "./triggers/new-or-updated-invoice";
+import { paymentReceived } from "./triggers/payment-received";
+import { newBill } from "./triggers/new-bill";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { quickbooksCommon } from "./lib/common";
 import { quickbooksAuth } from './lib/auth';
@@ -18,37 +28,45 @@ export const quickbooks = createPiece({
   auth: quickbooksAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/quickbooks.png",
-  authors: [
-    'onyedikachi-david'
-  ],
+  authors: [ 'onyedikachi-david', 'sanket-a11y'],
   actions: [
     findInvoiceAction,
     findCustomerAction,
     findPaymentAction,
     createInvoiceAction,
     createExpenseAction,
-	createCustomApiCallAction({
-		auth:quickbooksAuth,
-		baseUrl:(auth)=>{
-			const authValue = auth as PiecePropValueSchema<typeof quickbooksAuth>;
-			 const companyId = authValue.props?.['companyId'];
-			
-				const apiUrl = quickbooksCommon.getApiUrl(companyId);
-				return apiUrl
+    createBillAction,
+    createVendorAction,
+    findVendorAction,
+    findAccountAction,
+    recordPaymentAction,
+    recordBillPaymentAction,
+    readAgingReportAction,
+    createCustomApiCallAction({
+      auth:quickbooksAuth,
+      baseUrl:(auth)=>{
+        const authValue = auth as PiecePropValueSchema<typeof quickbooksAuth>;
+        const companyId = authValue.props?.['companyId'];
+        
+          const apiUrl = quickbooksCommon.getApiUrl(companyId);
+          return apiUrl
 
-		},
-		authMapping:async (auth)=>{
-        return {
-          Authorization:`Bearer ${(auth as OAuth2PropertyValue).access_token}`
+      },
+      authMapping:async (auth)=>{
+          return {
+            Authorization:`Bearer ${(auth as OAuth2PropertyValue).access_token}`
+          }
         }
-      }
-	})
+    })
   ],
   triggers: [
     newInvoice,
     newExpense,
     newCustomer,
     newDeposit,
-    newTransfer
+    newTransfer,
+    newOrUpdatedInvoice,
+    paymentReceived,
+    newBill
   ],
 });

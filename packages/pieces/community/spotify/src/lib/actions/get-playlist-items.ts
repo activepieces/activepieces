@@ -3,8 +3,14 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playlist_items',
+  classification: 'SEARCH',
   displayName: 'Get Playlist Items',
   description: 'Retrieves the list of items in the playlist',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists the tracks/episodes contained in a playlist, identified by its playlist id. By default returns one paged page (limit/offset); enable the All option to auto-page through and return every item in one call. Use it to read a playlist\'s contents. Read-only and repeatable.',
+    idempotent: true,
+  },
   auth: spotifyCommon.authentication,
   props: {
     playlist_id: spotifyCommon.playlist_id(true),

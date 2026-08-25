@@ -11,6 +11,12 @@ export const createAccountAction = createAction({
   name: 'create_account',
   displayName: 'Create Account',
   description: 'Create a billing account in Recurly.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new billing account in Recurly to represent a customer, identified by a unique account code you supply. Use before creating subscriptions, since a subscription must be attached to an existing account. Not idempotent: each call attempts to create a new account, and reusing an account code that already exists will fail.',
+    idempotent: false,
+  },
   props: {
     code: Property.ShortText({
       displayName: 'Account Code',

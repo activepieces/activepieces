@@ -1,0 +1,40 @@
+---
+title: "Building for Self-Hosting"
+icon: "server"
+---
+
+We develop against Cloud, where every env var, secret, and key is already provisioned. Most of our users self-host. When a feature quietly depends on something only Cloud has, it works on your machine, in the demo, and in the changelog — and is **silently broken for everyone who self-hosts.** They see a feature that looks enabled, doesn't work, and tells them nothing. Then they open a ticket.
+
+## The core rule: default to zero-setup
+
+> If a feature needs the self-hoster to set something up first, the default is **make it work with zero setup** — not "document the env var."
+
+An env var isn't a feature flag for the user. It's a tax on every install, and an undiscoverable failure: they enable the feature, it fails, nothing explains why. Order of preference for any required secret/key/config:
+
+1. **Auto-provision** it on first boot or first use. Reach for this first — it's almost always possible.
+2. **Derive** it from something the instance already has.
+3. **Gate visibly** — if the prerequisite is genuinely absent, the feature must be **disabled with an explanation**, never enabled-but-broken.
+4. **Require manual setup** — last resort only, with a clear in-product error *and* a changelog note.
+
+## Failure modes we keep hitting
+
+**1. "Requires manual setup" shipped as enabled.** A feature needs a per-instance key. Cloud has it, so it works; self-hosters don't, so it fails — but the UI shows it as available.
+
+- *S3 IAM Role / OIDC (PR #13439)* depends on `AP_OIDC_RSA_PRIVATE_KEY`. Unset, every connection fails: `/api/v1/worker/oidc-token` → `400`, `/.well-known/jwks.json` → `400 SYSTEM_PROP_INVALID`. The discovery doc returns `200`, so it *looks* deployed. The fix is to **auto-generate the key**, not document the env var.
+- *Pipefy* shipped the same shape — enabled in the UI, broken until an undocumented setup step is done.
+
+**2. Data-layer changes that break self-hosted upgrades.** *pgvector:* we added a dependency on the extension. Cloud's Postgres had it; many self-hosted instances didn't. Upgrades failed on migration — and it never reached breaking-changes, *because the people who hit it self-host and we don't test that path.* Either don't depend on what self-hosted Postgres may lack, or flag it as breaking, fail the migration with an actionable error, and document the step.
+
+**3. Assuming Cloud's network and infra.** Cloud has outbound internet, a public webhook URL, and generous resources. Self-hosters may run air-gapped or in strict network mode, behind a firewall with no public URL, or on tighter limits. A feature that calls an external service at runtime, fetches from a registry, assumes a publicly reachable callback, or hardcodes a Cloud URL (`cloud.activepieces.com`, `api.activepieces.com`) works for us and dies for them. Degrade gracefully when a dependency is absent, and derive URLs from the instance's own config — never hardcode Cloud's.
+
+**4. Enabling a feature without a self-hosted path at all.** A capability is built on a Cloud-only service (a managed secret store, a proprietary backend, a paid third-party with our key) and exposed everywhere anyway. Self-hosters can't supply the missing half, so it can never work for them. Decide up front whether it has a self-hosted story — if not, gate it by edition rather than letting it surface broken.
+
+## If it genuinely can't be zero-setup
+
+The UI must never present the feature as working when it isn't.
+
+- **Disable it visibly** with a message naming the missing prerequisite. Use existing patterns (`LockedFeatureGuard`, `enabled:` on queries, `platformMustHaveFeatureEnabled`).
+- **Fail with a real error** that names the prerequisite and links the fix — not an opaque `400`.
+- "Disable on Cloud" is a stopgap, not the goal. We want it to *work everywhere*, not be hidden on the one env where it happens to be set up.
+
+We're self-hosting-first. The self-hosted non-happy path *is* the happy path for most users — building for it is the work, not extra work.

@@ -9,6 +9,11 @@ export const searchMessages = createAction({
   name: 'searchMessages',
   displayName: 'Search Messages',
   description: 'Search within Chat for messages matching keywords or filters.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists recent messages in a given Google Chat space and returns those whose text contains the supplied keyword (case-insensitive substring match), capped by an optional result limit. Use to find messages mentioning a term within one space; note it scans only the latest messages fetched, not the full space history. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     spaceId: allSpacesDropdown({ refreshers: ['auth'], required: true }),
     keyword: Property.ShortText({

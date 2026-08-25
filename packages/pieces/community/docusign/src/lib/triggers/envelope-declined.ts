@@ -5,6 +5,10 @@ export const envelopeDeclined = createEnvelopeEventTrigger({
   displayName: 'Signing Refused',
   description:
     'Triggers when a recipient refuses to sign, stopping the signing process.',
+  aiMetadata: {
+    description:
+      'Fires when a recipient declines to sign a DocuSign envelope, which halts the signing process for the whole envelope. Represents a terminal failure of the signing request due to refusal.',
+  },
   docusignEvent: 'envelope-declined',
   sampleData: {
     event: 'envelope-declined',

@@ -7,8 +7,11 @@ import { PostDetails } from '../common/types';
 export const getPostDetailsAction = createAction({
 	auth: circleAuth,
 	name: 'get_post_details',
+	classification: 'READ',
 	displayName: 'Get Post Details',
 	description: 'Retrieves the complete details of a specific post.',
+	audience: 'both',
+	aiMetadata: { description: 'Retrieves the full details of a single Circle post by its post ID. Use to read a known post\'s content and metadata. Read-only and idempotent.', idempotent: true },
 	props: {
 		space_id: spaceIdDropdown,
 		post_id: postIdDropdown,

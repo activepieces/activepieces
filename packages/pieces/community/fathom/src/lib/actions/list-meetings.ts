@@ -6,6 +6,8 @@ export const listMeetings = createAction({
   name: 'listMeetings',
   displayName: 'List Meetings',
   description: 'List meetings with optional filtering and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'List Fathom meeting recordings, optionally narrowed by filters such as calendar invitees, invitee domains, recorder email, team, and created-before/after timestamps; with no filters it returns all accessible meetings. Use to discover meetings or find a recording ID for other actions. Set the include-transcript / summary / action-items / CRM-matches flags to embed that data per meeting. Read-only and repeatable; use the cursor for pagination.', idempotent: true },
   auth: fathomAuth,
   props: {
     calendar_invitees: Property.Array({

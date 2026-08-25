@@ -5,8 +5,11 @@ import { BlobServiceClient } from '@azure/storage-blob';
 export const createContainer = createAction({
   auth: azureBlobStorageAuth,
   name: 'createContainer',
+  classification: 'WRITE',
   displayName: 'Create Container',
   description: 'Creates a new container',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new container in the Azure Blob Storage account with the given name. Use when you need a fresh container to store blobs. Not idempotent: the container name must not already exist or the call fails.', idempotent: false },
   props: {
     containerName: Property.ShortText({
       displayName: 'Container Name',

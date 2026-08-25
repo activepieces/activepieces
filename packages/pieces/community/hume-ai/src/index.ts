@@ -7,7 +7,7 @@ import { deleteVoice } from './lib/actions/delete-voice';
 import { analyzeEmotionsFromUrl } from './lib/actions/analyze-emotions-from-url';
 import { getEmotionResults } from './lib/actions/get-emotion-results';
 import { newVoiceTrigger } from './lib/triggers/new-voice';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const humeAi = createPiece({
   displayName: 'Hume AI',

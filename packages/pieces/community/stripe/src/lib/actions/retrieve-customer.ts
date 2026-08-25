@@ -6,11 +6,19 @@ import {
 } from '@activepieces/pieces-common';
 import { stripeAuth } from '../..';
 
+import { customerOutputSchema } from '../output-schemas';
 export const stripeRetrieveCustomer = createAction({
   name: 'retrieve_customer',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve Customer',
   description: 'Retrieve a customer in stripe by id',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Fetches the full details of a single Stripe customer by its customer ID (e.g., cus_...). Use when you already have the exact ID and need the current record; for lookup by email use Search Customer instead. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'ID',
@@ -18,6 +26,7 @@ export const stripeRetrieveCustomer = createAction({
       required: true,
     }),
   },
+  outputSchema: customerOutputSchema,
   async run(context) {
     const customer = {
       id: context.propsValue.id,

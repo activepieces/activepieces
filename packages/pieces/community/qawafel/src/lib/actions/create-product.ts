@@ -10,6 +10,12 @@ export const createProduct = createAction({
   displayName: 'Create Product',
   description:
     'Add a new product to your Qawafel catalog. The workhorse for catalog sync from your ERP or storefront into Qawafel.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new product in the Qawafel catalog, in either Sale mode (something you sell) or Purchase mode (something bought from a supplier, which requires a supplier merchant id). Use when syncing a product from an external ERP or storefront into Qawafel; requires a SKU unique within the tenant plus English and Arabic names and a unit price. Not idempotent: each call creates a new product.',
+    idempotent: false,
+  },
   props: {
     type: Property.StaticDropdown<'sale' | 'purchase'>({
       displayName: 'Product Type',

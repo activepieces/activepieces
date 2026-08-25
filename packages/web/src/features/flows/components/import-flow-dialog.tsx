@@ -1,5 +1,5 @@
+import { isNil } from '@activepieces/core-utils';
 import {
-  isNil,
   PopulatedFlow,
   TelemetryEventName,
   UncategorizedFolderId,
@@ -137,17 +137,19 @@ const ImportFlowDialog = (
         }),
       );
 
+      setIsDialogOpen(false);
+
+      if (props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+        return;
+      }
+
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);
         return;
       }
-      setIsDialogOpen(false);
-      if (flows.length === 1 || props.insideBuilder) {
-        navigate(`/flow-import-redirect/${flows[0].id}`);
-      }
-      if (!props.insideBuilder) {
-        props.onRefresh();
-      }
+
+      props.onRefresh();
     },
     onError: (err) => {
       if (

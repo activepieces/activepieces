@@ -5,7 +5,6 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { dustAuth } from '../..';
-import { DustAuthType } from '../..';
 import {
   assistantProp,
   DUST_BASE_URL,
@@ -20,6 +19,12 @@ export const replyToConversation = createAction({
   name: 'replyToConversation',
   displayName: 'Reply to conversation',
   description: 'Send reply to existing conversation',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Post a new message to an existing Dust conversation, mentioning a chosen assistant, then return the conversation content once the assistant responds. Requires the target conversation ID and the query text. Each call appends a message, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: dustAuth,
   props: {
     conversationId: Property.ShortText({

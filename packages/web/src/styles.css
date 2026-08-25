@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import './styles/globals.css';
 @custom-variant dark (&:is(.dark *));
 
 /* Sentient Variable Font */
@@ -175,6 +176,7 @@
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
+  --font-sentient: 'Sentient', serif;
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
@@ -265,6 +267,15 @@
     }
   }
 
+  @keyframes slot-spin {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(0, calc(-1 * var(--marquee-loop, 50%)), 0);
+    }
+  }
+
   @keyframes blink-cursor {
     50% {
       opacity: 0;
@@ -343,6 +354,58 @@
     to {
       stroke-dashoffset: -20;
     }
+  }
+}
+
+/*
+  Per-block entrance fade for streaming chat markdown. While a message is actively
+  streaming (`data-stream-animate` set), each top-level markdown block
+  (paragraph/heading/list/code) fades + slides in once as it mounts. Completed
+  blocks are content-memoized so they never re-render → the animation never
+  replays (no flicker); historical/settled messages omit the attribute and render
+  static. Kept top-level (outside @theme) so Tailwind v4 always emits it.
+*/
+@keyframes chat-stream-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-stream-animate] > * {
+  animation: chat-stream-block-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+  Per-word entrance fade (Gemini-style) for the active streaming text block.
+  StreamingText injects `<span class="chat-word">` per word and paces the reveal,
+  so each word mounts once and fades via this keyframe; React's append-only
+  reconciliation keeps already-shown words from re-animating. Top-level (outside
+  @theme) so Tailwind v4 always emits it.
+*/
+@keyframes chat-word-in {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.chat-word {
+  animation: chat-word-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-stream-animate] > *,
+  .chat-word {
+    animation: none;
   }
 }
 
@@ -649,6 +712,14 @@
   [data-slot='sheet-content'][data-state='closed'] {
     --tw-exit-translate-x: 100% !important;
   }
+
+  /* Left-anchored sheets must slide in from the left, not the default right */
+  [data-slot='sheet-content'][data-side='left'][data-state='open'] {
+    --tw-enter-translate-x: -100% !important;
+  }
+  [data-slot='sheet-content'][data-side='left'][data-state='closed'] {
+    --tw-exit-translate-x: -100% !important;
+  }
 }
 
 @layer base {
@@ -800,6 +871,32 @@
   100% { background-position: 0% 50%; }
 }
 
+/* Animated gradient ring for the chat question card */
+.chat-question-gradient-border {
+  position: relative;
+}
+.chat-question-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(90deg, #8142e3, #a855f7, #d946ef, #a855f7, #8142e3);
+  background-size: 300% 100%;
+  animation: auth-anim-gradient-flow 4s ease-in-out infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-question-gradient-border::before {
+    animation: none;
+  }
+}
+
 /* Particle dots with percentage-based animation */
 .auth-anim-particle-dot {
   position: absolute;
@@ -881,4 +978,46 @@
   font-style: var(--shiki-dark-font-style);
   font-weight: var(--shiki-dark-font-weight);
   text-decoration: var(--shiki-dark-text-decoration);
+}
+
+@keyframes voice-bar {
+  0% { transform: scaleY(0.3); opacity: 0.6; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Brand-fixed purple (intentional, not --primary) so the icon matches the gradient. */
+.recurring-chip {
+  color: #8142e3;
+}
+.recurring-chip:hover {
+  background-color: rgba(129, 66, 227, 0.08);
+}
+
+/* Endpoints repeat the same purple so the 200% tiled background loops seamlessly. */
+.recurring-chip-gradient {
+  background-image: linear-gradient(
+    90deg,
+    #8142e3,
+    #ec2d9c,
+    #f2742b,
+    #4f8fe8,
+    #f2742b,
+    #ec2d9c,
+    #8142e3
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: recurring-gradient-slide 3.5s ease-in-out infinite;
+}
+
+@keyframes recurring-gradient-slide {
+  from { background-position: 200% center; }
+  to { background-position: 0% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recurring-chip-gradient { animation: none; }
 }

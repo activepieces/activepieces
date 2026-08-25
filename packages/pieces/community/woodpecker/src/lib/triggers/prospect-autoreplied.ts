@@ -7,6 +7,9 @@ export const prospectAutoreplied = createTrigger({
   name: 'prospect_autoreplied',
   displayName: 'Prospect Autoreplied',
   description: 'Triggers when an autoreply is detected from a prospect',
+  aiMetadata: {
+    description: 'Fires when Woodpecker detects an automated reply (e.g. out-of-office) from a prospect rather than a genuine human response. Represents an autoreply event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_autoreplied',

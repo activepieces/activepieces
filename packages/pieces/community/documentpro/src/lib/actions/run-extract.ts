@@ -7,6 +7,12 @@ export const runExtract = createAction({
   name: 'runExtract',
   displayName: 'Run Extract',
   description: 'Run an extract/workflow on an uploaded document',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a DocumentPro parser/workflow over an already-uploaded document to extract structured data, keyed by a document ID and a template/workflow ID. Optional OCR mode unlocks layout/table detection and regex-based start/end/split segmentation. Use after uploading a document; idempotent, as it reads and parses the same document with the same parameters without creating new records.',
+    idempotent: true,
+  },
   props: {
     document_id: Property.ShortText({
       displayName: 'Document ID',

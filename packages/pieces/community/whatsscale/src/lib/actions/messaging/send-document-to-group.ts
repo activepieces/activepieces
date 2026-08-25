@@ -9,8 +9,11 @@ import { pollJob } from '../../common/poll-job';
 export const sendDocumentToGroupAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_document_to_group',
+  classification: 'WRITE',
   displayName: 'Send a Document to a Group',
   description: 'Send a document to a WhatsApp group selected from the dropdown.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a document/file to a WhatsApp group whose chat ID is chosen from the session group list, with an optional display filename and caption. Pick this when the recipient is a known group; use the manual-entry, contact, CRM-contact, or channel variants for other recipient types. Requires a directly downloadable document URL. Not idempotent: each call delivers another document.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     group: whatsscaleProps.group,

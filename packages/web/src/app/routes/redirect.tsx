@@ -1,4 +1,4 @@
-import { ErrorCode, isNil } from '@activepieces/shared';
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -39,7 +39,7 @@ const RedirectPage: React.FC = React.memo(() => {
             code,
           });
           authenticationSession.saveResponse(data, false);
-          if (isNil(data.projectId)) {
+          if (isNil(data.platformId)) {
             navigate('/create-platform');
             return;
           }

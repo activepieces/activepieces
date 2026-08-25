@@ -10,6 +10,9 @@ export const contactTagUpdatedTrigger = createTrigger({
   name: 'contact_tag_updated',
   displayName: 'Contact Tag Updated',
   description: 'Triggers when a tag is added or removed from a contact in Respond.io.',
+  aiMetadata: {
+    description: 'Fires when a contact\'s tags change — a tag is added to or removed from a contact in Respond.io. Delivers the affected contact and its updated tag set. Requires manually configuring a contact.tag.updated webhook in Respond.io.',
+  },
   auth: respondIoAuth,
   props: {
     webhookInstructions: Property.MarkDown({

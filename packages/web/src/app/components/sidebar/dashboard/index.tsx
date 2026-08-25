@@ -1,9 +1,9 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
-  isNil,
+  ApFlagId,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
-  TeamProjectsLimit,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -13,11 +13,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { SearchInput } from '@/components/custom/search-input';
+import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
 import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
-import { TrophyIcon } from '@/components/icons/trophy';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,13 +37,19 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar-shadcn';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
+import { SidebarUsageLimits } from '@/features/billing';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import {
   CreateProjectButton,
   projectCollectionUtils,
   getProjectName,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -55,12 +61,14 @@ import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
-import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar({
   className,
 }: { className?: string } = {}) {
+  const { data: agentsEnabledFlag } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AGENTS_ENABLED,
+  );
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -71,7 +79,6 @@ export function ProjectDashboardSidebar({
   const navigate = useNavigate();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
-
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
@@ -79,21 +86,21 @@ export function ProjectDashboardSidebar({
   }, [searchOpen]);
 
   const shouldShowNewProjectButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return currentUser?.platformRole === PlatformRole.ADMIN;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowSearchButton = useMemo(() => {
-    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+    if (platform.plan.billedTeamProjectsLimit === 0) {
       return false;
     }
     return true;
-  }, [platform.plan.teamProjectsLimit]);
+  }, [platform.plan.billedTeamProjectsLimit]);
 
   const shouldShowInlineAddButton =
-    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
+    platform.plan.billedTeamProjectsLimit !== 0 &&
     currentUser?.platformRole === PlatformRole.ADMIN &&
     projects.filter((project) => project.type === ProjectType.TEAM).length ===
       0;
@@ -134,6 +141,8 @@ export function ProjectDashboardSidebar({
     [navigate, projects],
   );
 
+  const { checkAccess } = useAuthorization();
+
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
       return isNil(link.hasPermission) || link.hasPermission;
@@ -155,7 +164,19 @@ export function ProjectDashboardSidebar({
     icon: SendIcon,
     hasPermission: true,
     isSubItem: false,
-    badge: t('Beta'),
+    onClick: () => {
+      window.dispatchEvent(new Event(chatUtils.newChatEvent));
+    },
+  };
+
+  const agentsLink: SidebarItemType = {
+    type: 'link',
+    to: '/agents',
+    label: t('Agents'),
+    show: platform.plan.agentsEnabled && agentsEnabledFlag === true,
+    icon: BotIcon,
+    hasPermission: checkAccess(Permission.READ_AGENT),
+    isSubItem: false,
   };
 
   const exploreLink: SidebarItemType = {
@@ -199,29 +220,9 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const leaderboardLink: SidebarItemType = {
-    type: 'link',
-    to: '/leaderboard',
-    label: t('Leaderboard'),
-    icon: TrophyIcon,
-    show: true,
-    hasPermission: true,
-    isSubItem: false,
-    onClick: () => {
-      const page = STATIC_PAGES.find((p) => p.href === '/leaderboard');
-      if (page)
-        recordAccess({
-          id: page.id,
-          type: 'page',
-          label: page.label,
-          href: page.href,
-        });
-    },
-  };
-
-  const items = [chatLink, exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const items = [chatLink, agentsLink, exploreLink, impactLink]
+    .filter((item) => item.show !== false)
+    .filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (
@@ -312,20 +313,23 @@ export function ProjectDashboardSidebar({
                         <ProjectSideBarItem
                           key={project.id}
                           project={project}
-                          isCurrentProject={location.pathname.includes(
-                            `/projects/${project.id}`,
-                          )}
+                          isCurrentProject={
+                            location.pathname.includes(
+                              `/projects/${project.id}`,
+                            ) && !location.pathname.includes('/agents')
+                          }
                           handleProjectSelect={handleProjectSelect}
                         />
                       </SidebarMenuItem>
                     )}
                   />
                 ) : (
-                  isSearchMode && (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">
-                      {state === 'expanded' && t('No projects found.')}
-                    </div>
-                  )
+                  <div className="px-2 py-2 text-sm text-muted-foreground">
+                    {state === 'expanded' &&
+                      (isSearchMode
+                        ? t('No projects found.')
+                        : t('No projects yet'))}
+                  </div>
                 )}
               </div>
               {shouldShowInlineAddButton && state === 'expanded' && (

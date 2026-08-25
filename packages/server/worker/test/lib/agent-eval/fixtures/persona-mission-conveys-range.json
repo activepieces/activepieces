@@ -1,0 +1,25 @@
+{
+    "id": "persona-mission-conveys-range",
+    "description": "Capability: when asked what it can do, the assistant frames itself as a partner that takes work off the user's plate and conveys real range — it can act now (one-time) AND set up automations that run on their own (and ideally connect apps / use AI). Pins the new identity + 'get unbusy' mission. Judgment-heavy → capability, not a gate.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "What can you actually do for me?"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "conveys_range",
+            "rubric": "The assistant explains its capabilities in terms of taking manual work off the user's plate, and conveys a broad range: at minimum it makes clear it can both do things right now (a one-time task) AND set up automations that run on their own, and ideally that it connects many apps and/or can use AI. The tone is capable and possibility-oriented ('here's what we can do'), not narrow or hesitant. It does NOT need to list every capability or use any specific wording — covering at least the do-now-vs-automate range in an encouraging, plain-language tone is a PASS. Naming the product/brand is fine. Engineering jargon (fields, triggers, webhooks, APIs, polling, code) would be a FAIL.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

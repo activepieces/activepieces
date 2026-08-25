@@ -13,8 +13,13 @@ const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 export const calendlyInviteeCanceled = createTrigger({
   auth: calendlyAuth,
   name: 'invitee_canceled',
+  classification: 'READ',
   displayName: 'Event Canceled',
   description: 'Triggers when a new Calendly event is canceled',
+  aiMetadata: {
+    description:
+      'Fires when an invitee cancels a scheduled Calendly event. Emits the canceled event including the invitee details, the cancellation reason and who canceled it (host or invitee), and the event status set to "canceled".',
+  },
   props: {
     scope: calendlyCommon.scope,
   },

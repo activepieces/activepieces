@@ -6,6 +6,8 @@ export const generateCadModelAction = createAction({
   name: 'generate_cad_model',
   displayName: 'Generate CAD Model',
   description: 'Generate a 3D model from text prompt',
+  audience: 'both',
+  aiMetadata: { description: 'Submit a text prompt to Zoo\'s text-to-CAD ML model to generate a new 3D model in a chosen export format (FBX, GLB, GLTF, OBJ, PLY, STEP, or STL). Each call starts a new generation job, so it is not idempotent. Optionally include KCL source in the output; retrieve finished results with the get CAD model action.', idempotent: false },
   auth: zooAuth,
   // category: 'Machine Learning (ML)',
   props: {

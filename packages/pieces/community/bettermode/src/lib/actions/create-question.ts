@@ -5,9 +5,12 @@ import { bettermodeAuth } from '../auth';
 
 export const createQuestionAction = createAction({
   name: 'create_question',
+  classification: 'WRITE',
   auth: bettermodeAuth,
   displayName: 'Create Question Post',
   description: 'Create a new question post in a space',
+  audience: 'both',
+  aiMetadata: { description: 'Publishes a new question post (title, HTML content, optional comma-separated tags, optional locked flag) into a Bettermode community space identified by its space ID. Use to post a question thread programmatically; the post type is "Question" rather than a discussion. Not idempotent: each call publishes a separate post.', idempotent: false },
   props: {
     spaceId: Property.Dropdown({
       auth: bettermodeAuth,

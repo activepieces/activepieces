@@ -9,6 +9,9 @@ export const newIssue = createTrigger({
   name: 'new_issue',
   displayName: 'New Issue',
   description: 'Triggers when a new issue is created.',
+  aiMetadata: {
+    description: 'Fires when an issue is opened in the selected Gitea repository. Each event represents a newly created issue (only the opened action passes through).',
+  },
   props: {
     repository: giteaCommon.repositoryDropdown,
   },

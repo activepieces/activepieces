@@ -1,4 +1,5 @@
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { isNil, Permission } from '@activepieces/core-utils';
+import { ApFlagId } from '@activepieces/shared';
 import { Plus } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Column, RenderCellProps } from 'react-data-grid';
@@ -78,6 +79,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
       width: 207,
       minHeight: 37,
       resizable: true,
+      draggable: canEdit,
       name: '',
       renderHeaderCell: () => <ApFieldHeader field={{ ...field, index }} />,
       renderCell: ({

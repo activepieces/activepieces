@@ -105,8 +105,12 @@ const assessMarketingPotential = (data: any): string => {
 export const mailChimpNewCustomerTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_customer',
+  classification: 'READ',
   displayName: 'New Customer',
   description: 'Fires when a new customer is added to a connected store',
+  aiMetadata: {
+    description: 'Fires when a new e-commerce customer is added to a connected Mailchimp store. The event carries the customer id, email, name, and store/order context.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,

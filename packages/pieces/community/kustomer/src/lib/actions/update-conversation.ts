@@ -10,6 +10,12 @@ export const updateConversationAction = createAction({
   name: 'update-conversation',
   displayName: 'Update Conversation',
   description: 'Updates an existing conversation in Kustomer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Kustomer conversation identified by its conversation ID, changing fields such as status (open/done/snoozed), priority, name, direction, or reply channel. Only the fields you supply are modified. Use to change the state of a known conversation. Idempotent — repeating the same update yields the same end state.',
+    idempotent: true,
+  },
   props: {
     conversationId: Property.ShortText({
       displayName: 'Conversation ID',

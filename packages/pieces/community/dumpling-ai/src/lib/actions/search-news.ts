@@ -7,6 +7,8 @@ export const searchNews = createAction({
 	auth: dumplingAuth,
 	displayName: 'Search News',
 	description: 'Search for news articles using Google News.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Google News via Dumpling AI for a query, with optional country/location/language and date-range filtering plus pagination. Choose this over the general web search when the agent needs news articles specifically. Not idempotent: each call is a fresh billed search reflecting live news at request time.', idempotent: false },
 	props: {
 		query: Property.ShortText({
 			displayName: 'Search Query',

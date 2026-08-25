@@ -3,8 +3,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressCoinBalanceHistory = createAction({
   name: 'get_address_coin_balance_history',
+  classification: 'SEARCH',
   displayName: 'Get Address Coin Balance History',
   description: 'Get list of coin balance changes for an address',
+  audience: 'both',
+  aiMetadata: { description: 'List per-event native-coin (ETH) balance changes for an address, one entry per balance-altering block. Pick this for fine-grained balance history; use Get Address Coin Balance History By Day for a daily-aggregated series instead. Read-only lookup on eth.blockscout.com; requires a 0x address hash.', idempotent: true },
   // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({

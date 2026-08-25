@@ -29,8 +29,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newContact = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Trigger when a new contact is added.',
+  aiMetadata: {
+    description: 'Fires when a new contact is added to the GoHighLevel/LeadConnector location, polling for contacts not seen before. Represents the newly created contact; does not fire on updates to existing contacts.',
+  },
   props: {},
   type: TriggerStrategy.POLLING,
   sampleData: {},

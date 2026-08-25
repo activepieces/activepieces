@@ -1,4 +1,5 @@
-import { apId, PrincipalType, ProjectType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -749,8 +750,10 @@ describe('SCIM 2.0 API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(body).toHaveLength(2)
-            expect(body.map((r: { id: string }) => r.id).sort()).toEqual(['Group', 'User'])
+            expect(body.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:ListResponse')
+            expect(body.totalResults).toBe(2)
+            expect(body.Resources).toHaveLength(2)
+            expect(body.Resources.map((r: { id: string }) => r.id).sort()).toEqual(['Group', 'User'])
         })
 
         it('should return Schemas', async () => {
@@ -764,8 +767,10 @@ describe('SCIM 2.0 API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
-            expect(body).toHaveLength(2)
-            const schemaIds = body.map((s: { id: string }) => s.id)
+            expect(body.schemas).toContain('urn:ietf:params:scim:api:messages:2.0:ListResponse')
+            expect(body.totalResults).toBe(2)
+            expect(body.Resources).toHaveLength(2)
+            const schemaIds = body.Resources.map((s: { id: string }) => s.id)
             expect(schemaIds).toContain('urn:ietf:params:scim:schemas:core:2.0:User')
             expect(schemaIds).toContain('urn:ietf:params:scim:schemas:core:2.0:Group')
         })

@@ -1,7 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { kissflowAuth, KissflowAuth } from './auth';
 import { downloadAttachmentFromFormField } from './lib/actions/download-attachment-from-form-field';
 

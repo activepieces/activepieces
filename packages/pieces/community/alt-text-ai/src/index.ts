@@ -4,7 +4,7 @@ import { generateAltTextAction } from "./lib/actions/generate-alt-text";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { altTextAiAuth } from "./lib/common/auth";
 import { BASE_URL } from "./lib/common/constants";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
     export const altTextAi = createPiece({
       displayName: "AltText.ai",

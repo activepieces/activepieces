@@ -32,6 +32,10 @@ export const newSubscription = createTrigger({
   name: 'new_subscription',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is received on Ko-fi.',
+  aiMetadata: {
+    description:
+      'Fires when a supporter starts a new recurring membership on the connected Ko-fi creator account, only on the first subscription payment (recurring renewal payments do not trigger it). Emits the subscription event including the member name, email, message, amount, currency, and the membership tier name. Use to onboard new members, grant access, or send a welcome message.',
+  },
   props: {
       instructions: Property.MarkDown({
         value:

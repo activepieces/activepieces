@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createEstimateOptionNote = createAction({
   auth: housecallProAuth,
   name: "create_estimate_option_note",
+  classification: 'WRITE',
   displayName: "Create estimate option note",
   description: "Create a new estimate option note",
+  audience: 'both',
+  aiMetadata: { description: "Add a free-text note to a specific option within a Housecall Pro estimate, identified by estimate ID and option ID. Not idempotent: repeated calls create additional notes. Use delete-estimate-option-note to remove a note.", idempotent: false },
   props: {
     estimate_id: Property.ShortText({ displayName: "Estimate ID", required: true }),
     option_id: Property.ShortText({ displayName: "Option ID", required: true }),

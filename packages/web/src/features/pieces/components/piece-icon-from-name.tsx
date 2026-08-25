@@ -15,16 +15,14 @@ const PieceIconWithPieceName = ({
   border = true,
   showTooltip = true,
 }: PieceIconWithPieceNameProps) => {
-  const { pieceModel } = piecesHooks.usePiece({
-    name: pieceName,
-  });
+  const { summary } = piecesHooks.usePieceSummary({ name: pieceName });
 
   return (
     <PieceIcon
       size={size}
       border={border}
-      displayName={pieceModel?.displayName}
-      logoUrl={pieceModel?.logoUrl}
+      displayName={summary?.displayName}
+      logoUrl={summary?.logoUrl}
       showTooltip={showTooltip}
     />
   );

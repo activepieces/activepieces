@@ -2,7 +2,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getVersion } from './api';
 
@@ -61,9 +61,9 @@ export const matomoAuth = PieceAuth.CustomAuth({
 
 const validateAuth = async (auth: MatomoAuthType) => {
   await propsValidation.validateZod(auth, {
-    domain: z.string().url(),
-    tokenAuth: z.string().regex(/^[a-zA-Z0-9]+$/),
-    siteId: z.string().regex(/^[0-9]+$/),
+    domain: z.string().check(z.url()),
+    tokenAuth: z.string().check(z.regex(/^[a-zA-Z0-9]+$/)),
+    siteId: z.string().check(z.regex(/^[0-9]+$/)),
   });
 
   const response = await getVersion(auth);

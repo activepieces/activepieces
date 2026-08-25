@@ -10,6 +10,12 @@ export const createConversationAction = createAction({
   name: 'create-conversation',
   displayName: 'Create Conversation',
   description: 'Creates a new conversation in Kustomer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new conversation in Kustomer attached to an existing customer. Use to open a support thread for a known customer; the customer ID is required (resolve it first via Get Customer). Optional status, priority, direction, and reply channel set the conversation\'s initial state. Not idempotent — each call creates a separate conversation.',
+    idempotent: false,
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',

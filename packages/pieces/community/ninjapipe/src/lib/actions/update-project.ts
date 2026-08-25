@@ -8,6 +8,8 @@ export const updateProject = createAction({
   name: 'update_project',
   displayName: 'Update Project',
   description: 'Updates a project by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing project identified by Project ID, applying only the fields you supply (name, description, status, priority, due date, team, tags, extra settings); omitted fields are left unchanged. Requires a valid project ID; repeating with the same values is safe.', idempotent: true },
   props: {
     projectId: ninjapipeCommon.projectDropdownRequired,
     name: Property.ShortText({ displayName: 'Name', required: false }),

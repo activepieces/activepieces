@@ -8,8 +8,11 @@ import { MailchimpClient } from '../common/types';
 export const createAudience = createAction({
   auth: mailchimpAuth,
   name: 'create_audience',
+  classification: 'WRITE',
   displayName: 'Create Audience',
   description: 'Create a new audience (list) in your Mailchimp account',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new audience (list) in the Mailchimp account, including the required physical contact address, permission reminder, and default campaign sender settings. Use to provision a brand-new list to hold subscribers. Not idempotent: each call creates a separate audience even with identical input.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'List Name',

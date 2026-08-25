@@ -7,6 +7,8 @@ export const createExpenseAction = createAction({
   name: 'create_expense',
   displayName: 'Create Expense',
   description: 'Creates a new expense, optionally in a group or with specific friends',
+  audience: 'both',
+  aiMetadata: { description: 'Records a new shared expense in Splitwise under a group, supporting two split modes: split equally among all group members, or split by custom per-user paid/owed shares (each user identified by Splitwise user ID, or by name/email when no ID is known). Use to log a bill an agent needs to track and settle; a group is required and the cost is a string amount (e.g. "25.50"). Not idempotent — each call posts a new expense, so repeating it creates duplicates.', idempotent: false },
   props: {
     split_type: Property.StaticDropdown({
       displayName: 'Split Type',

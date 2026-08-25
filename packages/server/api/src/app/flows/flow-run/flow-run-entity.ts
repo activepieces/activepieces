@@ -66,6 +66,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             nullable: true,
             type: 'timestamp with time zone',
         },
+        timeline: {
+            type: 'jsonb',
+            nullable: true,
+        },
         failedStep: {
             type: 'jsonb',
             nullable: true,

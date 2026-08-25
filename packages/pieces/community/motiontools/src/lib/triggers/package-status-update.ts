@@ -9,6 +9,9 @@ export const packageStatusUpdate = createTrigger({
   name: 'packageStatusUpdate',
   displayName: 'Package Status Update',
   description: '',
+  aiMetadata: {
+    description: 'Fires when a hailing package transitions customs status in MotionTools (the hailing_package.customs_transition webhook event). Each event carries the package and customer ids plus the from/to customs status of the transition.',
+  },
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup

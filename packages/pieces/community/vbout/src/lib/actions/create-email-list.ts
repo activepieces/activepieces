@@ -5,8 +5,14 @@ import { makeClient } from '../common';
 export const createEmailListAction = createAction({
   auth: vboutAuth,
   name: 'vbout_create_email_list',
+  classification: 'WRITE',
   displayName: 'Create Email List',
   description: 'Creates a new email list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new VBOUT email list with optional subscription settings (sender, reply-to, confirmation and notification emails/messages). Use to set up a new audience before adding contacts or sending campaigns. Only the list name is required; not idempotent, as each call creates a new list.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       required: true,

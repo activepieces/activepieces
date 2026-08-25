@@ -7,6 +7,8 @@ export const getOperatingAccount = createAction({
   name: 'get-operating-account',
   displayName: 'Get Merchant Account',
   description: 'Get the details of a single merchant account.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the details of a single merchant account by its ID, including currency, balance, and account identifiers. Use when you already have the account ID; read-only and safe to repeat. To discover account IDs first, use List Merchant Accounts.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',

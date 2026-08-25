@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { recallAiAuth } from './lib/common/auth';
 import { createBot } from './lib/actions/create-bot';
 import { retrieveBot } from './lib/actions/retrieve-bot';

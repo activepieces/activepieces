@@ -15,6 +15,8 @@ export const contactDetailsUpdateAction = createAction({
   name: 'contactDetailsUpdate',
   displayName: 'Resources - Contact Details - Contact Details Update',
   description: 'Update the contact details.',
+  audience: 'both',
+  aiMetadata: { description: 'Set the account-level contact email (required) and optional phone, replacing the current contact record. Idempotent: re-sending the same values leaves the same end state. To clear the contact details entirely use contact-details-delete instead.', idempotent: true },
   props: {
         
   email: Property.ShortText({

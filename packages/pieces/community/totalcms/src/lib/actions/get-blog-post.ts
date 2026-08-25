@@ -4,9 +4,12 @@ import { cmsAuth } from '../auth';
 
 export const getBlogPostAction = createAction({
   name: 'get_blog_post',
+  classification: 'READ',
   auth: cmsAuth,
   displayName: 'Get Blog Post',
   description: 'Get a blog post from Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Reads a single blog post from a Total CMS blog, identified by the blog CMS ID (slug) plus the post permalink. Use to retrieve an existing post when you already know its permalink. Read-only and idempotent.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

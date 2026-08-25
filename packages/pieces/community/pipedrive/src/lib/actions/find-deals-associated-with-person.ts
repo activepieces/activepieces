@@ -7,15 +7,22 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { GetField } from '../common/types';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 
 export const findDealsAssociatedWithPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-deals-associated-with-person',
+	classification: 'SEARCH',
 	displayName: 'Find Deals Associated With Person',
 	description: 'Finds multiple deals related to a specific person.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Lists all deals linked to a given person, identified by their numeric person ID, sorted by most recently updated. Use when you already have a person and need their associated deals; to look up a deal by a field value instead, use Find Deal. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		personId: personIdProp(true), 
 	},

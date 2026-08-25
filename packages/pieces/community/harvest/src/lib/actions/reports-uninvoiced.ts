@@ -6,13 +6,15 @@ import {
 } from '@activepieces/pieces-common';
 import { callHarvestApi, filterDynamicFields } from '../common';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 export const reportsUninvoiced = createAction({
   name: 'reports-uninvoiced',
   auth: harvestAuth,
   displayName: 'Uninvoiced Report',
   description: 'Uninvoiced hours and expenses for all billable projects',
+  audience: 'both',
+  aiMetadata: { description: 'Returns a report of uninvoiced hours and expenses across all billable projects in a Harvest account for a given date range; optionally include fixed-fee projects. Use to find work that has not yet been billed. Requires both From and To dates (YYYY-MM-DD). Read-only and idempotent.', idempotent: true },
   props: {
     from: Property.ShortText({
       description: 'Only report on time entries and expenses with a spent_date on or after the given date. (YYYY-MM-DD)',
@@ -43,14 +45,7 @@ export const reportsUninvoiced = createAction({
   async run(context) {
     // Validate the input properties using Zod
     await propsValidation.validateZod(context.propsValue, {
-      per_page: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-      .refine(
-        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-        'Per Page must be a number between 1 and 2000.'
-      ),
+      per_page: z.pipe(z.optional(z.string()), z.transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))).check(z.refine((val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000), 'Per Page must be a number between 1 and 2000.')),
     });
 
     const params = filterDynamicFields(context.propsValue);

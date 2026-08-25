@@ -16,6 +16,8 @@ export const findPageByTitleAction = createAction({
 	name: 'find-page-by-title',
 	displayName: 'Find Page by Title',
 	description: 'Finds a page by exact title, optionally scoped to a space.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up Confluence pages by exact title, optionally restricted to one space, returning matches plus a found flag and count. Use to resolve a page title to its ID before reading or updating it. Match is exact (not fuzzy); for keyword or broader queries use Search Content (CQL) instead. Read-only and idempotent.', idempotent: true },
 	props: {
 		spaceId: spaceIdPropOptional,
 		title: Property.ShortText({

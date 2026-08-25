@@ -3,7 +3,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { baseUrl, unauthorizedMessage } from "./lib/common/common";
 import OpenAI from 'openai';
 import { askDeepseek } from "./lib/actions/ask-deepseek";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { deepseekAuth } from './lib/auth';
 
         

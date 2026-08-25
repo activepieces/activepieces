@@ -69,6 +69,9 @@ export const xeroNewProject = createTrigger({
   name: 'xero_new_project',
   displayName: 'New Project',
   description: 'Fires when a new project is created.',
+  aiMetadata: {
+    description: 'Fires when a new project is created in Xero Projects for the connected organisation. Polls the Xero Projects endpoint and emits each project the first time its projectId is seen, optionally filtered by contact or state (INPROGRESS, CLOSED). Each item is a full project record (name, contact, status, estimate). Represents a newly created project, not an update to an existing one.',
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(false),

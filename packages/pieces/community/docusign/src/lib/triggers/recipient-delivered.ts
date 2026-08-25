@@ -5,6 +5,10 @@ export const recipientDelivered = createEnvelopeEventTrigger({
   displayName: 'Person Opened Signing Request',
   description:
     'Triggers when a specific person opens and views the signing request.',
+  aiMetadata: {
+    description:
+      'Fires when a specific recipient opens and views a DocuSign envelope. Represents per-recipient delivery confirmation (the payload identifies the recipient), as opposed to the envelope-level all-recipients-delivered event.',
+  },
   docusignEvent: 'recipient-delivered',
   sampleData: {
     event: 'recipient-delivered',

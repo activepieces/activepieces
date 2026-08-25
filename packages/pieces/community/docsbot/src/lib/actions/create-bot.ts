@@ -7,6 +7,8 @@ export const createBot = createAction({
   name: 'createBot',
   displayName: 'Create Bot',
   description: 'Creates a new bot.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new DocsBot bot in a team, configuring its name, description, privacy, language, and optionally the chat/embedding models; optionally copy an existing bot (and its sources) via copyFrom. Creates a distinct bot on each call, so it is not idempotent.', idempotent: false },
   props: docsbotCommon.createBotProperties(),
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, docsbotCommon.createBotSchema);

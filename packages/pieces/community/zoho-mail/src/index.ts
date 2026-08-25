@@ -4,7 +4,7 @@ import {
 	OAuth2PropertyValue,
 	PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { getEmailDetailsAction } from './lib/actions/get-email-details';
 import { markEmailAsReadAction } from './lib/actions/mark-email-as-read';
 import { markEmailAsUnreadAction } from './lib/actions/mark-email-as-unread';

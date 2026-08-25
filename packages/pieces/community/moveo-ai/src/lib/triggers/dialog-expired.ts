@@ -9,6 +9,9 @@ export const dialogExpired = createTrigger({
   name: 'dialog_expired',
   displayName: 'Dialog Expired',
   description: 'Triggers when the dialog expires.',
+  aiMetadata: {
+    description: 'Fires when a Moveo conversation (dialog) expires due to inactivity or reaching its session timeout. The event payload represents the expired dialog, including its identifiers and session context, signaling that the conversation has ended without explicit closure.',
+  },
   auth: moveoAuth,
   props: {
     setupInstructions: Property.MarkDown({

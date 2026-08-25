@@ -7,6 +7,8 @@ export const adjustInventoryLevelAction = createAction({
   name: 'adjust_inventory_level',
   displayName: 'Adjust Inventory Level',
   description: `Adjust inventory level of an item at a location.`,
+  audience: 'both',
+  aiMetadata: { description: 'Apply a relative change to an inventory item\'s available quantity at a specific location: positive values increase stock, negative values decrease it. Requires the inventory item ID, location ID, and a delta. Because the adjustment is relative (not an absolute set), each call shifts the count again, so it is not idempotent.', idempotent: false },
   props: {
     id: Property.Number({
       displayName: 'Inventory Item',

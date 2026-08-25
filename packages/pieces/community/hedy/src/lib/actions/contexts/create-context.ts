@@ -9,6 +9,11 @@ export const createContext = createAction({
   name: 'create-context',
   displayName: 'Create Session Context',
   description: 'Create a new session context with AI instructions.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new Hedy session context (a reusable set of AI instructions applied to sessions), with a required title plus optional content and a default flag. Not idempotent: each call creates a separate context even with identical input.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

@@ -8,8 +8,13 @@ import { chatsistantAuth } from '../common/auth';
 export const formSubmission = createTrigger({
   auth: chatsistantAuth,
   name: 'formSubmission',
+  classification: 'READ',
   displayName: 'form submission',
   description: 'Triggered when a form is submitted',
+  aiMetadata: {
+    description:
+      'Fires when a visitor submits a form within a Chatsistant chatbot conversation, delivering the captured form fields (such as name and email) along with the originating session identifier. Requires the Form Submission webhook to be configured in the Chatsistant account.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## Chatsistant Webhook Setup

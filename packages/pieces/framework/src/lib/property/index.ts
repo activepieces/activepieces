@@ -1,11 +1,12 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
+export type { ApStreamingFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
@@ -17,10 +18,12 @@ export { DropdownOption,DropdownState } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
 export { PieceAuthProperty, DEFAULT_CONNECTION_DISPLAY_NAME} from './authentication';
 export { ShortTextProperty } from './input/text-property';
+export { RichTextProperty } from './input/rich-text-property';
 export { ArrayProperty, ArraySubProps } from './input/array-property';
 export { BasePropertySchema } from './input/common';
 export { CheckboxProperty } from './input/checkbox-property';
 export { DateTimeProperty } from './input/date-time-property';
+export { DateRangeProperty, DateRangeValue, DateRangePreset, dateRangeUtils } from './input/date-range-property';
 export { LongTextProperty } from './input/text-property';
 export { NumberProperty } from './input/number-property';
 export { ObjectProperty } from './input/object-property';
@@ -30,6 +33,7 @@ export { BasicAuthPropertyValue } from './authentication/basic-auth-prop';
 export { StaticMultiSelectDropdownProperty } from './input/dropdown/static-dropdown';
 export { StaticDropdownProperty } from './input/dropdown/static-dropdown';
 export * from './authentication/custom-auth-prop';
+export * from './authentication/oidc-prop';
 export { OAuth2Property } from './authentication/oauth2-prop';
 export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';

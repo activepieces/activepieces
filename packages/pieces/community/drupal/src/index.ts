@@ -1,7 +1,7 @@
 import {
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { drupalCallServiceAction } from './lib/actions/services';
 import { drupalCreateEntityAction } from './lib/actions/create_entity';
 import { drupalListEntitiesAction } from './lib/actions/list_entities';

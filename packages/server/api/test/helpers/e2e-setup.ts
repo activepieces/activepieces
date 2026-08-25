@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
-import { setupTestEnvironment } from './test-setup'
-import { migrateQueuesAndRunConsumers } from '../../src/app/workers/worker-module'
 import { accessTokenManager } from '../../src/app/authentication/lib/access-token-manager'
+import { migrateQueuesAndRunConsumers } from '../../src/app/workers/worker-module'
+import { setupTestEnvironment } from './test-setup'
 
 export type E2eContext = {
     app: FastifyInstance

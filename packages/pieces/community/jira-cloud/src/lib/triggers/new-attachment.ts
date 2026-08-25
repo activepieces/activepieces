@@ -120,6 +120,10 @@ export const newAttachment = createTrigger({
   displayName: 'New Attachment on Issue',
   description:
     'Fires when a file is attached to a Jira issue. Great for auto-saving screenshots to Google Drive, forwarding customer uploads to support tools, or archiving documents in S3.',
+  aiMetadata: {
+    description:
+      'Fires when a new file attachment is added to a Jira issue, optionally limited to issues matching a JQL filter. Each event represents one attachment and includes its metadata (filename, size, MIME type, author, download URL) plus the parent issue. Polling-based; events arrive on the next poll, not instantly.',
+  },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
   props: {

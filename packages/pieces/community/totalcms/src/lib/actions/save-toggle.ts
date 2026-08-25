@@ -4,9 +4,12 @@ import { cmsAuth } from '../auth';
 
 export const saveToggleAction = createAction({
   name: 'save_toggle',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Toggle',
   description: 'Save toggle content to Total CMS',
+  audience: 'both',
+  aiMetadata: { description: 'Sets a toggle-type (boolean on/off) CMS field in Total CMS, identified by its CMS ID (slug), to the supplied true/false state. Use to flip a stored toggle. Idempotent: the state is keyed on the slug, so repeating with the same value leaves the same result.', idempotent: true },
   props: {
     slug: Property.ShortText({
       displayName: 'CMS ID',

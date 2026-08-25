@@ -6,7 +6,7 @@ import { analyzeVideo } from './lib/actions/analyze-video';
 import { getFile } from './lib/actions/get-file';
 import { vlmRunAuth } from './lib/common';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const vlmRun = createPiece({
   displayName: 'VLM Run',

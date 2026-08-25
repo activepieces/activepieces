@@ -26,6 +26,11 @@ export const listTopics = createAction({
   name: 'list-topics',
   displayName: 'List Topics',
   description: 'Retrieve all topics from your Hedy workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List all topics in the Hedy workspace. Use to discover topics or find a topic ID before filtering sessions/highlights or updating a topic. Set Return All to fetch everything, otherwise results are capped by the limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     returnAll: commonProps.returnAll,
     limit: commonProps.limit,

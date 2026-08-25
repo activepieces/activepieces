@@ -1,12 +1,11 @@
-import { AlertChannel, ApEdition, assertNotNullOrUndefined, BADGES, InvitationType, isNil, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, unique } from '@activepieces/core-utils'
+import { AlertChannel, ApEdition, InvitationType, OtpType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
+import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
 import { alertsService } from '../../alerts/alerts-service'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
@@ -19,8 +18,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -44,8 +43,8 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendProjectMemberAdded] sending project member added email',
             email: userInvitation.email,
-            platformId: userInvitation.platformId,
-            projectId: userInvitation.projectId,
+            platform: { id: userInvitation.platformId },
+            project: { id: userInvitation.projectId },
             type: userInvitation.type,
             projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
@@ -54,7 +53,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const { name: projectName, role } = await getEntityNameForInvitation(userInvitation, log)
         const redirectPath = projectId ? `/projects/${projectId}/flows` : '/flows'
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: `sign-in?from=${encodeURIComponent(redirectPath)}`,
         })
         await emailSender(log).send({
@@ -79,11 +77,10 @@ export const emailService = (log: FastifyBaseLogger) => ({
         log.info({
             message: '[emailService#sendScimUserWelcome] sending welcome email',
             email,
-            platformId,
+            platform: { id: platformId },
         })
 
         const loginLink = await domainHelper.getPublicUrl({
-            platformId,
             path: 'sign-in',
         })
 
@@ -99,13 +96,34 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendPlatformDeleted({ platformId, email, purgeDate }: SendPlatformDeletedArgs): Promise<void> {
+        log.info({
+            message: '[emailService#sendPlatformDeleted] sending platform deleted email',
+            platform: { id: platformId },
+        })
+        await emailSender(log).send({
+            emails: [email],
+            platformId,
+            templateData: {
+                name: 'platform-deleted',
+                vars: {
+                    purgeDate,
+                },
+            },
+        })
+    },
+
     async sendIssueCreatedNotification({
         projectId,
+        projectName,
         flowName,
         platformId,
-        issueOrRunsPath,
-        isIssue,
+        runUrl,
         createdAt,
+        failedStepDisplayName,
+        failedStepNumber,
+        failedStepMessage,
+        flowOwnerEmail,
     }: IssueCreatedArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
@@ -113,13 +131,17 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             name: '[emailService#sendIssueCreatedNotification]',
-            projectId,
+            project: { id: projectId },
             flowName,
             createdAt,
         })
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const alertEmails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
+        const emails = unique([
+            ...alertEmails,
+            ...(isNil(flowOwnerEmail) ? [] : [flowOwnerEmail]),
+        ].map((email) => email.toLowerCase()))
 
         if (emails.length === 0) {
             return
@@ -131,17 +153,20 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: {
                 name: 'issue-created',
                 vars: {
+                    projectName,
                     flowName,
                     createdAt,
-                    isIssue: isIssue.toString(),
-                    issueUrl: issueOrRunsPath,
+                    runUrl,
+                    failedStepDisplayName,
+                    failedStepNumber: failedStepNumber ? `${failedStepNumber}` : '',
+                    failedStepMessage: failedStepMessage ?? '',
                 },
             },
         })
     },
 
     async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
-        if (EDITION_IS_NOT_PAID) {
+        if (EDITION_IS_NOT_PAID && type !== OtpType.EMAIL_LOGIN) {
             return
         }
 
@@ -151,66 +176,63 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             email: userIdentity.email,
-            otp,
             identityId: userIdentity.id,
             type,
         }, 'Sending OTP email')
 
-        const frontendPath = {
-            [OtpType.EMAIL_VERIFICATION]: 'verify-email',
-            [OtpType.PASSWORD_RESET]: 'reset-password',
-        }
-
-        const setupLink = await domainHelper.getInternalUrl({
-            platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
-        })
-
-        const otpToTemplate: Record<string, EmailTemplateData> = {
-            [OtpType.EMAIL_VERIFICATION]: {
-                name: 'verify-email',
-                vars: {
-                    setupLink,
-                },
-            },
-            [OtpType.PASSWORD_RESET]: {
-                name: 'reset-password',
-                vars: {
-                    setupLink,
-                },
-            },
-        }
-
         await emailSender(log).send({
             emails: [userIdentity.email],
             platformId: platformId ?? undefined,
-            templateData: otpToTemplate[type],
+            templateData: await otpTemplateData({ type, otp, identityId: userIdentity.id }),
         })
     },
 
-    async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
-        const user = await userService(log).getMetaInformation({ id: userId })
+    async sendChatNotification({ platformId, to, subject, body, senderName, senderEmail }: SendChatNotificationArgs): Promise<void> {
+        log.info({
+            platform: { id: platformId },
+            recipientCount: to.length,
+            subject,
+        }, '[emailService#sendChatNotification] sending chat notification email')
 
-        if (isNil(user) || !isValidEmail(user.email)) {
-            log.info({ userId, email: user?.email }, '[emailService#sendBadgeAwardedEmail] Skipping: external user has no valid email')
-            return
-        }
-        const badge = BADGES[badgeName as keyof typeof BADGES]
         await emailSender(log).send({
-            emails: [user.email],
-            platformId: user.platformId!,
+            emails: to,
+            platformId,
+            replyTo: senderEmail,
             templateData: {
-                name: 'badge-awarded',
+                name: 'chat-notification',
                 vars: {
-                    firstName: user.firstName,
-                    badgeTitle: badge.title,
-                    badgeDescription: badge.description,
-                    badgeImageUrl: badge.imageUrl,
+                    subject,
+                    body,
+                    senderName,
+                    senderEmail,
                 },
             },
         })
     },
 })
+
+async function otpTemplateData({ type, otp, identityId }: OtpTemplateDataParams): Promise<EmailTemplateData> {
+    switch (type) {
+        case OtpType.EMAIL_LOGIN:
+            return { name: 'login-code', vars: { code: otp } }
+        case OtpType.EMAIL_VERIFICATION:
+            return {
+                name: 'verify-email',
+                vars: { setupLink: await otpSetupLink({ path: 'verify-email', otp, identityId }) },
+            }
+        case OtpType.PASSWORD_RESET:
+            return {
+                name: 'reset-password',
+                vars: { setupLink: await otpSetupLink({ path: 'reset-password', otp, identityId }) },
+            }
+    }
+}
+
+async function otpSetupLink({ path, otp, identityId }: OtpSetupLinkParams): Promise<string> {
+    return domainHelper.getInternalUrl({
+        path: `${path}?otpcode=${otp}&identityId=${identityId}`,
+    })
+}
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
@@ -241,10 +263,6 @@ function capitalizeFirstLetter(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
 }
 
-function isValidEmail(email: string): boolean {
-    return z.email().safeParse(email).success
-}
-
 type SendInvitationArgs = {
     userInvitation: UserInvitation
     invitationLink: string
@@ -252,6 +270,18 @@ type SendInvitationArgs = {
 
 type SendProjectMemberAddedArgs = {
     userInvitation: UserInvitation
+}
+
+type OtpTemplateDataParams = {
+    type: OtpType
+    otp: string
+    identityId: string
+}
+
+type OtpSetupLinkParams = {
+    path: string
+    otp: string
+    identityId: string
 }
 
 type SendOtpArgs = {
@@ -266,11 +296,30 @@ type SendScimUserWelcomeArgs = {
     platformId: string
 }
 
+type SendPlatformDeletedArgs = {
+    platformId: string
+    email: string
+    purgeDate: string
+}
+
+type SendChatNotificationArgs = {
+    platformId: string
+    to: string[]
+    subject: string
+    body: string
+    senderName: string
+    senderEmail: string
+}
+
 type IssueCreatedArgs = {
     projectId: string
+    projectName: string
     flowName: string
     platformId: string
-    isIssue: boolean
-    issueOrRunsPath: string
+    runUrl: string
     createdAt: string
+    failedStepDisplayName: string
+    failedStepNumber?: number
+    failedStepMessage?: string
+    flowOwnerEmail?: string
 }

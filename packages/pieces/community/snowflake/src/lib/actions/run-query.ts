@@ -17,6 +17,12 @@ export const runQuery = createAction({
   displayName: 'Run Query',
   description:
     'Execute a SQL query against your Snowflake database and return the results as rows.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs an arbitrary SQL statement against Snowflake (SELECT, DML, or DDL). Use this for any query the dedicated row/table actions do not cover, or when you need full SQL control. Pass dynamic values via the parameters array bound to `:1`/`?` placeholders rather than concatenating into the SQL. Idempotency depends on the statement: a SELECT is safe to repeat, but an INSERT/UPDATE/DELETE mutates state on each call.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     sqlText: Property.LongText({

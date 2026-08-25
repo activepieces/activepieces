@@ -6,6 +6,11 @@ export const createCampaignAction = createAction({
     name: 'create-campaign',
     displayName: 'Create Campaign',
     description: 'Create a new outbound calling campaign.',
+    audience: 'both',
+    aiMetadata: {
+        description: 'Schedule a bulk outbound calling campaign that dials every contact in a list using a chosen AI agent and one or more sender numbers. Use it for mass calling rather than a single Make Call; requires an agent ID, a contact list ID, sender numbers, and a scheduled start time, with optional pacing controls (delay between calls, number rotation, timezone). Not idempotent — each call creates a separate campaign.',
+        idempotent: false,
+    },
     auth: kallabotAuth,
     props: {
         name: Property.ShortText({

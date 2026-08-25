@@ -11,6 +11,11 @@ export const updateBucket = createAction({
   name: 'updateBucket',
   displayName: 'Update Bucket',
   description: 'Modify bucket’s name or properties.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates an existing bucket\'s name and/or order hint, identified by bucket ID within a plan. Use to rename or reorder a bucket. Idempotent: applying the same field values repeatedly leaves the bucket in the same end state.',
+    idempotent: true,
+  },
   props: {
     planId: PlanDropdown({ required: true }),
     id: BucketDropdown({ required: true }),

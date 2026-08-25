@@ -4,7 +4,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { moxieCreateClientAction } from './lib/actions/create-client';
 import { moxieCreateProjectAction } from './lib/actions/create-project';
 import { moxieCreateTaskAction } from './lib/actions/create-task';

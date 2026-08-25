@@ -6,8 +6,11 @@ import { commonProps } from '../common/utils';
 export const sendTemplateMessageAction = createAction({
 	auth: whatsappAuth,
 	name: 'send-template-message',
+	classification: 'WRITE',
 	displayName: 'Send Template Message',
 	description: 'Sends a template message.',
+	audience: 'both',
+	aiMetadata: { description: 'Sends a pre-approved WhatsApp message template to a recipient, filling its header, body, and button placeholders from the supplied fields. Choose this to initiate conversations outside the 24-hour customer service window or for notifications/marketing where a registered template is required; the template must already be approved in the WhatsApp Business account. Requires the sender phone number ID, recipient phone number, and the template ID (its name and language are resolved automatically). Not idempotent — each call delivers a new message.', idempotent: false },
 	props: {
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({

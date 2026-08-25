@@ -10,13 +10,17 @@ import {
   timeParts,
   timeZoneOptions,
 } from '../common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { addSubtractDateActionOutputSchema } from '../output-schemas';
 
 export const addSubtractDateAction = createAction({
+  audience: 'both',
   name: 'add_subtract_date',
+  classification: 'READ',
   displayName: 'Add/Subtract Time',
   description: 'Add or subtract time from a date',
+  aiMetadata: { description: 'Shifts an input date by a signed year/month/day/hour/minute/second expression, and can pin the resulting clock time to a fixed 24h value or the current time. Use Date Difference to compare two dates, Format Date for a format or zone change only, and Next Day of Week or Next Day of Year for the next calendar occurrence. The Set Time To (HH:mm) and Use Current Time options apply only when a Time Zone is also selected; idempotent except when Use Current Time ties the result to the clock.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,
@@ -75,6 +79,7 @@ export const addSubtractDateAction = createAction({
       defaultValue: false,
     }),
   },
+  outputSchema: addSubtractDateActionOutputSchema,
   async run(context) {
     // Ensure all dayjs plugins are properly extended
    
@@ -89,7 +94,7 @@ export const addSubtractDateAction = createAction({
 
     if (setTime && setTime.trim() !== '') {
       await propsValidation.validateZod({ time: setTime }, {
-        time: z.string().regex(/^\d\d:\d\d$/),
+        time: z.string().check(z.regex(/^\d\d:\d\d$/)),
       });
     }
 

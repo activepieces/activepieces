@@ -12,6 +12,8 @@ export const sendMessageToNewChat = createAction({
   displayName: 'Send Message to New Chat',
   description:
     'Create a new chat (new conversation) by specifying the WhatsApp account, phone number, and message.',
+  audience: 'both',
+  aiMetadata: { description: 'Starts a new TimelinesAI WhatsApp conversation by addressing a contact either by phone number or by WhatsApp JID (selected via Contact Type), then sending an initial text and/or file. Use to message someone you do not yet have a chat_id for; use Send Message to Existing Chat when you already have the chat_id. Not idempotent: each call sends a message and may create a new chat.', idempotent: false },
   props: {
     contactType: Property.StaticDropdown({
       displayName: 'Contact Type',

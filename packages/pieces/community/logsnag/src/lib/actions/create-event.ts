@@ -7,6 +7,8 @@ export const createEvent = createAction({
   name: 'createEvent',
   displayName: 'Create Event',
   description: 'Creates a new event in LogSnag with the specified channel and details.',
+  audience: 'both',
+  aiMetadata: { description: 'Logs a new event to a LogSnag project channel (LogSnag is an event/activity tracking service). Use it to record that something happened — e.g. a signup, payment, or job completion — for monitoring or notification feeds. Requires the project name, channel, and an event title; an optional description adds detail. Not idempotent: each call appends a new event entry, so repeating the same input creates duplicate log entries.', idempotent: false },
   props: {
     project: Property.ShortText({displayName: "Project", required: true}),
     channel: Property.ShortText({displayName: "Channel", required: true}),

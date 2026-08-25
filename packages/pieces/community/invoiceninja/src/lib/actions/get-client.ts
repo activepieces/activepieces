@@ -3,7 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { invoiceninjaAuth } from '../..';
 
 export const getClient = createAction({
@@ -11,6 +11,8 @@ export const getClient = createAction({
   name: 'getclient_task',
   displayName: 'Get Client Details from e-mail',
   description: 'Gets the client details if they exist by e-mail.',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up a client in Invoice Ninja by email address and returns a trimmed set of their details (id, name, balances, address, contacts). Use to resolve a client id or fetch client info from an email; returns a falsy result when no matching client is found. Read-only and idempotent.', idempotent: true },
 
   props: {
     email: Property.LongText({
@@ -22,7 +24,7 @@ export const getClient = createAction({
 
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     const INapiToken = context.auth.props.access_token;

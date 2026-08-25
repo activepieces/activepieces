@@ -9,6 +9,9 @@ export const newPlan = createTrigger({
   name: 'newPlan',
   displayName: 'New Plan',
   description: 'Triggers when a new plan is created in MoonClerk',
+  aiMetadata: {
+    description: 'Fires when a new recurring plan (subscription) is created in MoonClerk, typically when a customer completes a recurring checkout. The event payload carries the customer record along with the newly created subscription and its plan details. Requires a MoonClerk webhook configured for the Plan Created event.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## MoonClerk Webhook Setup

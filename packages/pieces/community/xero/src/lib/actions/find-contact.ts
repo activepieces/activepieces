@@ -13,6 +13,12 @@ export const xeroFindContact = createAction({
   name: 'xero_find_contact',
   displayName: 'Find Contact',
   description: 'Finds a contact by name or account number (or SearchTerm).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Read-only lookup of Xero contacts in a tenant; pick when you need to locate a contact or its ID before invoicing or other operations. Choose the search mode via Search By: exact Name or Account Number, or a broad Search Term for fuzzy matching across fields. Returns matching contacts without modifying anything; supply the tenant ID and use Summary Only / Page for large result sets.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({

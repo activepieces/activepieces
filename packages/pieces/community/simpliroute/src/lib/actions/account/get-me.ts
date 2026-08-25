@@ -8,6 +8,8 @@ export const get_me = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Account Details',
     description: 'Returns account information of the authenticated user via API token.',
+    audience: 'both',
+    aiMetadata: { description: 'Return the account/profile of the user owning the API token. Read-only and idempotent; takes no input. Use to confirm credentials or discover the current account context before other operations.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/accounts/me/`;

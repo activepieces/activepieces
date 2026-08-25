@@ -1,6 +1,5 @@
-import { SecretManagerProviderId, SecretManagerFieldsSeparator, SecretManagerConnectionScope } from '@activepieces/shared'
 import { safeHttp } from '@activepieces/server-utils'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -255,7 +254,7 @@ describe('Secret Manager Cache', () => {
             // Delete — clears cache
             await app!.inject({
                 method: 'DELETE',
-                url: `/v1/secret-managers/${connectionId}`,
+                url: `/api/v1/secret-managers/${connectionId}`,
                 headers: { authorization: `Bearer ${testToken}` },
             })
 

@@ -7,6 +7,8 @@ export const getFulfillmentsAction = createAction({
   name: 'get_fulfillments',
   displayName: 'Get Fulfillments',
   description: `Get an order's fulfillments.`,
+  audience: 'both',
+  aiMetadata: { description: "List the fulfillments (shipments) recorded for a specific Shopify order, given the order ID. Use to find fulfillment IDs and shipment status, e.g. before posting a Create Fulfillment Event. Read-only and idempotent.", idempotent: true },
   props: {
     orderId: Property.Number({
       displayName: 'Order',

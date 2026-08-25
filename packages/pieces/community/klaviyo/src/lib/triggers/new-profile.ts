@@ -119,8 +119,12 @@ const polling: Polling<KlaviyoAuthValue, Record<string, unknown>> = {
 export const newProfileTrigger = createTrigger({
   auth: klaviyoAuth,
   name: 'newProfile',
+  classification: 'READ',
   displayName: 'New Profile',
   description: 'Triggers when a new profile is created in Klaviyo.',
+  aiMetadata: {
+    description: 'Fires when a new profile (contact) is created in the Klaviyo account, polling for profiles by their created timestamp. Each event represents one newly added profile across the whole account, regardless of list or segment membership.',
+  },
   props: {},
   sampleData: {
     id: '01JZTTZ2NNC8ZCP45SM4J84RG2',

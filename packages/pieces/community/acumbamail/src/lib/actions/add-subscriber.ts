@@ -11,9 +11,16 @@ import { acumbamailCommon } from '../common';
 export const addUpdateSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_add_update_subscriber',
+  classification: 'WRITE',
   displayName: 'Add/Update Subscriber',
   description:
     'Adds a new subscriber to a subscriber list of your choosing.Can be used to update an existing subscriber too.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Adds a contact to an Acumbamail subscriber list, or updates that contact\'s merge fields if it already exists when the update-existing option is enabled. Use to enroll or refresh a single contact in a list; requires the target list id and a merge-fields object that must include the email. Optionally sends a double-opt-in confirmation email. Idempotent: the subscriber is keyed on email within the list, so repeating the same input converges on the same membership.',
+    idempotent: true,
+  },
   props: {
     listId: acumbamailCommon.listId,
     listMergeFields: acumbamailCommon.listMergeFields,

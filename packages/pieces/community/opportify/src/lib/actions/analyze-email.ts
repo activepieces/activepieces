@@ -7,6 +7,12 @@ export const analyzeEmailAction = createAction({
   name: 'analyze-email',
   description:
     'Validates an email address and returns its deliverability status.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Validates a single email address via the Opportify API and reports its deliverability, with optional auto-correction of likely typos and optional AI-assisted analysis. Use when an agent needs to verify whether an email is valid or deliverable before sending or storing it. Requires the email string; this is a read-only lookup and is safe to repeat.',
+    idempotent: true,
+  },
   auth: opportifyAuth,
   props: {
     email: Property.ShortText({

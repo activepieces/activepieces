@@ -7,6 +7,12 @@ export const createProspectAction = createAction({
   name: 'create_prospect',
   displayName: 'Create Prospect',
   description: 'Creates a new prospect in Greenhouse — a person who has not yet applied to a specific job.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a prospect in Greenhouse — a sourced person flagged as not yet applied to a specific job — from name plus optional contact details, current role, links, and tags. Use for proactive sourcing rather than active applicants (use Create Candidate for those); first and last name are required. Not idempotent — each call creates a separate prospect even with identical input.',
+    idempotent: false,
+  },
   auth: greenhouseAuth,
   props: {
     first_name: Property.ShortText({

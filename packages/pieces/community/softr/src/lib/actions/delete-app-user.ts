@@ -7,6 +7,8 @@ export const deleteAppUser = createAction({
   name: 'deleteAppUser',
   displayName: 'Delete App User',
   description: 'Deletes a user from a Softr app.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently removes an end-user from a Softr app, identified by the app domain/subdomain and the user email. Use to deprovision a known user. Idempotent in effect on a stable email — once the user is gone the account stays gone — though a repeat call returns a not-found error.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'User Email',

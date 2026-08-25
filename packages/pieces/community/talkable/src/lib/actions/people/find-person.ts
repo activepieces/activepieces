@@ -7,6 +7,8 @@ export const findPerson = createAction({
   auth: talkableAuth,
   displayName: 'Find person',
   description: 'Find person by email',
+  audience: 'both',
+  aiMetadata: { description: 'Look up a Talkable person record by email and return the requested slice of their data; the scope selector switches between general profile info, referrals as advocate, referrals as friend, rewards, shares, or personal data. Use to fetch a known customer\'s referral/loyalty details. Read-only; the email and chosen scope are required.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Person email',

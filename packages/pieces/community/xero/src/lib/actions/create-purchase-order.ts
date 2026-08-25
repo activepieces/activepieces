@@ -13,6 +13,12 @@ export const xeroCreatePurchaseOrder = createAction({
   name: 'xero_create_purchase_order',
   displayName: 'Create Purchase Order',
   description: 'Creates a new purchase order for a contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Xero purchase order for a supplier contact, with at least one line item (Description required) and optional delivery, reference, and status details. Pick this to raise a new order to a supplier; to change an existing one use Update Purchase Order. Not idempotent: each call creates another purchase order.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     contact_id: props.contact_dropdown(true),

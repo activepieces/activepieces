@@ -9,6 +9,11 @@ export const findAvailableSlot = createAction({
   displayName: 'Find Available Slot',
   description:
     'Find the next available posting time slot for a connected channel',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Returns the next free posting time slot for a connected channel based on its posting schedule. Use before scheduling to pick a non-conflicting publish date for Create Post. Requires the channel integration id (resolve via List Channels). Idempotent — a read-only lookup.',
+    idempotent: true,
+  },
   props: {
     integration: postizCommon.integrationDropdown,
   },

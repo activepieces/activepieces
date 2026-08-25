@@ -1,9 +1,10 @@
-import { google } from 'googleapis';
+import { sheets as googleSheets } from '@googleapis/sheets';
+import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import { nanoid } from 'nanoid';
 import dayjs from 'dayjs';
 import crypto from 'crypto';
 import { columnToLabel, createGoogleClient, GoogleSheetsAuthValue } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export async function getWorkSheetName(
 	auth: GoogleSheetsAuthValue,
@@ -12,7 +13,7 @@ export async function getWorkSheetName(
 ) {
 	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId });
 	const sheetName = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties
@@ -32,7 +33,7 @@ export async function getWorkSheetGridSize(
 ) {
 	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId, includeGridData: true, fields: 'sheets.properties(sheetId,title,sheetType,gridProperties)' });
 	const sheetRange = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.gridProperties;
@@ -51,7 +52,7 @@ export async function getWorkSheetValues(
 ) {
 	const authClient = await createGoogleClient(auth);
 
-	const sheets = google.sheets({ version: 'v4', auth: authClient });
+	const sheets = googleSheets({ version: 'v4', auth: authClient });
 
 	const res = await sheets.spreadsheets.values.get({
 		spreadsheetId: spreadsheetId,
@@ -66,10 +67,10 @@ export async function createFileNotification(
 	fileId: string,
 	url: string,
 	includeTeamDrives?: boolean,
-) {
+): Promise<{ data: drive_v3.Schema$Channel }> {
 	const authClient = await createGoogleClient(auth);
 
-	const drive = google.drive({ version: 'v3', auth: authClient });
+	const drive = googleDrive({ version: 'v3', auth: authClient });
 
 	// create unique UUID for channel
 	const channelId = nanoid();
@@ -89,10 +90,10 @@ export async function deleteFileNotification(
 	auth: GoogleSheetsAuthValue,
 	channelId: string,
 	resourceId: string,
-) {
+): Promise<{ data: void }> {
 	const authClient = await createGoogleClient(auth);
 
-	const drive = google.drive({ version: 'v3', auth: authClient });
+	const drive = googleDrive({ version: 'v3', auth: authClient });
 
 	return await drive.channels.stop({
 		requestBody: {

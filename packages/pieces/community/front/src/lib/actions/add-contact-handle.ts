@@ -10,6 +10,12 @@ export const addContactHandle = createAction({
   displayName: 'Add Contact Handle',
   description:
     'Add a handle (email, phone number, etc.) to an existing Contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Add one additional handle (email, phone, social, or custom) of a chosen type to an existing Front contact identified by contact ID. Use to register a new address for someone already in the address book; to create a brand-new contact use "Create Contact". Not idempotent: re-adding the same handle may error or duplicate.',
+    idempotent: false,
+  },
   props: {
     contact_id: contactIdDropdown,
     handle_type: Property.StaticDropdown({

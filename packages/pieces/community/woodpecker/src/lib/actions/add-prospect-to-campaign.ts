@@ -8,6 +8,8 @@ export const addProspectToCampaign = createAction({
   name: 'add_prospect_to_campaign',
   displayName: 'Create/Update Prospect in Campaign',
   description: 'Adds a new prospect or updates existing prospect data in a campaign',
+  audience: 'both',
+  aiMetadata: { description: 'Enroll a prospect (keyed by email) into a specific Woodpecker campaign, creating the prospect or updating its fields if it already exists. Use to start outreach to someone or push updated prospect details into a campaign; requires the campaign and the prospect email. Re-running with the same email upserts the same record rather than duplicating it.', idempotent: true },
   props: {
     campaign_id: campaignsDropdown,
     email: Property.ShortText({

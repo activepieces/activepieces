@@ -8,12 +8,17 @@ export enum PieceSelectorTabType {
   APPROVALS = 'APPROVALS',
   APPS = 'APPS',
   UTILITY = 'UTILITY',
+  CUSTOM = 'CUSTOM',
   NONE = 'NONE',
 }
 
 export const PieceSelectorTabsContext = createContext({
   selectedTab: PieceSelectorTabType.EXPLORE,
-  setSelectedTab: (_tab: PieceSelectorTabType) => {},
+  selectedCustomTabId: null as string | null,
+  setSelectedTab: (
+    _tab: PieceSelectorTabType,
+    _customTabId?: string | null,
+  ) => {},
   resetToBeforeNoneWasSelected: () => {},
   setSelectedPieceInExplore: (_piece: StepMetadataWithSuggestions | null) => {},
   selectedPieceInExplore: null as null | StepMetadataWithSuggestions,
@@ -23,31 +28,45 @@ export const PieceSelectorTabsProvider = ({
   children,
   onTabChange,
   initiallySelectedTab,
+  initiallySelectedCustomTabId = null,
 }: {
   children: React.ReactNode;
   onTabChange: (tab: PieceSelectorTabType) => void;
   initiallySelectedTab: PieceSelectorTabType;
+  initiallySelectedCustomTabId?: string | null;
 }) => {
   const [selectedTab, setSelectedTab] = useState(initiallySelectedTab);
+  const [selectedCustomTabId, setSelectedCustomTabId] = useState<string | null>(
+    initiallySelectedCustomTabId,
+  );
   const [lastTabBefroeNoneWasSelected, setLastTabBeforeNoneWasSelected] =
-    useState(initiallySelectedTab);
+    useState<{ tab: PieceSelectorTabType; customTabId: string | null }>({
+      tab: initiallySelectedTab,
+      customTabId: initiallySelectedCustomTabId,
+    });
   const [selectedPieceInExplore, setSelectedPieceInExplore] =
     useState<StepMetadataWithSuggestions | null>(null);
   return (
     <PieceSelectorTabsContext.Provider
       value={{
         selectedTab,
+        selectedCustomTabId,
         setSelectedPieceInExplore,
         selectedPieceInExplore,
-        setSelectedTab: (tab: PieceSelectorTabType) => {
+        setSelectedTab: (
+          tab: PieceSelectorTabType,
+          customTabId: string | null = null,
+        ) => {
           if (tab !== PieceSelectorTabType.NONE) {
-            setLastTabBeforeNoneWasSelected(tab);
+            setLastTabBeforeNoneWasSelected({ tab, customTabId });
             onTabChange(tab);
           }
           setSelectedTab(tab);
+          setSelectedCustomTabId(customTabId);
         },
         resetToBeforeNoneWasSelected: () => {
-          setSelectedTab(lastTabBefroeNoneWasSelected);
+          setSelectedTab(lastTabBefroeNoneWasSelected.tab);
+          setSelectedCustomTabId(lastTabBefroeNoneWasSelected.customTabId);
         },
       }}
     >

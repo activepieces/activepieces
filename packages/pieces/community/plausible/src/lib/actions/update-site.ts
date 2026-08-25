@@ -8,6 +8,8 @@ export const updateSite = createAction({
   name: 'update_site',
   displayName: 'Update Site',
   description: 'Update an existing site in your Plausible account',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing site identified by its domain, optionally renaming the domain and toggling tracker options such as 404 tracking, hash-based routing, outbound-link, file-download, and form-submission tracking; only the fields you provide are changed. Use to modify an already-registered site. Idempotent, since applying the same values yields the same resulting configuration.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     new_domain: Property.ShortText({

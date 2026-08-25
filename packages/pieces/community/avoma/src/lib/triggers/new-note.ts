@@ -2,9 +2,13 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 
 export const newNote = createTrigger({
   name: 'new_note',
+  classification: 'READ',
   displayName: 'New Note',
   description:
     'Triggers when notes are successfully generated for meetings or calls',
+  aiMetadata: {
+    description: 'Fires when Avoma finishes generating AI notes for a recorded meeting or call (the AINOTE event), delivering the summary, action items, transcript and recording references for that conversation. Requires configuring the AINOTE webhook in Avoma settings.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     setupInstructions: Property.MarkDown({

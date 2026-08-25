@@ -17,6 +17,12 @@ export const createAssistantRun = createAction({
   displayName: 'Create Assistant Run',
   description:
     'Create a run for an assistant with optional additional resources',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Starts a Griptape Cloud assistant run by sending an input prompt to a chosen assistant, then blocks and polls until the run reaches SUCCEEDED before returning. Use to actually invoke an assistant and get its result in one step; optionally attach extra knowledge bases, rulesets, structures, or tools, and reuse or create a thread for conversation context. Not idempotent: each call creates a new run.',
+    idempotent: false,
+  },
   props: {
     assistant_id: assistantIdDropdown,
     input: Property.LongText({

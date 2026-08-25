@@ -7,6 +7,8 @@ export const getVector = createAction({
   name: 'get_vector',
   displayName: 'Get a Vector',
   description: 'Look up and return vectors by ID from a namespace.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches one or more stored vectors by their exact IDs from a namespace of a Pinecone index. Use when you already know the vector IDs and want their values and metadata; for similarity lookups use Search Vectors instead. Requires the index name and at least one ID (IDs cannot contain spaces). Idempotent read-only lookup.', idempotent: true },
   props: {
     indexName: Property.ShortText({
       displayName: 'Index Name',

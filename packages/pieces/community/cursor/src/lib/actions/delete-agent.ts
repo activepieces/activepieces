@@ -9,6 +9,11 @@ export const deleteAgent = createAction({
   name: 'delete_agent',
   displayName: 'Delete Agent',
   description: 'Delete a cloud agent. This action is permanent and cannot be undone.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Permanently deletes a Cursor cloud agent by its agent id. Use to clean up or stop an agent run; this cannot be undone. The first call removes the agent and subsequent calls for the same id will not find it, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     agentId: agentDropdown,
   },

@@ -8,6 +8,12 @@ export const createExpense = createAction({
   name: 'createExpense',
   displayName: 'Create Expense',
   description: 'Create a new expense in Quaderno',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a new expense in Quaderno via POST, embedding the vendor contact and a single line item (description, quantity, unit cost) along with currency, issue date, and payment method. Use when an agent needs to log a purchase or bill. Requires issue date, currency, vendor first name/country, item details, payment method, and expense country. Not idempotent — each call creates another expense.',
+    idempotent: false,
+  },
   props: {
     issueDate: Property.ShortText({
       displayName: 'Issue Date',

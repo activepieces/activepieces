@@ -8,13 +8,17 @@ import qs from 'qs';
 import { clickupAuth } from '../../auth';
 import { callClickUpApi, clickupCommon, listTags } from '../../common';
 import { ClickupTask } from '../../common/models';
+import { filterWorkspaceTasksOutputSchema } from '../../output-schemas';
 
 export const filterClickupWorkspaceTasks = createAction({
   auth: clickupAuth,
   name: 'list_workspace_tasks',
+  classification: 'SEARCH',
   displayName: 'List Team Tasks',
   description:
     'Retrieves the tasks that meet specific criteria from a Workspace.',
+  audience: 'human',
+  aiMetadata: { description: 'List tasks across an entire ClickUp workspace, filtered by space, folder, list, assignees, and tags, with paging, ordering, and inclusion of closed tasks. Pick this to search or browse tasks broadly when you do not know a specific task ID; use Get Task for a known ID or Get Task by Name to resolve a name within one list. Read-only and idempotent; results are paginated (page starts at 0).', idempotent: true },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(false, true),
@@ -89,6 +93,7 @@ export const filterClickupWorkspaceTasks = createAction({
       },
     }),
   },
+  outputSchema: filterWorkspaceTasksOutputSchema,
   async run(configValue) {
     const { list_id, folder_id, space_id, workspace_id, ...params } =
       configValue.propsValue;

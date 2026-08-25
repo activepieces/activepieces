@@ -6,7 +6,7 @@
   "default - https://api.elevenlabs.io": "standaard - https://api.elevenlabs.io",
   "US - https://api.us.elevenlabs.io": "US - https://api.us.elevenlabs.io",
   "EU - https://api.eu.residency.elevenlabs.io": "EU - https://api.eu.residency.elevenlabs.io",
-  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Copy the API Key.\n": "\nVolg deze instructies om uw API-sleutel te krijgen:\n1. Bezoek uw Elevenlabs dashboard.\n2. Eenmaal daar, klik op je account in de linkerbenedenhoek.\n3. Druk op Profiel + API-sleutel.\n4. Kopieer de API-sleutel.\n",
+  "\nFollow these instructions to get your API Key:\n1. Visit your Elevenlabs dashboard.\n2. Once there, click on your account in the bottom left corner.\n3. Press Profile + API Key.\n4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.\n": "\nVolg deze instructies om uw API-sleutel te krijgen:\n1. Bezoek uw Elevenlabs dashboard.\n2. Eenmaal daar, klikt u op uw account in de linkerbenedenhoek.\n3. Druk op Profiel + API-sleutel.\n4. Maak of kopieer je API-sleutel. Zorg ervoor dat je de volgende machtigingen inschakelt: **user:read**, **text_to_speech**, **voices:read**, en **models**.\n",
   "Text to Speech": "Tekst naar spraak",
   "Custom API Call": "Custom API Call",
   "Convert text to speech using Elevenlabs": "Converteer tekst naar spraak met behulp van Elevenlabs",

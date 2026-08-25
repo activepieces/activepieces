@@ -5,8 +5,14 @@ import { makeClient, vboutCommon } from '../common';
 export const addContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_contact',
+  classification: 'WRITE',
   displayName: 'Add Contact to List',
   description: 'Adds a contact to a given email list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Adds a new contact (by email) to a specific VBOUT email list, with an initial subscription status and optional custom field values. Use to subscribe or import someone into a list. Requires the target list ID and email; not idempotent, as each call adds the contact again.',
+    idempotent: false,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

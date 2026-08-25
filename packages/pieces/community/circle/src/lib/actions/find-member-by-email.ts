@@ -7,8 +7,11 @@ import { CommunityMemberDetails } from "../common/types";
 export const findMemberByEmail = createAction({
     auth: circleAuth,
     name: 'find_member_by_email',
+    classification: 'READ',
     displayName: 'Find Member by Email',
     description: 'Finds a community member by their email address.',
+    audience: 'both',
+    aiMetadata: { description: 'Looks up a single community member by their exact email address. Use to resolve an email into a member record (e.g. to obtain the member ID) before acting on them. Read-only and idempotent.', idempotent: true },
     props: {
         email: Property.ShortText({
             displayName: 'Email',

@@ -7,9 +7,12 @@ import { domainIdDropdown, folderIdDropdown } from '../common/props';
 export const createShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'create-short-link',
+  classification: 'WRITE',
   displayName: 'Create Short Link',
   description:
     'Create a new short link with optional parameters (title, UTM tags, expiration, cloaking, etc.)',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new short link on a Short.io domain pointing to a target URL, with optional path/slug, title, UTM tags, expiration, click limit, cloaking, A/B split, and analytics integrations. Use to generate a shortened URL. Requires an original URL and a domain; not idempotent — each call creates a new link (set Allow Duplicates to avoid 409 conflicts on a repeated path).', idempotent: false },
   props: {
     originalURL: Property.ShortText({
       displayName: 'Original URL',

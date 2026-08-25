@@ -3,15 +3,19 @@ import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
 import { beehiivApiCall, WebhookPayload } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-post-sent-trigger';
 
 export const newPostSentTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_new_post_sent',
+	classification: 'READ',
 	displayName: 'New Post Sent',
 	description: 'Triggers when a new post is sent.',
+	aiMetadata: {
+		description: 'Fires when a post is sent (published/delivered) in the selected beehiiv publication, emitting the post with its title, slug, audience, status, and URLs.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

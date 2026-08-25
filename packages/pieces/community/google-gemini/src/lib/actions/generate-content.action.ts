@@ -2,16 +2,18 @@ import { googleGeminiAuth } from '../auth';
 import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework';
 import { defaultLLM, getGeminiModelOptions } from '../common/common';
 import { GenerateContentParameters, GoogleGenAI } from '@google/genai';
-import { isEmpty, MarkdownVariant } from '@activepieces/shared';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { nanoid } from 'nanoid';
-import { promises as fs } from 'fs';
+import { isEmpty } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
+import mime from 'mime-types';
+import { generateContentActionOutputSchema } from '../output-schemas';
 
 export const generateContentAction = createAction({
+  audience: 'both',
 	description: 'Generate content using Google Gemini using the "gemini-pro" model',
+	aiMetadata: { description: 'Runs a single stateless prompt through a Gemini text model and returns the generated text, optionally grounded by one built-in tool: Google Search for live web results, URL Context to fetch pages named in the prompt, Google Maps scoped to a latitude/longitude, or File Search over an uploaded file. Use this as the default Gemini text-generation call; prefer chat_gemini when the exchange needs conversation memory, generate_content_from_image when the input includes an image, and create_video or text-to-speech for non-text output. Not idempotent: each call produces a fresh completion, and the File Search mode additionally creates a new file search store.', idempotent: false },
 	displayName: 'Generate Content',
 	name: 'generate_content',
+	classification: 'WRITE',
 	auth: googleGeminiAuth,
 	props: {
 		prompt: Property.LongText({
@@ -105,6 +107,7 @@ export const generateContentAction = createAction({
 			},
 		}),
 	},
+	outputSchema: generateContentActionOutputSchema,
 	async run({ auth, propsValue }) {
 		const { model, prompt, toolType } = propsValue;
 		const toolProperties = propsValue.toolProperties ?? {};
@@ -129,17 +132,16 @@ export const generateContentAction = createAction({
 			case 'file-search': {
 				const { file, fileStoreName } = toolProperties as { file: ApFile; fileStoreName: string };
 
-				const tempFilePath = join(tmpdir(), `gemini-file-${nanoid()}.${file.extension}`);
-
-				const fileBuffer = Buffer.from(file.base64, 'base64');
-				await fs.writeFile(tempFilePath, fileBuffer);
+				const fileBlob = new Blob([Buffer.from(file.base64, 'base64')], {
+					type: mime.lookup(file.extension || file.filename) || undefined,
+				});
 
 				const fileSearchStore = await genAI.fileSearchStores.create({
 					config: { displayName: fileStoreName },
 				});
 
 				let operation = await genAI.fileSearchStores.uploadToFileSearchStore({
-					file: tempFilePath,
+					file: fileBlob,
 					fileSearchStoreName: fileSearchStore.name!,
 					config: {
 						displayName: file.filename,

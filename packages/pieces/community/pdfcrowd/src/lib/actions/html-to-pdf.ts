@@ -8,6 +8,8 @@ export const htmlToPdfAction = createAction({
   name: 'html_to_pdf',
   displayName: 'Convert HTML to PDF',
   description: 'Convert HTML content (string) to PDF document',
+  audience: 'both',
+  aiMetadata: { description: 'Render a raw HTML string into a PDF file via the Pdfcrowd API, returning the generated document. Choose this when you already have HTML markup (e.g. a generated invoice or report) rather than a live page URL (use Convert URL to PDF for a URL). Supports extensive layout, header/footer, watermark, and security options, plus template data injection. Not idempotent: each call performs a fresh conversion that produces a new file and consumes account credits.', idempotent: false },
   auth: pdfcrowdAuth,
   props: {
     htmlContent: Property.LongText({

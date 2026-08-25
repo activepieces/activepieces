@@ -9,6 +9,9 @@ export const contactUpdatedTrigger = createTrigger({
   name: 'contact_updated',
   displayName: 'Contact Updated',
   description: 'Triggers when an existing contact is updated in Respond.io.',
+  aiMetadata: {
+    description: 'Fires when an existing Respond.io contact\'s details change (e.g. name, email, phone, custom fields), delivering the updated contact. Does not fire on contact creation — use the New Contact trigger for that. Requires manually configuring a contact.updated webhook in Respond.io.',
+  },
   auth: respondIoAuth,
   props: {
     webhookInstructions: Property.MarkDown({

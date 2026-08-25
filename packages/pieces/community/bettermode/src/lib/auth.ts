@@ -2,7 +2,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 import { getAuthToken } from './api';
 
@@ -64,8 +64,8 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
 
 const validateAuth = async (auth: BettermodeAuthType) => {
   await propsValidation.validateZod(auth, {
-    domain: z.string().url(),
-    email: z.string().email(),
+    domain: z.string().check(z.url()),
+    email: z.string().check(z.email()),
   });
 
   const response = await getAuthToken(auth);

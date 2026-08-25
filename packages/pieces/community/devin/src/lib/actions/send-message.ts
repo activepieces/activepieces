@@ -6,6 +6,8 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Sends a message to a Devin session',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message into an existing Devin session to give it further instructions, context, or follow-up requests. Use this to continue a conversation with an already-running session rather than starting a new one. Requires the target session id and message text; not idempotent, as each call appends a new message.', idempotent: false },
   auth: devinAuth,
   props: {
     sessionId: Property.ShortText({

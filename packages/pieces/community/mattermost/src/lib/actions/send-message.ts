@@ -12,6 +12,8 @@ export const sendMessage = createAction({
   name: 'send_message',
   displayName: 'Send Message',
   description: 'Send a message to a Mattermost channel',
+  audience: 'both',
+  aiMetadata: { description: 'Post a new text message to a Mattermost channel, identified by its channel ID (not name). Use when an agent needs to notify or post into a specific channel. Not idempotent: each call creates a separate post, so repeating it sends duplicate messages.', idempotent: false },
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',

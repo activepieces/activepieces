@@ -7,6 +7,12 @@ export const updateCandidateAction = createAction({
   name: 'update_candidate',
   displayName: 'Update Candidate',
   description: 'Updates an existing candidate profile in Greenhouse. Only fields you provide will be changed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates fields on an existing candidate identified by numeric candidate ID; only the fields you supply are changed, and the rest are left untouched. Use to amend a candidate name, contact details, current role, links, or tags. Idempotent — re-sending the same field values leaves the record in the same state; note that supplying email/phone replaces the primary value and supplying tags replaces all existing tags.',
+    idempotent: true,
+  },
   auth: greenhouseAuth,
   props: {
     candidate_id: Property.ShortText({

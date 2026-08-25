@@ -5,8 +5,11 @@ import { PlacidClient } from '../common/client';
 export const getVideo = createAction({
 	auth: placidAuth,
 	name: 'get_video',
+	classification: 'READ',
 	displayName: 'Get Video',
 	description: 'Retrieves the generated video by its ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Look up a previously created Placid video by its ID to read its current status and download URL. Use this to poll a queued render to completion or fetch the result of an earlier Create Video call. Requires the video ID. Idempotent read-only lookup.', idempotent: true },
 	props: {
 		videoId: Property.ShortText({
 			displayName: 'Video ID',

@@ -8,6 +8,12 @@ export const makePhoneCall = createAction({
   name: 'makePhoneCall',
   displayName: 'Make Phone Call',
   description: 'Initiate an AI-powered phone call to a customer.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Place a single outbound AI-assistant phone call to one customer number, using the chosen assistant and optional template variables. Use for one-off calls; for bulk outbound calling use a campaign (Start/Stop Campaign) instead. Each invocation dials a new call, so it is not idempotent.',
+    idempotent: false,
+  },
   props: famulorCommon.makePhoneCallProperties(),
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, famulorCommon.makePhoneCallSchema);

@@ -7,6 +7,8 @@ export const getProduct = createAction({
   name: 'get_product',
   displayName: 'Get Product',
   description: 'Retrieve a specific product by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single Lightfunnels product by its node ID, including variants, options, pricing, and related funnels/stores. Use when you already have a product ID and need its complete record; use List Products first if you only have a name or other criteria. Read-only and idempotent.', idempotent: true },
   props: {
     productId: Property.ShortText({
       displayName: 'Product ID',

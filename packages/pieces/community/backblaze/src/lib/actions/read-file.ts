@@ -5,8 +5,11 @@ import { createBackBlazeS3 } from '../common';
 export const readBackBlazeFileAction = createAction({
   auth: backBlazeS3Auth,
   name: 'read-backblaze-file',
+  classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from Backblaze bucket to use it in other steps.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches an object from the configured Backblaze B2 (S3-compatible) bucket by its key and writes it to a downstream file reference for use in later steps. Use to retrieve previously stored file content. Requires the exact object key including any extension. Idempotent: it only reads, leaving the bucket unchanged.', idempotent: true },
   props: {
     key: Property.ShortText({
       displayName: 'Key',

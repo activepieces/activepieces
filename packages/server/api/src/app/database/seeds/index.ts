@@ -1,4 +1,5 @@
 import { devDataSeed } from './dev-seeds'
+import { knowledgeBaseSeed } from './knowledge-base-seed'
 import { rolesSeed } from './role-seed'
 
 export const databaseSeeds = {
@@ -6,6 +7,7 @@ export const databaseSeeds = {
         const seeds = [
             rolesSeed,
             devDataSeed,
+            knowledgeBaseSeed,
         ]
         for (const seed of seeds) {
             await seed.run()

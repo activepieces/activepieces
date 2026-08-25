@@ -7,6 +7,8 @@ export const updatePayment = createAction({
     name: 'update_payment',
     displayName: 'Update Payment',
     description: 'Updates descriptive and global flexfields for a payment.',
+    audience: 'both',
+    aiMetadata: { description: 'Update an existing Oracle Fusion accounts-payable payment identified by its Check ID, setting its description and/or void dates (void date and void accounting date). Requires the payment to already exist and at least one field to change; only the supplied fields are modified, so reapplying the same values leaves the payment unchanged.', idempotent: true },
     props: {
         checkId: Property.ShortText({
             displayName: 'Check ID',

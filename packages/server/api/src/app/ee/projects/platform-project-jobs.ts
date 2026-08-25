@@ -1,4 +1,5 @@
-import { AppConnectionScope, assertNotNullOrUndefined } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { AppConnectionScope } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
@@ -30,7 +31,7 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             }
             const flowExists = await flowRepo().existsBy({ id: flow.id })
             if (!flowExists) {
-                log.info({ flowId: flow.id }, '[hardDeleteProjectHandler] Flow already deleted, skipping preDelete')
+                log.info({ flow: { id: flow.id } }, '[hardDeleteProjectHandler] Flow already deleted, skipping preDelete')
                 continue
             }
             await flowSideEffects(log).preDelete({ flowToDelete: flow })

@@ -86,6 +86,9 @@ export const newMessage = createTrigger({
   name: 'newMessage',
   displayName: 'New Message',
   description: 'Triggers when an agent uses send_message',
+  aiMetadata: {
+    description: 'Fires when a specific Letta agent (by agent ID) emits a message via its send_message tool call, representing the agent communicating to the user. Polls the agent\'s message history and detects send_message tool-call messages newer than the last poll.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     agentId: agentIdDropdown,

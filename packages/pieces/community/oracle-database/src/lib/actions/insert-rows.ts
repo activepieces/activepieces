@@ -8,6 +8,8 @@ export const insertRowsAction = createAction({
   name: 'insert_rows',
   displayName: 'Insert Rows',
   description: 'Insert multiple rows into an Oracle table',
+  audience: 'both',
+  aiMetadata: { description: 'Bulk-inserts multiple rows into an Oracle Database table from an array of objects keyed by column name. Use when adding several records at once instead of repeated single inserts. Requires a non-empty array; not idempotent — each call appends new rows.', idempotent: false },
   props: {
     tableName: oracleDbProps.tableName(),
     rows: Property.Array({

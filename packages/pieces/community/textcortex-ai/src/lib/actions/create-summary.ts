@@ -9,6 +9,8 @@ export const createSummary = createAction({
   name: 'create_summary',
   displayName: 'Create Summary',
   description: 'Summarize input text to concise form.',
+  audience: 'both',
+  aiMetadata: { description: 'Condense text into a shorter summary using TextCortex AI. Provide the content either as inline text or as a stored file ID (one is required); supports a default or embeddings summarization mode plus model, formality, and language options. Not idempotent: each call produces fresh, non-deterministic output and consumes account credits.', idempotent: false },
   props: {
     text: Property.LongText({
       displayName: 'Text to Summarize',

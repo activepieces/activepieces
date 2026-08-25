@@ -14,8 +14,15 @@ import {
 export const updateOpportunityAction = createAction({
   auth: capsuleCrmAuth,
   name: 'update_opportunity',
+  classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Update an existing Opportunity in Capsule CRM.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing Capsule CRM opportunity identified by its opportunity ID, changing fields such as name, milestone, value, probability, duration, owner, team, tags, and custom fields. Tags and custom-field entries each support a delete flag for removal. Use when you already know the target opportunity ID; only provided fields are changed. Not idempotent because it issues a mutating update on each call.',
+    idempotent: false,
+  },
   props: {
     opportunityId: Property.Dropdown({
       auth: capsuleCrmAuth,

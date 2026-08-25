@@ -9,7 +9,7 @@ import {
 	ObjectResponse,
 	SelectOptionResponse,
 } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { attioAuth } from '../auth';
 
 interface DropdownParams {

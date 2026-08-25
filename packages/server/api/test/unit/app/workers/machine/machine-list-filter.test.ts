@@ -1,6 +1,6 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { MachineInformation, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
-import { workerMachineCache, WorkerMachine } from '../../../../../src/app/workers/machine/machine-cache'
+import { MachineInformation, WorkerGroupScope, WorkerMachineStatus, WorkerMachineType } from '@activepieces/shared'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { WorkerMachine, workerMachineCache } from '../../../../../src/app/workers/machine/machine-cache'
 import { machineService } from '../../../../../src/app/workers/machine/machine-service'
 
 let inMemoryStore: Map<string, WorkerMachine>
@@ -90,6 +90,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-A',
             information: fakeMachineInfo('dedicated-A'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-A',
         })
 
@@ -97,6 +98,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-B',
             information: fakeMachineInfo('dedicated-B'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-B',
         })
 
@@ -116,6 +118,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-other',
         })
 
@@ -139,6 +142,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-mine',
             information: fakeMachineInfo('dedicated-mine'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-X',
         })
 
@@ -146,6 +150,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-Y',
         })
 
@@ -168,6 +173,7 @@ describe('machineService.list — platform filtering', () => {
             id: 'dedicated-other',
             information: fakeMachineInfo('dedicated-other'),
             type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PLATFORM,
             workerGroupId: 'group-Y',
         })
 
@@ -175,6 +181,23 @@ describe('machineService.list — platform filtering', () => {
         expect(result).toHaveLength(1)
         expect(result[0].id).toBe('shared-1')
         expect(result[0].type).toBe(WorkerMachineType.SHARED)
+    })
+
+    it('should return project-scope workers to any platform', async () => {
+        mockGetWorkerGroupId.mockResolvedValue(null)
+
+        await workerMachineCache().upsert({
+            id: 'project-worker',
+            information: fakeMachineInfo('project-worker'),
+            type: 'DEDICATED',
+            workerGroupScope: WorkerGroupScope.PROJECT,
+            workerGroupId: '1cpu_machine',
+        })
+
+        const result = await machineService(mockLogger).list('any-platform');
+        expect(result).toHaveLength(1)
+        expect(result[0].id).toBe('project-worker')
+        expect(result[0].workerGroupScope).toBe(WorkerGroupScope.PROJECT)
     })
 
     it('should include legacy workers with no type as shared', async () => {

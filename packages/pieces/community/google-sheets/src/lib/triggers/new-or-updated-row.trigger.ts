@@ -1,6 +1,6 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../common/common';
-import { areSheetIdsValid, columnToLabel, GoogleSheetsAuthValue, labelToColumn } from '../common/common';
+import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -24,14 +24,20 @@ import {
 
 import crypto from 'crypto';
 import { commonProps } from '../common/props';
+import { googleSheetsNewOrUpdatedRowTriggerOutputSchema } from '../output-schemas';
 
 const ALL_COLUMNS = 'all_columns';
 
 export const newOrUpdatedRowTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'google-sheets-new-or-updated-row',
+	classification: 'READ',
 	displayName: 'New or Updated Row',
 	description: 'Triggers when a new row is added or modified in a spreadsheet.',
+	aiMetadata: {
+		description:
+			'Fires when a row in the selected worksheet is added or any of its cell values change; can be narrowed to watch a single trigger column. Each event represents one new or changed row with its current values. Delivery may lag up to a few minutes due to Google notification delays.',
+	},
 	props: {
 		info: Property.MarkDown({
 			value:
@@ -82,6 +88,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			},
 		}),
 	},
+	outputSchema: googleSheetsNewOrUpdatedRowTriggerOutputSchema,
 
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,

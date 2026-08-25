@@ -5,6 +5,7 @@ import { flowCanvasConsts } from '../utils/consts';
 import { ApRouterEndEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
+import { useEdgeLayoutSpace } from './use-edge-layout-space';
 
 export const ApRouterEndCanvasEdge = ({
   sourceX,
@@ -14,20 +15,28 @@ export const ApRouterEndCanvasEdge = ({
   data,
   id,
 }: EdgeProps & Omit<ApRouterEndEdge, 'position'>) => {
-  const verticalLineLength =
-    flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
+  const { isHorizontal, layout, layoutSource, layoutTarget, toCanvasPath } =
+    useEdgeLayoutSpace({ sourceX, sourceY, targetX, targetY });
+
+  // layout-space (along-axis) length: vertical on the vertical canvas,
+  // horizontal on the horizontal canvas
+  const endLineAlongLength =
+    layout.spaceAlongBetweenSteps -
     2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
 
   const horizontalLineLength =
-    (Math.abs(targetX - sourceX) - 2 * flowCanvasConsts.ARC_LENGTH) *
-    (targetX > sourceX ? 1 : -1);
+    (Math.abs(layoutTarget.x - layoutSource.x) -
+      2 * flowCanvasConsts.ARC_LENGTH) *
+    (layoutTarget.x > layoutSource.x ? 1 : -1);
 
-  const distanceBetweenTargetAndSource = Math.abs(targetX - sourceX);
+  const distanceBetweenTargetAndSource = Math.abs(
+    layoutTarget.x - layoutSource.x,
+  );
 
-  const generatePath = () => {
+  const generateLayoutPath = () => {
     // Start point
-    let path = `M ${sourceX - 0.5} ${
-      sourceY - flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+    let path = `M ${layoutSource.x - 0.5} ${
+      layoutSource.y - flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
     }`;
 
     // Vertical line from start
@@ -36,7 +45,7 @@ export const ApRouterEndCanvasEdge = ({
     // Arc or vertical line based on distance
     if (distanceBetweenTargetAndSource >= flowCanvasConsts.ARC_LENGTH) {
       path +=
-        targetX > sourceX
+        layoutTarget.x > layoutSource.x
           ? flowCanvasConsts.ARC_RIGHT_DOWN
           : flowCanvasConsts.ARC_LEFT_DOWN;
     } else {
@@ -50,7 +59,7 @@ export const ApRouterEndCanvasEdge = ({
     // Optional horizontal line
     if (data.drawHorizontalLine) {
       path += `h ${horizontalLineLength} ${
-        targetX > sourceX
+        layoutTarget.x > layoutSource.x
           ? flowCanvasConsts.ARC_RIGHT
           : flowCanvasConsts.ARC_LEFT
       }`;
@@ -58,7 +67,7 @@ export const ApRouterEndCanvasEdge = ({
 
     // Optional ending vertical line with arrow
     if (data.drawEndingVerticalLine) {
-      path += `v${verticalLineLength}`;
+      path += `v${endLineAlongLength}`;
       if (!data.isNextStepEmpty) {
         path += flowCanvasConsts.ARROW_DOWN;
       }
@@ -67,7 +76,24 @@ export const ApRouterEndCanvasEdge = ({
     return path;
   };
 
-  const path = generatePath();
+  const layoutPath = generateLayoutPath();
+  const path = toCanvasPath(layoutPath);
+
+  const buttonPosition = isHorizontal
+    ? {
+        x: targetX - endLineAlongLength,
+        y:
+          targetY -
+          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height / 2 -
+          flowCanvasConsts.LINE_WIDTH / 2,
+      }
+    : {
+        x:
+          targetX -
+          flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 -
+          flowCanvasConsts.LINE_WIDTH / 2,
+        y: targetY - endLineAlongLength,
+      };
 
   return (
     <>
@@ -78,12 +104,8 @@ export const ApRouterEndCanvasEdge = ({
 
       {data.drawEndingVerticalLine && (
         <foreignObject
-          x={
-            targetX -
-            flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 -
-            flowCanvasConsts.LINE_WIDTH / 2
-          }
-          y={targetY - verticalLineLength}
+          x={buttonPosition.x}
+          y={buttonPosition.y}
           width={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"

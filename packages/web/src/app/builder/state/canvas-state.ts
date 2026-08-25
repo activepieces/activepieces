@@ -1,4 +1,5 @@
-import { FlowTriggerType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FlowTriggerType } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
@@ -6,14 +7,20 @@ import { flowRunUtils } from '@/features/flow-runs';
 
 import { BuilderState } from '../builder-hooks';
 import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
+import { CanvasOrientation } from '../flow-canvas/utils/types';
+
+export type StepDataPanelView = 'drawer' | 'split';
 
 export type CanvasState = {
+  canvasOrientation: CanvasOrientation;
+  setCanvasOrientation: (orientation: CanvasOrientation) => void;
   readonly: boolean;
   hideTestWidget: boolean;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
   selectedBranchIndex: number | null;
+  userManuallySelectedStepDuringRun: boolean;
   showMinimap: boolean;
   setShowMinimap: (showMinimap: boolean) => void;
   setSelectedBranchIndex: (index: number | null) => void;
@@ -21,7 +28,11 @@ export type CanvasState = {
   renameFlowClientSide: (newName: string) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   removeStepSelection: () => void;
-  selectStepByName: (stepName: string) => void;
+  selectStepByName: (
+    stepName: string,
+    options?: { fromAutoFocus?: boolean },
+  ) => void;
+  resumeLiveFollow: () => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setReadOnly: (readOnly: boolean) => void;
   selectedNodes: string[];
@@ -33,6 +44,10 @@ export type CanvasState = {
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   deselectStep: () => void;
+  stepDataPanelView: StepDataPanelView;
+  setStepDataPanelView: (view: StepDataPanelView) => void;
+  isStepDataPanelOpen: boolean;
+  setStepDataPanelOpen: (open: boolean) => void;
 };
 
 type CanvasStateInitialState = Pick<
@@ -58,6 +73,16 @@ export const createCanvasState = (
     initiallySelectedStep === 'trigger' &&
     initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
   return {
+    canvasOrientation: getCanvasOrientationFromLocalStorage(),
+    setCanvasOrientation: (orientation: CanvasOrientation) => {
+      localStorage.setItem(
+        CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE,
+        orientation,
+      );
+      return set(() => ({
+        canvasOrientation: orientation,
+      }));
+    },
     showMinimap: false,
     setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
     readonly: initialState.readonly,
@@ -94,7 +119,10 @@ export const createCanvasState = (
         };
       });
     },
-    selectStepByName: (selectedStep: string) => {
+    selectStepByName: (
+      selectedStep: string,
+      options?: { fromAutoFocus?: boolean },
+    ) => {
       set((state) => {
         const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
         const rightSidebar =
@@ -103,22 +131,38 @@ export const createCanvasState = (
             ? RightSideBarType.NONE
             : RightSideBarType.PIECE_SETTINGS;
 
-        const isEmptyTrigger =
-          selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
+        const userPickedDifferentStepDuringRun =
+          !options?.fromAutoFocus &&
+          !isNil(state.run) &&
+          state.selectedStep !== selectedStep;
 
         return {
-          openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
-            ? 'trigger'
-            : null,
+          openedPieceSelectorStepNameOrAddButtonId: null,
           selectedStep,
           rightSidebar,
           selectedBranchIndex: null,
           selectedNodes,
           chatDrawerOpenSource: null,
+          userManuallySelectedStepDuringRun:
+            state.userManuallySelectedStepDuringRun ||
+            userPickedDifferentStepDuringRun,
         };
       });
     },
+    resumeLiveFollow: () =>
+      set((state) => {
+        if (isNil(state.run) || isNil(state.run.steps)) {
+          return { userManuallySelectedStepDuringRun: false };
+        }
+        return {
+          userManuallySelectedStepDuringRun: false,
+          loopsIndexes: flowRunUtils.snapLoopsToLatestIteration(
+            state.run,
+            state.loopsIndexes,
+          ),
+        };
+      }),
+    userManuallySelectedStepDuringRun: false,
     exitStepSettings: () =>
       set(() => ({
         rightSidebar: RightSideBarType.NONE,
@@ -155,8 +199,34 @@ export const createCanvasState = (
         isFocusInsideListMapperModeInput,
       }));
     },
+    stepDataPanelView: getStepDataPanelViewFromLocalStorage(),
+    setStepDataPanelView: (view: StepDataPanelView) => {
+      localStorage.setItem(STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE, view);
+      return set(() => ({
+        stepDataPanelView: view,
+      }));
+    },
+    isStepDataPanelOpen:
+      getTestPanelOpenFromLocalStorage() || !isNil(initialState.run),
+    setStepDataPanelOpen: (open: boolean) => {
+      localStorage.setItem(
+        TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE,
+        open ? 'open' : 'closed',
+      );
+      return set(() => ({
+        isStepDataPanelOpen: open,
+      }));
+    },
   };
 };
+
+const CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE = 'ap.builder.canvasOrientation';
+function getCanvasOrientationFromLocalStorage(): CanvasOrientation {
+  return localStorage.getItem(CANVAS_ORIENTATION_KEY_IN_LOCAL_STORAGE) ===
+    'horizontal'
+    ? 'horizontal'
+    : 'vertical';
+}
 
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
@@ -164,4 +234,17 @@ function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     'grab'
     ? 'grab'
     : 'pan';
+}
+
+const STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelView';
+function getStepDataPanelViewFromLocalStorage(): StepDataPanelView {
+  return localStorage.getItem(STEP_DATA_PANEL_VIEW_KEY_IN_LOCAL_STORAGE) ===
+    'split'
+    ? 'split'
+    : 'drawer';
+}
+
+const TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE = 'ap.builder.testPanelOpen';
+function getTestPanelOpenFromLocalStorage(): boolean {
+  return localStorage.getItem(TEST_PANEL_OPEN_KEY_IN_LOCAL_STORAGE) === 'open';
 }

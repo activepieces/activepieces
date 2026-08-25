@@ -1,15 +1,11 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    ErrorCode,
-    PrincipalType,
-    ProjectType,
-    TeamProjectsLimit,
-} from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
+import { PrincipalType, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -26,7 +22,7 @@ describe('Project API (CE)', () => {
         it('should create one team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 project: { type: ProjectType.PERSONAL },
-                plan: { teamProjectsLimit: TeamProjectsLimit.ONE },
+                plan: { billedTeamProjectsLimit: 1 },
             })
 
             const testToken = await generateMockToken({
@@ -52,7 +48,7 @@ describe('Project API (CE)', () => {
 
         it('should fail to create a second team project', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: { teamProjectsLimit: TeamProjectsLimit.ONE },
+                plan: { billedTeamProjectsLimit: 1 },
             })
 
             const testToken = await generateMockToken({

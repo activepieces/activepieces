@@ -8,6 +8,8 @@ export const createBudget = createAction({
   name: 'create_budget',
   displayName: 'Create Budget',
   description: 'Creates a new budget.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new budget in NinjaPipe with a name and an allocated amount (which must be greater than 0); optionally set category, period, currency (defaults to USD), status, and start/end dates. Not idempotent — each call creates a separate budget, so calling repeatedly produces duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({ displayName: 'Name', description: 'Budget name.', required: true }),
     allocated: Property.Number({

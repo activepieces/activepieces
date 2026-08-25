@@ -26,6 +26,11 @@ export const listSessionTodos = createAction({
   name: 'list-session-todos',
   displayName: 'List Session Todos',
   description: 'Retrieve todos generated for a specific session.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List the todos generated for one specific Hedy session, identified by a session ID (must be prefixed with "sess_"). Use when you have a session and want only its todos, rather than the account-wide list. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     sessionId: commonProps.sessionId,
     returnAll: commonProps.returnAll,

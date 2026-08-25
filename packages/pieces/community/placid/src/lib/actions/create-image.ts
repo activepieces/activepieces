@@ -8,14 +8,17 @@ import {
 	passthroughProperty,
 	templateLayersProperty,
 } from '../common/props';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { PlacidCreateImageRequest } from '../common';
 
 export const createImage = createAction({
 	auth: placidAuth,
 	name: 'create_image',
+	classification: 'WRITE',
 	displayName: 'Create Image',
 	description: 'Generates a dynamic image from a specified template using input data.',
+	audience: 'both',
+	aiMetadata: { description: 'Render a dynamic image from a Placid template by filling its layers with provided data; choose this to produce a rendered image asset from a template. Requires a template UUID. By default the render is queued and returns immediately; enabling create_now blocks and polls until the image finishes. Not idempotent — each call queues a new render job.', idempotent: false },
 	props: {
 		template: imageTemplateDropdown,
 		layers: templateLayersProperty('image'),

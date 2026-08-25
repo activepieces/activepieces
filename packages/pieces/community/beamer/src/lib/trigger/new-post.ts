@@ -14,8 +14,12 @@ const markdown = `
 
 export const newPost = createTrigger({
   name: 'new_post_on_beamer',
+  classification: 'READ',
   displayName: 'New Beamer Post',
   description: 'Triggers when new post is found in your beamer account',
+  aiMetadata: {
+    description: 'Fires when a new post is published in the connected Beamer account, delivered via a Beamer webhook integration. Represents a freshly created announcement or changelog entry.',
+  },
   props: {
     md: Property.MarkDown({
       value: markdown,

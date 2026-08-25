@@ -8,6 +8,8 @@ export const profanityDetection = createAction({
   name: 'profanity_detection',
   displayName: 'Detect Profanity',
   description: 'Detect offensive or inappropriate language in text using machine learning',
+  audience: 'both',
+  aiMetadata: { description: 'Scan a block of text for offensive or inappropriate language and return a risk/safety assessment. Can return just the score and safety flag, or additionally list the bad words found. Use to moderate user-generated content. Read-only scoring call; safe to repeat.', idempotent: true },
   props: {
     text: Property.LongText({
       displayName: 'Text',

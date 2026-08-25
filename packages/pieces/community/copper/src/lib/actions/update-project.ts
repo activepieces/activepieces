@@ -12,6 +12,12 @@ export const updateProject = createAction({
   name: 'updateProject',
   displayName: 'Update Project',
   description: 'Updates a project record.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing project in Copper CRM, identified by project ID, overwriting its name and details with the supplied values. Use to modify a known project; requires the target project ID. Idempotent: re-applying the same values leaves the record in the same state.',
+    idempotent: true,
+  },
   props: {
     projectId: projectsDropdown({ refreshers: ['auth'], required: true }),
     updateFields: Property.DynamicProperties({

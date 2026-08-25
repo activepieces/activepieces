@@ -8,6 +8,8 @@ export const sendSignrequest = createAction({
   name: 'send_signrequest',
   displayName: 'Send signrequest',
   description: 'Create a SignRequest via the Signrequest API',
+  audience: 'both',
+  aiMetadata: { description: 'Creates and sends a document signature request via SignRequest, dispatching the document to the listed signers for e-signature. Use to kick off a signing workflow for a contract or form. Requires a title and a JSON array of signer objects (email/name/role); files to sign are an optional JSON array. Not idempotent — each call sends a new, separate signature request.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

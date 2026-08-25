@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'create-project',
   displayName: 'Create Project',
   description: 'Create a new project in Motion',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project in a Motion workspace, with optional description, due date, priority, and labels. Use when an agent needs a container to organize tasks under. Requires the target workspace ID and a project name. Not idempotent: each call creates a separate project.', idempotent: false },
   props: {
     workspaceId: workspaceId('Workspace ID'),
     name: Property.ShortText({

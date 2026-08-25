@@ -11,6 +11,12 @@ export const createDraftAdvancedAction = createAction({
 	displayName: 'Create Draft Advanced',
 	description:
 		'Create multi-post threads with full control. Supports threads (multiple posts), different content and media per post with pre-uploaded media IDs using JSON format. For single posts with simple text and media URLs, use "Create Draft Simple" instead.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Creates a Typefully draft from a raw per-platform JSON object, giving full control over multi-post threads, distinct content per platform, and attached media IDs. Choose this over Create Draft Simple when you need threads or platform-specific posts; the required Platforms JSON must be an object keyed by platform name, each with enabled and a posts array. Optionally schedule via Publish At. Each call creates a new draft, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		platforms_json: Property.Json({

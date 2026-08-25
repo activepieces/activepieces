@@ -15,6 +15,8 @@ export const evsesListingAction = createAction({
   name: 'evsesListing',
   displayName: 'Resources - Evses - Listing',
   description: 'Get all EVSEs.',
+  audience: 'both',
+  aiMetadata: { description: 'List EVSEs (charging connectors) across the network, optionally filtered by charge point, physical reference (QR code), external id, roaming flag, or last-updated window. Read-only and idempotent; use this to discover or search for EVSEs when you do not already have a specific id, and use Read for a single known EVSE. Enable pagination to fetch all results.', idempotent: true },
   props: {
         
   filter__chargePointId: Property.Number({

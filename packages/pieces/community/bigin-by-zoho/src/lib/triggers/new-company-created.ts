@@ -8,8 +8,12 @@ const CACHE_KEY = 'bigin_new_company_created_trigger';
 export const newCompanyCreated = createTrigger({
   auth: biginAuth,
   name: 'newCompanyCreated',
+  classification: 'READ',
   displayName: 'New Company Created',
   description: 'Triggers when a new company record is created',
+  aiMetadata: {
+    description: 'Fires when a new company (account) record is created in Bigin CRM, via an Accounts.create webhook. Represents a newly added organization.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

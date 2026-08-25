@@ -1,4 +1,4 @@
-import { isObject } from '@activepieces/shared'
+import { isObject } from '@activepieces/core-utils'
 import { ProcessorFn } from './types'
 
 function getLongestArrayLengthInObject(props: Record<string, unknown>): number {

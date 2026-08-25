@@ -8,6 +8,8 @@ export const updateContact = createAction({
     name: 'update_contact',
     displayName: 'Update Contact',
     description: 'Update an existing contact.',
+    audience: 'both',
+    aiMetadata: { description: 'Update fields (name, email, phone, title, account, or arbitrary extra fields) on an existing Salesforce Contact identified by its record Id. Use when you already have the contact Id and want to modify it rather than create one. Idempotent: re-applying the same field values to the same Id yields the same result; omitted fields are left unchanged, and a call with no fields is a no-op.', idempotent: true },
     props: {
         contact_id: salesforcesCommon.contact,
         FirstName: Property.ShortText({

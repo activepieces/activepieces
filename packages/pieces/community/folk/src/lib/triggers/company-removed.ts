@@ -12,6 +12,9 @@ export const companyRemoved = createTrigger({
   name: 'company_removed',
   displayName: 'Company Removed',
   description: 'Fires when a company is removed from your Folk workspace.',
+  aiMetadata: {
+    description: 'Fires when a company is deleted from the connected Folk workspace, optionally scoped to a single group. The event payload carries the deleted company ID along with a snapshot of its name and emails.',
+  },
   props: {
     groupId: folkProps.group_id(false, 'Group ID'),
   },

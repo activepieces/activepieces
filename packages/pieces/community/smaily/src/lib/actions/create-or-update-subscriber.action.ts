@@ -12,6 +12,12 @@ export const createOrUpdateSubscriberAction = createAction({
   displayName: 'Create or Update Subscriber',
   description:
     'Creates a new subscriber or update an existing subscriber by email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upsert a subscriber in a Smaily account, keyed on the email address: creates the contact if the email is new, otherwise updates the existing one (including subscription status and custom fields). Use to add or sync contact data. Idempotent — repeating the same input leaves the subscriber in the same state rather than creating duplicates.',
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

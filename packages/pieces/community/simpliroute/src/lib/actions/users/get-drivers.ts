@@ -8,6 +8,8 @@ export const get_drivers = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Drivers',
     description: 'Retrieve the list of drivers registered in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'List all drivers/users registered in the account. Read-only and idempotent; takes no input. Use to discover user IDs before fetching, updating, or assigning a specific driver.', idempotent: true },
     props: {},
     async run(context) {
         const url = `${API_BASE_URL}/v1/accounts/drivers/`;

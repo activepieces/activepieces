@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, createCustomApiCallAction } from '@activepieces/pieces-common';
 import { readSecret } from './lib/actions/read-secret';
 import { writeSecret } from './lib/actions/write-secret';

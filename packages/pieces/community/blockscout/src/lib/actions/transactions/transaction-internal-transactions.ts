@@ -3,8 +3,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionInternalTransactions = createAction({
   name: 'get_transaction_internal_transactions',
+  classification: 'SEARCH',
   displayName: 'Get Transaction Internal Transactions',
   description: 'Get list of internal transactions in a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'List the internal transactions (value-transferring calls made by contracts, not separate top-level transactions) triggered within one Ethereum transaction, identified by its hash. Read-only. Use this to trace contract-to-contract ETH movement inside a single transaction; for ERC token movements in that transaction use Get Transaction Token Transfers instead.', idempotent: true },
   // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({

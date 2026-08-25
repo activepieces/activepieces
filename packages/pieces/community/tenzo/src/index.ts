@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { tenzoAuth } from "./lib/common/auth";
 import { newDailyForecastTrigger } from "./lib/triggers/new-daily-forecast.trigger";
 import { newSummaryPaymentsTrigger } from "./lib/triggers/new-summary-payments.trigger";

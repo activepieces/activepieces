@@ -33,6 +33,8 @@ export const searchLeadsAction = createAction({
     name: 'search-leads',
     displayName: 'Search Leads',
     description: 'List and filter leads in the account.',
+    audience: 'both',
+    aiMetadata: { description: 'Lists leads in the Hunter account, optionally narrowed by a wide set of filters (email, name, company, list, verification/sending status, activity dates, custom attributes, free-text query) with limit/offset paging; with no filters it returns all leads. Use to find leads matching criteria or to page through the account. Read-only and idempotent.', idempotent: true },
     props: {
         leads_list_id: leadsListDropdownProp,
         email: emailFilterProp,

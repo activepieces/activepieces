@@ -8,6 +8,11 @@ export const createCompany = createAction({
   name: 'createCompany',
   displayName: 'Create Company',
   description: 'Create a new company in your Folk workspace. You can add emails, links, phone numbers, and assign it to a group.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new company record in the Folk CRM, optionally attaching addresses, emails, phone numbers, URLs, an industry, and a group assignment. Use when a company does not yet exist in Folk; only the company name is required. Not idempotent: each call creates a separate company even with identical input, so guard against duplicates (e.g. search with Find Company first).',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Company Name',

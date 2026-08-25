@@ -1,6 +1,8 @@
 import {
     PrincipalType,
+    SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
     SCIM_GROUP_SCHEMA,
+    SCIM_LIST_RESPONSE_SCHEMA,
     SCIM_RESOURCE_TYPE_SCHEMA,
     SCIM_SCHEMA_SCHEMA,
     SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA,
@@ -54,7 +56,7 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/ResourceTypes', ResourceTypesRequest, async (_request, reply) => {
-        return reply.status(StatusCodes.OK).send([
+        const resources = [
             {
                 schemas: [SCIM_RESOURCE_TYPE_SCHEMA],
                 id: 'User',
@@ -79,11 +81,18 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                     location: '/scim/v2/ResourceTypes/Group',
                 },
             },
-        ])
+        ]
+        return reply.status(StatusCodes.OK).send({
+            schemas: [SCIM_LIST_RESPONSE_SCHEMA],
+            totalResults: resources.length,
+            startIndex: 1,
+            itemsPerPage: resources.length,
+            Resources: resources,
+        })
     })
 
     app.get('/Schemas', SchemasRequest, async (_request, reply) => {
-        return reply.status(StatusCodes.OK).send([
+        const resources = [
             {
                 schemas: [SCIM_SCHEMA_SCHEMA],
                 id: SCIM_USER_SCHEMA,
@@ -94,7 +103,7 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                         name: 'userName',
                         type: 'string',
                         multiValued: false,
-                        required: true,
+                        required: false,
                         caseExact: false,
                         mutability: 'readWrite',
                         returned: 'default',
@@ -104,7 +113,7 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                         name: 'name',
                         type: 'complex',
                         multiValued: false,
-                        required: false,
+                        required: true,
                         mutability: 'readWrite',
                         returned: 'default',
                         subAttributes: [
@@ -130,7 +139,7 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                         name: 'emails',
                         type: 'complex',
                         multiValued: true,
-                        required: false,
+                        required: true,
                         mutability: 'readWrite',
                         returned: 'default',
                         subAttributes: [
@@ -167,6 +176,24 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                         required: false,
                         mutability: 'readWrite',
                         returned: 'default',
+                    },
+                    {
+                        name: SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA,
+                        type: 'complex',
+                        multiValued: true,
+                        required: true,
+                        mutability: 'readWrite',
+                        returned: 'default',
+                        subAttributes: [
+                            {
+                                name: 'platformRole',
+                                type: 'string',
+                                multiValued: false,
+                                required: true,
+                                mutability: 'readWrite',
+                                returned: 'default',
+                            },
+                        ],
                     },
                 ],
                 meta: {
@@ -228,7 +255,14 @@ export const scimDiscoveryController: FastifyPluginAsyncZod = async (app) => {
                     location: `/scim/v2/Schemas/${SCIM_GROUP_SCHEMA}`,
                 },
             },
-        ])
+        ]
+        return reply.status(StatusCodes.OK).send({
+            schemas: [SCIM_LIST_RESPONSE_SCHEMA],
+            totalResults: resources.length,
+            startIndex: 1,
+            itemsPerPage: resources.length,
+            Resources: resources,
+        })
     })
 }
 

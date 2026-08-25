@@ -10,7 +10,7 @@ import { findRoom } from './lib/actions/find-room';
 import { webexAuth } from './lib/common/auth';
 import { newRoom } from './lib/triggers/new-room';
 import { newMeeting } from './lib/triggers/new-meeting';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 

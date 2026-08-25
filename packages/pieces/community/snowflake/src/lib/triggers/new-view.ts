@@ -80,6 +80,10 @@ export const newViewTrigger = createTrigger({
   displayName: 'New View',
   description:
     'Triggers when a new view is created in the selected schema. Checked by polling every few minutes.',
+  aiMetadata: {
+    description:
+      "Fires when a new view is created in the selected Snowflake database and schema, detected by polling and comparing each view's creation time against the last-seen watermark. Each newly created view produces one event with its name, owner, definition text, and metadata.",
+  },
   props,
   sampleData: {
     view_name: 'ACTIVE_CUSTOMERS',

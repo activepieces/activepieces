@@ -5,8 +5,15 @@ import { bigCommerceApiService } from '../common/requests';
 export const findOrCreateProduct = createAction({
   auth: bigcommerceAuth,
   name: 'findOrCreateProduct',
+  classification: 'WRITE',
   displayName: 'Find or Create Product',
   description: 'Finds or creates a product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a catalog product by exact name and returns the match if found, otherwise creates a new product from the supplied details (type, weight, and price required). Use instead of Create a Product when the item may already exist, to avoid duplicates. Idempotent: repeated calls match the same existing product by name rather than creating duplicates.',
+    idempotent: true,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

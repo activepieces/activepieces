@@ -14,6 +14,8 @@ export const getHistoricalTimeSeriesAction = createAction({
   name: 'getHistoricalTimeSeries',
   displayName: 'Resources - Flexibility Assets - Get Historical Time Series',
   description: 'Get Historical Time Series for a Flexibility Asset.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve past measured time-series for one flexibility asset (by ID), optionally bounded by a start/end time window. Read-only and idempotent. Pick this for historical/recorded values; use Get Time Series Forecast for predicted future values of the same asset.', idempotent: true },
   props: {
         
   flexibilityAsset: Property.Number({

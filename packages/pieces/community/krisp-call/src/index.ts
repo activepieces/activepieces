@@ -5,7 +5,7 @@ import { deleteContacts } from './lib/actions/delete-contacts';
 import { sendSms } from './lib/actions/send-sms';
 import { sendMms } from './lib/actions/send-mms';
 import { triggers } from './lib/triggers';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { krispcallAuth } from './lib/auth';
 
 export type krispcallAuth = {

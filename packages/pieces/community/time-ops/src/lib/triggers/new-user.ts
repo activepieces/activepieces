@@ -48,6 +48,9 @@ export const newUser = createTrigger({
   name: 'new_user',
   displayName: 'New User',
   description: 'Triggers when a new user has been created.',
+  aiMetadata: {
+    description: 'Fires when a new user is added to the TimeOps account. Polls the user list and emits each newly seen user record, including name, email, and access level. Use to automate team-member onboarding such as welcome messages or provisioning.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

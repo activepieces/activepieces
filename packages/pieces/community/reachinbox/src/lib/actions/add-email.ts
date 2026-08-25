@@ -8,6 +8,12 @@ export const addEmail = createAction({
   name: 'addEmail',
   displayName: 'Add Email',
   description: 'Add an email to a specific account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Attaches a sending email address to a specific ReachInbox campaign so that account is used for outreach. Use to assign which connected mailbox a campaign sends from. Requires both a campaign id and the email address.',
+    idempotent: false,
+  },
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,

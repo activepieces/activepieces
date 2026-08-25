@@ -1,5 +1,5 @@
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { cursorAuth } from "./lib/common/auth";
 import { addFollowupInstruction } from "./lib/actions/add-followup-instruction";
 import { launchAgent } from "./lib/actions/launch-agent";

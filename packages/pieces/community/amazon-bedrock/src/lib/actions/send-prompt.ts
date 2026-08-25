@@ -10,7 +10,7 @@ import {
   ConversationRole,
   Message,
 } from '@aws-sdk/client-bedrock-runtime';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   buildFileContentBlock,
   buildS3ContentBlock,
@@ -21,18 +21,21 @@ import {
 } from '../common';
 
 export const sendPrompt = createAction({
-  auth: awsBedrockAuth,
+  audience: 'both',
+  auth: awsBedrockCombinedAuth,
   name: 'send_prompt',
+  classification: 'READ',
   displayName: 'Ask Bedrock',
   description: 'Send a text prompt to an Amazon Bedrock model.',
+  aiMetadata: { description: 'Sends a text prompt to a foundation model on Amazon Bedrock via the Converse API and returns the generated text, with optional system prompt, temperature, top-p, max-tokens, and stop sequences; leave Conversation Memory ID empty for a stateless one-off question or set one to persist message history across runs, and optionally attach a single file either uploaded directly or referenced by S3 bucket and key. This is the general-purpose text entry point for Bedrock - prefer Generate Content from Image for a one-off vision question, Generate Image to produce a picture, or Generate Embeddings for vectors. Requires a model id enabled in the connected AWS region. Not idempotent: each call bills a fresh non-deterministic completion and appends to the stored history whenever a memory key is set.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The foundation model to use for generation.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -40,7 +43,7 @@ export const sendPrompt = createAction({
             options: [],
           };
         }
-        return getBedrockModelOptions(auth.props, { useInferenceProfiles: true });
+        return getBedrockModelOptions(auth.props, { useInferenceProfiles: true }, server);
       },
     }),
     prompt: Property.LongText({
@@ -97,7 +100,7 @@ export const sendPrompt = createAction({
       },
     }),
     attachment: Property.DynamicProperties({
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       displayName: 'Attachment',
       required: false,
       refreshers: ['attachmentSource'],
@@ -129,8 +132,8 @@ export const sendPrompt = createAction({
       },
     }),
   },
-  async run({ auth, propsValue, store }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, store, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const {
       model,
       prompt,

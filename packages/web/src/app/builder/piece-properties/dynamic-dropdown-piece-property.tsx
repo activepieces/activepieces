@@ -1,5 +1,6 @@
+import { isNil } from '@activepieces/core-utils';
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared';
+import { AUTHENTICATION_PROPERTY_NAME } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';

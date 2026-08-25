@@ -5,8 +5,11 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetch
 
 export const listOrders = createAction({
   name: 'list_orders',
+  classification: 'SEARCH',
   displayName: 'List Orders',
   description: 'Retrieve a paginated list of orders from your Lemon Squeezy store, with optional filters.',
+  audience: 'both',
+  aiMetadata: { description: 'List orders from Lemon Squeezy, optionally narrowed by store (empty store spans all stores), customer email, and order status (pending, paid, refunded, etc.), with page-based pagination. Use to find or audit orders by criteria; pair with Get Order for full detail on a single order. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
   props: {
     storeId: Property.Dropdown({

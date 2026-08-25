@@ -10,6 +10,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { newFolderTriggerOutputSchema } from '../output-schemas';
 
 type DropboxListFolderEntry = {
   id: string;
@@ -99,12 +100,17 @@ const listRecentFolders = async (
 export const dropboxNewFolder = createTrigger({
   auth: dropboxAuth,
   name: 'new_folder',
+  classification: 'READ',
   displayName: 'New Folder',
   description:
     'Triggers when a new folder is created inside a watched Dropbox folder.',
+  aiMetadata: {
+    description: 'Fires when a new folder appears inside the watched Dropbox folder path, detected by polling the folder for changes since the last cursor. Each fired event represents one newly created folder; enable recursive watching to also detect folders created within subfolders.',
+  },
 
   type: TriggerStrategy.POLLING,
 
+  outputSchema: newFolderTriggerOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Watched Folder Path',

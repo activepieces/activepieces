@@ -4,7 +4,7 @@ import { newLeadSubmission } from './lib/triggers/new-lead-submission';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { guideliteAuth } from './lib/common/auth';
 import { BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const guidelite = createPiece({
   displayName: 'GuideLite',

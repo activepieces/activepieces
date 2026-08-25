@@ -4,14 +4,18 @@ import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { listIdDropdown } from '../common/props';
 import { ListWebhookPayload, WebhookResponse } from '../common/types';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'updated-list-entry-trigger';
 
 export const listEntryUpdatedTrigger = createTrigger({
 	name: 'list_entry_updated',
+	classification: 'READ',
 	displayName: 'List Entry Updated',
 	description: 'Triggers when an existing entry is updated.',
+	aiMetadata: {
+		description: 'Fires when an existing entry in the selected Attio list is updated (e.g. its list-specific attribute values change). Represents a change to a record\'s entry within a list; scoped to one list chosen per trigger.',
+	},
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({

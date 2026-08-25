@@ -8,6 +8,12 @@ export const searchForATarget = createAction({
   name: 'searchForATarget',
   displayName: 'Search For a Target',
   description: 'Search for targets by address',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up registered targets in the Intruder account that match a given address or domain. Use when an agent needs to find an existing target or confirm one is registered before scanning. The address is required. Idempotent: a read-only lookup that does not modify any data.',
+    idempotent: true,
+  },
   props: {
     address: Property.ShortText({
       displayName: 'Target Address',

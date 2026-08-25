@@ -8,6 +8,8 @@ export const createDataSourceAction = createAction({
   name: 'create_data_source',
   displayName: 'Create Data Source',
   description: 'Create a new data source',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new data source in IBM Cognos Analytics from a JDBC connection string, optionally attaching a database driver and a signon (username/password) credential. Use when provisioning a database connection for reporting. Not idempotent: each call creates a new data source and fails if one with the same name already exists.', idempotent: false },
   props: {
     defaultName: Property.ShortText({
       displayName: 'Data Source Name',

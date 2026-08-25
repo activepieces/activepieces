@@ -3,7 +3,7 @@ import {
   DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { snowflakeAuth } from '../auth';
 import snowflake from 'snowflake-sdk';
 

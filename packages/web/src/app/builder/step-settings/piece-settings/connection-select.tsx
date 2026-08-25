@@ -1,18 +1,27 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionScope,
+  AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
-  Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
-  isNil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus, Globe, Key } from 'lucide-react';
+import {
+  Plus,
+  Globe,
+  Key,
+  Cable,
+  Check,
+  Unplug,
+  X,
+  LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -30,7 +39,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { appConnectionsQueries } from '@/features/connections';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  appConnectionsQueries,
+  appConnectionUtils,
+} from '@/features/connections';
 import { piecesHooks } from '@/features/pieces';
 import {
   useAuthorization,
@@ -73,17 +90,38 @@ function ConnectionSelect(params: ConnectionSelectProps) {
       connection.externalId ===
       removeBrackets(form.getValues().settings.input.auth ?? ''),
   );
-  const isGlobalConnection =
+  const isSelectedConnectionGlobal =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  // The create/reconnect dialog runs in global (PLATFORM) scope ONLY when
+  // reconnecting an existing global connection. Creating a brand-new connection
+  // from a project flow must default to PROJECT scope, otherwise it silently
+  // inherits the selected connection's platform scope and (for non-admins) hits
+  // the platform-admin-only global-connections endpoint (GIT-1587).
+  const isReconnectingGlobalConnection =
+    reconnectConnection?.scope === AppConnectionScope.PLATFORM;
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
-  const isPLatformAdmin = useIsPlatformAdmin();
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const statusDisplay = selectedConnection
+    ? getConnectionStatusDisplay(selectedConnection.status)
+    : null;
+  const canShowConnectionStatus =
+    !!selectedConnection && (!isSelectedConnectionGlobal || isPlatformAdmin);
+  const openReconnectDialog = () => {
+    setReconnectConnection(selectedConnection ?? null);
+    setSelectConnectionOpen(false);
+    setConnectionDialogOpen(true);
+  };
 
   return (
     <FormField
       control={form.control}
-      key={form.getValues().settings.input.auth}
+      key={
+        dynamicInputModeToggled
+          ? 'auth-dynamic'
+          : `auth-${form.getValues().settings.input.auth}`
+      }
       name={'settings.input.auth'}
       render={({ field }) => (
         <>
@@ -118,7 +156,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
               >
                 <CreateOrEditConnectionDialog
                   reconnectConnection={reconnectConnection}
-                  isGlobalConnection={isGlobalConnection}
+                  isGlobalConnection={isReconnectingGlobalConnection}
                   piece={pieceWithCorrectVersion}
                   key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                   open={connectionDialogOpen}
@@ -140,27 +178,41 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                   <div className="relative">
                     {field.value &&
                       !field.disabled &&
-                      selectedConnection &&
-                      (!isGlobalConnection || isPLatformAdmin) && (
-                        <div className="z-50 absolute right-8 top-1 ">
-                          <PermissionNeededTooltip
-                            hasPermission={hasPermissionToCreateConnection}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="xs"
-                              loading={isLoadingPiece}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setReconnectConnection(selectedConnection);
-                                setSelectConnectionOpen(false);
-                                setConnectionDialogOpen(true);
-                              }}
-                              disabled={!hasPermissionToCreateConnection}
-                            >
-                              {t('Reconnect')}
-                            </Button>
-                          </PermissionNeededTooltip>
+                      canShowConnectionStatus &&
+                      statusDisplay && (
+                        <div className="z-50 absolute right-8 top-1.5 flex items-center gap-1.5 pointer-events-none">
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground select-none pointer-events-none">
+                            <statusDisplay.Icon
+                              className={cn(
+                                'size-3.5 shrink-0',
+                                statusDisplay.iconClassName,
+                              )}
+                            />
+                            {statusDisplay.label}
+                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex pointer-events-auto">
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
+                                  loading={isLoadingPiece}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openReconnectDialog();
+                                  }}
+                                  disabled={!hasPermissionToCreateConnection}
+                                >
+                                  <Cable className="size-3.5" />
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {!hasPermissionToCreateConnection
+                                ? t('Permission needed')
+                                : t('Reconnect')}
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
                       )}
 
@@ -198,17 +250,18 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       </SelectValue>
                       <div className="grow"></div>
                       {field.value &&
-                        connections?.data?.find(
-                          (connection) =>
-                            connection.externalId ===
-                              removeBrackets(field.value) &&
-                            connection.scope !== AppConnectionScope.PLATFORM,
-                        ) && (
+                        !field.disabled &&
+                        canShowConnectionStatus &&
+                        statusDisplay && (
                           <span
-                            role="button"
-                            className="z-50 opacity-0 pointer-events-none"
+                            aria-hidden
+                            className="z-50 opacity-0 pointer-events-none flex items-center gap-1.5"
                           >
-                            {t('Reconnect')}
+                            <span className="flex items-center gap-1 text-xs">
+                              <statusDisplay.Icon className="size-3.5 shrink-0" />
+                              {statusDisplay.label}
+                            </span>
+                            <span className="size-6 shrink-0" />
                           </span>
                         )}
                     </SelectTrigger>
@@ -244,12 +297,21 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                     {connections &&
                       connections.data &&
                       connections.data?.map((connection) => {
+                        const accountIdentifier =
+                          appConnectionUtils.getConnectionAccountIdentifier(
+                            connection,
+                          );
+                        const rowStatus =
+                          connection.status !== AppConnectionStatus.ACTIVE
+                            ? getConnectionStatusDisplay(connection.status)
+                            : null;
                         return (
                           <SelectItem
                             value={addBrackets(connection.externalId)}
                             key={connection.externalId}
+                            className="*:[span]:last:w-full"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full min-w-0">
                               {connection.usingSecretManager && (
                                 <Key size={16} className="shrink-0" />
                               )}
@@ -257,7 +319,30 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                                 AppConnectionScope.PLATFORM && (
                                 <Globe size={16} className="shrink-0" />
                               )}
-                              {connection.displayName}
+                              <span className="truncate min-w-0">
+                                {connection.displayName}
+                              </span>
+                              {accountIdentifier && (
+                                <span className="ml-auto shrink-0 truncate max-w-[50%] text-xs text-muted-foreground">
+                                  {accountIdentifier}
+                                </span>
+                              )}
+                              {rowStatus && (
+                                <span
+                                  className={cn(
+                                    'flex items-center gap-1 text-xs text-muted-foreground shrink-0',
+                                    { 'ml-auto': !accountIdentifier },
+                                  )}
+                                >
+                                  <rowStatus.Icon
+                                    className={cn(
+                                      'size-3.5 shrink-0',
+                                      rowStatus.iconClassName,
+                                    )}
+                                  />
+                                  {rowStatus.label}
+                                </span>
+                              )}
                             </div>
                           </SelectItem>
                         );
@@ -291,4 +376,30 @@ function removeBrackets(str: string | undefined) {
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
   );
+}
+function getConnectionStatusDisplay(status: AppConnectionStatus): {
+  Icon: LucideIcon;
+  iconClassName: string;
+  label: string;
+} {
+  switch (status) {
+    case AppConnectionStatus.ACTIVE:
+      return {
+        Icon: Check,
+        iconClassName: 'text-success',
+        label: t('Connected'),
+      };
+    case AppConnectionStatus.ERROR:
+      return {
+        Icon: X,
+        iconClassName: 'text-destructive',
+        label: t('Error'),
+      };
+    case AppConnectionStatus.MISSING:
+      return {
+        Icon: Unplug,
+        iconClassName: 'text-muted-foreground',
+        label: t('Missing'),
+      };
+  }
 }

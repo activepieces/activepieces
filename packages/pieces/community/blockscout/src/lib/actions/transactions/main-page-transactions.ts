@@ -3,8 +3,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getMainPageTransactions = createAction({
   name: 'get_main_page_transactions',
+  classification: 'SEARCH',
   displayName: 'Get Main Page Transactions',
   description: 'Get transactions for main page display',
+  audience: 'both',
+  aiMetadata: { description: 'Get the short list of latest Ethereum transactions shown on the Blockscout explorer home page. Read-only and takes no inputs. Use this for a quick at-a-glance feed of the most recent activity; for a fuller paginated transaction list use Get Transactions instead.', idempotent: true },
   // category: 'Transactions',
   props: {},
   async run(context) {

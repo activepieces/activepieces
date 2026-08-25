@@ -1,12 +1,11 @@
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-  isNil,
   ProjectType,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
-  SeekPage,
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import {
@@ -45,18 +44,45 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        const request: UpdateProjectPlatformRequest = {
-          displayName: modified.displayName,
-          metadata: modified.metadata ?? undefined,
-          releasesEnabled: modified.releasesEnabled,
-          externalId:
+        // Only send fields that actually changed, so e.g. a name/icon edit never
+        // re-writes maxConcurrentJobs/workerGroupId (which are edited elsewhere).
+        const request: UpdateProjectPlatformRequest = {};
+        if (modified.displayName !== original.displayName) {
+          request.displayName = modified.displayName;
+        }
+        if (modified.metadata !== original.metadata) {
+          request.metadata = modified.metadata ?? undefined;
+        }
+        if (modified.releasesEnabled !== original.releasesEnabled) {
+          request.releasesEnabled = modified.releasesEnabled;
+        }
+        if (
+          modified.notifyFlowOwnerOnFailure !==
+          original.notifyFlowOwnerOnFailure
+        ) {
+          request.notifyFlowOwnerOnFailure = modified.notifyFlowOwnerOnFailure;
+        }
+        if (modified.externalId !== original.externalId) {
+          request.externalId =
             !isNil(modified.externalId) && modified.externalId.trim() !== ''
               ? modified.externalId
-              : undefined,
-          icon: modified.icon,
-          plan: modified.plan,
-          maxConcurrentJobs: modified.maxConcurrentJobs,
-        };
+              : undefined;
+        }
+        if (modified.icon !== original.icon) {
+          request.icon = modified.icon;
+        }
+        if (modified.plan !== original.plan) {
+          request.plan = modified.plan;
+        }
+        if (modified.maxConcurrentJobs !== original.maxConcurrentJobs) {
+          request.maxConcurrentJobs = modified.maxConcurrentJobs;
+        }
+        if (modified.workerGroupId !== original.workerGroupId) {
+          request.workerGroupId = modified.workerGroupId;
+        }
+        if (Object.keys(request).length === 0) {
+          continue;
+        }
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
           request,
@@ -84,7 +110,8 @@ export const projectCollectionUtils = {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
         api.post<ProjectWithLimits>('/v1/projects', request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeInsert(data);
         onSuccess(data);
       },
@@ -105,7 +132,8 @@ export const projectCollectionUtils = {
         projectId: string;
         request: UpdateProjectPlatformRequest;
       }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeUpdate(data);
         onSuccess();
       },
@@ -113,7 +141,7 @@ export const projectCollectionUtils = {
     });
   },
   update: (projectId: string, request: UpdateProjectPlatformRequest) => {
-    projectCollection.update(projectId, (draft) => {
+    return projectCollection.update(projectId, (draft) => {
       Object.assign(
         draft,
         Object.fromEntries(
@@ -125,6 +153,7 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
+  refetchProjects: () => projectCollection.utils.refetch(),
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {
@@ -220,7 +249,9 @@ export const projectCollectionUtils = {
   },
 };
 
-export const getProjectName = (project: ProjectWithLimits): string => {
+export const getProjectName = (
+  project: Pick<ProjectWithLimits, 'type' | 'displayName'>,
+): string => {
   return project.type === ProjectType.PERSONAL
     ? 'Personal Project'
     : project.displayName;

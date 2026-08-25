@@ -7,8 +7,11 @@ import { domainIdDropdown, linkIdDropdown } from '../common/props';
 export const createCountryTargetingRuleAction = createAction({
   auth: shortIoAuth,
   name: 'create-country-targeting-rule',
+  classification: 'WRITE',
   displayName: 'Create Country Targeting Rule',
   description: 'Set geographic targeting rules for a link with specific destination per country.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a country-targeting rule to an existing short link so visitors from a given country are redirected to a country-specific URL instead of the default destination. Use to set up geo-redirects on a link you already have the ID for. Requires the link ID, a 2-letter ISO country code, and a valid redirect URL; not idempotent — a rule for a country that already exists is rejected (409).', idempotent: false },
   props: {
     domain: domainIdDropdown,
     linkId: linkIdDropdown,

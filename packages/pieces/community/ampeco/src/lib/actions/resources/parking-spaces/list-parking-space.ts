@@ -15,6 +15,8 @@ export const listParkingSpaceAction = createAction({
   name: 'listParkingSpace',
   displayName: 'Resources - Parking Spaces - List',
   description: 'Get all Parking spaces.',
+  audience: 'both',
+  aiMetadata: { description: 'List parking spaces, optionally filtered by externalId or restricted to a single EVSE. Read-only and idempotent. Enable Paginate Results to walk every page when you need the full set rather than a single page.', idempotent: true },
   props: {
         
   filter__externalId: Property.ShortText({

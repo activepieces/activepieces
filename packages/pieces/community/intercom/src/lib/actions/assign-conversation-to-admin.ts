@@ -8,6 +8,8 @@ export const assignConversationAction = createAction({
 	name: 'assignConversationAction',
 	displayName: 'Assign conversation to an admin or a team',
 	description: '(Re)assign conversation to a specific admin or team.',
+	audience: 'both',
+	aiMetadata: { description: 'Reassign an existing conversation to a specific admin or team by assignee ID, optionally with a message body. Reapplying the same assignee converges on the same state so it is effectively idempotent, though each call logs an assignment part. The assignee ID must be a valid admin or team ID.', idempotent: true },
 	props: {
 		from: commonProps.admins({ displayName: 'From (Admin)', required: true }),
 		conversationId:conversationIdProp('Conversation ID', true),

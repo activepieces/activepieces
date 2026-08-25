@@ -8,8 +8,11 @@ import { biginApiService } from '../common/request';
 export const updateTask = createAction({
   auth: biginAuth,
   name: 'updateTask',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'updates a Task',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing task in Bigin CRM, identified by selecting the task; its current fields are prepopulated and any you set are overwritten (subject, owner, due date, priority, status, description, tags), with optional recurrence and reminder settings and a related Contact/Pipeline/Company link. Use to modify a task that already exists. Idempotent: re-sending the same field values leaves the record in the same state.', idempotent: true },
   props: {
     taskId: Property.Dropdown({
       displayName: 'Select Task',

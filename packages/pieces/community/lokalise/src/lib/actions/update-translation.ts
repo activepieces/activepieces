@@ -9,6 +9,8 @@ export const updateTranslation = createAction({
   name: 'updateTranslation',
   displayName: 'Update Translation',
   description: 'Update a translation in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Set the content and review flags of an existing translation, identified by project ID and translation ID. Use to write or correct a translation value. Idempotent: re-sending the same content and flags yields the same final state.', idempotent: true },
   props: {
     projectId: projectDropdown,
     translationId: Property.ShortText({

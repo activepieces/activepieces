@@ -7,6 +7,8 @@ export const createPayment = createAction({
     name: 'create_payment',
     displayName: 'Create Payment',
     description: 'Creates a new manual payment in Oracle Fusion Cloud ERP.',
+    audience: 'both',
+    aiMetadata: { description: 'Record a manual payables payment (e.g. a check or EFT), requiring business unit, payment number, date, currency, and payment method. Not idempotent: each call records a new payment and re-running issues a duplicate. Use to disburse funds to a payee; to reverse a payment use Void Payment, or Stop Payment to halt one before it clears.', idempotent: false },
     props: {
         businessUnit: Property.ShortText({
             displayName: 'Business Unit',

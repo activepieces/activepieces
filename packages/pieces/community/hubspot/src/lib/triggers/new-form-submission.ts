@@ -15,6 +15,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
+import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	formId: string;
@@ -124,8 +125,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newFormSubmissionTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-form-submission',
+	classification: 'READ',
 	displayName: 'New Form Submission',
 	description: 'Triggers when a form is submitted.',
+	aiMetadata: {
+		description:
+			'Fires when the selected HubSpot form receives a submission. Each event represents one submission, with field values mapped to their human-readable form labels plus metadata such as submission timestamp, conversion ID, and page URL. Polls the form-integrations submissions API.',
+	},
+	outputSchema: newFormSubmissionTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		formId: formDropdown,
@@ -137,18 +144,10 @@ export const newFormSubmissionTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

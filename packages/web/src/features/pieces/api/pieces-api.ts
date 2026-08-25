@@ -4,7 +4,6 @@ import {
   PiecePackageInformation,
   PropertyType,
   ExecutePropsResult,
-  InputPropertyMap,
 } from '@activepieces/pieces-framework';
 import {
   AddPieceRequestBody,
@@ -31,6 +30,7 @@ export const piecesApi = {
       version: request.version ?? undefined,
       locale: request.locale ?? undefined,
       projectId: request.projectId ?? undefined,
+      audience: request.audience ?? undefined,
     });
   },
   options<
@@ -45,13 +45,11 @@ export const piecesApi = {
     return api
       .post<ExecutePropsResult<T>>(`/v1/pieces/options`, request)
       .catch((error) => {
+        if (propertyType === PropertyType.DYNAMIC) {
+          throw error;
+        }
         console.error(error);
         internalErrorToast();
-        const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> =
-          {
-            options: {} as InputPropertyMap,
-            type: PropertyType.DYNAMIC,
-          };
         const defaultStateForDropdownProperty: ExecutePropsResult<PropertyType.DROPDOWN> =
           {
             options: {
@@ -63,11 +61,7 @@ export const piecesApi = {
             },
             type: PropertyType.DROPDOWN,
           };
-        return (
-          propertyType === PropertyType.DYNAMIC
-            ? defaultStateForDynamicProperty
-            : defaultStateForDropdownProperty
-        ) as ExecutePropsResult<T>;
+        return defaultStateForDropdownProperty as ExecutePropsResult<T>;
       });
   },
   syncFromCloud() {

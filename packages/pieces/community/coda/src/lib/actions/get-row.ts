@@ -6,8 +6,11 @@ import { docIdDropdown, tableIdDropdown } from '../common/props';
 export const getRowAction = createAction({
 	auth: codaAuth,
 	name: 'get-row',
+	classification: 'READ',
 	displayName: 'Get Row',
 	description: 'Retrieves a single row by specified ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Fetch one row from a Coda table by its row ID or unique row name, returning its cell values. Use when you already have a specific row identifier; use Find Row(s) instead to search by a column value. Read-only and idempotent.', idempotent: true },
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,

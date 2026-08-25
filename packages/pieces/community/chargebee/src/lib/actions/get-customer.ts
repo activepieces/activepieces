@@ -6,9 +6,16 @@ import { chargebeeRequest } from '../common/client';
 
 export const getCustomer = createAction({
   name: 'get_customer',
+  classification: 'READ',
   auth: chargebeeAuth,
   displayName: 'Get Customer',
   description: 'Retrieve a customer from Chargebee by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single Chargebee customer record by its customer ID. Use when an agent needs to read a known customer\'s details before acting on them. Requires the exact customer ID; does not search by email or other fields. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

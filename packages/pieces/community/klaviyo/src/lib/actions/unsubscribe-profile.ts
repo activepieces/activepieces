@@ -7,8 +7,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const unsubscribeProfile = createAction({
   auth: klaviyoAuth,
   name: 'unsubscribeProfile',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Profile',
   description: 'Unsubscribe profiles from email or SMS marketing on a list.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Opts profiles out of email, SMS, and/or SMS transactional consent via a bulk unsubscribe job, optionally scoped to a list. At least one channel must be selected. Use to revoke marketing consent; not idempotent, since each call queues a new unsubscribe job (max 100 profiles).',
+    idempotent: false,
+  },
   props: {
     list_id: listIdDropdown,
     profile_ids: profileIdsMultiSelectDropdown,

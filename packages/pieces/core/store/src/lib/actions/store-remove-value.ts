@@ -7,7 +7,7 @@ import {
   StaticDropdownProperty,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey, PieceStoreScope } from './common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty | undefined, {
@@ -15,7 +15,7 @@ async function executeStorageRemoveValue(context: ActionContext<PieceAuthPropert
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
   await propsValidation.validateZod(context.propsValue, {
-    key: z.string().max(128),
+    key: z.string().check(z.maxLength(128)),
   });
 
   const { key, scope } = getScopeAndKey({
@@ -31,9 +31,12 @@ async function executeStorageRemoveValue(context: ActionContext<PieceAuthPropert
 }
 
 export const storageRemoveValue = createAction({
+  audience: 'both',
   name: 'remove_value',
+  classification: 'DESTRUCTIVE',
   displayName: 'Remove',
   description: 'Remove a value from storage',
+  aiMetadata: { description: 'Deletes a key and its value from the key/value store within the given scope. Use it to clear persisted state once it has been consumed or to reset a counter; use Remove from List instead to drop a single element while keeping the rest of a stored array. Requires the key (max 128 characters) and the Store Scope the value was written under; removing a key that does not exist is not an error, and the delete is idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

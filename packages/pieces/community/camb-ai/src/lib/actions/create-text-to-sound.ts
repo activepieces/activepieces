@@ -7,8 +7,11 @@ import { listFoldersDropdown } from '../common';
 export const createTextToSound = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_sound',
+    classification: 'READ',
     displayName: 'Create Text-to-Sound',
     description: 'Convert input text into “sound effects” using an AI model.',
+    audience: 'both',
+    aiMetadata: { description: 'Generates a sound-effect audio clip from a text prompt describing the desired effect using Camb.AI, polling until the generation task completes and returning the audio. Use to synthesize non-speech sound effects (not spoken voice — use Create Text-to-Speech for that). Duration is capped at 10 seconds (defaults to 8). Not idempotent: each call starts a new generation task and produces fresh audio.', idempotent: false },
     props: {
         prompt: Property.LongText({
             displayName: 'Prompt',

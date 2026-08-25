@@ -7,6 +7,8 @@ export const createCompany = createAction({
 	name: 'create_company',
 	displayName: 'Create Company',
 	description: 'Create a new company in Teamwork.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new company record in Teamwork. Use to register a client or organization before associating projects or people with it; requires a name and accepts optional address, contact, profile, and custom-field details. Not idempotent — each call creates a separate company even with the same name.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		name: Property.ShortText({ displayName: 'Name', description: 'Name of the company.', required: true }),

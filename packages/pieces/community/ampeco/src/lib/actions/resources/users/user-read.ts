@@ -15,6 +15,8 @@ export const userReadAction = createAction({
   name: 'userRead',
   displayName: 'Resources - Users - User Read',
   description: 'Get a user.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO user by numeric user id, optionally including partner invites or external app data and the current amount due. Read-only and idempotent. Use when you already have the id; to find a user by email or external id use Users Listing instead.', idempotent: true },
   props: {
         
   user: Property.Number({

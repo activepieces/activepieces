@@ -1,6 +1,8 @@
-import { getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, isNil, isObject, PropertySettings } from '@activepieces/shared'
-import { z } from 'zod'
+import { Readable } from 'node:stream'
+import { isNil, isObject } from '@activepieces/core-utils'
+import { DateRangeValue, getAuthPropertyForValue, InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { AppConnectionValue, AUTHENTICATION_PROPERTY_NAME, PropertySettings } from '@activepieces/shared'
+import { dynamicPropKeys } from '../helper/dynamic-prop-keys'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 
@@ -44,17 +46,21 @@ export const propsProcessor = {
             if (isNil(property)) {
                 continue
             }
-            if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {
-                const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
-                    value,
-                    dynamaicPropertiesSchema[key],
-                    undefined,
-                    false,
-                    {},
-                )
-                processedInput[key] = itemProcessedInput
-                if (Object.keys(itemErrors).length > 0) {
-                    errors[key] = itemErrors
+            if (property.type === PropertyType.DYNAMIC) {
+                const valueWithOriginalKeys = dynamicPropKeys.unescapeInputKeys(value)
+                processedInput[key] = valueWithOriginalKeys
+                if (!isNil(dynamaicPropertiesSchema?.[key])) {
+                    const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
+                        valueWithOriginalKeys,
+                        dynamicPropKeys.unescapePropsKeys(dynamaicPropertiesSchema[key]),
+                        undefined,
+                        false,
+                        {},
+                    )
+                    processedInput[key] = itemProcessedInput
+                    if (Object.keys(itemErrors).length > 0) {
+                        errors[key] = itemErrors
+                    }
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
@@ -80,6 +86,9 @@ export const propsProcessor = {
                     }
                 }
             }
+            if (!property.required && isNil(processedInput[key])) {
+                processedInput[key] = undefined
+            }
             const processor = processors[property.type]
             if (processor) {
                 processedInput[key] = await processor(property, processedInput[key])
@@ -103,89 +112,74 @@ export const propsProcessor = {
             }
         }
 
+        // Streaming file inputs open a live connection when resolved. If any property
+        // fails validation the action never runs, so drain those bodies here to avoid
+        // leaking connections until GC.
+        if (Object.keys(errors).length > 0) {
+            destroyOpenStreams(processedInput)
+        }
+
         return { processedInput, errors }
     },
 }
 
+function destroyOpenStreams(value: unknown): void {
+    if (isNil(value) || typeof value !== 'object' || Buffer.isBuffer(value)) {
+        return
+    }
+    if (value instanceof Readable) {
+        value.destroy()
+        return
+    }
+    for (const child of Object.values(value)) {
+        destroyOpenStreams(child)
+    }
+}
+
 const validateProperty = (property: PieceProperty, value: unknown, originalValue: unknown): string[] => {
-    let schema
+    if (property.type === PropertyType.JSON) {
+        if (!property.required && originalValue === '') {
+            return []
+        }
+        if (!isNil(originalValue) && isNil(value)) {
+            return [`Expected JSON, received: ${originalValue}`]
+        }
+        if (!property.required && isNil(value)) {
+            return []
+        }
+        if (!isObject(value) && !Array.isArray(value)) {
+            return [`Expected JSON, received: ${originalValue}`]
+        }
+        return []
+    }
+
+    if (!property.required && isNil(value)) {
+        return []
+    }
+
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
-            schema = z.string({
-                error: `Expected string, received: ${originalValue}`,
-            })
-            break
+        case PropertyType.RICH_TEXT:
+            return typeof value === 'string' ? [] : [`Expected string, received: ${originalValue}`]
         case PropertyType.NUMBER:
-            schema = z.number({
-                error: `Expected number, received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'number' && !Number.isNaN(value) ? [] : [`Expected number, received: ${originalValue}`]
         case PropertyType.CHECKBOX:
-            schema = z.boolean({
-                error: `Expected boolean, received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'boolean' ? [] : [`Expected boolean, received: ${originalValue}`]
         case PropertyType.DATE_TIME:
-            schema = z.string({
-                error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
-            })
-            break
+            return typeof value === 'string' ? [] : [`Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`]
+        case PropertyType.DATE_RANGE:
+            return DateRangeValue.safeParse(value).success ? [] : [`Expected date range, received: ${originalValue}`]
         case PropertyType.ARRAY:
-            schema = z.array(z.any(), {
-                error: `Expected array, received: ${originalValue}`,
-            })
-            break
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+            return Array.isArray(value) ? [] : [`Expected array, received: ${originalValue}`]
         case PropertyType.OBJECT:
-            schema = z.record(z.any(), z.any(), {
-                error: `Expected object, received: ${originalValue}`,
-            })
-            break
-        case PropertyType.JSON: {
-            if (!property.required && originalValue === '') {
-                return []
-            }
-            const originalValueProvidedAndFailed = !isNil(originalValue) && isNil(value)
-            if (originalValueProvidedAndFailed) {
-                return [`Expected JSON, received: ${originalValue}`]
-            }
-            schema = z.any().refine(
-                (val) => isObject(val) || Array.isArray(val),
-                {
-                    message: `Expected JSON, received: ${originalValue}`,
-                },
-            )
-            break
-        }
-        case PropertyType.FILE: {
-            schema = z.any().refine(
-                (val) => isObject(val),
-                {
-                    message: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-                },
-            )
-            break
-        }
+            return isObject(value) ? [] : [`Expected object, received: ${originalValue}`]
+        case PropertyType.FILE:
+            return isObject(value) ? [] : [`Expected file url or base64 with mimeType, received: ${originalValue}`]
         default:
-            schema = z.any()
-    }
-    let finalSchema
-    if (property.required) {
-        finalSchema = schema
-    }
-    else {
-        finalSchema = schema.nullable().optional()
-    }
-
-    try {
-        finalSchema.parse(value)
-        return []
-    }
-    catch (err) {
-        if (err instanceof z.ZodError) {
-            return err.issues.map(e => e.message)
-        }
-        return []
+            return []
     }
 }
 
@@ -197,7 +191,7 @@ function getAuthPropsToProcess(authValue: AppConnectionValue, auth: PieceAuthPro
         authValueType: authValue.type,
         pieceAuth: auth,
     })
-    const doesAuthHaveProps = usedAuthProperty?.type === PropertyType.CUSTOM_AUTH || usedAuthProperty?.type === PropertyType.OAUTH2
+    const doesAuthHaveProps = usedAuthProperty?.type === PropertyType.CUSTOM_AUTH || usedAuthProperty?.type === PropertyType.OAUTH2 || usedAuthProperty?.type === PropertyType.OIDC
     if (doesAuthHaveProps && !isNil(usedAuthProperty?.props)) {
         return usedAuthProperty.props
     }

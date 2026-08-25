@@ -7,6 +7,11 @@ export const scanText = createAction({
   name: 'scanText',
   displayName: 'Scan Text',
   description: 'Scan text content for AI-generated content detection',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Submits a raw text string to GPTZero to estimate how likely it was AI-generated, returning per-document and per-sentence detection scores. Choose this when you already have the text inline; use Scan File instead when the content is in a file. Read-only analysis: re-running with the same text is safe and yields the same result.',
+    idempotent: true,
+  },
   props: {
     text: Property.LongText({
       displayName: 'Text',

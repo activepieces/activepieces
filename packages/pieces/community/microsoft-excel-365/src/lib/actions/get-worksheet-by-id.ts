@@ -6,8 +6,11 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getWorksheetAction = createAction({
     auth: excelAuth,
     name: 'get_worksheet',
+    classification: 'READ',
     displayName: 'Get Worksheet by ID',
     description: 'Retrieve metadata of a worksheet by its ID.',
+    audience: 'both',
+    aiMetadata: { description: 'Fetch a single worksheet by its id (or name), returning that sheet metadata such as id, name, position, and visibility. Use when you already know which sheet you want; to list all sheets use Get Worksheets, or to search by name use Find Worksheet. Read-only and idempotent.', idempotent: true },
     props: {
         storageSource: commonProps.storageSource,
         siteId: commonProps.siteId,

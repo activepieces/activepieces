@@ -8,6 +8,11 @@ export const findCampaign = createAction({
   name: 'find_campaign',
   displayName: 'Find Campaign',
   description: 'Get details of a specific campaign by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single campaign by its PromoteKit campaign ID, returning its name and commission terms. Use when you already have the exact ID; to discover IDs, list campaigns first. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     campaign_id: Property.ShortText({
       displayName: 'Campaign ID',

@@ -9,8 +9,12 @@ const LAST_BITLINK_IDS_KEY = 'bitly-last-bitlink-ids';
 export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
   name: 'new_bitlink_created',
+  classification: 'READ',
   displayName: 'New Bitlink Created',
   description: 'Fires when a new Bitlink is created.',
+  aiMetadata: {
+    description: 'Fires when a new Bitlink appears in the selected group, detected by polling. Represents a newly created short link, optionally narrowed to those whose title or tags match a filter and optionally including archived links.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     pollingInterval: Property.StaticDropdown({

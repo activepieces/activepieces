@@ -8,6 +8,12 @@ export const sendSms = createAction({
   name: 'sendSms',
   displayName: 'Send SMS',
   description: 'Send an SMS message via Kudosity',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send an SMS text message to a recipient via Kudosity. Use when an automation needs to deliver an outbound text. Requires a sender (number or alphanumeric ID assigned to the account), a recipient (local or E.164), and the message body; an optional message reference and link tracking can be set. Not idempotent — each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     sender: Property.ShortText({
       displayName: 'Sender',

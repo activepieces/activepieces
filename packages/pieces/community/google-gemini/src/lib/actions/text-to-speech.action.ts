@@ -1,31 +1,26 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleGeminiAuth } from '../auth';
+import { getGeminiTtsModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import wav from 'wav';
 import { Writable } from 'stream';
+import { textToSpeechActionOutputSchema } from '../output-schemas';
 
 export const textToSpeechAction = createAction({
+  audience: 'both',
   name: 'text-to-speech',
+  classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',
+  aiMetadata: { description: 'Synthesizes spoken audio from input text using a Gemini TTS model and one of roughly thirty prebuilt named voices, returning a WAV file. This is the audio-output sibling of generate_content: use it when the flow needs speech instead of text, and create_video when it needs video. Requires a TTS-capable model, which the model dropdown restricts to. Not idempotent: each call renders a new audio file.', idempotent: false },
   props: {
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'Gemini 2.5 Pro Preview TTS ',
-            value: 'gemini-2.5-pro-preview-tts',
-          },
-          {
-            label: 'Gemini 2.5 Flash Preview TTS',
-            value: 'gemini-2.5-flash-preview-tts',
-          },
-        ],
-      },
+      auth: googleGeminiAuth,
+      refreshers: [],
+      options: async ({ auth }) => getGeminiTtsModelOptions({ auth }),
     }),
     text: Property.LongText({
       displayName: 'Input Text',
@@ -71,6 +66,7 @@ export const textToSpeechAction = createAction({
       },
     }),
   },
+  outputSchema: textToSpeechActionOutputSchema,
   async run(context) {
     const { text, model, voice } = context.propsValue;
 

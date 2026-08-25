@@ -7,14 +7,21 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { GetField } from '../common/types';
 
 export const findProductsAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-products',
+	classification: 'SEARCH',
 	displayName: 'Find Products',
 	description: 'Finds a product or products by name or product code.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Searches products by exact match on either name or product code (selected via the Field dropdown) and returns all matches, paging through every result. Use to locate products before adding them to a deal or updating them. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		field: Property.StaticDropdown({
 			displayName: 'Field to search by',

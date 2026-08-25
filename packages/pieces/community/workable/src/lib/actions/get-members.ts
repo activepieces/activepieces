@@ -8,6 +8,8 @@ export const getMembers = createAction({
   name: 'getMembers',
   displayName: 'Get Members',
   description: 'Gets members of hiring team.',
+  audience: 'both',
+  aiMetadata: { description: "Lists Workable account members (hiring team users). With no filters it returns all members; supply role, job shortcode, email, or exact name to narrow results. Use to resolve a member ID needed by actions like rating or moving a candidate. Read-only and idempotent.", idempotent: true },
   props: {
     limit: Property.Number({
       displayName: "Limit",

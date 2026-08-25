@@ -9,6 +9,11 @@ export const findSiteAction = createAction({
   name: 'microsoft_sharepoint_find_site',
   displayName: 'Find Site',
   description: 'Search for SharePoint sites by name and return matching results.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches SharePoint sites across the tenant by a name keyword and returns matching sites with their IDs, names, and URLs. Use as the entry point to resolve a site ID needed by other SharePoint actions. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     searchTerm: Property.ShortText({
       displayName: 'Site Name',

@@ -10,8 +10,13 @@ import { WebhookInformation, common } from '../common';
 export const newFile = createTrigger({
   auth: boxAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Triggers when a file is uploaded',
+  aiMetadata: {
+    description:
+      'Fires when a new file is uploaded into the specified Box folder. Each event represents one uploaded file, including its name, ID, size, version, and parent folder.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     folder: Property.ShortText({

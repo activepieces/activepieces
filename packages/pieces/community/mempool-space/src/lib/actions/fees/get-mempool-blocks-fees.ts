@@ -7,6 +7,8 @@ export const getMempoolBlocksFees = createAction({
     name: 'get_mempool_blocks_fees',
     displayName: 'Get Mempool Blocks Fees',
     description: 'Returns current mempool as projected blocks with fee rates and sizes',
+    audience: 'both',
+    aiMetadata: { description: 'Returns the current mempool modeled as a series of projected upcoming blocks, each with its fee-rate range, median fee, size, and transaction count. Takes no input and is read-only and idempotent, but reflects a live snapshot that shifts every few seconds. Use this for detailed fee-tier/congestion analysis; use Get Recommended Fees for simple confirmation-target fee picks.', idempotent: true },
     // category: 'Fees',
     props: {},
     async run() {

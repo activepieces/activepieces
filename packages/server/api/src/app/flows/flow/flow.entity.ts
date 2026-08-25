@@ -75,6 +75,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: String,
             nullable: true,
         },
+        createdBy: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {

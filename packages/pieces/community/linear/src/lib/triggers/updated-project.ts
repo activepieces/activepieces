@@ -6,8 +6,12 @@ import { props } from '../common/props';
 export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
+  classification: 'READ',
   displayName: 'Project Status Updated',
   description: 'Triggers when the status of an Linear project is updated',
+  aiMetadata: {
+    description: 'Fires when a Linear project status changes, optionally filtered to specific teams or a target status. Represents the project after the status change.',
+  },
   props: {
     team_ids: props.team_ids(false),
     project_status: props.project_statuses(false),
@@ -42,7 +46,15 @@ export const linearUpdatedProject = createTrigger({
     updatedFrom: {
       updatedAt: '2023-09-06T12:00:00.000Z',
       state: 'planned',
+      statusId: 'status_1',
     },
+    type: 'Project',
+    actor: { id: 'user_1', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-06T12:00:00.000Z',
+    url: 'https://linear.app/test-team/project/project_1',
+    organizationId: 'org_1',
+    webhookTimestamp: 1694001600000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -94,7 +106,7 @@ export const linearUpdatedProject = createTrigger({
       return [];
     }
 
-    return [body.data];
+    return [body];
   },
 });
 

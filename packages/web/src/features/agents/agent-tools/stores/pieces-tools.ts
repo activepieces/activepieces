@@ -1,8 +1,8 @@
+import { isNil } from '@activepieces/core-utils';
 import { ActionBase } from '@activepieces/pieces-framework';
 import {
   AgentPieceTool,
   AgentToolType,
-  isNil,
   PredefinedInputsStructure,
   mcpToolNameUtils,
 } from '@activepieces/shared';

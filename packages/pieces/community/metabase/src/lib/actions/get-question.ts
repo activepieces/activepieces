@@ -16,6 +16,12 @@ export const getQuestion = createAction({
   requireAuth: true,
   displayName: 'Get question',
   description: 'Fetch the results of a Metabase question',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a saved Metabase question (card) by its ID and returns the query result rows. Use to pull live data from an existing report rather than writing raw SQL. Optionally pass a parameters object (keyed by parameter slug) to filter the query; slugs not defined on the card are ignored. Read-only and idempotent — re-running with the same inputs re-executes the query without side effects.',
+    idempotent: true,
+  },
   props: {
     questionId: Property.ShortText({
       displayName: 'Metabase question ID',

@@ -8,6 +8,10 @@ export const registrationFolderSelected = createTrigger({
   displayName: 'Événement sur le dossier de formation',
   description:
     "Se déclenche lorsque l'événement choisi se produit sur un dossier de formation",
+  aiMetadata: {
+    description:
+      'Fires when a chosen lifecycle event occurs on a Wedof training registration folder (dossier de formation). The specific event to listen for is configured via the scope property. Emits the full folder record for the matching event.',
+  },
   props: {
     scope: wedofCommon.events,
   },

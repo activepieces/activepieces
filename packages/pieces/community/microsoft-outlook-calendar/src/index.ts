@@ -1,18 +1,18 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { microsoftCloudProperty, getGraphBaseUrl, getMicrosoftCloudFromAuth } from './lib/common/microsoft-cloud';
+import { microsoftCloudProperty } from './lib/common/microsoft-cloud';
 import {
   createPiece,
   OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createEventAction } from './lib/actions/create-event';
 import { deleteEventAction } from './lib/actions/delete-event';
 import { listEventsAction } from './lib/actions/list-events';
 import { outlookCalendarCommon } from './lib/common/common';
 
 const authDesc = `
-If you’d like to use your own custom Azure app instead of the default Activepieces app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
+If you’d like to use your own custom Azure app instead of the default app, follow the [Azure app creation guide](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app#register-an-application),
  set the **Redirect URI** to {{redirectUrl}} and add the following **Microsoft Graph (Delegated) permissions** under **API permissions**:
  - User.Read
  - Calendars.ReadWrite
@@ -26,7 +26,7 @@ export const outlookCalendarAuth = PieceAuth.OAuth2({
   authUrl: 'https://{cloud}/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://{cloud}/common/oauth2/v2.0/token',
   required: true,
-  scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access'],
+  scope: ['User.Read', 'Calendars.ReadWrite', 'offline_access', 'openid', 'email', 'profile'],
   prompt: 'omit',
 });
 

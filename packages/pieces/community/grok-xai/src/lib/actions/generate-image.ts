@@ -10,16 +10,19 @@ import {
 } from '@activepieces/pieces-common';
 import { grokAuth } from '../common/auth';
 import { XAI_BASE_URL } from '../common/constants';
-import { 
+import {
   createModelProperty
 } from '../common/utils';
-import { z } from 'zod';
+import { generateImageActionOutputSchema } from '../output-schemas';
+import * as z from 'zod/mini'
 
 export const generateImage = createAction({
+  audience: 'both',
   auth: grokAuth,
   name: 'generate_image',
   displayName: 'Generate Image',
   description: 'Create images from text prompts using Grok\'s image generation.',
+  aiMetadata: { description: 'Generates one to ten images from a text prompt with a Grok image model, delivered either as hosted URLs or as base64 payloads depending on the chosen response format. This is the only action in the piece that produces images; ask_grok can accept an image URL as vision input but only ever returns text. Requires a non-empty prompt of at most 4000 characters, and the model must be an image model (the dropdown filters to those). Not idempotent: each call renders new images.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Image Prompt',
@@ -52,10 +55,11 @@ export const generateImage = createAction({
       },
     }),
   },
+  outputSchema: generateImageActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      numberOfImages: z.number().min(1).max(10).optional(),
-      prompt: z.string().min(1).max(4000),
+      numberOfImages: z.optional(z.number().check(z.minimum(1), z.maximum(10))),
+      prompt: z.string().check(z.minLength(1), z.maxLength(4000)),
     });
 
     const {

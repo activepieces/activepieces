@@ -8,8 +8,11 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToChannelAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_channel',
+  classification: 'WRITE',
   displayName: 'Send a Text to a Channel',
   description: 'Send a text message to a WhatsApp Channel',
+  audience: 'both',
+  aiMetadata: { description: 'Broadcasts a text message to a WhatsApp Channel whose ID is chosen from the session channel list. Pick this for one-to-many channel posts rather than the contact/group/CRM text variants used for direct chats. Not idempotent: each call posts another message to the channel.', idempotent: false },
   props: {
     session: whatsscaleProps.session,
     channel: whatsscaleProps.channel,

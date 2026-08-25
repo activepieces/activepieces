@@ -9,6 +9,12 @@ export const createFinetune = createAction({
   name: 'create_finetune',
   displayName: 'Create Finetune',
   description: 'Adds a new fine-tune (question + suggested answer) for the specified chatbot in SiteSpeakAI.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a fine-tune entry on a SiteSpeakAI chatbot, pairing a question with a suggested answer so the bot responds that way in future. Use to teach a bot a specific Q&A. Not idempotent: each call appends a new fine-tune even if the same question already exists.',
+    idempotent: false,
+  },
   props: {
     chatbotId: chatbotIdDropdown,
     question: Property.LongText({

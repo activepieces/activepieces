@@ -6,9 +6,16 @@ import { aipriseAuth } from '../common/auth';
 export const getVerificationUrlAction = createAction({
   auth: aipriseAuth,
   name: 'get_verification_url',
+  classification: 'WRITE',
   displayName: 'Get Identity Verification Link',
   description:
     'Generates a secure link you can send to a person so they can complete their identity verification on an AiPrise-hosted page — no extra development needed.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a unique hosted-verification URL for a given template that you can send to a person so they complete their identity (KYC) check on an AiPrise-hosted page. Use this for the no-code/self-service flow instead of collecting data yourself. Requires a template ID and a redirect URL the person returns to afterward. Not idempotent — each call mints a new verification link/session.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Verification Template',

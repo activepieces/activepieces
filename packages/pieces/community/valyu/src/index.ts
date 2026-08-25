@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { searchAction } from './lib/actions/search';
 import { extractContentAction } from './lib/actions/extract-content';
 import { answerAction } from './lib/actions/answer';

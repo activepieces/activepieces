@@ -7,6 +7,8 @@ export const getPayment = createAction({
   name: 'get-payment',
   displayName: 'Get Payment',
   description: 'Returns payment details. This API can be called using either the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single payment by its ID, including its current status. Use when you have a known payment ID and need to inspect or poll the payment\'s state (e.g. waiting for it to settle). Read-only and safe to repeat; callable with either the payment resource token or a backend bearer token.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

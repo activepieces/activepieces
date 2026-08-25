@@ -8,6 +8,8 @@ export const createCustomTraining = createAction({
   name: 'create_custom_training',
   displayName: 'Send Custom Training',
   description: 'Send a custom training instruction to AI assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Send a custom training instruction or prompt to the Personal AI assistant to shape its future behavior, optionally tied to a session. Use when you want to teach or fine-tune how the assistant responds rather than just chat with it. Each call submits a new training instruction, so it is not idempotent.', idempotent: false },
   // category: 'AI Interaction',
   props: {
     text: Property.LongText({

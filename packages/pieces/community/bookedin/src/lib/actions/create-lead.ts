@@ -5,8 +5,11 @@ import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const createLead = createAction({
   name: 'createLead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Creates a new lead in Bookedin AI',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new lead in Bookedin for the authenticated business from a contact first name, last name, email, and phone (all required). Use it to add a prospect into the lead pipeline. Not idempotent — each call creates a separate lead, with no de-duplication on email or phone.', idempotent: false },
   auth: bookedinAuth,
   props: {
     firstName: Property.ShortText({

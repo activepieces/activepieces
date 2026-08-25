@@ -6,6 +6,8 @@ export const kimaiCreateTimesheetAction = createAction({
   auth: kimaiAuth,
   name: 'create_timesheet',
   description: 'Create a new timesheet',
+  audience: 'both',
+  aiMetadata: { description: 'Logs a new time entry (timesheet record) in Kimai for a given project and activity, with a required begin time and optional end time and description. Use when an agent needs to record tracked work against a Kimai project. Each call appends a new timesheet, so it is not idempotent; repeating it creates duplicate entries.', idempotent: false },
   displayName: 'Create Timesheet',
   props: {
     project: kimaiCommon.project,

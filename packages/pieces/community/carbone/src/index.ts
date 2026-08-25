@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { renderDocumentAction } from './lib/actions/render-document';
 import { uploadTemplateAction } from './lib/actions/upload-template';
 import { deleteTemplateAction } from './lib/actions/delete-template';

@@ -84,6 +84,10 @@ export const newComment = createTrigger({
 	displayName: 'New Comment',
 	description:
 		'Fires whenever someone adds a new comment to a Jira issue. Great for getting notified in Slack or Teams, syncing customer replies, or reacting to feedback automatically.',
+	aiMetadata: {
+		description:
+			'Fires when a new comment is posted on a Jira issue, optionally limited to issues matching a JQL filter. Each event represents one comment and includes the comment body, author, timestamps, and the parent issue. Polling-based; events arrive on the next poll, not instantly.',
+	},
 	auth: jiraCloudAuth,
 	type: TriggerStrategy.POLLING,
 	props: {

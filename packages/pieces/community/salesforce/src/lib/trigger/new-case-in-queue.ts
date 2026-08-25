@@ -18,6 +18,9 @@ export const newCaseCreatedTrigger = createTrigger({
     name: 'new_case',
     displayName: 'New Case in Queue',
     description: 'Triggers when a new Case record is assigned to a specified queue.',
+    aiMetadata: {
+        description: 'Fires when a Case becomes owned by the selected Salesforce queue, whether assigned at creation by an Assignment Rule or moved into the queue later via an owner change. Each event emits all fields of the Case. Detected by polling CaseHistory owner changes and newly created Cases owned by the queue since the last poll.',
+    },
     props: {
         caseQueueId: salesforcesCommon.caseQueueId,
     },

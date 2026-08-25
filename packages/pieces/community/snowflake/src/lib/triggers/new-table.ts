@@ -80,6 +80,10 @@ export const newTableTrigger = createTrigger({
   displayName: 'New Table',
   description:
     'Triggers when a new table is created in the selected schema. Checked by polling every few minutes.',
+  aiMetadata: {
+    description:
+      "Fires when a new table is created in the selected Snowflake database and schema, detected by polling and comparing each table's creation time against the last-seen watermark. Each newly created table produces one event with its name, kind, owner, and metadata.",
+  },
   props,
   sampleData: {
     table_name: 'ORDERS',

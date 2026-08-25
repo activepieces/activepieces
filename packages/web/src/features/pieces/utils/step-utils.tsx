@@ -1,3 +1,4 @@
+import { LocalesEnum, spreadIfDefined } from '@activepieces/core-utils';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -7,8 +8,6 @@ import {
   FlowAction,
   FlowActionType,
   flowStructureUtil,
-  LocalesEnum,
-  spreadIfDefined,
   Step,
   FlowTriggerType,
   FlowTrigger,

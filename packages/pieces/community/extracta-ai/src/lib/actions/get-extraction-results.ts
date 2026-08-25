@@ -13,6 +13,8 @@ export const getExtractionResults = createAction({
   name: 'get_extraction_results',
   displayName: 'Get Extraction Results',
   description: 'Fetches successful data from extraction. Note: The API recommends a 2-second delay between requests to avoid rate-limiting.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the extracted structured data for a previously submitted Extracta.ai batch, identified by extractionId and batchId; optionally narrow to a single file by passing its fileId. Use this to poll for or read back results after a file has been uploaded for extraction. Idempotent read; the API recommends spacing requests by ~2 seconds to avoid rate limits.', idempotent: true },
   props: {
     extractionId: Property.ShortText({
       displayName: 'Extraction ID',

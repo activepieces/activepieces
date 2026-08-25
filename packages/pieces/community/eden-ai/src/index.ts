@@ -14,7 +14,7 @@
     import { imageGenerationAction } from './lib/actions/image-generation';
     import { textToSpeechAction } from './lib/actions/text-to-speech';
     import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
     export const edenAiAuth = PieceAuth.SecretText({
       displayName: 'Eden AI API Key',

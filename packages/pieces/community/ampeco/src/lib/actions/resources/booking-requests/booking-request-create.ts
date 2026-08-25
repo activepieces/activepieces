@@ -21,6 +21,8 @@ export const bookingRequestCreateAction = createAction({
   displayName: 'Resources - Booking Requests - Create',
   description:
     'Create a new booking request. If you want to find the available slots for a given location use the Actions / Location / Check Booking Availability.',
+  audience: 'both',
+  aiMetadata: { description: 'Submit a booking request to the chargepoint scheduling system. The request body variant selects the operation: create a new booking, update an existing booking, or cancel a booking - update and cancel target an existing booking by ID. Not idempotent: a create variant call queues a new request each time. To discover available slots first, use the Location Check Booking Availability action.', idempotent: false },
   props: {
     requestBody_VariantType: Property.StaticDropdown({
       displayName: 'Request Body Variant Type',

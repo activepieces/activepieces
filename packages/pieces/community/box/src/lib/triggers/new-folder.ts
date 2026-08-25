@@ -10,8 +10,13 @@ import { WebhookInformation, common } from '../common';
 export const newFolder = createTrigger({
   auth: boxAuth,
   name: 'new_folder',
+  classification: 'READ',
   displayName: 'New Folder',
   description: 'Triggers when a folder is created',
+  aiMetadata: {
+    description:
+      'Fires when a new folder is created inside the specified Box parent folder. Each event represents one newly created folder, including its name, ID, parent folder, and creation timestamp.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     folder: Property.ShortText({

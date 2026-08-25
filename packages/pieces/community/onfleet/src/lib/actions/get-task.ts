@@ -8,6 +8,12 @@ export const getTask = createAction({
   name: 'get_task',
   displayName: 'Get Task',
   description: 'Get a specific task',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a single Onfleet task by its task ID. Read-only and idempotent. Use when you already have the task ID; use Get Tasks to search or list tasks over a time window.',
+    idempotent: true,
+  },
   props: {
     task: Property.ShortText({
       displayName: 'Task ID',

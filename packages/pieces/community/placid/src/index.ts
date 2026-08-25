@@ -5,7 +5,7 @@ import {
 	httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createImage } from './lib/actions/create-image';
 import { createPdf } from './lib/actions/create-pdf';
 import { createVideo } from './lib/actions/create-video';

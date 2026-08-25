@@ -6,8 +6,14 @@ import { makeRequest } from '../common/client';
 export const walletSegment = createAction({
   auth: chainAwareAuth,
   name: 'walletSegment',
+  classification: 'READ',
   displayName: 'Wallet Segment',
   description: 'Get wallet behaviour information',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieve ChainAware behavioural segmentation for a wallet address on a given network — how the wallet is categorized based on its on-chain activity. Choose this to profile or classify a wallet rather than score its fraud risk. Requires the network name and wallet address. Read-only lookup — idempotent.',
+    idempotent: true,
+  },
   props: {
     network: Property.ShortText({
       displayName: 'Network',

@@ -8,6 +8,8 @@ export const assignIncidents = createAction({
   name: 'assignIncidents',
   displayName: 'Assign Incidents',
   description: 'Assign one or more Coralogix incidents to a specific user.',
+  audience: 'both',
+  aiMetadata: { description: 'Assigns one or more Coralogix incidents to a specific user, given a list of incident IDs and the target Coralogix user ID. Use to route incidents to an on-call owner. Idempotent: reassigning to the same user leaves ownership unchanged.', idempotent: true },
   requireAuth: true,
   props: {
     incidentIds: Property.Array({

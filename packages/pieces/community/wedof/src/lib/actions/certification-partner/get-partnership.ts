@@ -9,6 +9,12 @@ export const getPartnership = createAction({
   displayName: "Récupération d'un partenariat",
   description:
     "Récupération d'un partenariat par le certifInfo de la certification et du siret du partenaire",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up a single certification partnership by the certification certifInfo and the partner SIRET number. Read-only and safe to retry; pick this when you already know both identifiers and need the current partnership record. To remove a partnership use the delete action instead.',
+    idempotent: true,
+  },
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',

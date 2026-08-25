@@ -1,6 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { opnformCommon } from './common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 export const opnformAuth = PieceAuth.CustomAuth({
     description:

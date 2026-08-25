@@ -6,8 +6,15 @@ import { telnyxRequest } from '../common/client';
 export const makeCallAction = createAction({
   auth: telnyxAuth,
   name: 'make_call',
+  classification: 'WRITE',
   displayName: 'Make Call',
   description: 'Initiate an outbound call using the Telnyx Call Control API.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Places an outbound voice call via the Telnyx Call Control API from a caller ID (E.164) to a destination number or SIP URI, using a required Call Control Application (connection) ID; can optionally play an audio file (WAV/MP3) on answer and override the webhook destination and ring timeout. Use to dial a recipient programmatically. Not idempotent: each call initiates a new call.',
+    idempotent: false,
+  },
   props: {
     connection_id: Property.ShortText({
       displayName: 'Connection ID',

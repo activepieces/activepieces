@@ -9,6 +9,8 @@ export const makePhoneCall = createAction({
   name: 'make_phone_call',
   displayName: 'Make Phone Call',
   description: 'Initiate a new outbound phone call using Retell AI agents.',
+  audience: 'both',
+  aiMetadata: { description: 'Place an outbound phone call from a Retell-owned/imported number to a destination number, dialed by a Retell AI voice agent. Use to start a live AI-driven call. Both numbers must be in E.164 format; the agent version, metadata, dynamic prompt variables, and custom SIP headers can optionally be overridden per call. Not idempotent: each call places a new outbound call.', idempotent: false },
   props: {
     fromNumber: Property.ShortText({
       displayName: 'From Number',

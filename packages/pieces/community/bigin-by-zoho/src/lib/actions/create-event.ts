@@ -8,8 +8,11 @@ import { formatDateOnly, formatDateTime, getSafeLabel, handleDropdownError } fro
 export const createEvent = createAction({
   auth: biginAuth,
   name: 'createEvent',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Creates a new event in Bigin',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a calendar event in Bigin CRM with a title, start and end date/time (end must be after start), plus optional all-day flag, venue, participants, description, and tags. Supports optional recurrence (daily/weekly/monthly/yearly RRULE) and reminders, and can be linked to a related Contact, Pipeline, or Company record. Use to schedule a meeting or appointment. Not idempotent: each call creates a new event.', idempotent: false },
   props: {
     eventTitle: Property.ShortText({
       displayName: 'Event Title',

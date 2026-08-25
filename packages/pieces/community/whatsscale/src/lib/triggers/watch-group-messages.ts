@@ -7,8 +7,13 @@ import { whatsscaleProps } from '../common/props';
 export const watchGroupMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
   name: 'watch_group_messages',
+  classification: 'READ',
   displayName: 'Watch Group Messages',
   description: 'Triggers when a new message is received in any WhatsApp group.',
+  aiMetadata: {
+    description:
+      'Fires when a new message is received in any WhatsApp group the connected session belongs to. Each event represents a single inbound group message and includes the originating group ID, the sender (participant) ID and name, message body, media details, and reply/forward metadata. Use to react to group activity across all groups rather than a single chosen one.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,

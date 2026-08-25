@@ -9,6 +9,8 @@ export const updateRepoSync = createAction({
   name: 'update_repo',
   displayName: 'Update Repository',
   description: 'Update repository settings.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates settings on an existing Gitea repository such as its name, description, website, or private/public visibility; only the fields you supply are changed. Use to rename a repo or adjust its metadata. Repeating the call with the same values leaves the repository in the same state, so it is idempotent.', idempotent: true },
   props: {
     repository: giteaCommon.repositoryDropdown,
     name: Property.ShortText({

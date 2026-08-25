@@ -8,7 +8,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askChatbot } from './lib/actions/ask-chatbot';
 import { retuneAuth } from './lib/auth';
 

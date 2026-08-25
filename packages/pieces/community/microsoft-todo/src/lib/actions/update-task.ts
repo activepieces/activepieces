@@ -6,8 +6,11 @@ import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-typ
 export const updateTaskAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'update_task',
+	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
+	audience: 'both',
+	aiMetadata: { description: 'Update fields of an existing Microsoft To Do task identified by its task list id and task id — title, body/notes, importance, status, due/reminder/start dates, or categories. Use to edit an already-created task; resolve the task id first via list/find actions. Idempotent in effect: re-sending the same field values converges the task to that state without additional side effects.', idempotent: true },
 	props: {
 		task_list_id: Property.Dropdown({
 			auth: microsoftToDoAuth,

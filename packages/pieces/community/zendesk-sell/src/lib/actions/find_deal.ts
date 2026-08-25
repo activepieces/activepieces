@@ -9,6 +9,8 @@ export const findDeal = createAction({
     name: 'find_deal',
     displayName: 'Find Deal',
     description: 'Look up a deal by ID or name.',
+    audience: 'both',
+    aiMetadata: { description: 'Looks up a single deal in Zendesk Sell, either by its unique deal ID (a direct fetch, prioritized when provided) or by exact deal name (a search that returns the first match). Use to resolve a deal before updating it or to check whether a named deal exists. Requires at least one of ID or name; returns null data when no match is found. Idempotent — a read-only lookup.', idempotent: true },
     props: {
         deal_id: Property.Number({
             displayName: 'Deal ID',

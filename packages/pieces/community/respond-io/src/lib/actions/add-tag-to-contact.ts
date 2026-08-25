@@ -9,6 +9,8 @@ export const addTagToContact = createAction({
   name: 'add_tag_to_contact',
   displayName: 'Add Tag to Contact',
   description: 'Add one or multiple tags to a contact in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Adds one or more tags to a Respond.io contact, identified by the contact identifier. Use to label or segment a contact. Accepts 1-10 tag names per call. Idempotent on the resulting tag set — re-adding a tag the contact already has leaves it unchanged.', idempotent: true },
   props: {
     identifier: contactIdentifierDropdown,
     tags: Property.Array({

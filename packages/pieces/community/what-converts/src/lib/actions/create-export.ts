@@ -10,6 +10,8 @@ export const exportLeadsAction = createAction({
   displayName: 'Export Leads',
   description:
     'Retrieves all leads from an account, handling pagination automatically.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves leads for a WhatConverts profile in bulk, automatically paging through results up to the configured page count. Use when an agent needs to export or analyze many leads at once, optionally narrowed by date range and lead type. Requires a profile; an empty date/type filter returns all leads. Read-only and idempotent.', idempotent: true },
   props: {
     account_id: whatConvertsProps.account_id(),
     profile_id: whatConvertsProps.profile_id(),

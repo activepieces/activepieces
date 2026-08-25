@@ -8,6 +8,12 @@ export const getKnowledgeArticleAction = createAction({
   displayName: 'Get Knowledge Article',
   description:
     'Retrieve the full content of a knowledge article by sys_id',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches the full content of a single knowledge base article by its sys_id; use Search Knowledge Articles first if you only have a KB number. Effectively a read, and idempotent unless the optional Increment View Count flag is enabled, which bumps the article view counter each call. Requires the article sys_id.',
+    idempotent: true,
+  },
   props: {
     article_sys_id: Property.ShortText({
       displayName: 'Article Sys ID',

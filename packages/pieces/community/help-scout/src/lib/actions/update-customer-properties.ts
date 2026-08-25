@@ -3,14 +3,19 @@ import { helpScoutApiRequest } from '../common/api';
 import { helpScoutAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { customerIdDropdown, customerProperties } from '../common/props';
-import { isNil } from '@activepieces/shared';
-import { HttpStatusCode } from 'axios';
+import { isNil } from '@activepieces/pieces-framework';
 
 export const updateCustomerProperties = createAction({
   auth: helpScoutAuth,
   name: 'update_customer_properties',
   displayName: 'Update Customer Properties',
   description: `Updates customer's properties.`,
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Updates a Help Scout customer's editable property fields (the supplied fields are replaced) for the customer identified by customer ID. Use to modify an existing customer's attributes; only non-empty fields are applied. Repeating the call with the same values is safe and converges to the same state.",
+    idempotent: true,
+  },
   props: {
     customerId: customerIdDropdown,
     fields: customerProperties,
@@ -35,7 +40,7 @@ export const updateCustomerProperties = createAction({
     });
 
     return {
-      success: response.status === HttpStatusCode.NoContent ? true : false,
+      success: response.status === 204 ? true : false,
     };
   },
 });

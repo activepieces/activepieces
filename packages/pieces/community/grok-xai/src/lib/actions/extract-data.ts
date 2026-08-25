@@ -16,7 +16,8 @@ import {
   XaiResponse,
   ExtractionResult
 } from '../common/utils';
-import { z } from 'zod';
+import { extractDataFromTextActionOutputSchema } from '../output-schemas';
+import * as z from 'zod/mini'
 
 interface ExtractDataField {
   fieldName: string;
@@ -26,10 +27,12 @@ interface ExtractDataField {
 }
 
 export const extractDataFromText = createAction({
+  audience: 'both',
   auth: grokAuth,
   name: 'extract_data_from_text',
   displayName: 'Extract Data From Text',
   description: 'Extract structured data fields from unstructured text (e.g., names, addresses, dates).',
+  aiMetadata: { description: 'Pulls a caller-defined set of typed fields (string, number, boolean, array, or object, each named, described, and individually required or optional) out of one block of unstructured text and returns them as a structured object with extraction notes and optional per-field confidence scores; a strict mode restricts it to information explicitly present instead of allowing inference from context. Choose it to turn prose into known fields; prefer categorize_text when the goal is assigning a label from a fixed set, and ask_grok for open-ended generation or free-form structured output. Non-empty text and at least one field definition are required; not idempotent: each call is a fresh model completion and the extracted values can vary between runs.', idempotent: false },
   props: {
     model: createModelProperty({
       displayName: 'Model',
@@ -119,11 +122,12 @@ export const extractDataFromText = createAction({
       description: 'Include confidence scores for extracted fields.',
     }),
   },
+  outputSchema: extractDataFromTextActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      maxCompletionTokens: z.number().min(100).max(4000).optional(),
-      text: z.string().min(1).max(100000),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      maxCompletionTokens: z.optional(z.number().check(z.minimum(100), z.maximum(4000))),
+      text: z.string().check(z.minLength(1), z.maxLength(100000)),
     });
 
     const {

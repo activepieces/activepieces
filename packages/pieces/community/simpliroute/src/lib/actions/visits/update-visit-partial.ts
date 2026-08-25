@@ -8,6 +8,8 @@ export const update_visit_partial = createAction({
     auth: simplirouteAuth,
     displayName: 'Update Visit (Partial)',
     description: 'Partially update fields of an existing visit.',
+    audience: 'both',
+    aiMetadata: { description: 'Patch only the supplied fields of an existing visit by ID, leaving other fields untouched. Idempotent for a fixed payload. Prefer this over the complete-update action when changing just a few fields; only visit_id is required.', idempotent: true },
     props: {
         visit_id: Property.Number({ displayName: 'visit_id', description: 'ID of the visit to update.', required: true }),
         title: Property.ShortText({ displayName: 'title', description: 'Visit title (if you want to change it).', required: false }),

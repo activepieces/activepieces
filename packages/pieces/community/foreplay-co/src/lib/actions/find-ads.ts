@@ -11,6 +11,8 @@ export const findAds = createAction({
   displayName: 'Find Ads',
   description:
     'Search and filter ads by text, dates, platforms, and categories.',
+  audience: 'both',
+  aiMetadata: { description: 'Search the Foreplay ad discovery library across all advertisers, optionally filtered by free-text query, date range, platform, display format, niche, market, language, and live-only status, with cursor pagination. With no query or filters it returns the broad feed; supply filters to narrow to matching ads. Use for cross-advertiser ad research rather than pulling ads for one known page. Read-only, so repeating the call is safe.', idempotent: true },
   props: findAdsProperties(),
   async run({ auth, propsValue }) {
     // Validate props using Zod schema

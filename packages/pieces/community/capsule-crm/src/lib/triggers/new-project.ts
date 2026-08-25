@@ -4,6 +4,10 @@ export const newProjectTrigger = capsuleCrmCreateTrigger({
   name: 'new_project',
   displayName: 'New Project',
   description: 'Fires when a project is created.',
+  aiMetadata: {
+    description:
+      'Fires when a new project (case) is created in Capsule CRM, delivering the created project record. Use to react to newly opened projects.',
+  },
   event: 'kase/created',
   sampleData: {
     event: 'kase/created',

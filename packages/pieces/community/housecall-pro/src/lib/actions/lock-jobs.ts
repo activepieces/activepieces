@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const lockJobs = createAction({
   auth: housecallProAuth,
   name: "lock_jobs",
+  classification: 'WRITE',
   displayName: "Lock Jobs",
   description: "Lock completed or scheduled jobs by the given time range",
+  audience: 'both',
+  aiMetadata: { description: "Bulk-lock all completed or scheduled Housecall Pro jobs falling within a start/end datetime range, preventing further edits to them. Effectively idempotent: re-running the same range re-locks already-locked jobs with no additional effect. Acts on every matching job in the window, not a single job.", idempotent: true },
   props: {
     starting_at: Property.DateTime({
       displayName: "Starting At",

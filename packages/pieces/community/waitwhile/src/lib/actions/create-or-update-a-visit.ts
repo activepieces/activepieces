@@ -13,6 +13,12 @@ export const createOrUpdateAVisit = createAction({
   name: 'createOrUpdateAVisit',
   displayName: 'Create or Update a Visit',
   description: 'Create a new visit or update an existing visit in Waitwhile',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new waitlist/appointment visit or updates an existing one in Waitwhile, optionally linking a customer and location and setting notes, party size, and start time. Use to add someone to a queue or modify their visit; supply an existing visit id to update, or omit it to create. Idempotent when keyed on a stable visit id (re-running with the same id and inputs converges to the same record).',
+    idempotent: true,
+  },
   props: {
     id: visitIdDropdown,
     customerId: customerIdDropdown,

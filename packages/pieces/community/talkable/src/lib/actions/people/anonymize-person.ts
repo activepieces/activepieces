@@ -7,6 +7,8 @@ export const anonymizePerson = createAction({
   auth: talkableAuth,
   displayName: 'Anonymize person',
   description: 'Anonymize person by email',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently anonymize a Talkable person\'s personal data, identified by email, for privacy/GDPR-style erasure requests. Use only when a customer\'s identifying information must be scrubbed. Destructive and irreversible; repeating leaves the record anonymized (no further effect). The email is required.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Person email',

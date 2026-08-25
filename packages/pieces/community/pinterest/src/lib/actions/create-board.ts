@@ -7,12 +7,21 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
+import { createBoardActionOutputSchema } from '../output-schemas';
 
 export const createBoard = createAction({
   auth: pinterestAuth,
   name: 'createBoard',
+  classification: 'WRITE',
+  outputSchema: createBoardActionOutputSchema,
   displayName: 'Create Board',
   description: 'Create a new Pinterest board for organizing Pins.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new Pinterest board to organize Pins, with a name and optional description and privacy level. Use before adding Pins when no suitable board exists. Each call creates a separate board even with identical input, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     ad_account_id: adAccountIdDropdown,
     name: Property.ShortText({

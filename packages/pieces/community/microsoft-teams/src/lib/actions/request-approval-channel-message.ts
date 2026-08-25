@@ -2,10 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftTeamsAuth } from '../auth';
 import { microsoftTeamsCommon } from '../common';
 import { createGraphClient } from '../common/graph';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 
 export const requestApprovalInChannel = createAction({
@@ -13,6 +11,11 @@ export const requestApprovalInChannel = createAction({
   name: 'request_approval_in_channel',
   displayName: 'Request Approval in Channel',
   description: 'Send approval message to a channel and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts an adaptive card with a single button linking to a confirmation page (where the recipient chooses Approve or Disapprove) into a Microsoft Teams channel (by team ID and channel ID) and pauses the flow until they respond, then resumes reporting whether it was approved. Use as a human-in-the-loop gate where channel members decide; for a direct-message gate use Request Approval from a User instead. Not idempotent — each call posts another approval message and creates a new wait.',
+    idempotent: false,
+  },
   props: {
     teamId: microsoftTeamsCommon.teamId,
     channelId: microsoftTeamsCommon.channelId,
@@ -38,14 +41,8 @@ export const requestApprovalInChannel = createAction({
       const waitpoint = await context.run.createWaitpoint({
         type: 'WEBHOOK',
       });
-      const approvalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'approve' },
-      });
-      const disapprovalLink = waitpoint.buildResumeUrl({
-        queryParams: { action: 'disapprove' },
-      });
+      const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
-      
       const chatMessage: ChatMessage = {
         body: {
           contentType: 'html',
@@ -69,15 +66,8 @@ export const requestApprovalInChannel = createAction({
               actions: [
                 {
                   type: 'Action.OpenUrl',
-                  title: 'Approve',
-                  url: approvalLink,
-                  style: 'positive',
-                },
-                {
-                  type: 'Action.OpenUrl',
-                  title: 'Disapprove',
-                  url: disapprovalLink,
-                  style: 'destructive',
+                  title: 'Review & Respond',
+                  url: confirmationLink,
                 },
               ],
             }),

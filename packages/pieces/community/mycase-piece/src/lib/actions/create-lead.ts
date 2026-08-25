@@ -7,6 +7,8 @@ export const createLead = createAction({
   name: 'create_lead',
   displayName: 'Create Lead',
   description: 'Creates a new lead in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new lead (prospective client) with first and last name plus optional contact, address, drivers-license, referral-source, and referred-by details. Distinct from Create Person, which creates an established client rather than a lead. Not idempotent: each call creates another lead.', idempotent: false },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

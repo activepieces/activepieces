@@ -9,6 +9,12 @@ export const declareCertificationFolderRegistred = createAction({
   name: 'declareCertificationFolderRegistred',
   displayName: "Passer un dossier de certification à l'état : Enregistré",
   description: "Change l'état d'un dossier de certification vers : Enregistré",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transition a Wedof certification folder into the 'registered' state, optionally recording enrollment/exam dates, exam type and place, and a comment. Pick this to confirm the candidate is enrolled for the certification, typically before 'toTake'; it follows the certification-folder state machine and is not idempotent. Requires the folder's externalId.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',

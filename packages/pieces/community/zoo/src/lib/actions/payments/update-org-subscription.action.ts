@@ -6,6 +6,8 @@ export const updateOrgSubscriptionAction = createAction({
   name: 'update_org_subscription',
   displayName: 'Update Organization Subscription',
   description: 'Update the subscription for your organization',
+  audience: 'both',
+  aiMetadata: { description: 'Change the organization\'s existing subscription to the given plan ID. Use to switch the org\'s plan once a subscription exists; to start one from scratch use the create org subscription action. Not idempotent: it writes the plan and may trigger billing changes.', idempotent: false },
   auth: zooAuth,
   // category: 'Payments',
   props: {

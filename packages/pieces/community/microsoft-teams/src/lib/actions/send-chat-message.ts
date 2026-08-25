@@ -8,6 +8,11 @@ export const sendChatMessageAction = createAction({
 	name: 'microsoft_teams_send_chat_message',
 	displayName: 'Send Chat Message',
 	description: 'Sends a message in an existing chat.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Sends a message into an existing one-on-one or group chat in Microsoft Teams, identified by chat ID, as plain text or HTML. Use when the target chat already exists; to start a fresh chat use Create Chat & Send Message instead. Not idempotent — each call posts another message.',
+		idempotent: false,
+	},
 	props: {
 		chatId: microsoftTeamsCommon.chatId,
 		contentType: Property.StaticDropdown({

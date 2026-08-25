@@ -9,6 +9,12 @@ export const getReverseEmailLookup = createAction({
   displayName: 'Reverse Email Lookup',
   description:
     'Find social media profiles from an email address. Works with both personal and work emails (3 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Find social/professional-network profiles associated with an email address (personal or work). Read-only and safe to retry. Use to go from a known email back to a person's profiles; the reverse direction (profile to emails) is Look Up Personal Email or Look Up Work Email. Superficial lookup depth charges no credits when there are no results; Deep charges regardless.",
+    idempotent: true,
+  },
   props: {
     email: Property.ShortText({
       displayName: 'Email Address',

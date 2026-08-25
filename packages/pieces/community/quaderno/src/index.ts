@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createContact } from './lib/actions/create-contact';
 import { createExpense } from './lib/actions/create-expence';
 import { createInvoice } from './lib/actions/create-invoice';

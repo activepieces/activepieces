@@ -9,8 +9,13 @@ const TRIGGER_SCOPE = 'store/customer/created';
 export const customerCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'customerCreated',
+  classification: 'READ',
   displayName: 'Customer Created',
   description: 'Triggers when a new customer is created',
+  aiMetadata: {
+    description:
+      'Fires when a new customer is created in the BigCommerce store. The event identifies the new customer.',
+  },
   props: {},
   sampleData: {
     producer: 'stores/xqcaklwsso',

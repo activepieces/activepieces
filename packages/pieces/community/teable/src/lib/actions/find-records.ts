@@ -9,8 +9,14 @@ import { prepareQuery } from '../common/client';
 export const findRecordsAction = createAction({
   auth: TeableAuth,
   name: 'teable_list_records',
+  classification: 'SEARCH',
   displayName: 'List Records',
   description: 'Retrieves a list of records from a table with optional filtering, sorting, and pagination.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves a list of records from a Teable table, returning all rows when no filter is supplied or only matching rows when a filter expression or specific record IDs are given. Supports pagination via take/skip. Use to query or scan a table; read-only and idempotent. Requires the table ID.',
+    idempotent: true,
+  },
   props: {
     base_id: TeableCommon.base_id,
     table_id: TeableCommon.table_id,

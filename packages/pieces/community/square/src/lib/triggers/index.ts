@@ -6,6 +6,10 @@ const triggerData = [
     name: 'new_order',
     displayName: 'New Order',
     description: 'Triggered when a new order is created',
+    aiMetadata: {
+      description:
+        'Fires when a new order is created in the Square seller account (order.created event). Represents a newly opened sale or transaction tied to a location, including the order id, location, state, and version.',
+    },
     event: 'order.created',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -31,6 +35,10 @@ const triggerData = [
     name: 'order_updated',
     displayName: 'Order Updated',
     description: 'Triggered when an order is updated',
+    aiMetadata: {
+      description:
+        'Fires when an existing order is modified in the Square seller account (order.updated event). Represents a change to an order such as its state, line items, or version bump, including the order id, location, and new version.',
+    },
     event: 'order.updated',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -57,6 +65,10 @@ const triggerData = [
     name: 'new_customer',
     displayName: 'New Customer',
     description: 'Triggered when a customer is created',
+    aiMetadata: {
+      description:
+        'Fires when a new customer profile is added to the Square Customer Directory (customer.created event). Represents a newly created customer record including contact details, address, creation source, and identifiers.',
+    },
     event: 'customer.created',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -97,6 +109,10 @@ const triggerData = [
     name: 'customer_updated',
     displayName: 'Customer Updated',
     description: 'Triggered when a customer is updated',
+    aiMetadata: {
+      description:
+        'Fires when an existing customer profile is changed in the Square Customer Directory (customer.updated event). Represents an update to a customer record such as contact details or preferences, including the customer id and incremented version.',
+    },
     event: 'customer.updated',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -129,6 +145,10 @@ const triggerData = [
     name: 'new_appointment',
     displayName: 'New Appointment',
     description: 'Triggered when a new appointment is created',
+    aiMetadata: {
+      description:
+        'Fires when a new appointment booking is created in Square Appointments (booking.created event). Represents a newly scheduled appointment for a service at a location.',
+    },
     event: 'booking.created',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -215,6 +235,10 @@ const triggerData = [
     name: 'new_payment',
     displayName: 'New Payment',
     description: 'Triggered when a new payment is created',
+    aiMetadata: {
+      description:
+        'Fires when a new payment is created in the Square seller account (payment.created event). Represents a payment taken against an order, including amounts, currency, card details, status, and the associated order and location.',
+    },
     event: 'payment.created',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -289,6 +313,10 @@ const triggerData = [
     name: 'new_invoice',
     displayName: 'New Invoice',
     description: 'Triggered when a new invoice is created',
+    aiMetadata: {
+      description:
+        'Fires when a new invoice is created in Square Invoices (invoice.created event). Represents a newly created invoice including its number, status, recipient, payment requests, amounts, and the associated order and location.',
+    },
     event: 'invoice.created',
     sampleData: {
       merchant_id: 'MLTZ79VE64YTN',
@@ -379,6 +407,7 @@ export const triggers = triggerData.map((trigger) =>
     name: trigger.name,
     displayName: trigger.displayName,
     description: trigger.description,
+    aiMetadata: trigger.aiMetadata,
     props: {},
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: trigger.sampleData,

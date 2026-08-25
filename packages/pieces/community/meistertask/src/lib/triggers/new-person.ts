@@ -44,6 +44,9 @@ export const newPerson = createTrigger({
   name: 'new_person',
   displayName: 'New Person',
   description: 'Triggers when a new person is added to a project.',
+  aiMetadata: {
+    description: 'Fires when a new person (member) is added to the selected MeisterTask project. Represents a user gaining access to that project.',
+  },
   props: {
     project: meisterTaskCommon.project,
   },

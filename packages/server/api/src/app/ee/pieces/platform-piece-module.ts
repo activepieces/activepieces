@@ -1,15 +1,10 @@
-import {
-    ActivepiecesError,
-    AddPieceRequestBody,
-    ErrorCode,
-    PieceScope,
-    PrincipalType,
-    SERVICE_KEY_SECURITY_OPENAPI,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { AddPieceRequestBody, PieceScope, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod, FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { attachMultipartFieldsToBody } from '../../helper/multipart-body'
 import { pieceInstallService } from '../../pieces/piece-install-service'
 
 export const platformPieceModule: FastifyPluginAsyncZod = async (app) => {
@@ -40,6 +35,7 @@ const installPieceParams = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
+    preValidation: attachMultipartFieldsToBody,
     schema: {
         tags: ['pieces'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],

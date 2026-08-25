@@ -6,8 +6,14 @@ import { heygenAuth } from '../common/auth';
 export const retrieveVideoStatusAction = createAction({
   auth: heygenAuth,
   name: 'retrieve_video_status',
+  classification: 'READ',
   displayName: 'Retrieve Video Status',
   description: 'Retrieve the status and details of a video using its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Looks up the processing status and details (including the output URL once ready) of an avatar/template-generated video by its video ID. Use to poll whether a generation job has finished before downloading or sharing. Read-only and idempotent. For video-translation jobs use Retrieve Translated Video Status instead.',
+    idempotent: true,
+  },
   props: {
     videoId: Property.ShortText({
       displayName: 'Video ID',

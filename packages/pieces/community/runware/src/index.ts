@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { generateImagesFromExistingImage } from './lib/actions/generate-images-from-existing-image';
 import { generateImagesFromText } from './lib/actions/generate-images-from-text';
 import { generateVideoFromText } from './lib/actions/generate-video-from-text';

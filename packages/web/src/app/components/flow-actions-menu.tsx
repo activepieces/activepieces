@@ -1,9 +1,9 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   FlowOperationType,
   FlowVersion,
   FlowVersionState,
   GitBranchType,
-  Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';

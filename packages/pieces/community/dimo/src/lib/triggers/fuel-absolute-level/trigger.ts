@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../auth';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
@@ -14,6 +14,10 @@ export const fuelAbsoluteTrigger = createTrigger({
 	name: 'fuel-absolute-level-trigger',
 	displayName: 'Fuel System Absolute Level Trigger',
 	description: 'Triggers when vehicle fuel system absolute level meets the specified condition.',
+	aiMetadata: {
+		description:
+			'Fires via DIMO webhook when a monitored vehicle reports a fuel-system absolute level reading (liters) that satisfies the configured comparison operator against the threshold. Each event represents a single absolute fuel-level telemetry signal and includes the vehicle token ID, timestamp, and the fuel volume in liters and gallons. Use to detect when fuel volume drops below or rises above a specific amount.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {
 		vehicleTokenIds: Property.Array({

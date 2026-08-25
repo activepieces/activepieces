@@ -49,6 +49,9 @@ export const getAssistants = createTrigger({
     name: 'getAssistants',
     displayName: 'New or Updated Assistant',
     description: 'Triggers when AI assistants are created or updated in your Famulor account.',
+    aiMetadata: {
+        description: 'Polls the Famulor account and fires when an AI assistant is newly created or updated, deduplicating by the assistant\'s updated/created timestamp. Optionally filter by assistant type (inbound or outbound). Each emitted item is the full assistant record, including id, name, type, status, phone number, voice and language, timezone, initial message, system prompt, max duration, recording flag, custom variables, webhook configuration, and create/update timestamps. Use to keep an external system in sync with assistant configuration changes.',
+    },
     props: {
         type: Property.StaticDropdown({
             displayName: 'Assistant Type',

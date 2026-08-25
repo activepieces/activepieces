@@ -37,7 +37,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
       mutationFn: async () => {
         await navigator.clipboard.writeText(textToCopy);
         setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 1500);
+        setTimeout(() => setIsCopied(false), 3000);
       },
       onError: () => {
         toast.error(t('Failed to copy to clipboard'), {

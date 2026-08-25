@@ -22,8 +22,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 export const newListCreatedTrigger = createTrigger({
     auth: microsoftToDoAuth,
     name: 'new_list_created',
+    classification: 'READ',
     displayName: 'New List',
     description: 'Triggers when a new task list is created.',
+    aiMetadata: {
+        description: 'Fires when a new task list is created in the authenticated user\'s Microsoft To Do account. Each event represents one newly added task list; watches all of the user\'s lists rather than a single one.',
+    },
     props: {},
     type: TriggerStrategy.POLLING,
     sampleData: {

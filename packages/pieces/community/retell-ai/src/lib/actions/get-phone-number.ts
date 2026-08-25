@@ -8,6 +8,8 @@ export const getPhoneNumber = createAction({
   name: 'get_phone_number',
   displayName: 'Get Phone Number',
   description: 'Retrieve full details for an existing phone number in Retell AI.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up the configuration of a phone number registered in Retell, including its bound inbound/outbound agents and webhook settings. The number, supplied in E.164 format, is the unique identifier. Use to inspect an existing number before reusing or updating it. Read-only and idempotent.', idempotent: true },
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',

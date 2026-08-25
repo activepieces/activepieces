@@ -6,8 +6,11 @@ import { assembledAuth } from '../common/auth';
 export const deleteOOO = createAction({
   auth: assembledAuth,
   name: 'delete_OOO',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete OOO Request',
   description: 'Cancel/delete a OOO request.',
+  audience: 'both',
+  aiMetadata: { description: 'Cancels (deletes) a time-off request in Assembled, identified by its OOO ID. Use to revoke a previously submitted out-of-office request. Because the cancellation is keyed on the request ID, repeating the call leaves the request cancelled, so it is idempotent.', idempotent: true },
   props: {
     OOO_id: Property.ShortText({
       displayName: 'OOO ID',

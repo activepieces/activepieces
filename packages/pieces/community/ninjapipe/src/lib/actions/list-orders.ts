@@ -8,6 +8,8 @@ export const listOrders = createAction({
   name: 'list_orders',
   displayName: 'List Orders',
   description: 'Retrieves a list of orders.',
+  audience: 'both',
+  aiMetadata: { description: 'List orders with optional search text and status filter. Read-only; supports single-page paging or "Return All" to follow pagination across every page. Use to discover order IDs before fetching or deleting an order.', idempotent: true },
   props: {
     limit: ninjapipeCommon.limitProperty,
     search: ninjapipeCommon.searchProperty,

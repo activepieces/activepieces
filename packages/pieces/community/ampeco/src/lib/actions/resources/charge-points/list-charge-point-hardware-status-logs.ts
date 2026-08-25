@@ -23,6 +23,8 @@ export const listChargePointHardwareStatusLogsAction = createAction({
     'Resources - Charge Points - List Charge Point Hardware Status Logs',
   description:
     'Get paginated list of hardware status logs for a charge point with optional date filtering.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve historical hardware status log entries for a charge point, optionally filtered to a created-after/created-before window. Read-only and safe to retry. Use this for a time range or full history; for only the single most recent entry use the latest-hardware-status-log action instead.', idempotent: true },
   props: {
     chargePoint: Property.Number({
       displayName: 'Charge Point',

@@ -10,17 +10,14 @@ import {
 import { zendeskAuth } from '../..';
 import { userIdDropdown } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const deleteUserAction = createAction({
   auth: zendeskAuth,
   name: 'delete-user',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete User',
   description: 'Remove a user and associated records from the account.',
+  audience: 'both',
+  aiMetadata: { description: 'Soft-deletes a user identified by user ID from the Zendesk account; deleted users are not recoverable in the UI (use a permanent/GDPR erasure endpoint for full removal). Use to offboard or remove an account. Requires the confirmation checkbox to be set, and the account owner or restricted users cannot be deleted. Idempotent in effect: once removed the user stays removed, though a repeat call on an already-deleted user returns a not-found error.', idempotent: true },
   props: {
     user_id: userIdDropdown,
     confirmation: Property.Checkbox({

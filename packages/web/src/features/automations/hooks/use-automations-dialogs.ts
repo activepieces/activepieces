@@ -16,6 +16,9 @@ export function useAutomationsDialogs({
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
   const [isImportFlowDialogOpen, setIsImportFlowDialogOpen] = useState(false);
   const [isImportTableDialogOpen, setIsImportTableDialogOpen] = useState(false);
+  const [importTargetFolderId, setImportTargetFolderId] = useState<
+    string | undefined
+  >(undefined);
   const [moveToDialogOpen, setMoveToDialogOpen] = useState(false);
   const [moveToFolderId, setMoveToFolderId] = useState<string>('');
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -47,6 +50,8 @@ export function useAutomationsDialogs({
     setIsImportFlowDialogOpen,
     isImportTableDialogOpen,
     setIsImportTableDialogOpen,
+    importTargetFolderId,
+    setImportTargetFolderId,
     moveToDialogOpen,
     setMoveToDialogOpen,
     moveToFolderId,

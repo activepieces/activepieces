@@ -1,13 +1,16 @@
-import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, apId, FlowStatus, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, ProjectLeaderboardItem, RunEnvironment, UserLeaderboardItem, UserWithMetaInformation } from '@activepieces/shared'
+import { apId, isNil, PlatformId } from '@activepieces/core-utils'
+import { AnalyticsFlowReportItem, AnalyticsRunsUsageItem, AnalyticsTimePeriod, FlowStatus, FlowVersionState, PlatformAnalyticsReport, RunEnvironment, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
+import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { ProjectEntity } from '../project/project-entity'
-import { userRepo } from '../user/user-service'
+import { projectService } from '../project/project-service'
+import { userRepo, userService } from '../user/user-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
@@ -49,40 +52,73 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
         }
         return filterReportByTimePeriod(report, timePeriod)
     },
-    getProjectLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<ProjectLeaderboardItem[]> => {
-        const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
-        const projects = await listProjects(platformId)
-        
-        return projects.map((project) => {
-            const projectFlows = report.flows.filter((flow) => flow.projectId === project.id)
-            const flowIds = projectFlows.map((flow) => flow.flowId)
-            const flowCount = projectFlows.length
-            const minutesSaved = calculateTimeSaved(flowIds, report, timePeriod)
-            return {
-                projectId: project.id,
-                projectName: project.displayName,
-                flowCount,
-                minutesSaved,
-            }
-        })
+    getReportForUser: async ({ platformId, userId, timePeriod }: GetReportForUserParams): Promise<PlatformAnalyticsReport> => {
+        const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId, timePeriod)
+        return scopeReportForUser({ report, platformId, userId, log })
     },
-    getUserLeaderboard: async (platformId: PlatformId, timePeriod: AnalyticsTimePeriod): Promise<UserLeaderboardItem[]> => {
-        const report = await platformAnalyticsReportService(log).getOrGenerateReport(platformId)
-        const users = report.users ?? []
-        
-        return users.map((user) => {
-            const flowsOfUser = report.flows.filter((flow) => flow.ownerId === user.id)
-            const flowIds = flowsOfUser.map((flow) => flow.flowId)
-            const flowCount = flowsOfUser.length
-            const minutesSaved = calculateTimeSaved(flowIds, report, timePeriod)
-            return {
-                userId: user.id,
-                flowCount,
-                minutesSaved,
-            }
-        })
+    refreshReportForUser: async ({ platformId, userId }: RefreshReportForUserParams): Promise<PlatformAnalyticsReport> => {
+        const report = await platformAnalyticsReportService(log).refreshReport(platformId)
+        return scopeReportForUser({ report, platformId, userId, log })
     },
 })
+
+async function scopeReportForUser({ report, platformId, userId, log }: ScopeReportForUserParams): Promise<PlatformAnalyticsReport> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    if (userService(log).isUserPrivileged(user)) {
+        return report
+    }
+    const projects = await projectService(log).getAllForUser({
+        platformId,
+        userId,
+        isPrivileged: false,
+    })
+    const projectIds = projects.map((project) => project.id)
+    const [visibleUserIds, visibleFlowIds] = await Promise.all([
+        listUserIdsForProjects({ platformId, projectIds }),
+        listFlowIdsForProjects({ projectIds }),
+    ])
+    return scopeReportToProjects({ report, projectIds, visibleUserIds, visibleFlowIds })
+}
+
+async function listUserIdsForProjects({ platformId, projectIds }: ListUserIdsForProjectsParams): Promise<string[]> {
+    if (projectIds.length === 0) {
+        return []
+    }
+    const rows = await userRepo()
+        .createQueryBuilder('u')
+        .select('u.id', 'id')
+        .where('u."platformId" = :platformId', { platformId })
+        .andWhere(
+            '(u.id IN (SELECT pm."userId" FROM project_member pm WHERE pm."projectId" IN (:...projectIds)) OR u.id IN (SELECT p."ownerId" FROM project p WHERE p.id IN (:...projectIds)))',
+            { projectIds },
+        )
+        .getRawMany<{ id: string }>()
+    return rows.map((row) => row.id)
+}
+
+async function listFlowIdsForProjects({ projectIds }: ListFlowIdsForProjectsParams): Promise<string[]> {
+    if (projectIds.length === 0) {
+        return []
+    }
+    const rows = await flowRepo()
+        .createQueryBuilder('flow')
+        .select('flow.id', 'id')
+        .where('flow."projectId" IN (:...projectIds)', { projectIds })
+        .getRawMany<{ id: string }>()
+    return rows.map((row) => row.id)
+}
+
+function scopeReportToProjects({ report, projectIds, visibleUserIds, visibleFlowIds }: ScopeReportToProjectsParams): PlatformAnalyticsReport {
+    const allowedProjectIds = new Set(projectIds)
+    const allowedUserIds = new Set(visibleUserIds)
+    const allowedFlowIds = new Set(visibleFlowIds)
+    return {
+        ...report,
+        flows: report.flows.filter((flow) => allowedProjectIds.has(flow.projectId)),
+        runs: report.runs.filter((run) => allowedFlowIds.has(run.flowId)),
+        users: report.users.filter((user) => allowedUserIds.has(user.id)),
+    }
+}
 
 
 
@@ -228,17 +264,36 @@ function getDateRange(timePeriod: AnalyticsTimePeriod): string {
     }
 }
 
-function calculateTimeSaved(flowIds: string[], report: PlatformAnalyticsReport, timePeriod: AnalyticsTimePeriod): number | null {
-    const flowsWithTimeSaved = report.flows.filter((flow) => flowIds.includes(flow.flowId) && flow.timeSavedPerRun !== null)
-    if (flowsWithTimeSaved.length === 0) {
-        return null
-    }
-    const dateRange = getDateRange(timePeriod)
-    return flowsWithTimeSaved.reduce((acc, flow) => {
-        const timeSavedPerRun = flow.timeSavedPerRun ?? 0
-        const totalRuns = report.runs
-            .filter((run) => dayjs(run.day).isAfter(dayjs(dateRange)) && run.flowId === flow.flowId)
-            .reduce((sum, run) => sum + (run.runs ?? 0), 0)
-        return acc + timeSavedPerRun * totalRuns
-    }, 0)
+type GetReportForUserParams = {
+    platformId: PlatformId
+    userId: string
+    timePeriod?: AnalyticsTimePeriod
+}
+
+type RefreshReportForUserParams = {
+    platformId: PlatformId
+    userId: string
+}
+
+type ScopeReportForUserParams = {
+    report: PlatformAnalyticsReport
+    platformId: PlatformId
+    userId: string
+    log: FastifyBaseLogger
+}
+
+type ListUserIdsForProjectsParams = {
+    platformId: PlatformId
+    projectIds: string[]
+}
+
+type ListFlowIdsForProjectsParams = {
+    projectIds: string[]
+}
+
+type ScopeReportToProjectsParams = {
+    report: PlatformAnalyticsReport
+    projectIds: string[]
+    visibleUserIds: string[]
+    visibleFlowIds: string[]
 }

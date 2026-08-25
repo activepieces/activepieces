@@ -6,6 +6,8 @@ export const createOrder = createAction({
   name: 'create_order',
   displayName: 'Create Order',
   description: 'Create a new order in Shippo',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new order record in Shippo with recipient address, totals, and optional sender address and line items. Use to register an incoming purchase before generating shipments or labels. Requires order number, recipient address, total price, currency, order date, and total package weight; a single line item can be passed via the flat item fields and more via the additional line items JSON array. Not idempotent: each call creates a separate order even with identical input.', idempotent: false },
   auth: shippoAuth,
   props: {
     order_number: Property.ShortText({

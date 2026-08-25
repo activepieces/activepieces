@@ -15,6 +15,8 @@ export const currencyUpdateAction = createAction({
   name: 'currencyUpdate',
   displayName: 'Resources - Currencies - Update',
   description: 'Update a currency.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing currency in AMPECO, identified by its numeric currency id, changing its display prefix/suffix, decimal precision, or minor-unit settings. Requires the currency to already exist; use Create Currency to add a new one. Re-running with the same values is safe, but supplied fields overwrite the current configuration.', idempotent: false },
   props: {
         
   currency: Property.Number({

@@ -6,8 +6,11 @@ import { containerProp } from '../common';
 export const findBlobs = createAction({
   auth: azureBlobStorageAuth,
   name: 'findBlobs',
+  classification: 'SEARCH',
   displayName: 'Find Blobs',
   description: 'Finds Blobs based on their tags',
+  audience: 'both',
+  aiMetadata: { description: 'Searches a container for blobs matching the supplied tag key-value pairs, returning the names of blobs whose tags satisfy all conditions (combined with AND). Use to locate blobs by tag rather than by name or prefix. Read-only and idempotent.', idempotent: true },
   props: {
     container: containerProp,
     tags: Property.Object({

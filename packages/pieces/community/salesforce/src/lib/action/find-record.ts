@@ -8,6 +8,8 @@ export const findRecord = createAction({
     name: 'find_record',
     displayName: 'Find Record',
     description: 'Finds a record by a field value.',
+    audience: 'both',
+    aiMetadata: { description: 'Look up records of a chosen Salesforce object where a single field equals an exact value (read-only, returns up to 200 matches). Pick this for simple equality lookups by a known field such as Email or Name; for multi-condition filters, joins, or sorting use Run Query (SOQL) instead.', idempotent: true },
     props: {
         object: salesforcesCommon.object,
         field: salesforcesCommon.field,
@@ -24,9 +26,9 @@ export const findRecord = createAction({
             throw new Error('Object and Field must be selected.');
         }
 
-        const escapedSearchValue = search_value.replace(/'/g, "\\'");
+        const escapedSearchValue = search_value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${field} = '${escapedSearchValue}' LIMIT 2000`;
+        const query = `SELECT FIELDS(ALL) FROM ${object} WHERE ${field} = '${escapedSearchValue}' LIMIT 200`;
 
         const response = await querySalesforceApi(
             HttpMethod.GET,

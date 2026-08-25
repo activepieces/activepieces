@@ -5,9 +5,16 @@ import { chatDataAuth } from '../common/types';
 export const uploadFile = createAction({
   auth: chatDataAuth,
   name: 'upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description:
     'Upload a file to be used with a chatbot for training or knowledge base',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a file to a Chat Data chatbot (selected by chatbotId) to add it to the bot\'s knowledge base / training data. Use when knowledge should come from a document rather than text or URLs. Not idempotent — each call adds another file to the chatbot.',
+    idempotent: false,
+  },
   props: {
     chatbotId: Property.Dropdown({
       auth: chatDataAuth,

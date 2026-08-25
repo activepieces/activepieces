@@ -15,6 +15,8 @@ export const partnerSettlementReportPartnerSettlementRecordsListingAction = crea
   name: 'partnerSettlementReportPartnerSettlementRecordsListing',
   displayName: 'Resources - Partner Settlement Reports - Listing Partner Settlement Records',
   description: 'Get all Partner Settlement Records.',
+  audience: 'both',
+  aiMetadata: { description: 'List the settlement records belonging to a given partner settlement report (identified by report id). Read-only and idempotent. Use to enumerate the payment records inside a report; to read one known record use Read Partner Settlement Record. Enable Paginate Results to walk every page.', idempotent: true },
   props: {
         
   partnerSettlementReport: Property.Number({

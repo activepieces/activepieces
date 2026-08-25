@@ -6,8 +6,15 @@ import { callGraphApi, flattenGroup } from '../common';
 export const createGroupAction = createAction({
     auth: azureAdAuth,
     name: 'create_group',
+    classification: 'WRITE',
     displayName: 'Create Group',
     description: 'Creates a new group in Azure Active Directory.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Creates a new Azure AD security or Microsoft 365 group with a display name and a unique mail nickname (toggle mailEnabled/securityEnabled for the group type). Use only when provisioning a fresh group, not to modify an existing one. Not idempotent — display names are not unique, so repeating the call can create duplicate groups.',
+        idempotent: false,
+    },
     props: {
         displayName: Property.ShortText({
             displayName: 'Display Name',

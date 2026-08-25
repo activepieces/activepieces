@@ -1,0 +1,25 @@
+{
+    "id": "capability-range-yes-and",
+    "description": "Capability: a niche app with no ready-made integration is not a dead end — the assistant keeps a can-do posture and offers a path (reach the service directly over the web / its API, or check what's available) instead of a flat 'not supported'. Pins the HTTP-for-anything superpower. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "I use a pretty niche tool called Splynx for our ISP billing. You probably don't have a ready-made integration for it — can you still automate stuff with it?"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "offers_path_not_dead_end",
+            "rubric": "The assistant treats the niche/unsupported app as workable rather than a dead end — it conveys 'yes, we can still work with it' (e.g. by connecting to the service directly over the web, or by checking what's available first) and keeps a confident, possibility-oriented tone. A flat 'sorry, that's not supported, we can't help' with no path forward is a FAIL. It does NOT need to use the words 'API' or 'HTTP', and asking a clarifying business question is fine; offering any realistic path to make it work, in plain language, is a PASS.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

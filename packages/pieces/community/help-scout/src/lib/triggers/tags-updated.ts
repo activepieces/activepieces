@@ -12,6 +12,10 @@ export const tagsUpdated = createTrigger({
   name: 'tags_updated',
   displayName: 'Tags Updated',
   description: 'Triggers when tags on a conversation are modified.',
+  aiMetadata: {
+    description:
+      "Fires when a conversation's tags are changed in the selected Help Scout mailbox (convo.tags webhook event), representing a tagging/categorization update. Can optionally be narrowed to conversations assigned to a specific user.",
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailboxId: mailboxIdDropdown(true),

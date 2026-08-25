@@ -6,8 +6,11 @@ import { containerProp } from '../common';
 export const createBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'createBlob',
+  classification: 'WRITE',
   displayName: 'Create Blob',
   description: 'Creates a new Blob in the specified location',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads file data as a blob to the given container under the specified blob name, optionally attaching tags. Use to store or update a file in Azure Blob Storage. Idempotent on the blob name: re-uploading to the same name overwrites the existing blob rather than creating duplicates.', idempotent: true },
   props: {
       container: containerProp,
       blobName: Property.ShortText({
@@ -19,6 +22,7 @@ export const createBlob = createAction({
         displayName: 'File',
         description: 'The file to upload as a blob',
         required: true,
+        streaming: true,
       }),
       tags: Property.Object({
         displayName: 'Tags',
@@ -34,6 +38,6 @@ export const createBlob = createAction({
       const containerClient = blobServiceClient.getContainerClient(container);
       const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-      return await blockBlobClient.uploadData(file.data, { tags: tags as Tags });
+      return await blockBlobClient.uploadStream(file.body, undefined, undefined, { tags: tags as Tags });
     },
 });

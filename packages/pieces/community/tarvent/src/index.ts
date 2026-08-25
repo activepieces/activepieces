@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { AppConnectionType, PieceCategory } from "@activepieces/shared";
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { makeClient } from "./lib/common";
 import { campaignSendFinishedTrigger, contactAddedTrigger, contactBouncedTrigger, contactClickedTrigger, contactGroupUpdatedTrigger, contactNoteAddedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactUnsubscribedTrigger, contactUpdatedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, transactionCreatedTrigger, transactionSentTrigger } from "./lib/triggers";
 import { updateContactTags, sendCampaign, createAudienceGroup, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, generateCustomEvent, updateJourneyStatus, createSuppressionFilter, getAudiences, getAudienceGroups, getCampaigns, getContact, getCustomEvent, getJourney, createContact, createTransaction } from "./lib/actions";

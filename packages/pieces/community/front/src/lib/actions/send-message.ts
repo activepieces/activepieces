@@ -10,6 +10,12 @@ export const sendMessage = createAction({
   displayName: 'Send Message',
   description:
     'Send a new message (starts a conversation) with subject, recipients, body, attachments, tags, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send an outbound message through a Front channel, creating a brand-new conversation. Pick this to initiate first contact with recipients (by handle) rather than answering an existing thread; use "Send Reply" to respond within an existing conversation. Not idempotent: each call sends a new message and starts a new conversation.',
+    idempotent: false,
+  },
   props: {
     channel_id: channelIdDropdown,
     to: Property.Array({

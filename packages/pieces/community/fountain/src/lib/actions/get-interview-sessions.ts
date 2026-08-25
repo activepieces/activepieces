@@ -27,6 +27,8 @@ export const fountainGetInterviewSessions = createAction({
   auth: fountainAuth,
   displayName: 'Get Interview Sessions',
   description: 'Returns the applicant\'s interview sessions',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the booked interview slots/sessions for a single applicant, identified by their applicant ID. Use to check a candidate\'s scheduled interviews. Read-only and idempotent.', idempotent: true },
   props: {
     id: Property.Dropdown({
       displayName: 'Applicant',

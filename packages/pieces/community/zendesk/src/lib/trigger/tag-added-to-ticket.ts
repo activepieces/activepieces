@@ -12,12 +12,6 @@ import { zendeskAuth } from '../..';
 
 const WEBHOOK_TRIGGER_KEY = 'zendesk_tag_added_webhook';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 interface ZendeskTicket {
   id: number;
   subject: string;
@@ -34,8 +28,12 @@ interface ZendeskTicket {
 
 export const tagAddedToTicket = createTrigger({
   name: 'tag_added_to_ticket',
+  classification: 'READ',
   displayName: 'Tag Added to Ticket',
   description: 'Fires when a ticket update includes the specified tag. Requires a Zendesk Trigger with Notify active webhook.',
+  aiMetadata: {
+    description: 'Fires when a ticket update carries a tag, delivered via a registered webhook. If a specific tag is configured, fires only when that tag is present on the updated ticket; if left empty, fires on any ticket update that has at least one tag. Requires a Zendesk Trigger configured to notify the active webhook.',
+  },
   auth: zendeskAuth,
   props: {
     specific_tag: Property.ShortText({

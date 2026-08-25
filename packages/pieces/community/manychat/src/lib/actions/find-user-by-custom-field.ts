@@ -8,6 +8,8 @@ export const findUserByCustomFieldAction = createAction({
 	name: 'findUserByCustomField',
 	displayName: 'Find User by Custom Field',
 	description: 'Finds a user by custom field.',
+	audience: 'both',
+	aiMetadata: { description: 'Searches Manychat subscribers by a custom field (text or number type) matching a given value, returning whether any matched and the list of matches. Use to look up a subscriber by a stored attribute when you do not have their subscriber ID. Read-only and idempotent.', idempotent: true },
 	props: {
 		field: Property.Dropdown({
 			auth: manychatAuth,

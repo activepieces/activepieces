@@ -170,6 +170,29 @@ export interface MailchimpListsApi {
   getAllLists(options?: any): Promise<any>;
   tagSearch(listId: string, opts?: any): Promise<any>;
   updateListMemberTags(listId: string, subscriberHash: string, data: any): Promise<any>;
+  createSegment(listId: string, data: CreateSegmentData): Promise<Segment>;
+  createListMemberEvent(listId: string, subscriberHash: string, data: CreateListMemberEventData): Promise<void>;
+}
+
+export interface CreateSegmentData {
+  name: string;
+  static_segment?: string[];
+}
+
+export interface Segment {
+  id: number;
+  name: string;
+  list_id: string;
+  type: string;
+  created_at: string;
+  updated_at: string;
+  member_count: number;
+}
+
+export interface CreateListMemberEventData {
+  name: string;
+  properties?: Record<string, unknown>;
+  occurred_at?: string;
 }
 
 export interface MailchimpReportsApi {

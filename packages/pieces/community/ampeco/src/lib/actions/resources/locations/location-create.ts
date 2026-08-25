@@ -21,6 +21,8 @@ export const locationCreateAction = createAction({
   name: 'locationCreate',
   displayName: 'Resources - Locations - Create',
   description: 'Create a new location.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new charging location in AMPECO; requires a localized name, geoposition latitude/longitude, an address, and a country, with optional working hours, timezone, tags, and external/roaming IDs. Use to add a location; to edit an existing one use the Update action instead. Not idempotent: each call creates a separate location, so guard against duplicates.', idempotent: false },
   props: {
     name: Property.Array({
       displayName: 'Name',

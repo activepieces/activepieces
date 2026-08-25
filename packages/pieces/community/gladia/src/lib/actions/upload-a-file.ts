@@ -14,6 +14,12 @@ export const uploadAFile = createAction({
   displayName: 'Upload Audio File',
   description:
     'Upload an audio or video file for use in a pre-recorded transcription job',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a local audio or video file to Gladia and returns a Gladia-hosted URL that can be passed to the Create Transcription action. Choose this when the source media is a file rather than an already-public URL. Not idempotent: each call uploads a new file and produces a new reference.',
+    idempotent: false,
+  },
   props: {
     audio_file: Property.File({
       displayName: 'Audio File',

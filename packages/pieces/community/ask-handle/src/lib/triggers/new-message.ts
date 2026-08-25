@@ -10,8 +10,12 @@ const BASE_URL = 'https://dashboard.askhandle.com/api/v1';
 export const newMessageTrigger = createTrigger({
   auth: askHandleAuth,
   name: 'new_message',
+  classification: 'READ',
   displayName: 'New Message',
   description: 'Triggers when a new message is received',
+  aiMetadata: {
+    description: 'Fires when a new message is added to any AskHandle chat room, including who sent it and whether it came from a support agent. Use to react to incoming conversation activity in real time.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {

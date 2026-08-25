@@ -9,6 +9,12 @@ export const getWebsiteMetrics = createAction({
   displayName: 'Get Website Metrics',
   description:
     'Returns a ranked list for a chosen metric category (e.g. top pages, browsers, or countries) over a date range.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetch a ranked breakdown of one Umami-tracked website by a single chosen dimension (the Metric prop selects which, e.g. pages, referrers, browsers, countries, devices, or events) over a date range. Use to answer "top N by X" questions; pick a different metric type per call. Requires a website ID, a start/end date, and the metric type. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     websiteId: umamiCommon.websiteDropdown,
     startDate: umamiCommon.dateRange.startDate,

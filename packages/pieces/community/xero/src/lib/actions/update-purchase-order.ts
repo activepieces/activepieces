@@ -13,6 +13,12 @@ export const xeroUpdatePurchaseOrder = createAction({
   name: 'xero_update_purchase_order',
   displayName: 'Update Purchase Order',
   description: 'Updates details of an existing purchase order.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update an existing Xero purchase order identified by its ID, changing fields such as status, delivery address/instructions, attention-to, telephone, or expected arrival date. Idempotent on a fixed purchase-order ID. To raise a new order use Create Purchase Order instead.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     purchase_order_id: props.purchase_order_id(true),

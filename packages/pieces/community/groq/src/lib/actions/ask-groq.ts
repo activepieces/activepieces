@@ -1,12 +1,16 @@
 import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
 import { groqAuth } from '../..';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { askAiActionOutputSchema } from '../output-schemas';
 
 export const askGroq = createAction({
+  audience: 'both',
 	auth: groqAuth,
 	name: 'ask-ai',
+	classification: 'READ',
 	displayName: 'Ask AI',
 	description: 'Ask Groq anything using fast language models.',
+	aiMetadata: { description: 'Sends a prompt to a Groq-hosted chat model (Whisper speech models are excluded from the model list) and returns the generated text, with optional sampling controls and a roles array for system instructions. Runs stateless by default, or shares conversation history across runs and flows when a memory key is set. This is the only text-generation action in the piece - pick the sibling Transcribe Audio or Translate Audio actions when the input is a sound file rather than text. Requires a model, a question, and a maximum token count; not idempotent: each call produces a fresh completion and, when a memory key is set, appends to the stored project-scoped history.', idempotent: false },
 	props: {
 		model: Property.Dropdown({
 			auth: groqAuth,
@@ -106,6 +110,7 @@ export const askGroq = createAction({
 			defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
 		}),
 	},
+	outputSchema: askAiActionOutputSchema,
 	async run({ auth, propsValue, store }) {
 		const {
 			model,

@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const updateEstimateOptionSchedule = createAction({
   auth: housecallProAuth,
   name: "update_estimate_option_schedule",
+  classification: 'WRITE',
   displayName: "Update estimate option schedule",
   description: "Update an estimate option's schedule.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Set the schedule (start/end time, arrival window, and dispatched employees) for a specific option of a Housecall Pro estimate, identified by estimate ID and option ID. Idempotent since it overwrites the option's schedule. Can optionally notify the customer and the pro.",
+    idempotent: true,
+  },
   props: {
     estimate_id: Property.ShortText({ displayName: "Estimate ID", required: true }),
     option_id: Property.ShortText({ displayName: "Option ID", required: true }),

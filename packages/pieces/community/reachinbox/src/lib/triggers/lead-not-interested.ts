@@ -25,6 +25,10 @@ export const leadNotInterested = createTrigger({
   name: 'leadNotInterested',
   displayName: 'Lead Not Interested',
   description: 'Triggers when a lead is set to not interested.',
+  aiMetadata: {
+    description:
+      'Fires when a lead is marked as not interested in ReachInbox (LEAD_NOT_INTERESTED), signaling a negative or opt-out response. Use to suppress or follow up differently; payload includes the lead and campaign. Requires the webhook to be configured in ReachInbox.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: leadNotInterestedMessage,

@@ -6,8 +6,15 @@ import { callGraphApi, userDropdown } from '../common';
 export const deleteUserAction = createAction({
     auth: azureAdAuth,
     name: 'delete_user',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete User',
     description: 'Deletes a user from Azure Active Directory.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Permanently deletes an Azure AD user account by object ID or user principal name. Destructive and not idempotent — repeating the call fails with 404 after the first success. If the removal may need to be reversed, prefer disabling sign-in via Update User (accountEnabled) instead.',
+        idempotent: false,
+    },
     props: {
         userId: userDropdown,
     },

@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createIndex } from './lib/actions/create-index';
 import { upsertVector } from './lib/actions/upsert-vector';
 import { updateVector } from './lib/actions/update-vector';

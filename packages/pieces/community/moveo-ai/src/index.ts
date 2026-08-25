@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { moveoTriggers } from './lib/triggers';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { moveoAuth } from './lib/auth';

@@ -5,7 +5,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { askGroq } from './lib/actions/ask-groq';
 import { transcribeAudio } from './lib/actions/transcribe-audio';
 import { translateAudio } from './lib/actions/translate-audio';

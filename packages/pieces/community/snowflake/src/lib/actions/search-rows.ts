@@ -14,6 +14,12 @@ export const searchRowsAction = createAction({
   displayName: 'Search Rows',
   description:
     'Search for rows in a Snowflake table using an optional WHERE condition, ordering, and row limit.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Returns rows from a Snowflake table with an optional WHERE filter, ORDER BY sort, and row limit (default 100); leaving the filter empty returns all rows up to the limit. Use to retrieve a filtered or sorted set of records; for a single row by key use Get Row by ID. The filter and sort clauses are embedded directly into SQL, so pass only trusted values. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

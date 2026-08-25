@@ -7,6 +7,12 @@ export const findCandidateAction = createAction({
   name: 'find_candidate',
   displayName: 'Find Candidate',
   description: 'Searches for a candidate in Greenhouse by email address. Returns the first match.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Looks up a candidate by exact email address and returns the first match, or a not-found result if none exists. Use to resolve a candidate ID or check whether someone already exists before creating them. Idempotent read-only lookup; matches only on a full email, not partial names.',
+    idempotent: true,
+  },
   auth: greenhouseAuth,
   props: {
     email: Property.ShortText({

@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -17,11 +17,17 @@ type StripeWebhookPayload = {
   };
 };
 
+import { invoiceOutputSchema } from '../output-schemas';
 export const stripeInvoicePaymentFailed = createTrigger({
   auth: stripeAuth,
   name: 'invoice_payment_failed',
+  classification: 'READ',
   displayName: 'Invoice Payment Failed',
   description: 'Fires when a payment against an invoice fails.',
+  aiMetadata: {
+    description:
+      'Fires when a payment against an invoice fails in Stripe (the invoice.payment_failed event), emitting the affected invoice including the finalization error. An optional customer ID filter narrows firing to one customer. Use to react to failed invoice payments, such as starting a dunning or retry flow.',
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
@@ -31,6 +37,7 @@ export const stripeInvoicePaymentFailed = createTrigger({
     }),
   },
 
+  outputSchema: invoiceOutputSchema,
   sampleData: {
     id: 'in_1MtHbELkdIwHu7ixl4OzzPMv',
     object: 'invoice',
@@ -92,13 +99,13 @@ export const stripeInvoicePaymentFailed = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/invoices',
+      url: 'https://api.stripe.com/v1/invoices',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'failed',
+        status : 'open',
         limit: '5',
       },
     });

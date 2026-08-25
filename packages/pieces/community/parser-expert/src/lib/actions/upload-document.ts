@@ -9,6 +9,11 @@ export const uploadDocument = createAction({
   name: 'upload_document',
   displayName: 'Upload Document',
   description: 'Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Submits a document for parsing into a Parser Expert bucket, accepting either an uploaded file (PDF, DOCX, image, or txt; max 10 pages) or a webpage URL — supply exactly one (the file takes precedence if both are given). Use this to start extraction; it returns a parser ID that you then pass to Get Extracted Data to retrieve the result. Not idempotent: each call queues a new parse job.',
+    idempotent: false,
+  },
   props: {
     bucket_id: Property.ShortText({
       displayName: 'Bucket ID',

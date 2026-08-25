@@ -7,6 +7,8 @@ export const merchantAccountSetupSweeping = createAction({
   name: 'merchant-account-setup-sweeping',
   displayName: 'Set Up or Update Sweeping',
   description: 'Set the automatic sweeping settings for a merchant account. At regular intervals, any available balance in excess of the configured `max_amount_in_minor` is withdrawn to a pre-configured IBAN.',
+  audience: 'both',
+  aiMetadata: { description: 'Configure or update automatic sweeping for a merchant account so balance above a threshold is periodically withdrawn to a fixed IBAN at the chosen frequency. Idempotent: it sets the full sweeping configuration for the account, so repeating with the same values leaves the same settings. To stop sweeping use Disable Sweeping; to read current settings use Get Sweeping Settings.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',

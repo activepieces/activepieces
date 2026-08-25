@@ -92,6 +92,8 @@ export const mergePdf = createAction({
   name: 'merge_pdf',
   displayName: 'Merge Files to PDF',
   description: 'Combine multiple documents/images into a single PDF',
+  audience: 'both',
+  aiMetadata: { description: 'Merges two or more files into a single PDF via CloudConvert. Choose this to combine separate documents or images into one PDF. Requires at least two input files supplied via the selected import method (file URL or previously stored Activepieces file ID; multi-file uploads are not supported). Each call creates a new merge job, so it is not idempotent.', idempotent: false },
   auth: cloudconvertAuth,
   requireAuth: true,
   props: mergePdfProps(),

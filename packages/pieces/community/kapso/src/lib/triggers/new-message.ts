@@ -3,7 +3,7 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { kapsoAuth } from '../common';
 import { parseWebhookPayload } from '../common/webhook';
 
@@ -23,9 +23,13 @@ const webhookSetupMarkdown = `**Setup Instructions:**
 export const newMessage = createTrigger({
   auth: kapsoAuth,
   name: 'new_message_received',
+  classification: 'READ',
   displayName: 'New Message Received',
   description:
     'Triggers when a new WhatsApp message is received.',
+  aiMetadata: {
+    description: 'Fires when the connected WhatsApp Business number receives an inbound message from a user — text, media, location, contact, interactive reply, or any other message type. Represents a customer-initiated message and is the entry point for handling incoming conversations.',
+  },
   props: {
     setup: Property.MarkDown({
       value: webhookSetupMarkdown,

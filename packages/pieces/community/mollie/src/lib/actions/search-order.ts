@@ -9,6 +9,12 @@ export const mollieSearchOrder = createAction({
   displayName: 'Search Order',
   description:
     '⚠️ We no longer recommend using the Orders API. Please refer to the Payments API instead.\n\nSearches for orders in Mollie',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists orders from the legacy Mollie Orders API, paginated with an optional cursor (from order ID), limit, sort direction, and profile filter. Use only when working with the deprecated Orders API; prefer Search Payment for current payment flows. Idempotent: read-only listing with no side effects.',
+    idempotent: true,
+  },
   props: {
     from: Property.ShortText({
       displayName: 'From Order ID',

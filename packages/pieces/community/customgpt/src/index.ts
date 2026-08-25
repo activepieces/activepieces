@@ -9,7 +9,7 @@ import { updateAgent } from './lib/actions/update-agent';
 import { exportConversation } from './lib/actions/export-conversation';
 import { customgptAuth } from './lib/common/auth';
 import { newConversation } from './lib/triggers/new-conversation';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const customgpt = createPiece({
   displayName: 'CustomGPT',

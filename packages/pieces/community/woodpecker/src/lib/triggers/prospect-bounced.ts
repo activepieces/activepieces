@@ -7,6 +7,9 @@ export const prospectBounced = createTrigger({
   name: 'prospect_bounced',
   displayName: 'Prospect Bounced',
   description: 'Triggers when an email to a prospect bounces',
+  aiMetadata: {
+    description: 'Fires when an email sent to a prospect bounces and the prospect is marked BOUNCED. Represents an undeliverable-address event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_bounced',

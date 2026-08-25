@@ -13,6 +13,12 @@ export const xeroAllocateCreditNoteToInvoice = createAction({
   name: 'xero_allocate_credit_note_to_invoice',
   displayName: 'Allocate Credit Note to Invoice',
   description: 'Allocates a credit note to a specific invoice.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Apply a specified amount of an existing credit note against a specific invoice in Xero, both referenced by ID. Pick this to offset an outstanding invoice with available credit. Not idempotent: each call records another allocation, so re-running over-allocates; resolve the credit-note and invoice IDs and the remaining credit first.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     credit_note_id: props.credit_note_id(true),

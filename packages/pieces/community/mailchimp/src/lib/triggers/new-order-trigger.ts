@@ -125,8 +125,12 @@ const calculateOrderMetrics = (data: any): any => {
 export const mailChimpNewOrderTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_order',
+  classification: 'READ',
   displayName: 'New Order',
   description: 'Fires when a new order is created in the connected store',
+  aiMetadata: {
+    description: 'Fires when a new e-commerce order is created in the selected connected Mailchimp store. The event carries the order id, customer, total, currency, status, and line items.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: mailchimpCommon.mailChimpStoreIdDropdown,

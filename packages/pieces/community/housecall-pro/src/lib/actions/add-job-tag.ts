@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const addJobTag = createAction({
   auth: housecallProAuth,
   name: "add_job_tag",
+  classification: 'WRITE',
   displayName: "Add job tag",
   description: "Add a tag to a job",
+  audience: 'both',
+  aiMetadata: {
+    description: "Attach a tag (by tag ID) to a Housecall Pro job. Effectively idempotent since adding a tag already present leaves the job's tag set unchanged. To detach a tag use Remove job tag.",
+    idempotent: true,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

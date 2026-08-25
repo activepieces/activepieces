@@ -1,9 +1,9 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   AddSigningKeyRequestBody,
   AddSigningKeyResponse,
   SigningKey,
   SigningKeyId,
-  SeekPage,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';

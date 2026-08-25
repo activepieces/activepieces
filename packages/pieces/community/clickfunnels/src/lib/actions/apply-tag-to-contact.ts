@@ -13,6 +13,12 @@ export const applyTagToContact = createAction({
   name: 'applyTagToContact',
   displayName: 'Apply Tag to Contact',
   description: 'Apply a tag to a contact if it doesn’t already exist.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Applies a tag to a ClickFunnels contact for segmentation or automation. Use to label or categorize a contact. Requires the workspace, contact, and tag. Effectively idempotent — re-applying a tag the contact already has does not add a duplicate.',
+    idempotent: true,
+  },
   props: {
     teamId: teamsDropdown(['auth']),
     workspaceId: workspacesDropdown(['auth', 'teamId']),

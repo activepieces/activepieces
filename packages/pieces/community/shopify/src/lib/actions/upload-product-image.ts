@@ -7,6 +7,8 @@ export const uploadProductImageAction = createAction({
   name: 'upload_product_image',
   displayName: 'Upload Product Image',
   description: 'Upload a new product image.',
+  audience: 'both',
+  aiMetadata: { description: 'Add an image to an existing Shopify product from a public URL or base64 file; an optional position of 1 makes it the main image. Use to attach product photos; requires the product ID. Each call adds another image, so repeating it creates duplicates.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Product',

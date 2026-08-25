@@ -11,7 +11,7 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { ChatMessage } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 type Props = {
 	teamId: string;
 	channelId: string;
@@ -22,6 +22,9 @@ export const newChannelMessageTrigger = createTrigger({
 	name: 'new-channel-message',
 	displayName: 'New Channel Message',
 	description: 'Triggers when a new message is posted in a channel.',
+	aiMetadata: {
+		description: 'Fires when a new message is posted in the selected Microsoft Teams channel (by team ID and channel ID). Each event represents the posted channel message and its content. Polls periodically, so events appear with a short delay rather than instantly.',
+	},
 	props: {
 		teamId: microsoftTeamsCommon.teamId,
 		channelId: microsoftTeamsCommon.channelId,

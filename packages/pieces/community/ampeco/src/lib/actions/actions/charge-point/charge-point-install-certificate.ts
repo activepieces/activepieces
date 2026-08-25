@@ -14,6 +14,8 @@ export const chargePointInstallCertificateAction = createAction({
   name: 'chargePointInstallCertificate',
   displayName: 'Actions - Charge Point - Install Certificate',
   description: 'Charge Point / Install Certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Send an OCPP InstallCertificate command to install a root certificate of the chosen type (V2GRootCertificate, MORootCertificate, CSMSRootCertificate, or ManufacturerRootCertificate) onto a charge point. Use to provision PKI/ISO 15118 trust anchors on a station. Pair with the delete-certificate action to remove one. Re-installing the same certificate is not guaranteed safe to repeat, so treat as non-idempotent.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

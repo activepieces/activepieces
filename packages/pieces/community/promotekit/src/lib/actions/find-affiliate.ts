@@ -8,6 +8,11 @@ export const findAffiliate = createAction({
   name: 'find_affiliate',
   displayName: 'Find Affiliate',
   description: 'Get details of a specific affiliate by ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch a single affiliate by its PromoteKit affiliate ID. Use when you already have the exact ID and need that affiliate\'s details; to discover IDs, list affiliates first. Read-only and safe to repeat.',
+    idempotent: true,
+  },
   props: {
     affiliate_id: Property.ShortText({
       displayName: 'Affiliate ID',

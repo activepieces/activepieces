@@ -7,6 +7,11 @@ export const createOrUpdateContact = createAction({
   name: 'create_or_update_contact',
   displayName: 'Create or Update Contact',
   description: 'Creates a contact (or updates contact based on email address).',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Upserts a contact in Visible: creates a new contact, or updates the existing one matched on the provided email address. Use to ensure a person exists under a company without first checking. Requires the email and the company ID; optional name, title, and contact list IDs. Idempotent because the email is the stable match key, so repeating the same input converges to the same contact.',
+    idempotent: true,
+  },
   auth: visibleAuth,
   props: {
     email: Property.ShortText({

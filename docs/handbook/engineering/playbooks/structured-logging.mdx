@@ -1,0 +1,79 @@
+---
+title: "Structured Logging"
+description: "Field-naming conventions for evlog wide events across the Activepieces server"
+icon: "list-tree"
+---
+
+All structured logging on the server goes through [evlog](https://www.evlog.dev) — `logger.{info,warn,error,debug}({ fields }, msg)` and `wideEvent.set/error/timed` from `@activepieces/server-utils`.
+
+The **field keys** (not the message string) are the real schema — they are what dashboards, alerts, and the OTLP drain query against. If the same thing is logged under different keys (`runId` here, `flowRunId` there, a bare `id` elsewhere), every query becomes a guessing game and correlation silently breaks.
+
+One rule above all: **one concept = one field, everywhere.**
+
+## Group fields by entity
+
+Following [evlog's guidance](https://www.evlog.dev/learn/wide-events), group related fields under the entity they belong to instead of flat, prefixed keys. An entity's own id is just `id` inside its group.
+
+```ts
+// ✅ Grouped — clear, and flattens to flowRun.id / flow.id
+logger.info({
+  flowRun: { id: run.id, status: run.status },
+  flow: { id: run.flowId },
+  project: { id: run.projectId },
+}, 'Flow run started')
+
+// ❌ Flat prefixes, alias, and a bare id
+logger.info({ runId: run.id, flowRunId: run.id, id: run.id }, 'Flow run started')
+```
+
+The group name is the camelCase singular entity from the domain model. The id lives at `entity.id`, and the entity's attributes sit beside it in the same group.
+
+## Rules
+
+<Steps>
+<Step title="The id is `id`, inside its entity group">
+Never a top-level `flowRunId`, `runId`, or bare `id`. A flow run is `flowRun: { id }`, a flow is `flow: { id }`. This gives exactly one queryable path per entity.
+</Step>
+
+<Step title="Attributes live beside the id, merged into one group">
+`{ jobId, jobType }` becomes `job: { id, type }`; `{ pieceName, pieceVersion }` becomes `piece: { name, version }`. Never a bare `name` / `version` / `status` / `type` at the top level — they're meaningless without their entity.
+</Step>
+
+<Step title="Errors use `error`">
+Pass the error straight to evlog — `logger.error(err)` or `logger.error({ err }, 'msg')` — and it lands under the canonical `error` key. Descriptive error fields like `migrationError` are fine.
+</Step>
+
+<Step title="Units go in the suffix">
+Durations end in `Ms` (`durationMs`, `timings.{op}Ms`), bytes in `Bytes`, counts in `Count` or a plural.
+</Step>
+
+<Step title="Keep it shallow, and leave reserved fields flat">
+One level of grouping (two max). `requestId`, `service`, `version`, `level`, `msg`, `timestamp`, `error`, `method`, `path` are added automatically — never set them, and never fold `requestId` into a group.
+</Step>
+</Steps>
+
+## Groups
+
+| Group | Fields | Entity |
+| --- | --- | --- |
+| `flowRun` | `id`, `status`, `environment` | A flow execution |
+| `flow` | `id`, `version` | A flow definition |
+| `flowVersion` | `id` | A flow version |
+| `project` | `id` | A project |
+| `platform` | `id` | A platform / workspace |
+| `user` | `id` | A user |
+| `job` | `id`, `type` | A queue job |
+| `piece` | `name`, `version` | An integration piece |
+| `connection` | `id` | An app connection |
+| `sandbox` | `id` | An execution sandbox |
+| `worker` | `id` | A worker process |
+| `webhook` | `id`, `requestId`, `mode`, `flowFound`, `responseStatus` | A webhook request |
+| `conversation` | `id` | A chat conversation |
+| `waitpoint` | `id` | A pause / resume point |
+| `step` | `name` | A flow step |
+| `trigger` | `name` | A flow trigger |
+| `migration` | `name` | A database migration |
+
+<Warning>
+This convention governs the keys in **logging calls** only, not entity or DTO field names. Data-model fields such as `JobData.runId`, DB query arguments, and service-call arguments stay as-is — the value is simply logged under `flowRun: { id }`.
+</Warning>

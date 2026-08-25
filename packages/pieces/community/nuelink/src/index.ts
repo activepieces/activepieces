@@ -1,7 +1,7 @@
 
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { createPost } from "./lib/actions/create-post";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const nuelinkAuth = PieceAuth.SecretText({
   displayName: 'API Key',

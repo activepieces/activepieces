@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { letsCalendarAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addContactToCampaign } from './lib/actions/add-contact-to-campaign';
 import { newCampaign } from './lib/triggers/new-campaign';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

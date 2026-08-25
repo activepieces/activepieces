@@ -6,8 +6,11 @@ import { togglCommon } from '../common';
 export const startTimeEntry = createAction({
   auth: togglTrackAuth,
   name: 'start_time_entry',
+  classification: 'WRITE',
   displayName: 'Start Time Entry',
   description: 'Start a new time entry (live timer).',
+  audience: 'both',
+  aiMetadata: { description: 'Starts a live running timer in a Toggl Track workspace, beginning now with an open-ended duration; optionally links project, task, tags, and billable flag. Use to begin tracking time in real time (use Stop Time Entry to end it); prefer Create Time Entry to log a completed entry with an explicit start/stop. Not idempotent: each call starts a new running entry.', idempotent: false },
   props: {
     workspace_id: togglCommon.workspace_id,
     description: Property.LongText({

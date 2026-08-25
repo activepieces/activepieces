@@ -5,8 +5,11 @@ import { BexioClient } from '../common/client';
 export const createCompanyAction = createAction({
   auth: bexioAuth,
   name: 'create_company',
+  classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Create a new company contact',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new organization (company-type) contact in Bexio with name, address, communication, and grouping fields. Use to add a company; pick Create Person for an individual or Update Company to modify an existing one. Requires a company name plus an assigned user and owner. Not idempotent: each call creates a separate contact, so search first to avoid duplicates.', idempotent: false },
   props: {
     name_1: Property.ShortText({
       displayName: 'Company Name',

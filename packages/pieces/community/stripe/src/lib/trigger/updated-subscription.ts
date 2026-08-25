@@ -7,7 +7,7 @@ import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 type StripeWebhookPayload = {
   data: {
@@ -17,11 +17,17 @@ type StripeWebhookPayload = {
   };
 };
 
+import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdatedSubscription = createTrigger({
   auth: stripeAuth,
   name: 'updated_subscription',
+  classification: 'READ',
   displayName: 'Updated Subscription',
   description: 'Fires when an existing subscription is changed.',
+  aiMetadata: {
+    description:
+      'Fires when an existing subscription is updated in Stripe (the customer.subscription.updated event), emitting the changed subscription. Optional filters narrow firing to a target new status or a specific customer ID. Use to react to plan changes, status transitions, or quantity updates.',
+  },
   props: {
     status: Property.StaticDropdown({
       displayName: 'New Status',
@@ -48,6 +54,7 @@ export const stripeUpdatedSubscription = createTrigger({
       required: false,
     }),
   },
+  outputSchema: subscriptionOutputSchema,
   sampleData: {
     id: 'sub_1MowQVLkdIwHu7ixeRlqHVzs',
     object: 'subscription',

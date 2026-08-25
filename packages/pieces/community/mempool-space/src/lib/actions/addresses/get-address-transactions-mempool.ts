@@ -7,6 +7,8 @@ export const getAddressTransactionsMempool = createAction({
     name: 'get_address_transactions_mempool',
     displayName: 'Get Address Transactions (Mempool)',
     description: 'Returns unconfirmed transactions (up to 50)',
+    audience: 'both',
+    aiMetadata: { description: 'Returns only the pending, unconfirmed mempool transactions for a Bitcoin address (up to 50). Read-only and idempotent, though entries disappear as they confirm or are dropped. Choose this to detect incoming/outgoing payments not yet mined; use the Chain variant for confirmed history.', idempotent: true },
     // category: 'Addresses',
     props: {
         address: Property.ShortText({

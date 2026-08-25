@@ -10,6 +10,8 @@ export const getKeywords = createAction({
   auth: serpstatAuth,
   displayName: 'Get Keywords',
   description: 'Get keywords data from Serpstat > Keyword Analysis.',
+  audience: 'both',
+  aiMetadata: { description: 'Look up organic keyword data (search volume, CPC, competition, etc.) that a given seed keyword ranks for on a chosen search engine/region, via Serpstat keyword analysis. Use to research the keyword landscape around a term; supports excluding minus-keywords, sorting, pagination, and an advanced JSON filter for narrowing results. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

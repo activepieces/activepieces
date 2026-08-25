@@ -5,8 +5,11 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetch
 
 export const listCustomers = createAction({
   name: 'list_customers',
+  classification: 'SEARCH',
   displayName: 'List Customers',
   description: 'Retrieve a paginated list of customers from your Lemon Squeezy store.',
+  audience: 'both',
+  aiMetadata: { description: 'List customers from Lemon Squeezy, optionally narrowed by store (empty store spans all stores) and email address, with page-based pagination. Use to look up a customer by email or enumerate the customer base. Read-only and idempotent.', idempotent: true },
   auth: lemonSqueezyAuth,
   props: {
     storeId: Property.Dropdown({

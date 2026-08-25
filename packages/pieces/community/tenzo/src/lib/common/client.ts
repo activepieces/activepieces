@@ -5,7 +5,7 @@ import {
   HttpRequest,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 const BASE_URL = 'https://api.gotenzo.com/v1.0';
 

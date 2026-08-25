@@ -6,8 +6,15 @@ import { Filter } from '../common/types';
 export const findProjectAction = createAction({
   auth: capsuleCrmAuth,
   name: 'find_project',
+  classification: 'SEARCH',
   displayName: 'Find Project',
   description: 'Find a Project by search criteria.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Finds Capsule CRM projects (cases) matching a structured filter query (a conditions array of field/operator/value clauses, per Capsule's filter API). Use to locate projects by field criteria rather than a free-text term. Idempotent: it is a read-only filter that does not modify any data.",
+    idempotent: true,
+  },
   props: {
     filter: Property.Json({
       displayName: 'Filter',

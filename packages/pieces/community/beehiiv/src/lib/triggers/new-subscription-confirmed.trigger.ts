@@ -3,15 +3,19 @@ import { publicationId } from '../common/props';
 import { beehiivAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { beehiivApiCall, WebhookPayload } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'new-subscription-confirmed-trigger';
 
 export const newSubscriptionConfirmedTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_new_subscription_confirmed',
+	classification: 'READ',
 	displayName: 'New Subscription Confirmation',
 	description: 'Triggers when a new subscriber confirms their subscription.',
+	aiMetadata: {
+		description: 'Fires when a subscriber confirms their subscription to the selected beehiiv publication (subscription.confirmed event), after any double opt-in step, emitting the confirmed subscription record.',
+	},
 	props: {
 		publicationId: publicationId,
 	},

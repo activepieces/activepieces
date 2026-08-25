@@ -8,6 +8,8 @@ export const getSubscriberDetails = createAction({
   name: 'getSubscriberDetails',
   displayName: 'Get Subscriber',
   description: 'Gets the details of a subscriber.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the full details of a single subscriber in a Zagomail list, addressed directly by list UID and subscriber UID. Use when you already hold the subscriber UID; to find one from an email, use Search Subscriber first. Read-only and idempotent.', idempotent: true },
   props: {
     listUId: listUId,
     subscriberUid: Property.ShortText({

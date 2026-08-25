@@ -7,6 +7,12 @@ export const searchAction = createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Search for content using Vertex AI Search (searchLite).',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Runs a query against a Google Cloud Vertex AI Search (Discovery Engine) app and returns matching results from that app\'s indexed data store. Choose this to search a private/enterprise corpus configured in Discovery Engine — not the public Google web. Requires the query text plus the connection\'s project, app, and API key; an optional user pseudo ID can be passed to improve personalization. Read-only and idempotent — the same query returns the same results without side effects.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

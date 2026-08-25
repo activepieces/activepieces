@@ -8,6 +8,8 @@ export const deleteInvoice = createAction({
   name: 'delete_invoice',
   displayName: 'Delete Invoice',
   description: 'Permanently deletes an invoice',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a JustInvoice invoice by its ID or invoice number. Use to remove an invoice entirely; prefer cancelling instead of deleting an issued invoice. Idempotent in effect: once removed, the invoice stays gone.', idempotent: true },
   props: {
     invoiceId: Property.ShortText({
       displayName: 'Invoice ID',

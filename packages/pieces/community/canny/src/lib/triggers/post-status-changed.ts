@@ -4,6 +4,10 @@ export const postStatusChangedTrigger = createCannyTrigger({
   name: 'post_status_changed',
   displayName: 'Post Status Changed',
   description: "Triggers when a post's status is changed (e.g. open → in progress → complete).",
+  aiMetadata: {
+    description:
+      'Fires when a Canny post moves to a different status (for example open to in progress to complete), delivering the post in its new state. Use to react to changes in how a feature request is progressing.',
+  },
   eventType: 'post.status_changed',
   sampleData: {
     created: '2026-04-06T11:00:00.000Z',

@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { kapsoAuth, KAPSO_BASE_URL } from './lib/common';
 import { sendTextMessage } from './lib/actions/send-text-message';

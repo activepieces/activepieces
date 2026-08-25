@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { realTimeWebSearch } from './lib/actions/real-time-data';
 import { sportsNewsSearch } from './lib/actions/sports-news';
 import { stockMarketDataSearch } from './lib/actions/stock-market-data';

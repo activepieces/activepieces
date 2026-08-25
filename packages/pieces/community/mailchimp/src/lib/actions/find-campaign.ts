@@ -8,8 +8,11 @@ import { MailchimpClient, CampaignGetOptions } from '../common/types';
 export const findCampaign = createAction({
   auth: mailchimpAuth,
   name: 'find_campaign',
+  classification: 'SEARCH',
   displayName: 'Find Campaign',
   description: 'Search all campaigns for the specified query terms',
+  audience: 'both',
+  aiMetadata: { description: 'Searches all campaigns in the account by a free-text query (matching titles, subject lines, and related fields) and returns the matches. Use to locate a campaign by name or wording before reading or acting on it. Read-only and idempotent; a query is required.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

@@ -6,8 +6,12 @@ import { assembledAuth } from '../common/auth';
 export const newTimeOffRequest = createTrigger({
   auth: assembledAuth,
   name: 'new_OOO_request',
+  classification: 'READ',
   displayName: 'New OOO Request',
   description: 'Triggers when a new OOO request is created.',
+  aiMetadata: {
+    description: 'Fires when a new time-off (out-of-office) request is created in Assembled, polling for time-off requests updated since the last check. Use to react to newly submitted OOO requests, for example to route them for approval.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

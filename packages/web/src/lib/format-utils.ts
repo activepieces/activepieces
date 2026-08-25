@@ -46,6 +46,16 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
+  formatDateTime(date: Date) {
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
+  },
   formatDateWithTime(date: Date, hideCurrentYear: boolean) {
     const now = dayjs();
     const inputDate = dayjs(date);
@@ -187,6 +197,18 @@ export const formatUtils = {
           }`;
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
+  },
+  formatStorageSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    if (bytes < 1024 * 1024 * 1024) {
+      return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+    return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
   },
   urlIsNotLocalhostOrIp(url: string): boolean {
     const parsed = new URL(url);

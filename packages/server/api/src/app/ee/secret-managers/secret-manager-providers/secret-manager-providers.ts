@@ -1,4 +1,5 @@
-import { ActivepiecesError, ConnectSecretManagerRequest, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ConnectSecretManagerRequest, SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { awsProvider } from './aws-provider'
 import { cyberarkConjurProvider } from './cyberark-conjur-provider'

@@ -13,17 +13,14 @@ import {
   problemTicketIdDropdown,
 } from '../common/props';
 
-type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
-
 export const updateTicketAction = createAction({
   auth: zendeskAuth,
   name: 'update-ticket',
+  classification: 'WRITE',
   displayName: 'Update Ticket',
   description: 'Modify ticket fields or status via API call.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing ticket identified by ticket ID, changing fields such as subject, status, priority, type, assignee, organization, tags, due date, or custom fields. Use to advance or edit a ticket already created. Two effects to note: setting the tags array REPLACES all existing tags (use Add Tag to Ticket to append), and supplying a comment body APPENDS a new comment on each call, so repeated calls with a comment are not idempotent; field-only updates are effectively idempotent. At least one field must be provided.', idempotent: false },
   props: {
     ticket_id: ticketIdDropdown,
     subject: Property.ShortText({

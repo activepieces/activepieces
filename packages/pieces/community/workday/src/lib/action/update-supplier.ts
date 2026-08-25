@@ -11,6 +11,12 @@ export const updateSupplier = createAction({
 	name: 'update_supplier',
 	displayName: 'Update Supplier',
 	description: 'Updates an existing supplier in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Updates an existing supplier (identified by its supplier WID) in Workday, setting any of name, tax ID, and payment-terms WID. Use to amend supplier master data. Idempotent: keyed on the supplier ID, so re-sending the same field values converges to the same state.',
+		idempotent: true,
+	},
 	props: {
 		supplierId: Property.ShortText({
 			displayName: 'Supplier ID',

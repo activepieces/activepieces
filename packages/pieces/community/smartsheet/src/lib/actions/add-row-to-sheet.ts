@@ -7,6 +7,8 @@ export const addRowToSheet = createAction({
 	name: 'add_row_to_sheet',
 	displayName: 'Add Row to Sheet',
 	description:'Adds new row to a sheet.',
+	audience: 'both',
+	aiMetadata: { description: 'Appends a new row to a Smartsheet sheet, populating cells by column ID; position is controlled by a top-or-bottom prop. Use when adding records to a sheet identified by its sheet ID. At least one cell value is required. Not idempotent: each call inserts another distinct row.', idempotent: false },
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 		cells: smartsheetCommon.cells,

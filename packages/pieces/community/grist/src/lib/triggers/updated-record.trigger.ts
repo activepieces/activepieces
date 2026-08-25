@@ -7,8 +7,12 @@ import { GristWebhookPayload } from '../common/types';
 export const gristUpdatedRecordTrigger = createTrigger({
   auth: gristAuth,
   name: 'grist-updated-record',
+  classification: 'READ',
   displayName: 'Updated Record',
   description: 'Triggers when a record is updated in the table.',
+  aiMetadata: {
+    description: 'Fires when an existing record is updated in the configured Grist document and table, via a Grist webhook on the update event. Each fired event represents a row whose values changed; an optional readiness column can gate when a row is considered ready.',
+  },
   props: {
     workspace_id: commonProps.workspace_id,
     document_id: commonProps.document_id,

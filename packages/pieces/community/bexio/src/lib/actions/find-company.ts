@@ -5,8 +5,11 @@ import { BexioClient } from '../common/client';
 export const findCompanyAction = createAction({
   auth: bexioAuth,
   name: 'find_company',
+  classification: 'SEARCH',
   displayName: 'Find Company',
   description: 'Search for company contacts using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Bexio contacts for companies, matching one or more field criteria (name, number, email, city, country, etc.) with operators such as contains, equals, or comparison; results are automatically filtered to company-type contacts. Use to locate a company before referencing or updating it; pick Find Country/Find Product/Find Account for those object types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

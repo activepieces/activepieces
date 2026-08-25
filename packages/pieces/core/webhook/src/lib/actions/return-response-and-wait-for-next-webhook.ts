@@ -4,9 +4,11 @@ import {
     Property,
     createAction,
   } from '@activepieces/pieces-framework';
-  import { ExecutionType, StopResponse } from '@activepieces/shared';
-  import { StatusCodes } from 'http-status-codes';
-  
+  import { ExecutionType, StopResponse } from '@activepieces/pieces-framework';
+
+  const HTTP_STATUS_OK = 200;
+  const HTTP_STATUS_MOVED_PERMANENTLY = 301;
+
   enum ResponseType {
     JSON = 'json',
     RAW = 'raw',
@@ -16,9 +18,12 @@ import {
 
   const RESUME_WEBHOOK_HEADER = 'x-activepieces-resume-webhook-url';
   export const returnResponseAndWaitForNextWebhook = createAction({
+    audience: 'both',
     name: 'return_response_and_wait_for_next_webhook',
+    classification: 'WRITE',
     displayName: 'Respond and Wait for Next Webhook',
     description: 'return a response and wait for the next webhook to resume the flow',
+    aiMetadata: { description: 'Replies to a webhook caller with a JSON, Raw, or Redirect body and attaches an x-activepieces-resume-webhook-url header holding a freshly minted callback URL, then suspends the run until that URL is called. Pick it for a multi-request handshake inside one flow; prefer plain Return Response when no follow-up call is needed, or Wait for Approval or the Delay piece when a human or a timer resumes the flow. Not idempotent: each execution creates a new waitpoint with a different resume URL and suspends the run again.', idempotent: false },
     props: {
         markdown: Property.MarkDown({
             value: `**Respond and Wait for Next Webhook**<br> 
@@ -102,7 +107,7 @@ import {
       const headers = fields['headers'] ?? {};
       const status = fields['status'];
       const response: StopResponse = {
-        status: status ?? StatusCodes.OK,
+        status: status ?? HTTP_STATUS_OK,
         headers,
       };
 
@@ -114,7 +119,7 @@ import {
           response.body = bodyInput;
           break;
         case ResponseType.REDIRECT:
-          response.status = StatusCodes.MOVED_PERMANENTLY;
+          response.status = HTTP_STATUS_MOVED_PERMANENTLY;
           response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
           response.body = bodyInput;
           break;

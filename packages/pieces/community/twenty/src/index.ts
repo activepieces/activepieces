@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { twentyAuth } from './lib/auth';
 import { createContact } from './lib/actions/create-contact';
 import { createCompany } from './lib/actions/create-company';

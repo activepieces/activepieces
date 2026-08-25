@@ -7,6 +7,9 @@ export const bookingCreated = createSessionsUsWebhookTrigger({
   name: 'booking_created',
   displayName: 'Booking Created',
   description: 'Triggered when a new booking is created.',
+  aiMetadata: {
+    description: 'Fires when someone books a meeting through a Sessions.us booking page, creating a new scheduled session tied to that booking. The payload includes the booking details (participant name and email, guests) and the resulting session and its participants.',
+  },
   trigger: SessionsUsWebhookTrigger.BOOKING_CREATED,
   storeKey: 'sessions_booking_created_trigger',
   sampleData: {

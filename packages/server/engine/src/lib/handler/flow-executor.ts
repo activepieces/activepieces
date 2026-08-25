@@ -1,9 +1,10 @@
 import { performance } from 'node:perf_hooks'
-import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, isNil, StepOutputStatus } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { triggerRunner } from '../core/piece/trigger-runner'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
-import { triggerHelper } from '../helper/trigger-helper'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
@@ -12,24 +13,26 @@ import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
 
-function getExecuteFunction(): Record<FlowActionType, BaseExecutor<FlowAction>> {
-    return {
+let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
+
+// ponytail: lazy because router-executor imports this module back; a module-level
+// const would hit the circular import in TDZ depending on bundle order.
+function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
+    executors ??= {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
     }
+    return executors
 }
 
 export const flowExecutor = {
     getExecutorForAction(type: FlowActionType): BaseExecutor<FlowAction> {
-        const executeFunction = getExecuteFunction()
-        const executor = executeFunction[type]
-
+        const executor = getExecutors()[type]
         if (isNil(executor)) {
             throw new EngineGenericError('ExecutorNotFoundError', `Executor not found for action type: ${type}`)
         }
-        
         return executor
     },
     async executeFromTrigger({ executionState, constants, input }: {
@@ -46,14 +49,14 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await triggerRunner.executeOnStart({ trigger, constants, payload: input.triggerPayload })
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
                 stepNameToUpdate: trigger.name,
                 startTime: dayjs().toISOString(),
             })
-            executionState = applyLogSizeLimitIfExceeded(executionState, trigger)
+            executionState = await applyLogSizeLimitIfExceeded(executionState, trigger)
             if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
                 return executionState
             }
@@ -77,7 +80,6 @@ export const flowExecutor = {
 
         while (!isNil(currentAction)) {
             if (currentAction.skip && !testSingleStepMode) {
-                previousAction = currentAction
                 currentAction = currentAction.nextAction
                 continue
             }
@@ -96,8 +98,14 @@ export const flowExecutor = {
                 executionState: flowExecutionContext,
                 constants,
             })
-
-            flowExecutionContext = applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
+            if (!testSingleStepMode) {
+                flowExecutionContext = await runContinueOnFailureBranchIfNeeded({
+                    action: currentAction,
+                    executionState: flowExecutionContext,
+                    constants,
+                })
+            }
+            flowExecutionContext = await applyLogSizeLimitIfExceeded(flowExecutionContext, currentAction)
 
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
             previousAction = currentAction
@@ -122,14 +130,46 @@ export const flowExecutor = {
     },
 }
 
-const applyLogSizeLimitIfExceeded = (
+async function runContinueOnFailureBranchIfNeeded({ action, executionState, constants }: {
+    action: FlowAction
+    executionState: FlowExecutorContext
+    constants: EngineConstants
+}): Promise<FlowExecutorContext> {
+    if (action.type !== FlowActionType.CODE && action.type !== FlowActionType.PIECE) {
+        return executionState
+    }
+    const cofEnabled = action.settings.errorHandlingOptions?.continueOnFailure?.value
+    if (!cofEnabled) {
+        return executionState
+    }
+    const branches = action.continueOnFailureBranches
+    if (isNil(branches?.onSuccess) && isNil(branches?.onFailure)) {
+        return executionState
+    }
+    if (executionState.verdict.status !== FlowRunStatus.RUNNING) {
+        return executionState
+    }
+    const stepOutput = executionState.getStepOutput(action.name)
+    const stepFailed = stepOutput?.status === StepOutputStatus.FAILED
+    const branchHead = stepFailed ? branches?.onFailure : branches?.onSuccess
+    if (isNil(branchHead)) {
+        return executionState
+    }
+    return flowExecutor.execute({
+        action: branchHead,
+        executionState,
+        constants,
+    })
+}
+
+const applyLogSizeLimitIfExceeded = async (
     flowExecutionContext: FlowExecutorContext,
     action: FlowAction | FlowTrigger,
-): FlowExecutorContext => {
-    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.steps)) {
+): Promise<FlowExecutorContext> => {
+    if (loggingUtils.isWithinSizeLimit(flowExecutionContext.logSizeBytes)) {
         return flowExecutionContext
     }
-    return flowExecutionContext
+    const failed = await flowExecutionContext
         .upsertStep(action.name, GenericStepOutput.create({
             input: flowExecutionContext.getStepOutput(action.name)?.input,
             type: action.type,
@@ -137,12 +177,12 @@ const applyLogSizeLimitIfExceeded = (
             output: undefined,
         })
             .setErrorMessage(`Flow run data size exceeded the maximum allowed size of ${loggingUtils.maxLogSizeMb} MB`))
-        .setVerdict({
-            status: FlowRunStatus.LOG_SIZE_EXCEEDED,
-            failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: 'Flow run logs size exceeded',
-            },
-        })
+    return failed.setVerdict({
+        status: FlowRunStatus.LOG_SIZE_EXCEEDED,
+        failedStep: {
+            name: action.name,
+            displayName: action.displayName,
+            message: 'Flow run logs size exceeded',
+        },
+    })
 }

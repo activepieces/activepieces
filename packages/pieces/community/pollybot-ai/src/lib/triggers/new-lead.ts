@@ -9,6 +9,9 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is created in PollyBot AI chatbot.',
+  aiMetadata: {
+    description: 'Fires when a new lead is created in the specified PollyBot AI chatbot (the LEAD_CREATED webhook event), delivering the new lead record. Events for other chatbots are filtered out by the configured Chatbot ID.',
+  },
   props: {
     chatbotid: Property.ShortText({
       displayName: 'Chatbot ID',

@@ -11,6 +11,9 @@ export const newFormSubmission = createTrigger({
   name: 'new_form_submission',
   displayName: 'New Form Submission',
   description: 'Triggers when a completed form submission is received.',
+  aiMetadata: {
+    description: 'Fires when a respondent completes and submits the selected Paperform form. The event represents a finished submission, with its field answers resolved into named values.',
+  },
   props: {
     formId: paperformCommonProps.formId,
   },

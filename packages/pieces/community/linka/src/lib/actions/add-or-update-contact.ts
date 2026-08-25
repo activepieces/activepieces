@@ -6,6 +6,12 @@ export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
   displayName: 'Add or Update Contact',
   description: 'Creates a new contact.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact (lead, client, or partner) in the Linka/Sperse CRM. With "Match Existing" enabled it looks up an existing record by email and full name (or by Contact ID) and updates it; otherwise it creates a new contact. Use to add or maintain CRM contacts. At least one of First Name, Last Name, or Company Name must be provided. Idempotent when matching is on and a stable identifier is supplied; with matching off, repeated calls create duplicate contacts.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     importType: Property.StaticDropdown({

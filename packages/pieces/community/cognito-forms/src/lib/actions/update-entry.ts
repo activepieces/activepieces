@@ -9,6 +9,8 @@ export const updateEntryAction = createAction({
   name: 'update_entry',
   displayName: 'Update Entry',
   description: 'Update an existing entry.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing entry in a Cognito Forms form, identified by its entry ID, applying the provided field values. Choose this when you already have the entry ID and want to modify its data rather than create a new one. Idempotent: repeating with the same field values leaves the entry in the same state.', idempotent: true },
   props: {
     formId: formIdDropdown,
     entryId: Property.ShortText({

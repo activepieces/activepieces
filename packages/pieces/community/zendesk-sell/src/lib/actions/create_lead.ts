@@ -9,6 +9,8 @@ export const createLead = createAction({
     name: 'create_lead',
     displayName: 'Create Lead',
     description: 'Create a new lead record.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new lead in Zendesk Sell. Requires at least one of Last Name or Organization Name. Use to capture a prospect who has not yet been qualified into a contact or deal. Not idempotent — each call creates a separate lead even with identical input.', idempotent: false },
     props: {
         last_name: Property.ShortText({
             displayName: 'Last Name',

@@ -9,6 +9,10 @@ export const newUser = createTrigger({
   name: 'newUser',
   displayName: 'New User',
   description: 'Triggered when a new user is created',
+  aiMetadata: {
+    description:
+      'Fires when a new user profile is created in Vero, representing a newly added contact along with their initial properties.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

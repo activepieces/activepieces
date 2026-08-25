@@ -8,6 +8,8 @@ export const getCalls = createAction({
   name: 'getCalls',
   displayName: 'Get Calls',
   description: 'Retrieve all calls with optional filtering and pagination',
+  audience: 'both',
+  aiMetadata: { description: 'Lists OpenMic AI calls, with optional filters by customer ID, from/to phone number, bot ID, date range, call status, and call type plus limit/offset pagination. With no filters it returns all calls; supply filters to narrow the set. Use to discover calls and their IDs. Read-only and idempotent.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

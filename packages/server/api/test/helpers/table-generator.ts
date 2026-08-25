@@ -1,4 +1,5 @@
-import { apId, Field, FieldState, FieldType, PopulatedTable, TableAutomationStatus } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { Field, FieldState, FieldType, PopulatedTable, TableAutomationStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 export const tableGenerator = {

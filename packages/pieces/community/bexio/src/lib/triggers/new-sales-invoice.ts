@@ -77,8 +77,12 @@ const polling: Polling<
 export const newSalesInvoiceTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_sales_invoice',
+  classification: 'READ',
   displayName: 'New Sales-Invoice',
   description: 'Triggers when a Sales-Invoice is created or updated with the chosen status',
+  aiMetadata: {
+    description: 'Fires when a sales invoice is created or its updated timestamp changes in Bexio, optionally filtered to a chosen invoice status. Emits each matching invoice with its document number, contact, totals (gross, net, taxes), validity dates, and status. Use to react to new or modified customer invoices.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

@@ -2,13 +2,21 @@ import { githubAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createPullRequestReviewCommentActionOutputSchema } from '../output-schemas';
 
 export const githubCreatePullRequestReviewCommentAction = createAction({
   auth: githubAuth,
   name: 'github_create_pull_request_review_comment',
+  classification: 'WRITE',
   displayName: 'Create Pull Request Review Comment',
   description:
     'Creates a review comment on a pull request in a GitHub repository',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Posts an inline review comment on a pull request, anchored to a specific commit SHA, file path, and diff position. Use to comment on a particular line of changed code in a PR (not a general PR comment — use Create Comment on a Issue for that). Not idempotent: each call adds a new review comment.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     pull_number: Property.Number({
@@ -38,12 +46,13 @@ export const githubCreatePullRequestReviewCommentAction = createAction({
       required: true,
     }),
   },
+  outputSchema: createPullRequestReviewCommentActionOutputSchema,
   async run({ auth, propsValue }) {
     const { pull_number, commit_id, path, body, position } = propsValue;
     const { owner, repo } = propsValue.repository!;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/pulls/${pull_number}/comments`,
       body: {

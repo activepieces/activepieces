@@ -3,7 +3,7 @@ import {
   createCustomApiCallAction,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { BASE_URL, makeRequest } from './lib/common';
 import { runWorkflow } from './lib/actions/run-workflow';
 import { runWorkflowAsync } from './lib/actions/run-workflow-async';

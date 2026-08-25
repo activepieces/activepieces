@@ -7,6 +7,9 @@ export const transcriptReady = createSessionsUsWebhookTrigger({
   name: 'transcript_ready',
   displayName: 'Transcript Ready',
   description: 'Triggered when a session has ended.',
+  aiMetadata: {
+    description: 'Fires when the transcript for a session has finished processing and is available. The payload includes the session id and the transcript segments (text, language, speaker participant id, and timestamps).',
+  },
   trigger: SessionsUsWebhookTrigger.TRANSCRIPT_READY,
   storeKey: 'sessions_transcript_ready_trigger',
   sampleData: {

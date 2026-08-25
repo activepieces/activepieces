@@ -1,16 +1,37 @@
+import { formulaEvaluator } from '@activepieces/core-formula'
+import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
-import { initCodeSandbox } from '../core/code/code-sandbox'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createConnectionResolver } from '../piece-context/connection-resolver'
+import { FormulaEvaluationError } from '@activepieces/shared'
+
+import { SharedScriptSession } from '../core/code/shared-script-session'
+import { FlowExecutorContext, StepView } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
+import { connectionToken } from './connection-token'
+import { propertyPath } from './property-path'
+import { scriptEvaluator } from './script-evaluator'
+import { variableToken } from './variable-token'
 
-const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
+const VARIABLES = 'variables'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
+async function replaceTokensAsync(
+    str: string,
+    replacer: (token: string, inner: string) => Promise<string>,
+): Promise<string> {
+    const tokens = extractMustacheTokens(str)
+    let result = ''
+    let lastIndex = 0
+    for (const { token, inner, index } of tokens) {
+        result += str.slice(lastIndex, index)
+        result += await replacer(token, inner)
+        lastIndex = index + token.length
+    }
+    result += str.slice(lastIndex)
+    return result
+}
 
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion, stepNames, pieceName }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -20,40 +41,150 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const referencedStepNames = extractReferencedStepNames(unresolvedInput, stepNames)
-            const currentState = executionState.currentState(Array.from(referencedStepNames))
-            const resolveOptions = {
-                engineToken,
-                projectId,
-                apiUrl,
-                currentState,
+            const getStepView = createMemoizedStepViewGetter(executionState)
+            const scriptSession = scriptEvaluator.initSession()
+            try {
+                const resolveOptions = {
+                    engineToken,
+                    projectId,
+                    apiUrl,
+                    getStepView,
+                    scriptSession,
+                    stepNames,
+                    pieceName,
+                }
+                const resolvedInput = await applyFunctionToValues<T>(
+                    unresolvedInput,
+                    (token) => resolveInputAsync({
+                        ...resolveOptions,
+                        input: token,
+                        censoredInput: false,
+                        contextVersion,
+                    }))
+                const censoredInput = await applyFunctionToValues<T>(
+                    unresolvedInput,
+                    (token) => resolveInputAsync({
+                        ...resolveOptions,
+                        input: token,
+                        censoredInput: true,
+                        contextVersion,
+                    }))
+                return {
+                    resolvedInput,
+                    censoredInput,
+                }
             }
-            const resolvedInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
-                    ...resolveOptions,
-                    input: token,
-                    censoredInput: false,
-                    contextVersion,
-                }))
-            const censoredInput = await applyFunctionToValues<T>(
-                unresolvedInput,
-                (token) => resolveInputAsync({
-                    ...resolveOptions,
-                    input: token,
-                    censoredInput: true,
-                    contextVersion,
-                }))
-            return {
-                resolvedInput,
-                censoredInput,
+            finally {
+                await scriptSession.dispose()
             }
         },
     }
 }
 
+/**
+ * input: `Hello {{firstName}} {{lastName}}`
+ * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
+ */
+async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
+    const { input, getStepView, engineToken, projectId, apiUrl, censoredInput, scriptSession, stepNames, pieceName } = params
+
+    if (formulaEvaluator.containsWrapper(input)) {
+        const formulaOptions = { engineToken, projectId, apiUrl, getStepView, censoredInput, scriptSession, stepNames, pieceName, contextVersion: params.contextVersion }
+        const { expression: preResolvedExpr, vars: preResolvedVars } = await preResolveFormulaVars({ expression: input, resolveOptions: formulaOptions })
+        const { result, error } = formulaEvaluator.evaluate({ expression: preResolvedExpr, sampleData: preResolvedVars })
+        if (error) {
+            throw new FormulaEvaluationError({ expression: input, message: error })
+        }
+        return result ?? ''
+    }
+
+    const tokensThatNeedResolving = extractMustacheTokens(input)
+    const resolveOptions = {
+        engineToken,
+        projectId,
+        apiUrl,
+        getStepView,
+        censoredInput,
+        scriptSession,
+        stepNames,
+        pieceName,
+    }
+    const inputContainsOnlyOneTokenToResolve =
+        tokensThatNeedResolving.length === 1 &&
+        tokensThatNeedResolving[0].token === input
+
+    if (inputContainsOnlyOneTokenToResolve) {
+        const variableName = tokensThatNeedResolving[0].inner.trim()
+        return resolveSingleToken({
+            ...resolveOptions,
+            variableName,
+            contextVersion: params.contextVersion,
+        })
+    }
+    const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
+    if (!isNil(inputIncludesFlattenNestedKeysTokens) && tokensThatNeedResolving.length > 0) {
+        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving.map(t => t.token), resolveOptions, params.contextVersion)
+    }
+
+    return replaceTokensAsync(input, async (_fullMatch, variableName) => {
+        const result = await resolveSingleToken({
+            ...resolveOptions,
+            variableName: variableName.trim(),
+            contextVersion: params.contextVersion,
+        })
+        return isString(result) ? result : JSON.stringify(result)
+    })
+}
+
+async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
+    const { variableName, engineToken, projectId, apiUrl, censoredInput, contextVersion, pieceName, getStepView, scriptSession, stepNames } = params
+    if (variableName.startsWith(VARIABLES)) {
+        return variableToken.handle({ variableName, engineToken, projectId, apiUrl, censoredInput })
+    }
+    if (variableName.startsWith(CONNECTIONS)) {
+        return connectionToken.handle({ variableName, engineToken, projectId, apiUrl, censoredInput, contextVersion, pieceName })
+    }
+    const segments = propertyPath.parse(variableName)
+    if (isNil(segments) || segments.length === 0) {
+        return evalWithScript({ variableName, getStepView, scriptSession, stepNames })
+    }
+    return evalWithPropertyPath({ segments, getStepView })
+}
+
+async function evalWithScript({ variableName, getStepView, scriptSession, stepNames }: EvalStepTokenParams): Promise<unknown> {
+    const session = await scriptSession.get()
+    for (const stepName of extractReferencedStepNames(variableName, stepNames)) {
+        const view = await getStepView(stepName)
+        if (view !== undefined) {
+            await session.setGlobal(stepName, view)
+        }
+    }
+    return scriptEvaluator.evaluate({ script: variableName, scriptSession })
+}
+
+async function evalWithPropertyPath({ segments, getStepView }: {
+    segments: string[]
+    getStepView: GetStepView
+}): Promise<unknown> {
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError(async () => {
+        const stepView = await getStepView(segments[0])
+        if (isNil(stepView)) {
+            return ''
+        }
+        const value = propertyPath.resolveValue({ segments: segments.slice(1), scope: stepView })
+        return cloneResolvedValue(value) ?? ''
+    })
+
+    if (resultError) {
+        console.warn('[evalWithPropertyPath] Error evaluating variable', resultError)
+        return ''
+    }
+    return result ?? ''
+}
+
+
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'scriptSession' | 'stepNames' | 'pieceName'>,
     contextVersion: ContextVersion | undefined,
 ) => {
     const resolvedValues: Record<string, unknown> = {}
@@ -82,160 +213,90 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
 function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
-    const stringifiedInput = JSON.stringify(input)
     const referencedSteps = new Set<string>()
-    for (const stepName of stepNames) {
-        if (stringifiedInput.includes(stepName)) {
-            referencedSteps.add(stepName)
+    const stack: unknown[] = [input]
+    while (stack.length > 0 && referencedSteps.size < stepNames.length) {
+        const current = stack.pop()
+        if (isString(current)) {
+            for (const stepName of stepNames) {
+                if (current.includes(stepName)) {
+                    referencedSteps.add(stepName)
+                }
+            }
+        }
+        else if (Array.isArray(current)) {
+            stack.push(...current)
+        }
+        else if (typeof current === 'object' && current !== null) {
+            stack.push(...Object.keys(current), ...Object.values(current))
         }
     }
     return referencedSteps
 }
 
-/** 
- * input: `Hello {{firstName}} {{lastName}}`
- * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
- */
-async function resolveInputAsync(params: ResolveInputInternalParams): Promise<unknown> {
-    const { input, currentState, engineToken, projectId, apiUrl, censoredInput } = params
-    const tokensThatNeedResolving = input.match(VARIABLE_PATTERN)
-    const inputContainsOnlyOneTokenToResolve = tokensThatNeedResolving !== null && tokensThatNeedResolving.length === 1 && tokensThatNeedResolving[0] === input
-    const resolveOptions = {
-        engineToken,
-        projectId,
-        apiUrl,
-        currentState,
-        censoredInput,
-    }
-
-    if (inputContainsOnlyOneTokenToResolve) {
-        const trimmedInput = input.trim()
-        const variableName = trimmedInput.substring(2, trimmedInput.length - 2)
-        return resolveSingleToken({
-            ...resolveOptions,
-            variableName,
-            contextVersion: params.contextVersion,
-        })
-    }
-    const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
-    if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
-    }
-
-    return stringReplaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
-        const result = await resolveSingleToken({
-            ...resolveOptions,
-            variableName,
-            contextVersion: params.contextVersion,
-        })
-        return isString(result) ? result : JSON.stringify(result)
-    })
-}
-
-async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, currentState } = params
-    const isConnection = variableName.startsWith(CONNECTIONS)
-    if (isConnection) {
-        return handleConnection(params)
-    }
-    return evalInScope(variableName, { ...currentState }, { flattenNestedKeys })
-}
-
-async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
-    const { variableName, engineToken, projectId, apiUrl, censoredInput } = params
-    const connectionName = parseConnectionNameOnly(variableName)
-    if (isNil(connectionName)) {
-        return ''
-    }
-    if (censoredInput) {
-        return '**REDACTED**'
-    }
-    const connection = await createConnectionResolver({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
-    const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
-    if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
-        return connection
-    }
-    return evalInScope(pathAfterConnectionName, { connection }, { flattenNestedKeys })
-}
-
-function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
-    if (variableName.includes('[')) {
-        return variableName.substring(`connections.['${connectionName}']`.length)
-    }
-    const cp = variableName.substring(`connections.${connectionName}`.length)
-    if (cp.length === 0) {
-        return cp
-    }
-    return `connection${cp}`
-}
-
-function parseConnectionNameOnly(variableName: string): string | null {
-    const connectionWithNewFormatSquareBrackets = variableName.includes('[')
-    if (connectionWithNewFormatSquareBrackets) {
-        return parseSquareBracketConnectionPath(variableName)
-    }
-    // {{connections.connectionName.path}}
-    // This does not work If connectionName contains .
-    return variableName.split('.')?.[1]
-}
-
-function parseSquareBracketConnectionPath(variableName: string): string | null {
-    // Find the connection name inside {{connections['connectionName'].path}}
-    const matches = variableName.match(/\['([^']+)'\]/g)
-    if (matches && matches.length >= 1) {
-        // Remove the square brackets and quotes from the connection name
-
-        const secondPath = matches[0].replace(/\['|'\]/g, '')
-        return secondPath
-    }
-    return null
-}
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
-        const codeSandbox = await initCodeSandbox()
-
-        const result = await codeSandbox.runScript({
-            script: js,
-            scriptContext: contextAsScope,
-            functions,
-        })
-        return result ?? ''
-    }))
-
-    if (resultError) {
-        console.warn('[evalInScope] Error evaluating variable', resultError)
-        return ''
-    }
-    return result ?? ''
-}
-
-function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
-    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-        for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-            if (key === pathToMatch[0]) {
-                return flattenNestedKeys(value, pathToMatch.slice(1))
-            }
+function createMemoizedStepViewGetter(executionState: FlowExecutorContext): GetStepView {
+    const stepViewCache = new Map<string, Promise<StepView | undefined>>()
+    return (stepName: string) => {
+        let view = stepViewCache.get(stepName)
+        if (isNil(view)) {
+            view = executionState.getStepView(stepName)
+            stepViewCache.set(stepName, view)
         }
+        return view
     }
-    else if (Array.isArray(data)) {
-        return data.flatMap((d) => flattenNestedKeys(d, pathToMatch))
-    }
-    else if (pathToMatch.length === 0) {
-        return [data]
-    }
-    return []
+}
+
+type PreResolveOptions = Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'getStepView' | 'censoredInput' | 'contextVersion' | 'scriptSession' | 'stepNames' | 'pieceName'>
+
+async function preResolveFormulaVars({ expression, resolveOptions }: {
+    expression: string
+    resolveOptions: PreResolveOptions
+}): Promise<{ expression: string, vars: Record<string, unknown> }> {
+    // Single-pass regex substitution with dedup: identical tokens map to the
+    // same key and resolve once. The previous split/join loop created one key
+    // per occurrence then replaced ALL occurrences with the first key,
+    // leaving later keys orphaned in `vars`.
+    const variableNameToKey = new Map<string, string>()
+    const rewritten = expression.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
+        const variableName = raw.trim()
+        let key = variableNameToKey.get(variableName)
+        if (key === undefined) {
+            key = `__ap_pv${variableNameToKey.size}__`
+            variableNameToKey.set(variableName, key)
+        }
+        return `{{${key}}}`
+    })
+
+    const vars: Record<string, unknown> = {}
+    await Promise.all(
+        Array.from(variableNameToKey.entries()).map(async ([variableName, key]) => {
+            vars[key] = await resolveSingleToken({ variableName, ...resolveOptions })
+        }),
+    )
+
+    return { expression: rewritten, vars }
+}
+
+type GetStepView = (stepName: string) => Promise<StepView | undefined>
+
+type EvalStepTokenParams = {
+    variableName: string
+    getStepView: GetStepView
+    scriptSession: SharedScriptSession
+    stepNames: string[]
 }
 
 type ResolveSingleTokenParams = {
     variableName: string
-    currentState: Record<string, unknown>
+    getStepView: GetStepView
     engineToken: string
     projectId: string
     apiUrl: string
     censoredInput: boolean
     contextVersion: ContextVersion | undefined
+    scriptSession: SharedScriptSession
+    stepNames: string[]
+    pieceName?: string
 }
 
 type ResolveInputInternalParams = {
@@ -244,8 +305,11 @@ type ResolveInputInternalParams = {
     projectId: string
     apiUrl: string
     censoredInput: boolean
-    currentState: Record<string, unknown>
+    getStepView: GetStepView
     contextVersion: ContextVersion | undefined
+    scriptSession: SharedScriptSession
+    stepNames: string[]
+    pieceName?: string
 }
 
 type ResolveInputParams = {
@@ -258,24 +322,6 @@ type ResolveResult<T = unknown> = {
     censoredInput: unknown
 }
 
-async function stringReplaceAsync(str: string, regex: RegExp, replacer: (...args: string[]) => Promise<string>): Promise<string> {
-    const matches: { match: string, groups: string[], index: number }[] = []
-    str.replace(regex, (match, ...args) => {
-        const groups = args.slice(0, -2) as string[]
-        const index = args[args.length - 2] as unknown as number
-        matches.push({ match, groups, index })
-        return match
-    })
-    let result = ''
-    let lastIndex = 0
-    for (const { match, groups, index } of matches) {
-        result += str.slice(lastIndex, index)
-        result += await replacer(match, ...groups)
-        lastIndex = index + match.length
-    }
-    result += str.slice(lastIndex)
-    return result
-}
 
 type PropsResolverParams = {
     engineToken: string
@@ -283,4 +329,5 @@ type PropsResolverParams = {
     apiUrl: string
     contextVersion: ContextVersion | undefined
     stepNames: string[]
+    pieceName?: string
 }

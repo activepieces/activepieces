@@ -1,7 +1,7 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
   ListGlobalConnectionsRequestQuery,
-  SeekPage,
   UpdateGlobalConnectionValueRequestBody,
   UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared';

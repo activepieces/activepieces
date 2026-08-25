@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
+import { newTimelinePostsTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
@@ -69,8 +70,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Re
 export const newTimelinePosts = createTrigger({
   auth: blueskyAuth,
   name: 'newTimelinePosts',
+  classification: 'READ',
   displayName: 'New Timeline Posts',
   description: 'Triggers when new posts appear in your timeline',
+  aiMetadata: {
+    description: 'Fires when a new post appears in the authenticated account\'s home timeline (posts and reposts from accounts it follows); each event represents one such timeline item.',
+  },
   props: {},
   sampleData: {
     uri: 'at://did:plc:example123/app.bsky.feed.post/example456',
@@ -117,6 +122,7 @@ export const newTimelinePosts = createTrigger({
     }
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newTimelinePostsTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);

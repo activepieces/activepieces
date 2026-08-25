@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import {
   createClient,
@@ -15,7 +15,7 @@ Follow these instructions to get your API Key:
 1. Visit your Elevenlabs dashboard.
 2. Once there, click on your account in the bottom left corner.
 3. Press Profile + API Key.
-4. Copy the API Key.
+4. Create or copy your API Key. Make sure to enable the following permissions: **user:read**, **text_to_speech**, **voices:read**, and **models**.
 `;
 
 const customApiCallDescription = `

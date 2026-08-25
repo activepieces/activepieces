@@ -47,6 +47,9 @@ export const newDeal = createTrigger({
     name: 'new_deal',
     displayName: 'New Deal',
     description: 'Fires when a new deal is created (polls for new records).',
+    aiMetadata: {
+      description: 'Fires when a new deal is created in Zendesk Sell. Each event represents one newly opened sales opportunity, discovered by polling sorted by creation time.',
+    },
     props: {},
     sampleData: {
         "id": 1,

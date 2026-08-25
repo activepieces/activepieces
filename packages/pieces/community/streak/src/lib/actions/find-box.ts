@@ -1,0 +1,53 @@
+import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { streakAuth } from '../common/auth';
+import { streakApiCall } from '../common/client';
+import { pipelineDropdown } from '../common/props';
+import { StreakSearchResponse } from '../common/types';
+
+export const findBoxAction = createAction({
+  auth: streakAuth,
+  name: 'find_box',
+  displayName: 'Find Boxes',
+  description:
+    'Search boxes by name or query. Returns matching boxes across all pipelines, optionally filtered to one pipeline.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Search for boxes by a text query matched against box name, notes, emails, and text custom fields, returning the matching boxes; by default it spans all pipelines, or it can be restricted to a single pipeline. Use when an agent needs to look up a box by name or content rather than by a known box key. Read-only and idempotent; a search query is required.',
+    idempotent: true,
+  },
+  props: {
+    query: Property.ShortText({
+      displayName: 'Search Query',
+      description:
+        'The text to search for. Matches against box name, notes, emails, and text custom fields.',
+      required: true,
+    }),
+    pipelineKey: { ...pipelineDropdown, required: false },
+  },
+  async run(context) {
+    const { query, pipelineKey } = context.propsValue;
+
+    const queryParams: any = { query };
+    if (pipelineKey) {
+      queryParams['pipelineKey'] = pipelineKey;
+    }
+
+    const response = await streakApiCall<StreakSearchResponse>({
+      apiKey: context.auth.secret_text,
+      method: HttpMethod.GET,
+      path: '/api/v1/search',
+      queryParams,
+    });
+
+    const boxes = response.body.results?.boxes ?? [];
+    return boxes.map((b) => ({
+      box_key: b.boxKey,
+      name: b.name,
+      pipeline_key: b.pipelineKey ?? null,
+      stage_key: b.stageKey ?? null,
+      last_updated_timestamp_epoch_ms: b.lastUpdatedTimestamp ?? null,
+    }));
+  },
+});

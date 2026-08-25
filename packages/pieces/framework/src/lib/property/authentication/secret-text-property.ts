@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/mini";
 import { BasePieceAuthSchema } from "./common";
 import { TPropertyValue } from "../input/common";
 import { PropertyType } from "../input/property-type";

@@ -8,6 +8,11 @@ export const findUser = createAction({
   name: 'find_user',
   displayName: 'Find User',
   description: 'Returns a list of existing users in the Vault based on filter criteria (requires Audit users permissions)',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches and lists Vault users, optionally narrowing by filter (userType, componentUser, userName), free-text search, user type, sort, and pagination; with no criteria it returns all users. Use to look up a user ID or discover existing users before acting on them. Requires Audit Users permissions. Idempotent read-only lookup.',
+    idempotent: true,
+  },
   props: {
     filter: Property.ShortText({
       displayName: 'Filter',

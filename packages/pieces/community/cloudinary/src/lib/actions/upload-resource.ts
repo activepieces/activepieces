@@ -23,8 +23,11 @@ function getResourceType(extension: string, filename: string): 'image' | 'video'
 export const uploadResource = createAction({
   auth: cloudinaryAuth,
   name: 'uploadResource',
+  classification: 'WRITE',
   displayName: 'Upload Resource',
   description: 'Upload a new image, video, or file to Cloudinary.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file (image, video, or raw) to Cloudinary, optionally placing it in a folder, tagging it, and assigning a public ID. Use to ingest media into the account before transforming, delivering, or referencing it. Not idempotent: each call uploads the file and, unless overwrite is enabled with a fixed public_id, creates a distinct asset.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

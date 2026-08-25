@@ -15,6 +15,8 @@ export const evseDowntimePeriodUpdateAction = createAction({
   name: 'evseDowntimePeriodUpdate',
   displayName: 'Resources - Evse Downtime Periods - Update',
   description: 'Update EVSE Downtime Period.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing EVSE downtime period by its numeric ID, changing its notice, start, or end time. Editing start/end is only allowed for periods with type "exempt" and entryMode "manual". Idempotent: re-applying the same values yields the same end state.', idempotent: true },
   props: {
         
   evseDowntimePeriod: Property.Number({

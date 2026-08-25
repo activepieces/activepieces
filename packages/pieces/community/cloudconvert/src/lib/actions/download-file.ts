@@ -36,6 +36,8 @@ export const downloadFile = createAction({
   name: 'download_file',
   displayName: 'Download a File',
   description: 'Downloads output from a completed task',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves a finished CloudConvert task by its ID and returns its output file download URLs, optionally fetching and storing the files in Activepieces. Choose this to collect results from a conversion/merge/archive/optimize job that was started without waiting for completion. The task must already be finished; if it lacks download URLs an export task is created on the fly, so this is not strictly idempotent.', idempotent: false },
   auth: cloudconvertAuth,
   requireAuth: true,
   props: downloadFileProps(),

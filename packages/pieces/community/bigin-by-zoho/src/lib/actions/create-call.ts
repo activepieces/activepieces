@@ -7,8 +7,11 @@ import { formatDateTime, getSafeLabel, handleDropdownError } from '../common/hel
 export const createCall = createAction({
   auth: biginAuth,
   name: 'createCall',
+  classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Creates a Call Log Entry Record',
+  audience: 'both',
+  aiMetadata: { description: 'Logs a call in Bigin CRM with a required start time, duration in minutes, and type (Outbound, Inbound, or Missed), plus optional subject, description, agenda, reminder, dialed number, owner, contact, and a related Pipeline or Company record. Use to record a phone interaction. Not idempotent: each call creates a new call log entry.', idempotent: false },
   props: {
     callStartTime: Property.DateTime({
       displayName: 'Call Start Time',

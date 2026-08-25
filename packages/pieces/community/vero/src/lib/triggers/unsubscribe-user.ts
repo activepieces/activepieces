@@ -9,6 +9,10 @@ export const unsubscribeUser = createTrigger({
   name: 'unsubscribeUser',
   displayName: 'Unsubscribe User',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when a user unsubscribes from communications in Vero, representing a withdrawal of consent for a specific user (and, when applicable, the campaign that prompted it).',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

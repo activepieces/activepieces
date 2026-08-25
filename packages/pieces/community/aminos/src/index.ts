@@ -3,7 +3,7 @@
       Property,
       createPiece,
     } from '@activepieces/pieces-framework';
-    import { PieceCategory } from '@activepieces/shared';
+    import { PieceCategory } from '@activepieces/pieces-framework';
     import { createUser } from './lib/actions/createUser';
 
     export const aminosAuth = PieceAuth.CustomAuth({

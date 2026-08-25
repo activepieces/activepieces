@@ -11,6 +11,8 @@ export const dripApplyTagToSubscriber = createAction({
   auth: dripAuth,
   name: 'apply_tag_to_subscriber',
   description: 'Apply a tag to a subscriber',
+  audience: 'both',
+  aiMetadata: { description: 'Applies a tag to a subscriber in a Drip account, identifying the subscriber by email address. Use to label or segment a contact. Repeating with the same email and tag has no additional effect, so it is idempotent.', idempotent: true },
   displayName: 'Apply a tag to subscriber',
   props: {
     account_id: dripCommon.account_id,

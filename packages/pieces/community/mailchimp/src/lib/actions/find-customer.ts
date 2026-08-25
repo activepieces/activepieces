@@ -8,8 +8,11 @@ import { MailchimpClient } from '../common/types';
 export const findCustomer = createAction({
   auth: mailchimpAuth,
   name: 'find_customer',
+  classification: 'SEARCH',
   displayName: 'Find Customer',
   description: 'Find a customer by email address in a store',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up e-commerce customers in a specified connected store by email address, with optional pagination and field filtering. Use to retrieve a store customer record before referencing or syncing it. Requires a store and email; read-only and idempotent.', idempotent: true },
   props: {
     store_id: mailchimpCommon.mailChimpStoreIdDropdown,
     email_address: Property.ShortText({

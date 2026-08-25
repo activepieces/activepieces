@@ -10,6 +10,12 @@ export const getDocument = createAction({
   displayName: 'Download Document from Signing Request',
   description:
     'Download a document (or all documents) from a signing request as a file.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Downloads a document from a DocuSign envelope (signing request) as a file, given the account, envelope, and document ID. The document ID accepts a specific document number or special keywords — combined (all documents as one PDF), archive (a ZIP of all PDFs plus the certificate), certificate (only the completion certificate), or portfolio. Use to fetch signed or in-progress document files. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: docusignAuth,
   props: {
     accountId: Property.ShortText({

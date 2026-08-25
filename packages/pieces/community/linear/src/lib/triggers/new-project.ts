@@ -5,8 +5,12 @@ import { makeClient } from '../common/client';
 export const linearNewProject = createTrigger({
   auth: linearAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a new project is created in Linear',
+  aiMetadata: {
+    description: 'Fires when a new project is created anywhere in the Linear workspace. Represents the newly created project with its details such as name, state, dates, and teams.',
+  },
   props: {},
   sampleData: {
     action: 'create',
@@ -34,6 +38,13 @@ export const linearNewProject = createTrigger({
       createdAt: '2023-09-05T12:00:00.000Z',
       updatedAt: '2023-09-05T12:00:00.000Z',
     },
+    type: 'Project',
+    actor: { id: 'user_1', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-05T12:00:00.000Z',
+    url: 'https://linear.app/test-team/project/project_1',
+    organizationId: 'org_1',
+    webhookTimestamp: 1693915200000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -64,7 +75,7 @@ export const linearNewProject = createTrigger({
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown };
     if (body.action === 'create') {
-      return [body.data];
+      return [body];
     }
     return [];
   },

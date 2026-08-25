@@ -140,7 +140,7 @@ describe('Flow Diff Service', () => {
         ])
     })
 
-    it('should compare piece version only based on major and minor version', async () => {
+    it('should detect piece patch version change', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = JSON.parse(JSON.stringify(flowOne))
         flowTwo.version.trigger.settings.pieceVersion = '0.1.1'
@@ -153,7 +153,13 @@ describe('Flow Diff Service', () => {
                 flows: [flowTwo],
             },
         })
-        expect(diff.flows).toEqual([])
+        expect(diff.flows).toEqual([
+            {
+                type: 'UPDATE_FLOW',
+                flowState: flowOne,
+                newFlowState: flowTwo,
+            },
+        ])
     })
 
     it('should detect major piece version change', async () => {

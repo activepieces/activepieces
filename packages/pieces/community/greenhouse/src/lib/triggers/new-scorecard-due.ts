@@ -75,6 +75,10 @@ export const newScorecardDueTrigger = createTrigger({
   name: 'new_scorecard_due',
   displayName: 'New Scorecard Due',
   description: 'Triggers when a new scorecard is due — i.e. created but not yet submitted by the interviewer.',
+  aiMetadata: {
+    description:
+      'Fires when a new scorecard becomes due in Greenhouse — created but still in draft, i.e. not yet submitted by the interviewer. Use to nudge interviewers for pending feedback; polls scorecards filtered to draft status.',
+  },
   props: {},
   sampleData: {
     id: 11274,

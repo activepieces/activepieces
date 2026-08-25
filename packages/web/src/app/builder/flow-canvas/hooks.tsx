@@ -1,7 +1,6 @@
+import { Permission, isNil } from '@activepieces/core-utils';
 import {
   FlowRunStatus,
-  Permission,
-  isNil,
   WebsocketClientEvent,
   RunEnvironment,
   isFlowRunStateTerminal,
@@ -10,13 +9,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
-import { PanelImperativeHandle } from 'react-resizable-panels';
 import { useLocation, usePrevious } from 'react-use';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { RightSideBarType } from '@/app/builder/types';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useSocket } from '@/components/providers/socket-provider';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi, flowRunUtils } from '@/features/flow-runs';
 import { flowsApi } from '@/features/flows';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -25,20 +23,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-
-export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
-  const handleRef = useRef<PanelImperativeHandle>(null);
-  const sidebarClosed = sidebarValue === RightSideBarType.NONE;
-  useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize()?.asPercentage ?? 0;
-    if (sidebarClosed) {
-      handleRef.current?.collapse();
-    } else if (sidebarSize === 0) {
-      handleRef.current?.resize('25%');
-    }
-  }, [handleRef, sidebarValue, sidebarClosed]);
-  return handleRef;
-};
 
 const useSetSocketListener = (refetchPiece: () => void) => {
   const socket = useSocket();
@@ -137,6 +121,10 @@ export const useSwitchToDraft = () => {
         clearRun(userHasPermissionToEditFlow);
         socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
+      // surface the failure instead of silently keeping a stale draft, which
+      // matters most on the lock take-over path where the refresh replaces a
+      // full-page reload
+      onError: () => internalErrorToast(),
     });
   return {
     switchToDraft,
@@ -177,10 +165,12 @@ const useIsFocusInsideListMapperModeInput = ({
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
 export const useFocusOnStep = () => {
-  const [currentRun, selectStep] = useBuilderStateContext((state) => [
-    state.run,
-    state.selectStepByName,
-  ]);
+  const [currentRun, selectStep, userManuallySelectedStepDuringRun] =
+    useBuilderStateContext((state) => [
+      state.run,
+      state.selectStepByName,
+      state.userManuallySelectedStepDuringRun,
+    ]);
 
   const previousStatus = usePrevious(currentRun?.status);
   const currentStep = flowRunUtils.findLastStepWithStatus(
@@ -188,17 +178,20 @@ export const useFocusOnStep = () => {
     currentRun?.steps ?? {},
   );
 
+  const { fitView } = useReactFlow();
   const focusCurrentStep = useDebouncedCallback(() => {
+    if (userManuallySelectedStepDuringRun) {
+      return;
+    }
     if (!isNil(currentStep)) {
       fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
-      selectStep(currentStep);
+      selectStep(currentStep, { fromAutoFocus: true });
     }
   }, 500);
 
-  const { fitView } = useReactFlow();
   useEffect(() => {
     focusCurrentStep();
-  }, [currentStep, selectStep, fitView]);
+  }, [currentStep, selectStep, fitView, userManuallySelectedStepDuringRun]);
 };
 
 export const useResizeCanvas = (
@@ -234,7 +227,6 @@ export const useResizeCanvas = (
 };
 
 export const flowCanvasHooks = {
-  useAnimateSidebar,
   useSetSocketListener,
   useShowBuilderIsSavingWarningBeforeLeaving,
   useIsFocusInsideListMapperModeInput,

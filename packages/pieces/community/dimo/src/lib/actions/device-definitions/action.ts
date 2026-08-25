@@ -9,6 +9,8 @@ const deviceDefinitionApiAction = createAction({
 	displayName: 'Device Definitions : Decode VIN',
 	description:
 		'Submits a decoding request for vehicle identification number, returns the device definition ID corresponding to the VIN.',
+	audience: 'both',
+	aiMetadata: { description: 'Decode a VIN (plus its 3-letter ISO country code) into a DIMO device definition ID identifying the make/model/year. A pure lookup that returns the same definition for the same VIN, so it is idempotent; pick it when you have a concrete VIN and need its canonical device definition, versus the Lookup action when you only have free-text make/model/year search terms.', idempotent: true },
 	props: {
 		countryCode: Property.ShortText({
 			displayName: 'Country Code',
@@ -49,6 +51,8 @@ const deviceDefinitionsSearchAction = createAction({
 	name: 'device-definitions-lookup-device-definitions',
 	displayName: 'Device Definitions : Lookup',
 	description: 'Search for device definitions by query and filters.',
+	audience: 'both',
+	aiMetadata: { description: 'Search the DIMO device-definition catalog by free-text query plus optional make/model/year filters, with pagination. Read-only search; pick it when you only have descriptive terms (e.g. "Lexus gx 2023") rather than a concrete VIN, in which case use Decode VIN instead.', idempotent: true },
 	props: {
 		query: Property.ShortText({
 			displayName: 'Query',

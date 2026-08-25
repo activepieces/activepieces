@@ -75,6 +75,9 @@ export const agentStatusEqualsTrigger = createTrigger({
   name: 'agent_status_equals',
   displayName: 'Agent Status Equals',
   description: 'Triggers when a Cursor agent has the specified status (e.g., "FINISHED", "FAILED")',
+  aiMetadata: {
+    description: 'Fires when a specific Cursor cloud agent transitions into a chosen status (such as FINISHED or FAILED). Watches a single agent by id and emits once each time it newly reaches the configured status.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     agentId: agentDropdown,

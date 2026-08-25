@@ -2,15 +2,24 @@ import { createAction } from '@activepieces/pieces-framework';
 import { stripeAuth } from '../..';
 import { stripeCommon, getClient } from '../common';
 
+import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeDeactivatePaymentLink = createAction({
   name: 'deactivate_payment_link',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Deactivate Payment Link',
   description:
     'Disable or deactivate a Payment Link so it can no longer be used.',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Deactivates an existing Stripe payment link by its ID so it can no longer accept payments. Use to retire a shared checkout URL. Idempotent in effect: re-running on an already-inactive link leaves it inactive.',
+    idempotent: true,
+  },
   props: {
     payment_link_id: stripeCommon.paymentLink,
   },
+  outputSchema: paymentLinkOutputSchema,
   async run(context) {
     const { payment_link_id } = context.propsValue;
     const client = getClient(context.auth.secret_text);

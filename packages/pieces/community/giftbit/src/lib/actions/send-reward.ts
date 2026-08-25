@@ -7,6 +7,8 @@ export const sendReward = createAction({
   name: 'send_reward',
   displayName: 'Send Reward',
   description: 'Sends a gift card reward by email',
+  audience: 'both',
+  aiMetadata: { description: 'Sends a digital gift card / reward campaign to one or more email recipients via Giftbit. Choose this to disburse incentives, rebates, or rewards. The reward branding can be set in two ways — either let recipients pick from the full regional catalog (set a region) or restrict them to specific brand codes; the email body comes either from a saved gift template ID or from an explicit subject and message. Not idempotent: each call creates and sends a new campaign, so retrying re-sends rewards.', idempotent: false },
   auth: giftbitAuth,
   props: {
     use_testbed: Property.Checkbox({

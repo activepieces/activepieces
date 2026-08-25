@@ -8,6 +8,8 @@ export const findCall = createAction({
   name: 'findCall',
   displayName: 'Find Call',
   description: 'Retrieve details of a specific call by its ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of a single OpenMic AI call by its call ID. Use when you already have a call ID and need its record; to discover IDs or browse calls, use Get Calls instead. Read-only and idempotent.', idempotent: true },
   props: {
     callId: Property.ShortText({
       displayName: 'Call ID',

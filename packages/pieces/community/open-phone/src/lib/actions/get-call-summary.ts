@@ -11,9 +11,12 @@ import {
 export const getCallSummary = createAction({
   auth: openPhoneAuth,
   name: 'get_call_summary',
+  classification: 'READ',
   displayName: 'Get Call Summary',
   description:
     'Retrieve an AI-generated summary of a specific call by ID. Call summaries are only available on OpenPhone Business plan.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the AI-generated summary of a single call identified by its call ID (format AC...). Choose this to fetch the post-call summary text for a known call. Requires a valid call ID and an OpenPhone Business plan (summaries are unavailable otherwise). Idempotent read-only lookup.', idempotent: true },
   props: {
     phoneNumberId: phoneNumberDropdown,
     participantNumber: participantDropdown,

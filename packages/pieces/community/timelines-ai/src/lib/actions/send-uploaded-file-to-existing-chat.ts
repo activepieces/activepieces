@@ -8,6 +8,8 @@ export const sendUploadedFileToExistingChat = createAction({
   displayName: 'Send Uploaded File to Existing Chat',
   description:
     'Send a file (media/attachment) to a chat, with metadata like file name, via existing chat.',
+  audience: 'both',
+  aiMetadata: { description: 'Sends an already-uploaded file, selected by its file uid, as an attachment into an existing TimelinesAI WhatsApp chat identified by its numeric chat_id. Use when the file is already uploaded (e.g. found via Find Uploaded File); use Send File to Existing Chat to upload and send raw file data in one step. Not idempotent: each call posts a new message.', idempotent: false },
   props: {
     chat_id: chatDropdown({ required: true }),
     file_id: fileDropdown({ required: true }),

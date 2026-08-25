@@ -8,8 +8,12 @@ const CACHE_KEY = 'bigin_new_pipeline_record_created_trigger';
 export const newPipelineRecordCreated = createTrigger({
   auth: biginAuth,
   name: 'newPipelineRecordCreated',
+  classification: 'READ',
   displayName: 'New Pipeline Record Created',
   description: 'Triggers when a new pipeline record is created',
+  aiMetadata: {
+    description: 'Fires when a new pipeline record (deal) is created in Bigin CRM, via a Pipelines.create webhook. Represents a newly opened sales opportunity.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

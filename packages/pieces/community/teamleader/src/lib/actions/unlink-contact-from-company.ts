@@ -7,6 +7,8 @@ export const unlinkContactFromCompany = createAction({
     name: 'unlink_contact_from_company',
     displayName: 'Unlink Contact from Company',
     description: 'Remove the association between contact and company',
+    audience: 'both',
+    aiMetadata: { description: 'Remove the link between a contact and a company in Teamleader without deleting either record. Use to undo a Link Contact to Company association. Requires contact ID and company ID. Idempotent: if the link is already absent, re-running leaves them unlinked.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({

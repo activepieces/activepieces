@@ -6,8 +6,15 @@ import { callGraphApi, userDropdown } from '../common';
 export const revokeSignInSessionAction = createAction({
     auth: azureAdAuth,
     name: 'revoke_sign_in_session',
+    classification: 'DESTRUCTIVE',
     displayName: 'Revoke Sign-in Session',
     description: 'Revokes all refresh tokens for the user, forcing them to sign in again.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Invalidates all of a user\'s refresh and session tokens, forcing re-authentication on every device — use to cut off access after a compromise or during offboarding, typically alongside disabling the account. Safe to repeat: calling it again just renews the revocation. It does not disable the account or reset the password.',
+        idempotent: true,
+    },
     props: {
         userId: userDropdown,
     },

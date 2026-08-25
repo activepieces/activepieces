@@ -1,5 +1,5 @@
 import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 import { Client } from 'recurly';
 
 export const recurlyAuth = PieceAuth.SecretText({

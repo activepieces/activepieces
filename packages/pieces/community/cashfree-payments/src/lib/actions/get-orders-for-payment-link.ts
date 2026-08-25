@@ -5,8 +5,14 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 export const getOrdersForPaymentLink = createAction({
   auth: cashfreePaymentsAuth,
   name: 'get-orders-for-payment-link',
+  classification: 'SEARCH',
   displayName: 'Get Orders for Payment Link',
   description: 'View all order details for a payment link in Cashfree Payment Gateway',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists the orders associated with a Cashfree payment link, identified by its Link ID, along with summary totals. Use this to see who paid a link and reconcile collections. The Order Status Filter selects between all orders or paid-only (the default); read-only listing, so it is idempotent.',
+    idempotent: true,
+  },
   requireAuth: true,
   props: {
     environment: Property.StaticDropdown({

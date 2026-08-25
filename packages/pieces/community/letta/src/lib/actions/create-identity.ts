@@ -12,6 +12,8 @@ export const createIdentity = createAction({
   name: 'createIdentity',
   displayName: 'Create Identity',
   description: 'Creates a Letta identity',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a Letta identity (representing an org, user, or other entity) with a required external identifier key and name, plus optional project scoping and typed key/value properties. Use to register a new addressable identity that agents can be associated with. Not idempotent: each call creates a new identity record.', idempotent: false },
   props: {
     identifierKey: Property.ShortText({
       displayName: 'Identifier Key',

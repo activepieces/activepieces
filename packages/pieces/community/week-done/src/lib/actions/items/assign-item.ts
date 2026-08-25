@@ -17,6 +17,8 @@ export const assignItemAction = createAction({
   name: 'assign_item',
   displayName: 'Assign Item',
   description: 'Assign an item to another user.',
+  audience: 'both',
+  aiMetadata: { description: 'Reassign an existing Weekdone item to a different user by item ID; the user/team/period filters only help locate the item. Requires the target item and the assignee user ID. Mutates the item, so not idempotent.', idempotent: false },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

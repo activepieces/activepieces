@@ -1,4 +1,5 @@
-import { ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
@@ -22,6 +23,8 @@ import { Separator } from '@/components/ui/separator';
 import { MultiSelectFilter } from '@/features/automations/components/multi-select-filter';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+
+import { PermissionItem } from './permission-item';
 
 function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
@@ -214,23 +217,6 @@ function McpAuthorizePage() {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function PermissionItem({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-md border bg-accent/50 px-3 py-2.5 text-sm">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10">
-        {icon}
-      </div>
-      <span>{text}</span>
     </div>
   );
 }

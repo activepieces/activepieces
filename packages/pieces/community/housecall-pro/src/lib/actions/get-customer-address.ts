@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getCustomerAddress = createAction({
   auth: housecallProAuth,
   name: "get_customer_address",
+  classification: 'READ',
   displayName: "Get a Customer's Address",
   description: "Retrieves a customer's address by customer ID and address ID.",
+  audience: 'both',
+  aiMetadata: { description: 'Read-only: fetches a single customer address in Housecall Pro by its customer ID and address ID. Use when both IDs are known and you need the details of one specific address; safe to retry. Does not list all addresses for a customer and does not modify any data.', idempotent: true },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

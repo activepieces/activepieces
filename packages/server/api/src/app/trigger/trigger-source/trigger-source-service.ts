@@ -1,4 +1,5 @@
-import { ActivepiecesError, apId, ErrorCode, FlowId, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowId, isNil } from '@activepieces/core-utils'
+import { FlowVersion, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -14,11 +15,11 @@ export const triggerSourceRepo = repoFactory(TriggerSourceEntity)
 export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
-            const { flowVersion, projectId, simulate, templateId } = params
+            const { flowVersion, projectId, simulate, templateId, isRepublish } = params
             log.info({
-                flowId: flowVersion.flowId,
-                flowVersionId: flowVersion.id,
-                projectId,
+                flow: { id: flowVersion.flowId },
+                flowVersion: { id: flowVersion.id },
+                project: { id: projectId },
                 simulate,
             }, '[triggerSourceService#enable] Enabling trigger source')
             const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
@@ -58,6 +59,7 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceTrigger,
                 simulate,
+                isRepublish,
             })
 
             if (templateId) {
@@ -150,8 +152,8 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         async disable(params: DisableTriggerParams): Promise<void> {
             const { projectId, flowId, simulate, templateId } = params
             log.info({
-                flowId,
-                projectId,
+                flow: { id: flowId },
+                project: { id: projectId },
                 simulate,
             }, '[triggerSourceService#disable] Disabling trigger source')
             const triggerSource = await triggerSourceRepo().findOneBy({
@@ -232,4 +234,5 @@ type EnableTriggerParams = {
     projectId: string
     simulate: boolean
     templateId?: string
+    isRepublish?: boolean
 }

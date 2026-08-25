@@ -7,6 +7,8 @@ export const findStaff = createAction({
   name: 'find_staff',
   displayName: 'Find Staff',
   description: 'Searches for staff members with optional filters',
+  audience: 'both',
+  aiMetadata: { description: 'Read-only list of MyCase staff (firm users), optionally narrowed by active/inactive status, an updated-after timestamp, and page size. Use to look up staff IDs needed when assigning lawyers or sharing documents. Returns whatever matches the filters and does not modify anything, so it is safe to call repeatedly.', idempotent: true },
   props: {
     status: Property.StaticDropdown({
       displayName: 'Status',

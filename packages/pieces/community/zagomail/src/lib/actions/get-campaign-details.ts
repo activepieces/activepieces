@@ -8,6 +8,8 @@ export const getCampaignDetails = createAction({
   name: 'getCampaignDetails',
   displayName: 'Get Campaign',
   description: 'Gets the details of a campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieves the details of a single Zagomail email campaign identified by its campaign UID. Use to inspect a campaign configuration or status. Read-only and idempotent.', idempotent: true },
   props: {
     campaignUid: campaignUid,
   },

@@ -7,6 +7,8 @@ export const createPaymentRefund = createAction({
   name: 'create-payment-refund',
   displayName: 'Create Payment Refund',
   description: 'Refund a merchant account payment, either fully or partially.',
+  audience: 'both',
+  aiMetadata: { description: 'Issue a refund against an existing merchant-account payment, given its payment ID; omit the amount to refund in full or set an amount in minor units for a partial refund. Use to return funds to a payer. This creates a new refund each call and is not safe to repeat without external deduplication.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

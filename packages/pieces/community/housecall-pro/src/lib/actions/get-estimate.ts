@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getEstimate = createAction({
   auth: housecallProAuth,
   name: "get_estimate",
+  classification: 'READ',
   displayName: "Get estimate by ID",
   description: "Retrieve a single estimate by ID",
+  audience: 'both',
+  aiMetadata: { description: "Fetch a single Housecall Pro estimate by its ID, optionally expanding related customer, address, assigned-employees, options, or attachments inline. Read-only and idempotent. Use the get-estimates list action instead when you need to search or filter across multiple estimates rather than look one up by known ID.", idempotent: true },
   props: {
     estimate_id: Property.ShortText({
       displayName: "Estimate ID",

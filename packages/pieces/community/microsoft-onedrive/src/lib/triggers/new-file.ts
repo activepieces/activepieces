@@ -59,8 +59,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, P
 export const newFile = createTrigger({
 	auth: oneDriveAuth,
 	name: 'new_file',
+	classification: 'READ',
 	displayName: 'New File',
 	description: 'Trigger when a new file is uploaded.',
+	aiMetadata: {
+		description: 'Fires when a new file appears in the watched Microsoft OneDrive folder, polling by file creation time. Scope it to a specific folder via the parent folder ID, or leave it empty to watch the drive root; subfolders are not included and folders themselves do not trigger it.',
+	},
 	props: {
 		markdown:oneDriveCommon.parentFolderInfo,
 		parentFolder: oneDriveCommon.parentFolder,

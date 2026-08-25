@@ -9,8 +9,12 @@ const CACHE_KEY = 'bigin_created_contact_trigger';
 export const newContactCreated = createTrigger({
   auth: biginAuth,
   name: 'newContactCreated',
+  classification: 'READ',
   displayName: 'New Contact Created',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact (person) record is created in Bigin CRM, via a Contacts.create webhook. Represents a newly added person.',
+  },
   props: {},
   sampleData: {
     server_time: 1754252081534,

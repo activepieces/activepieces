@@ -24,6 +24,10 @@ export const emailBounced = createTrigger({
   name: 'emailBounced',
   displayName: 'Email Bounced',
   description: 'Triggers when an email is bounced.',
+  aiMetadata: {
+    description:
+      'Fires when an outreach email bounces (EMAIL_BOUNCED) and was not delivered to the lead. Use to detect undeliverable addresses; payload includes the lead, sending account, and campaign. Requires the webhook to be configured in ReachInbox.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: emailBouncedMessage,

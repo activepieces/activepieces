@@ -1,11 +1,5 @@
-import {
-    Field,
-    FlowActionType,
-    flowStructureUtil,
-    FlowVersion,
-    isNil,
-    Step,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { Field, FlowActionType, flowStructureUtil, FlowVersion, Step } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { FieldEntity } from '../../../tables/field/field.entity'

@@ -8,17 +8,20 @@ import { openaiAuth } from '../auth';
 import {
   calculateMessagesTokenSize,
   exceedsHistoryLimit,
-  notLLMs,
+  isLLM,
   reduceContextSize,
 } from '../common/common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenAI = createAction({
+  audience: 'both',
   auth: openaiAuth,
   name: 'ask_chatgpt',
+  classification: 'READ',
   displayName: 'Ask ChatGPT',
   description: 'Ask ChatGPT anything you want!',
+  aiMetadata: { description: 'Sends a prompt to an OpenAI chat model and returns the reply text, with sampling controls (temperature, top P, frequency and presence penalties) and an optional roles array that supplies the system message. Two modes: stateless by default, or, when a memory key is set, loading and re-saving the conversation history in project storage so later runs continue the same thread, trimming it as it approaches the token limit. This is the general-purpose text call of this piece; prefer ask_assistant to route through a pre-built OpenAI Assistant, vision_prompt when an image is part of the question, and extract-structured-data when the answer must come back as named fields. A model, a question, and a maximum token count are required; not idempotent: each call produces a fresh completion and, with a memory key, rewrites the stored history.', idempotent: false },
   props: {
     model: Property.Dropdown({
   auth: openaiAuth,
@@ -41,10 +44,7 @@ export const askOpenAI = createAction({
             apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
-          // We need to get only LLM models
-          const models = response.data.filter(
-            (model) => !notLLMs.includes(model.id)
-          );
+          const models = response.data.filter((model) => isLLM(model.id));
           return {
             disabled: false,
             options: models.map((model) => {
@@ -118,8 +118,8 @@ export const askOpenAI = createAction({
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(1).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
     const openai = new OpenAI({
       apiKey: auth.secret_text,

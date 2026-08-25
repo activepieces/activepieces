@@ -8,6 +8,12 @@ export const me = createAction({
     name: 'me',
     displayName: "Récupérer mes informations",
     description: "Récupérer mes informations et mes détails",
+    audience: 'both',
+    aiMetadata: {
+      description:
+        "Retrieve the profile and account details of the currently authenticated Wedof user (the owner of the API key). Takes no input; useful for confirming which account/connection is active or reading the user's identity. Read-only and idempotent.",
+      idempotent: true,
+    },
     props: {},
     async run(context) {
         return (

@@ -14,14 +14,17 @@ import {
   updateOpportunity,
 } from '../common';
 import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateOpportunityAction = createAction({
   auth: leadConnectorAuth,
   name: 'update_opportunity',
+  classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Updates an existing opportunity.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing GoHighLevel/LeadConnector opportunity identified by pipeline and opportunity ID, changing stage, status, title, contact, assignee, or monetary value. Omitted stage/title/status are backfilled from the current opportunity. Use to advance or edit a known deal; idempotent — repeating with the same input leaves the opportunity in the same state.', idempotent: true },
   props: {
     pipeline: Property.Dropdown({
   auth: leadConnectorAuth,
@@ -182,7 +185,7 @@ export const updateOpportunityAction = createAction({
 
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      monetaryValue: z.number().optional(),
+      monetaryValue: z.optional(z.number()),
     });
 
     const {

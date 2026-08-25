@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newLead } from './lib/triggers/new-lead';
 import { facebookLeadsAuth } from './lib/auth';
 import crypto from 'node:crypto';

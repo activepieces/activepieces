@@ -4,7 +4,7 @@ import { chatCompletion } from './lib/actions/chat-completion';
 import { createEmbeddings } from './lib/actions/create-embeddings';
 import { transcribeAudio } from './lib/actions/transcribe-audio';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const greenpt = createPiece({
   displayName: 'GreenPT',

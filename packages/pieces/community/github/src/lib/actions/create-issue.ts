@@ -2,12 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { issueActionOutputSchema } from '../output-schemas';
 
 export const githubCreateIssueAction = createAction({
   auth: githubAuth,
   name: 'github_create_issue',
+  classification: 'WRITE',
   displayName: 'Create Issue',
   description: 'Create Issue in GitHub Repository',
+  audience: 'human',
+  aiMetadata: {
+    description:
+      'Opens a new issue in a GitHub repository with a title and optional body, labels, and assignees. Use to file a bug, task, or request in a specified repo. Not idempotent: each call creates a separate issue even with identical input.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({
@@ -23,6 +31,7 @@ export const githubCreateIssueAction = createAction({
     labels: githubCommon.labelDropDown(),
     assignees: githubCommon.assigneeDropDown(),
   },
+  outputSchema: issueActionOutputSchema,
   async run({ auth, propsValue }) {
     const { title, assignees, labels, description } = propsValue;
     const { owner, repo } = propsValue.repository!;
@@ -41,7 +50,7 @@ export const githubCreateIssueAction = createAction({
     }
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: `/repos/${owner}/${repo}/issues`,
       body: issueFields,

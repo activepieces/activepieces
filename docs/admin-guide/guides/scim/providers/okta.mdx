@@ -18,12 +18,12 @@ Before you start, make sure you have:
 
 <Steps>
   <Step title="Open your Okta app">
-    In Okta Admin Console, open your Activepieces application (created in [SSO step](/admin-guide/guides/sso#saml-with-okta)).
+    In Okta Admin Console, open your Activepieces application (created in first [SSO step](/admin-guide/guides/sso#saml-with-okta)).
 
   </Step>
   <Step title="Enable provisioning">
     In the app's **General** tab, enable **SCIM Provisioning**.
-    ![Okta User Provisioning Placeholder](/resources/screenshots/scim/okta/enable-provisioning.png)
+    ![Okta User Provisioning](/resources/screenshots/scim/okta/enable-provisioning.png)
   </Step>
   <Step title="Add SCIM connection details">
     **Provisioning** will be visible, go to it and set:
@@ -92,22 +92,22 @@ By default, provisioned users will have `Member` role in the platform. In order 
     </Warning>
 
      - Back to your Activepieces application page in **Provisioning -> To App -> Attribute Mappings**
-     
+
      - Scroll down and click **Show Unmapped Attributes**
-     
+
      - Edit `platformRole` field
-     
+
      - Here you need to map the attribute value from your Okta user profile. If you already have a role field in the Okta user profile that matches exactly with a platformRole value (`ADMIN`, `MEMBER`, `OPERATOR`) then you can select it directly with `Map from Okta Profile` option, otherwise you can use an [Expression](https://developer.okta.com/docs/reference/okta-expression-language/) to return one of the 3 roles based on other fields in the Okta user profile.
 
      Here is an example of an expression:
 
-    
+
     ![Okta role expression example](/resources/screenshots/scim/okta/role-expression.png)
 
     <Warning>
       Please make sure the return value to always be one of `ADMIN`, `MEMBER` or `OPERATOR`
     </Warning>
-    
+
   </Step>
 </Steps>
 

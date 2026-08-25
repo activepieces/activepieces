@@ -15,6 +15,11 @@ export const createDocumentFromTemplate = createAction({
   name: 'createDocumentFromTemplate',
   displayName: 'Create Document from Template',
   description: 'Creates a document from a PandaDoc Template.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new PandaDoc document from an existing template, supplying recipients, prefilled field/token values, folder, tags, and metadata. Use to generate a contract or agreement that can then be sent for signature. Requires a valid template UUID; not idempotent — each call creates a separate document.',
+    idempotent: false,
+  },
   auth: pandadocAuth,
   props: {
     template_uuid: templateDropdown,

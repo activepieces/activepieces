@@ -8,11 +8,19 @@ import {
 import { googleSheetsAuth } from '../common/common';
 import { includeTeamDrivesProp } from '../common/props';
 import { getAccessToken } from '../common/common';
+import { findSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const findSpreadsheets = createAction({
 	name: 'find_spreadsheets',
+	classification: 'SEARCH',
 	displayName: 'Find Spreadsheet(s)',
 	description: 'Find spreadsheet(s) by name.',
+	audience: 'human',
+	aiMetadata: {
+		description:
+			'Searches Google Drive for spreadsheets whose name matches a query (exact or contains) and returns the matches. Use to resolve a spreadsheet id from a human-readable name before acting on it. Read-only and idempotent.',
+		idempotent: true,
+	},
 	auth: googleSheetsAuth,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
@@ -29,6 +37,7 @@ export const findSpreadsheets = createAction({
 			defaultValue: false,
 		}),
 	},
+	outputSchema: findSpreadsheetsActionOutputSchema,
 	async run({ propsValue, auth }) {
 		const searchValue = propsValue.spreadsheet_name;
 		const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed=false'];
@@ -50,6 +59,7 @@ export const findSpreadsheets = createAction({
 					q: queries.join(' and '),
 					includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
 					supportsAllDrives: 'true',
+					corpora: propsValue.includeTeamDrives ? 'allDrives' : 'user',
 					fields: 'files(id,name,webViewLink,createdTime,modifiedTime),nextPageToken',
 				},
 				authentication: {

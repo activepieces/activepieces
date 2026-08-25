@@ -6,6 +6,8 @@ export const findTeam = createAction({
   name: 'findTeam',
   displayName: 'Find Team',
   description: 'Find team based on name',
+  audience: 'both',
+  aiMetadata: { description: 'List the teams in the connected Fathom workspace, used to look up or enumerate teams by name. Read-only and repeatable; use the cursor for pagination across large team lists.', idempotent: true },
   auth: fathomAuth,
   props: {
     cursor: Property.ShortText({

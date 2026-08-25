@@ -7,6 +7,8 @@ export const startMandateAuthorizationFlow = createAction({
   name: 'start-mandate-authorization-flow',
   displayName: 'Start Authorization Flow',
   description: 'Start the authorization flow for a mandate. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Begin the authorization flow for an existing mandate identified by its ID so the user can authorize the recurring payment arrangement. Use after the mandate is created; this advances mandate state and is not idempotent. Follow with Submit consent if the flow requires it.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',

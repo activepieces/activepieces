@@ -7,8 +7,11 @@ import { retableCommon } from '../common';
 export const retableGetAllRetablesAction = createAction({
   auth: retableAuth,
   name: 'retable_get_retables',
+  classification: 'SEARCH',
   displayName: 'Get Retables',
   description: 'Gets all retables in given project',
+  audience: 'both',
+  aiMetadata: { description: 'Lists all retables (tables) within a given Retable project. Use to discover retable IDs needed before reading or writing records. Requires the project ID; read-only and idempotent.', idempotent: true },
   props: {
     workspace_id: retableCommon.workspace_id(),
     project_id: retableCommon.project_id(),

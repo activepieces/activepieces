@@ -23,6 +23,8 @@ export const shareReportEmailAction = createAction({
   name: 'share_report_email',
   displayName: 'Share Report by Email',
   description: 'Sends report in email body with optional attachments.',
+  audience: 'both',
+  aiMetadata: { description: 'Emails an existing SeekTable report to a recipient, optionally embedding the report HTML in the body and attaching exports (PDF, CSV, Excel, or Excel pivot table). Use when an agent needs to deliver a report by email rather than just generate it. Requires a valid report id and recipient address; report parameters can be passed to filter the data. Not idempotent — each call sends a new email.', idempotent: false },
   props: {
     reportId: Property.Dropdown({
       displayName: 'Report',

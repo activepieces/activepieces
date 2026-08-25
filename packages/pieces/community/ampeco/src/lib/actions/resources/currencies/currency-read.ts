@@ -15,6 +15,8 @@ export const currencyReadAction = createAction({
   name: 'currencyRead',
   displayName: 'Resources - Currencies - Read',
   description: 'Currency / Read.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single currency from AMPECO by its numeric currency id, returning its code and display/precision configuration. Read-only and idempotent. Use when you already know the id; there is no list-currencies counterpart here.', idempotent: true },
   props: {
         
   currency: Property.Number({

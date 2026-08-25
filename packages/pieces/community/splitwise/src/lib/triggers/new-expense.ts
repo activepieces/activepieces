@@ -74,6 +74,9 @@ export const newExpenseTrigger = createTrigger({
   name: 'new_expense',
   displayName: 'New Expense',
   description: 'Triggers when a new expense is created. Optionally, filter for a specific group.',
+  aiMetadata: {
+    description: 'Fires when a new expense appears in the connected Splitwise account, representing a freshly recorded shared bill. Optionally scope to a single group; leave the group unset to watch expenses across all groups.',
+  },
   props,
   type: TriggerStrategy.POLLING,
   sampleData: {},

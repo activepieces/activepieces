@@ -7,6 +7,8 @@ export const updateReferralStatus = createAction({
   auth: talkableAuth,
   displayName: 'Update referral status',
   description: 'You can void or approve referral',
+  audience: 'both',
+  aiMetadata: { description: 'Set the status of a referral tied to a purchase/event origin in Talkable to either "approved" or "voided", identified by its order/event number (origin slug). Use to manually approve a pending referral reward or void a fraudulent/invalid one. Idempotent: re-applying the same status leaves it unchanged; origin slug and a status of approved or voided are required.', idempotent: true },
   props: {
     origin_slug: Property.ShortText({
       displayName: 'Order or event number',

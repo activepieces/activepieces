@@ -15,6 +15,8 @@ export const circuitChargePointPrioritiesListingAction = createAction({
   name: 'circuitChargePointPrioritiesListing',
   displayName: 'Resources - Circuits - Circuit Charge Point Priorities Listing',
   description: 'Get all circuit&#x27;s charge point priorities.',
+  audience: 'both',
+  aiMetadata: { description: 'List the charge-point priority rules configured on a single AMPECO circuit, identified by numeric circuit ID. Read-only and safe to repeat; supports automatic pagination across pages. Use to enumerate which charge points are prioritized on one circuit, distinct from the user-priority and SoC-priority listings on the same circuit.', idempotent: true },
   props: {
         
   circuit: Property.Number({

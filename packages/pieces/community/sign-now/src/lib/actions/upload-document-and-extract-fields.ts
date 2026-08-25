@@ -9,6 +9,12 @@ export const uploadDocumentAndExtractFieldsAction = createAction({
   displayName: 'Upload Document & Extract Fields',
   description:
     'Uploads a document and automatically converts text tags into SignNow fillable fields.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Uploads a file (up to 50 MB) into SignNow as a new document and always parses its embedded text tags (e.g. {{t:s;r:y;...}}) into fillable fields, returning the document ID. Choose this over plain Upload Document when the file already contains SignNow text tags that should become signature/data fields. Each call creates a separate document, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     file: Property.File({
       displayName: 'File',

@@ -1,7 +1,6 @@
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
-  isNil,
-  Permission,
   PlatformRole,
   ProjectType,
   UserStatus,
@@ -181,7 +180,6 @@ export const ProjectDashboardPageHeader = ({
         title={titleContent}
         description={description}
         rightContent={rightContent}
-        showSidebarToggle={true}
         className="min-w-full"
       />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />

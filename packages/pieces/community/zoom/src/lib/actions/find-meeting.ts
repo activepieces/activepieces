@@ -11,8 +11,11 @@ import { zoomAuth } from '../..';
 export const zoomFindMeeting = createAction({
   auth: zoomAuth,
   name: 'zoom_find_meeting',
+  classification: 'READ',
   displayName: 'Find Zoom Meeting',
-  description: 'Retrieve the details of an existing meeting or webinar.',
+  description: 'Retrieve the details of an existing meeting.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full details of an existing Zoom meeting by its meeting ID. Use to look up a meeting before acting on it; optionally target a specific occurrence of a recurring meeting or include all previous occurrences. Read-only and idempotent.', idempotent: true },
   props: {
     meeting_id: zoomMeetingDropdown,
     occurrence_id: Property.ShortText({

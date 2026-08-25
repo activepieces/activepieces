@@ -1,8 +1,7 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { Copy, Download, Eye, EyeOff } from 'lucide-react';
-import React, { useLayoutEffect, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
+import { Copy, Download } from 'lucide-react';
+import React, { useMemo } from 'react';
 import ReactJson from 'react-json-view';
 import { toast } from 'sonner';
 
@@ -14,44 +13,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { isStepFileUrl } from '@/lib/dom-utils';
 import { cn } from '@/lib/utils';
 
 type JsonViewerProps = {
   json: any;
-  title: string;
+  title: React.ReactNode;
   hideDownload?: boolean;
+  hideHeader?: boolean;
   className?: string;
 };
-
-type FileButtonProps = {
-  fileUrl: string;
-  handleDownloadFile: (fileUrl: string) => void;
-};
-const FileButton = ({ fileUrl, handleDownloadFile }: FileButtonProps) => {
-  const readonly = fileUrl.includes('file://');
-  return (
-    <div className="flex items-center gap-0">
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={readonly}
-        onClick={() => handleDownloadFile(fileUrl)}
-        className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
-      >
-        {readonly ? (
-          <EyeOff className="w-4 h-4" />
-        ) : (
-          <Eye className="w-4 h-4" />
-        )}
-        {t('Download File')}
-      </Button>
-    </div>
-  );
-};
-
-const removeDoubleQuotes = (str: string): string =>
-  str.startsWith('"') && str.endsWith('"') ? str.slice(1, -1) : str;
 
 const removeUndefined = (obj: any): any => {
   if (Array.isArray(obj)) {
@@ -71,6 +41,7 @@ const JsonViewer = React.memo(
     json: unclearJson,
     title,
     hideDownload = false,
+    hideHeader = false,
     className,
   }: JsonViewerProps) => {
     const { theme } = useTheme();
@@ -91,74 +62,12 @@ const JsonViewer = React.memo(
         type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
-      handleDownloadFile(url);
-    };
-
-    const handleDownloadFile = (fileUrl: string, ext = '') => {
       const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = `${title}${ext}`;
+      link.href = url;
+      link.download = `${typeof title === 'string' ? title : 'data'}.json`;
       link.click();
-      URL.revokeObjectURL(fileUrl);
+      URL.revokeObjectURL(url);
     };
-    useLayoutEffect(() => {
-      if (typeof json === 'object') {
-        const stringValuesHTML = Array.from(
-          document.getElementsByClassName('string-value'),
-        );
-
-        const stepFileUrlsHTML = stringValuesHTML.filter(
-          (el) =>
-            isStepFileUrl(el.innerHTML) ||
-            isStepFileUrl(el.parentElement!.nextElementSibling?.innerHTML),
-        );
-
-        stepFileUrlsHTML.forEach((el: Element) => {
-          const fileUrl = removeDoubleQuotes(el.innerHTML)
-            .trim()
-            .replace('\n', '');
-          el.className += ' hidden';
-
-          const rootElem = document.createElement('div');
-          const root = createRoot(rootElem);
-
-          el.parentElement!.replaceChildren(el as Node, rootElem as Node);
-          const isProductionFile = fileUrl.includes('file://');
-
-          root.render(
-            <div data-file-root="true">
-              {isProductionFile ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <FileButton
-                        fileUrl={fileUrl}
-                        handleDownloadFile={handleDownloadFile}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {t('File is not available after execution.')}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <FileButton
-                  fileUrl={fileUrl}
-                  handleDownloadFile={handleDownloadFile}
-                />
-              )}
-            </div>,
-          );
-        });
-      }
-    });
-
-    if (isStepFileUrl(json)) {
-      return (
-        <FileButton fileUrl={json} handleDownloadFile={handleDownloadFile} />
-      );
-    }
-
     return (
       <div
         className={cn(
@@ -166,43 +75,45 @@ const JsonViewer = React.memo(
           className,
         )}
       >
-        <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
-          <div className="grow justify-center items-center">
-            <span className="text-md">{title}</span>
-          </div>
-          <div className="flex items-center gap-0">
-            {!hideDownload && (
+        {!hideHeader && (
+          <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
+            <div className="grow justify-center items-center">
+              <span className="text-md">{title}</span>
+            </div>
+            <div className="flex items-center gap-0">
+              {!hideDownload && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={'ghost'}
+                        size={'sm'}
+                        onClick={handleDownload}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('Download JSON')}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant={'ghost'}
-                      size={'sm'}
-                      onClick={handleDownload}
-                    >
-                      <Download className="w-4 h-4" />
+                    <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
+                      <Copy className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Download JSON')}
+                    {t('Copy to clipboard')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Copy to clipboard')}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            </div>
           </div>
-        </div>
+        )}
 
         {
           <>

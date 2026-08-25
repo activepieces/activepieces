@@ -12,6 +12,8 @@ export const blogOutlines = createAction({
   name: 'blogOutlines',
   displayName: 'Blog Outlines',
   description: 'Generate detailed article outlines for better content writing',
+  audience: 'both',
+  aiMetadata: { description: 'Generates a detailed AI-written blog outline via Writesonic from a blog title plus an existing introduction (both required), controlled by engine/language/copy-count settings. Use when an agent needs a structured section breakdown to draft a full article. Each call produces fresh generated text and is billed, so it is not idempotent.', idempotent: false },
   props: {
     blog_title: Property.ShortText({
       displayName: 'Blog Title',

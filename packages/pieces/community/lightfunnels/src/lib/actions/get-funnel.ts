@@ -7,6 +7,8 @@ export const getFunnel = createAction({
   name: 'get_funnel',
   displayName: 'Get Funnel',
   description: 'Retrieve a specific funnel by ID',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches a single Lightfunnels funnel by its node ID, returning its name, slug, and published status. Use when you have a funnel ID and need its record. Read-only and idempotent.', idempotent: true },
   props: {
     funnelId: Property.ShortText({
       displayName: 'Funnel ID',

@@ -1,4 +1,5 @@
-import { AgentMcpTool, ApId, Permission, PrincipalType } from '@activepieces/shared'
+import { ApId, Permission } from '@activepieces/core-utils'
+import { AgentMcpTool, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'

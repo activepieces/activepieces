@@ -9,6 +9,10 @@ export const newOrUpdatedMessage = createTrigger({
   displayName: 'New Or Updated Message',
   description:
     'Triggers when an SMS or EMAIL notification is created or its delivery status changes',
+  aiMetadata: {
+    description:
+      'Fires when a Waitwhile SMS or email notification is created or its delivery status changes (subscribes to message.created and message.updated webhook events), representing the outbound/inbound message and its current state.',
+  },
   props: {},
   sampleData: {
     id: '0T6229ytZ6Ud3AS2OCsE',

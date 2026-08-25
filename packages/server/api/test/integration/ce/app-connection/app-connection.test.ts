@@ -1,19 +1,16 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    AppConnectionType,
-    PackageType,
-    PieceType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, PackageType, PieceType, PLACEHOLDER_CONNECTION_TYPE } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { db } from '../../../helpers/db'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
+    createMockConnection,
     createMockPieceMetadata,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
-import { describeWithAuth } from '../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -87,6 +84,121 @@ describe('AppConnection CE API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const body = response?.json()
             expect(body.displayName).toBe('Test No Auth')
+        })
+
+        it('should create a placeholder connection with status MISSING', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const response = await ctx.post('/v1/app-connections', {
+                externalId: 'test-placeholder-connection',
+                displayName: 'Placeholder Slack',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const body = response?.json()
+            expect(body.displayName).toBe('Placeholder Slack')
+            expect(body.type).toBe(AppConnectionType.NO_AUTH)
+            expect(body.status).toBe(AppConnectionStatus.MISSING)
+            expect(body.pieceName).toBe(mockPiece.name)
+            expect(body.externalId).toBe('test-placeholder-connection')
+        })
+
+        it('should not overwrite an active connection with a placeholder', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const active = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-no-clobber',
+                displayName: 'Active Secret',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: {
+                    type: AppConnectionType.SECRET_TEXT,
+                    secret_text: 'real-secret',
+                },
+                pieceVersion: mockPiece.version,
+            })
+            expect(active?.statusCode).toBe(StatusCodes.CREATED)
+            const activeBody = active?.json()
+            expect(activeBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(activeBody.type).toBe(AppConnectionType.SECRET_TEXT)
+
+            const placeholder = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-no-clobber',
+                displayName: 'Should Not Win',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+            expect(placeholder?.statusCode).toBe(StatusCodes.CREATED)
+            const placeholderBody = placeholder?.json()
+            expect(placeholderBody.id).toBe(activeBody.id)
+            expect(placeholderBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(placeholderBody.type).toBe(AppConnectionType.SECRET_TEXT)
+            expect(placeholderBody.displayName).toBe('Active Secret')
+        })
+
+        it('should transition a placeholder to ACTIVE on real upsert', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const placeholder = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-fill-in',
+                displayName: 'Pending',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: PLACEHOLDER_CONNECTION_TYPE,
+                pieceVersion: mockPiece.version,
+            })
+            expect(placeholder?.statusCode).toBe(StatusCodes.CREATED)
+            const placeholderId = placeholder?.json().id
+
+            const filled = await ctx.post('/v1/app-connections', {
+                externalId: 'placeholder-fill-in',
+                displayName: 'Filled In',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: {
+                    type: AppConnectionType.SECRET_TEXT,
+                    secret_text: 'real-secret',
+                },
+                pieceVersion: mockPiece.version,
+            })
+            expect(filled?.statusCode).toBe(StatusCodes.CREATED)
+            const filledBody = filled?.json()
+            expect(filledBody.id).toBe(placeholderId)
+            expect(filledBody.type).toBe(AppConnectionType.SECRET_TEXT)
+            expect(filledBody.status).toBe(AppConnectionStatus.ACTIVE)
+            expect(filledBody.displayName).toBe('Filled In')
         })
 
         it('should upsert on duplicate externalId', async () => {
@@ -264,6 +376,48 @@ describe('AppConnection CE API', () => {
         })
     })
 
+    describeWithAuth('GET /v1/app-connections/:id', () => app!, (setup) => {
+        it('should get a connection by id without sensitive data', async () => {
+            const ctx = await setup()
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const createResponse = await ctx.post('/v1/app-connections', {
+                externalId: 'get-by-id-test',
+                displayName: 'Get Me',
+                pieceName: mockPiece.name,
+                projectId: ctx.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 'my-secret' },
+                pieceVersion: mockPiece.version,
+            })
+            const connectionId = createResponse?.json().id
+
+            const response = await ctx.get(`/v1/app-connections/${connectionId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.id).toBe(connectionId)
+            expect(body.externalId).toBe('get-by-id-test')
+            expect(body.value).toBeUndefined()
+            expect(body.flowIds).toEqual([])
+        })
+
+        it('should return 404 for a non-existent connection', async () => {
+            const ctx = await setup()
+
+            const response = await ctx.get(`/v1/app-connections/${apId()}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
     describe('GET /v1/app-connections (Isolation)', () => {
         it('should isolate connections between projects', async () => {
             const ctx1 = await createTestContext(app!)
@@ -295,6 +449,34 @@ describe('AppConnection CE API', () => {
             const body = response?.json()
             const ids = body.data.map((c: Record<string, string>) => c.externalId)
             expect(ids).not.toContain('isolation-test')
+        })
+
+        it('should not get a connection from another project', async () => {
+            const ctx1 = await createTestContext(app!)
+            const ctx2 = await createTestContext(app!)
+
+            const mockPiece = createMockPieceMetadata({
+                platformId: ctx1.platform.id,
+                packageType: PackageType.REGISTRY,
+                pieceType: PieceType.OFFICIAL,
+            })
+            await db.save('piece_metadata', mockPiece)
+            pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPiece)
+
+            const createResponse = await ctx1.post('/v1/app-connections', {
+                externalId: 'cross-project-get',
+                displayName: 'Project 1 Connection',
+                pieceName: mockPiece.name,
+                projectId: ctx1.project.id,
+                type: AppConnectionType.SECRET_TEXT,
+                value: { type: AppConnectionType.SECRET_TEXT, secret_text: 's' },
+                pieceVersion: mockPiece.version,
+            })
+            const connectionId = createResponse?.json().id
+
+            const response = await ctx2.get(`/v1/app-connections/${connectionId}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
@@ -333,6 +515,27 @@ describe('AppConnection CE API', () => {
             const response = await ctx.delete(`/v1/app-connections/${nonExistentId}`)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should not delete a platform-scoped connection from the project route', async () => {
+            const ctx = await setup()
+
+            const platformConnection = {
+                ...createMockConnection({
+                    platformId: ctx.platform.id,
+                    projectIds: [ctx.project.id],
+                    externalId: 'platform-delete-test',
+                }, ctx.user.id),
+                scope: AppConnectionScope.PLATFORM,
+            }
+            await db.save('app_connection', platformConnection)
+
+            const response = await ctx.delete(`/v1/app-connections/${platformConnection.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+
+            const stillExists = await db.findOneBy('app_connection', { id: platformConnection.id })
+            expect(stillExists).not.toBeNull()
         })
     })
 })

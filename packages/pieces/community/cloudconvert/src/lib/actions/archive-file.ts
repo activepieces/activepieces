@@ -105,6 +105,8 @@ export const archiveFile = createAction({
   name: 'archive_file',
   displayName: 'Archive File',
   description: 'Creates a ZIP, RAR, 7Z, TAR, TAR.GZ or TAR.BZ2 archive',
+  audience: 'both',
+  aiMetadata: { description: 'Bundles one or more files into a single archive (ZIP, RAR, 7Z, TAR, TAR.GZ, or TAR.BZ2) via CloudConvert. Choose this to compress or package multiple files together. Requires at least one input file supplied via the selected import method (file URL or previously stored Activepieces file ID; multi-file uploads are not supported) and an output archive format. Each call creates a new archive job, so it is not idempotent.', idempotent: false },
   auth: cloudconvertAuth,
   requireAuth: true,
   props: archiveFileProps(),

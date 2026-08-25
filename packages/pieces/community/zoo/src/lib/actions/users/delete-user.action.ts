@@ -6,6 +6,8 @@ export const deleteUserAction = createAction({
   name: 'delete_user',
   displayName: 'Delete User',
   description: 'Delete your user account',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete the authenticated Zoo user account. Destructive and irreversible; the first call removes the account and subsequent calls have no further effect. Use only when intentionally closing the current account.', idempotent: false },
   auth: zooAuth,
   // category: 'Users',
   props: {},

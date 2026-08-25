@@ -1,12 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    CreateTemplateRequestBody,
-    PlatformPlan,
-    PlatformRole,
-    PrincipalType,
-    TemplateType,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { CreateTemplateRequestBody, PlatformPlan, PlatformRole, PrincipalType, TemplateType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -18,6 +11,7 @@ import {
     mockBasicUser,
 } from '../../../helpers/mocks'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

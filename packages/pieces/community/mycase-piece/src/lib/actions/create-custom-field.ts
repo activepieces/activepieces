@@ -7,6 +7,8 @@ export const createCustomField = createAction({
   name: 'create_custom_field',
   displayName: 'Create Custom Field',
   description: 'Creates a new custom field in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always defines a new custom field on a MyCase resource type (case, client, company, expense, time, or time-and-expense), with a chosen field type. When the field type is "list" you must supply at least one list option. This is a schema/configuration change, not data entry. Not idempotent: each call adds another custom field.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Field Name',

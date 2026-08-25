@@ -14,6 +14,8 @@ export const vendorErrorCodesListingAction = createAction({
   name: 'vendorErrorCodesListing',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Codes Listing',
   description: 'Get all Vendor Error Codes.',
+  audience: 'both',
+  aiMetadata: { description: 'List all vendor error codes configured in AMPECO. Read-only and safe to repeat. Enable the pagination option to fetch every page in one call; otherwise a single page (up to per_page, max 100) is returned. Use to discover available codes when you do not have a specific identifier.', idempotent: true },
   props: {
         
     per_page: Property.Number({

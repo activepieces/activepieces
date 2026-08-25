@@ -15,6 +15,12 @@ export const updateConversation = createAction({
   displayName: 'Update Conversation',
   description:
     'Modify conversation properties: status, assignee, inbox, tags, etc.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Update properties of a Front conversation: status (open/archived/deleted), assignee, inbox, and tags; only the fields you supply change. Use for general thread state changes; "Assign/Unassign Conversation" and "Add Conversation Tags" cover those single concerns. Idempotent: re-applying the same values yields the same conversation state.',
+    idempotent: true,
+  },
   props: {
     conversation_id: conversationIdDropdown,
     status: Property.StaticDropdown({

@@ -1,25 +1,17 @@
+import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
 import { intercom } from '@activepieces/piece-intercom'
+import { microsoftTeamsBot } from '@activepieces/piece-microsoft-teams-bot'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
-import {
-    ActivepiecesError,
-    apId,
-    assertNotNullOrUndefined,
-    ErrorCode,
-    FlowStatus,
-    isNil,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    RunEnvironment,
-    WorkerJobType,
-} from '@activepieces/shared'
+import { FlowStatus, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, WorkerJobType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { flowService } from '../../flows/flow/flow.service'
+import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { projectService } from '../../project/project-service'
 import { WebhookFlowVersionToRun, webhookService } from '../../webhooks/webhook.service'
@@ -33,12 +25,14 @@ const appWebhooks: Record<string, Piece<PieceAuthProperty | PieceAuthProperty[] 
     square,
     'facebook-leads': facebookLeads,
     intercom,
+    'microsoft-teams-bot': microsoftTeamsBot,
 }
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
     intercom: '@activepieces/piece-intercom',
+    'microsoft-teams-bot': '@activepieces/piece-microsoft-teams-bot',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncZod = async (app) => {

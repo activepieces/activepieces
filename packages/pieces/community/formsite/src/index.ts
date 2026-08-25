@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { newFormResult } from './lib/triggers/new-form-result';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const formsiteAuth = PieceAuth.SecretText({
   displayName: 'API Key',

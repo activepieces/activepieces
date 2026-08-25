@@ -7,6 +7,11 @@ export const findPerson = createAction({
   name: 'findPerson',
   displayName: 'List People',
   description: 'Retrieve a paginated list of people in your Folk workspace with optional filtering.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists people (contacts) in the Folk CRM, returning a single cursor-paginated page. With no filters it returns all people; optional name and email filters (contains-match) combined by AND or OR narrow the results. Use to browse contacts or resolve a name/email into a person ID; pass the cursor to page through additional results. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

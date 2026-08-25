@@ -1,29 +1,30 @@
 import {
-  AgentPieceTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
-  FlowRunId,
-  PopulatedFlow,
-  ProjectId,
   RespondResponse,
   ResumePayload,
-  SeekPage,
   TriggerPayload,
   TriggerStrategy,
-} from '@activepieces/shared';
-import { LanguageModel, Tool } from 'ai'
+  DelayPauseMetadata,
+  PauseMetadata,
+  WebhookPauseMetadata,
+} from '@activepieces/core-piece-types';
+import type { SeekPage } from '@activepieces/core-utils';
+import type { FlowRunId, ProjectId } from '@activepieces/core-utils';
+import type { Readable } from 'node:stream'
 
 import {
   BasicAuthProperty,
   CustomAuthProperty,
   InputPropertyMap,
+  OIDCProperty,
   OAuth2Property,
   SecretTextProperty,
   StaticPropsValue,
 } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import type { PopulatedFlowSummary } from '@activepieces/core-piece-types';
 
 export type BaseContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
@@ -44,6 +45,8 @@ export type BaseContext<
 
 type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Props : never;
 
+type ExtractOIDCProps<T> = T extends OIDCProperty<infer Props> ? Props : never;
+
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
@@ -52,10 +55,11 @@ export type AppConnectionValueForAuthProperty<T extends PieceAuthProperty | Piec
   T extends PieceAuthProperty ? AppConnectionValueForSingleAuthProperty<T> :
   T extends undefined ? undefined : never;
 
-type AppConnectionValueForSingleAuthProperty<T extends PieceAuthProperty | undefined> = 
+type AppConnectionValueForSingleAuthProperty<T extends PieceAuthProperty | undefined> =
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
+  T extends OIDCProperty<any> ? AppConnectionValue<AppConnectionType.OIDC, StaticPropsValue<ExtractOIDCProps<T>>> :
   T extends OAuth2Property<any> ? AppConnectionValue<AppConnectionType.OAUTH2, StaticPropsValue<ExtractOAuth2Props<T>>> :
   T extends undefined ? undefined : never;
 type AppWebhookTriggerHookContext<
@@ -79,7 +83,9 @@ type PollingTriggerHookContext<
   PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
-  setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
+  server: ServerContext;
+  setSchedule(schedule: SetScheduleRequest): void;
+  isRepublish?: boolean;
 };
 
 type WebhookTriggerHookContext<
@@ -135,7 +141,7 @@ export type PauseHook = (params: {
 }) => void;
 
 export type FlowsContext = {
-  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlow>>
+  list(params?: ListFlowsContextParams): Promise<SeekPage<PopulatedFlowSummary>>
   current: {
     id: string;
     version: {
@@ -223,7 +229,6 @@ type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
-  agent: AgentContext;
   run: RunContext;
   /** @deprecated Use waitpoint.buildResumeUrl() from createWaitpoint result instead */
   generateResumeUrl?: (params: {
@@ -254,22 +259,13 @@ export type ActionContext<
 
 
 
-export type ConstructToolParams = {
-  tools: AgentPieceTool[]
-  model: LanguageModel,
-}
-
-export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
-}
-
 export interface FilesService {
   write({
     fileName,
     data,
   }: {
     fileName: string;
-    data: Buffer;
+    data: Buffer | Readable;
   }): Promise<string>;
 }
 
@@ -294,3 +290,7 @@ export enum StoreScope {
   PROJECT = 'COLLECTION',
   FLOW = 'FLOW',
 }
+
+export type SetScheduleRequest =
+  | { cronExpression: string; timezone?: string }
+  | { intervalMs: number };

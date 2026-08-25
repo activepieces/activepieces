@@ -6,8 +6,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubCreateDiscussionCommentAction = createAction({
   auth: githubAuth,
   name: 'github_create_discussion_comment',
+  classification: 'WRITE',
   displayName: 'Create Discussion Comment',
   description: 'Creates a comment on a discussion in a GitHub repository',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Posts a comment on a GitHub Discussion (via the GraphQL API) identified by its discussion ID. Use to reply to a repository discussion thread. Not idempotent: each call adds a new comment.',
+    idempotent: false,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     discussion_number: Property.Number({
@@ -44,7 +51,7 @@ export const githubCreateDiscussionCommentAction = createAction({
 		}`;
 
     const response = await githubApiCall({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.POST,
       resourceUri: '/graphql',
       body: {

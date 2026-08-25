@@ -6,6 +6,12 @@ export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
   displayName: 'Add or Update Contact (Extended)',
   description: 'Adds or updates a contact (extended version)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a contact in the Linka/Sperse CRM with the full extended field set (personal, business, addresses, subscriptions, tracking, UTM, and custom fields). With "Match Existing" enabled it finds an existing record by email/full name, Contact ID, or Contact XREF and updates it; otherwise it creates one. Choose this over the basic Add or Update Contact when you need to set company details, embedded subscriptions, or custom/tracking attributes. At least one of First Name, Last Name, or Company Name is required. Idempotent when matching is on with a stable identifier; otherwise repeated calls create duplicates.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     matchExisting: Property.StaticDropdown({

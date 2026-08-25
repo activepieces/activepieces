@@ -4,16 +4,23 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { appWebhookSetupInfo, getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { getBotToken, getTeamId, SlackAuthValue } from '../common/auth-helpers';
+import { newReactionAddedTriggerOutputSchema } from '../output-schemas';
 
 
 export const newReactionAdded = createTrigger({
   auth: slackAuth,
   name: 'new_reaction_added',
+  classification: 'READ',
   displayName: 'New Reaction',
   description: 'Triggers when a new reaction is added to a message',
+  aiMetadata: {
+    description:
+      'Fires when an emoji reaction is added to a message in the Slack workspace. Can be optionally filtered to specific emojis, a specific user, or specific channels. The event payload identifies the user who added the reaction, the emoji name, and the message item it was added to.',
+  },
   props: {
+    webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
     emojis: Property.Array({
       displayName: 'Emojis (E.g fire, smile)',
@@ -48,6 +55,7 @@ export const newReactionAdded = createTrigger({
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: undefined,
+  outputSchema: newReactionAddedTriggerOutputSchema,
   onEnable: async (context) => {
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({

@@ -6,6 +6,9 @@ export const postCreated = createTrigger({
   name: 'post_created',
   displayName: 'Post Created',
   description: 'Triggers when a post generation completes or fails.',
+  aiMetadata: {
+    description: 'Fires when a Predis.ai content generation job finishes, reaching either completed or error status. Represents the asynchronous result of a Create Content request, carrying the post status, caption, post id, and generated media. Requires the Predis.ai webhook URL to be configured manually in the account REST API settings.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     markdown: Property.MarkDown({

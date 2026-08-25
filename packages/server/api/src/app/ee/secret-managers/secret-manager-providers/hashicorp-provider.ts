@@ -1,5 +1,6 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, SecretManagerProviderId } from '@activepieces/shared'
+import { SecretManagerProviderId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'
 

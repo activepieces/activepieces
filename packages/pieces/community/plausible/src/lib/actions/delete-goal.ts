@@ -8,6 +8,8 @@ export const deleteGoal = createAction({
   name: 'delete_goal',
   displayName: 'Delete Goal',
   description: 'Delete a goal from a site',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes a conversion goal from a site, identified by the site and the goal id. Use List Goals first to obtain the goal id. Idempotent in effect, since the goal ends up removed regardless of repeats.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
     goal_id: goalIdDropdown,

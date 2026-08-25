@@ -3,7 +3,7 @@ import {
   DropdownState,
   Property,
 } from '@activepieces/pieces-framework';
-import { tryCatch, unique } from '@activepieces/shared';
+import { tryCatch, unique } from '@activepieces/pieces-framework';
 import {
   baserowAuth,
   BaserowAuthValue,

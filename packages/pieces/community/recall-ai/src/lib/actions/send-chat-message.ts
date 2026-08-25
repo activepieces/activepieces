@@ -8,6 +8,8 @@ export const sendChatMessage = createAction({
   name: 'sendChatMessage',
   displayName: 'Send Chat Message',
   description: 'Causes the bot to send a message in the meeting chat',
+  audience: 'both',
+  aiMetadata: { description: 'Has an in-call Recall.ai bot post a message to the meeting chat. Use to relay text into a live meeting through a bot you already created. Requires the bot ID and message (max 4096 chars); by default sends to everyone, and can optionally target a specific recipient (Zoom only) or pin the message. Not idempotent — each call posts another chat message.', idempotent: false },
   props: {
     bot_id: Property.ShortText({
       displayName: 'Bot ID',

@@ -7,8 +7,11 @@ import { roomDropdown } from '../common/props';
 export const createMessage = createAction({
   auth: askHandleAuth,
   name: 'create_message',
+  classification: 'WRITE',
   displayName: 'Create Message',
   description: 'Send a message to a room',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message to a specific AskHandle chat room, identified by its room UUID. Use to send a reply or note into an existing conversation; optionally attach a sender nickname, email, and phone number. Not idempotent — each call appends a new message.', idempotent: false },
   props: {
     room: roomDropdown,
     body: Property.LongText({

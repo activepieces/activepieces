@@ -6,8 +6,11 @@ import { ObjectCannedACL } from '@aws-sdk/client-s3';
 export const backBlazes3UploadFileAction = createAction({
   auth: backBlazeS3Auth,
   name: 'upload-backblaze-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload an File to bucket.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file to the configured Backblaze B2 (S3-compatible) bucket, returning the stored key and a public URL. Use to persist binary or text content to object storage. Requires the file content and a MIME type; an optional file name may include a full path for sub-directories, and when omitted a timestamped name is generated. Not idempotent: it writes an object on every call, and an omitted name produces a new object each time.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

@@ -1,5 +1,7 @@
+import { SeekPage } from '@activepieces/core-utils'
 import { FlowsContext, ListFlowsContextParams } from '@activepieces/pieces-framework'
-import { FetchError, PopulatedFlow, SeekPage } from '@activepieces/shared'
+import { FetchError, PopulatedFlow } from '@activepieces/shared'
+import { retryFetch } from '../api/retry-fetch'
 
 export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVersionId }: CreateFlowsServiceParams): FlowsContext => {
     return {
@@ -9,7 +11,7 @@ export const createFlowsContext = ({ engineToken, internalApiUrl, flowId, flowVe
                 queryParams.set('externalIds', params.externalIds.join(','))
             }
             const url = `${internalApiUrl}v1/engine/populated-flows?${queryParams.toString()}`
-            const response = await fetch(url, {
+            const response = await retryFetch(url, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${engineToken}`,

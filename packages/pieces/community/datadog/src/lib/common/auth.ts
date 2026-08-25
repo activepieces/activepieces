@@ -1,6 +1,6 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { getDatadogConfiguration } from './helpers';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 import { v1 } from '@datadog/datadog-api-client';
 
 export const datadogAuth = PieceAuth.CustomAuth({

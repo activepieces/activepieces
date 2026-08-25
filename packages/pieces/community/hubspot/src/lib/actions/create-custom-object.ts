@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import {
 	customObjectDropdown,
@@ -8,12 +8,17 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createCustomObjectAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-custome-object',
+	classification: 'WRITE',
 	displayName: 'Create Custom Object',
 	description: 'Creates a custom object in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Create a new record of a selected HubSpot custom object type from the supplied properties. Each call inserts a new record, so it is not idempotent. Requires choosing the custom object type; use Find Custom Object to locate an existing record.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
 		objectProperties: customObjectDynamicProperties,

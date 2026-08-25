@@ -6,9 +6,16 @@ import { aipriseAuth } from '../common/auth';
 export const getBusinessProfileAction = createAction({
   auth: aipriseAuth,
   name: 'get_business_profile',
+  classification: 'READ',
   displayName: 'Get Business Profile',
   description:
     'Fetches a business profile from AiPrise by its ID — including the stored company details, addresses, tags, linked verification sessions, and metadata.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Fetches a single business (company) profile by its ID, returning the stored company details, addresses, tags, linked verification sessions, and metadata. Use this to read back a business profile you created or referenced. Requires the business_profile_id. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     business_profile_id: Property.ShortText({
       displayName: 'Business Profile ID',

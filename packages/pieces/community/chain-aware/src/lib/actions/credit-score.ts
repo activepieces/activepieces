@@ -6,8 +6,14 @@ import { makeRequest } from '../common/client';
 export const creditScore = createAction({
   auth: chainAwareAuth,
   name: 'creditScore',
+  classification: 'READ',
   displayName: 'Credit Score',
   description: "Get a user's credit score",
+  audience: 'both',
+  aiMetadata: {
+    description: 'Look up the ChainAware on-chain credit score for a wallet address on a given network. Choose this to assess a wallet\'s creditworthiness or borrowing history rather than fraud risk. Requires the network name and wallet address. Read-only lookup — idempotent.',
+    idempotent: true,
+  },
   props: {
     network: Property.ShortText({
       displayName: 'Network',

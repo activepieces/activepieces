@@ -13,6 +13,12 @@ export const insertRowAction = createAction({
   name: 'insert-row',
   displayName: 'Insert Row',
   description: 'Insert a row into a table.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Inserts a single new row into a specified Snowflake table (database, schema, table, and a map of column values). Use when adding one record; for many rows at once use Insert Multiple Rows. Not idempotent: each call issues an INSERT, so repeating it appends a duplicate row unless the table enforces uniqueness.',
+    idempotent: false,
+  },
   auth: snowflakeAuth,
   props: {
     database: snowflakeCommonProps.database,

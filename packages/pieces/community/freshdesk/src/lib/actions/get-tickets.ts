@@ -5,8 +5,11 @@ import { freshdeskAuth } from '../..';
 export const getTickets = createAction({
   auth: freshdeskAuth,
   name: 'get_tickets',
+  classification: 'SEARCH',
   displayName: 'Get Tickets',
   description: 'Get Ticket instances from Freshdesk.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the list of support tickets from a Freshdesk account (the default unfiltered tickets endpoint, returning recent tickets). Use to browse or enumerate tickets when you do not have a specific ticket ID or status filter; for status-filtered results use Get All Tickets By Status instead. Read-only and idempotent.', idempotent: true },
   props: {},
 
   async run(context) {

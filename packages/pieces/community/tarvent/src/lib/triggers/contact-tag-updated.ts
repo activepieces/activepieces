@@ -8,6 +8,9 @@ export const contactTagUpdatedTrigger = createTrigger({
   name: 'tarvent_contact_tag_updated',
   displayName: 'Contact Tag Added Or Removed',
   description: 'Triggers when a tag is added or removed from a contact.',
+  aiMetadata: {
+    description: 'Fires when a tag is added to or removed from a contact, with the direction (added vs. removed) selectable. Represents a change in a contact\'s tags.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     include: tarventCommon.include,

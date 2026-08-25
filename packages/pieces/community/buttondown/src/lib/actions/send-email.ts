@@ -13,8 +13,15 @@ import {
 export const sendEmail = createAction({
   auth: buttondownAuth,
   name: 'sendEmail',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send an email to your Buttondown subscribers.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates an email in Buttondown from a subject and Markdown/HTML body, then handles it per the chosen delivery status (e.g. send now vs. schedule for a future publish date, or save as draft). Use to broadcast a newsletter or queue one for later. A publish date is required when status is scheduled. Not idempotent: each call creates and may dispatch a new email.',
+    idempotent: false,
+  },
   props: {
     subject: Property.ShortText({
       displayName: 'Subject',

@@ -10,7 +10,7 @@ describe('flow with looping', () => {
         const codeAction = buildCodeAction({
             name: 'echo_step',
             input: {
-                'index': '{{loop.index}}',
+                'index': '{{loop.output.index}}',
             },
         })
         const result = await flowExecutor.execute({
@@ -38,7 +38,7 @@ describe('flow with looping', () => {
             },
             nextAction: buildSimpleLoopAction({
                 name: 'loop',
-                loopItems: '{{ echo_step.array }}',
+                loopItems: '{{ echo_step.output.array }}',
                 firstLoopAction: buildCodeAction({
                     name: 'runtime',
                     input: {},
@@ -86,6 +86,49 @@ describe('flow with looping', () => {
         expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
         expect(result.steps.loop).toBeUndefined()
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
+    })
+
+    it('should keep every nested step output inside its iteration', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [4,5,6] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: {
+                        'index': '{{loop.output.index}}',
+                    },
+                }),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        const loopOut = result.steps.loop as LoopStepOutput
+        expect(loopOut.output?.iterations.map((iteration) => iteration.echo_step?.output)).toEqual([
+            { index: 1 },
+            { index: 2 },
+            { index: 3 },
+        ])
+    })
+
+    it('should not build a circular graph when a nested step references the loop output', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({
+                name: 'loop',
+                loopItems: '{{ [4,5,6] }}',
+                firstLoopAction: buildCodeAction({
+                    name: 'echo_step',
+                    input: {
+                        'data': '{{loop.output}}',
+                    },
+                }),
+            }),
+            executionState: FlowExecutorContext.empty(),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
+        })
+
+        expect(() => JSON.stringify(result.steps)).not.toThrow()
     })
 
 })

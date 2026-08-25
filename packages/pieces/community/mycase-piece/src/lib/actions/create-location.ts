@@ -7,6 +7,8 @@ export const createLocation = createAction({
   name: 'create_location',
   displayName: 'Create Location',
   description: 'Creates a new location in MyCase',
+  audience: 'both',
+  aiMetadata: { description: 'Always inserts a new location with the given name and optional address fields. Not idempotent: calling twice with the same name creates two locations, so use Find or Create Location when you want to avoid duplicates.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Location Name',

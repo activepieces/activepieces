@@ -55,8 +55,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props
 export const newRowCreatedTrigger = createTrigger({
 	auth: codaAuth,
 	name: 'new-row-created',
+	classification: 'READ',
 	displayName: 'New Row Created',
 	description: 'Triggers when a new row is added to the selected table.',
+	aiMetadata: {
+		description: 'Fires when a new row is created in the selected Coda table, emitting that row. Polls and dedupes by row creation time, so it captures rows added since the last check.',
+	},
 	props: {
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,

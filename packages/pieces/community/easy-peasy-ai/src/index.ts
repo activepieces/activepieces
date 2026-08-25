@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { easyPeasyAiAuth } from './lib/common/auth';
 import { customGeneratorText } from './lib/actions/custom-generator-text';
 import { getAiTranscription } from './lib/actions/get-ai-transcription';

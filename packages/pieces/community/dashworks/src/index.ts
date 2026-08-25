@@ -1,6 +1,6 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { generateAnswerAction } from "./lib/actions/generate-answer";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 import { dashworksAuth } from "./lib/common/auth";

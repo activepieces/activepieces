@@ -7,6 +7,9 @@ export const prospectBlacklisted = createTrigger({
   name: 'prospect_blacklisted',
   displayName: 'Prospect Blacklisted',
   description: 'Triggers when a prospect is added to the blacklist',
+  aiMetadata: {
+    description: 'Fires when a prospect is added to the Woodpecker blacklist, meaning Woodpecker will no longer email that contact. Represents a suppression event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_blacklisted',

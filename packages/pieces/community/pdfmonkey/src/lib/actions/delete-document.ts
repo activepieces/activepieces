@@ -9,6 +9,8 @@ export const deleteDocumentAction = createAction({
 	name: 'deleteDocument',
 	displayName: 'Delete Document',
 	description: 'Deletes a document.',
+	audience: 'both',
+	aiMetadata: { description: 'Permanently delete a generated document in PDFMonkey by its document ID. Use to clean up documents no longer needed. The document ID is required; deletion is irreversible, and a repeat call for an already-deleted ID is not a successful no-op, so treat it as not idempotent.', idempotent: false },
 	props: {
 		document_id: documentIdDropdown,
 	},

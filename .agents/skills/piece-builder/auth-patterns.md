@@ -2,7 +2,9 @@
 
 ## API Key (SecretText)
 
-Most common for simple APIs. The `auth` value is a plain string.
+Most common. Use for simple APIs that issue a single API key or token.
+
+Inside `validate`, `auth` is a plain string. Inside actions/triggers, it's the full connection object — read the secret via `context.auth.secret_text`.
 
 ```typescript
 import { PieceAuth } from '@activepieces/pieces-framework';
@@ -27,7 +29,7 @@ export const myAppAuth = PieceAuth.SecretText({
 });
 ```
 
-**Access in actions/triggers:** `context.auth` is a string directly.
+**Access in actions/triggers:** `context.auth.secret_text` (string).
 
 **Real example:** `packages/pieces/community/stripe/src/index.ts`
 
@@ -55,20 +57,31 @@ export const myAppAuth = PieceAuth.OAuth2({
 });
 ```
 
-**Access in actions/triggers:** `context.auth.access_token`
+**Access in actions/triggers:**
+- `context.auth.access_token` — the OAuth2 access token
+- `context.auth.props?.['<key>']` — when the auth defines extra `props` (e.g. data center, region, subdomain)
+- `context.auth.data` — the raw token response from the provider (refresh token, scope, etc.)
 
-For custom API call actions with OAuth2:
+```typescript
+async run(context) {
+  const token = context.auth.access_token;
+  const region = context.auth.props?.['region'] as string;
+  // ...
+}
+```
+
+For custom API call actions with OAuth2 — `authMapping`'s `auth` is already typed from `auth: myAppAuth`, so read `auth.access_token` directly, no cast:
 ```typescript
 createCustomApiCallAction({
   baseUrl: () => 'https://api.example.com',
   auth: myAppAuth,
   authMapping: async (auth) => ({
-    Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+    Authorization: `Bearer ${auth.access_token}`,
   }),
 })
 ```
 
-**Real example:** `packages/pieces/community/github/src/index.ts`
+**Real example:** `packages/pieces/community/github/src/index.ts`, `packages/pieces/community/zoho-campaigns/` (OAuth2 with extra `props`)
 
 ---
 
@@ -109,13 +122,13 @@ export const myAppAuth = PieceAuth.BasicAuth({
 });
 ```
 
-**Access:** `context.auth.username`, `context.auth.password`
+**Access in actions/triggers:** `context.auth.username`, `context.auth.password`
 
 ---
 
 ## Custom Auth
 
-For APIs needing multiple fields (e.g., instance URL + API key, or region + credentials).
+For APIs needing multiple fields — e.g. instance URL + API key, or region + credentials.
 
 ```typescript
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
@@ -149,11 +162,106 @@ export const myAppAuth = PieceAuth.CustomAuth({
 });
 ```
 
-**Access:** `context.auth.base_url`, `context.auth.api_key`
+**Access in actions/triggers:** the fields live under `props`, not on `auth` directly.
+
+```typescript
+async run(context) {
+  const baseUrl = context.auth.props.base_url;
+  const apiKey = context.auth.props.api_key;
+  // ...
+}
+```
+
+Inside `validate`, the callback receives the flat shape — `auth.base_url`, `auth.api_key`. Inside actions/triggers, use `context.auth.props.<field>`.
 
 **Allowed prop types in CustomAuth:** ShortText, LongText, SecretText, Number, Checkbox, StaticDropdown, StaticMultiSelectDropdown, MarkDown.
 
-**Real example:** `packages/pieces/community/wordpress/src/index.ts`
+**Real example:** `packages/pieces/community/wordpress/src/index.ts`, `packages/pieces/community/mattermost/src/index.ts`
+
+---
+
+### Custom Auth with Token Refresh
+
+Use this when the API requires a login call to get a short-lived token (e.g. username/password → JWT). Without caching, every action triggers a login request and can cause **429 rate limit errors**.
+
+Add a `refresh` field to cache the token server-side. Activepieces renews it automatically up to 15 minutes before expiry (clamped to half the token lifetime for short-lived tokens).
+
+```typescript
+export const myAppAuth = PieceAuth.CustomAuth({
+  displayName: 'Connection',
+  required: true,
+  props: {
+    baseUrl: Property.ShortText({ displayName: 'Instance URL', required: true }),
+    username: Property.ShortText({ displayName: 'Username', required: true }),
+    password: PieceAuth.SecretText({ displayName: 'Password', required: true }),
+  },
+  validate: async ({ auth }) => {
+    // validate as usual
+  },
+  refresh: {
+    generate: async ({ auth }) => {
+      // auth is the flat props shape: auth.baseUrl, auth.username, etc.
+      const res = await httpClient.sendRequest<{ token: string }>({
+        method: HttpMethod.POST,
+        url: `${auth.baseUrl}/api/auth/login`,
+        body: { username: auth.username, password: auth.password },
+      });
+      return {
+        access_token: res.body.token,
+        // expires_in: 3600, // optional, seconds — omit if API doesn't return it
+      };
+    },
+    defaultExpiresIn: 3300, // fallback TTL in seconds (default 3300 = 55 min)
+  },
+});
+```
+
+**Access in actions/triggers:** `context.auth.access_token` holds the cached token. Still use `context.auth.props.<field>` for the raw credential fields.
+
+```typescript
+async run(context) {
+  const token = context.auth.access_token; // server-cached, no login call here
+  const baseUrl = context.auth.props.baseUrl;
+  await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${baseUrl}/api/resource`,
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+```
+
+**Real example:** `packages/pieces/community/umami/src/lib/auth.ts`
+
+---
+
+## Connection Identifier
+
+`getConnectionIdentifier` is an optional callback available on every auth type (`SecretText`, `BasicAuth`, `OAuth2`, `CustomAuth`). It resolves a human-readable label for a connection (e.g. the account email, or Slack's "display-name (workspace)"), shown in the connections UI so users can tell accounts apart.
+
+```typescript
+export const myAppAuth = PieceAuth.OAuth2({
+  required: true,
+  authUrl: 'https://app.example.com/oauth/authorize',
+  tokenUrl: 'https://app.example.com/oauth/token',
+  scope: ['read', 'write'],
+  getConnectionIdentifier: async ({ auth }) => {
+    const response = await httpClient.sendRequest<{ email: string }>({
+      method: HttpMethod.GET,
+      url: 'https://api.example.com/v1/me',
+      headers: { Authorization: `Bearer ${auth.access_token}` },
+    });
+    return response.body.email;
+  },
+});
+```
+
+**Rules:**
+- Wrap risky calls in `try/catch` and resolve to `undefined` when nothing can be determined. This must stay best-effort: a thrown error blocks the connection save.
+- For `OAuth2`, Activepieces already derives an identifier from the token response's OIDC claims when present. Add this hook only when the provider needs handling the generic path can't cover (e.g. Slack has no per-user OIDC claim, so it needs a workspace name plus a follow-up `users.info` call).
+- Add it only when the provider exposes an account/workspace label worth surfacing (a bare API key with no "who am I" endpoint has nothing to resolve).
+- `auth` in the callback matches the same shape as `validate` (flat string for SecretText, flat props object for CustomAuth), not the full connection object.
+
+**Real example:** `packages/pieces/community/slack/src/lib/auth.ts`
 
 ---
 
@@ -167,8 +275,8 @@ auth: PieceAuth.None(),
 ```
 
 When auth is `None`:
-- Do NOT add `auth:` to `createAction()` / `createTrigger()`
-- Do NOT reference `context.auth` in the `run` function
-- Dropdowns do NOT receive an `auth` parameter
+- Omit `auth:` from `createAction()` / `createTrigger()`
+- `context.auth` is unavailable in `run`
+- Dropdowns receive no `auth` parameter
 
 **Real example:** `packages/pieces/core/qrcode/src/index.ts`

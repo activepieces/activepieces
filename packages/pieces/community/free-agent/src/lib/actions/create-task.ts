@@ -9,6 +9,8 @@ import { freeAgentAuth } from '../auth';
 export const freeAgentCreateTask = createAction({
   displayName: 'Create Task',
   description: 'Create a task inside a project',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new task within a specific FreeAgent project. Requires a project (selected from the account) and a task name; optionally sets billable status, billing rate/period, and task status. Not idempotent — each call adds a new task, so guard against duplicates.', idempotent: false },
   auth: freeAgentAuth,
   name: 'create_task',
   props: {

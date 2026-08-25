@@ -7,6 +7,11 @@ export const findTask = createAction({
   name: 'findTask',
   displayName: 'Find Task',
   description: 'Find task by fields.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Searches the tasks of a given Planner plan and returns those whose title contains the given text (case-insensitive substring match). Use to locate a task ID within a known plan. Read-only and idempotent; both plan ID and title are required.',
+    idempotent: true,
+  },
   props: {
     planId: PlanDropdown({ required: true }),
     title: Property.ShortText({

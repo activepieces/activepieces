@@ -52,6 +52,9 @@ export const newLeadSubmission = createTrigger({
   displayName: 'new lead submission',
   description:
     'Trigger when a new lead is captured through the assistant conversation',
+  aiMetadata: {
+    description: 'Fires when a GuideLite assistant captures a new lead (contact details such as email, phone, or location) during a conversation, scoped to the selected assistant.',
+  },
   props,
   sampleData: {
     createdDate: '2024-04-25T10:13:12.504Z',

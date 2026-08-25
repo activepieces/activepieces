@@ -57,6 +57,9 @@ export const dealEntersStage = createTrigger({
     name: 'deal_enters_stage',
     displayName: 'Deal Enters New Stage',
     description: 'Fires when a deal transitions into a specified pipeline stage by polling for updates.',
+    aiMetadata: {
+      description: 'Fires when a deal moves into a specific pipeline stage configured on the trigger, detecting the transition by comparing each deal\'s current stage against its previously observed stage. Each event represents one deal that just entered the target stage; deals already in the stage do not re-fire.',
+    },
     props: {
         pipeline_id: zendeskSellCommon.pipeline(true),
         stage_id: zendeskSellCommon.stage(true),

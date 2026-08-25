@@ -10,7 +10,7 @@ import { updateConversationStateAction } from './lib/actions/update-conversation
 import { findConversationAction } from './lib/actions/find-conversation';
 import { newContactTrigger } from './lib/triggers/new-contact';
 import { newConversationTrigger } from './lib/triggers/new-conversation';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const crisp = createPiece({
 	displayName: 'Crisp',

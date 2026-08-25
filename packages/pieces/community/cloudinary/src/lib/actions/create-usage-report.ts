@@ -7,8 +7,11 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createUsageReport = createAction({
   auth: cloudinaryAuth,
   name: 'createUsageReport',
+  classification: 'READ',
   displayName: 'Create Usage Report',
   description: 'Generate a comprehensive report of account usage and quotas including storage, bandwidth, transformations, requests, and add-on usage.',
+  audience: 'both',
+  aiMetadata: { description: 'Reads the Cloudinary account usage and quota figures (storage, bandwidth, transformations, requests, add-ons) for an optional date within the last three months. Use to check current consumption against plan limits. Read-only and idempotent; despite the name it creates nothing.', idempotent: true },
   props: {
     date: Property.DateTime({
       displayName: 'Report Date',

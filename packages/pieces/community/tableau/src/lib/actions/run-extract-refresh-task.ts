@@ -13,6 +13,8 @@ export const runExtractRefreshTask = createAction({
   name: 'run_extract_refresh_task',
   displayName: 'Run Extract Refresh Task',
   description: 'Runs the specified extract refresh task and returns job information',
+  audience: 'both',
+  aiMetadata: { description: 'Triggers an existing extract refresh task (by task ID) to run immediately, queuing a background job on the Tableau site and returning the new job\'s identifier. Use to force an on-demand refresh of a scheduled extract rather than waiting for its schedule. Not idempotent: each call enqueues a new refresh job.', idempotent: false },
   auth: tableauAuth,
   props: {
     taskId: Property.Dropdown({

@@ -15,6 +15,8 @@ export const chargePointPersonalSmartChargingPreferencesReadAction = createActio
   name: 'chargePointPersonalSmartChargingPreferencesRead',
   displayName: 'Resources - Charge Points - Charge Point Personal Smart Charging Preferences Read',
   description: 'Get personal smart charging preferences of the charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Read the currently configured personal smart-charging preferences for a charge point, by charge point ID. Read-only and safe to retry. Use the matching update action to change these preferences, and the available-modes listing to see which modes can be set.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
+import { newFollowerTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
@@ -64,8 +65,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Re
 export const newFollowerOnAccount = createTrigger({
   auth: blueskyAuth,
   name: 'newFollowerOnAccount',
+  classification: 'READ',
   displayName: 'New Follower on Account',
   description: 'Triggers when someone new follows your Bluesky account',
+  aiMetadata: {
+    description: 'Fires when a new account follows the authenticated Bluesky account; each event represents one new follower and carries that follower\'s profile details.',
+  },
   props: {},
   sampleData: {
     did: 'did:plc:example123',
@@ -73,10 +78,10 @@ export const newFollowerOnAccount = createTrigger({
     displayName: 'New Follower',
     description: 'A new user who just followed your account',
     avatar: 'https://cdn.bsky.app/img/avatar/plain/did:plc:example123/example@jpeg',
-    banner: 'https://cdn.bsky.app/img/banner/plain/did:plc:example123/example@jpeg',
-    followersCount: 42,
-    followsCount: 156,
-    postsCount: 78,
+    banner: '',
+    followersCount: 0,
+    followsCount: 0,
+    postsCount: 0,
     indexedAt: '2024-01-01T12:00:00.000Z',
     viewer: {
       muted: false,
@@ -88,6 +93,7 @@ export const newFollowerOnAccount = createTrigger({
     createdAt: '2023-06-01T12:00:00.000Z'
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newFollowerTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);

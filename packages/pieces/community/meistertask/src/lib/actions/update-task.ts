@@ -2,13 +2,15 @@ import { meistertaskAuth } from '../auth';
 import { meisterTaskCommon, makeRequest } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { Project } from '@activepieces/shared';
+import { Project } from '@activepieces/pieces-framework';
 
 export const updateTask = createAction({
   auth: meistertaskAuth,
   name: 'update_task',
   displayName: 'Update Task',
   description: 'Updates an existing task',
+  audience: 'both',
+  aiMetadata: { description: 'Update fields on an existing MeisterTask task identified by task ID — name, notes, status (Open, Completed, or Trashed), assignee, or due date. Use to change or close out a known task; only the fields you supply are modified. Idempotent: re-sending the same field values leaves the task in the same state.', idempotent: true },
   props: {
     Project: meisterTaskCommon.project,
     task_id: meisterTaskCommon.task_id,

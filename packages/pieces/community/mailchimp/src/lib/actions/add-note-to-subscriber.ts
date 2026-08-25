@@ -6,8 +6,11 @@ import { mailchimpAuth } from '../..';
 export const addNoteToSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'add_note_to_subscriber',
+  classification: 'WRITE',
   displayName: 'Add Note to Subscriber',
   description: 'Add a note to a subscriber in your Mailchimp audience.',
+  audience: 'both',
+  aiMetadata: { description: 'Appends an internal note to a subscriber, identified by email within a given audience (list). Use to record context or annotations on a contact. Not idempotent: each call adds a new note even if the content is identical.', idempotent: false },
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
     email: Property.ShortText({

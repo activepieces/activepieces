@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mongodbAuth } from '../..';
+import { deleteDocumentsOutputSchema } from '../output-schemas';
 import { mongodbCommon, mongodbConnect } from '../common';
 
 export default createAction({
@@ -7,6 +8,9 @@ export default createAction({
   name: 'delete_documents',
   displayName: 'Delete Documents',
   description: 'Delete documents from a collection',
+  audience: 'both',
+  outputSchema: deleteDocumentsOutputSchema,
+  aiMetadata: { description: 'Removes every document matching a filter from a MongoDB collection via deleteMany. Use to delete records in bulk; an empty filter would match and delete all documents in the collection, so scope the filter carefully. The filter is required. Mutating and destructive; repeating the call deletes whatever now matches, so it is not idempotent.', idempotent: false },
   props: {
     database: mongodbCommon.database,
     collection: mongodbCommon.collection(),

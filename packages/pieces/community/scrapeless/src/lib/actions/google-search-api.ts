@@ -5,8 +5,11 @@ import { createScrapelessClient } from '../services/scrapeless-api-client';
 export const googleSearchApi = createAction({
   auth: scrapelessApiAuth,
   name: 'google_search_api',
+  classification: 'SEARCH',
   displayName: 'Google Search',
   description: 'Retrieves search result data for any query.',
+  audience: 'both',
+  aiMetadata: { description: 'Runs a Google web search through Scrapeless and returns the structured results (organic listings, etc.) for a given query. Choose this to programmatically fetch live Google search results when you need ranked web matches rather than scraping a specific page; supports Google advanced operators (site:, inurl:, intitle:) inside the query and optional language/country localization. Read-only and idempotent: the same query returns the same results with no side effects.', idempotent: true },
 
   props: {
     q: Property.ShortText({

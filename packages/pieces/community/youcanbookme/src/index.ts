@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { newBooking } from './lib/triggers/new-booking';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createprofile } from './lib/actions/create-profile';
 import { retrieveBookingById } from './lib/actions/retrieve-booking-by-id';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

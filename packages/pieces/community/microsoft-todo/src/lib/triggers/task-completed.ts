@@ -17,8 +17,12 @@ interface WebhookNotification {
 export const taskCompletedTrigger = createTrigger({
     auth: microsoftToDoAuth,
     name: 'task_completed',
+    classification: 'READ',
     displayName: 'Task Completed',
     description: 'Triggers when a task is completed in a specific list.',
+    aiMetadata: {
+        description: 'Fires when a task in the selected Microsoft To Do task list is marked completed. Backed by a Microsoft Graph change-notification webhook on the list; each event represents one task whose status became completed.',
+    },
     props: {
         task_list_id: Property.Dropdown({
    auth: microsoftToDoAuth,

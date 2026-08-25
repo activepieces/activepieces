@@ -8,6 +8,8 @@ export const get_vehicle = createAction({
     auth: simplirouteAuth,
     displayName: 'Get Vehicle',
     description: 'Retrieve information of a specific vehicle.',
+    audience: 'both',
+    aiMetadata: { description: 'Retrieve a single vehicle by its ID. Read-only and idempotent. Use when you already know the vehicle ID; to list all vehicles use the get-vehicles action.', idempotent: true },
     props: {
         vehicle_id: Property.Number({ 
             displayName: 'vehicle_id', 

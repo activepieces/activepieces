@@ -8,6 +8,8 @@ export const findAttachment = createAction({
   name: 'find_attachment',
   displayName: 'Find Attachment',
   description: 'Finds an attachment by searching',
+  audience: 'both',
+  aiMetadata: { description: 'Look up attachments on a specific MeisterTask task and return the first match. With a name supplied it returns the first attachment whose name contains that text (case-insensitive); leaving the name empty returns the first attachment on the task. Read-only and idempotent. Requires the task ID; returns null if no attachment matches.', idempotent: true },
   props: {
     task_id: meisterTaskCommon.task_id,
     name: Property.ShortText({

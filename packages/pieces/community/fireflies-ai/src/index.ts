@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { findMeetingByIdAction } from './lib/actions/find-meeting-by-id';
 import { findRecentMeetingAction } from './lib/actions/find-recent-meeting';

@@ -84,6 +84,9 @@ export const freeAgentNewContactTrigger = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact appears in FreeAgent, detected by polling. Can be filtered to a contact view (active, clients, suppliers, hidden, project-based, etc.) or left to watch all contacts.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

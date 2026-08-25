@@ -1,3 +1,4 @@
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
 
@@ -16,13 +17,28 @@ const StepNodeDisplayName = ({
   pieceDisplayName: string;
   stepName: string;
 }) => {
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
+  const isHorizontal = canvasOrientation === 'horizontal';
   return (
-    <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-      <div className=" flex items-center justify-between min-w-0 w-full">
+    <div
+      className={cn('grow flex flex-col justify-center min-w-0 w-full', {
+        'items-start': !isHorizontal,
+        'items-center': isHorizontal,
+      })}
+    >
+      <div
+        className={cn('flex items-center min-w-0 w-full', {
+          'justify-between': !isHorizontal,
+          'justify-center': isHorizontal,
+        })}
+      >
         <TextWithTooltip tooltipMessage={stepDisplayName} key={stepDisplayName}>
           <div
             className={cn('text-sm truncate grow shrink ', {
               'text-accent-foreground/70': isSkipped,
+              'text-center': isHorizontal,
             })}
           >
             {stepIndex}. {stepDisplayName}

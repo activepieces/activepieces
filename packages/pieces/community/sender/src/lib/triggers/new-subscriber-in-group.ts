@@ -6,8 +6,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newSubscriberInGroupTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_subscriber_in_group',
+  classification: 'READ',
   displayName: 'New Subscriber in Group',
   description: 'Fires when a subscriber is added to a specific group/list',
+  aiMetadata: {
+    description: 'Fires when a subscriber is added to one specific group/list (identified by group ID) in the connected Sender account, representing that contact joining the monitored group.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     groupId: Property.ShortText({

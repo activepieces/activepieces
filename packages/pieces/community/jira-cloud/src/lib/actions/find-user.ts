@@ -8,6 +8,12 @@ export const findUserAction = createAction({
     name:'find-user',
     displayName:'Find User',
     description:'Finds an existing user.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Search Jira users by a keyword matched against display name and email, returning all matches plus a found flag. Use to resolve a person\'s name or email into a Jira accountId before assigning issues or adding watchers. Read-only and idempotent.',
+        idempotent: true,
+    },
     props:{
         keyword:Property.ShortText({
             displayName:'Keyword',

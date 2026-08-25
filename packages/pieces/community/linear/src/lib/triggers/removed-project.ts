@@ -5,8 +5,12 @@ import { makeClient } from '../common/client';
 export const linearRemovedProject = createTrigger({
   auth: linearAuth,
   name: 'removed_project',
+  classification: 'READ',
   displayName: 'Removed Project',
   description: 'Triggers when an existing Linear project is removed',
+  aiMetadata: {
+    description: 'Fires when an existing project is deleted anywhere in the Linear workspace. Represents the project as it was at the time of removal.',
+  },
   props: {},
   sampleData: {
     action: 'remove',
@@ -34,6 +38,13 @@ export const linearRemovedProject = createTrigger({
       createdAt: '2023-09-05T12:00:00.000Z',
       updatedAt: '2023-09-05T12:00:00.000Z',
     },
+    type: 'Project',
+    actor: { id: 'user_1', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-05T12:00:00.000Z',
+    url: 'https://linear.app/test-team/project/project_1',
+    organizationId: 'org_1',
+    webhookTimestamp: 1693915200000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -67,7 +78,7 @@ export const linearRemovedProject = createTrigger({
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown };
     if (body.action === 'remove') {
-      return [body.data];
+      return [body];
     }
     return [];
   },

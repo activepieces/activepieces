@@ -6,6 +6,12 @@ export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a product in Sperse CRM of a given type (General, Event, Subscription, or Digital), with pricing, currency, unit, and a subscription/payment-cycle option. Requires a name and a unique SKU (product code); pricing and cycle fields are required for certain product types. Not idempotent: each call submits another product.',
+    idempotent: false,
+  },
   auth: sperseAuth,
   props: {
     productType: Property.StaticDropdown({

@@ -14,6 +14,8 @@ export const chargePointStopChargingSessionAction = createAction({
   name: 'chargePointStopChargingSession',
   displayName: 'Actions - Charge Point - Stop Charging Session',
   description: 'Stop a charging session.',
+  audience: 'both',
+  aiMetadata: { description: 'Remotely stop an active charging session on a charge point by session id; set force=true to end it in the backend regardless of the charge point response. Use to terminate an in-progress charge. Stopping an already-stopped session is effectively a no-op, so it is safe to retry for a given session id.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

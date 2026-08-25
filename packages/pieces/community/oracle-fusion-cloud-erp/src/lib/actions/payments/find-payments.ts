@@ -7,6 +7,8 @@ export const findPayments = createAction({
     name: 'find_payments',
     displayName: 'Find Payments',
     description: 'Search for payments with optional filters.',
+    audience: 'both',
+    aiMetadata: { description: 'Read-only search of Oracle Fusion accounts-payable payments, optionally filtered by payment number, payee, business unit, status (Negotiable, Voided, Stopped, Cleared), or a payment-date range, with limit/offset paging. Use to look up or list payments; it never modifies data. To change a payment use Update Payment instead.', idempotent: true },
     props: {
         paymentNumber: Property.Number({
             displayName: 'Payment Number',

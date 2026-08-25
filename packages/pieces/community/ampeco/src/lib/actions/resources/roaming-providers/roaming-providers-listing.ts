@@ -15,6 +15,8 @@ export const roamingProvidersListingAction = createAction({
   name: 'roamingProvidersListing',
   displayName: 'Resources - Roaming Providers - Listing',
   description: 'Get all Roaming Providers.',
+  audience: 'both',
+  aiMetadata: { description: 'List AMPECO roaming providers (external EV charging network partners), optionally filtered by platform ID, country code, or party ID. Read-only and idempotent. Enable pagination to fetch all matches across pages. Use this to discover roaming provider IDs before reading, updating, or deleting one.', idempotent: true },
   props: {
         
   filter__platformId: Property.Number({

@@ -49,8 +49,13 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof appfollowAuth>, 
 export const newReview = createTrigger({
   auth: appfollowAuth,
   name: 'newReview',
+  classification: 'READ',
   displayName: 'New Review',
   description: 'Triggered when a new review is added',
+  aiMetadata: {
+    description:
+      'Fires when a new app store review is posted for the selected application and collection. Each event represents a single newly created review.',
+  },
   props,
   sampleData: {
     content: '. :)',

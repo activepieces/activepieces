@@ -7,6 +7,8 @@ export const uploadVideo = createAction({
   name: 'upload_video',
   displayName: 'Upload Video',
   description: 'Upload a video to your Vimeo account',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a new video to the authenticated user\'s Vimeo account by pulling it from a public video URL (the file must be reachable via that link; this is a pull-based upload, not a direct file transfer). Use to publish video content programmatically, optionally setting privacy, license, content rating, language, and a destination folder. Not idempotent: each call creates a separate video, so repeating it produces duplicates. Requires a token with the upload scope.', idempotent: false },
   auth: vimeoAuth,
   props: {
     videoUrl: Property.ShortText({

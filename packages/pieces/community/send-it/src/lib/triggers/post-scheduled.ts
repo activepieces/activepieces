@@ -18,8 +18,13 @@ type ScheduledPayload = {
 export const postScheduled = createTrigger({
   auth: sendItAuth,
   name: 'post_scheduled',
+  classification: 'READ',
   displayName: 'Post Scheduled',
   description: 'Triggers when a post is scheduled for future publishing',
+  aiMetadata: {
+    description:
+      'Fires when a post is queued in SendIt for future publishing, representing a newly created schedule. Each event carries the schedule ID, target platforms, content, and the scheduled publish time.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

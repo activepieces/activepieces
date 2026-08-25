@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createTaskAction } from './lib/actions/create-task.action';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { completeTaskAction } from './lib/actions/complete-task.action';
 import { deleteTaskAction } from './lib/actions/delete-task.action';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';

@@ -7,6 +7,8 @@ export const createDraftPost = createAction({
     name: 'create_draft_post',
     displayName: 'Create Draft/Post',
     description: 'Create a draft message or post in Missive, with option to send',
+    audience: 'both',
+    aiMetadata: { description: 'Compose a message in Missive across a chosen channel (email, SMS, WhatsApp, live chat, custom channel, Messenger, or Instagram), either saving it as a draft or sending it immediately (optionally scheduled for a future timestamp). Use to send or queue an outbound message; sender/recipient fields and any account IDs depend on the selected message type. Not idempotent: each call creates a new draft and, if send is enabled, dispatches a message.', idempotent: false },
     auth: missiveAuth,
     props: {
     message_type: Property.StaticDropdown({

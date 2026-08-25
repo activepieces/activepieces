@@ -9,6 +9,12 @@ export const enrollAUserIntoAUserGroup = createAction({
   name: 'enrollAUserIntoAUserGroup',
   displayName: 'Enroll a User Into a User Group',
   description: 'Enroll a user into a user group by user email or user ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Enrolls a SkyPrep user into a user group, identifying the user either by email or by user ID (selectable via the identifier type), with an optional enrollment expiration date. Use to add a learner to a group so they inherit its course assignments. Not idempotent: each call registers a group enrollment as a side effect.',
+    idempotent: false,
+  },
   props: {
     user_identifier: Property.StaticDropdown({
       displayName: 'User Identifier Type',

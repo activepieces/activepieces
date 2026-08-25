@@ -5,7 +5,7 @@ import {
 import { status } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const statusAction = createAction({
@@ -13,6 +13,8 @@ export const statusAction = createAction({
   auth: sendyAuth,
   displayName: 'Get Subscription Status',
   description: 'Get the subscription status of a user',
+  audience: 'both',
+  aiMetadata: { description: 'Looks up the subscription state (e.g. subscribed, unsubscribed, unconfirmed, bounced, complained) of a subscriber, identified by email, within a specific Sendy list. Use to check whether a contact is on a list before acting. Requires the list and a valid email; read-only and idempotent.', idempotent: true },
   props: {
     list: Property.Dropdown({
       auth: sendyAuth,
@@ -31,7 +33,7 @@ export const statusAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
+      email: z.string().check(z.email()),
     });
 
     return await status(context.auth, {

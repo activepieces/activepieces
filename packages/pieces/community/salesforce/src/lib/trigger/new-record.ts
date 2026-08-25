@@ -20,6 +20,9 @@ export const newRecord = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when there is new record',
+  aiMetadata: {
+    description: 'Fires once for each new record created for the selected Salesforce object, detected by polling for records whose CreatedDate is later than the last poll. Each event emits all fields of the created record. An optional SOQL where-clause condition can further filter which records trigger the event. Does not fire on updates to existing records.',
+  },
   props: {
     object: salesforcesCommon.object,
     conditions: Property.LongText({

@@ -7,8 +7,11 @@ import { AttioRecordResponse } from '../common/types';
 
 export const findRecordAction = createAction({
 	name: 'find_record',
+	classification: 'SEARCH',
 	displayName: 'Find Record',
 	description: 'Search for records in Attio using filters and return matching results.',
+	audience: 'both',
+	aiMetadata: { description: 'Looks up records of a chosen Attio object type. Operates in two modes: supply a Record ID to fetch that exact record (all attribute filters are then ignored), or leave it empty and provide attribute filters to query for matching records (empty filters return all records). Use this to resolve a record before updating or referencing it. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

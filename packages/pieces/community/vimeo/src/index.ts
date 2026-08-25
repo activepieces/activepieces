@@ -8,7 +8,7 @@ import { newVideoLiked } from './lib/triggers/new-video-liked';
 import { newVideoBySearch } from './lib/triggers/new-video-by-search';
 import { newVideoOfMine } from './lib/triggers/new-video-of-mine';
 import { newVideoByUser } from './lib/triggers/new-video-by-user';
-import { PieceCategory } from "@activepieces/shared";
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 
 export const vimeo = createPiece({

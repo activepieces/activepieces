@@ -6,8 +6,14 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const getRecord = createAction({
 	name: 'get_record',
+	classification: 'READ',
 	displayName: 'Get a Record',
 	description: 'Retrieves a specific record by ID',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Fetches a single SmartSuite record by its record ID, with field values resolved against the live table schema. Use when an agent already has a record ID and needs its current field values; requires the solution, table, and record ID. Idempotent — it only reads data.',
+		idempotent: true,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

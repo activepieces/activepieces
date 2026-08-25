@@ -14,6 +14,8 @@ export const deleteRoamingCustomTariffFilterAction = createAction({
   name: 'deleteRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Delete Roaming Custom Tariff Filter',
   description: 'Delete a custom tariff filter.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a custom tariff filter from a roaming operator, identified by the roaming operator ID and filter ID. Destructive and irreversible; effectively idempotent since deleting an already-removed filter has no further effect, though it may return a not-found error. Confirm both IDs before calling.', idempotent: true },
   props: {
         
   roamingOperator: Property.Number({

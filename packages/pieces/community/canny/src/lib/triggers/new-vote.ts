@@ -4,6 +4,10 @@ export const newVoteTrigger = createCannyTrigger({
   name: 'new_vote',
   displayName: 'New Vote',
   description: 'Triggers when a user votes on a post.',
+  aiMetadata: {
+    description:
+      'Fires when a user casts a vote on a Canny post, delivering the vote with its voter and the parent post. Use to react to changes in demand or support for feedback.',
+  },
   eventType: 'vote.created',
   sampleData: {
     created: '2026-04-06T10:47:47.056Z',

@@ -9,6 +9,8 @@ export const createIssue = createAction({
   name: 'create_issue',
   displayName: 'Create Issue',
   description: 'Creates a new issue in a repository.',
+  audience: 'both',
+  aiMetadata: { description: 'Opens a new issue on a Gitea repository with a title and optional body. Use to file a bug, task, or feature request. Requires the target repository; each call creates a separate issue, so it is not idempotent.', idempotent: false },
   props: {
     repository: giteaCommon.repositoryDropdown,
     title: Property.ShortText({

@@ -1,7 +1,7 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   RouterAction,
   BranchExecutionType,
-  isNil,
   RouterActionSettings,
 } from '@activepieces/shared';
 import { t } from 'i18next';

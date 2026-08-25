@@ -6,8 +6,14 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const createRecord = createAction({
 	name: 'create_record',
+	classification: 'WRITE',
 	displayName: 'Create a Record',
 	description: 'Creates a new record in the specified table.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Adds a new record (row) to a SmartSuite table, with field values mapped against the live table schema. Use when an agent needs to insert data into a SmartSuite database; requires the target solution and table, plus the field values to set. Not idempotent — each call creates a separate record.',
+		idempotent: false,
+	},
 	auth: smartsuiteAuth,
 	props: {
 		solutionId: smartsuiteCommon.solutionId,

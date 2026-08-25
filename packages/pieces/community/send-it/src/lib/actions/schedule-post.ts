@@ -12,8 +12,15 @@ import {
 export const schedulePost = createAction({
   auth: sendItAuth,
   name: 'schedule_post',
+  classification: 'WRITE',
   displayName: 'Schedule Post',
   description: 'Schedule content to be published at a future time',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Queues a post (text plus optional media URL) to be published at a specified future time on one or more connected social platforms. Choose this when publishing should be deferred; use Publish Post to send immediately. The scheduled time must be in the future and is interpreted in UTC. Not idempotent: each call creates a new scheduled post.',
+    idempotent: false,
+  },
   props: {
     platforms: platformProperty,
     text: textProperty,

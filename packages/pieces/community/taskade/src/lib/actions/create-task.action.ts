@@ -8,6 +8,8 @@ export const createTaskAction = createAction({
 	name: 'taskade-create-task',
 	displayName: 'Create Task',
 	description: 'Creates a new task.',
+	audience: 'both',
+	aiMetadata: { description: 'Adds a new task to a Taskade project, with the task body supplied as markdown or plain text and positioned at the start or end of the project. Use to append work items to an existing project; requires the target project id. Creates a new task on every call, so it is not idempotent.', idempotent: false },
 	props: {
 		workspace_id: taskadeProps.workspace_id,
 		folder_id: taskadeProps.folder_id,

@@ -7,6 +7,9 @@ export const prospectSaved = createTrigger({
   name: 'prospect_saved',
   displayName: 'Prospect Saved',
   description: 'Triggers when a prospect is saved',
+  aiMetadata: {
+    description: 'Fires when a prospect is created or saved in Woodpecker. Represents a new or updated prospect record and includes its details.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_saved',

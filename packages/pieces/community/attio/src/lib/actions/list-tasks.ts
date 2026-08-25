@@ -7,8 +7,11 @@ import { linkedRecordDropdown, objectTypeIdDropdown } from '../common/props';
 export const listTasksAction = createAction({
 	auth: attioAuth,
 	name: 'list_tasks',
+	classification: 'SEARCH',
 	displayName: 'List Tasks',
 	description: 'List tasks with optional filters by linked record, assignee, or completion status.',
+	audience: 'both',
+	aiMetadata: { description: 'Lists tasks in Attio, optionally narrowed by linked object type, linked record, assignee (member email/ID, or "null" for unassigned), and completion status. With no filters it returns all tasks. Use this to find tasks before getting or updating one. Read-only and idempotent.', idempotent: true },
 	props: {
 		linked_object: objectTypeIdDropdown({
 			displayName: 'Linked Object',

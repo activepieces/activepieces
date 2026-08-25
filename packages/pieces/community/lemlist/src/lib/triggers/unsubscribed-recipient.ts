@@ -7,8 +7,12 @@ const CACHE_KEY = 'lemlist_unsubscribed_recipient_trigger_key';
 export const unsubscribedRecipient = createTrigger({
   auth: lemlistAuth,
   name: 'unsubscribedRecipient',
+  classification: 'READ',
   displayName: 'Unsubscribed Recipient',
   description: 'Triggers when a recipient unsubscribes.',
+  aiMetadata: {
+    description: 'Fires via webhook when a recipient unsubscribes from outreach (Lemlist emailsUnsubscribed event). Represents an opt-out signal for a single lead.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

@@ -15,6 +15,8 @@ export const chargePointVendorReadAction = createAction({
   name: 'chargePointVendorRead',
   displayName: 'Resources - Charge Point Vendors - Read',
   description: 'Get a Charge Point Vendor.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single AMPECO charge-point vendor (manufacturer) by its numeric vendor ID. Use when you already know the vendor ID. Read-only and idempotent.', idempotent: true },
   props: {
         
   vendorId: Property.Number({

@@ -39,6 +39,10 @@ export const runWqlQuery = createTrigger({
 	name: 'run_wql_query',
 	displayName: 'Run WQL Query',
 	description: 'Triggers when new records are returned by a Workday Query Language (WQL) query.',
+	aiMetadata: {
+		description:
+			'Fires when a custom Workday Query Language (WQL) query returns rows newer than the last poll, judged by a caller-named date/timestamp field. General-purpose change detector for any Workday dataset; use when no dedicated trigger fits. The query must select a date column and you must name it in the Date Field input.',
+	},
 	props,
 	sampleData: { id: 'record-001', createdDate: '2026-04-01T10:00:00Z', descriptor: 'Sample Record' },
 	type: TriggerStrategy.POLLING,

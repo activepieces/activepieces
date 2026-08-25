@@ -6,8 +6,11 @@ import { CreateContactRequest } from '../../common/types';
 export const createContactAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_create_contact',
+	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Creates a new contact.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new ActiveCampaign contact from an email (required) plus optional first name, last name, phone, and custom field values. Use when adding a new person to the CRM. Not idempotent: each call creates a contact and does not look up or merge by email, so repeated calls can create duplicates.', idempotent: false },
 	props: {
 		email: Property.ShortText({
 			displayName: 'Email',

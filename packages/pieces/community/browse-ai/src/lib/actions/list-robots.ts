@@ -5,9 +5,16 @@ import { browseAiAuth } from '../common/auth';
 
 export const listRobotsAction = createAction({
   name: 'list-robots',
+  classification: 'SEARCH',
   auth: browseAiAuth,
   displayName: 'List Robots',
   description: 'Retrieves all robots available in your account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists all Browse AI robots in the connected account, returning each robot and its ID. Use to discover the available robots or resolve a robot name to the ID needed by other Browse AI actions. Takes no input; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {},
   async run(context) {
     try {

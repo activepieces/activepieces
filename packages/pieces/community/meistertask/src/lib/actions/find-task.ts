@@ -8,6 +8,8 @@ export const findTask = createAction({
   name: 'find_task',
   displayName: 'Find Task',
   description: 'Finds a task by searching',
+  audience: 'both',
+  aiMetadata: { description: 'Look up tasks in a specific MeisterTask section and return the first match. With a name supplied it returns the first task whose name contains that text (case-insensitive); leaving the name empty returns the first task in the section. Read-only and idempotent. Requires the project and section; returns null if no task matches.', idempotent: true },
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,

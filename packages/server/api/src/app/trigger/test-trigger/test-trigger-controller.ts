@@ -9,9 +9,9 @@ export const testTriggerController: FastifyPluginAsyncZod = async (app) => {
         const { flowId, flowVersionId, testStrategy } = req.body
 
         const logWithContext = req.log.child({
-            flowId,
-            flowVersionId,
-            projectId: req.projectId,
+            flow: { id: flowId },
+            flowVersion: { id: flowVersionId },
+            project: { id: req.projectId },
             testStrategy,
         })
         return testTriggerService(logWithContext).test({

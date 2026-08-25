@@ -1,14 +1,12 @@
-import {
-    ApMultipartFile,
-    EventPayload,
-    FAIL_PARENT_ON_FAILURE_HEADER,
-    FlowRun,
-    isMultipartFile,
-    PARENT_RUN_ID_HEADER,
-} from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
+import { PassThrough, Readable } from 'node:stream'
+import { EventPayload, FAIL_PARENT_ON_FAILURE_HEADER, FileCompression, FileType, FlowRun, PARENT_RUN_ID_HEADER } from '@activepieces/shared'
+import { MultipartFile } from '@fastify/multipart'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import mime from 'mime-types'
-import { stepFileService } from '../file/step-file/step-file.service'
+import { fileService } from '../file/file.service'
+import { enforceByteLimit, filesService, fileTooLargeError } from '../file/files-service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 
 const BINARY_CONTENT_TYPE_PATTERNS = [
@@ -19,6 +17,7 @@ const BINARY_CONTENT_TYPE_PATTERNS = [
     /^application\/zip$/,
     /^application\/gzip$/,
     /^application\/octet-stream$/,
+    /^text\/csv$/,
 ]
 
 export function isBinaryContentType(contentType: string | undefined): boolean {
@@ -27,18 +26,24 @@ export function isBinaryContentType(contentType: string | undefined): boolean {
     return BINARY_CONTENT_TYPE_PATTERNS.some(pattern => pattern.test(baseContentType))
 }
 
+export function isMultipartContentType(contentType: string | undefined): boolean {
+    return contentType?.trim().toLowerCase().startsWith('multipart/') ?? false
+}
+
 export async function convertRequest(
     request: FastifyRequest,
     projectId: string,
     flowId: string,
 ): Promise<EventPayload> {
     const contentType = request.headers['content-type']
-    const isBinary = isBinaryContentType(contentType) && Buffer.isBuffer(request.body)
+    const isBinary = isBinaryContentType(contentType)
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
+        // Streamed bodies (binary/multipart) are consumed straight to storage, so there is no
+        // raw payload to forward; rawBody is captured only for the string-parsed signed types.
         rawBody: isBinary ? undefined : request.rawBody,
     }
 }
@@ -56,79 +61,89 @@ async function convertBody(
     flowId: string,
 ): Promise<unknown> {
     if (request.isMultipart()) {
-        const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
-
         const platformId = await projectService(request.log).getPlatformId(projectId)
-
-        for (const [key, value] of requestBodyEntries) {
-            if (isMultipartFile(value)) {
-                jsonResult[key] = await saveMultipartFileAsUrl({
-                    file: value,
-                    request,
+        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+        const jsonResult: Record<string, unknown> = {}
+        for await (const part of request.parts()) {
+            if (part.type === 'file') {
+                const url = await saveStepFileAndConstructUrl({
+                    log: request.log,
+                    data: failIfTruncated(part.file, maxFileSizeInBytes),
+                    fileName: part.filename,
                     flowId,
-                    projectId,
                     platformId,
+                    projectId,
                 })
-            }
-            else if (Array.isArray(value) && value.every(isMultipartFile)) {
-                jsonResult[key] = await Promise.all(value.map((file) => saveMultipartFileAsUrl({
-                    file,
-                    request,
-                    flowId,
-                    projectId,
-                    platformId,
-                })))
+                jsonResult[part.fieldname] = appendMultiValue(jsonResult[part.fieldname], url)
             }
             else {
-                jsonResult[key] = value
+                jsonResult[part.fieldname] = appendMultiValue(jsonResult[part.fieldname], part.value)
             }
         }
         return jsonResult
     }
+
     const contentType = request.headers['content-type']
-    if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
+    if (isBinaryContentType(contentType)) {
         const platformId = await projectService(request.log).getPlatformId(projectId)
         const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
-        const fileName = `file.${extension}`
-
-        const file = await stepFileService(request.log).saveAndEnrich({
-            data: request.body,
-            fileName,
-            stepName: 'trigger',
+        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+        const url = await saveStepFileAndConstructUrl({
+            log: request.log,
+            data: (request.body as Readable).pipe(enforceByteLimit(maxFileSizeInBytes)),
+            fileName: `file.${extension}`,
             flowId,
-            contentLength: request.body.length,
             platformId,
             projectId,
         })
-        return {
-            fileUrl: file.url,
-        }
+        return { fileUrl: url }
     }
 
     return request.body
 }
 
-async function saveMultipartFileAsUrl(params: SaveMultipartFileAsUrlParams): Promise<string> {
-    const { file, request, flowId, projectId, platformId } = params
-    const saved = await stepFileService(request.log).saveAndEnrich({
-        data: file.data,
-        fileName: file.filename,
-        stepName: 'trigger',
-        flowId,
-        contentLength: file.data.length,
-        platformId,
+async function saveStepFileAndConstructUrl(params: SaveStepFileParams): Promise<string> {
+    const { log, data, fileName, flowId, platformId, projectId } = params
+    const file = await fileService(log).save({
+        data,
+        metadata: { stepName: 'trigger', flowId },
+        fileName,
+        type: FileType.FLOW_STEP_FILE,
+        compression: FileCompression.NONE,
         projectId,
+        platformId,
     })
-    return saved.url
+    return filesService.constructReadUrl({
+        fileId: file.id,
+        fileType: FileType.FLOW_STEP_FILE,
+        platformId,
+    })
 }
 
-type SaveMultipartFileAsUrlParams = {
-    file: ApMultipartFile
-    request: FastifyRequest
+// When a part exceeds busboy's fileSize limit it ends the stream cleanly and flags `truncated`
+// rather than emitting an error, so a truncated file would otherwise be persisted before
+// @fastify/multipart surfaces the limit. Erroring at end-of-stream fails the upload instead.
+function failIfTruncated(file: MultipartFile['file'], maxBytes: number): Readable {
+    return file.pipe(new PassThrough({
+        flush(callback) {
+            callback(file.truncated ? fileTooLargeError(maxBytes) : null)
+        },
+    }))
+}
+
+// A repeated multipart field name collects into an array, matching the previous body shape.
+function appendMultiValue(existing: unknown, value: unknown): unknown {
+    if (existing === undefined) {
+        return value
+    }
+    return Array.isArray(existing) ? [...existing, value] : [existing, value]
+}
+
+type SaveStepFileParams = {
+    log: FastifyBaseLogger
+    data: Readable
+    fileName: string
     flowId: string
-    projectId: string
     platformId: string
+    projectId: string
 }

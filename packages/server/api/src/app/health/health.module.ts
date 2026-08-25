@@ -1,7 +1,8 @@
-import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
+import { GetDiagnosticsResponse, GetSystemHealthChecksResponse, PlatformMetricsHealthHistory, PlatformMetricsLive, PlatformMetricsReport, PlatformMetricsReportRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { healthMetricsService } from './health-metrics.service'
 import { healthStatusService } from './health.service'
 
 export const healthModule: FastifyPluginAsyncZod = async (app) => {
@@ -28,16 +29,88 @@ const healthController: FastifyPluginAsyncZod = async (app) => {
     app.get('/system', GetSystemHealthChecks, async (request, reply) => {
         await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks(request.principal.platform.id))
     })
+
+    app.get('/run-metrics', GetRunMetricsRequest, async (request) => {
+        const { platform } = request.principal
+        const { createdAfter, createdBefore } = request.query
+        return healthMetricsService(request.log).getRunMetrics(platform.id, { createdAfter, createdBefore })
+    })
+
+    app.get('/queue-metrics', GetQueueMetricsRequest, async (request) => {
+        const { platform } = request.principal
+        const { createdAfter, createdBefore } = request.query
+        return healthMetricsService(request.log).getQueueMetrics(platform.id, { createdAfter, createdBefore })
+    })
+
+    app.get('/history', GetHealthHistoryRequest, async (request) => {
+        const { platform } = request.principal
+        return healthMetricsService(request.log).getHealthHistory(platform.id)
+    })
+
+    app.get('/diagnostics', GetDiagnosticsRequest, async (request) => {
+        return healthStatusService(app.log).getDiagnostics(request.principal.platform.id)
+    })
 }
 
 const GetSystemHealthChecks = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     response: {
         200: {
             description: 'System health checks',
             type: GetSystemHealthChecksResponse,
+        },
+    },
+}
+
+const GetRunMetricsRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['health'],
+        querystring: PlatformMetricsReportRequest,
+        response: {
+            200: PlatformMetricsReport,
+        },
+    },
+}
+
+const GetQueueMetricsRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['health'],
+        querystring: PlatformMetricsReportRequest,
+        response: {
+            200: PlatformMetricsLive,
+        },
+    },
+}
+
+const GetHealthHistoryRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['health'],
+        response: {
+            200: PlatformMetricsHealthHistory,
+        },
+    },
+}
+
+const GetDiagnosticsRequest = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+    },
+    schema: {
+        tags: ['health'],
+        description: 'Server-measured infra round-trip latency (db/redis/storage) + effective config',
+        response: {
+            200: GetDiagnosticsResponse,
         },
     },
 }

@@ -1,14 +1,19 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
 import { createApifyClient } from '../common';
+import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 const WEBSITE_CONTENT_CRAWLER_ACTOR_ID = 'apify/website-content-crawler';
 
 export const scrapeSingleUrl = createAction({
   name: 'scrapeSingleUrl',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Scrape Single URL',
   description: 'Scrape a single URL using the Apify Website Content Crawler Actor and get its content as markdown and HTML.',
+  audience: 'human',
+  outputSchema: scrapeUrlActionOutputSchema,
+  aiMetadata: { description: 'Scrapes the content of one web page via the Apify Website Content Crawler Actor and returns its text as markdown and HTML. Use this for a quick single-page extraction without configuring a full Actor run; the URL must be a valid http/https address and crawler type (Cheerio or Playwright) selects the rendering engine. Not idempotent — each call launches a new crawler run.', idempotent: false },
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -26,10 +31,6 @@ export const scrapeSingleUrl = createAction({
           {
             label: 'Cheerio',
             value: 'cheerio',
-          },
-          {
-            label: 'JSDOM',
-            value: 'jsdom',
           },
           {
             label: 'Playwright Adaptive',

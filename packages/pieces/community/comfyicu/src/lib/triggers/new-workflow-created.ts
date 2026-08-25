@@ -19,6 +19,9 @@ export const newWorkflowCreatedTrigger = createTrigger({
   name: 'new-workflow-created',
   displayName: 'New Workflow Created',
   description: 'Triggers when a new workflow is created.',
+  aiMetadata: {
+    description: 'Fires when a new workflow is created on the connected Comfy.ICU account, emitting that workflow. Polls the account workflow list and detects newly added workflows by creation time.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   async onEnable(context) {

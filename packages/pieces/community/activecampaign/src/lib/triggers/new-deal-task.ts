@@ -7,8 +7,12 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newDealTaskTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_deal_task',
+	classification: 'READ',
 	displayName: 'New Deal Task',
 	description: 'Triggers when a new deal task is created.',
+	aiMetadata: {
+		description: 'Fires when a task is created on a deal. The payload includes the task (type, title, due date) and the associated deal and contact.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {

@@ -27,6 +27,12 @@ export const createCustomer = createAction({
   name: 'create_customer',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Katana.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in the Katana manufacturing ERP, optionally with billing/shipping addresses. Use when registering a new customer; only the display name is required. Not idempotent — each call creates a separate customer, so look the customer up first if you need to avoid duplicates.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

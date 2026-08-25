@@ -6,7 +6,7 @@ import {
 import { stripeCommon } from '../common';
 import { StripeWebhookInformation } from '../common/types';
 import { stripeAuth } from '../..';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 type StripeWebhookPayload = {
   data: {
@@ -16,12 +16,18 @@ type StripeWebhookPayload = {
   };
 };
 
+import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeCheckoutSessionCompleted = createTrigger({
   auth: stripeAuth,
   name: 'checkout_session_completed',
+  classification: 'READ',
   displayName: 'Checkout Session Completed',
   description:
     'Fires when a Stripe Checkout Session is successfully completed.',
+  aiMetadata: {
+    description:
+      'Fires when a Stripe Checkout Session is successfully completed (the checkout.session.completed event), emitting the completed session including customer and payment details. An optional customer ID filter narrows firing to one customer. Use to react to a completed hosted checkout, such as fulfilling an order or granting access.',
+  },
   props: {
     customer: Property.ShortText({
       displayName: 'Customer ID',
@@ -30,6 +36,7 @@ export const stripeCheckoutSessionCompleted = createTrigger({
       required: false,
     }),
   },
+  outputSchema: checkoutSessionOutputSchema,
   sampleData: {
     id: 'cs_test_a11YYufWQzNY63zpQ6QSNRQhkUpVph4WRmzW0zWJO2znZKdVujZ0N0S22u',
     object: 'checkout.session',

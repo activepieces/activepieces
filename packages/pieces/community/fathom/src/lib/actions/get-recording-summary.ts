@@ -5,6 +5,8 @@ export const getRecordingSummary = createAction({
   name: 'getRecordingSummary',
   displayName: 'Get Recording Summary',
   description: 'Get the AI-generated summary of a meeting recording. Note: This action requires API Key authentication and is not available when using OAuth2.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the AI-generated summary of a single Fathom meeting recording, identified by its recording ID. Use to pull a concise recap of what a recorded meeting covered. Read-only and repeatable; optionally supply a destination URL to have Fathom POST the summary there instead of returning it inline. Requires API Key auth (not available under OAuth2).', idempotent: true },
   auth: fathomAuth,
   props: {
     recording_id: Property.Dropdown({

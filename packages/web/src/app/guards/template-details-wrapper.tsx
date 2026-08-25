@@ -1,4 +1,5 @@
-import { TemplateType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { TemplateType } from '@activepieces/shared';
 import { Navigate, useParams, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';

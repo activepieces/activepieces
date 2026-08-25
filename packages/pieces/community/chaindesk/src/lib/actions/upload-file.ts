@@ -12,8 +12,11 @@ import { BASE_URL } from '../common/constants';
 export const uploadFileAction = createAction({
   auth: chaindeskAuth,
   name: 'upload-file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Uploads a new file to provided Datastore.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file as a new datasource into a specific Chaindesk datastore (selected by datastore ID), ingesting its content into the knowledge base. Use to add documents an agent or datastore search can later draw on; requires the binary file input. Not idempotent: each call creates a new datasource, so repeating uploads the same file again.', idempotent: false },
   props: {
     datastoreId: datastoreIdDropdown,
     file: Property.File({

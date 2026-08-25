@@ -54,7 +54,7 @@ export const RequestTrial = ({
       lastName: currentUser?.lastName || '',
       email: currentUser?.email || '',
       featureKey,
-      flags: btoa(JSON.stringify(flags)),
+      flags: toLatin1SafeBase64(JSON.stringify(flags ?? {})),
     };
 
     return Object.entries(params)
@@ -81,3 +81,14 @@ export const RequestTrial = ({
     </AnimatedIconButton>
   );
 };
+
+function toLatin1SafeBase64(value: string): string {
+  const latin1Safe = value
+    .split('')
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code > 0xff ? `\\u${code.toString(16).padStart(4, '0')}` : char;
+    })
+    .join('');
+  return btoa(latin1Safe);
+}

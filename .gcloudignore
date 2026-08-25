@@ -1,0 +1,16 @@
+.git
+.github
+.angular
+.history
+.idea
+.vscode
+*.log
+**/node_modules
+node_modules
+dist
+**/dist
+builds
+deploy
+dev
+docs
+benchmark

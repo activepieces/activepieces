@@ -5,8 +5,12 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const orderRefundedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'order_refunded',
+  classification: 'READ',
   displayName: 'Order Refunded',
   description: 'Triggers when a full or partial refund is made on an order',
+  aiMetadata: {
+    description: 'Fires when an order in Lemon Squeezy is refunded, either fully or partially. Represents the updated order with its refunded amount and refunded status.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

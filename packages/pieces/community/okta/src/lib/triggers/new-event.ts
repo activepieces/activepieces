@@ -5,13 +5,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { oktaAuth, makeOktaRequest } from '../common/common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 export const newEventTrigger = createTrigger({
   auth: oktaAuth,
   name: 'new_event',
   displayName: 'New Event',
   description: 'Fires when a new Okta event is generated',
+  aiMetadata: {
+    description: 'Fires via an Okta Event Hook when a system event occurs in the org, emitting one item per matching event. By default it covers user lifecycle changes (create/activate/deactivate/suspend/unsuspend/delete), group membership add/remove, group lifecycle, and session start/end; if specific Event Types are selected, only those fire. Use to react in real time to identity and access changes in Okta.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     eventTypes: Property.StaticMultiSelectDropdown({

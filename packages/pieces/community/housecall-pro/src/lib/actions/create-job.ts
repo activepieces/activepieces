@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createJob = createAction({
   auth: housecallProAuth,
   name: 'create_job',
+  classification: 'WRITE',
   displayName: 'Create Job',
   description: 'Creates a job with the ID for an already existing address and customer.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create a new Housecall Pro job for an existing customer and address, with optional schedule, assigned employees, tags, line items, and pricing/job fields. Not idempotent: each call creates a separate job. Requires existing customer ID and address ID; the customer and address must be created first.',
+    idempotent: false,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

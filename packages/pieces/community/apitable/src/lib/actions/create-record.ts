@@ -9,8 +9,15 @@ import { APITableAuth } from '../auth';
 export const createRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in datasheet.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new row in an AITable datasheet from a set of field values. Use when an agent needs to add data to a datasheet; requires the target space and datasheet IDs. Not idempotent: each call appends a new record, so repeating it creates duplicates.',
+    idempotent: false,
+  },
   props: {
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,

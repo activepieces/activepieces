@@ -1,7 +1,7 @@
+import { validateIndexBound } from '@activepieces/core-utils';
 import {
   AppConnectionOwners,
   UserWithMetaInformation,
-  validateIndexBound,
 } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';

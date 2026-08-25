@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from "zod/mini";
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { BasePieceAuthSchema } from './common';
@@ -14,11 +14,11 @@ export const BasicAuthProperty = z.object({
   ...BasePieceAuthSchema.shape,
   username: z.object({
     displayName: z.string(),
-    description: z.string().optional()
+    description: z.optional(z.string())
   }),
   password: z.object({
     displayName: z.string(),
-    description: z.string().optional()
+    description: z.optional(z.string())
   }),
   ...TPropertyValue(BasicAuthPropertyValue, PropertyType.BASIC_AUTH).shape,
 })

@@ -1,4 +1,3 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { OtpType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -7,6 +6,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { db } from '../../../helpers/db'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -29,7 +29,6 @@ beforeEach(() => {
         sendQuotaAlert: vi.fn(),
         sendReminderJobHandler: vi.fn(),
         sendExceedFailureThresholdAlert: vi.fn(),
-        sendBadgeAwardedEmail: vi.fn(),
         sendProjectMemberAdded: vi.fn(),
     }))
 
@@ -84,6 +83,38 @@ describe('OTP API', () => {
                     email: mockUserIdentity.email,
                 }),
             }))
+        })
+
+        it('Resends the existing OTP when a pending one is not expired', async () => {
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
+
+            await db.update('user_identity', mockUserIdentity.id, {
+                verified: false,
+            })
+
+            const mockCreateOtpRequest = {
+                email: mockUserIdentity.email,
+                type: OtpType.EMAIL_VERIFICATION,
+            }
+
+            // act
+            const response1 = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/otp',
+                body: mockCreateOtpRequest,
+            })
+
+            const response2 = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/otp',
+                body: mockCreateOtpRequest,
+            })
+
+            // assert
+            expect(response1?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response2?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(sendOtpSpy).toHaveBeenCalledTimes(2)
+            expect(sendOtpSpy.mock.calls[1][0].otp).toBe(sendOtpSpy.mock.calls[0][0].otp)
         })
 
         it('OTP is unique per user per OTP type', async () => {

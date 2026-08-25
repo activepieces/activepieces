@@ -79,6 +79,9 @@ export const freeAgentNewTaskTrigger = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Triggers when a new task is added',
+  aiMetadata: {
+    description: 'Fires when a new task is added in FreeAgent, detected by polling. Can be filtered by task status (active, completed, hidden) or left to watch all tasks.',
+  },
   type: TriggerStrategy.POLLING,
   props,
   sampleData: {

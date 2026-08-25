@@ -11,6 +11,8 @@ export const listMessages = createAction({
   name: 'listMessages',
   displayName: 'List Messages',
   description: 'Lists an Messages via Bird Channels API',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve messages for the configured Bird (MessageBird) channel within a required UTC start/end time window (the span must not exceed 7 days). Choose this to read recent message history or to look up message status. Set status to "all" to return messages of every status, or pick a specific status (pending, sent, delivered, failed, etc.) to filter to matching messages only; supports a page token for paging past 1000 results. Read-only and idempotent.', idempotent: true },
   props: {
     status : Property.StaticDropdown({
       displayName: 'Status',

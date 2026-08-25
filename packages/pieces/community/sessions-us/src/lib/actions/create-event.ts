@@ -12,6 +12,8 @@ export const createEvent = createAction({
   name: 'create_event',
   displayName: 'Create Event',
   description: 'Quickly create an event.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new event on Sessions.us with a name, start/end time, and timezone. Use when an agent needs to schedule an event (a public, registration-based gathering, as opposed to a private session). Creates a new event each call, so it is not idempotent — repeating it produces duplicate events.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Event Name',

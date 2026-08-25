@@ -8,6 +8,8 @@ export const findUser = createAction({
     name: 'find_user',
     displayName: 'Find User',
     description: 'Finds a user by ID, email, name, or status.',
+    audience: 'both',
+    aiMetadata: { description: 'Looks up a Zendesk Sell user (a team member of the account), either by unique user ID (a direct fetch, prioritized when provided) or by filtering on name, email, role, or status and returning the first match. Use to resolve an owner ID for assigning records or to verify a user exists. Requires a user ID or at least one other field; returns null data when no match is found. Idempotent — a read-only lookup.', idempotent: true },
     props: {
         user_id: Property.Number({
             displayName: 'User ID',

@@ -6,6 +6,9 @@ export const newConversationFromUser = createTrigger({
 	name: 'newConversationFromUser',
 	displayName: 'New Conversation',
 	description: 'Triggers when a conversation is created by a user or lead (not an admin).',
+	aiMetadata: {
+		description: 'Fires when a contact (user or lead) starts a new conversation in Intercom, such as opening the Messenger or sending an inbound message. Does not fire for conversations initiated by an admin or teammate. Outputs the new conversation object, including its source message, contacts, assignee, state, tags, and any linked ticket.',
+	},
 	props: {},
 	auth: intercomAuth,
 	type: TriggerStrategy.APP_WEBHOOK,

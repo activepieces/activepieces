@@ -12,6 +12,10 @@ export const conversationAssigned = createTrigger({
   name: 'conversation_assigned',
   displayName: 'Conversation Assigned',
   description: 'Triggers when a conversation is assigned to a user.',
+  aiMetadata: {
+    description:
+      'Fires when a conversation in the selected Help Scout mailbox is assigned to a user (convo.assigned webhook event), representing a routing/ownership change. Can optionally be narrowed to a specific assigned user.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     mailboxId: mailboxIdDropdown(true),

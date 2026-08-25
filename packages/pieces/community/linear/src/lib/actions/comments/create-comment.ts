@@ -7,8 +7,14 @@ import { LinearDocument } from '@linear/sdk';
 export const linearCreateComment = createAction({
   auth: linearAuth,
   name: 'linear_create_comment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Create a new comment on an issue in Linear workspace',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Posts a new comment on a Linear issue identified by its issue ID. Use to add a note, reply, or status update to an existing issue. Requires the issue ID and comment body; not idempotent, each call appends a new comment.',
+    idempotent: false,
+  },
   props: {
     team_id: props.team_id(),
     user_id: props.assignee_id(),

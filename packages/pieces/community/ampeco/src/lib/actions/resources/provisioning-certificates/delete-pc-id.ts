@@ -14,6 +14,8 @@ export const deletePcIdAction = createAction({
   name: 'deletePcId',
   displayName: 'Resources - Provisioning Certificates - Delete Pc Id',
   description: 'Delete a provisioning certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO provisioning certificate by its numeric ID. Destructive and not reversible; a repeat call on an already-deleted certificate will fail. Verify the ID via get or list pc ids before deleting.', idempotent: false },
   props: {
         
   provisioningCertificate: Property.Number({

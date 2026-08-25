@@ -8,8 +8,14 @@ import { parseRequiredString } from '../common/utils';
 export const browseRecordsAction = createAction({
   auth: algoliaAuth,
   name: 'browse-records',
+  classification: 'SEARCH',
   displayName: 'Browse Records',
   description: 'Retrieves records from an Algolia index.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves the raw records stored in an Algolia index, paging through them up to an optional limit (default 10,000). Use this to dump or inspect index contents; it is a read-only lookup, not a relevance-ranked query, so it does not accept a search term. Idempotent.',
+    idempotent: true,
+  },
   props: {
     indexName: algoliaProps.index(),
     limit: Property.Number({

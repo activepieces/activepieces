@@ -1,0 +1,17 @@
+{
+  "Receive triggers for donations, subscriptions, commissions, and shop orders from Ko-fi.": "Ontvang triggers voor donaties, abonnementen, provisies en winkels bestellingen van Ko-fi.",
+  "Your Ko-fi webhook verification token. Find it in Ko-fi Dashboard > Settings > API/Webhooks > Advanced Settings > Webhook verification token.": "Je Ko-fi webhook verificatiesleutel. Vind het in Ko-fi Dashboard > Instellingen > API/Webhooks > Geavanceerde instellingen > Webhook verificatiestoken.",
+  "New Donation": "Nieuwe donatie",
+  "New Subscription": "Nieuw abonnement",
+  "New Commission": "Nieuwe Commissie",
+  "New Shop Order": "Nieuwe winkel bestelling",
+  "Triggers when a new one-time donation is received on Ko-fi.": "Triggert wanneer een nieuwe eenmalige donatie wordt ontvangen op Ko-fi.",
+  "Triggers when a new subscription is received on Ko-fi.": "Activeert wanneer een nieuw abonnement wordt ontvangen op Ko-fi.",
+  "Triggers when a new commission is received on Ko-fi.": "Triggert wanneer een nieuwe commissie wordt ontvangen op Ko-fi.",
+  "Triggers when a new shop order is received on Ko-fi.": "Triggert wanneer een nieuwe winkel bestelling wordt ontvangen op Ko-fi.",
+  "Markdown": "Markdown",
+  "To receive donation events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Donation\" event type.": "Om donatie evenementen te ontvangen, stel een webhook in op uw Ko-fi Dashboard: ga naar Instellingen > API/Webhooks, Plak de URL {{webhookUrl}}en selecteer het type \"Donatie\".",
+  "To receive subscription events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Subscription\" event type.": "Om abonnementsgebeurtenissen te ontvangen, stel een webhook in op uw Ko-fi Dashboard: ga naar Instellingen > API/Webhooks, Plak de URL {{webhookUrl}}en selecteer het type \"Abonnement\".",
+  "To receive commission events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Commission\" event type.": "Om commissie evenementen te ontvangen, stel een webhook in in je Ko-fi Dashboard: ga naar Instellingen > API/Webhooks, Plak de URL {{webhookUrl}}en selecteer het type \"Commissie\".",
+  "To receive shop order events, set up a webhook in your Ko-fi Dashboard: go to Settings > API/Webhooks, paste the URL {{webhookUrl}}, and select the \"Shop Order\" event type.": "Om een webhook te ontvangen in uw Ko-fi Dashboard: ga naar Instellingen > API/Webhooks, Plak de URL {{webhookUrl}}en selecteer het \"Shop Order\" gebeurtenistype."
+}

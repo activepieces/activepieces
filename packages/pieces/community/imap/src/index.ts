@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newEmail } from './lib/triggers/new-email';
 import { imapAuth } from './lib/common';
 import { markEmailAsRead } from './lib/actions/mark-email-read';

@@ -54,7 +54,7 @@ import {
   listPurchases,
 } from './lib/actions/purchases';
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import {
   addTag,
   formSubscribed,

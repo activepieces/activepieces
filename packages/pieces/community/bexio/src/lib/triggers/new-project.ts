@@ -62,8 +62,12 @@ const polling: Polling<
 export const newProjectTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a Project is created or updated with the chosen status',
+  aiMetadata: {
+    description: 'Fires when a project is created or updated in Bexio, optionally filtered to a chosen project status. Emits each matching project with its number, name, dates, status, type, contact, invoicing and budget settings. Use to track new or changing projects.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({

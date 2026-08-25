@@ -10,6 +10,8 @@ export const scoreResume = createAction({
     name: 'score_resume',
     displayName: 'Score Resume',
     description: 'Scores a resume against a job description and provides a reason.',
+    audience: 'both',
+    aiMetadata: { description: 'Scores how well a publicly accessible resume file (PDF/DOC/DOCX) at a given URL matches a supplied job description, returning a fit score with reasoning. Use to rank or screen candidates against a specific role. Both the resume URL and the job description are required to start a job; alternatively pass the Request ID from a prior timed-out run to retrieve that result. The call polls until scoring completes. Idempotent: re-running with the same resume and job description yields the same score.', idempotent: true },
     props: {
         url: Property.ShortText({
             displayName: 'Resume URL',

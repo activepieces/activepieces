@@ -6,16 +6,18 @@ import {
   httpClient,
   propsValidation,
 } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 import { baseUrlv1 } from '../common/common';
 
 export const promptCompletion = createAction({
+  audience: 'both',
   auth: straicoAuth,
   name: 'prompt_completion',
   displayName: 'Ask AI',
   description:
     'Enables users to generate prompt completion based on a specified model.',
+  aiMetadata: { description: 'Sends a single prompt to any chat model in the Straico catalog and returns the completion text, optionally grounding it in attached context: up to four file URLs, up to four YouTube video URLs and image URLs, with transcripts returned when requested. This is the general-purpose text action; prefer RAG Prompt Completion to search an indexed knowledge base, Agent Prompt Completion to reuse a saved persona, and Image Generation for pictures. Requires a model and a prompt; attached files and images must first be hosted by Upload File, and enabling transcripts without a file or YouTube URL fails. Not idempotent: each call spends credits and returns a fresh completion.', idempotent: false },
   props: {
     model: Property.Dropdown({
   auth: straicoAuth,
@@ -109,8 +111,8 @@ export const promptCompletion = createAction({
   async run({ auth, propsValue }) {
     // Validate URLs length and displayTranscripts requirements
     await propsValidation.validateZod(propsValue, {
-      fileUrls: z.array(z.string()).max(4, 'Maximum 4 file URLs allowed'),
-      youtubeUrls: z.array(z.string()).max(4, 'Maximum 4 YouTube URLs allowed'),
+      fileUrls: z.array(z.string()).check(z.maxLength(4, 'Maximum 4 file URLs allowed')),
+      youtubeUrls: z.array(z.string()).check(z.maxLength(4, 'Maximum 4 YouTube URLs allowed')),
     });
     
     // Validate that displayTranscripts is only true when fileUrls or youtubeUrls are provided

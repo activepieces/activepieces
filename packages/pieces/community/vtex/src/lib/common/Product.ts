@@ -1,4 +1,4 @@
-import axios, { Axios } from 'axios';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import {
   CreateProductParams,
   UpdateProductParams,
@@ -6,28 +6,36 @@ import {
 } from './types';
 
 export class Product {
-  api: Axios;
+  private baseURL: string;
+  private headers: Record<string, string>;
 
   constructor(host: string, appKey: string, appToken: string) {
-    this.api = axios.create({
-      baseURL: 'https://' + host,
-      headers: {
-        'X-VTEX-API-AppKey': appKey,
-        'X-VTEX-API-AppToken': appToken,
-      },
-    });
+    this.baseURL = 'https://' + host;
+    this.headers = {
+      'X-VTEX-API-AppKey': appKey,
+      'X-VTEX-API-AppToken': appToken,
+    };
   }
 
   async getProductById(productID: number): Promise<GetProductByIdResponse> {
     const route = '/api/catalog/pvt/product/';
-    const response = await this.api.get(route + productID);
-    return response.data;
+    const response = await httpClient.sendRequest<GetProductByIdResponse>({
+      method: HttpMethod.GET,
+      url: this.baseURL + route + productID,
+      headers: this.headers,
+    });
+    return response.body;
   }
 
   async createProduct(newProductData: CreateProductParams) {
     const route = '/api/catalog/pvt/product';
-    const response = await this.api.post(route, newProductData);
-    return response.data;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: this.baseURL + route,
+      headers: this.headers,
+      body: newProductData,
+    });
+    return response.body;
   }
 
   async updateProduct(
@@ -35,7 +43,12 @@ export class Product {
     updatedProductData: UpdateProductParams
   ) {
     const route = '/api/catalog/pvt/product/';
-    const response = await this.api.put(route + productID, updatedProductData);
-    return response.data;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.PUT,
+      url: this.baseURL + route + productID,
+      headers: this.headers,
+      body: updatedProductData,
+    });
+    return response.body;
   }
 }

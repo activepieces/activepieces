@@ -45,8 +45,12 @@ const getSubscriberSummary = (request: any): any => {
 export const mailChimpSubscriberUpdatedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'subscriber_updated',
+  classification: 'READ',
   displayName: 'Subscriber Updated',
   description: 'Fires when a subscriber profile is updated, including changes to merge fields, interests, or contact information. This trigger captures profile updates, new subscriptions, and subscriber modifications.',
+  aiMetadata: {
+    description: 'Fires on subscriber-record changes in the selected audience (list) — covering profile/merge-field updates, new subscriptions, email-address changes, and cleaned addresses. The event carries the subscriber email, merge fields, and (for email changes) the old and new addresses.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,

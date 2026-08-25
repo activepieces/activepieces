@@ -6,7 +6,7 @@
     import { getExtractionResults } from "./lib/actions/get-extraction-results";
     import { newDocumentProcessed } from "./lib/triggers/new-document-processed";
     import { extractionFailed } from "./lib/triggers/extraction-failed";
-    import { PieceCategory } from "@activepieces/shared";
+    import { PieceCategory } from '@activepieces/pieces-framework';
 
 
     export const extractaAi = createPiece({

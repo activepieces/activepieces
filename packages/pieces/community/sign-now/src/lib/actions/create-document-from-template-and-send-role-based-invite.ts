@@ -8,6 +8,12 @@ export const createDocumentFromTemplateAndSendRoleBasedInviteAction = createActi
   displayName: 'Create Document From Template & Send Role-Based Invite',
   description:
     'Creates a new document from a template with fillable fields and sends an invite to one or more signers by role.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Copies a SignNow template into a new document and sends a role-based field invite to one or more signers matched to the template roles, returning the new document ID. Use for templates with predefined roles/fields where each signer is assigned by role name; for free-form signing use the free-form invite action instead. Requires the template ID, the sender email tied to the SignNow account, and one signer entry per role (email, role name, signing order); signers sharing an order sign in parallel. Each call creates a new document and dispatches invites, so it is not idempotent.',
+    idempotent: false,
+  },
   props: {
     template_id: Property.ShortText({
       displayName: 'Template ID',
@@ -91,7 +97,7 @@ export const createDocumentFromTemplateAndSendRoleBasedInviteAction = createActi
     }),
     expiration_days: Property.Number({
       displayName: 'Expiration Days',
-      description: 'Number of days before the invite expires (3–180). Defaults to 30.',
+      description: 'Number of days before the invite expires (1-180). Defaults to 30.',
       required: false,
     }),
     language: Property.StaticDropdown({
@@ -173,11 +179,11 @@ export const createDocumentFromTemplateAndSendRoleBasedInviteAction = createActi
     if (subject) inviteBody['subject'] = subject;
     if (message) inviteBody['message'] = message;
     if (cc && (cc as string[]).length > 0) {
-      inviteBody['cc'] = (cc as string[]).map((email) => ({ email }));
+      inviteBody['cc'] = cc;
     }
     if (cc_subject) inviteBody['cc_subject'] = cc_subject;
     if (cc_message) inviteBody['cc_message'] = cc_message;
-    if (expiration_days) inviteBody['expiration_days'] = expiration_days;
+    if (expiration_days) inviteBody['general_expiration_days'] = expiration_days;
     if (language) inviteBody['language'] = language;
 
     try {

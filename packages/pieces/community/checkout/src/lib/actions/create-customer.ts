@@ -4,9 +4,12 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createCustomerAction = createAction({
   name: 'create_customer',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Create Customer',
   description: 'Store a customer\'s details in a customer object to reuse in future payments. You can link payment instruments and set a default instrument.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Checkout.com customer record from an email (required) plus optional name, phone, metadata, and a default payment instrument, so the customer can be referenced in later payments. Choose it to register a payer before charging them or saving their card. Not idempotent: each call creates a separate customer even with identical input.', idempotent: false },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

@@ -7,6 +7,9 @@ export const leadConvertedToUserTrigger = createTrigger({
   name: 'lead-converted-to-user',
   displayName: 'Lead Converted To User',
   description: 'Triggers when a lead is converted to a user.',
+  aiMetadata: {
+    description: 'Fires when a lead is converted into a user in Intercom, typically when the lead signs up or is otherwise identified and promoted from role "lead" to role "user". Outputs the resulting user contact object.',
+  },
   props: {},
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

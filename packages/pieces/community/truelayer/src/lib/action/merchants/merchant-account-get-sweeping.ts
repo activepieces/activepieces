@@ -7,6 +7,8 @@ export const merchantAccountGetSweeping = createAction({
   name: 'merchant-account-get-sweeping',
   displayName: 'Get Sweeping Settings',
   description: 'Get the automatic sweeping settings for a merchant account.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the current automatic sweeping configuration (threshold, frequency, destination IBAN) for a merchant account by its ID. Use to check whether and how sweeping is set up; read-only and safe to repeat. To change it use Set Up or Update Sweeping, or Disable Sweeping.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',

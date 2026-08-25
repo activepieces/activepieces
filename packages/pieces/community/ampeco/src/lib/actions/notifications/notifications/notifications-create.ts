@@ -15,6 +15,8 @@ export const notificationsCreateAction = createAction({
   name: 'notificationsCreate',
   displayName: 'Notifications - V2.0 - Notifications Create',
   description: 'Update a notification.',
+  audience: 'both',
+  aiMetadata: { description: 'Replace the configuration of an existing AMPECO notification subscription identified by its ID, setting its delivery method (webhook or kafka), the subscribed event types, and the matching delivery config. Idempotent: applying the same values repeatedly yields the same subscription state. To register a brand-new subscription use the notifications subscribe action instead.', idempotent: true },
   props: {
         
   notification: Property.ShortText({

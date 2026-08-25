@@ -8,8 +8,12 @@ const TRIGGER_KEY = 'trigger_new-number'
 export const newNumberCreated = createTrigger({
   auth: aircallAuth,
   name: 'newNumberCreated',
+  classification: 'READ',
   displayName: 'New Number Created',
   description: 'Triggers when a new number is created.',
+  aiMetadata: {
+    description: 'Fires when a new phone number is provisioned in Aircall (the number.created webhook event), emitting the number with its name, digits, country, time zone, and IVR messages.',
+  },
   props: {},
   sampleData: {
       id: 123,

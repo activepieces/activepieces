@@ -4,9 +4,16 @@ import { chatDataAuth, SendMessageDto } from '../common/types';
 
 export const sendMessage = createAction({
   name: 'send_message',
+  classification: 'READ',
   displayName: 'Send Message to Chatbot',
   description:
     'Send messages to a chatbot and receive a response with support for streaming and OpenAI-compatible formats',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends a message to a Chat Data chatbot (selected by chatbotId) and returns its generated reply. Leave conversationId empty to start a new conversation or pass one to continue an existing thread. Per-request overrides (base model, base prompt, reasoning, OpenAI-compatible output) are optional. Use to converse with or query a deployed bot. Not idempotent — each call generates a fresh reply and appends to the conversation.',
+    idempotent: false,
+  },
   auth: chatDataAuth,
   props: {
     chatbotId: Property.Dropdown({

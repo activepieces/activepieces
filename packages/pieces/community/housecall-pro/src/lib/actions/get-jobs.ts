@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const getJobs = createAction({
   auth: housecallProAuth,
   name: 'get_jobs',
+  classification: 'SEARCH',
   displayName: 'Get Jobs',
   description: 'Retrieve a list of jobs from Housecall Pro.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'List or search Housecall Pro jobs with optional filters (customer, employees, locations, scheduled date ranges, work status) plus pagination and sorting. Read-only and repeatable. Use to discover jobs matching criteria; when you already have a single job ID, use Get a Job instead.',
+    idempotent: true,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

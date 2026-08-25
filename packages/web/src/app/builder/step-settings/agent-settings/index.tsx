@@ -1,8 +1,7 @@
+import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentProviderModel,
-  AIProviderName,
-  isNil,
   PieceAction,
   PieceActionSettings,
 } from '@activepieces/shared';
@@ -17,6 +16,7 @@ import {
   selectGenericFormComponentForProperty,
   SelectGenericFormComponentForPropertyParams,
 } from '../../piece-properties/properties-utils';
+import { PieceNotAvailableAlert } from '../piece-not-available-alert';
 import { useStepSettingsContext } from '../step-settings-context';
 
 type AgentSettingsProps = {
@@ -26,9 +26,22 @@ type AgentSettingsProps = {
 };
 
 export const AgentSettings = (props: AgentSettingsProps) => {
-  const { pieceModel, updateFormSchema, updatePropertySettingsSchema } =
-    useStepSettingsContext();
+  const {
+    pieceModel,
+    pieceModelNotFound,
+    updateFormSchema,
+    updatePropertySettingsSchema,
+  } = useStepSettingsContext();
   const form = useFormContext();
+
+  if (isNil(pieceModel) && pieceModelNotFound) {
+    return (
+      <PieceNotAvailableAlert
+        pieceName={props.step.settings.pieceName}
+        pieceVersion={props.step.settings.pieceVersion}
+      />
+    );
+  }
 
   if (isNil(pieceModel)) {
     return (
@@ -124,10 +137,12 @@ const selectAgentFormComponentForProperty = (
     case AgentPieceProps.AI_PROVIDER_MODEL: {
       const provider = (field.value as AgentProviderModel).provider;
       const model = (field.value as AgentProviderModel).model;
+      const configId = (field.value as AgentProviderModel).configId;
       return (
         <AIModelSelector
           defaultModel={model}
           defaultProvider={provider}
+          defaultConfigId={configId}
           onChange={field.onChange}
           disabled={disabled}
         />

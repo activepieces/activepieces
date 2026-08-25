@@ -9,6 +9,8 @@ export const getAdById = createAction({
   name: 'getAdById',
   displayName: 'Get Ad by ID',
   description: 'Get detailed information about a specific ad by its ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the full details of one Foreplay ad by its ad ID. Use when you already have a specific ad ID (e.g. from a search or a trigger) and need its complete metadata. Requires the exact ad ID; read-only, so repeating the call is safe.', idempotent: true },
   props: getAdByIdProperties(),
   auth: foreplayCoAuth,
   async run({ auth, propsValue }) {

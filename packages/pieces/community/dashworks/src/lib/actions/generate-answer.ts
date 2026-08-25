@@ -7,6 +7,8 @@ export const generateAnswerAction = createAction({
     auth:dashworksAuth,
     displayName:'Generate Answer',
     description:'Generates an answer from a Dashworks bot.',
+    audience: 'both',
+    aiMetadata: { description: 'Send a question or prompt to a specific Dashworks bot and get back a generated, knowledge-grounded answer. Use when an agent needs Dashworks to answer using its connected company knowledge sources. Requires the target bot ID; optionally toggle inline markdown source citations in the answer. Not idempotent — each call generates a fresh answer.', idempotent: false },
     props:{
         botId:Property.ShortText({
             displayName:'Bot ID',

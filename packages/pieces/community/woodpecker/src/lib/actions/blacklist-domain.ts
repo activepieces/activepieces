@@ -8,6 +8,8 @@ export const blacklistDomain = createAction({
   name: 'blacklist_domain',
   displayName: 'Blacklist Domain',
   description: 'Add a domain to the blacklist to block sending to all prospects within that domain',
+  audience: 'both',
+  aiMetadata: { description: 'Add a domain (e.g. example.com) to the account-wide blacklist so Woodpecker stops emailing every prospect at that domain. Use to suppress an entire company or to honor an unsubscribe-by-domain request. Blacklisting an already-blacklisted domain leaves it blacklisted with no additional effect.', idempotent: true },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

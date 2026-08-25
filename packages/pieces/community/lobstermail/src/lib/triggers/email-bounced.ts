@@ -13,6 +13,9 @@ export const emailBouncedTrigger = createTrigger({
   displayName: 'Email Bounced',
   description:
     'Triggers when an outbound email fails to deliver. Use this to update CRM records, retry with a different address, or alert your team.',
+  aiMetadata: {
+    description: 'Fires via webhook when a previously sent outbound email fails to deliver, optionally scoped to a single inbox. Each event represents one bounce with the failed message id, recipient, and a bounce type (e.g. hard vs. soft) and reason. Use to flag bad addresses, retry delivery, or alert on delivery failures.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     inbox_id: inboxIdDropdownOptional,

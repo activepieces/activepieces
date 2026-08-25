@@ -5,7 +5,7 @@ import { getAccountInformation } from './lib/actions/get-account-information';
 import { getPageHtml } from './lib/actions/get-page-html';
 import { scrapeWebsiteText } from './lib/actions/scrape-website-text';
 import { webscrapingAiAuth } from './lib/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const webscrapingAi = createPiece({
   displayName: 'WebScraping AI',

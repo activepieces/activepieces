@@ -13,6 +13,12 @@ export const searchKnowledgeArticlesAction = createAction({
   displayName: 'Search Knowledge Articles',
   description:
     'Search published knowledge base articles using free text. Requires the Knowledge API plugin to be active.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches published knowledge base articles by free text, optionally scoped to a specific knowledge base or language; leaving the search text empty browses articles rather than filtering to matches. Use to find relevant KB articles, then Get Knowledge Article for full content. Read-only and idempotent; results are paged via limit and offset. Requires the Knowledge API plugin to be active on the instance.',
+    idempotent: true,
+  },
   props: {
     query: Property.ShortText({
       displayName: 'Search Text',

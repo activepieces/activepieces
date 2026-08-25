@@ -1,14 +1,7 @@
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError,
-    AppConnectionType,
-    BaseOAuth2ConnectionValue,
-    ErrorCode,
-    isNil,
-    OAuth2ConnectionValueWithApp,
-    OAuth2GrantType,
-    resolveValueFromProps,
-} from '@activepieces/shared'
+import { AppConnectionType, BaseOAuth2ConnectionValue, OAuth2ConnectionValueWithApp, OAuth2GrantType, resolveValueFromProps } from '@activepieces/shared'
 import { AxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { secretManagersService } from '../../../../ee/secret-managers/secret-managers.service'

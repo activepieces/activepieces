@@ -17,8 +17,13 @@ export const githubRegisterTrigger = ({
   createTrigger({
     auth: githubAuth,
     name: `trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
+    aiMetadata: {
+      description:
+        'Fires on activity for a configured GitHub event type on a chosen repository (one of: pull request, star, issue, push, discussion, or discussion comment, depending on which trigger variant is used). Represents a repository webhook event delivering the raw GitHub event payload.',
+    },
     props: {
       repository: githubCommon.repositoryDropdown,
     },
@@ -28,7 +33,7 @@ export const githubRegisterTrigger = ({
       const { repo, owner } = context.propsValue.repository!;
 
       const response = await githubApiCall<{ id: number }>({
-        accessToken: context.auth.access_token,
+        auth: context.auth,
         method: HttpMethod.POST,
         resourceUri: `/repos/${owner}/${repo}/hooks`,
         body: {
@@ -55,15 +60,13 @@ export const githubRegisterTrigger = ({
       );
       if (response !== null && response !== undefined) {
         await githubApiCall({
-          accessToken: context.auth.access_token,
+          auth: context.auth,
           method: HttpMethod.DELETE,
           resourceUri: `/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
         });
       }
     },
     async run(context) {
-      console.debug('payload received', context.payload.body);
-
       if (isVerificationCall(context.payload.body as Record<string, unknown>)) {
         return [];
       }

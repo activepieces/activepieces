@@ -44,6 +44,9 @@ export const newTask = createTrigger({
   name: 'new_task',
   displayName: 'New Task',
   description: 'Triggers when a task is created or changed.',
+  aiMetadata: {
+    description: 'Fires when a task is created or updated in the connected MeisterTask account; deduplication is keyed on the task\'s last-updated time, so it re-fires whenever a task changes, not only on creation. Represents the latest create-or-edit event across the account\'s tasks.',
+  },
   props: {
   },
   sampleData: {

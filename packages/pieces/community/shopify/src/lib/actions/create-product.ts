@@ -8,6 +8,8 @@ export const createProductAction = createAction({
   name: 'create_product',
   displayName: 'Create Product',
   description: 'Create a new product.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new product in the Shopify store with a title and optional description, type, image, status, vendor, and tags. Not idempotent: each call adds a separate product, so calling repeatedly creates duplicates. Use only to add a brand-new product, not to update an existing one.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

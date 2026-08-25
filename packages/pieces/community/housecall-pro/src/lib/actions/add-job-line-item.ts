@@ -5,8 +5,14 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const addJobLineItem = createAction({
   auth: housecallProAuth,
   name: "add_job_line_item",
+  classification: 'WRITE',
   displayName: "Add a line item to a job",
   description: "Add a line item to a job. This is a rate limited request.",
+  audience: 'both',
+  aiMetadata: {
+    description: "Append a single line item (name plus optional price, cost, quantity, kind, and tax settings) to a Housecall Pro job. Not idempotent: each call adds another line item, so repeating it creates duplicates. This endpoint is rate limited. To change an existing line item use Update a single line item for a job.",
+    idempotent: false,
+  },
   props: {
     job_id: Property.ShortText({
       displayName: "Job ID",

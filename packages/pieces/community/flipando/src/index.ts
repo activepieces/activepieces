@@ -5,7 +5,7 @@ import { getTask } from './lib/actions/get-task';
 import { runAppGenerator } from './lib/actions/run-app-generator';
 import { getAllApps } from './lib/actions/get-all-apps';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const flipando = createPiece({
   displayName: 'Flipando AI',

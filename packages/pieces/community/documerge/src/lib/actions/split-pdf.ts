@@ -8,6 +8,8 @@ export const splitPdf = createAction({
   name: 'split_pdf',
   displayName: 'Split PDF',
   description: 'Extract or remove specific pages from a PDF file',
+  audience: 'both',
+  aiMetadata: { description: 'Produce a new PDF on DocuMerge by either extracting a set of pages from a source PDF or removing a set of pages from it, with pages given as numbers or ranges (e.g. "1", "2-5"). Supply the source by name plus an optional URL or base64 contents. Use to subset or trim a PDF. Requires a file name; each call writes a new file (not idempotent).', idempotent: false },
   props: {
     fileName: Property.ShortText({
       displayName: 'File Name',

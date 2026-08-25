@@ -9,6 +9,10 @@ export const updatedOpportunity = createTrigger({
   name: 'updatedOpportunity',
   displayName: 'Updated Opportunity',
   description: 'Triggers when an opportunity changes.',
+  aiMetadata: {
+    description:
+      'Fires when an existing opportunity (deal) is modified in Copper CRM (any field change), via a Copper webhook. Emits the updated opportunity record. For stage- or status-specific changes use the dedicated Updated Opportunity Stage / Status triggers instead.',
+  },
   props: {},
   sampleData: {},
   type: TriggerStrategy.WEBHOOK,

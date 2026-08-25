@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { useEmbedding } from '@/components/providers/embed-provider';

@@ -6,8 +6,15 @@ import { callGraphApi, flattenUser } from '../common';
 export const listUsersAction = createAction({
     auth: azureAdAuth,
     name: 'list_users',
+    classification: 'SEARCH',
     displayName: 'List Users',
     description: 'Lists users in the directory. Supports optional filter and top (page size).',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Lists directory users with an optional OData $filter expression and a page-size cap (max 999), returning only the first page. Read-only and idempotent — the most flexible user search when you need filtering beyond enabled-only; use Get User by ID when you already know the exact user.',
+        idempotent: true,
+    },
     props: {
         top: Property.Number({
             displayName: 'Top',

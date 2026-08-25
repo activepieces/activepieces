@@ -9,8 +9,11 @@ import { leadConnectorAuth } from '../..';
 export const createTaskAction = createAction({
   auth: leadConnectorAuth,
   name: 'create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a new task.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a task attached to a GoHighLevel/LeadConnector contact, with a title, due date, optional description, assignee, and completed flag. Use to schedule follow-up work against a contact. Requires contact, title, and due date; not idempotent — each call creates a separate task.', idempotent: false },
   props: {
     contact: Property.Dropdown({
   auth: leadConnectorAuth,

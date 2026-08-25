@@ -7,6 +7,11 @@ export const createMetric = createAction({
   name: 'create_metric',
   displayName: 'Create Metric',
   description: 'Create a new metric for a company.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a new metric (a named, recurring data series with a reporting frequency and unit) for a Visible portfolio company. Use to register a KPI before reporting values against it. Requires the target company ID, a name, a frequency (daily, weekly, monthly, or quarterly), and a unit. Not idempotent: each call creates another metric even with identical inputs.',
+    idempotent: false,
+  },
   auth: visibleAuth,
   props: {
     companyId: Property.ShortText({

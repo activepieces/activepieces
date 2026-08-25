@@ -16,13 +16,16 @@ import {
   XaiResponse,
   AskGrokResult
 } from '../common/utils';
-import { z } from 'zod';
+import { askGrokActionOutputSchema } from '../output-schemas';
+import * as z from 'zod/mini'
 
 export const askGrok = createAction({
+  audience: 'both',
   auth: grokAuth,
   name: 'ask_grok',
   displayName: 'Ask Grok',
   description: 'Send prompts to Grok with real-time search, tools, and structured outputs.',
+  aiMetadata: { description: 'Sends a prompt to a Grok chat model and returns the completion, carrying the conversation as a required Messages array of role-and-content turns, which also covers a single-turn question as one user message and can pair it with an image URL for vision models. It is the general-purpose Grok call and the only one here that can turn on real-time web, news, and X search with citations, declare callable functions, or carry conversation history across runs via a memory key; prefer categorize_text to assign labels from a fixed set, extract_data_from_text to pull named fields out of prose, and generate_image for pictures. Messages must be supplied; the Quick Prompt field is a builder-side alternative that run() only reads when Messages is left empty. Not idempotent: each call produces a fresh completion and, when a memory key is set, appends to the stored history.', idempotent: false },
   props: {
     model: createModelProperty({
       displayName: 'Model',
@@ -203,12 +206,13 @@ export const askGrok = createAction({
       required: false,
     }),
   },
+  outputSchema: askGrokActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
-      temperature: z.number().min(0).max(2).optional(),
-      maxCompletionTokens: z.number().min(1).optional(),
-      maxSearchResults: z.number().min(1).max(30).optional(),
-      memoryKey: z.string().max(128).optional(),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
+      maxCompletionTokens: z.optional(z.number().check(z.minimum(1))),
+      maxSearchResults: z.optional(z.number().check(z.minimum(1), z.maximum(30))),
+      memoryKey: z.optional(z.string().check(z.maxLength(128))),
     });
 
     const {

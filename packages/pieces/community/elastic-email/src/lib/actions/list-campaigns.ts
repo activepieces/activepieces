@@ -9,6 +9,12 @@ export const listCampaignsAction = createAction({
   name: 'list_campaigns',
   displayName: 'List Campaigns',
   description: 'Fetch a paginated list of campaigns from Elastic Email.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a paginated list of campaigns from Elastic Email; leave the search field empty to return all campaigns, or set it to filter by campaign name. Use to look up campaigns or find a campaign name before updating it. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: elasticEmailAuth,
   props: {
     search: Property.ShortText({

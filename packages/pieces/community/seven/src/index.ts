@@ -4,7 +4,7 @@ import { sendRcsAction } from './action/rcs-send';
 import { sendVoiceCallAction } from './action/send-voice-call';
 import { lookup } from './action/lookup';
 import { smsInbound } from './trigger/sms-inbound';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sevenAuth } from './lib/auth';
 
 export const seven = createPiece({

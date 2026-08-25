@@ -8,7 +8,7 @@ import {
 	verifyWebhookSignature,
 	getCommentFullDetails,
 } from '../common';
-import { WebhookHandshakeStrategy } from '@activepieces/shared';
+import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'smartsheet_new_comment_trigger';
 
@@ -17,6 +17,9 @@ export const newCommentTrigger = createTrigger({
 	name: 'new_comment_webhook',
 	displayName: 'New Comment Added',
 	description: 'Triggers when a new comment is added to a discussion on a sheet.',
+	aiMetadata: {
+		description: 'Fires when a new comment is posted to a discussion within the configured Smartsheet sheet, delivering the comment event with fetched full comment details. The comment may belong to a discussion on a row or on the sheet.',
+	},
 	props: {
 		sheet_id: smartsheetCommon.sheet_id(),
 	},

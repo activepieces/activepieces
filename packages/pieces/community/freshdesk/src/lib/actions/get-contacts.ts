@@ -5,9 +5,12 @@ import { freshdeskAuth } from '../..';
 export const getContacts = createAction({
   auth: freshdeskAuth,
   name: 'get_contacts',
+  classification: 'SEARCH',
   displayName: 'Get Freshdesk Contacts',
   description:
     'Get contact details from Freshdesk for all (optional filtered) contacts.',
+  audience: 'both',
+  aiMetadata: { description: 'List Freshdesk contacts, optionally narrowing the results by an attribute filter (email, mobile, phone, company ID, or updated-since) and/or a state filter (blocked, deleted, unverified, verified); with no filters it returns all contacts. Use to search for or enumerate contacts when you do not already have a contact ID. Per-page count caps at 100 (set 0 for the default page). Read-only and idempotent.', idempotent: true },
 
   props: {
     filter_type: Property.StaticDropdown({

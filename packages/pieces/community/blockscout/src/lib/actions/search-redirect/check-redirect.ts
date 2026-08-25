@@ -3,8 +3,11 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const checkRedirect = createAction({
   name: 'check_redirect',
+  classification: 'READ',
   displayName: 'Check Search Redirect',
   description: 'Check if a search query should redirect to a specific resource',
+  audience: 'both',
+  aiMetadata: { description: 'Check whether a search query maps unambiguously to a single resource (address, transaction, block, or token) and should redirect straight to it. Pick this to disambiguate an exact identifier into one entity rather than browsing ranked results from Search. Read-only lookup on eth.blockscout.com.', idempotent: true },
   // category: 'Search',
   props: {
     query: Property.ShortText({

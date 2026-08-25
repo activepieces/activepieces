@@ -7,6 +7,8 @@ export const updateDeal = createAction({
     name: 'update_deal',
     displayName: 'Update Deal',
     description: 'Modify deal properties',
+    audience: 'both',
+    aiMetadata: { description: 'Update properties of an existing Teamleader deal identified by deal ID, such as title, customer, summary, source, department, responsible user, estimated value, probability, or closing date. Use when you already know the deal and want to change its data; only provided fields are sent. Idempotent: re-sending the same values leaves the deal unchanged.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         deal_id: Property.Dropdown({

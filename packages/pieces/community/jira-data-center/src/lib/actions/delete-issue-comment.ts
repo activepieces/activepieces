@@ -10,6 +10,12 @@ export const deleteIssueCommentAction = createAction({
 	name: 'delete_issue_comment',
 	displayName: 'Delete Issue Comment',
 	description: 'Deletes a comment on a specific issue.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Permanently deletes a specific comment from a Jira Data Center/Server issue, identified by issue and comment ID. Use to remove a comment that was posted in error. Idempotent on its target — once the comment is gone, the end state is unchanged by repeating.',
+		idempotent: true,
+	},
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

@@ -6,10 +6,17 @@ import { chargebeeRequest, cleanObject } from '../common/client';
 
 export const createSubscription = createAction({
   name: 'create_subscription',
+  classification: 'WRITE',
   auth: chargebeeAuth,
   displayName: 'Create Subscription',
   description:
     'Create a subscription for an existing customer using a Chargebee item price.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new item-price-based subscription for an existing Chargebee customer. Use when an agent needs to start billing a known customer on a specific item price. Requires a valid customer ID and item price ID; optional fields control trial, billing cycles, coupons, and auto-collection. Not idempotent — each call creates a separate subscription.',
+    idempotent: false,
+  },
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

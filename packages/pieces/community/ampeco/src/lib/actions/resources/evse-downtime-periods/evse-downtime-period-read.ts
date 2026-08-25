@@ -15,6 +15,8 @@ export const evseDowntimePeriodReadAction = createAction({
   name: 'evseDowntimePeriodRead',
   displayName: 'Resources - Evse Downtime Periods - Read',
   description: 'Get EVSE Downtime Period.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single EVSE downtime period by its numeric ID. Read-only and safe to repeat. To search across periods by EVSE, type, or time window use evse-downtime-periods-listing.', idempotent: true },
   props: {
         
   evseDowntimePeriod: Property.Number({

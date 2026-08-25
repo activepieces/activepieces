@@ -76,9 +76,9 @@ export const MultiSelectFilter = ({
                   <Badge
                     key={selectedValues[idx]}
                     variant="outline"
-                    className="px-1.5 py-0 text-xs font-normal rounded-sm bg-muted"
+                    className="px-1.5 py-0 text-xs font-normal rounded-sm bg-muted max-w-[15vw] min-w-0"
                   >
-                    {labelText}
+                    <span className="truncate">{labelText}</span>
                   </Badge>
                 ))
               ) : (

@@ -4,7 +4,7 @@ import { neverbounceAuth } from './lib/common/auth';
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { verifyEmailAddress } from './lib/actions/verify-email-address';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const neverbounce = createPiece({
   displayName: 'NeverBounce',

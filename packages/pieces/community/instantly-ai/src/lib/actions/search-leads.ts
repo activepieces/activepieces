@@ -9,6 +9,8 @@ export const searchLeadsAction = createAction({
   name: 'search_leads',
   displayName: 'Search Leads',
   description: 'Search for leads in Instantly by name or email.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches leads in Instantly by a query string (first name, last name, or email), optionally scoped to a specific campaign and/or lead list, and returns all matches across pages. Use to find a lead and its ID before adding it to a campaign or other lead operations. The search term is required. Read-only and idempotent.', idempotent: true },
   props: {
     search: Property.ShortText({
       displayName: 'Search',

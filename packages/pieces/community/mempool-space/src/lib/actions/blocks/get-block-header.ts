@@ -7,6 +7,8 @@ export const getBlockHeader = createAction({
     name: 'get_block_header',
     displayName: 'Get Block Header',
     description: 'Returns the hex-encoded block header',
+    audience: 'both',
+    aiMetadata: { description: 'Returns the hex-encoded 80-byte block header for a given block hash (version, previous hash, merkle root, timestamp, bits, nonce). Read-only and idempotent. Pick this when you only need the header rather than the full block; use Get Block for parsed fields or Get Block Raw for the entire serialized block.', idempotent: true },
     // category: 'Blocks',
     props: {
         hash: Property.ShortText({

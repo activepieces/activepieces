@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { savvyCalPaginatedCall, flattenEvent, SavvyCalEvent } from '../common';
-import { savvyCalAuth } from '../../';
+import { savvyCalAuth, getToken } from '../auth';
 
 export const findEventsByEmailAction = createAction({
   auth: savvyCalAuth,
   name: 'find_events_by_email',
   displayName: 'Find Events by Attendee Email',
   description: "Returns all events where the attendee's email matches the given address.",
+  audience: 'both',
+  aiMetadata: { description: 'Finds all SavvyCal events that have a given email among their attendees. Use to look up a specific person\'s bookings when you only know their email; optionally narrow with a start-date window to limit the scan. Match is case-insensitive on the attendee email. Read-only and idempotent.', idempotent: true },
   props: {
     attendee_email: Property.ShortText({
       displayName: 'Attendee Email',
@@ -25,7 +27,7 @@ export const findEventsByEmailAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.secret_text;
+    const token = getToken(context.auth);
     const { attendee_email, start_after, start_before } = context.propsValue;
 
     const queryParams: Record<string, string> = {};

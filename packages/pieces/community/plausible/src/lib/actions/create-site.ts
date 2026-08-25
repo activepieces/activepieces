@@ -8,6 +8,8 @@ export const createSite = createAction({
   name: 'create_site',
   displayName: 'Create Site',
   description: 'Create a new site in your Plausible account',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new site in the Plausible account, optionally setting timezone, owning team, and tracker options like 404 tracking, hash-based routing, outbound-link, file-download, and form-submission tracking. Use when registering a new domain for analytics. The domain must be globally unique; not idempotent, as a repeat call with the same domain fails or creates a duplicate.', idempotent: false },
   props: {
     domain: Property.ShortText({
       displayName: 'Domain',

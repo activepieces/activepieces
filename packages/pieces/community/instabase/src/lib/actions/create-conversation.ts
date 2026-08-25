@@ -21,6 +21,8 @@ export const createConversationAction = createAction({
   name: 'create_conversation',
   displayName: 'Create Conversation and Upload Files',
   description: 'Create a new conversation and upload files to it',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Instabase AI Hub conversation and uploads one or more document files to it for processing, returning the conversation. Use this as the first step before querying documents; at least one file is required and processing options (object/entity detection, fast mode, multilanguage) can be toggled. Not idempotent: each call creates a distinct conversation.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Conversation Name',

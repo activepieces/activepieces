@@ -8,6 +8,8 @@ export const getLead = createAction({
   name: 'get_Lead',
   displayName: 'Get Lead',
   description: 'Retrieves a specific lead by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch a single lead from the configured PollyBot chatbot by its unique lead ID. Use when you already have a lead ID and need its current details. Read-only and idempotent.', idempotent: true },
   auth: pollybotAuth,
   props: {
     id: Property.ShortText({

@@ -8,7 +8,7 @@ import { findDatabaseRecord } from './lib/actions/find-database-record';
 import { updateDatabaseRecord } from './lib/actions/update-database-record';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newDatabaseRecord } from './lib/triggers/new-database-record';
 
 export const softr = createPiece({

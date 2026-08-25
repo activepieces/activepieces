@@ -10,12 +10,14 @@ import {
 	customObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { chunk, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
+import { chunk } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
 import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 type Props = {
 	customObjectType?: string;
@@ -131,26 +133,24 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-custom-object-property-change',
+	classification: 'READ',
 	displayName: 'New Custom Object Property Change',
 	description: 'Triggers when a specified property is updated on a custom object.',
+	aiMetadata: {
+		description:
+			'Fires when the chosen property changes on a record of the selected HubSpot custom object type. Each event represents one custom-object record whose selected property was modified since the last poll, returning the record. Use to react to specific field updates on a custom object rather than every change.',
+	},
 	props: {
 		customObjectType: customObjectDropdown,
 		propertyName: customObjectPropertiesDropdown('Property Name', true, true),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

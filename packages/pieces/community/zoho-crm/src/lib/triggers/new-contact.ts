@@ -21,6 +21,9 @@ export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
+  aiMetadata: {
+    description: 'Fires when a new contact record is created in the connected Zoho CRM account, emitting that contact. Polls the Contacts module ordered by creation time, so it represents newly added contacts.',
+  },
   sampleData: {
     Owner: {
       name: 'Activepieces Apps',

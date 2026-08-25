@@ -9,6 +9,8 @@ export const uploadDocumentAction = createAction({
   name: 'upload-docuemnt',
   displayName: 'Upload Document',
   description: 'Uploads a document file to SlideSpeak.',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a document file to SlideSpeak so it can later be used as source material when creating a presentation (reference the returned task/document id in Create Presentation). Use as the first step before grounding a generated deck in your own content; the call blocks while polling until processing finishes (up to ~5 minutes) and uploads a new document each time, so it is not idempotent.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

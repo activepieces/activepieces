@@ -5,6 +5,10 @@ export const newOpenEvent = createMailgunWebhookTrigger({
   displayName: 'New Open Event',
   description:
     'Triggers when a recipient opens an email in Mailgun',
+  aiMetadata: {
+    description:
+      'Fires when Mailgun detects that a recipient opened a tracked email. Represents a single open event with client and device details; requires open tracking enabled on the domain.',
+  },
   eventType: 'opened',
   testEventFilter: { event: 'opened' },
   sampleData: {

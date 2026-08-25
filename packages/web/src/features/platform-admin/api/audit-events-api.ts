@@ -1,8 +1,5 @@
-import {
-  ApplicationEvent,
-  ListAuditEventsRequest,
-  SeekPage,
-} from '@activepieces/shared';
+import { SeekPage } from '@activepieces/core-utils';
+import { ApplicationEvent, ListAuditEventsRequest } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 

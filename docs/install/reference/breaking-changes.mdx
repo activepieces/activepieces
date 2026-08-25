@@ -1,0 +1,478 @@
+---
+title: "Breaking Changes"
+description: "This list shows all versions that include breaking changes and how to upgrade."
+icon: "hammer"
+---
+
+## Unreleased
+
+### What has changed?
+
+#### A new workspace is named after the company in the sign-up email
+
+Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
+
+The person-based name is still what you get from a consumer address. `ahmad@gmail.com` continues to produce `"Ahmad's Platform"`, as do the other common providers (Outlook, Yahoo, iCloud, Proton, GMX, QQ and similar). Whether an address counts as a work address is decided by a denylist of consumer providers, so anything not on that list is treated as a company.
+
+This only affects platforms created from here on. Existing platforms keep their names, and renaming stays available in settings.
+
+#### What you need to do
+
+Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
+
+#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
+
+The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
+
+#### What you need to do
+
+Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
+
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
+
+Two changes to the MCP OAuth endpoints:
+
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
+
+#### What you need to do
+
+Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
+
+Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
+
+If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
+
+#### Agent steps move from the flow engine to the server
+
+An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
+
+The step's inputs and its output shape are unchanged, so anything reading the step's result or its structured output keeps working. Sub-flow, MCP server, knowledge base and piece action tools all run on the new path.
+
+Two differences are worth knowing before you upgrade:
+
+- **Web search is no longer a step setting.** It follows what the platform has configured rather than a per-step toggle. A step that had it switched on keeps working; the stored value is ignored.
+- **Max steps is honoured up to a ceiling.** The value you set still applies, but the server caps a single run at 50 turns. A step configured above that runs 50.
+
+#### What you need to do
+
+Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
+
+#### The container no longer bundles PM2 — crashes exit the container
+
+The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
+
+#### What you need to do
+
+Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+
+#### The Microsoft Teams Bot piece no longer needs a server-side installation record
+
+`POST /v1/teams-bot/webhook` and `POST /v1/teams-bot/send` are removed, and the `teams_bot_installation` table is dropped. The webhook existed only to capture Microsoft's per-tenant `serviceUrl` at install time so the send endpoint could look it up.
+
+The piece now posts to Microsoft's documented global Teams service endpoint directly, so it holds no server-side state and its messaging endpoint moves to the shared app-webhooks route, `/api/v1/app-events/microsoft-teams-bot`. Because the installed-or-not check is no longer a cached row, it is answered by Microsoft at send time: posting to a team the bot is not a member of now fails with `403 The bot is not part of the conversation roster` instead of a stale local lookup.
+
+The piece is published as `0.1.0` with a minimum supported release of `0.88.4`, so releases below `0.88.4` keep being offered `0.0.2`, which still has the server route it depends on.
+
+#### What you need to do
+
+Nothing for existing connections; they keep working untouched, and sending no longer reads the dropped table.
+
+If you already have a flow using **Microsoft Teams Bot** piece version `0.0.2`, open the step and upgrade the piece to `0.1.0`. Flow steps pin an exact piece version, so an existing step stays on `0.0.2` after you upgrade, and `0.0.2` calls the `/v1/teams-bot/send` route this release removes. That step will fail with a 404 until it is upgraded.
+
+Optionally repoint the **Messaging endpoint** on your Azure Bot resource from `/api/v1/teams-bot/webhook` to `/api/v1/app-events/microsoft-teams-bot`; an endpoint left on the old path returns 404 and is otherwise harmless. If you call `/v1/teams-bot/send` directly from your own code, switch to the piece's **Send Channel Message as Bot** action.
+
+#### Table record filters compare date columns chronologically
+
+The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
+
+This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
+
+#### What you need to do
+
+Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
+
+#### Emailed sign-in codes allow ten wrong guesses per account per hour
+
+The six-digit login code already allowed five wrong guesses, but that budget lived on the code itself, and the fifth wrong guess threw the code away — so asking for a new code handed out five fresh guesses immediately, with no ceiling on how often that could repeat. A six-digit code is only a million possibilities, so unlimited retries reduce it to a matter of hours.
+
+Wrong guesses are now counted per account over a rolling hour, independently of how many codes get sent. Entering the right code clears the counter, so someone who fumbles a few digits and then succeeds is unaffected.
+
+Two consequences worth knowing. Someone who spends ten wrong guesses on an account within an hour cannot sign in **with an emailed code** until the hour is up; password and Google sign-in are unaffected. And because the counter is keyed on the account rather than the caller, anyone who knows an address can spend that budget on the owner's behalf — a temporary nuisance for the owner, and the trade the cap is worth making.
+
+#### What you need to do
+
+Nothing. The limit applies out of the box and needs no configuration. If your support team sees a report of "the code keeps saying it's wrong", have them check whether the account has burned its hourly budget, and point the user at password or Google sign-in in the meantime.
+
+#### One-time codes are no longer stored in a readable form
+
+The `otp` table used to hold the six-digit sign-in code as plain text, so anyone who could read the database — a replica, a backup, a support query — could sign in as any account for the ten minutes that code was alive, without a password. Codes are now stored as a digest keyed with a server-held secret, so reading the table no longer yields anything you can sign in with. The code itself is held only long enough to re-send it if the person asks for it again.
+
+A code found to be expired is thrown away when it is next presented, rather than sitting in the table until the same person happens to request another one.
+
+#### What you need to do
+
+Nothing, and no new configuration: the key is derived from a secret your instance already has. Codes written by an older build are recorded as such and keep working until they expire, so a sign-in already underway when you deploy still completes, an email verification link still opens, and a rolling deploy where both builds are serving at once behaves the same.
+
+Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
+
+
+## 0.87.0
+
+### What has changed?
+
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
+
+#### Plans and credits are now managed by our billing service
+
+Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `POST /v1/license-keys/verify`. Applying a key is now `POST /v1/platform-billing/activate`.
+
+Four feature flags no longer appear in `GET /v1/flags`: `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` and `SHOW_BILLING_LIMITS_ON_SIDEBAR`. Whether the billing page appears is now decided from the edition and plan instead.
+
+#### Enterprise instances without a license key are placed on the free plan
+An Enterprise-edition instance with no license key previously ran with no credit enforcement. It is now enrolled on the free plan, so credit limits apply to it. Entering your license key restores your contracted limits.
+
+#### Running out of credits now stops production flow runs
+When a platform has no credits left, new production runs are recorded with the `QUOTA_EXCEEDED` status instead of executing, and synchronous webhooks respond with HTTP 402. Such a run keeps its trigger payload, so it can be retried once credits are available. Test runs are unaffected.
+
+#### The AI piece offers only the named model tiers for Activepieces-provided AI
+In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
+
+### Do you need to take action?
+- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
+- Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
+- Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
+- Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
+- Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
+- No database action is required. The migration only adds columns and leaves the existing ones in place.
+#### Official piece bundles are served from the Activepieces CDN by default
+`AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
+
+### Do you need to take action?
+- Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
+
+## 0.86.0
+
+### What has changed?
+
+#### Log fields are now grouped by entity
+Log fields are now grouped under the entity they belong to, so each thing has one name. A flow run id is `flowRun.id` (it used to appear as `runId`, `flowRunId`, or a bare `id`), and other ids follow the same shape (`flow.id`, `project.id`, `job.id`, …). Errors are logged under `error`. This only changes how logs look — nothing about the API, database, or flows changes.
+
+#### Google SSO is configured via environment variables only
+"Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
+
+#### Pieces are now self-contained bundles
+Each piece is now built into a single self-contained bundle — its own code, the Activepieces framework, and its third-party dependencies are inlined into one artifact, so the engine provisions a piece by downloading one file instead of installing a dependency tree at runtime. As part of this, the shared libraries (`@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, `@activepieces/core-*`) are no longer published to npm, and pieces import only from `@activepieces/pieces-framework` (which re-exports the foundation symbols that used to come from `@activepieces/shared`). Built-in pieces are unaffected — this only matters for custom pieces.
+
+#### `AP_PRE_WARM_CACHE` removed
+The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
+
+The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
+
+### Do you need to take action?
+- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+- Only if you build dashboards or alerts on Activepieces logs. Update them to the new grouped names, e.g. `runId` → `flowRun.id` and `err` → `error`.
+- Only if you maintain **custom pieces** (in a fork or built outside the repo). Migrate each one to the bundle model — run `npm run cli -- pieces migrate <piece-name>` (or `--all`), or follow the [migration guide](/build-pieces/misc/migrate-pieces-to-bundles). Pieces that still import `@activepieces/shared` or depend on the now-unpublished libraries will fail to build.
+- Only if your deployment sets `AP_PRE_WARM_CACHE`. Remove it from your environment — it is no longer read. Nothing else is required.
+
+## 0.85.4
+### What has changed?
+
+#### Observability: OpenTelemetry replaced with evlog
+Logging moved from pino + OpenTelemetry to [evlog](https://evlog.dev). Logs are now one rich event per request/job instead of many small lines, so the JSON shape changed.
+
+**Traces and metrics are no longer exported.** OpenTelemetry tracing produced a huge volume of low-value spans — far more data (and cost) than it was worth — so we dropped it in favour of these wide events, which carry the same context in one place. `AP_OTEL_ENABLED=true` now sends **logs** only, over OTLP.
+
+New optional env vars: `AP_LOG_SAMPLE_RATE_INFO` (percent of info logs to keep, default `100`) and `AP_LOG_KEEP_SLOW_MS` (always keep requests slower than this, default `2000`). Drain settings (`AP_AXIOM_*`, `AP_BETTERSTACK_*`, `AP_LOKI_*`, `AP_HYPERDX_TOKEN`) are unchanged.
+
+**Action:** only if you ingest Activepieces telemetry — update log dashboards to the new shape, and move any trace- or metric-based monitoring to logs.
+
+#### Referencing step outputs
+Previously if you had a step called step_1 you would had to reference it "step_1['the_property_you_want']" but now you must reference it as "step_1['output']['the_property_you_want']", there is already a migration that will take care of this for you, but if you must abide by this new syntax if you are writing/editing step references manually not through the builder.
+You can now also reference the step error via "step_1['error']", these changes come with the error handling feature.
+Also step names there were shown on hover in the builder are now removed, you can right click the step and copy its reference instead.
+
+#### Enforcing same version of docker image on both worker and app servers
+Previously if your worker was on a different version of your app server, the worker would work fine most of the time, but because some changes we do will require both of them to be on the same version we added this safeguard.
+
+## 0.84.0
+
+### What has changed?
+
+#### Flow Run Log Size Enforcement
+This is an important behavior change in how flow run logs are stored and capped, but **no action is required** — the existing default (`AP_MAX_FLOW_RUN_LOG_SIZE_MB=50`) is preserved.
+
+- Large step outputs are now offloaded to object storage instead of sitting inline in worker memory, controlled by the new `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` env var (default `32`).
+- Large step input values are replaced with a `(truncated, original size <N>)` placeholder in the log via the new `AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB` env var (default `2`). The step still receives the full value at runtime.
+- Runs whose combined step inputs and outputs exceed `AP_MAX_FLOW_RUN_LOG_SIZE_MB` now terminate with the new `LOG_SIZE_EXCEEDED` status instead of silently trimming inputs. Offloaded outputs still count their original size against the cap.
+- See [Limits → Files & flow run logs](/install/reference/limits#files-flow-run-logs) for the full behavior, environment variables, and defaults.
+- Embedding now requires setting allowed embed origins, which means only the domains listed in the field can embed the app (wildcards are supported). There is also a new env variable `AP_ALLOWED_EMBED_ORIGINS` for setting pre-allowed origins, and a new endpoint for adding these origins — [check docs](/endpoints/embedding/add-allowed-embed-origins).
+- "Sign in with Google" can no longer be enabled from the SSO page in the admin panel — that setting has been removed. It is now controlled solely by the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables. The button only appears when both are set (and the platform's Google auth toggle is enabled).
+
+### Do you need to take action?
+- **Embedding** — if you are embedding your self-hosted activepieces somewhere make sure it's on the allow list
+- Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
+
+## 0.83.0
+
+### What has changed?
+When creating a project now, the platform owner email doesn't automatically get added to the alert recievers list of the project, you can manually assign it in the UI/API, when creating a project.
+
+## 0.82.0
+
+### What has changed?
+
+#### Piece Versions Are Now Pinned
+- Piece versions are no longer stored with wildcards (`~1.2.0`, `^1.2.0`). All piece steps now use exact versions (e.g. `1.2.0`).
+- A migration automatically strips wildcard prefixes from all existing flow versions on upgrade.
+- The `LOCK_AND_PUBLISH` operation no longer resolves piece versions at publish time — steps run with the exact version stored in the flow.
+- A new **version switcher** UI in the builder lets users upgrade or downgrade piece versions manually.
+
+#### REST API
+- `ADD_ACTION`, `UPDATE_ACTION`, and `UPDATE_TRIGGER` now strip wildcard prefixes (`~`, `^`) from `pieceVersion` before saving. If you were relying on wildcard versions to auto-resolve on publish, your steps will now be pinned to the base version (e.g. `~1.2.0` becomes `1.2.0`).
+- `LOCK_AND_PUBLISH` no longer modifies `pieceVersion` on any step. The version in the draft is the version that will run.
+- A new endpoint `GET /v1/pieces/:name/versions` is available to list all versions of a piece, useful for building custom version selection.
+
+#### Concurrent Jobs Env Var Renamed
+- `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` → `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. Default drops from `100` to `5`.
+
+#### Outbound HTTP is SSRF-filtered
+- Server-side HTTP (OAuth, Vault, Conjur, event destinations, on-call pager, MCP validator) now blocks private, loopback, and cloud-metadata IPs. Reach internal hosts by adding their IP/CIDR to `AP_SSRF_ALLOW_LIST`.
+
+### Do you need to take action?
+- **Pinned piece versions** — if you create or update flows via the REST API with wildcard versions (`~` or `^`), switch to exact versions; wildcards are silently stripped. If your publish flow relied on `LOCK_AND_PUBLISH` resolving wildcards, set the exact version on each step before publishing. Use `GET /v1/pieces/:name/versions` to list available versions.
+- **Concurrent jobs** — rename `AP_MAX_CONCURRENT_JOBS_PER_PROJECT` to `AP_DEFAULT_CONCURRENT_JOBS_LIMIT`. To keep the old cap, set `AP_DEFAULT_CONCURRENT_JOBS_LIMIT=100`.
+- **SSRF filter** — if you self-host Vault, Conjur, an OAuth2 token endpoint, or any internal webhook on a private IP, set `AP_SSRF_ALLOW_LIST` (comma-separated IPs or CIDRs, e.g. `10.0.5.12,192.168.10.0/24`) before upgrading.
+
+
+## 0.80.0
+
+### What has changed?
+
+#### Infrastructure
+- A new environment variable `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` has been introduced to control the maximum allowed webhook payload size. The default is `25` MB. Webhooks exceeding this limit will be rejected with a `413 Request Too Long` response.
+- Nginx has been removed from the Docker image. Fastify now serves both the API and the React frontend directly. All API routes are now under the `/api` prefix natively. If you were using `/v1/health` as a health check endpoint (e.g. in Kubernetes probes or load balancer checks), update it to `/api/v1/health`.
+- Secret managers has been refactored, the version in **0.79.0** no longer is supported, it was not used by anyone but it's worth to mention to upgrade to **0.80.0** before considering using the feature
+
+#### API
+- A new `UPDATE_SAMPLE_DATA_INFO` flow operation has been introduced to handle sample data updates independently.
+- `UPDATE_ACTION` and `UPDATE_TRIGGER` no longer accept or apply changes to `sampleData` in step settings. Any `sampleData` fields sent in these requests will be ignored and the existing sample data will be preserved.
+- A new required `lastUpdatedDate` field has been added to all actions and triggers, tracked automatically by the server. It is not accepted in `UPDATE_ACTION` or `UPDATE_TRIGGER` requests.
+
+
+### Do you need to take action?
+- If you want to restrict webhook payload sizes below the new `25` MB default, set `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` to your desired limit.
+- If you are using the API to update sample data on steps via `UPDATE_ACTION` or `UPDATE_TRIGGER`, switch to the new `UPDATE_SAMPLE_DATA_INFO` operation instead.
+- If you have custom health checks pointing to `/v1/health`, update them to `/api/v1/health`.
+
+
+
+
+
+## 0.78.1
+
+### What has changed?
+- The Platform `Operator` role can now edit all projects.
+
+### Do you need to take action?
+- Only if you want to restrict Operators from having editor access to every project. Review your Operator permissions as needed.
+
+## 0.78.0
+### What has changed?
+
+- The `usageCount` field has been removed from both the template API responses and the database—it's no longer available.
+- The Todos feature is now deprecated and will not be supported going forward.
+
+### Do you need to take action?
+
+- If you're using the Todos feature, update your flows to use the new approvals channels available from the approvals tab in the piece selector.
+
+
+## 0.77.0
+### What has changed?
+
+- For Embed Plan users: the "Use a Template" dialog no longer appears when clicking the "New Flow" button.
+- The `/flow-templates` API endpoints have been removed and replaced by `/templates`.
+- Log size configuration has changed: `AP_MAX_FILE_SIZE_MB` no longer controls flow run logs. Use `AP_MAX_FLOW_RUN_LOG_SIZE_MB` instead.
+
+### Do you need to take action?
+
+- If you are on the embed plan, update your implementation to redirect users to the `/templates` page.
+- Review the new endpoints documentation: [Templates API Schema](https://www.activepieces.com/docs/endpoints/templates/schema).
+- If you use a custom value for `AP_MAX_FILE_SIZE_MB`, be sure to also set `AP_MAX_FLOW_RUN_LOG_SIZE_MB` accordingly.
+
+## 0.75.0
+
+### What has changed?
+- When you navigate to a flow run inside the builder the url will change to /runs, this is something embedding customers might need to consider in case they have a route guard that only allows users to navigate to /flows.
+- In **development mode**, loading piece translations are now off by default. Set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` to enable.
+
+### Do you need to take action?
+- Check your embedding navigation handler and see if it would be blocking the user from seeing the runs inside the builder or not.
+- If you want to load translations for pieces in development mode, set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` in your environment variables.
+
+## 0.74.0
+
+### What has changed?
+- The default embedded database for development and lightweight deployments has changed from **SQLite3** to [**PGLite**](https://pglite.dev/) (embedded PostgreSQL).
+- The environment variable `AP_DB_TYPE=SQLITE3` is now deprecated and replaced with `AP_DB_TYPE=PGLITE`.
+- Existing SQLite databases will be automatically migrated to PGLite on first startup.
+- Templates are broken in this version. A migration issue changed template IDs, breaking API endpoints. This will be fixed in the next patch release.
+- The `aiCredits` feature per project has been removed. In the next version, it will be replaced by integration with the AI Gateway.
+
+### Do you need to take action?
+- **If you are using `AP_DB_TYPE=SQLITE3`:** Update your configuration to use `AP_DB_TYPE=PGLITE` instead.
+- **If you are using templates:** Wait for the next patch release to fix the template IDs.
+
+
+## 0.73.0
+
+### What has changed?
+- Major change to MCP: [Read the announcement.](https://community.activepieces.com/t/mcp-update-easier-faster-and-more-secure/11177)
+- If you have SMTP configured in the platform admin, it's no longer supported—you need to use AP_SMTP_ [environment variables.](https://www.activepieces.com/docs/install/reference/environment-variables#email-smtp)
+
+### Do you need to take action?
+- If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
+
+
+## 0.71.0
+
+### What has changed?
+
+- In separate workers setup, now they have access to Redis.
+- `AP_EXECUTION_MODE` mode `SANDBOXED` is now deprecated and replaced with `SANDBOX_PROCESS`
+- Code Copilot has been deprecated. It will be reintroduced in a different, more powerful form in the future.
+
+### When is action necessary?
+
+- If you have separate workers setup, you should make sure that workers have access to Redis.
+- If you are using `AP_EXECUTION_MODE` mode `SANDBOXED`, you should replace it with `SANDBOX_PROCESS`
+
+## 0.70.0
+
+### What has changed?
+- `AP_QUEUE_MODE` is now deprecated and replaced with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+### When is action necessary?
+
+- If you are using `AP_QUEUE_MODE`, you should replace it with `AP_REDIS_TYPE`
+- If you are using Sentinel Redis, you should add `AP_REDIS_TYPE` to `SENTINEL`
+
+## 0.69.0
+
+### What has changed?
+- `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` are now deprecated all jobs have single queue and replaced with `AP_WORKER_CONCURRENCY`
+
+### When is action necessary?
+
+- If you are using `AP_FLOW_WORKER_CONCURRENCY` or `AP_SCHEDULED_WORKER_CONCURRENCY`, you should replace them with `AP_WORKER_CONCURRENCY`
+
+## 0.66.0
+
+### What has changed?
+
+- If you use embedding the embedding SDK, please upgrade to version 0.6.0, `embedding.dashboard.hideSidebar` used to hide the navbar above the flows table in the dashboard now it relies on `embedding.dashboard.hideFlowsPageNavbar`
+
+
+## 0.64.0
+
+### What has changed?
+
+- MCP management is removed from the embedding SDK.
+
+
+## 0.63.0
+
+### What has changed?
+
+- Replicate provider's text models have been removed.
+
+### When is action necessary?
+
+- If you are using one of Replicate's text models, you should replace it with another model from another provider.
+
+## 0.46.0
+
+### What has changed?
+
+- The UI for "Array of Properties" inputs in the pieces has been updated, particularly affecting the "Dynamic Value" toggle functionality.
+
+### When is action necessary?
+
+- No action is required for this change.
+- Your published flows will continue to work without interruption.
+- When editing existing flows that use the "Dynamic Value" toggle on "Array of Properties" inputs (such as the "files" parameter in the "Extract Structured Data" action of the "Utility AI" piece), the end user will need to remap the values again.
+- For details on the new UI implementation, refer to this [announcement](https://community.activepieces.com/t/inline-items/8964).
+
+## 0.38.6
+
+### What has changed?
+
+- Workers no longer rely on the `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` environment variables. These values are now retrieved from the app server.
+
+### When is action necessary?
+
+- If `AP_CONTAINER_TYPE` is set to `WORKER` on the worker machine, and `AP_SCHEDULED_WORKER_CONCURRENCY` or `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To fix this, check the [Separate Worker from App](https://www.activepieces.com/docs/install/configure-operate/separate-workers) documentation and set the `AP_CONTAINER_TYPE` to fetch the necessary values from the app server. If no container type is set on the worker machine, this is not a breaking change.
+
+## 0.35.1
+
+### What has changed?
+
+- The 'name' attribute has been renamed to 'externalId' in the `AppConnection` entity.
+- The 'displayName' attribute has been added to the `AppConnection` entity.
+
+### When is action necessary?
+- If you are using the connections API, you should update the `name` attribute to `externalId` and add the `displayName` attribute.
+
+## 0.35.0
+
+### What has changed?
+
+- All branches are now converted to routers, and downgrade is not supported.
+
+## 0.33.0
+
+### What has changed?
+
+- Files from actions or triggers are now stored in the database / S3 to support retries from certain steps, and the size of files from actions is now subject to the limit of `AP_MAX_FILE_SIZE_MB`.
+- Files in triggers were previously passed as base64 encoded strings; now they are passed as file paths in the database / S3. Paused flows that have triggers from version 0.29.0 or earlier will no longer work.
+
+### When is action necessary?
+- If you are dealing with large files in the actions, consider increasing the `AP_MAX_FILE_SIZE_MB` to a higher value, and make sure the storage system (database/S3) has enough capacity for the files.
+
+
+## 0.30.0
+
+### What has changed?
+
+- `AP_SANDBOX_RUN_TIME_SECONDS` is now deprecated and replaced with `AP_FLOW_TIMEOUT_SECONDS`
+- `AP_CODE_SANDBOX_TYPE` is now deprecated and replaced with new mode in `AP_EXECUTION_MODE`
+
+### When is action necessary?
+
+- If you are using `AP_CODE_SANDBOX_TYPE` to `V8_ISOLATE`, you should switch to `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY`
+- If you are using `AP_SANDBOX_RUN_TIME_SECONDS` to set the sandbox run time limit, you should switch to `AP_FLOW_TIMEOUT_SECONDS`
+
+## 0.28.0
+
+### What has changed?
+
+- **Project Members:**
+    - The `EXTERNAL_CUSTOMER` role has been deprecated and replaced with the `OPERATOR` role. Please check the permissions page for more details.
+    - All pending invitations will be removed.
+    - The User Invitation entity has been introduced to send invitations. You can still use the Project Member API to add roles for the user, but it requires the user to exist. If you want to send an email, use the User Invitation, and later a record in the project member will be created after the user accepts and registers an account.
+- **Authentication:**
+    - The `SIGN_UP_ENABLED` environment variable, which allowed multiple users to sign up for different platforms/projects, has been removed. It has been replaced with inviting users to the same platform/project. All old users should continue to work normally.
+
+### When is action necessary?
+
+- **Project Members:**
+
+If you use the embedding SDK or the create project member API with the `EXTERNAL_CUSTOMER` role, you should start using the `OPERATOR` role instead.
+
+- **Authentication:**
+
+Multiple platforms/projects are no longer supported in the community edition. Technically, everything is still there, but you have to hack using the API as the authentication system has now changed. If you have already created the users/platforms, they should continue to work, and no action is required.

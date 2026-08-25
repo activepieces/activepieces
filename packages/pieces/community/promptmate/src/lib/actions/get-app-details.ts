@@ -8,6 +8,8 @@ export const getAppDetails = createAction({
   name: 'get_app_details',
   displayName: 'Get App Details',
   description: 'Retrieve detailed information about a specific PromptMate app',
+  audience: 'both',
+  aiMetadata: { description: 'Fetches the full configuration and metadata of one PromptMate app by appId. Use it to inspect an app\'s expected data fields and settings before constructing input for run-app. Read-only and safe to repeat.', idempotent: true },
   props: {
     appId: Property.Dropdown({
       displayName: 'App',

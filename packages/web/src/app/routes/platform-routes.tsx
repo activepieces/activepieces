@@ -8,6 +8,7 @@ import { Error, Success } from '@/features/billing';
 import { PlatformLayout } from '../components/platform-layout';
 
 const SettingsBilling = React.lazy(() => import('./platform/billing'));
+const SettingsUsage = React.lazy(() => import('./platform/usage'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
@@ -33,9 +34,9 @@ const ProjectRolePage = React.lazy(() =>
 const SecretManagersPage = React.lazy(
   () => import('./platform/security/secret-managers'),
 );
-const SigningKeysPage = React.lazy(() =>
-  import('./platform/security/signing-keys').then((m) => ({
-    default: m.SigningKeysPage,
+const EmbedPage = React.lazy(() =>
+  import('./platform/security/embed').then((m) => ({
+    default: m.EmbedPage,
   })),
 );
 const SSOPage = React.lazy(() =>
@@ -43,9 +44,9 @@ const SSOPage = React.lazy(() =>
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
-const BrandingPage = React.lazy(() =>
-  import('./platform/setup/branding').then((m) => ({
-    default: m.BrandingPage,
+const GeneralPage = React.lazy(() =>
+  import('./platform/setup/general').then((m) => ({
+    default: m.GeneralPage,
   })),
 );
 const GlobalConnectionsTable = React.lazy(() =>
@@ -58,12 +59,20 @@ const PlatformPiecesPage = React.lazy(() =>
     default: m.PlatformPiecesPage,
   })),
 );
+const PieceSetDetailsPage = React.lazy(() =>
+  import('./platform/setup/pieces/piece-sets/piece-set-details-page').then(
+    (m) => ({ default: m.PieceSetDetailsPage }),
+  ),
+);
 const PlatformTemplatesPage = React.lazy(() =>
   import('./platform/setup/templates').then((m) => ({
     default: m.PlatformTemplatesPage,
   })),
 );
 const UsersPage = React.lazy(() => import('./platform/users'));
+const PlatformConnectionsPage = React.lazy(
+  () => import('./platform/connections'),
+);
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
@@ -105,6 +114,18 @@ export const platformRoutes = [
     ),
   },
   {
+    path: '/platform/connections',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Connections">
+          <SuspenseWrapper>
+            <PlatformConnectionsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
     path: '/platform/setup',
     element: (
       <PlatformLayout>
@@ -118,13 +139,17 @@ export const platformRoutes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI">
+        <PageTitle title="AI Center">
           <SuspenseWrapper>
             <AIProvidersPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/platform/setup/ai-capabilities',
+    element: <Navigate to="/platform/setup/ai?tab=capabilities" replace />,
   },
   {
     path: '/platform/setup/mcp',
@@ -145,6 +170,18 @@ export const platformRoutes = [
         <PageTitle title="Pieces">
           <SuspenseWrapper>
             <PlatformPiecesPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/pieces/piece-sets/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Piece Set">
+          <SuspenseWrapper>
+            <PieceSetDetailsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -175,16 +212,20 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/branding',
+    path: '/platform/setup/general',
     element: (
       <PlatformLayout>
-        <PageTitle title="Branding">
+        <PageTitle title="General">
           <SuspenseWrapper>
-            <BrandingPage />
+            <GeneralPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/platform/setup/branding',
+    element: <Navigate to="/platform/setup/general" replace />,
   },
   {
     path: '/platform/setup/billing',
@@ -193,6 +234,18 @@ export const platformRoutes = [
         <PageTitle title="Billing">
           <SuspenseWrapper>
             <SettingsBilling />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/usage',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Usage">
+          <SuspenseWrapper>
+            <SettingsUsage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -265,12 +318,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/signing-keys',
+    path: '/platform/security/embed',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
           <SuspenseWrapper>
-            <SigningKeysPage />
+            <EmbedPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
@@ -326,7 +379,7 @@ export const platformRoutes = [
     path: '/platform/infrastructure/health',
     element: (
       <PlatformLayout>
-        <PageTitle title="System Health">
+        <PageTitle title="Health">
           <SuspenseWrapper>
             <SettingsHealthPage />
           </SuspenseWrapper>

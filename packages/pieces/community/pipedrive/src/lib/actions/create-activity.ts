@@ -8,8 +8,15 @@ import dayjs from 'dayjs';
 export const createActivityAction = createAction({
     auth: pipedriveAuth,
     name: 'create-activity',
+    classification: 'WRITE',
     displayName: 'Create Activity',
-    description: 'Creates a new activity.', 
+    description: 'Creates a new activity.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Creates an activity (call, meeting, task, etc.) with a subject and optional type, due date/time, owner, and links to a deal, lead, person, or organization. Use to schedule or log work against CRM records (use Update Activity to change one that exists). Not idempotent: each call creates a separate activity.',
+        idempotent: false,
+    },
     props: {
         subject: Property.ShortText({
             displayName: 'Subject',

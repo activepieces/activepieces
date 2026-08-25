@@ -15,6 +15,11 @@ export const downloadFileFromRecord = createAction({
 	name: 'downloadFileFromRecord',
 	displayName: 'Download File from Record',
 	description: 'Downloads a file attached to a record.',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Retrieves one named file attachment from a Ninox record, addressed by team, database, table, record id, and the file name, returning its metadata and the downloaded content. Use to fetch an existing attachment. Idempotent — a read-only download with no side effect.',
+		idempotent: true,
+	},
 	props: {
 		teamid: teamidDropdown,
 		dbid: databaseIdDropdown,

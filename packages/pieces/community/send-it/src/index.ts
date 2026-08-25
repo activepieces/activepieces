@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { sendItAuth } from './lib/auth';
 import { publishPost } from './lib/actions/publish-post';
 import { schedulePost } from './lib/actions/schedule-post';

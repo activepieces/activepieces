@@ -7,8 +7,11 @@ import { bitlinkDropdown, groupGuid } from '../common/props';
 export const archiveBitlinkAction = createAction({
   auth: bitlyAuth,
   name: 'archive_bitlink',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Bitlink',
   description: 'Archive a Bitlink to stop redirects.',
+  audience: 'both',
+  aiMetadata: { description: 'Archives an existing Bitlink so it stops redirecting, identified by its Bitlink ID (e.g. bit.ly/xyz123). Use to retire or disable a short link. Idempotent: re-archiving an already-archived link leaves it archived with no additional effect.', idempotent: true },
   props: {
     group_guid: groupGuid,
     bitlink: bitlinkDropdown,

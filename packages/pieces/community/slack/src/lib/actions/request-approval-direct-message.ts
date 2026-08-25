@@ -1,20 +1,27 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-} from '@activepieces/shared';
+import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
+import { ExecutionType } from '@activepieces/pieces-framework';
 import { profilePicture, text, userId, username, mentionOriginFlow } from '../common/props';
 import { ChatPostMessageResponse, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
+import { approvalActionOutputSchema } from '../output-schemas';
 
 export const requestApprovalDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'request_approval_direct_message',
+  classification: 'WRITE',
   displayName: 'Request Approval from A User',
   description:
     'Send approval message to a user and then wait until the message is approved or disapproved',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Direct-message one Slack user an approval request with Approve/Disapprove buttons and pause the flow until they respond. Pick this for a private one-to-one approval gate; use Request Action in A Channel to ask a whole channel. Not idempotent: each run sends a new DM and creates a fresh wait.',
+    idempotent: false,
+  },
+  outputSchema: approvalActionOutputSchema,
   props: {
     userId: userId(true),
     text,

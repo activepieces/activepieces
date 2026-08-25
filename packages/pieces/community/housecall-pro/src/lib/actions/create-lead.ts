@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createLead = createAction({
   auth: housecallProAuth,
   name: "create_lead",
+  classification: 'WRITE',
   displayName: "Create Lead",
   description: "Create a lead with the ID for an already existing customer.",
+  audience: 'both',
+  aiMetadata: { description: "Create a new sales lead in Housecall Pro, tied to an existing customer via customer_id. Not idempotent: repeated calls create duplicate leads for the same customer. Optional contact, lead-source, tag, address, and assigned-employee fields can be supplied; use the convert-lead action afterward to turn a lead into an estimate or job.", idempotent: false },
   props: {
     customer_id: Property.ShortText({
       displayName: "Customer ID",

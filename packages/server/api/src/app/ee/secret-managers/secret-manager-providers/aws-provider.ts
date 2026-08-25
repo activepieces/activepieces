@@ -1,4 +1,5 @@
-import { ActivepiecesError, AWSProviderConfig, ErrorCode, isNil, isObject, isString, SecretManagerProviderId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, isObject, isString } from '@activepieces/core-utils'
+import { AWSProviderConfig, SecretManagerProviderId } from '@activepieces/shared'
 import { GetSecretValueCommand, ListSecretsCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager'
 import { FastifyBaseLogger } from 'fastify'
 import { SecretManagerProvider, throwConnectionError, throwGetSecretError } from './secret-manager-providers'

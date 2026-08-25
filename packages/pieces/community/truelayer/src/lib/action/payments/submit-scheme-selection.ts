@@ -7,6 +7,8 @@ export const submitSchemeSelection = createAction({
   name: 'submit-scheme-selection',
   displayName: 'Submit Scheme Selection',
   description: 'Submit the scheme details selected by the PSU. This API can be called using the `resource_token` associated with the payment or a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'Advance a payment\'s authorization flow by submitting the payment scheme the user chose. Use only when the flow has reached a scheme-selection step. This mutates flow state and is not safe to repeat; distinct from the provider-selection, consent, and form submission steps of the same flow.', idempotent: false },
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',

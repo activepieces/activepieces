@@ -63,9 +63,26 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
         keys: pieceWithTriggersAndActionsFilterKeys,
         threshold: 0.2,
         distance: 250,
+        ignoreLocation: true,
     })
 
-    return fuse.search(searchQuery).map(({ item }) => {
+    const fuseMatches = fuse.search(searchQuery).map(({ item }) => item)
+
+    // Guarantee that an exact/substring name match is never lost to fuzzy ranking:
+    // an extra word in the query (e.g. "Discord webhook" vs the piece name "Discord")
+    // must still surface the piece. Union the fuzzy hits with any piece whose name or
+    // displayName contains a query token.
+    const tokens = searchQuery.toLowerCase().split(/\s+/).filter((token) => token.length > 0)
+    const fuseMatchedNames = new Set(fuseMatches.map((piece) => piece.name))
+    const substringMatches = putActionsAndTriggersInAnArray.filter((piece) => {
+        if (fuseMatchedNames.has(piece.name)) {
+            return false
+        }
+        const haystack = `${piece.displayName} ${piece.name}`.toLowerCase()
+        return tokens.some((token) => haystack.includes(token))
+    })
+
+    return [...fuseMatches, ...substringMatches].map((item) => {
         const suggestedActions = searchForSuggestion(
             item.actions,
             searchQuery,

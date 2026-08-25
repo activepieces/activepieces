@@ -1,17 +1,16 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    apId,
-    PlatformRole,
-    PrincipalType,
-    UserStatus,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { PlatformRole, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockProject,
+    createMockUser,
     mockAndSaveBasicSetup,
     mockBasicUser,
 } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -239,6 +238,146 @@ describe('User API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Removes a user who owns a personal project on the first attempt', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockMember } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+            const personalProject = createMockProject({
+                ownerId: mockMember.id,
+                platformId: mockPlatform.id,
+                type: ProjectType.PERSONAL,
+            })
+            await databaseConnection().getRepository('project').save(personalProject)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Returns 204 when deleting a non-existent user', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${apId()}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+        })
+
+        it('Deletes the orphaned identity when the deleted user was its only reference', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockMember, mockUserIdentity } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const identity = await databaseConnection()
+                .getRepository('user_identity')
+                .findOneBy({ id: mockUserIdentity.id })
+            expect(identity).toBeNull()
+        })
+
+        it('Keeps the identity when another user still references it', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser: mockMember, mockUserIdentity } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+            const { mockPlatform: otherPlatform } = await mockAndSaveBasicSetup()
+            const sharedUserOnOtherPlatform = createMockUser({
+                identityId: mockUserIdentity.id,
+                platformId: otherPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection()
+                .getRepository('user')
+                .save(sharedUserOnOtherPlatform)
+
+            const mockOwnerToken = await generateMockToken({
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/api/v1/users/${mockMember.id}`,
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            const identity = await databaseConnection()
+                .getRepository('user_identity')
+                .findOneBy({ id: mockUserIdentity.id })
+            expect(identity).not.toBeNull()
         })
 
         it('Fails if user is not platform owner', async () => {

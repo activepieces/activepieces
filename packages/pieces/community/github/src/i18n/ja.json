@@ -34,7 +34,7 @@
   "Finds a branch by name and returns its details.": "名前でブランチを検索し、その詳細を返します。",
   "Finds an issue based title.": "課題ベースのタイトルを検索します。",
   "Finds a user by their login name.": "ログイン名でユーザーを検索します。",
-  "Create a GitHub Gist": "Create a GitHub Gist",
+  "Create a GitHub Gist. Requires an OAuth connection — Gists cannot be created with GitHub App authentication.": "GitHub Gist の作成 OAuth 接続が必要です — GitHub アプリ認証ではジストを作成できません。",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Repository": "リポジトリ",
   "Title": "タイトル",

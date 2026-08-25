@@ -6,8 +6,13 @@ import { FacebookTriggerPayloadBody, FacebookPageDropdown } from '../common/type
 export const newLead = createTrigger({
 	auth: facebookLeadsAuth,
 	name: 'new_lead',
+	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
+	aiMetadata: {
+		description:
+			'Fires when a person submits a Facebook/Instagram Lead Ad form on the connected Page. Emits the new lead, including the submitted field answers (such as name, email, and phone) and form/page context. If a specific form is selected, only submissions to that form fire the trigger; otherwise any form on the Page does.',
+	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: {},
 	props: {

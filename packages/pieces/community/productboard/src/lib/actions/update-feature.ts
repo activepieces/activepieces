@@ -11,6 +11,8 @@ export const updateFeature = createAction({
     name: 'update_feature',
     displayName: 'Update Feature',
     description: 'Updates an existing feature in Productboard.',
+    audience: 'both',
+    aiMetadata: { description: 'Updates an existing Productboard feature identified by its feature id, setting only the supplied fields (name, description, status, or archived flag) and leaving others unchanged. Use to edit a known feature; if no fields are provided it makes no change. Idempotent: re-applying the same field values leaves the feature in the same state.', idempotent: true },
     auth: productboardAuth,
     props: {
         feature_id: productboardProps.feature_id(),

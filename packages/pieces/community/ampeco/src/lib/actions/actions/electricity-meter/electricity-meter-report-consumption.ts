@@ -14,6 +14,8 @@ export const electricityMeterReportConsumptionAction = createAction({
   name: 'electricityMeterReportConsumption',
   displayName: 'Actions - Electricity Meter - Report Consumption',
   description: 'Add an electricity meter report for the meter readings at the current moment.',
+  audience: 'both',
+  aiMetadata: { description: 'Record a consumption reading for an electricity meter, capturing per-phase current (L1/L2/L3, in milliamperes) at an optional ISO 8601 timestamp (defaults to now). Not idempotent: each call appends a new meter report.', idempotent: false },
   props: {
         
   electricityMeter: Property.Number({

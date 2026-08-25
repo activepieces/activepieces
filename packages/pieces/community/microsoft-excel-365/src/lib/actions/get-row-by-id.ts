@@ -9,8 +9,11 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const getRowAction = createAction({
   auth: excelAuth,
   name: 'getRowById',
+  classification: 'READ',
   displayName: 'Get Row by ID',
   description: '  Retrieve the entire content of a row by its row ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the full contents of a single table row by its zero-based index within the table. Pick this when you already know the row position; use Find Row instead to locate a row by a column value. Read-only and idempotent.', idempotent: true },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

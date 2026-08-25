@@ -12,7 +12,10 @@ import dayjs from 'dayjs';
 export const createEventAction = createAction({
   auth: outlookCalendarAuth,
   name: 'create_event',
+  classification: 'WRITE',
   description: 'Create a new event in a calendar',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new calendar event in a specified Microsoft Outlook calendar with a title, start time, and optional end time (defaults to 30 minutes after start), timezone, and location. Use to schedule a meeting or appointment. Not idempotent: each call adds a new event, so repeated calls create duplicates.', idempotent: false },
   displayName: 'Create a new event in a calendar',
   props: {
     calendarId: outlookCalendarCommon.calendarDropdown,

@@ -30,6 +30,6 @@
   "Form Data": "Formulieren gegevens",
   "Raw": "Onbewerkte",
   "New Submission": "Nieuwe inzending",
-  "Triggers when a new submission is submitted": "Triggert wanneer een nieuwe uitwerking wordt ingediend",
+  "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.": "Triggert wanneer iemand een antwoord op uw formulier indient. Elk formulier veld wordt geretourneerd als een apart veld met behulp van het label van de vraag als sleutel.",
   "Form": "Vorm"
 }

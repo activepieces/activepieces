@@ -15,6 +15,8 @@ export const electricityRateCreateAction = createAction({
   name: 'electricityRateCreate',
   displayName: 'Resources - Electricity Rates - Create',
   description: 'Create a new Electricity rate.',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new electricity rate in AMPECO with a name, default per-kWh price (tax included) and tax percentage. Not idempotent: each call creates another distinct rate, so guard against duplicates. To change an existing rate use the update action instead.', idempotent: false },
   props: {
         
   name: Property.ShortText({

@@ -1,0 +1,27 @@
+{
+  "extends": ["../../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*", "dist"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@activepieces/shared",
+                  "@activepieces/server*",
+                  "@activepieces/pieces*",
+                  "@activepieces/web*"
+                ],
+                "message": "core/* packages are the framework-agnostic foundation; they must not import shared, server, pieces, or web. Keep core/* acyclic."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

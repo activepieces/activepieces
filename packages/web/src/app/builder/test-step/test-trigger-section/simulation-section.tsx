@@ -18,7 +18,7 @@ export const SimulationNote = ({
   abortControllerRef,
 }: SimulationSectionProps) => {
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full px-3 pt-3">
       <div className="flex gap-2 items-center justify-center w-full">
         <LoadingSpinner className="size-4"></LoadingSpinner>
         <div>{t('Testing Trigger')}</div>

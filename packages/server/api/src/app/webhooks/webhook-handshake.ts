@@ -1,4 +1,5 @@
-import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FlowId, FlowVersionId, isNil, ProjectId, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
+import { FlowId, FlowVersionId, isNil, ProjectId } from '@activepieces/core-utils'
+import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, TriggerHookType, TriggerPayload, TriggerSource, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
@@ -51,7 +52,7 @@ export const webhookHandshake = {
 export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
     const { payload, handshakeConfiguration } = params
 
-    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
+    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy)) {
         return false
     }
 
@@ -59,15 +60,19 @@ export function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
 
     switch (strategy) {
         case WebhookHandshakeStrategy.HEADER_PRESENT:
-            return paramName.toLowerCase() in payload.headers
+            return !isNil(paramName) && paramName.toLowerCase() in payload.headers
 
         case WebhookHandshakeStrategy.QUERY_PRESENT:
-            return paramName in payload.queryParams
+            return !isNil(paramName) && paramName in payload.queryParams
 
         case WebhookHandshakeStrategy.BODY_PARAM_PRESENT:
-            return typeof payload.body === 'object' &&
+            return !isNil(paramName) &&
+                typeof payload.body === 'object' &&
                 payload.body !== null &&
                 paramName in payload.body
+
+        case WebhookHandshakeStrategy.HEAD_REQUEST:
+            return payload.method?.toUpperCase() === 'HEAD'
 
         default:
             return false

@@ -28,8 +28,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newOpportunity = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_opportunity',
+  classification: 'READ',
   displayName: 'New Opportunity',
   description: 'Trigger when a new opportunity is added.',
+  aiMetadata: {
+    description: 'Fires when a new opportunity is created in a specific GoHighLevel/LeadConnector pipeline (selected by pipeline ID). Represents the newly created opportunity; scoped to the chosen pipeline only.',
+  },
   props: {
     pipeline: Property.Dropdown({
   auth: leadConnectorAuth,

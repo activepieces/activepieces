@@ -4,8 +4,10 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
+import { StopResponse } from '@activepieces/pieces-framework';
+
+const HTTP_STATUS_OK = 200;
+const HTTP_STATUS_MOVED_PERMANENTLY = 301;
 
 enum ResponseType {
   JSON = 'json',
@@ -19,9 +21,12 @@ enum FlowExecution {
 }
 
 export const returnResponse = createAction({
+  audience: 'both',
   name: 'return_response',
+  classification: 'WRITE',
   displayName: 'Return Response',
   description: 'return a response',
+  aiMetadata: { description: 'Sends the HTTP response for a run started by the Catch Webhook trigger, with the body typed as JSON, Raw, or Redirect and Flow Execution choosing whether the run stops here or responds and continues; leave Flow Execution unset and no response is emitted. Prefer Respond and Wait for Next Webhook when the flow must answer then pause for a follow-up call, or the Forms piece Respond on UI action for form and chat triggers. Only synchronous (/sync) webhook calls receive it; not idempotent, since each call emits a response.', idempotent: false },
   props: {
     responseType: Property.StaticDropdown({
       displayName: 'Response Type',
@@ -114,7 +119,7 @@ export const returnResponse = createAction({
     
  
     const response: StopResponse = {
-      status: status ?? StatusCodes.OK,
+      status: status ?? HTTP_STATUS_OK,
       headers,
     };
 
@@ -126,7 +131,7 @@ export const returnResponse = createAction({
         response.body = bodyInput;
         break;
       case ResponseType.REDIRECT:
-        response.status = StatusCodes.MOVED_PERMANENTLY;
+        response.status = HTTP_STATUS_MOVED_PERMANENTLY;
         response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
         response.body = bodyInput;
         break;

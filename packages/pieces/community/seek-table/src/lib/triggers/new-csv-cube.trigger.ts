@@ -45,6 +45,9 @@ export const newCsvCubeTrigger = createTrigger({
   name: 'new_csv_cube',
   displayName: 'New CSV Cube',
   description: 'Triggers when a new CSV cube is added to your SeekTable account.',
+  aiMetadata: {
+    description: 'Fires when a new CSV-sourced cube appears in the connected SeekTable account. Polls the cube list and emits one event per newly created CSV cube (cubes from other source types are ignored), representing a fresh dataset available for reporting.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

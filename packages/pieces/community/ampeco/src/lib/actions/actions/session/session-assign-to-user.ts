@@ -14,6 +14,8 @@ export const sessionAssignToUserAction = createAction({
   name: 'sessionAssignToUser',
   displayName: 'Actions - Session - Assign To User',
   description: 'Assign a user to a session. This action is only applicable to sessions with Completed billing status that have no user associated with them. This operation can be done only once and is not reversible.',
+  audience: 'both',
+  aiMetadata: { description: 'Attach a user to a charging session that currently has no user. Only works on sessions with Completed billing status and no existing user. Not idempotent: the assignment is permanent and irreversible, and a second call (after the session already has a user) will fail.', idempotent: false },
   props: {
         
   session: Property.Number({

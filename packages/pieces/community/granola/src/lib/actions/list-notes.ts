@@ -12,6 +12,12 @@ export const listNotesAction = createAction({
   name: 'list_notes',
   displayName: 'List Notes',
   description: 'List your meeting notes with optional date filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists the authenticated user\'s Granola meeting notes, returning a page of note summaries. With no date filters it returns the most recent notes; supply created-after/created-before/updated-after bounds to narrow to a time window (e.g. notes modified since a given time). Use it to discover notes and their IDs before fetching details with Get Note. Page size is capped at 30. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     created_after: Property.DateTime({
       displayName: 'Created After',

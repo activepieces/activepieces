@@ -5,8 +5,15 @@ import { bigCommerceApiService } from '../common/requests';
 export const createAProduct = createAction({
   auth: bigcommerceAuth,
   name: 'createAProduct',
+  classification: 'WRITE',
   displayName: 'Create a Product',
   description: 'Creates a Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new catalog product in a BigCommerce store. Use to add an item to the store. Requires name, type (physical or digital), weight, and price; SKU, description, and brand_id are optional. Not idempotent: each call adds a new product, so search the catalog first if it may already exist.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Product Name',

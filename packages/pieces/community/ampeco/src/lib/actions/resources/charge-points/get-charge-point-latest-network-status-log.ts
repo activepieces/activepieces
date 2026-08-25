@@ -12,6 +12,8 @@ export const getChargePointLatestNetworkStatusLogAction = createAction({
   name: 'getChargePointLatestNetworkStatusLog',
   displayName: 'Resources - Charge Points - Get Charge Point Latest Network Status Log',
   description: 'Get the latest network status log entry for a charge point.',
+  audience: 'both',
+  aiMetadata: { description: 'Fetch the single most recent network (connectivity) status log entry for a charge point, by charge point ID. Read-only and safe to retry. This covers network/online status; use the latest-hardware-status-log action for the hardware/OCPP status snapshot.', idempotent: true },
   props: {
         
   chargePoint: Property.Number({

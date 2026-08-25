@@ -15,6 +15,8 @@ export const getConfigurationTemplateAction = createAction({
   name: 'getConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Get Configuration Template',
   description: 'Get Configuration Template.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve a single OCPP configuration template by its numeric id. Read-only and idempotent; use this when you already know the template id, and use List Configuration Templates to search across templates.', idempotent: true },
   props: {
         
   template: Property.Number({

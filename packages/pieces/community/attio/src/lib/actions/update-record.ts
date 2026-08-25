@@ -6,8 +6,11 @@ import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common
 
 export const updateRecordAction = createAction({
 	name: 'update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Update an existing record with new attribute values.',
+	audience: 'both',
+	aiMetadata: { description: 'Updates an existing record in a given Attio object type by record ID, overwriting the supplied attribute values (multiselect values are appended). Choose this when you already know the record ID and want to change its fields. Idempotent — re-applying the same values leaves the record in the same state.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		objectTypeId: objectTypeIdDropdown({

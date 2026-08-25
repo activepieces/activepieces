@@ -15,6 +15,8 @@ export const updatePcIdAction = createAction({
   name: 'updatePcId',
   displayName: 'Resources - Provisioning Certificates - Update Pc Id',
   description: 'Update a Provisioning Certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing AMPECO provisioning certificate identified by its numeric ID, changing fields such as PC ID, name, vehicle type, user, or ID tags. A partial PATCH that applies only the fields you supply. Use create pc id to register a new certificate instead.', idempotent: false },
   props: {
         
   provisioningCertificate: Property.Number({

@@ -7,6 +7,8 @@ export const parseFileAction = createAction({
   name: 'parse_file',
   displayName: 'Parse File',
   description: 'Parse a document file into structured Markdown and/or JSON format',
+  audience: 'both',
+  aiMetadata: { description: 'Starts an asynchronous job that parses a document file (PDF, DOC/DOCX, PPT/PPTX) into structured Markdown/JSON, returning a job id to poll for results. Use to extract clean text, tables, and document structure for downstream processing rather than to load a datastore. Choose basic mode for plain text or standard mode for complex layouts; an optional page range limits scope. Not idempotent — each call creates a new parse job.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'Document File',

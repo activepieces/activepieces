@@ -6,8 +6,11 @@ import { lemlistApiService } from '../common/requests';
 export const removeLeadFromACampaign = createAction({
   auth: lemlistAuth,
   name: 'removeLeadFromACampaign',
+  classification: 'WRITE',
   displayName: 'Remove Lead from A Campaign',
   description: 'removes a lead from a specific campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Removes a lead, identified by email, from one specific Lemlist campaign, stopping their sequence in it. Requires both the campaign and the lead email. Idempotent: re-running on an already-removed lead leaves them absent from the campaign.', idempotent: true },
   props: {
     campaignId: campaignsDropdown({ refreshers: ['auth'] }),
     email: Property.ShortText({

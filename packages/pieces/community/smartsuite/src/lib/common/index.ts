@@ -6,7 +6,7 @@ import {
   QueryParams,
 } from '@activepieces/pieces-common';
 import { SMARTSUITE_API_URL } from './constants';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 
 export type SmartSuiteApiCallParams = {
   apiKey: string;

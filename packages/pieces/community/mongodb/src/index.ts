@@ -4,9 +4,9 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 
 import actions from './lib/actions';
 import { mongodbConnect } from './lib/common';
@@ -67,12 +67,12 @@ export const mongodbAuth = PieceAuth.CustomAuth({
 
 const validateAuth = async (auth: PiecePropValueSchema<typeof mongodbAuth>) => {
   await propsValidation.validateZod(auth, {
-    host: z.string().min(1),
+    host: z.string().check(z.minLength(1)),
     useAtlasUrl: z.boolean(),
-    database: z.string().optional(),
-    username: z.string().min(1),
-    password: z.string().optional(),
-    authSource: z.string().optional(),
+    database: z.optional(z.string()),
+    username: z.string().check(z.minLength(1)),
+    password: z.optional(z.string()),
+    authSource: z.optional(z.string()),
   });
 
   const client = await mongodbConnect({

@@ -1,16 +1,17 @@
+import { ErrorCode, isNil } from '@activepieces/core-utils';
 import {
   OtpType,
   ApEdition,
   ApFlagId,
-  ErrorCode,
-  isNil,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -35,13 +36,20 @@ import {
   PasswordStrengthBolt,
 } from '@/features/authentication/components/password-validator';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
+import { captchaUtils } from '../utils/captcha-utils';
 import { passwordValidation } from '../utils/password-validation-utils';
+
+import {
+  TurnstileWidget,
+  useTurnstileSiteKey,
+} from './auth-landing/turnstile-widget';
 
 const SignUpForm = ({
   showCheckYourEmailNote,
@@ -89,12 +97,14 @@ const SignUpForm = ({
 
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
+  const { capture } = useTelemetry();
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data, false);
-        if (isNil(data.projectId)) {
+
+        if (isNil(data.platformId)) {
           navigate('/create-platform');
           return;
         }
@@ -104,10 +114,23 @@ const SignUpForm = ({
       }
     },
     onError: (error) => {
+      // The challenge token is single-use, so a refused attempt must be given a
+      // fresh one or every retry replays a token Cloudflare has already spent.
+      setCaptchaReset((count) => count + 1);
       if (api.isError(error)) {
         const errorCode: ErrorCode | undefined = (
           error.response?.data as { code: ErrorCode }
         )?.code;
+        capture({
+          name: TelemetryEventName.SIGN_UP_FAILED,
+          payload: { errorCode: errorCode ?? 'UNKNOWN' },
+        });
+        if (captchaUtils.isRejection(error)) {
+          form.setError('root.serverError', {
+            message: t('That verification expired. Please try again.'),
+          });
+          return;
+        }
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -156,14 +179,31 @@ const SignUpForm = ({
     },
   });
 
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const handleCaptchaUnavailable = useCallback(() => {
+    setCaptchaUnavailable(true);
+    capture({
+      name: TelemetryEventName.CAPTCHA_UNAVAILABLE,
+      payload: { surface: 'password-sign-up' },
+    });
+  }, [capture]);
+  const captchaRequired = !isNil(useTurnstileSiteKey()) && !captchaUnavailable;
+
   const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
+    });
+    capture({
+      name: TelemetryEventName.SIGN_UP_SUBMITTED,
+      payload: { method: 'email', ...acquisitionUtils.getAcquisitionParams() },
     });
     mutate({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
+      captchaToken,
     });
   };
 
@@ -177,7 +217,7 @@ const SignUpForm = ({
   ) : (
     <>
       <Form {...form}>
-        <form className="grid space-y-4">
+        <form className="flex flex-col space-y-4">
           <div className={'flex flex-row gap-2'}>
             <FormField
               control={form.control}
@@ -186,7 +226,7 @@ const SignUpForm = ({
                 required: t('First name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
                   <Input
                     {...field}
@@ -208,7 +248,7 @@ const SignUpForm = ({
                 required: t('Last name is required'),
               }}
               render={({ field }) => (
-                <FormItem className="w-full grid space-y-1">
+                <FormItem className="w-full">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
                   <Input
                     {...field}
@@ -344,8 +384,14 @@ const SignUpForm = ({
               {form.formState.errors.root.serverError.message}
             </FormMessage>
           )}
+          <TurnstileWidget
+            onToken={setCaptchaToken}
+            onUnavailable={handleCaptchaUnavailable}
+            resetSignal={captchaReset}
+          />
           <Button
             loading={isPending}
+            disabled={captchaRequired && isNil(captchaToken)}
             onClick={(e) => form.handleSubmit(onSubmit)(e)}
             data-testid="sign-up-button"
           >

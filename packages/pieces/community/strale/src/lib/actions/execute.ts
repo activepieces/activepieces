@@ -12,6 +12,12 @@ export const executeCapability = createAction({
   displayName: 'Execute Capability',
   description:
     'Run any Strale capability by slug. Performs verifications, validations, lookups, and data extraction. Returns structured output with quality score and data provenance. Five free capabilities work without an API key.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Run any Strale capability by slug, passing its required input fields (e.g. an IBAN to validate or a company to verify) and an optional spend cap. Choose this to actually perform a verification, validation, lookup, or data extraction after finding the slug via Search Capabilities. Not idempotent: each call executes the capability and may consume wallet balance; some capabilities are free while paid ones require an API key with sufficient funds.',
+    idempotent: false,
+  },
   props: {
     slug: Property.ShortText({
       displayName: 'Capability Slug',

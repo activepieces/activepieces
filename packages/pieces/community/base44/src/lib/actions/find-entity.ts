@@ -5,8 +5,11 @@ import { createClient, Base44Error, type Base44Client } from '@base44/sdk';
 export const findEntity = createAction({
   auth: base44Auth,
   name: 'find_entity',
+  classification: 'SEARCH',
   displayName: 'Find Entity Record',
   description: 'Find a matching entity record in your Base44 app',
+  audience: 'both',
+  aiMetadata: { description: 'Searches a Base44 app for records of a given entity type that match a JSON filter query, returning all matches. Use when you need to look up existing records by field values (e.g. find a User by email) without modifying anything. Requires the exact entity-type name; this is a read-only lookup and is idempotent.', idempotent: true },
   props: {
     entityType: Property.ShortText({
       displayName: 'Entity Type',

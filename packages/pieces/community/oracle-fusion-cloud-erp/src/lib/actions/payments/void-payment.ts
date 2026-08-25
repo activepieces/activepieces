@@ -7,6 +7,8 @@ export const voidPayment = createAction({
     name: 'void_payment',
     displayName: 'Void Payment',
     description: 'Voids a payment by setting the void date.',
+    audience: 'both',
+    aiMetadata: { description: 'Void an already-issued payables payment by CheckId, setting its void date (defaults to today) and optional void accounting date. State-changing; effectively idempotent since a voided payment stays voided. Use to reverse a payment that has been issued; to prevent one from clearing before it is cashed use Stop Payment instead.', idempotent: true },
     props: {
         checkId: Property.ShortText({
             displayName: 'Check ID',

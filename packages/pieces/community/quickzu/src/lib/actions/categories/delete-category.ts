@@ -7,6 +7,12 @@ export const deleteCategoryAction = createAction({
   name: 'quickzu_delete_category',
   displayName: 'Delete Category',
   description: 'Deletes an existing category from store.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently removes a category from a Quickzu store by its category ID. Use to delete a catalog category. Idempotent: once the category is gone, repeating the call leaves the store in the same state.',
+    idempotent: true,
+  },
   props: {
     categoryId: quickzuCommon.categoryId(true),
   },

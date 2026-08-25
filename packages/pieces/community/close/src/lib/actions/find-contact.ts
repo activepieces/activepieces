@@ -9,6 +9,11 @@ export const findContact = createAction({
 	name: 'find_contact',
 	displayName: 'Find Contact',
 	description: 'Search for contacts by name, email, or other criteria with advanced filtering',
+	audience: 'both',
+	aiMetadata: {
+		description: 'Searches contacts in Close CRM and returns all matching records (auto-paginated). The search type selects which field to match on — contact name, email, phone, or parent lead ID — and the match mode controls comparison. Use to resolve a contact by a known attribute (e.g. find a contact ID before attaching an opportunity). Read-only and idempotent. Requires a search query value.',
+		idempotent: true,
+	},
 	props: {
 		search_type: Property.StaticDropdown({
 			displayName: 'Search Type',

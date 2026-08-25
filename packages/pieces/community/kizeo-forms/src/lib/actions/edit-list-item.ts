@@ -9,6 +9,8 @@ export const editListItem = createAction({
   name: 'edit_list_item',
   displayName: 'Edit List Item',
   description: 'Edit a specific item in a list',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing item in a Kizeo Forms external list, identified by list ID and item ID, overwriting its label and property values with the ones supplied. Use to modify a known item rather than add one. Idempotent: repeating the call with the same item ID and values leaves the item in the same state.', idempotent: true },
   props: {
     listId: kizeoFormsCommon.listId,
     itemId: Property.ShortText({

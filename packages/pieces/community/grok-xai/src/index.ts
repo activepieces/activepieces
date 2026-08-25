@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { grokAuth } from './lib/common/auth';
 import { askGrok } from './lib/actions/ask-grok';
 import { extractDataFromText } from './lib/actions/extract-data';

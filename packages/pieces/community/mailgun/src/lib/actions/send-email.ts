@@ -8,6 +8,12 @@ export const sendEmail = createAction({
   name: 'send_email',
   displayName: 'Send Email',
   description: 'Send an email using your Mailgun domain',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Send an outbound email through a verified Mailgun sending domain, with optional CC/BCC/Reply-To and either a plain-text or HTML body (at least one body is required). Choose this to deliver transactional or notification mail. Not idempotent: each call dispatches a new message.',
+    idempotent: false,
+  },
   props: {
     domain: mailgunCommon.domainDropdown,
     from: Property.ShortText({

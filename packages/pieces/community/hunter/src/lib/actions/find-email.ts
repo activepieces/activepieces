@@ -16,6 +16,8 @@ export const findEmailAction = createAction({
     name: 'find-email',
     displayName: 'Find Email',
     description: 'Retrieve/propose the most likely email for a person at a domain.',
+    audience: 'both',
+    aiMetadata: { description: 'Finds the most likely professional email address for a named person at a given company, returning a confidence score and supporting sources. Use to discover an unknown contact email from a name plus an organization. Requires either a domain or a company name, plus either both first and last name or a full name; this is a read-only lookup and is idempotent for the same input.', idempotent: true },
     props: {
         domain: domainProp,
         company: companyProp,

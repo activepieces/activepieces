@@ -52,6 +52,9 @@ export const newTaskLabel = createTrigger({
   name: 'new_task_label',
   displayName: 'New Task Label',
   description: 'Triggers when a task label is created.',
+  aiMetadata: {
+    description: 'Fires when a label is attached to a task within the selected MeisterTask project section. Represents a new task-label association (a task being tagged).',
+  },
   props: {
     project: meisterTaskCommon.project,
     section: meisterTaskCommon.section,

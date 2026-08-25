@@ -4,9 +4,12 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateCustomerAction = createAction({
   name: 'update_customer',
+  classification: 'WRITE',
   auth: checkoutComAuth,
   displayName: 'Update Customer',
   description: 'Update existing customer or their metadata.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing Checkout.com customer identified by customer ID, changing supplied fields such as email, name, phone, default instrument, or metadata (metadata replaces any existing values rather than merging). Choose it to amend a known customer rather than create one. Idempotent: applying the same field values to the same customer ID yields the same end state.', idempotent: true },
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',

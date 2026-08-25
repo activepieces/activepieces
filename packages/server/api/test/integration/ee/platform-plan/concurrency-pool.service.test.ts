@@ -1,12 +1,12 @@
-import { Redis } from 'ioredis'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { Redis } from 'ioredis'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { getConcurrencyPoolLimitKey, getProjectConcurrencyPoolKey } from '../../../../src/app/database/redis/keys'
+import { getConcurrencyPoolLimitKey } from '../../../../src/app/database/redis/keys'
 import { distributedStore, redisConnections } from '../../../../src/app/database/redis-connections'
 import { concurrencyPoolService } from '../../../../src/app/ee/platform/concurrency-pool/concurrency-pool.service'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 async function deleteKeysByPattern(redis: Redis, pattern: string): Promise<void> {
     const stream = redis.scanStream({ match: pattern, count: 100 })

@@ -1,4 +1,5 @@
-import { Permission, PrincipalType } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { PrincipalType } from '@activepieces/shared'
 import { AuthorizationType, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, ProjectResource, PublicRoute, RouteKind, UnscopedAuthorization } from './common'
 
 type FastifySecurityAuthorization =

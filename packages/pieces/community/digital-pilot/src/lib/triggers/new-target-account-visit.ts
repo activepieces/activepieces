@@ -7,6 +7,9 @@ export const newTargetAccountVisitTrigger = createTrigger({
   name: 'new_target_account_visit',
   displayName: 'New Target Account Visit',
   description: 'Triggers when a business you\'ve identified as a high-priority target account browses your site',
+  aiMetadata: {
+    description: 'Fires when a business already on one of your DigitalPilot target-account lists (for the configured tag) visits your website. Each event represents one such visit and carries the account domain and engagement signals (page views, time on site, pages visited). Use to react to activity from accounts you are specifically targeting, as opposed to any high-intent visitor.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     tagId: tagIdProp,

@@ -36,7 +36,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 callback?.(result)
             }
             catch (error) {
-                app.log.error({ err: error }, '[LOCK_RESOURCE] Failed to acquire lock')
+                app.log.error({ error }, '[LOCK_RESOURCE] Failed to acquire lock')
                 callback?.({ acquired: false, lock: null })
             }
         }
@@ -56,7 +56,7 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
                 }
             }
             catch (error) {
-                app.log.error({ err: error }, '[UNLOCK_RESOURCE] Failed to release lock')
+                app.log.error({ error }, '[UNLOCK_RESOURCE] Failed to release lock')
             }
         }
     })

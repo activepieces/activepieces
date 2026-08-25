@@ -5,6 +5,10 @@ export const newMerchant = createQawafelEventTrigger({
   displayName: 'New Merchant Registered',
   description:
     'Fires when a new merchant (customer or supplier) is created in Qawafel. Use it to onboard customers in your CRM or add suppliers to your procurement system.',
+  aiMetadata: {
+    description:
+      'Fires when a new merchant — a customer or a supplier — is created in the Qawafel tenant (the merchant.created event). Each event represents one newly registered merchant, useful for onboarding into a CRM or procurement system.',
+  },
   event: 'merchant.created',
   sampleData: {
     id: 'mer_01jk5jtv3x2zbdroz75n3eczi4',

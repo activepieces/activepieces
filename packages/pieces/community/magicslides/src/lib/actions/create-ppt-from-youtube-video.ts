@@ -8,6 +8,8 @@ export const createPptFromYoutubeVideo = createAction({
   name: 'createPptFromYoutube',
   displayName: 'Create PPT from YouTube Video',
   description: 'Generates a PPT presentation from a YouTube video link.',
+  audience: 'both',
+  aiMetadata: { description: 'Generate a new PowerPoint presentation from a YouTube video URL using AI, which extracts the video content into slides with optional control over slide count, language, template, AI model, and image sourcing. Choose this when the source material is a video; use the topic or text/summary variants when starting from a subject line or existing text. Requires a valid YouTube URL. Each call generates a fresh presentation, so it is not idempotent.', idempotent: false },
   props: {
     youtubeURL: Property.ShortText({
       displayName: 'YouTube Video URL',

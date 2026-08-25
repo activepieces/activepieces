@@ -15,8 +15,11 @@ import { leadConnectorAuth } from '../..';
 export const updateTaskAction = createAction({
   auth: leadConnectorAuth,
   name: 'update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Update a task.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing task on a GoHighLevel/LeadConnector contact, identified by contact ID and task ID, changing title, due date, description, assignee, or completed flag. Use to edit or complete a known task. Idempotent — repeating with the same input leaves the task in the same state.', idempotent: true },
   props: {
     contact: Property.Dropdown({
   auth: leadConnectorAuth,

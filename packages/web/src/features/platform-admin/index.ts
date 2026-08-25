@@ -1,12 +1,18 @@
 export { aiProviderApi } from './api/ai-provider-api';
+export { aiToolConfigApi } from './api/ai-tool-config-api';
 export { analyticsApi } from './api/analytics-api';
 export { apiKeyApi } from './api/api-key-api';
 export { auditEventsApi } from './api/audit-events-api';
-export { piecesTagsApi } from './api/pieces-tags';
+export { embedSubdomainApi } from './api/embed-subdomain-api';
 export { projectRoleApi } from './api/project-role-api';
 export { samlSsoApi } from './api/saml-sso-api';
 export { signingKeyApi } from './api/signing-key-api';
 export { workersApi } from './api/workers-api';
+export {
+  embedSubdomainQueries,
+  embedSubdomainMutations,
+  embedSubdomainKeys,
+} from './hooks/embed-subdomain-hooks';
 export { NewSigningKeyDialog } from './components/new-signing-key-dialog';
 export { platformAnalyticsHooks } from './hooks/analytics-hooks';
 export {
@@ -33,10 +39,10 @@ export {
   hasAnyAuthFieldFilled,
 } from './hooks/ai-provider-hooks';
 export {
-  piecesTagQueries,
-  piecesTagMutations,
-  piecesTagKeys,
-} from './hooks/pieces-tag-hooks';
+  aiToolConfigQueries,
+  aiToolConfigMutations,
+  aiToolConfigKeys,
+} from './hooks/ai-tool-config-hooks';
 export { platformPiecesMutations } from './hooks/platform-pieces-hooks';
 export { brandingMutations } from './hooks/branding-hooks';
 export { workersQueries, workersKeys } from './hooks/workers-hooks';

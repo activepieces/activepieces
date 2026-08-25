@@ -7,9 +7,12 @@ import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
 export const findListEntryAction = createAction({
 	name: 'find_list_entry',
+	classification: 'SEARCH',
 	displayName: 'Find List Entry',
 	description:
 		'Search for entries in a specific list in Attio using filters and return matching results.',
+	audience: 'both',
+	aiMetadata: { description: 'Queries the entries of a specific Attio list, returning entries that match the supplied attribute filters (leaving filters empty returns all entries in the list). Use this to find list entries before updating or referencing them. Read-only and idempotent.', idempotent: true },
 	auth: attioAuth,
 	props: {
 		listId: listIdDropdown({

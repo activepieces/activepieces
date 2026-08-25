@@ -2,18 +2,27 @@ import {
   createCustomApiCallAction,
 } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory,  } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
+import { analyzeSentiment } from './lib/actions/analyze-sentiment';
 import { askAssistant } from './lib/actions/ask-assistant';
-import { generateImage } from './lib/actions/generate-image';
 import { askOpenAI } from './lib/actions/send-prompt';
+import { classifyText } from './lib/actions/classify-text';
+import { createEmbedding } from './lib/actions/create-embedding';
+import { deleteFile } from './lib/actions/delete-file';
+import { editImage } from './lib/actions/edit-image';
+import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+import { findFile } from './lib/actions/find-file';
+import { generateImage } from './lib/actions/generate-image';
+import { listFiles } from './lib/actions/list-files';
+import { searchEmbeddings } from './lib/actions/search-embeddings';
+import { listModels } from './lib/actions/list-models';
 import { textToSpeech } from './lib/actions/text-to-speech';
 import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
+import { uploadFile } from './lib/actions/upload-file';
 import { visionPrompt } from './lib/actions/vision-prompt';
-import { baseUrl } from './lib/common/common';
-import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
-import { editImage } from './lib/actions/edit-image';
 import { openaiAuth } from './lib/auth';
+import { baseUrl } from './lib/common/common';
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -25,13 +34,22 @@ export const openai = createPiece({
   actions: [
     askOpenAI,
     askAssistant,
+    visionPrompt,
+    extractStructuredDataAction,
+    classifyText,
+    analyzeSentiment,
+    createEmbedding,
+    searchEmbeddings,
     generateImage,
     editImage,
-    visionPrompt,
     textToSpeech,
     transcribeAction,
     translateAction,
-    extractStructuredDataAction,
+    uploadFile,
+    listFiles,
+    findFile,
+    deleteFile,
+    listModels,
     createCustomApiCallAction({
       auth: openaiAuth,
       baseUrl: () => baseUrl,

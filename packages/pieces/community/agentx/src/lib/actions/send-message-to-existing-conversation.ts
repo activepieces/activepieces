@@ -8,8 +8,11 @@ import { AgentIdDropdown } from '../common/dropdown';
 export const sendMessageToExistingConversation = createAction({
   auth: AgentXAuth,
   name: 'sendMessageToExistingConversation',
+  classification: 'WRITE',
   displayName: 'Send Message to Existing Conversation',
   description: 'Send a message to an existing conversation with an agent.',
+  audience: 'both',
+  aiMetadata: { description: 'Posts a message into an existing AgentX conversation (by conversation ID) and gets the agent reply, with a selectable response mode (chat or search) and an optional memory-context window controlling how many prior messages the agent considers. Use this to continue an already-created conversation; create the conversation first to obtain its ID. Each call appends a new message and produces a new reply (not idempotent).', idempotent: false },
   props: {
       agentId: AgentIdDropdown,
     conversationId: ConversationIdDropdown,

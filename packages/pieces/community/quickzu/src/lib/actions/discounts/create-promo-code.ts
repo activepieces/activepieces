@@ -17,6 +17,12 @@ export const createPromoCodeAction = createAction({
   name: 'quickzu_create_promo_code',
   displayName: 'Create Promo/Coupon Code',
   description: 'Creates a new promo code for category or product level.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a customer-redeemable promo/coupon code in a Quickzu store over a date range, with a minimum cart value and a maximum usage limit. The filter type selects scope: specific categories, specific products, or all products. Use to set up a code shoppers enter at checkout (unlike Create Product Discount, which applies automatically). Not idempotent: each call creates a separate promo.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Promotion / Discount Title',

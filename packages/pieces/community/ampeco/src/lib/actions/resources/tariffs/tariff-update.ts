@@ -15,6 +15,8 @@ export const tariffUpdateAction = createAction({
   name: 'tariffUpdate',
   displayName: 'Resources - Tariffs - Update',
   description: 'Update a tariff.',
+  audience: 'both',
+  aiMetadata: { description: 'Replace the full configuration of an existing AMPECO tariff identified by its numeric ID, including its type, pricing model, fees, restrictions, and display text. This is a full-replacement PUT, so supply all fields you want to keep; idempotent in that repeating the same payload yields the same final state. Use the create action to add a new tariff instead.', idempotent: true },
   props: {
         
   tariff: Property.Number({

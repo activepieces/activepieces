@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { addSubscriberToListAction } from './lib/actions/add-subscriber-to-list';
 import { updateSubscriberDetailsAction } from './lib/actions/update-subscriber-details';
 import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscriber';

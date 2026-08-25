@@ -9,6 +9,12 @@ export const aliasAUser = createAction({
   displayName: 'Alias a User',
   description:
     "Change a user's identifier by merging two user identities into one",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Re-identifies a Vero user by remapping an existing record from an old user ID to a new user ID, merging the two identities. Use when a user's stable identifier has changed and their history must be preserved under the new ID. Both the old and new IDs are required; re-running with the same pair is effectively idempotent.",
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Old User ID',

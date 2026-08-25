@@ -8,6 +8,8 @@ export const createContact = createAction({
   name: 'create_contact',
   displayName: 'Create Contact',
   description: 'Create a new contact record in Respond.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact in Respond.io, keyed by a unique identifier in `email:...` or `phone:...` form. Use only when adding a brand-new contact; if the contact may already exist, prefer Create or Update Contact, which upserts. Requires the identifier and first name; optional email, phone, language, country, profile picture, and custom fields. Not idempotent — intended to create a fresh record.', idempotent: false },
   props: {
     identifier: Property.ShortText({
       displayName: 'Identifier',

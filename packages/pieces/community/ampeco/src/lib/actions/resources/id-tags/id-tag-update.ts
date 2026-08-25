@@ -15,6 +15,8 @@ export const idTagUpdateAction = createAction({
   name: 'idTagUpdate',
   displayName: 'Resources - Id Tags - Update',
   description: 'Update a Id Tag.',
+  audience: 'both',
+  aiMetadata: { description: 'Modify an existing ID tag identified by its numeric id, for example to enable, disable, or suspend it, reassign its user or payment method, or change its expiry. Idempotent: applies the supplied fields to that one tag, so repeating the same call leaves the same result. Requires the tag to already exist; use idTagCreate to register a new one.', idempotent: true },
   props: {
         
   idTag: Property.Number({

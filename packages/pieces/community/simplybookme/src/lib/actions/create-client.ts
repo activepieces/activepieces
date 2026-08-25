@@ -6,6 +6,8 @@ export const createClient = createAction({
   name: 'create_client',
   displayName: 'Add Client',
   description: 'Add a new client with specified data. Email, phone, or both may be required (check company settings).',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new client record in SimplyBook.me from a name plus optional contact and address fields. Use when an agent needs a client to attach to a booking and the person does not yet exist (look them up with Get Client List first). Email, phone, or both may be required by company settings. Not idempotent: each call adds a new client even with identical data.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

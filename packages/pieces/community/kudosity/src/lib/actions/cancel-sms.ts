@@ -8,6 +8,12 @@ export const cancelSms = createAction({
   name: 'cancelSms',
   displayName: 'Cancel SMS',
   description: 'Cancel a scheduled SMS message in Kudosity',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancel a previously scheduled (not-yet-sent) SMS in Kudosity by its numeric message ID. Use to stop a queued message before delivery. Requires the message ID returned when the SMS was scheduled. Safe to repeat — re-cancelling an already-cancelled message leaves the same end state.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Message ID',

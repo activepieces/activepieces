@@ -7,6 +7,11 @@ export const downloadDocument = createAction({
   name: 'downloadDocument',
   displayName: 'Download Document',
   description: 'Downloads a document as PDF.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Download a PandaDoc document by ID as a PDF file, optionally as a zip of separate per-section PDFs and with configurable watermark text, color, font size, and opacity. Use to fetch the rendered document for storage or forwarding. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: pandadocAuth,
   props: {
     document_id: documentDropdown,

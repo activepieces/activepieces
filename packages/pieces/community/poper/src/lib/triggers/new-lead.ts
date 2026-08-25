@@ -18,6 +18,9 @@ export const newLead = createTrigger({
   name: 'newLead',
   displayName: 'New Lead',
   description: 'Triggers when a new lead is obtained from popup.',
+  aiMetadata: {
+    description: 'Fires when a Poper popup captures a new lead, such as a visitor submitting their email or contact details through a popup form. The event represents a single newly collected lead and delivers the submitted form data from the popup.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: message,

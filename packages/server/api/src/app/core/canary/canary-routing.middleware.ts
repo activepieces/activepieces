@@ -1,5 +1,6 @@
 import '@fastify/reply-from'
-import { isNil, PrincipalType, tryCatch } from '@activepieces/shared'
+import { isNil, tryCatch } from '@activepieces/core-utils'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { flowExecutionCache } from '../../flows/flow/flow-execution-cache'
@@ -19,12 +20,12 @@ export const canaryRoutingMiddleware = async (request: FastifyRequest, reply: Fa
         workerGroupService(request.log).isCanaryPlatform({ platformId }),
     )
     if (canaryLookupError) {
-        request.log.error({ err: canaryLookupError }, '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through')
+        request.log.error({ error: canaryLookupError }, '[canaryRoutingMiddleware] failed to fetch canary platform IDs, falling through')
         return
     }
     if (!shouldForward) return
 
-    request.log.info({ platformId }, '[canaryRoutingMiddleware] proxying to canary')
+    request.log.info({ platform: { id: platformId } }, '[canaryRoutingMiddleware] proxying to canary')
 
     await awaitProxy(request, reply)
 }
@@ -34,7 +35,7 @@ async function awaitProxy(request: FastifyRequest, reply: FastifyReply): Promise
         reply.raw.once('finish', resolve)
         void reply.from(request.url, {
             onError: (reply, { error: proxyError }) => {
-                request.log.error({ err: proxyError }, '[canaryRoutingMiddleware] proxy failed')
+                request.log.error({ error: proxyError }, '[canaryRoutingMiddleware] proxy failed')
                 void reply.send(proxyError)
             },
         })

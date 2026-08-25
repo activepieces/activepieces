@@ -67,6 +67,7 @@
   "Timeout (in seconds)": "Time-out (in seconden)",
   "Follow redirects": "Volg omleidingen",
   "The name of the new folder": "De naam van de nieuwe map",
+  "The Drive folder to target. Leave empty to use the root of My Drive. Type in the box to search your Drive by folder name. If the folder still isn't listed, switch this field to 'Dynamic value' (the toggle next to the field) and paste the folder ID — you can copy it from the folder's URL in Drive, after /folders/ (e.g. https://drive.google.com/drive/folders/<FOLDER_ID>).": "De Drive-map naar het doel. Laat leeg om de hoofdmap van mijn schijf te gebruiken. Typ in het vak om uw Drive te zoeken op mapnaam. Als de map nog steeds niet wordt weergegeven, verander dit veld naar 'Dynamische waarde' (schakel naast het veld) en plak de map-ID - u kunt het kopiëren van de map-URL in de schijf, na /folders/ (bv. . https://drive.google.com/drive/folders/<FOLDER_ID>).",
   "Determines if folders from Team Drives should be included in the results.": "Bepaalt of mappen van Team Drives moeten worden opgenomen in de resultaten.",
   "The name of the new text file": "De naam van het nieuwe tekstbestand",
   "The text content to add to file": "De tekstinhoud om toe te voegen aan het bestand",

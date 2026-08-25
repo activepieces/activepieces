@@ -9,6 +9,9 @@ export const entryUpdatedTrigger = createTrigger({
   name: 'entry_updated',
   displayName: 'Entry Updated',
   description: 'Triggers when an existing form entry is updated.',
+  aiMetadata: {
+    description: 'Fires when an existing entry in a Cognito Forms form is updated, delivering the updated entry data. Requires the form to be configured to post JSON to the webhook URL on entry update.',
+  },
   auth: cognitoFormsAuth,
   props: {
     webhookInstructions: Property.MarkDown({

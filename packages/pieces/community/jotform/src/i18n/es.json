@@ -30,6 +30,6 @@
   "Form Data": "Datos de Formulario",
   "Raw": "Rápido",
   "New Submission": "Nuevo envío",
-  "Triggers when a new submission is submitted": "Dispara cuando se envía un nuevo envío",
+  "Triggers when someone submits a response to your form. Each form field is returned as a separate field using the question label as the key.": "Se activa cuando alguien envía una respuesta a su formulario. Cada campo del formulario se devuelve como un campo separado usando la etiqueta de la pregunta como clave.",
   "Form": "Forma"
 }

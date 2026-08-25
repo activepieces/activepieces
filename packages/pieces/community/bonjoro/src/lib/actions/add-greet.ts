@@ -9,9 +9,12 @@ import {
 
 export const addGreetAction = createAction({
   name: 'add_greet',
+  classification: 'WRITE',
   auth: bonjoroAuth,
   displayName: 'Create a Greet',
   description: 'Create a new Greet in Bonjoro',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a personal-video Greet task in Bonjoro for a recipient identified by email (upserting their profile first), with a note and optional assignee, campaign, and message template. Use to queue a new outreach video for a customer. Not idempotent: each call creates a new Greet, so repeating it produces duplicates.', idempotent: false },
   props: {
     note: Property.LongText({
       displayName: 'Note',

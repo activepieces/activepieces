@@ -6,8 +6,11 @@ import { bexioCommonProps } from '../common/props';
 export const updateProductAction = createAction({
   auth: bexioAuth,
   name: 'update_product',
+  classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Update an existing product or service',
+  audience: 'both',
+  aiMetadata: { description: 'Updates fields on an existing Bexio product/article (codes, names, prices, tax, unit, stock, dimensions, accounts) identified by its article id; only supplied fields change. Use to modify a known product; locate the article id with Find Product first. Idempotent: re-sending the same values converges to the same product state.', idempotent: true },
   props: {
     article_id: Property.Dropdown({
       auth: bexioAuth,

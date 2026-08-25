@@ -9,6 +9,11 @@ export const changeCredentialsBulk = createAction({
   displayName: 'Change Credentials Immediately in Bulk',
   description:
     'Marks multiple accounts for an immediate credentials change by the CPM to a new random value',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Marks a list of CyberArk accounts (by account ID) for an immediate CPM credential change to a new random value on both the Vault and the target device, optionally rotating every account in the same account group. Use to force a rotation across many accounts at once. Not idempotent: each call triggers another rotation to a fresh random secret.',
+    idempotent: false,
+  },
   props: {
     accountIds: Property.Array({
       displayName: 'Account IDs',

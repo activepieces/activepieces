@@ -1,9 +1,9 @@
+import { apId } from '@activepieces/core-utils';
 import {
   AddNoteRequest,
   FlowOperationType,
   NoteColorVariant,
   Note,
-  apId,
 } from '@activepieces/shared';
 import { StoreApi } from 'zustand';
 

@@ -13,6 +13,12 @@ export const xeroCreateInventoryItem = createAction({
   name: 'xero_create_inventory_item',
   displayName: 'Create Inventory Item',
   description: 'Creates a new inventory item in Xero.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Xero item (product/service) keyed by a unique item code, optionally tracked as inventory via sales, purchase, COGS, and inventory-asset accounts. Pick this to register a catalog item that line items can later reference by ItemCode. Not idempotent: each call creates an item, and Xero rejects a duplicate code; look the code up first if it may already exist.',
+    idempotent: false,
+  },
   props: {
     tenant_id: props.tenant_id,
     code: Property.ShortText({

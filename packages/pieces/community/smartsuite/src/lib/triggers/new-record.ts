@@ -7,8 +7,12 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const newRecord = createTrigger({
 	name: 'new_record',
+	classification: 'READ',
 	displayName: 'New Record',
 	description: 'Triggers when a new record is created in the specified table',
+	aiMetadata: {
+		description: 'Fires when a new record is created in the specified SmartSuite solution and table, delivering the created record. Use to start a flow whenever a row is added to that table.',
+	},
 	type: TriggerStrategy.WEBHOOK,
 	auth: smartsuiteAuth,
 	props: {

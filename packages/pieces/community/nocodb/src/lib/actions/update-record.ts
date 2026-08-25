@@ -11,6 +11,12 @@ export const updateRecordAction = createAction({
   name: 'nocodb-update-record',
   displayName: 'Update a Record',
   description: 'Updates an existing record with the given Record ID.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Patches an existing NocoDB row identified by its numeric Record ID, overwriting only the supplied column values within the chosen base and table. Use when an agent needs to modify a record it already knows by ID. Idempotent: re-applying the same field values to the same Record ID yields the same final state.',
+    idempotent: true,
+  },
   props: {
     workspaceId: nocodbCommon.workspaceId,
     baseId: nocodbCommon.baseId,

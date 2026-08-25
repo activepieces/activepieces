@@ -6,8 +6,11 @@ import { containerProp } from '../common';
 export const deleteBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'deleteBlob',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Blob',
   description: 'Deletes the Blob at the specified location',
+  audience: 'both',
+  aiMetadata: { description: 'Deletes the blob at the given container and blob name. Use to remove a single blob; this is destructive. Idempotent: it deletes only if the blob exists, so repeating the call against an already-deleted blob succeeds without error.', idempotent: true },
   props: {
       container: containerProp,
       blobName: Property.ShortText({

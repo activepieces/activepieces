@@ -11,6 +11,12 @@ export const createCreditNote = createAction({
   displayName: 'Create Credit Note',
   description:
     'Issue a credit note to a customer — used when you refund them, correct an overcharge, or take back goods. A credit note reduces how much the customer owes you.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Issues a customer credit note in Wafeq to refund, correct an overcharge, or reverse goods, reducing what the customer owes. Choose this to credit back against an earlier sale rather than create a new charge. Requires an existing customer contact ID, line items, and a unique credit_note_number. Not idempotent — each call creates a new credit note.',
+    idempotent: false,
+  },
   props: {
     contact: wafeqProps.contactDropdown({
       displayName: 'Customer',

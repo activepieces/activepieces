@@ -8,6 +8,10 @@ export const bookingCanceledThenRescheduled = createTrigger({
   displayName: 'Booking Canceled Then Rescheduled',
   description:
     'Triggered when Customer cancels a booking and then reschedules on a different booking page.',
+  aiMetadata: {
+    description:
+      'Fires when a customer cancels a booking and then reschedules it on a different booking page in OnceHub. The event carries the rescheduled booking with its contact, owner, and conversation details. Distinct from a plain reschedule on the same booking page.',
+  },
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',

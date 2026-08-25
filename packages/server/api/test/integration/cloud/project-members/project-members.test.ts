@@ -1,13 +1,5 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import {
-    DefaultProjectRole,
-    Permission,
-    PlatformRole,
-    PrincipalType,
-    ProjectRole,
-    RoleType,
-    UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/shared'
+import { Permission, ProjectRole, RoleType } from '@activepieces/core-utils'
+import { DefaultProjectRole, PlatformRole, PrincipalType, UpdateProjectMemberRoleRequestBody } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -22,6 +14,7 @@ import {
 } from '../../../helpers/mocks'
 import { describeRolePermissions } from '../../../helpers/permission-test'
 import { createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 

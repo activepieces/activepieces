@@ -8,6 +8,8 @@ export const getProspectResponses = createAction({
   name: 'get_prospect_responses',
   displayName: 'Get Prospect Responses',
   description: 'Fetch all responses from a specified prospect',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the reply messages a given prospect has sent back, looked up by the prospect numeric ID and optionally narrowed to a single campaign. Use to read a prospect\'s replies for triage, sentiment, or logging. Read-only; safe to call repeatedly.', idempotent: true },
   props: {
     prospect_id: Property.Number({
       displayName: 'Prospect ID',

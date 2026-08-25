@@ -2,10 +2,9 @@ import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
-import { db } from '../../../helpers/db'
-import { createMockApiKey, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { createServiceContext, createTestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -79,6 +78,16 @@ describe('Queue Metrics API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('GET /v1/worker-machines/queue-metrics/prometheus/:queueName?', () => {
+        it('is not registered on cloud (self-hosted only)', async () => {
+            const ctx = await createTestContext(app!)
+
+            const response = await ctx.get('/v1/worker-machines/queue-metrics/prometheus')
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 })

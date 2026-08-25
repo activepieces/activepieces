@@ -1,0 +1,66 @@
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+  createAction,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
+import { tablesCommon } from '../common';
+import { downloadTableActionOutputSchema } from '../output-schemas';
+
+export const downloadTable = createAction({
+  audience: 'both',
+  name: 'tables-download-table',
+  classification: 'READ',
+  displayName: 'Download Table',
+  description: 'Export a table as a CSV file.',
+  aiMetadata: { description: 'Exports all records of an Activepieces Table as a CSV file, optionally prefixed with a header row of column names. Pick this when a whole table is needed as a file; use Find Records instead to read rows as structured data. Requires the table ID and always exports the full table - it accepts no filters, column selection, or row limit; read-only and idempotent.', idempotent: true },
+  auth: PieceAuth.None(),
+  props: {
+    table_id: tablesCommon.table_id,
+    include_headers: Property.Checkbox({
+      displayName: 'Include Headers',
+      description:
+        'Whether to include column headers as the first row of the CSV.',
+      required: true,
+      defaultValue: true,
+    }),
+  },
+  outputSchema: downloadTableActionOutputSchema,
+  async run(context) {
+    const { table_id: tableExternalId, include_headers: includeHeaders } =
+      context.propsValue;
+    const tableId = await tablesCommon.convertTableExternalIdToId(
+      tableExternalId,
+      context
+    );
+
+    const response = await httpClient.sendRequest<DownloadTableResponse>({
+      method: HttpMethod.GET,
+      url: `${context.server.apiUrl}v1/tables/${tableId}/export/csv`,
+      queryParams: {
+        includeHeaders: String(includeHeaders ?? true),
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+      timeout: 120000,
+    });
+
+    return {
+      file: response.body.url,
+      name: response.body.name,
+      rowCount: response.body.rowCount,
+    };
+  },
+});
+
+type DownloadTableResponse = {
+  url: string;
+  name: string;
+  rowCount: number;
+};

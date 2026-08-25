@@ -15,6 +15,8 @@ export const taxIdentificationNumberUpdateAction = createAction({
   name: 'taxIdentificationNumberUpdate',
   displayName: 'Resources - Tax Identification Numbers - Update',
   description: 'Tax Identification Numbers.',
+  audience: 'both',
+  aiMetadata: { description: 'Update an existing tax identification number by its numeric ID, changing its name. Use when modifying a known TIN record rather than creating one; targets a specific record so re-running with the same values is safe.', idempotent: true },
   props: {
         
   taxIdentificationNumber: Property.Number({

@@ -9,6 +9,12 @@ export const createASchedule = createAction({
   displayName: 'Create a schedule',
   description:
     'Creates a scheduled task for a dashboard with support for email, SFTP, and webhook destinations',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a scheduled delivery for an Omni dashboard, sending output on a cron-defined cadence to one of three destination types (email, webhook, or SFTP) in a chosen format. Use to automate recurring report delivery. The required destination type determines which optional fields apply (e.g. recipients for email, url for webhook). Not idempotent: each call creates a new schedule even with identical inputs.',
+    idempotent: false,
+  },
   props: {
     identifier: Property.ShortText({
       displayName: 'Dashboard Identifier',

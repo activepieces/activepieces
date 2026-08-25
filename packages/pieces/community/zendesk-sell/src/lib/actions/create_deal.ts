@@ -9,6 +9,8 @@ export const createDeal = createAction({
     name: 'create_deal',
     displayName: 'Create Deal',
     description: 'Create a new deal under an existing contact.',
+    audience: 'both',
+    aiMetadata: { description: 'Creates a new deal in Zendesk Sell linked to an existing contact. Requires a deal name and a contact ID; optionally set value, currency, pipeline, stage, owner, and source. Use to open a sales opportunity against a known contact. Not idempotent — each call creates a separate deal even with identical input.', idempotent: false },
     props: {
         name: Property.ShortText({
             displayName: 'Deal Name',

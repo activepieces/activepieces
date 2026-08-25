@@ -6,8 +6,15 @@ import { blandApiCall } from '../common/client';
 export const listCalls = createAction({
   auth: blandAiAuth,
   name: 'list_calls',
+  classification: 'SEARCH',
   displayName: 'List Calls',
   description: 'List recent Bland AI calls with optional filters.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Lists recent Bland AI calls, optionally narrowed by origin (from) and/or destination (to) phone number and capped by a limit (1-100). Leave the number filters empty to retrieve the most recent calls regardless of party. Use to discover call IDs or survey call history. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Limit',

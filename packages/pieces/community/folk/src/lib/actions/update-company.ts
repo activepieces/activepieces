@@ -8,6 +8,11 @@ export const updateCompany = createAction({
   name: 'updateCompany',
   displayName: 'Update Company',
   description: 'Update an existing company in your Folk workspace. Select the company from the dropdown to update its details.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Updates fields on an existing Folk company identified by its company ID; only the fields you supply are changed. Use when you already know the target company ID (look it up first with Find Company or Get Company). Not idempotent in general: re-running mutates the record on each call and supplied arrays such as emails or groups replace prior values, so resubmitting the same input is not guaranteed to be a no-op.',
+    idempotent: false,
+  },
   props: {
     companyId: folkProps.company_id(true),
     name: Property.ShortText({

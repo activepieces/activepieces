@@ -10,6 +10,12 @@ export const cancelOrder = createAction({
   displayName: 'Cancel Order',
   description:
     'Cancel an open order. Once cancelled, the order cannot be reopened — the only path forward is to create a new order.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Cancels an open order by its `ord_` id, optionally recording a cancellation reason. This is terminal — a cancelled order cannot be reopened, only replaced by a new one. Use specifically to cancel; to advance an order use Update Order Status. Not idempotent: it mutates order state and will fail if the order is not in a cancellable state.',
+    idempotent: false,
+  },
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

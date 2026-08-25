@@ -1,10 +1,9 @@
 import { randomBytes } from 'crypto'
+import { apId, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { apId, McpOAuthToken } from '@activepieces/shared'
+import { McpOAuthToken } from '@activepieces/shared'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 
@@ -62,7 +61,7 @@ export const mcpOAuthTokenService = {
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
         }
-        await repo().save(tokenRecord)
+        await repo().save(sanitizeObjectForPostgresql(tokenRecord))
 
         const accessToken = await issueAccessToken({
             userId: params.userId,
@@ -102,6 +101,7 @@ export const mcpOAuthTokenService = {
             access_token: accessToken,
             token_type: 'Bearer',
             expires_in: ACCESS_TOKEN_TTL_15_MINUTES_SECONDS,
+            refresh_token: params.refreshToken,
         }
     },
 
@@ -118,21 +118,12 @@ export const mcpOAuthTokenService = {
         return payload
     },
 
-    async revokeRefreshToken(refreshToken: string, clientId: string | undefined): Promise<void> {
-        const hashed = hashRefreshToken(refreshToken)
-        const criteria = clientId
-            ? { refreshToken: hashed, clientId }
-            : { refreshToken: hashed }
-        await repo().update(criteria, { revoked: true })
+    async revokeRefreshToken({ refreshToken, clientId }: RevokeRefreshTokenParams): Promise<void> {
+        await repo().update({ refreshToken: hashRefreshToken(refreshToken), clientId }, { revoked: true })
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
         return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, scopes: ['mcp'] })
-    },
-
-    getIssuerUrl(): string {
-        return system.get(AppSystemProp.MCP_OAUTH_ISSUER_URL)
-            ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
     },
 }
 
@@ -162,6 +153,11 @@ type ExchangeCodeParams = {
     projectId: string | null
     platformId: string
     scopes: string[]
+}
+
+type RevokeRefreshTokenParams = {
+    refreshToken: string
+    clientId: string
 }
 
 type RefreshParams = {

@@ -10,6 +10,12 @@ export const convertQuoteToInvoice = createAction({
   displayName: 'Convert Quote to Invoice',
   description:
     'Turn a customer-accepted quote into a real invoice. The new invoice copies the customer, line items, and totals from the quote.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Converts an existing accepted quote into a new invoice in Wafeq, copying the customer, line items, and totals. Choose this after a quote created via Create Quote is approved, instead of re-entering the data as a fresh invoice. Requires the quote ID. Not idempotent — each call generates a new invoice from the quote.',
+    idempotent: false,
+  },
   props: {
     quote: wafeqProps.quoteDropdown({
       description: 'Pick the quote you want to convert into an invoice.',

@@ -7,6 +7,8 @@ export const createMilestone = createAction({
 	name: 'create_milestone',
 	displayName: 'Create Milestone',
 	description: 'Add a milestone with due date, description, responsible user, etc.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a milestone in a Teamwork project with a title, deadline, and responsible parties (optionally a description, notify flag, and private flag). Use to set a dated project goal. Requires the project, title, deadline, and at least one responsible party. Not idempotent — each call creates a new milestone.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

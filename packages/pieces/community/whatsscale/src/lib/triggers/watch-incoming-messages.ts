@@ -7,8 +7,13 @@ import { whatsscaleProps } from '../common/props';
 export const watchIncomingMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
   name: 'watch_incoming_messages',
+  classification: 'READ',
   displayName: 'Watch Incoming Messages',
   description: 'Triggers when a new 1-on-1 WhatsApp message is received.',
+  aiMetadata: {
+    description:
+      'Fires when a new direct (one-on-one) WhatsApp message is received on the connected session, excluding group and channel messages. Each event represents a single inbound private message and includes the sender phone number and name, message body, media details, and reply/forward metadata. Use to react to incoming customer or contact messages in private chats.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,

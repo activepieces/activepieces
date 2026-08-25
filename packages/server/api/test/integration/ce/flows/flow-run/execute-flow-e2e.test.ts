@@ -12,6 +12,8 @@
  *   - bun must be available for piece installation
  *   - Redis (in-memory via AP_REDIS_TYPE=MEMORY) is started automatically
  */
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
     ExecutionType,
     FlowActionType,
@@ -20,13 +22,19 @@ import {
     FlowTriggerType,
     FlowVersionState,
     PackageType,
+    PieceScope,
     PieceType,
-    StreamStepProgress,
     RunEnvironment,
+    StepOutputType,
+    StreamStepProgress,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { worker } from '../../../../../../worker/src/lib/worker'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { db } from '../../../../helpers/db'
+import { createTestContext } from '../../../../helpers/test-context'
 import { setupE2eEnvironment } from '../../../../helpers/e2e-setup'
 import {
     createMockFlow,
@@ -34,8 +42,12 @@ import {
     createMockPieceMetadata,
     mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
-import { db } from '../../../../helpers/db'
-import { worker } from '../../../../../../worker/src/lib/worker'
+
+const CUSTOM_PIECE_NAME = 'e2e-custom-echo'
+const CUSTOM_PIECE_VERSION = '0.0.1'
+const customPieceArchive = readFileSync(
+    join(__dirname, '../../../../../src/assets/e2e-custom-echo-0.0.1.tgz'),
+)
 
 let app: FastifyInstance
 
@@ -55,7 +67,7 @@ afterAll(async () => {
     await app.close()
 }, 15_000)
 
-async function setupSubflowFixtures() {
+async function setupSubflowFixtures({ childAlwaysFails = false, retryOnFailure = false }: { childAlwaysFails?: boolean, retryOnFailure?: boolean } = {}) {
     const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
     const webhookPiece = createMockPieceMetadata({
@@ -88,8 +100,8 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        greeting: '{{step_1.greeting}}',
-                        processed: '{{step_1.processed}}',
+                        greeting: '{{step_1[\'output\'].greeting}}',
+                        processed: '{{step_1[\'output\'].processed}}',
                     },
                 },
             },
@@ -105,7 +117,9 @@ async function setupSubflowFixtures() {
         valid: true,
         settings: {
             sourceCode: {
-                code: `export const code = async (inputs) => {
+                code: childAlwaysFails
+                    ? 'export const code = async () => { throw new Error(\'deliberate subflow failure\') }'
+                    : `export const code = async (inputs) => {
                     return {
                         greeting: 'Hello ' + inputs.name,
                         processed: true,
@@ -114,7 +128,7 @@ async function setupSubflowFixtures() {
                 packageJson: '{}',
             },
             input: {
-                name: '{{trigger.data.name}}',
+                name: '{{trigger[\'output\'].data.name}}',
             },
             errorHandlingOptions: {},
         },
@@ -181,13 +195,15 @@ async function setupSubflowFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        name: '{{trigger.body.name}}',
+                        name: '{{trigger[\'output\'].body.name}}',
                     },
                 },
                 waitForResponse: true,
             },
             propertySettings: {},
-            errorHandlingOptions: {},
+            errorHandlingOptions: retryOnFailure
+                ? { retryOnFailure: { value: true }, continueOnFailure: { value: false } }
+                : {},
         },
     }
 
@@ -217,7 +233,7 @@ async function setupSubflowFixtures() {
     })
     await db.save('flow_version', parentFlowVersion)
 
-    return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+    return { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject }
 }
 
 async function setupSubflowWithWebhookResponseFixtures() {
@@ -253,7 +269,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 response: {
                     response: {
-                        echo: '{{trigger.data.message}}',
+                        echo: '{{trigger[\'output\'].data.message}}',
                     },
                 },
             },
@@ -315,7 +331,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 fields: {
                     status: 200,
                     headers: {},
-                    body: { echo: '{{step_1.data.echo}}' },
+                    body: { echo: '{{step_1[\'output\'].data.echo}}' },
                 },
             },
             propertySettings: {},
@@ -344,7 +360,7 @@ async function setupSubflowWithWebhookResponseFixtures() {
                 mode: 'simple',
                 flowProps: {
                     payload: {
-                        message: '{{trigger.body.message}}',
+                        message: '{{trigger[\'output\'].body.message}}',
                     },
                 },
                 waitForResponse: true,
@@ -450,7 +466,7 @@ describe('Execute Flow E2E', () => {
                     packageJson: '{}',
                 },
                 input: {
-                    data: '{{step_1}}',
+                    data: '{{step_1[\'output\']}}',
                 },
                 errorHandlingOptions: {},
             },
@@ -467,8 +483,8 @@ describe('Execute Flow E2E', () => {
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        fullName: '{{trigger.body.name}}',
-                        emailAddress: '{{trigger.body.email}}',
+                        fullName: '{{trigger[\'output\'].body.name}}',
+                        emailAddress: '{{trigger[\'output\'].body.email}}',
                     },
                 },
                 propertySettings: {},
@@ -555,6 +571,103 @@ describe('Execute Flow E2E', () => {
             }),
         )
     }, 120_000)
+
+    it('installs a tar.gz custom piece and executes a flow that runs its action', async () => {
+        const ctx = await createTestContext(app)
+
+        // Install the custom piece straight from its packed .tgz archive through the
+        // real public API — this exercises archive upload → engine metadata extraction →
+        // worker install, the full private-piece path.
+        const formData = new FormData()
+        formData.append(
+            'pieceArchive',
+            new Blob([customPieceArchive], { type: 'application/gzip' }),
+            'e2e-custom-echo-0.0.1.tgz',
+        )
+        formData.append('pieceName', CUSTOM_PIECE_NAME)
+        formData.append('pieceVersion', CUSTOM_PIECE_VERSION)
+        formData.append('packageType', PackageType.ARCHIVE)
+        formData.append('scope', PieceScope.PLATFORM)
+
+        const installResponse = await ctx.inject({
+            method: 'POST',
+            url: '/api/v1/pieces',
+            body: formData,
+        })
+        // Surface the response body in the failure message so a regressed archive
+        // upload is diagnosable from the CI log without re-running locally.
+        expect(installResponse.statusCode, installResponse.body).toBe(StatusCodes.CREATED)
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+        const echoAction = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_1',
+            displayName: 'Echo Message',
+            valid: true,
+            settings: {
+                pieceName: CUSTOM_PIECE_NAME,
+                pieceVersion: CUSTOM_PIECE_VERSION,
+                actionName: 'echo',
+                input: {},
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+        }
+
+        const mockFlow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: echoAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { trigger: 'custom-piece' } },
+            platformId: ctx.platform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: ctx.project.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, ctx.project.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(result.steps.step_1.output).toEqual(
+            expect.objectContaining({ message: 'custom-piece-works' }),
+        )
+    }, 180_000)
 
     it('handles concurrent flow run executions without jobs getting stuck', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
@@ -702,6 +815,36 @@ describe('Execute Flow E2E', () => {
         )
     }, 180_000)
 
+    it('retry-on-failure of a wait-for-response Call Flow retries the parent step and fails after maxAttempts without re-invoking the child subflow', async () => {
+        const { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject } = await setupSubflowFixtures({
+            childAlwaysFails: true,
+            retryOnFailure: true,
+        })
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: parentFlow.id,
+            payload: { body: { name: 'Alice' } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: parentFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        const childRunCount = await databaseConnection()
+            .getRepository('flow_run')
+            .count({ where: { flowId: childFlow.id } })
+
+        expect(result.status).toBe(FlowRunStatus.FAILED)
+        expect(childRunCount).toBe(1)
+    }, 180_000)
+
     it('executes a webhook → delay_for → code flow without infinite loop', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
@@ -802,6 +945,136 @@ describe('Execute Flow E2E', () => {
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps.step_2.output).toEqual(
             expect.objectContaining({ resumed: true }),
+        )
+    }, 60_000)
+
+    it('slices a >32 KB step output, persists it across a delay/resume, and materializes it for a downstream step', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        const delayPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-delay',
+            version: '0.3.26',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece, delayPiece])
+
+        const referenceAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_3',
+            displayName: 'Read Sliced Output',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: `export const code = async (inputs) => ({
+                        seenLength: inputs.received.length,
+                        sample: inputs.received.slice(0, 5),
+                    });`,
+                    packageJson: '{}',
+                },
+                input: {
+                    received: '{{step_1.output.big}}',
+                },
+                errorHandlingOptions: {},
+            },
+        }
+
+        const delayAction = {
+            type: FlowActionType.PIECE as const,
+            name: 'step_2',
+            displayName: 'Delay For',
+            valid: true,
+            settings: {
+                pieceName: '@activepieces/piece-delay',
+                pieceVersion: '0.3.26',
+                actionName: 'delayFor',
+                input: {
+                    unit: 'seconds',
+                    delayFor: 2,
+                },
+                propertySettings: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: referenceAction,
+        }
+
+        const emitBigOutputAction = {
+            type: FlowActionType.CODE as const,
+            name: 'step_1',
+            displayName: 'Emit 40 KB',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: 'export const code = async () => ({ big: \'x\'.repeat(40000) });',
+                    packageJson: '{}',
+                },
+                input: {},
+                errorHandlingOptions: {},
+            },
+            nextAction: delayAction,
+        }
+
+        const mockFlow = createMockFlow({
+            projectId: mockProject.id,
+        })
+        await db.save('flow', mockFlow)
+
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: emitBigOutputAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { test: true } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        // step_1 was offloaded to a FLOW_RUN_LOG_SLICE file; the journal stores a LogSliceRef.
+        expect(result.steps.step_1.outputType).toBe(StepOutputType.SLICE)
+        expect((result.steps.step_1.output as { fileId: string }).fileId).toEqual(expect.any(String))
+        // step_3 ran after the delay/resume — its input was resolved by materializing the slice
+        // through the unified /v1/files/:fileId GET endpoint.
+        expect(result.steps.step_3.output).toEqual(
+            expect.objectContaining({
+                seenLength: 40_000,
+                sample: 'xxxxx',
+            }),
         )
     }, 60_000)
 

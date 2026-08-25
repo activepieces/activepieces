@@ -59,6 +59,12 @@ export const getCampaignAnalytics = createAction({
   displayName: 'Get Campaign Analytics',
   description:
     'Fetch analytics data for a selected campaign based on a date range.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves performance analytics (sent, opens, clicks, replies, per-step breakdowns, and activity) for one ReachInbox campaign over a date range. Use to report on or evaluate a specific campaign. Requires a campaign id and start/end dates in YYYY-MM-DD format; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     campaignId: Property.Dropdown({
   auth: ReachinboxAuth,

@@ -7,6 +7,9 @@ export const conversationSnoozed = createTrigger({
 	name: 'conversationSnoozed',
 	displayName: 'Conversation snoozed',
 	description: 'Triggers when a conversation is snoozed',
+	aiMetadata: {
+		description: 'Fires when a conversation is snoozed in Intercom, meaning an admin temporarily pauses it until a chosen time. Outputs the snoozed conversation object, including its snoozed_until time.',
+	},
 	props: {},
 	sampleData: undefined,
 	auth: intercomAuth,

@@ -1,16 +1,17 @@
-import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
-import { apId, FieldType } from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FieldType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
+    createMockCell,
     createMockField,
     createMockRecord,
-    createMockCell,
     createMockTable,
 } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
-import { describeWithAuth } from '../../../helpers/describe-with-auth'
+import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
 
@@ -65,6 +66,32 @@ describe('Table API', () => {
             const fields = fieldsResponse?.json()
             expect(fields.length).toBe(2)
             expect(fields.map((f: { name: string }) => f.name).sort()).toEqual(['Age', 'Name'])
+        })
+
+        it('should assign field positions from the fields array order', async () => {
+            const ctx = await setup()
+            const fieldNames = Array.from({ length: 10 }, (_, i) => `Field ${String.fromCharCode(65 + i)}`)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'Ordered Table',
+                fields: fieldNames.map((name) => ({
+                    name,
+                    type: FieldType.TEXT,
+                    data: null,
+                    externalId: apId(),
+                })),
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+
+            const fieldsResponse = await ctx.get('/v1/fields', {
+                tableId: body.id,
+            })
+            const fields = fieldsResponse?.json()
+            expect(fields.map((f: { name: string }) => f.name)).toEqual(fieldNames)
+            expect(fields.map((f: { position: number }) => f.position)).toEqual(fieldNames.map((_, i) => i))
         })
 
         it('should create a table with externalId', async () => {
@@ -335,6 +362,85 @@ describe('Table API', () => {
             const body = response?.json()
             expect(body.fields.length).toBe(1)
             expect(body.rows.length).toBe(0)
+        })
+    })
+
+    describeWithAuth('GET /v1/tables/:id/export/csv (Export CSV)', () => app!, (setup) => {
+        const seedTextField = async (ctx: TestContext, tableId: string) => {
+            const field = createMockField({ tableId, projectId: ctx.project.id })
+            field.type = FieldType.TEXT
+            field.name = 'Name'
+            await db.save('field', field)
+            return field
+        }
+
+        const seedRecord = async (ctx: TestContext, tableId: string, fieldId: string, value: string, created: string) => {
+            const record = createMockRecord({ tableId, projectId: ctx.project.id })
+            record.created = created
+            await db.save('record', record)
+            const cell = createMockCell({ recordId: record.id, fieldId, projectId: ctx.project.id })
+            cell.value = value
+            await db.save('cell', cell)
+            return record
+        }
+
+        const downloadCsv = async (ctx: TestContext, tableId: string, query?: Record<string, string>) => {
+            const response = await ctx.get(`/v1/tables/${tableId}/export/csv`, query)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            const fileUrl = new URL(body.url)
+            const fileResponse = await app!.inject({ method: 'GET', url: fileUrl.pathname + fileUrl.search })
+            return { body, csv: fileResponse.payload }
+        }
+
+        it('should stream rows, escape special chars and count rows', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+            await seedRecord(ctx, table.id, field.id, 'a,b"c\nd', '2024-01-02T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.name).toBe(`${table.name}.csv`)
+            expect(body.rowCount).toBe(2)
+            expect(csv.startsWith('Name\n')).toBe(true)
+            expect(csv).toContain('Alice')
+            expect(csv).toContain('"a,b""c\nd"')
+        })
+
+        it('should trim whitespace and control chars from cell edges', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, '  padded \t', '2024-01-01T00:00:00.000Z')
+
+            const { csv } = await downloadCsv(ctx, table.id)
+
+            expect(csv).toBe('Name\npadded')
+        })
+
+        it('should omit the header row when includeHeaders is false', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            const field = await seedTextField(ctx, table.id)
+            await seedRecord(ctx, table.id, field.id, 'Alice', '2024-01-01T00:00:00.000Z')
+
+            const { body, csv } = await downloadCsv(ctx, table.id, { includeHeaders: 'false' })
+
+            expect(body.rowCount).toBe(1)
+            expect(csv).toBe('Alice')
+        })
+
+        it('should export an empty table as header only', async () => {
+            const ctx = await setup()
+            const table = await createAndSaveTable(ctx)
+            await seedTextField(ctx, table.id)
+
+            const { body, csv } = await downloadCsv(ctx, table.id)
+
+            expect(body.rowCount).toBe(0)
+            expect(csv).toBe('Name')
         })
     })
 

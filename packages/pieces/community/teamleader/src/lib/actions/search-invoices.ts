@@ -7,6 +7,8 @@ export const searchInvoices = createAction({
     name: 'search_invoices',
     displayName: 'Search Invoices',
     description: 'List or filter invoices',
+    audience: 'both',
+    aiMetadata: { description: 'Look up invoices in Teamleader, optionally narrowing by a free-text term, invoice number, customer, department, associated deal/project/subscription, status (draft/outstanding/matched), purchase order or payment reference, or invoice-date/updated date ranges, with paging and sorting. With no filters it lists all invoices; supply filters to find specific matches. Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({

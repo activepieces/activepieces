@@ -1,13 +1,17 @@
+import { isNil } from '@activepieces/core-utils';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { determineDefaultRoute } from '@/lib/route-utils';
+
+import { NoProjectsState } from '../components/no-projects-state';
+import { ProjectDashboardLayout } from '../components/project-layout';
 
 export const DefaultRoute = () => {
   const token = authenticationSession.getToken();
   const location = useLocation();
-  const { checkAccess } = useAuthorization();
   if (!token) {
     const searchParams = new URLSearchParams();
     searchParams.set('from', location.pathname + location.search);
@@ -21,5 +25,27 @@ export const DefaultRoute = () => {
   if (authenticationSession.isOnboarding()) {
     return <Navigate to="/create-platform" replace />;
   }
-  return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
+  return <AuthenticatedDefaultRoute />;
+};
+
+const AuthenticatedDefaultRoute = () => {
+  const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const currentProjectId = authenticationSession.getProjectId();
+  if (isNil(currentProjectId)) {
+    return (
+      <ProjectDashboardLayout>
+        <NoProjectsState />
+      </ProjectDashboardLayout>
+    );
+  }
+  return (
+    <Navigate
+      to={determineDefaultRoute({
+        checkAccess,
+        chatEnabled: platform.plan.chatEnabled,
+      })}
+      replace
+    ></Navigate>
+  );
 };

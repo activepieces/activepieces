@@ -9,6 +9,11 @@ export const listFilesFromRecord = createAction({
   name: 'listFilesFromRecord',
   displayName: 'List Files from Record',
   description: 'List files attached to a specific record (without downloading) for management.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Lists the file attachments on one Ninox record, addressed by team, database, table, and record id, returning their metadata without downloading content. Use to enumerate or check which files are attached before downloading. Idempotent — a read-only listing with no side effect.',
+    idempotent: true,
+  },
   props: {
     teamid: teamidDropdown,
     dbid: databaseIdDropdown,

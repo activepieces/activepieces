@@ -8,6 +8,11 @@ export const readSecret = createAction({
   name: 'read_secret',
   displayName: 'Read Secret',
   description: 'Read a secret from HashiCorp Vault',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetch the key-value data stored at a secret path in a HashiCorp Vault secrets engine (mount). Use to retrieve credentials or config an agent needs at runtime. Requires the secrets-engine mount name and the path; on KV v2 engines an optional version number reads a specific historical version (0/omitted = latest). Read-only and idempotent; a missing path returns success:false rather than erroring.',
+    idempotent: true,
+  },
   props: {
     secretEngine: Property.ShortText({
       displayName: 'Secret Engine',

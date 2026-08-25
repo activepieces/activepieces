@@ -9,6 +9,12 @@ export const createCodeSnippet = createAction({
   displayName: 'Create Code Snippet',
   description:
     'Create a new code snippet in Mixmax. [See the documentation](https://developer.mixmax.com/reference/codesnippets-1)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a reusable code snippet in Mixmax from required HTML content, with optional title, syntax-highlighting language, background color, and editor theme. Use to save a code block for later insertion into emails. Not idempotent — each call creates a new snippet.',
+    idempotent: false,
+  },
   props: {
     title: Property.ShortText({
       displayName: 'Title',

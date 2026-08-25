@@ -1,4 +1,4 @@
-import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
+import { ProjectRole, RoleType, SeekPage } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import {
   Eye,

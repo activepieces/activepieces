@@ -9,6 +9,12 @@ export const getPersonLookup = createAction({
   displayName: 'Look Up Person',
   description:
     'Look up a person by name and company information (2 credits)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Resolve a single person's professional-network profile from their first name plus a company name or domain (both required), optionally refined by last name, title, or location. Read-only and safe to retry. Use this as the entry point when you have a name and employer but no profile URL; once you have the URL use Get Person Profile to enrich. Similarity checks consume credits even when no match is found.",
+    idempotent: true,
+  },
   props: {
     first_name: Property.ShortText({
       displayName: 'First Name',

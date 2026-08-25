@@ -8,6 +8,8 @@ export const findProject = createAction({
   name: 'findProject',
   displayName: 'Find Project',
   description: 'Find a project by name or retrieve all projects',
+  audience: 'both',
+  aiMetadata: { description: 'Look up Zeplin projects accessible to the authenticated user. With a project name it filters to partial (case-insensitive) name matches; with the name left empty it returns all projects. Use to resolve a project ID before screen or note operations. Read-only and idempotent. Note: if the name filter matches nothing, it falls back to returning all projects.', idempotent: true },
   props: {
     projectName: Property.ShortText({
       displayName: 'Project Name',

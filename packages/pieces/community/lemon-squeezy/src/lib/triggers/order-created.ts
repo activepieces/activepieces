@@ -5,8 +5,12 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const orderCreatedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'order_created',
+  classification: 'READ',
   displayName: 'Order Created',
   description: 'Triggers when a new order is successfully placed',
+  aiMetadata: {
+    description: 'Fires when a new order is created in Lemon Squeezy (a customer completes a purchase). Represents the order record at creation, including customer, product/variant, totals, and status.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     store_id: createStoreDropdownProperty()

@@ -7,6 +7,8 @@ export const findOrCreateCompany = createAction({
   name: 'find_or_create_company',
   displayName: 'Find or Create Company',
   description: 'Finds a company by name or creates a new one if it does not exist',
+  audience: 'both',
+  aiMetadata: { description: 'Returns the MyCase company matching the given name (case-insensitive), creating it with the optional contact, address, and association fields only if no match exists. Use to guarantee a company exists without creating duplicates; repeat calls with the same name converge to one record. The extra fields apply only on creation. Use Find Company for a pure lookup or Create Company to always insert.', idempotent: true },
   props: {
     name: Property.ShortText({
       displayName: 'Company Name',

@@ -1,41 +1,31 @@
-import {
-    ActivepiecesError,
-    ApId,
-    apId,
-    assertNotNullOrUndefined,
-    ColorName,
-    ErrorCode,
-    isNil,
-    Metadata,
-    Project,
-    ProjectIcon,
-    ProjectId,
-    ProjectType,
-    spreadIfDefined,
-    UserId,
-} from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, assertNotNullOrUndefined, ErrorCode, isNil, Metadata, ProjectId, spreadIfDefined, spreadIfNotUndefined, UserId } from '@activepieces/core-utils'
+import { ColorName, Project, ProjectIcon, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, EntityManager, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { userService } from '../user/user-service'
-import { projectHooks } from './project-hooks'
+import { projectHooks, ProjectPostCreateContext } from './project-hooks'
 import { projectRepo } from './project-repo'
+import { projectWorkerGroupService } from './project-worker-group.service'
 
 export { projectRepo }
 
 export const projectService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<Project> {
-        const { callPostCreateHooks = true, entityManager, ...rest } = params
+        const { callPostCreateHooks = true, entityManager, postCreateContext, ...rest } = params
         const icon = this.createProjectIcon()
         const newProject: NewProject = {
             id: apId(),
             ...rest,
             icon,
             releasesEnabled: false,
+            notifyFlowOwnerOnFailure: false,
             sensitive: false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
-            await this.callProjectPostCreateHooks(savedProject)
+            await this.callProjectPostCreateHooks(savedProject, postCreateContext)
         }
         return savedProject
     },
@@ -79,14 +69,18 @@ export const projectService = (log: FastifyBaseLogger) => ({
     async update(projectId: ProjectId, request: UpdateParams, entityManager?: EntityManager): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
+        assertRetentionDaysWithinInstanceBounds(request.executionDataRetentionDays)
 
         const baseUpdate = {
             ...spreadIfDefined('externalId', externalId),
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+            ...spreadIfDefined('notifyFlowOwnerOnFailure', request.notifyFlowOwnerOnFailure),
             ...spreadIfDefined('metadata', request.metadata),
             ...spreadIfDefined('sensitive', request.sensitive),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
+            ...(request.workerGroupId !== undefined ? { workerGroupId: request.workerGroupId } : {}),
+            ...spreadIfNotUndefined('executionDataRetentionDays', request.executionDataRetentionDays),
         }
 
         const teamUpdate = request.type === ProjectType.TEAM ? {
@@ -95,6 +89,9 @@ export const projectService = (log: FastifyBaseLogger) => ({
         } : {}
 
         await projectRepo(entityManager).update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
+        if (request.workerGroupId !== undefined) {
+            await projectWorkerGroupService(log).invalidate({ projectId })
+        }
         return this.getOneOrThrow(projectId)
     },
 
@@ -211,8 +208,8 @@ export const projectService = (log: FastifyBaseLogger) => ({
         }
         return icon
     },
-    callProjectPostCreateHooks: async (savedProject: Project)=>{
-        await projectHooks.get(log).postCreate(savedProject)
+    callProjectPostCreateHooks: async (savedProject: Project, context?: ProjectPostCreateContext)=>{
+        await projectHooks.get(log).postCreate(savedProject, context)
     },
 })
 
@@ -254,6 +251,22 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
     }
 }
 
+function assertRetentionDaysWithinInstanceBounds(executionDataRetentionDays: number | null | undefined): void {
+    if (isNil(executionDataRetentionDays)) {
+        return
+    }
+    const instanceRetentionDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+    const pausedFlowTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+    if (executionDataRetentionDays < pausedFlowTimeoutDays || executionDataRetentionDays > instanceRetentionDays) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `executionDataRetentionDays must be between AP_PAUSED_FLOW_TIMEOUT_DAYS (${pausedFlowTimeoutDays}) and AP_EXECUTION_DATA_RETENTION_DAYS (${instanceRetentionDays})`,
+            },
+        })
+    }
+}
+
 type GetAllForUserParams = {
     platformId: string
     userId: string
@@ -276,9 +289,12 @@ type UpdateTeamProjectParams = {
     displayName?: string
     externalId?: string
     releasesEnabled?: boolean
+    notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
+    workerGroupId?: string | null
+    executionDataRetentionDays?: number | null
     icon?: ProjectIcon
     sensitive?: boolean
 }
@@ -287,9 +303,12 @@ type UpdatePersonalProjectParams = {
     type: ProjectType.PERSONAL
     externalId?: string
     releasesEnabled?: boolean
+    notifyFlowOwnerOnFailure?: boolean
     metadata?: Metadata
     poolId?: string | null
     maxConcurrentJobs?: number | null
+    workerGroupId?: string | null
+    executionDataRetentionDays?: number | null
     sensitive?: boolean
 }
 
@@ -304,6 +323,7 @@ type CreateParams = {
     metadata?: Metadata
     maxConcurrentJobs?: number
     callPostCreateHooks?: boolean
+    postCreateContext?: ProjectPostCreateContext
     entityManager?: EntityManager
 }
 

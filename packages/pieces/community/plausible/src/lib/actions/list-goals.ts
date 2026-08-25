@@ -7,6 +7,8 @@ export const listGoals = createAction({
   name: 'list_goals',
   displayName: 'List Goals',
   description: 'Get a list of goals for a site',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the conversion goals configured for a site, including each goal\'s id, type, and display name. Use to discover existing goals or obtain a goal id before deleting one. Read-only and safe to repeat.', idempotent: true },
   props: {
     site_id: siteIdDropdown,
   },

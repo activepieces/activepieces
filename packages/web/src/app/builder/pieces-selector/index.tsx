@@ -1,8 +1,5 @@
-import {
-  FlowOperationType,
-  FlowTriggerType,
-  isNil,
-} from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -28,12 +25,15 @@ import {
   PieceSelectorTabType,
   PieceSelectorOperation,
   pieceSelectorUtils,
+  pieceSelectorCustomization,
   PieceSearchProvider,
   usePieceSearchContext,
+  piecesHooks,
 } from '@/features/pieces';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { AITabContent } from './ai-tab-content';
 import { ApprovalsTabContent } from './approvals-tab-content';
@@ -42,7 +42,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  agentsEnabled: boolean,
+  aiAndAgentsAvailable: boolean,
 ) => {
   const baseTabs = [
     {
@@ -67,7 +67,7 @@ const getTabsList = (
     FlowOperationType.UPDATE_ACTION,
   ].includes(operationType);
 
-  if (replaceOrAddAction && agentsEnabled) {
+  if (replaceOrAddAction && aiAndAgentsAvailable) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -130,7 +130,9 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight =
+    Math.min(listHeightRef.current, 300) -
+    pieceSelectorUtils.PIECE_SELECTOR_CLIPPING_THRESHOLD;
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -139,31 +141,48 @@ const PieceSelectorContent = ({
       });
     }
   }, [isOpen]);
-  const { data: aiProviders } = aiProviderQueries.useAiProviders();
+  const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
+  const {
+    pieceModel: aiPieceModel,
+    isError: isAiPieceError,
+    isSuccess: isAiPieceLoaded,
+  } = piecesHooks.usePiece({
+    name: '@activepieces/piece-ai',
+    projectId: authenticationSession.getProjectId() ?? undefined,
+  });
+  const isAiPieceUnavailable =
+    isAiPieceError ||
+    (isAiPieceLoaded && Object.keys(aiPieceModel?.actions ?? {}).length === 0);
   const clearSearch = () => {
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const tabsList = getTabsList(
-    operation.type,
-    platform.plan.agentsEnabled &&
-      !isNil(aiProviders) &&
-      aiProviders.length > 0,
-  );
+  const tabsList = pieceSelectorCustomization.buildResolvedTabs({
+    availableBuiltinTabs: getTabsList(
+      operation.type,
+      !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable,
+    ),
+    config: platform.pieceSelectorConfig,
+  });
+  const firstTab = tabsList[0];
 
   return (
     <Popover
       open={isOpen}
-      modal={true}
+      modal={false}
       onOpenChange={(open) => {
-        if (!open) {
-          clearSearch();
-          setOpenedPieceSelectorStepNameOrAddButtonId(null);
-          if (isForEmptyTrigger) {
-            deselectStep();
+        if (open) {
+          if (isForEmptyTrigger || openSelectorOnClick) {
+            setOpenedPieceSelectorStepNameOrAddButtonId(id);
           }
+          return;
+        }
+        clearSearch();
+        setOpenedPieceSelectorStepNameOrAddButtonId(null);
+        if (isForEmptyTrigger) {
+          deselectStep();
         }
       }}
     >
@@ -183,7 +202,10 @@ const PieceSelectorContent = ({
         initiallySelectedTab={
           isForReplace || isMobile
             ? PieceSelectorTabType.NONE
-            : PieceSelectorTabType.EXPLORE
+            : firstTab?.type ?? PieceSelectorTabType.EXPLORE
+        }
+        initiallySelectedCustomTabId={
+          isForReplace || isMobile ? null : firstTab?.customTabId ?? null
         }
         onTabChange={clearSearch}
         key={isOpen ? 'open' : 'closed'}
@@ -191,6 +213,11 @@ const PieceSelectorContent = ({
         <PopoverContent
           onContextMenu={(e) => {
             e.stopPropagation();
+          }}
+          onInteractOutside={(e) => {
+            if (e.detail.originalEvent.type === 'focusin') {
+              e.preventDefault();
+            }
           }}
           className="w-[340px] md:w-[600px] p-0 shadow-lg"
           onClick={(e) => {

@@ -7,6 +7,9 @@ export const prospectOptout = createTrigger({
   name: 'prospect_optout',
   displayName: 'Prospect Opt-out',
   description: 'Triggers when a prospect opts out from receiving emails',
+  aiMetadata: {
+    description: 'Fires when a prospect opts out of receiving further emails (e.g. clicks unsubscribe). Represents an explicit unsubscribe by the prospect and includes their details.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_optout',

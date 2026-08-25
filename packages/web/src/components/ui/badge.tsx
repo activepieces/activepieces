@@ -16,11 +16,13 @@ const badgeVariants = cva(
           'bg-destructive-50 text-destructive-700 border-destructive-600 dark:bg-destructive-950 dark:text-destructive-300 dark:border-destructive-400',
         success:
           'bg-success-50 text-success-700 border-success-600 dark:bg-success-950 dark:text-success-300 dark:border-success-400',
+        info: 'bg-blue-50 text-blue-700 border-blue-600 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-400',
         accent: 'bg-accent text-accent-foreground border-border',
         outline:
           'border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         ghost: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 [a&]:hover:underline',
+        inverted: 'text-primary bg-primary/10',
       },
     },
     defaultVariants: {

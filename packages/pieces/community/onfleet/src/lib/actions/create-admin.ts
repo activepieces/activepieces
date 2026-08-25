@@ -9,6 +9,8 @@ export const createAdmin = createAction({
   name: 'create_admin',
   displayName: 'Create Administrator',
   description: 'Create a new administrator',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new Onfleet organization administrator from a name and email (optional phone and read-only flag). Not idempotent: each call adds another admin even with the same email. Use update-admin to modify an existing one.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

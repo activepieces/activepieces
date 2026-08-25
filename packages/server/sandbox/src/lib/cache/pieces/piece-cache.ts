@@ -1,0 +1,106 @@
+import path from 'path'
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { type ApLogger, wideEvent } from '@activepieces/server-utils'
+import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
+import { SandboxSettings } from '../../types'
+import { cacheUtils } from '../cache-paths'
+import { cacheState, NO_SAVE_GUARD } from '../cache-state'
+import { isValidPackageName } from './piece-installer'
+
+export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxSettings) => ({
+    async getPiece({ pieceName, pieceVersion, platformId }: PieceCacheKey): Promise<PiecePackage> {
+        if (!isValidPackageName(pieceName)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Invalid pieceName: "${pieceName}" is not a valid package name` },
+            })
+        }
+        const isExactVersion = EXACT_VERSION_REGEX.test(pieceVersion)
+
+        if (!isExactVersion) {
+            return getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
+        }
+
+        const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
+        const cache = cacheState(path.join(cacheUtils(basePath).getGlobalCachePiecesPath(), cacheKey))
+
+        const { state, cacheHit } = await cache.getOrSetCache({
+            key: cacheKey,
+            cacheMiss: (_: string) => {
+                const environment = getSettings().ENVIRONMENT
+                if (environment === ApEnvironment.TESTING) {
+                    return true
+                }
+                const devPieces = getSettings().DEV_PIECES
+                if (devPieces.includes(pieceName)) {
+                    return true
+                }
+                return false
+            },
+            installFn: async () => {
+                return wideEvent.timed({
+                    name: 'pieceFetch',
+                    fn: async () => {
+                        const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
+                        log.info({ piece: { name: pieceName, version: pieceVersion }, platform: { id: platformId } }, 'Cached piece')
+                        return JSON.stringify(piecePackage)
+                    },
+                })
+            },
+            skipSave: NO_SAVE_GUARD,
+        })
+
+        wideEvent.set({ pieceCacheHit: cacheHit })
+
+        return JSON.parse(state as string) as PiecePackage
+    },
+})
+
+async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContract): Promise<PiecePackage> {
+    const pieceMetadata = await apiClient.getPiece({
+        name: query.pieceName,
+        version: query.pieceVersion,
+        platformId: query.platformId,
+    }) as { packageType: PackageType, name: string, version: string, pieceType: PieceType, archiveId?: string } | null
+
+    if (!pieceMetadata) {
+        throw new PieceNotFoundError(query.pieceName, query.pieceVersion)
+    }
+
+    const baseProps = {
+        packageType: pieceMetadata.packageType,
+        pieceName: pieceMetadata.name,
+        pieceVersion: pieceMetadata.version,
+        pieceType: pieceMetadata.pieceType,
+    }
+
+    if (pieceMetadata.packageType === PackageType.ARCHIVE) {
+        return {
+            ...baseProps,
+            archiveId: pieceMetadata.archiveId!,
+            platformId: query.platformId,
+        } as PiecePackage
+    }
+
+    if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+        return {
+            ...baseProps,
+            platformId: query.platformId,
+        } as PiecePackage
+    }
+
+    return baseProps as PiecePackage
+}
+
+export class PieceNotFoundError extends Error {
+    constructor(readonly pieceName: string, readonly pieceVersion: string) {
+        super(`Piece metadata not found for ${pieceName}@${pieceVersion}`)
+        this.name = 'PieceNotFoundError'
+    }
+}
+
+type PieceCacheKey = {
+    pieceName: string
+    pieceVersion: string
+    platformId: string
+}

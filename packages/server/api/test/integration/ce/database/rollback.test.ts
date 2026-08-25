@@ -1,6 +1,6 @@
 import { QueryRunner } from 'typeorm'
-import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { Migration } from '../../../../src/app/database/migration'
 import { identifyCandidatesByManifest, identifyReleaseCandidates, verifyDatabaseState } from '../../../../src/app/database/rollback-migrations'
 
@@ -54,7 +54,7 @@ async function applyTestMigration(ds: ReturnType<typeof databaseConnection>, mig
     await migration.up(queryRunner)
     await queryRunner.release()
     await ds.query(
-        `INSERT INTO "migrations" ("timestamp", "name") VALUES ($1, $2)`,
+        'INSERT INTO "migrations" ("timestamp", "name") VALUES ($1, $2)',
         [Date.now(), migration.name],
     )
 }
@@ -64,17 +64,17 @@ async function revertTestMigration(ds: ReturnType<typeof databaseConnection>, mi
     await queryRunner.connect()
     await migration.down(queryRunner)
     await queryRunner.release()
-    await ds.query(`DELETE FROM "migrations" WHERE "name" = $1`, [migration.name])
+    await ds.query('DELETE FROM "migrations" WHERE "name" = $1', [migration.name])
 }
 
 async function cleanupTestState(ds: ReturnType<typeof databaseConnection>): Promise<void> {
     await ds.query(`DROP TABLE IF EXISTS "${TEST_TABLE}"`).catch(() => { /* ignore */ })
-    await ds.query(`DELETE FROM "migrations" WHERE "name" LIKE 'TestMigration%'`).catch(() => { /* ignore */ })
+    await ds.query('DELETE FROM "migrations" WHERE "name" LIKE \'TestMigration%\'').catch(() => { /* ignore */ })
 }
 
 async function getTableColumns(ds: ReturnType<typeof databaseConnection>, tableName: string): Promise<string[]> {
     const columns = await ds.query(
-        `SELECT column_name FROM information_schema.columns WHERE table_name = $1 ORDER BY ordinal_position`,
+        'SELECT column_name FROM information_schema.columns WHERE table_name = $1 ORDER BY ordinal_position',
         [tableName],
     )
     return columns.map((c: { column_name: string }) => c.column_name)
@@ -82,7 +82,7 @@ async function getTableColumns(ds: ReturnType<typeof databaseConnection>, tableN
 
 async function tableExists(ds: ReturnType<typeof databaseConnection>, tableName: string): Promise<boolean> {
     const result = await ds.query(
-        `SELECT table_name FROM information_schema.tables WHERE table_name = $1`,
+        'SELECT table_name FROM information_schema.tables WHERE table_name = $1',
         [tableName],
     )
     return result.length > 0
@@ -290,7 +290,7 @@ describe('Rollback Integration', () => {
 
             // Migration records cleaned up
             const remaining = await ds.query(
-                `SELECT "name" FROM "migrations" WHERE "name" LIKE 'TestMigration%'`,
+                'SELECT "name" FROM "migrations" WHERE "name" LIKE \'TestMigration%\'',
             )
             expect(remaining).toHaveLength(0)
         })

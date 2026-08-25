@@ -15,6 +15,12 @@ export const addCommentAction = createAction({
   displayName: 'Add Comment or Work Note',
   description:
     'Append a customer-visible comment or an internal work note to a record (incident, request, problem, change, etc.)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Appends a journal entry to an existing record on any table, choosing between a customer-visible comment and an internal work note via the Type option. Use to post an update or note on a known record (incident, request, problem, change). Not idempotent — each call adds another entry, so re-running duplicates the note. Requires the table, the record sys_id, the entry type, and the text.',
+    idempotent: false,
+  },
   props: {
     table: tableDropdown,
     record: recordDropdown,

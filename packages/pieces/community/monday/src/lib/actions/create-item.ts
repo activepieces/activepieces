@@ -13,8 +13,11 @@ import {
 export const createItemAction = createAction({
   auth: mondayAuth,
   name: 'monday_create_item',
+  classification: 'WRITE',
   displayName: 'Create Item',
   description: 'Creates a new item inside a board.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new item (row) on a monday.com board, optionally placed in a group and pre-populated with column values that are auto-coerced to each column\'s type. Use to add a record to a board. Requires the board id and an item name; enable create-labels-if-missing only when allowed to modify board structure. Not idempotent: each call creates a separate item.', idempotent: false },
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

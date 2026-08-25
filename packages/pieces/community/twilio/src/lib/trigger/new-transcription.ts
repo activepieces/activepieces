@@ -93,8 +93,12 @@ const polling: Polling<
 export const twilioNewTranscription = createTrigger({
   auth: twilioAuth,
   name: 'new_transcription',
+  classification: 'READ',
   displayName: 'New Transcription',
   description: 'Triggers when a new call recording transcription is completed.',
+  aiMetadata: {
+    description: 'Fires when a call recording transcription reaches completed status on the Twilio account. Each event represents one finished transcription tied to a recording, including its transcribed text.',
+  },
   props: {},
   sampleData: {
       "account_sid": "ACaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

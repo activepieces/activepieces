@@ -8,7 +8,6 @@ import {
   createClient,
 } from '../common';
 import { dustAuth } from '../..';
-import { DustAuthType } from '../..';
 import mime from 'mime-types';
 import { PublicPostConversationsRequestBody } from '@dust-tt/client';
 
@@ -17,6 +16,12 @@ export const createConversation = createAction({
   name: 'createConversation',
   displayName: 'Create conversation',
   description: 'Create a new conversation with a specific Dust assistant',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Start a new Dust conversation with a chosen assistant; pass a query to send the first message and have the assistant respond, or omit it to open an empty conversation for later replies. Optionally attach context by passing an uploaded File ID (takes precedence) or an inline file fragment. Each call creates a distinct conversation, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: dustAuth,
   props: {
     assistant: assistantProp,

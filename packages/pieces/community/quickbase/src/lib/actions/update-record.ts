@@ -9,6 +9,11 @@ export const updateRecord = createAction({
   name: 'update_record',
   displayName: 'Update Record',
   description: 'Update an existing record in a Quickbase table',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Update the field values of one existing Quickbase record, identified by its record ID. Use when you already know which record to change; to create when none exists use Create or Find or Create Record. Requires the app, table, and record ID; only the provided fields are written. Repeating with the same input re-writes the same values, so it is idempotent.',
+    idempotent: true,
+  },
   auth: quickbaseAuth,
   props: {
     appId: appIdProp,

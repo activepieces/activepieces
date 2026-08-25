@@ -9,9 +9,17 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasConsts } from '../utils/consts';
 
 const AboveFlowWidgets = React.memo(() => {
-  const [flowVersion, selectStepByName, readonly] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.selectStepByName, state.readonly],
-  );
+  const [
+    flowVersion,
+    selectStepByName,
+    readonly,
+    setOpenedPieceSelectorStepNameOrAddButtonId,
+  ] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.selectStepByName,
+    state.readonly,
+    state.setOpenedPieceSelectorStepNameOrAddButtonId,
+  ]);
   return (
     <ViewportPortal>
       <WidgetWrapper>
@@ -28,6 +36,9 @@ const AboveFlowWidgets = React.memo(() => {
               <IncompleteSettingsButton
                 flowVersion={flowVersion}
                 selectStepByName={selectStepByName}
+                setOpenedPieceSelectorStepNameOrAddButtonId={
+                  setOpenedPieceSelectorStepNameOrAddButtonId
+                }
               ></IncompleteSettingsButton>
             )}
           </div>
@@ -59,9 +70,14 @@ const BelowFlowWidget = React.memo(() => {
 });
 
 const WidgetWrapper = ({ children }: { children: React.ReactNode }) => {
+  const canvasOrientation = useBuilderStateContext(
+    (state) => state.canvasOrientation,
+  );
   return (
     <div
-      style={{ width: flowCanvasConsts.AP_NODE_SIZE.STEP.width + 'px' }}
+      style={{
+        width: flowCanvasConsts.STEP_NODE_SIZE[canvasOrientation].width + 'px',
+      }}
       className="flex items-center justify-center"
     >
       {children}

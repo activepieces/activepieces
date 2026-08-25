@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createRecord } from './lib/actions/create-record';
 import { updateRecord } from './lib/actions/update-record';

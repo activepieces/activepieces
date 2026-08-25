@@ -8,6 +8,12 @@ export const bookAppointment = createAction({
   name: 'bookAppointment',
   displayName: 'Book Appointment',
   description: 'Book an appointment for a customer for a desired service',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new appointment in a Zoho Bookings workspace for a given service, customer (name/email/phone), and start time. Assign the booking to exactly one of staff, resource, or group (the call fails if none is supplied). Not idempotent: each call books a separate appointment.',
+    idempotent: false,
+  },
   props: {
     workspace_id: Property.Dropdown({
       auth: zohoBookingsAuth,

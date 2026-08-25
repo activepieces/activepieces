@@ -1,19 +1,5 @@
-import {
-    CreateScimGroupRequest,
-    DefaultProjectRole,
-    isNil,
-    parseScimFilter,
-    ProjectType,
-    ReplaceScimGroupRequest,
-    SCIM_GROUP_SCHEMA,
-    SCIM_LIST_RESPONSE_SCHEMA,
-    ScimError,
-    ScimGroupMember,
-    ScimGroupResource,
-    ScimListResponse,
-    ScimPatchRequest,
-    UserStatus,
-} from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { CreateScimGroupRequest, DefaultProjectRole, parseScimFilter, ProjectType, ReplaceScimGroupRequest, SCIM_GROUP_SCHEMA, SCIM_LIST_RESPONSE_SCHEMA, ScimError, ScimGroupMember, ScimGroupResource, ScimListResponse, ScimPatchRequest, UserStatus } from '@activepieces/shared'
 
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'

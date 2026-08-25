@@ -56,6 +56,10 @@ export const newUserMessage = createTrigger({
   displayName: 'New User Message',
   description:
     'Triggers when a new message is sent by a user in a specific chatlog.',
+  aiMetadata: {
+    description:
+      'Fires when an end user sends a new message in a specific Wonderchat chat session (identified by chatlogId). Polls the chatlog’s messages and emits only newly arrived user-typed messages (bot replies are excluded). Use to react to incoming visitor messages in a single tracked conversation.',
+  },
   props: {
     chatlogId: Property.ShortText({
       displayName: 'Chatlog ID',

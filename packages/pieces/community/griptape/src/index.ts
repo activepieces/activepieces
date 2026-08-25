@@ -1,6 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { griptapeAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createAssistantRun } from './lib/actions/create-assistant-run';
 import { createStructureRun } from './lib/actions/create-structure-run';
 import { getAssistantRun } from './lib/actions/get-assistant-run';

@@ -15,6 +15,8 @@ export const createPcIdAction = createAction({
   name: 'createPcId',
   displayName: 'Resources - Provisioning Certificates - Create Pc Id',
   description: 'Create Provisioning Certificate.',
+  audience: 'both',
+  aiMetadata: { description: 'Register a new AMPECO provisioning certificate (Plug & Charge) with a PC ID, name, vehicle type, owning user, and optional ID tags. Not idempotent: each call creates a new certificate. Use update pc id to modify an existing certificate.', idempotent: false },
   props: {
         
   pcId: Property.ShortText({

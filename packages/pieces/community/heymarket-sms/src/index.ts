@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { heymarketSmsAuth } from './lib/common/auth';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 import { sendCustomMessage } from './lib/actions/send-custom-message';

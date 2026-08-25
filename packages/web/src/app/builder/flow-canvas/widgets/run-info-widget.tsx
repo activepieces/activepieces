@@ -2,17 +2,30 @@ import {
   ApFlagId,
   FlowRunStatus,
   isFlowRunStateTerminal,
+  StepOutputStatus,
 } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { CircleHelp } from 'lucide-react';
+import { ArrowRight, CircleHelp, Info, Magnet } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { flowRunUtils } from '@/features/flow-runs';
+import {
+  isTimelineEmpty,
+  TimelineBar,
+} from '@/features/flow-runs/components/timeline-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view-draft-or-edit-flow-button';
 import { useBuilderStateContext } from '../../builder-hooks';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 
@@ -35,7 +48,9 @@ function getStatusText({
     case FlowRunStatus.PAUSED:
       return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
-      return t('Quota Exceeded');
+      return t(
+        'This run stopped because your platform ran out of credits. It can be retried once credits are available.',
+      );
     case FlowRunStatus.LOG_SIZE_EXCEEDED:
       return t(
         'Run failed due to output of steps exceeding the log size limit of {logSizeLimit} MB',
@@ -57,14 +72,14 @@ function getStatusText({
         timeout,
       });
     case FlowRunStatus.INTERNAL_ERROR:
-      return t('Run failed for an unknown reason, contact support.');
+      return t('Run failed with an internal error, contact support.');
     case FlowRunStatus.CANCELED:
       return t('Run Cancelled');
   }
 }
 
 const RunInfoWidget = () => {
-  const [run] = useBuilderStateContext((state) => [state.run]);
+  const run = useBuilderStateContext((state) => state.run);
   const { variant, Icon } = run
     ? flowRunUtils.getStatusIcon(run.status)
     : { variant: 'default' as const, Icon: CircleHelp };
@@ -130,9 +145,27 @@ const RunInfoWidget = () => {
               </>
             )}
           </div>
+          {isRunTerminal && !isTimelineEmpty(run.timeline) && (
+            <HoverCard openDelay={200} closeDelay={100}>
+              <HoverCardTrigger className="ml-1 inline-flex cursor-default items-center">
+                <Info className="size-4 text-muted-foreground" />
+              </HoverCardTrigger>
+              <HoverCardContent className="w-[28rem] p-3">
+                <TimelineBar timeline={run.timeline} />
+              </HoverCardContent>
+            </HoverCard>
+          )}
         </div>
 
-        <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
+        <div className="flex items-center gap-2">
+          <ResumeLiveFollowButton isRunTerminal={isRunTerminal} />
+          {run.failedStep && (
+            <JumpToFailedStepButton failedStepName={run.failedStep.name} />
+          )}
+          <EditFlowOrViewDraftButton
+            onCanvas={false}
+          ></EditFlowOrViewDraftButton>
+        </div>
       </div>
     </LargeWidgetWrapper>
   );
@@ -152,5 +185,70 @@ const DateSection = ({
       <span>{`${text}: `}</span>
       <span>{`${dateOrDuration}`}</span>
     </>
+  );
+};
+
+const ResumeLiveFollowButton = ({
+  isRunTerminal,
+}: {
+  isRunTerminal: boolean;
+}) => {
+  const [userManuallySelectedStepDuringRun, resumeLiveFollow] =
+    useBuilderStateContext((state) => [
+      state.userManuallySelectedStepDuringRun,
+      state.resumeLiveFollow,
+    ]);
+  if (isRunTerminal || !userManuallySelectedStepDuringRun) {
+    return null;
+  }
+  return (
+    <Button variant="ghost" size="sm" onClick={resumeLiveFollow}>
+      <Magnet className="size-4" />
+      {t('Follow run updates')}
+    </Button>
+  );
+};
+
+const JumpToFailedStepButton = ({
+  failedStepName,
+}: {
+  failedStepName: string;
+}) => {
+  const [selectedStep, selectFailedStep, run, loopsIndexes] =
+    useBuilderStateContext((state) => [
+      state.selectedStep,
+      state.selectFailedStep,
+      state.run,
+      state.loopsIndexes,
+    ]);
+  const { fitView } = useReactFlow();
+  const selectedStepOutput =
+    run && selectedStep
+      ? flowRunUtils.extractStepOutput(
+          selectedStep,
+          loopsIndexes,
+          run.steps ?? {},
+        )
+      : null;
+  if (
+    selectedStep === failedStepName &&
+    selectedStepOutput?.status === StepOutputStatus.FAILED
+  ) {
+    return null;
+  }
+  const handleClick = () => {
+    selectFailedStep();
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStepName));
+  };
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className="text-destructive-700 hover:text-destructive-700 dark:text-destructive-200 dark:hover:text-destructive-200"
+    >
+      <ArrowRight className="size-4" />
+      {t('See error')}
+    </Button>
   );
 };

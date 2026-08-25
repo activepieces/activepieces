@@ -1,76 +1,6 @@
+import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { apDayjs } from '@activepieces/server-utils'
-import {
-    AiCreditsAutoTopUpState,
-    AIProvider,
-    AIProviderName,
-    apId,
-    ApiKey,
-    AppConnection,
-    AppConnectionScope,
-    AppConnectionStatus,
-    AppConnectionType,
-    ApplicationEvent,
-    ApplicationEventName,
-    assertNotNullOrUndefined,
-    Cell,
-    ColorName,
-    CustomDomain,
-    CustomDomainStatus,
-    EventDestinationScope,
-    Field,
-    FieldType,
-    File,
-    FileCompression,
-    FileLocation,
-    FileType,
-    FilteredPieceBehavior,
-    Flow,
-    FlowOperationStatus,
-    FlowRun,
-    FlowRunStatus,
-    FlowStatus,
-    FlowTriggerType,
-    FlowVersion,
-    FlowVersionState,
-    Folder,
-    GitBranchType,
-    GitRepo,
-    InvitationStatus,
-    InvitationType,
-    KeyAlgorithm,
-    OAuthApp,
-    OtpModel,
-    OtpState,
-    OtpType,
-    PackageType,
-    PiecesFilterType,
-    PieceType,
-    Platform,
-    PlatformPlan,
-    PlatformRole,
-    Project,
-    ProjectIcon,
-    ProjectMember,
-    ProjectPlan,
-    ProjectRelease,
-    ProjectReleaseType,
-    ProjectRole,
-    ProjectType,
-    Record,
-    RoleType,
-    RunEnvironment,
-    SigningKey,
-    Table,
-    TeamProjectsLimit,
-    Template,
-    TemplateStatus,
-    TemplateType,
-    User,
-    UserIdentity,
-    UserIdentityProvider,
-    UserInvitation,
-    UserStatus } from '@activepieces/shared'
+import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -83,17 +13,17 @@ import { PlatformPlanEntity } from '../../../src/app/ee/platform/platform-plan/p
 import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-metadata-service'
-import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
-import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
+
+const HASHED_OTP_VERSION = 1
 
 export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): UserIdentity => {
     return {
         id: userIdentity?.id ?? apId(),
         created: userIdentity?.created ?? faker.date.recent().toISOString(),
         updated: userIdentity?.updated ?? faker.date.recent().toISOString(),
-        email: (userIdentity?.email ?? faker.internet.email()).toLowerCase().trim(),
+        email: (userIdentity?.email ?? `${apId()}@example.com`).toLowerCase().trim(),
         firstName: userIdentity?.firstName ?? faker.person.firstName(),
         lastName: userIdentity?.lastName ?? faker.person.lastName(),
         tokenVersion: userIdentity?.tokenVersion ?? undefined,
@@ -167,6 +97,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
+        activeFlowsLimit: plan?.activeFlowsLimit ?? null,
     }
 }
 
@@ -199,9 +130,12 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
         poolId: project?.poolId ?? null,
+        workerGroupId: project?.workerGroupId ?? null,
+        executionDataRetentionDays: project?.executionDataRetentionDays ?? null,
         icon,
     }
 }
@@ -227,13 +161,10 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         updated: platformPlan?.updated ?? faker.date.recent().toISOString(),
         platformId: platformPlan?.platformId ?? apId(),
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
-        includedAiCredits: platformPlan?.includedAiCredits ?? 0,
+        includedCredits: platformPlan?.includedCredits ?? 0,
         licenseKey: platformPlan?.licenseKey ?? faker.lorem.word(),
-        stripeCustomerId: undefined,
-        stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         eventStreamingEnabled: platformPlan?.eventStreamingEnabled ?? false,
-        aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
@@ -243,21 +174,21 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         manageTemplatesEnabled: platformPlan?.manageTemplatesEnabled ?? false,
         customAppearanceEnabled: platformPlan?.customAppearanceEnabled ?? false,
         apiKeysEnabled: platformPlan?.apiKeysEnabled ?? false,
-        stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
-        agentsEnabled: platformPlan?.agentsEnabled ?? false,
         aiProvidersEnabled: platformPlan?.aiProvidersEnabled ?? false,
         chatEnabled: platformPlan?.chatEnabled ?? false,
-        teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
+        agentsEnabled: platformPlan?.agentsEnabled ?? false,
+        workerGroupsEnabled: platformPlan?.workerGroupsEnabled ?? false,
+        billedTeamProjectsLimit: platformPlan?.billedTeamProjectsLimit === undefined ? 0 : platformPlan.billedTeamProjectsLimit,
+        usersLimit: platformPlan?.usersLimit ?? null,
+        scheduledUsersLimit: platformPlan?.scheduledUsersLimit ?? null,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
-        customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
-        stripeSubscriptionEndDate: apDayjs().endOf('month').unix(),
-        stripeSubscriptionStartDate: apDayjs().startOf('month').unix(),
         plan: platformPlan?.plan,
         secretManagersEnabled: platformPlan?.secretManagersEnabled ?? false,
         scimEnabled: platformPlan?.scimEnabled ?? false,
-        canary: platformPlan?.canary ?? false
+        canary: platformPlan?.canary ?? false,
+        customDomainsEnabled: false,
     }
 }
 export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
@@ -267,20 +198,22 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         enforceAllowedAuthDomains: platform?.enforceAllowedAuthDomains ?? false,
-        federatedAuthProviders: platform?.federatedAuthProviders ?? {},
+        federatedAuthProviders: platform?.federatedAuthProviders ?? { saml: null },
         allowedAuthDomains: platform?.allowedAuthDomains ?? [],
+        allowedEmbedOrigins: platform?.allowedEmbedOrigins ?? [],
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
+        themeColors: platform?.themeColors ?? null,
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
+        autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
-        filteredPieceNames: platform?.filteredPieceNames ?? [],
-        filteredPieceBehavior:
-            platform?.filteredPieceBehavior ??
-            faker.helpers.enumValue(FilteredPieceBehavior),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        googleAuthEnabled: platform?.googleAuthEnabled ?? true,
+        ssoDomain: platform?.ssoDomain ?? null,
+        ssoDomainVerification: platform?.ssoDomainVerification ?? null,
     }
 }
 
@@ -376,28 +309,6 @@ export const createMockSigningKey = (
 }
 
 
-export const createMockTag = (tag?: Partial<Omit<TagEntitySchema, 'platform'>>): Omit<TagEntitySchema, 'platform'> => {
-    return {
-        id: tag?.id ?? apId(),
-        created: tag?.created ?? faker.date.recent().toISOString(),
-        updated: tag?.updated ?? faker.date.recent().toISOString(),
-        platformId: tag?.platformId ?? apId(),
-        name: tag?.name ?? faker.lorem.word(),
-    }
-}
-
-
-export const createMockPieceTag = (request: Partial<Omit<PieceTagSchema, 'platform' | 'tag'>>): Omit<PieceTagSchema, 'platform' | 'tag'> => {
-    return {
-        id: request.id ?? apId(),
-        created: request.created ?? faker.date.recent().toISOString(),
-        updated: request.updated ?? faker.date.recent().toISOString(),
-        platformId: request.platformId ?? apId(),
-        pieceName: request.pieceName ?? faker.lorem.word(),
-        tagId: request.tagId ?? apId(),
-    }
-}
-
 export const createMockPieceMetadata = (
     pieceMetadata?: Partial<Omit<PieceMetadataSchema, 'project'>>,
 ): Omit<PieceMetadataSchema, 'project'> => {
@@ -442,19 +353,6 @@ export const createAuditEvent = (auditEvent: Partial<ApplicationEvent>) => {
     }
 }
 
-export const createMockCustomDomain = (
-    customDomain?: Partial<CustomDomain>,
-): CustomDomain => {
-    return {
-        id: customDomain?.id ?? apId(),
-        created: customDomain?.created ?? faker.date.recent().toISOString(),
-        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
-        domain: customDomain?.domain ?? faker.internet.domainName(),
-        platformId: customDomain?.platformId ?? apId(),
-        status: customDomain?.status ?? CustomDomainStatus.ACTIVE,
-    }
-}
-
 export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
     const now = dayjs()
     const twentyMinutesAgo = now.subtract(5, 'minutes')
@@ -472,7 +370,15 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         value:
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
+        attempts: otp?.attempts ?? 0,
+        version: otp?.version ?? 0,
     }
+}
+
+export const createMockOtpWithCode = async (otp?: Partial<OtpModel>): Promise<MockOtpWithCode> => {
+    const code = otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString()
+    const value = await encryptUtils.hmacString(code)
+    return { otp: createMockOtp({ ...otp, value, version: HASHED_OTP_VERSION }), code }
 }
 
 export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
@@ -536,6 +442,8 @@ export const createMockFlowVersion = (
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
         notes: flowVersion?.notes ?? [],
+        schemaVersion: flowVersion?.schemaVersion ?? LATEST_FLOW_SCHEMA_VERSION,
+        backupFiles: flowVersion?.backupFiles ?? null,
     }
 }
 
@@ -587,6 +495,7 @@ export const createMockField = ({ tableId, projectId }: { tableId: string, proje
         },
         externalId: apId(),
         projectId,
+        position: 0,
         type: FieldType.STATIC_DROPDOWN,
     }
 }
@@ -684,7 +593,6 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
     const mockPlatform = createMockPlatform({
         ...params?.platform,
         ownerId: mockOwner.id,
-        filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
 
     await databaseConnection().getRepository('platform').save(mockPlatform)
@@ -695,9 +603,8 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             auditLogEnabled: true,
             apiKeysEnabled: true,
             customRolesEnabled: true,
-            teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
-            customDomainsEnabled: true,
-            includedAiCredits: 1000,
+            billedTeamProjectsLimit: null,
+            includedCredits: 1000,
             ...params?.plan,
         })
         await databaseConnection().getRepository('platform_plan').upsert(mockPlatformPlan, ['platformId'])
@@ -737,16 +644,22 @@ export const mockAndSaveBasicSetupWithApiKey = async (params?: MockBasicSetupPar
 }
 
 export const createMockFile = (file?: Partial<File>): File => {
+    const hasExplicitProjectId = file !== undefined && 'projectId' in file
+    const hasExplicitPlatformId = file !== undefined && 'platformId' in file
     return {
         id: file?.id ?? apId(),
         created: file?.created ?? faker.date.recent().toISOString(),
         updated: file?.updated ?? faker.date.recent().toISOString(),
-        platformId: file?.platformId ?? apId(),
-        projectId: file?.projectId ?? apId(),
+        platformId: hasExplicitPlatformId ? (file?.platformId ?? null) : apId(),
+        projectId: hasExplicitProjectId ? (file?.projectId ?? null) : apId(),
         location: file?.location ?? FileLocation.DB,
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+        fileName: file?.fileName ?? null,
+        metadata: file?.metadata ?? null,
+        s3Key: file?.s3Key ?? null,
+        size: file?.size ?? null,
     }
 }
 
@@ -776,7 +689,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -785,18 +698,30 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
         displayName: aiProvider?.displayName ?? faker.lorem.word(),
         auth: await encryptUtils.encryptObject({
-            apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+            apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
+        enabledForChat: aiProvider?.enabledForChat ?? (aiProvider?.provider === AIProviderName.ACTIVEPIECES),
+        modelScope: aiProvider?.modelScope ?? 'all',
+        modelIds: aiProvider?.modelIds ?? [],
+        projectScope: aiProvider?.projectScope ?? 'all',
+        projectIds: aiProvider?.projectIds ?? [],
     }
-    
+
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
-    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
 }
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
+}
+
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -825,6 +750,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -833,6 +759,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
     created: string
     updated: string
     platformId: string
+    projectId: string | null
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
@@ -842,6 +769,7 @@ export const createMockEventDestination = (eventDestination?: Partial<{
         created: eventDestination?.created ?? faker.date.recent().toISOString(),
         updated: eventDestination?.updated ?? faker.date.recent().toISOString(),
         platformId: eventDestination?.platformId ?? apId(),
+        projectId: eventDestination?.projectId ?? null,
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,

@@ -12,6 +12,8 @@ export const createTask = createAction({
 	name: 'create_task',
 	displayName: 'Create Task',
 	description: 'Add a new task under a project with description, due date, assignee, tags, etc.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a task within a project and task list in Teamwork. Use to add an actionable item with content, optional due/start dates, assignees, priority, tags, custom fields, and an optional file attachment (uploaded via presigned URL before the task is created). Requires the target project and task list. Not idempotent — each call creates a new task.', idempotent: false },
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({

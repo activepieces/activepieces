@@ -110,6 +110,9 @@ export const xeroNewReconciledPayment = createTrigger({
   name: 'xero_new_reconciled_payment',
   displayName: 'New Reconciled Payment',
   description: 'Fires when a payment is reconciled for the first time.',
+  aiMetadata: {
+    description: 'Fires when a payment is reconciled in the connected Xero organisation for the first time, i.e. when its IsReconciled flag transitions from false to true. Polls the Xero Payments endpoint, tracks each payment\'s prior reconciliation state, and emits a payment only on that first false-to-true transition, optionally filtered by payment type (ACCRECPAYMENT / ACCPAYPAYMENT), status, invoice, reference, or date range. Each item is a full payment record. Distinct from New Payment, which fires when a payment is first recorded regardless of reconciliation.',
+  },
   props: {
     tenant_id: props.tenant_id,
     payment_types: Property.StaticMultiSelectDropdown({

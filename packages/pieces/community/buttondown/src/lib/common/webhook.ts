@@ -14,6 +14,9 @@ interface CreateButtondownWebhookTriggerParams {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata: {
+    description: string;
+  };
   eventType: ButtondownWebhookEvent;
   sampleData: unknown;
   enrich?: (params: {
@@ -26,6 +29,7 @@ export const createButtondownWebhookTrigger = ({
   name,
   displayName,
   description,
+  aiMetadata,
   eventType,
   sampleData,
   enrich,
@@ -33,8 +37,10 @@ export const createButtondownWebhookTrigger = ({
   createTrigger({
     auth: buttondownAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
+    aiMetadata,
     type: TriggerStrategy.WEBHOOK,
     props: {
       webhookDescription: Property.ShortText({

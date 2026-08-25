@@ -8,10 +8,11 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import dayjs from 'dayjs';
+import { newContactInListTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	listId: string;
@@ -88,8 +89,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newContactInListTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-contact-in-list',
+	classification: 'READ',
 	displayName: 'New Contact in List',
 	description: 'Triggers when a new contact is added to the specified list.',
+	aiMetadata: {
+		description:
+			'Fires when a contact is added to the selected HubSpot contact list. Each event represents one contact whose membership was added since the last poll, enriched with the contact record properties (name, email, etc.) plus the timestamp it joined the list. Tracked by list-membership date.',
+	},
+	outputSchema: newContactInListTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		listId: Property.Dropdown({
@@ -147,18 +154,10 @@ export const newContactInListTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);

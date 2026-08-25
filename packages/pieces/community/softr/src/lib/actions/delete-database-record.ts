@@ -13,6 +13,8 @@ export const deleteDatabaseRecord = createAction({
   name: 'deleteDatabaseRecord',
   displayName: 'Delete Database Record',
   description: 'Deletes a existing database record.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a single record from a chosen table of a Softr database, identified by its record ID. Use when you already hold the target record ID (e.g. from a find or trigger). Idempotent on a stable record ID — once deleted the record stays gone.', idempotent: true },
   props: {
     databaseId: databaseIdDropdown,
     tableId: tableIdDropdown,

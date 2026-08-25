@@ -3,8 +3,14 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'update_playlist',
+  classification: 'WRITE',
   displayName: 'Update Playlist',
   description: 'Updates details of the playlist',
+  audience: 'both',
+  aiMetadata: {
+    description: "Updates a playlist's metadata (name, description, public, collaborative) for the playlist identified by its id; only the fields you provide are changed. Use it to rename or re-describe an existing playlist. Idempotent: applying the same values repeatedly leaves the playlist in the same state.",
+    idempotent: true,
+  },
   auth: spotifyCommon.authentication,
   props: {
     playlist_id: spotifyCommon.playlist_id(true),

@@ -6,6 +6,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { nanoid } from 'nanoid';
 import Jimp from 'jimp';
+import { convertToImageActionOutputSchema } from '../output-schemas';
 
 const execPromise = promisify(exec);
 const pdftoppmPath = '/usr/bin/pdftoppm';
@@ -13,8 +14,12 @@ const pdftoppmPath = '/usr/bin/pdftoppm';
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 async function isPdftoppmInstalled(): Promise<boolean> {
-    const { stdout, stderr } = await execPromise(`command -v ${pdftoppmPath}`);
-    return !stderr && stdout.trim() === pdftoppmPath;
+    try {
+        const { stdout, stderr } = await execPromise(`command -v ${pdftoppmPath}`);
+        return !stderr && stdout.trim() === pdftoppmPath;
+    } catch {
+        return false;
+    }
 }
 async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     const tempDir = tmpdir();
@@ -22,7 +27,7 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     const inputFilePath = join(tempDir, `input-${uniqueId}.pdf`);
     const outputDir = join(tempDir, `output-${uniqueId}`);
     try {
-        await fs.mkdir(outputDir);
+        await fs.mkdir(outputDir, { recursive: true });
         await fs.writeFile(inputFilePath, dataBuffer as any);
 
         const { stderr } = await execPromise(`${pdftoppmPath} -png ${inputFilePath} ${join(outputDir, 'output')}`);
@@ -63,9 +68,13 @@ async function concatImagesVertically(imageBuffers: Buffer[]): Promise<Buffer> {
 }
 
 export const convertToImage = createAction({
+  audience: 'both',
     name: 'convertToImage',
+    classification: 'READ',
     displayName: 'Convert to Image',
     description: 'Convert a PDF file or URL to an image',
+    aiMetadata: { description: 'Rasterizes a PDF to PNG images, either as one tall combined image or as a separate image per page (selected via Output Image Type). Pick this when a downstream vision or OCR step needs pixels rather than a text layer; prefer Extract Text for text-based PDFs and Image to PDF for the reverse direction. Requires the pdftoppm binary on the worker and a PDF no larger than 16 MB; the render is deterministic, so idempotent.', idempotent: true },
+    outputSchema: convertToImageActionOutputSchema,
     props: {
         file: Property.File({
             displayName: 'PDF File or URL',

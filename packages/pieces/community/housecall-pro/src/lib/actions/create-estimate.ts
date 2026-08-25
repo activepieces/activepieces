@@ -5,8 +5,11 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createEstimate = createAction({
   auth: housecallProAuth,
   name: "create_estimate",
+  classification: 'WRITE',
   displayName: "Create estimate",
   description: "Create an estimate",
+  audience: 'both',
+  aiMetadata: { description: "Create a new Housecall Pro estimate, optionally attaching it to an existing customer, address, schedule, and one or more priced options. Not idempotent: each call creates a separate estimate even with identical inputs unless you supply your own unique estimate_number. Use the dedicated address/schedule/estimate-fields objects when known; the additional_fields object merges raw fields into the request body for anything not surfaced as a prop.", idempotent: false },
   props: {
     estimate_number: Property.Number({
       displayName: "Estimate Number",

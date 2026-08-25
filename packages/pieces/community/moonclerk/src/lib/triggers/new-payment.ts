@@ -10,6 +10,9 @@ export const newPayment = createTrigger({
   displayName: 'New Payment',
   description:
     'Triggers when a payment is created in any state (failed, succeeded, etc).',
+  aiMetadata: {
+    description: 'Fires whenever a payment is created in MoonClerk regardless of outcome — successful, failed, or otherwise — so the handler must inspect the payment status field to branch. Use to capture every payment attempt; choose Payment Succeeds instead to react only to successful charges. Requires a MoonClerk webhook configured for the Payment Created event.',
+  },
   props: {
     markdown: Property.MarkDown({
       value: `## MoonClerk Webhook Setup

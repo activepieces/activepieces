@@ -7,8 +7,11 @@ import FormData from 'form-data';
 export const createFileAction = createAction({
   auth: bexioAuth,
   name: 'create_file',
+  classification: 'WRITE',
   displayName: 'Create File',
   description: 'Upload a new file to Bexio',
+  audience: 'both',
+  aiMetadata: { description: 'Uploads a file to the Bexio file manager via multipart form data, returning the stored file metadata. Use to add a document or attachment to Bexio storage; requires the file contents. Not idempotent: each call stores another copy of the file.', idempotent: false },
   props: {
     file: Property.File({
       displayName: 'File',

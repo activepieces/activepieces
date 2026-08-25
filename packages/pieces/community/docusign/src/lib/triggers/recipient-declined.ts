@@ -4,6 +4,10 @@ export const recipientDeclined = createEnvelopeEventTrigger({
   name: 'recipientDeclined',
   displayName: 'Person Refused to Sign',
   description: 'Triggers when a specific person refuses to sign the document.',
+  aiMetadata: {
+    description:
+      'Fires when a specific recipient declines to sign a DocuSign envelope. Represents a per-recipient refusal (the payload identifies the recipient), which typically halts the envelope.',
+  },
   docusignEvent: 'recipient-declined',
   sampleData: {
     event: 'recipient-declined',

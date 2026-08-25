@@ -1,4 +1,4 @@
-import { LocalesEnum } from '@activepieces/shared';
+import { LocalesEnum } from '@activepieces/core-utils';
 
 export const localesMap = {
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',

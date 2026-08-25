@@ -29,6 +29,9 @@ export const updatedSubscriberTrigger = createTrigger({
   name: 'updated_subscriber',
   displayName: 'Updated Subscriber',
   description: 'Fires when subscriber details change (polling)',
+  aiMetadata: {
+    description: 'Polls the selected SendPulse mailing list (address book) and fires when an existing subscriber\'s details or variables change between checks. Each event represents one changed contact and includes the previous data, current data, and a diff of the changed fields.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     mailingListId: mailingListDropdown,

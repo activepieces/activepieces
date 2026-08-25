@@ -1,10 +1,10 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { BotIcon } from '@/components/icons/bot';
+import { ChartLineIcon } from '@/components/icons/chart-line';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
@@ -16,11 +16,12 @@ import { KeyRoundIcon } from '@/components/icons/key-round';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
 import { LogInIcon } from '@/components/icons/log-in';
 import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PaletteIcon } from '@/components/icons/palette';
 import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
+import { SettingsIcon } from '@/components/icons/settings';
 import { Settings2Icon } from '@/components/icons/settings2';
+import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
 import { UnplugIcon } from '@/components/icons/unplug';
 import { UsersIcon } from '@/components/icons/users';
@@ -50,25 +51,27 @@ export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
-  const defaultRoute = determineDefaultRoute(checkAccess);
+  const defaultRoute = determineDefaultRoute({
+    checkAccess,
+    chatEnabled: platform.plan.chatEnabled,
+  });
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
   const setupItems = [
     {
+      to: '/platform/setup/general',
+      label: t('General'),
+      icon: SettingsIcon,
+    },
+    {
       to: '/platform/setup/ai',
-      label: t('AI Providers'),
-      icon: BotIcon,
+      label: t('AI Center'),
+      icon: SparklesIcon,
     },
     {
       to: '/platform/setup/mcp',
       label: t('MCP Server'),
       icon: McpSvg,
-    },
-    {
-      to: '/platform/setup/branding',
-      label: t('Branding'),
-      icon: PaletteIcon,
-      locked: !platform.plan.customAppearanceEnabled,
     },
     {
       to: '/platform/setup/connections',
@@ -90,12 +93,18 @@ export function PlatformSidebar() {
     },
     {
       to: '/platform/setup/billing',
-      label: t('Billing'),
+      label: t('Billing & subscription'),
       icon: ReceiptIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
     {
-      to: '/platform/security/signing-keys',
+      to: '/platform/setup/usage',
+      label: t('Usage'),
+      icon: ChartLineIcon,
+      locked: edition === ApEdition.COMMUNITY,
+    },
+    {
+      to: '/platform/security/embed',
       label: t('Embedding'),
       icon: FrameIcon,
       locked: !platform.plan.embeddingEnabled,
@@ -118,12 +127,17 @@ export function PlatformSidebar() {
           to: '/platform/projects',
           label: t('Projects'),
           icon: LayoutGridIcon,
-          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
+          locked: platform.plan.billedTeamProjectsLimit === 0,
         },
         {
           to: '/platform/users',
           label: t('Users'),
           icon: UsersIcon,
+        },
+        {
+          to: '/platform/connections',
+          label: t('Connections'),
+          icon: UnplugIcon,
         },
       ],
     },
@@ -134,12 +148,6 @@ export function PlatformSidebar() {
     {
       label: t('Security'),
       items: [
-        {
-          to: '/platform/security/audit-logs',
-          label: t('Audit Logs'),
-          icon: SquareDashedBottomCodeIcon,
-          locked: !platform.plan.auditLogEnabled,
-        },
         {
           to: '/platform/security/sso',
           label: t('Single Sign On'),
@@ -167,6 +175,23 @@ export function PlatformSidebar() {
       ],
     },
     {
+      label: t('Observability'),
+      items: [
+        {
+          to: '/platform/security/audit-logs',
+          label: t('Audit Logs'),
+          icon: SquareDashedBottomCodeIcon,
+          locked: !platform.plan.auditLogEnabled,
+        },
+        {
+          to: '/platform/infrastructure/event-destinations',
+          label: t('Event Streaming'),
+          icon: WebhookIcon,
+          locked: !platform.plan.eventStreamingEnabled,
+        },
+      ],
+    },
+    {
       label: t('Infrastructure'),
       items: [
         {
@@ -183,12 +208,6 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
           icon: MousePointerClickIcon,
-        },
-        {
-          to: '/platform/infrastructure/event-destinations',
-          label: t('Event Streaming'),
-          icon: WebhookIcon,
-          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },
@@ -235,7 +254,7 @@ export function PlatformSidebar() {
         </SidebarContent>
       </div>
 
-      <SidebarFooter>
+      <SidebarFooter className="pb-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

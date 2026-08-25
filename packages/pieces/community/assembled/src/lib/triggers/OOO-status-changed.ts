@@ -6,8 +6,12 @@ import { assembledAuth } from '../common/auth';
 export const timeOffStatusChanged = createTrigger({
   auth: assembledAuth,
   name: 'OOO_status_changed',
+  classification: 'READ',
   displayName: 'OOO Status Changed',
   description: 'Triggers on approval/rejection of OOO.',
+  aiMetadata: {
+    description: 'Fires when an existing time-off (out-of-office) request changes status, such as being approved or rejected, polling for time-off updates since the last check. Use to react to decisions on submitted OOO requests.',
+  },
   type: TriggerStrategy.POLLING,
   props: {},
   sampleData: {

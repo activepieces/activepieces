@@ -7,8 +7,11 @@ import { t } from 'i18next';
 export const createCustomer = createAction({
   auth: bokioAuth,
   name: 'createCustomer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Bokio',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new customer record in a Bokio accounting company. Use to register a person or company before invoicing them; only customer name and type (individual/company) are required, with optional VAT/org number, contact, and address details. Not idempotent — each call creates a separate customer.', idempotent: false },
   props: {
     customerName: Property.ShortText({
       displayName: 'Customer Name',

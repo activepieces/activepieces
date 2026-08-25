@@ -1,6 +1,6 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   AppConnectionWithoutSensitiveData,
-  Permission,
   UpdateProjectPlatformRequest,
   PlatformRole,
 } from '@activepieces/shared';

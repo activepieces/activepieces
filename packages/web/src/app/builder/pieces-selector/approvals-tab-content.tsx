@@ -1,4 +1,5 @@
-import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { FlowActionType, FlowOperationType } from '@activepieces/shared';
 
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import {

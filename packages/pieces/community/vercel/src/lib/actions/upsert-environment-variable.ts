@@ -10,6 +10,11 @@ export const upsertEnvironmentVariable = createAction({
   displayName: 'Upsert Environment Variable',
   description:
     'Create or update a Vercel environment variable using Vercel\'s upsert API.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Create or update an environment variable on a Vercel project via Vercel\'s upsert endpoint, keyed by the variable name. Choose the variable type (plain, sensitive, or encrypted) and one or more target environments (production, preview, development); a Git branch may only be set when preview is among the targets. Use when you need a specific key set to a known value. Idempotent: repeating with the same key and value yields the same stored variable.',
+    idempotent: true,
+  },
   props: {
     project: vercelProjectDropdown,
     key: Property.ShortText({

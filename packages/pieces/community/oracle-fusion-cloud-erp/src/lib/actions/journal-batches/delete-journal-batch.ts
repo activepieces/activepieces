@@ -7,6 +7,8 @@ export const deleteJournalBatch = createAction({
     name: 'delete_journal_batch',
     displayName: 'Delete Journal Batch',
     description: 'Deletes a journal batch from Oracle Fusion Cloud ERP.',
+    audience: 'both',
+    aiMetadata: { description: 'Permanently delete a general-ledger journal batch by its JeBatchId. Destructive; idempotent in effect since a removed batch cannot be deleted again. Typically only unposted batches can be removed; use when discarding a draft batch rather than correcting it (use Update Journal Batch to change status or reversal attributes).', idempotent: true },
     props: {
         jeBatchId: Property.ShortText({
             displayName: 'Journal Batch ID',

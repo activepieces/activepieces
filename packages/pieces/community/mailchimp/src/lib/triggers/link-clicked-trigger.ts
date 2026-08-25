@@ -124,8 +124,12 @@ const assessConversionPotential = (data: any): string => {
 export const mailChimpLinkClickedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'link_clicked',
+  classification: 'READ',
   displayName: 'Link Clicked',
   description: 'Fires when a recipient clicks a specified link in a campaign',
+  aiMetadata: {
+    description: 'Fires when a recipient in the selected audience (list) clicks a link in a campaign email. The event carries the subscriber email, campaign id, clicked URL, and client/location metadata.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,

@@ -1,0 +1,23 @@
+---
+title: "Sandboxing Mode"
+description: "Choose how flow code is isolated and set AP_EXECUTION_MODE accordingly"
+icon: "code"
+---
+
+Decide how flow code is isolated before you go to production. Here is a simplified way to choose:
+
+<Tip>
+**Multi-tenant** → use V8 / Code Sandboxing. Secure, and needs no privileged Docker access in Kubernetes (privileged Docker is usually disallowed to prevent root escalation).
+</Tip>
+
+<Tip>
+**Single-tenant** → use No Sandboxing. Faster, and needs no privileged Docker access.
+</Tip>
+
+Set the mode with the `AP_EXECUTION_MODE` environment variable. The table below lists every mode and its exact value:
+
+<Snippet file="execution-mode.mdx" />
+
+<Note>
+Want the reasoning behind each mode — how `fork()`/V8 isolation and kernel-namespace isolation actually work, and their security trade-offs? See [Sandboxing](../architecture/sandboxing) in the Architecture section.
+</Note>

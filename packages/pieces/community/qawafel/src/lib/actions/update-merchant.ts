@@ -10,6 +10,12 @@ export const updateMerchant = createAction({
   displayName: 'Update Merchant',
   description:
     'Edit a merchant\'s trade name or active state. Only the fields you fill in are updated. (Legal name, CR, VAT and other identity fields cannot be changed via the API.)',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Updates an existing merchant identified by its Qawafel merchant id, applying a partial patch of English/Arabic trade name or active state — fields left blank are unchanged. Identity fields (legal name, CR, VAT) cannot be changed here. Idempotent: re-applying the same patch leaves the merchant in the same state.',
+    idempotent: true,
+  },
   props: {
     merchant_id: qawafelProps.merchantDropdown({
       displayName: 'Merchant to update',

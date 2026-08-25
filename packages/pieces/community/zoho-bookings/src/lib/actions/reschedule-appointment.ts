@@ -15,6 +15,12 @@ export const rescheduleAppointment = createAction({
   displayName: 'Reschedule Appointment',
   description:
     'Reschedule an appointment to a different time or to a different staff',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Move an existing Zoho Bookings appointment, identified by its booking ID, to a new start time and/or reassign it to a different staff member or group. Supply at least one of new start time, staff, or group. Use the from/to time range only to look up the booking ID to act on. Not idempotent: it mutates the booking each time, though repeating with the same target is effectively a no-op once applied.',
+    idempotent: false,
+  },
   props: {
     from_time: Property.DateTime({
       displayName: 'From Time',

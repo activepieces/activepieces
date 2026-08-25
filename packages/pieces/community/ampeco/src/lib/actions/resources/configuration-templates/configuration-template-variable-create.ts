@@ -15,6 +15,8 @@ export const configurationTemplateVariableCreateAction = createAction({
   name: 'configurationTemplateVariableCreate',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Create',
   description: 'Create a new Configuration Template Variable.',
+  audience: 'both',
+  aiMetadata: { description: 'Add a configuration variable to an OCPP configuration template, identified by template id. Choose the variant matching the template OCPP version: 1.6 uses keyName/value, while 2.0.1 uses component/variableName/value plus optional instance and EVSE/connector scoping. Not idempotent: each call adds another variable. Use the Update variant action to change an existing variable.', idempotent: false },
   props: {
         
   template: Property.Number({

@@ -1,6 +1,6 @@
 
     import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-    import { OAuth2GrantType, PieceCategory } from '@activepieces/shared';
+    import { OAuth2GrantType, PieceCategory } from '@activepieces/pieces-framework';
     import { getInvoices } from './lib/actions/get-invoices';
     import { getProjects } from './lib/actions/get-projects';
     import { getTasks } from './lib/actions/get-tasks';

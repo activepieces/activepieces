@@ -8,6 +8,12 @@ export const formatNumber = createAction({
   name: 'formatNumber',
   displayName: 'Format Number',
   description: 'Format a phone number to international E.164 format',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Normalize a phone number into international E.164 format using a supplied country code or name to resolve the local number. Use to validate or standardize numbers before sending or storing them. Requires the country and the number; this is a pure lookup with no side effect and is safe to repeat.',
+    idempotent: true,
+  },
   props: {
     country: Property.ShortText({
       displayName: 'Country',

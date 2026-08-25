@@ -7,8 +7,11 @@ import { handleDropdownError } from '../common/helpers';
 export const createContact = createAction({
   auth: biginAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a Contact Record',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new contact (person) record in Bigin CRM. Last name is required; optionally set email, mobile, title, owner, associated company, tags, mailing address, and description. Use to add a person to the CRM. Not idempotent: each call creates a new contact even with identical details, so search first to avoid duplicates.', idempotent: false },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

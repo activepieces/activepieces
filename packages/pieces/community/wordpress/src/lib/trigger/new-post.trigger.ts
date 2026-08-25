@@ -12,11 +12,14 @@ import {
 import { wordpressCommon } from '../common';
 import dayjs from 'dayjs';
 import { wordpressAuth } from '../..';
+import { newPostTriggerOutputSchema } from '../output-schemas';
 
 export const wordpressNewPost = createTrigger({
   auth: wordpressAuth,
   name: 'new_post',
+  classification: 'READ',
   displayName: 'New Post',
+  outputSchema: newPostTriggerOutputSchema,
   sampleData: {
     id: 60,
     date: '2023-02-19T10:08:25',
@@ -118,6 +121,9 @@ export const wordpressNewPost = createTrigger({
     },
   },
   description: 'Triggers when a new post is published',
+  aiMetadata: {
+    description: 'Fires when a new post is published on the WordPress site, optionally filtered to specific authors. Each event represents one newly published post and emits that post record. Polls periodically, so there may be a short delay after publishing.',
+  },
   props: {
     authors: wordpressCommon.authors,
   },

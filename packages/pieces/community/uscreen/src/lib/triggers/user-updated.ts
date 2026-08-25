@@ -35,6 +35,9 @@ export const userUpdated = createTrigger({
   displayName: 'User Updated',
   description:
     'Triggers when a user’s profile or information is updated.',
+  aiMetadata: {
+    description: 'Fires when an existing user’s profile or attributes change on the Uscreen storefront (event user_updated). Represents a customer-record update, exposing both the changed fields and the full current attributes (e.g. subscription status, lifetime spent, segments).',
+  },
   props: { setupInstructions: uscreenProps.webhookInstructions() },
   sampleData: sampleData,
   type: TriggerStrategy.WEBHOOK,

@@ -6,6 +6,8 @@ export const convertCadFileAction = createAction({
   name: 'convert_cad_file',
   displayName: 'Convert CAD File',
   description: 'Convert a CAD file from one format to another',
+  audience: 'both',
+  aiMetadata: { description: 'Convert an uploaded CAD file from one 3D format to another; both source and output formats must be chosen from FBX, GLB, glTF, OBJ, PLY, STEP, and STL. Use this for format translation only, not for measuring mass properties (see the get-mass/volume/density/surface-area/center-of-mass actions). The source file is left untouched and the conversion is deterministic for the same inputs.', idempotent: true },
   auth: zooAuth,
   // category: 'File Operations',
   props: {

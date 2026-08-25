@@ -2,7 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
 import { claudeAuth } from './lib/auth';
 

@@ -9,6 +9,10 @@ export const newDocumentNotProcessed = createTrigger({
   displayName: 'New Document Not Processed',
   description:
     'Fires when Parseur fails to parse a document (e.g. no matching template).',
+  aiMetadata: {
+    description:
+      'Fires when Parseur receives a document but cannot parse it because no matching template exists (template-needed). Use to react to documents that require a new template or manual attention. The mailbox filter is optional; without it, the event fires across mailboxes.',
+  },
   props: {
     mailboxId: parserDropdown({ required: false }),
   },

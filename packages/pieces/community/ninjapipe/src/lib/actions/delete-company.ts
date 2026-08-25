@@ -8,6 +8,8 @@ export const deleteCompany = createAction({
   name: 'delete_company',
   displayName: 'Delete Company',
   description: 'Deletes a company by ID.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a company identified by its ID. Destructive and not reversible; re-running after the company is gone will fail since the ID no longer exists.', idempotent: false },
   props: {
     companyId: ninjapipeCommon.companyDropdownRequired,
   },

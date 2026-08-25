@@ -2,7 +2,7 @@ import { hubspotAuth } from '../auth';
 
 import { Property, createAction } from '@activepieces/pieces-framework';
 
-import { MarkdownVariant } from '@activepieces/shared';
+import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE } from '../common/constants';
 import {
 	getDefaultPropertiesForObject,
@@ -13,12 +13,17 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const createDealAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-deal',
+	classification: 'WRITE',
 	displayName: 'Create Deal',
 	description: 'Creates a new deal in Hubspot.',
+	audience: 'both',
+	aiMetadata: { description: 'Creates a new deal in HubSpot, requiring a deal name plus a pipeline and stage, and returns the created deal. Use to open a new opportunity; use Update Deal to modify an existing one. Not idempotent: each call creates a separate deal, so guard against duplicates.', idempotent: false },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		dealname: Property.ShortText({
 			displayName: 'Deal Name',

@@ -5,8 +5,15 @@ import { bigCommerceApiService } from '../common/requests';
 export const deleteAProduct = createAction({
   auth: bigcommerceAuth,
   name: 'deleteAProduct',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete a Product',
   description: 'Deletes an existing Product',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a catalog product from a BigCommerce store by its productId. Use to remove an item from the store. This is destructive and cannot be undone. Effectively idempotent: deleting an already-removed product has no further effect, though the call may error if the id no longer exists.',
+    idempotent: true,
+  },
   props: {
     productId: Property.ShortText({
       displayName: 'Product ID',

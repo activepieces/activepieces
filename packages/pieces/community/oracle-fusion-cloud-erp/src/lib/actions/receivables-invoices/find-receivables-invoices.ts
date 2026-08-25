@@ -7,6 +7,8 @@ export const findReceivablesInvoices = createAction({
     name: 'find_receivables_invoices',
     displayName: 'Find Receivables Invoices',
     description: 'Search for receivables invoices with optional filters.',
+    audience: 'both',
+    aiMetadata: { description: 'List or search accounts-receivable (customer) invoices, optionally filtering by transaction number, bill-to customer, status, or a billing-date range, with limit/offset paging (default 25, max 500). Read-only and idempotent. Use this to discover AR invoices or resolve a CustomerTransactionId; for payables (supplier) invoices use Find Invoices instead.', idempotent: true },
     props: {
         transactionNumber: Property.ShortText({
             displayName: 'Transaction Number',

@@ -14,6 +14,8 @@ export const deleteConfigurationTemplateAction = createAction({
   name: 'deleteConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Delete Configuration Template',
   description: 'Delete Configuration Template.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an OCPP configuration template by its numeric id, removing the template and its variables. Destructive and not idempotent: deleting an already-removed template will fail. Confirm the template with Get or List before deleting.', idempotent: false },
   props: {
         
   template: Property.Number({

@@ -6,8 +6,11 @@ import { createVapiClient } from '../common/client';
 export const createCall = createAction({
   auth: vapiAuth,
   name: 'create_call',
+  classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Create an outbound phone call using a Vapi assistant.',
+  audience: 'both',
+  aiMetadata: { description: 'Place an outbound phone call through Vapi, having the specified AI voice assistant call a customer number. Use to initiate a live voice conversation; requires the assistant ID, a Vapi-registered phone number ID, and the destination number in E.164 format, with optional per-call assistant overrides. Not idempotent: each call places a new phone call.', idempotent: false },
   props: {
     assistantId: Property.ShortText({
       displayName: 'Assistant ID',

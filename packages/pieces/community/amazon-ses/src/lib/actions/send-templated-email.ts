@@ -17,8 +17,15 @@ import {
 export const sendTemplatedEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_templated_email',
+  classification: 'WRITE',
   displayName: 'Send Templated Email',
   description: 'Send personalized emails using pre-created templates',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Sends an email through Amazon SES rendered from an existing named template, substituting the supplied key-value template variables, with optional CC/BCC, reply-to, return path, configuration set, and tags. Use when the message body lives in a pre-created SES template rather than inline content. Requires a verified sender, a template that already exists, and at least one template variable. Not idempotent: each call dispatches a new email.',
+    idempotent: false,
+  },
   props: {
     fromEmailAddress: Property.Dropdown({
       auth: amazonSesAuth,

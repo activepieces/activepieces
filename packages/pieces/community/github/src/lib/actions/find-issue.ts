@@ -2,12 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubAuth } from '../auth';
 import { githubApiCall, githubCommon, RequestParams } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { findIssueActionOutputSchema } from '../output-schemas';
 
 export const githubFindIssueAction = createAction({
   auth: githubAuth,
   name: 'find_issue',
+  classification: 'SEARCH',
   displayName: 'Find Issue',
   description: 'Finds an issue based title.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Searches a repository for an issue whose title matches the given text, filtered by state (open, closed, or all), and returns the top match plus whether any was found. Use to locate an issue by title when you do not have its number. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({
@@ -27,6 +35,7 @@ export const githubFindIssueAction = createAction({
       },
     }),
   },
+  outputSchema: findIssueActionOutputSchema,
   async run({ auth, propsValue }) {
     const { owner, repo } = propsValue.repository!;
     const { state, title } = propsValue;
@@ -45,7 +54,7 @@ export const githubFindIssueAction = createAction({
       total_count: number;
       items: Array<{ id: number }>;
     }>({
-      accessToken: auth.access_token,
+      auth,
       method: HttpMethod.GET,
       resourceUri: `/search/issues`,
       query: { q, per_page: 1 },

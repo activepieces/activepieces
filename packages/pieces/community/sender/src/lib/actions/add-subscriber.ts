@@ -7,8 +7,11 @@ import { group } from 'console';
 export const addUpdateSubscriberAction = createAction({
   auth: senderAuth,
   name: 'add_update_subscriber',
+  classification: 'WRITE',
   displayName: 'Add / Update Subscriber',
   description: 'Add a new subscriber or update existing subscriber\'s data',
+  audience: 'both',
+  aiMetadata: { description: 'Upserts a subscriber in a Sender account by email: creates the contact if the email is new, otherwise updates its name, phone, group membership, and custom fields. Use to ensure a contact exists with given details before campaigns or grouping. Keyed on email, so repeating the same call is idempotent (no duplicate contact); note the optional flag that triggers automation workflows on the subscriber.', idempotent: true },
   props: {
     email: Property.ShortText({
       displayName: 'Email',

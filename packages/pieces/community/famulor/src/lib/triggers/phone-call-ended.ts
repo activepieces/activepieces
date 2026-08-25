@@ -54,6 +54,9 @@ export const phoneCallEnded = createTrigger({
     name: 'phoneCallEnded',
     displayName: 'Phone Call Completed',
     description: 'Triggers when a phone call completes.',
+    aiMetadata: {
+        description: 'Fires when a Famulor AI phone call finishes, delivering the full post-call result via webhook. The payload includes call metadata (customer and assistant phone numbers, duration, status, timestamps), the conversation transcript and recording URL, AI-extracted variables (e.g. interest, appointment scheduled, follow-up needed), the input variables passed in, and the associated lead and campaign. Use to act on outcomes of completed inbound or outbound calls.',
+    },
     props: {
         assistant_id: assistantDropdownForWebhook(),
     },

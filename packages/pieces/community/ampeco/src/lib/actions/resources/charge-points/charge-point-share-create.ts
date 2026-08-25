@@ -15,6 +15,8 @@ export const chargePointShareCreateAction = createAction({
   name: 'chargePointShareCreate',
   displayName: 'Resources - Charge Points - Charge Point Share Create',
   description: 'Create new Share within the Charge Point.',
+  audience: 'both',
+  aiMetadata: { description: 'Grant a user access to a charge point by creating a new share, given the charge point ID and the user ID. This is a mutating create that adds a new share each call, so it is not idempotent.', idempotent: false },
   props: {
         
   chargePoint: Property.Number({

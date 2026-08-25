@@ -1,7 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { retellAiApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { AppConnectionType } from '@activepieces/shared';
+import { AppConnectionType } from '@activepieces/pieces-framework';
 
 // For typing purposes in the client
 export const RetellAiAuth = PieceAuth.SecretText({

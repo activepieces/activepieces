@@ -3,19 +3,34 @@ name: Continuous Delivery — Canary
 on:
   workflow_dispatch:
   workflow_call:
+    inputs:
+      image_tag:
+        description: 'Deploy this already-built tag instead of building a new image'
+        type: string
+        required: false
+        default: ''
+      skip_migration_check:
+        description: 'Deploy even when a pending migration is marked breaking'
+        type: boolean
+        required: false
+        default: false
   schedule:
-    - cron: '0 9 * * *'  # Daily 9 AM UTC
+    - cron: '0 9 * * *'  # Daily 9 AM UTC — scheduled runs always use the default branch
 
 jobs:
   build-image:
+    if: ${{ !inputs.image_tag }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     concurrency:
       group: canary-deploy
       cancel-in-progress: true
     outputs:
       image_tag: ${{ steps.set-tag.outputs.image_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set image tag
         id: set-tag
@@ -23,7 +38,7 @@ jobs:
           RELEASE=$(node --print "require('./package.json').version")
           echo "image_tag=${RELEASE}.${{ github.sha }}.canary" >> $GITHUB_OUTPUT
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -44,16 +59,25 @@ jobs:
           no-cache: true
           tags: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
 
+      - uses: ./.github/actions/sbom
+        with:
+          image: ghcr.io/activepieces/activepieces-cloud:${{ steps.set-tag.outputs.image_tag }}
+          version: ${{ steps.set-tag.outputs.image_tag }}
+
   check-migrations:
     needs: build-image
+    if: |
+      always() &&
+      needs.build-image.result != 'failure' &&
+      inputs.skip_migration_check != true
     runs-on: ubuntu-latest
     outputs:
       has_breaking: ${{ steps.check.outputs.has_breaking }}
       breaking_names: ${{ steps.check.outputs.breaking_names }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
 
@@ -64,11 +88,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build shared package
-        run: bun run --cwd packages/shared build
-
-      - name: Build server-utils package
-        run: bun run --cwd packages/server/utils build
+      - name: Build shared and server-utils packages
+        run: bunx turbo run build --filter=@activepieces/shared --filter=@activepieces/server-utils
 
       - name: Configure SSH
         run: |
@@ -109,10 +130,18 @@ jobs:
 
   deploy-canary:
     needs: [build-image, check-migrations]
+    if: |
+      always() &&
+      needs.build-image.result != 'failure' &&
+      needs.check-migrations.result != 'failure'
     runs-on: ubuntu-latest
     environment:
       name: canary
     steps:
+      - name: Resolve image tag
+        id: image
+        run: echo "image_tag=${{ inputs.image_tag || needs.build-image.outputs.image_tag }}" >> $GITHUB_OUTPUT
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -132,9 +161,9 @@ jobs:
 
       - name: Deploy canary app
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/app-canary.yml --skip-push; exit"'
 
       - name: Deploy canary workers
         run: |
-          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ needs.build-image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
+          ssh ops -t -t 'bash -ic "cd mrsk/prod && kamal deploy --version ${{ steps.image.outputs.image_tag }} --config-file=config/worker-canary.yml --skip-push; exit"'
 

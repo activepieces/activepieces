@@ -1,0 +1,58 @@
+{
+    "id": "intent-relentless-empty-escalate",
+    "description": "Capability: when the first deal lookup comes back EMPTY, the relentless operator escalates on its own (different action / direct API call / another query) instead of bouncing the task back to the user (reconnect, which-workspace, or a 'what would you like to do?' menu). Pins the persistence-ladder / drive-don't-menu doctrine. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "close my open deals"
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "connections": [
+                    { "externalId": "conn_attio", "displayName": "Attio", "pieceName": "@activepieces/piece-attio", "status": "ACTIVE", "scope": "PROJECT" },
+                    { "externalId": "conn_gmail", "displayName": "Gmail", "pieceName": "@activepieces/piece-gmail", "status": "ACTIVE", "scope": "PROJECT" }
+                ]
+            }
+        },
+        {
+            "order": 1,
+            "toolName": "ap_explore_data",
+            "output": {
+                "content": [{ "type": "text", "text": "Listed 0 record(s)." }],
+                "structuredContent": { "count": 0, "records": [] }
+            }
+        },
+        {
+            "order": 2,
+            "toolName": "ap_execute_action",
+            "output": {
+                "structuredContent": {
+                    "data": [
+                        { "id": "deal_1", "name": "Typeform", "stage": "Proposal", "value": 90000, "last_activity": "2026-05-02" },
+                        { "id": "deal_2", "name": "Alvys", "stage": "Evaluating", "value": 60000, "last_activity": "2026-04-18" },
+                        { "id": "deal_3", "name": "FlixMobility", "stage": "Proposal", "value": 50000, "last_activity": "2026-03-30" }
+                    ]
+                }
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" },
+        { "type": "maxQuestionCards", "n": 0, "toolNames": ["ap_show_questions", "ap_show_connection_picker", "ap_show_connection_required"] }
+    ],
+    "judge": [
+        {
+            "dimension": "relentless_escalation_not_handback",
+            "rubric": "The connection to the CRM exists and is ACTIVE. After the first deal lookup returns empty (0 records), the assistant must keep trying on its OWN to get the deals — e.g. a different action, a different filter/object, a direct API call, or another query — rather than handing the problem back to the user. Continuing with another approach is a PASS, even if it narrates the retry briefly. It is a FAIL if the assistant instead bounces the task back: telling the user to reconnect, asking which workspace/list holds the deals, blaming scope/permissions and stopping, or ending with a 'what would you like to do?' style menu in place of actually pursuing the deals. Treating an empty result as a dead end and returning to the user without exhausting its own options is a FAIL.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

@@ -20,6 +20,9 @@ export const newCancelledCase = createTrigger({
     name: 'new_cancelled_case',
     displayName: 'New Cancelled Case',
     description: "Triggers when a collection process for a given sequence (case) was cancelled.",
+    aiMetadata: {
+      description: 'Fires when the collection process for a debtor case (sequence) is cancelled, carrying the debtor/invoice details and the cancellation reason. Use to react to a case being dropped from active collection.',
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

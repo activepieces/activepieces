@@ -15,6 +15,9 @@ export const newIncident = createTrigger({
   displayName: 'New Incident',
   description:
     'Triggers when a new incident appears in Coralogix. Polls on a schedule — ideal for paging on-call, creating Jira tickets, or posting to Slack.',
+  aiMetadata: {
+    description: 'Fires for each newly triggered Coralogix incident, discovered by polling on a schedule; can be narrowed to specific severities. Represents a freshly opened incident the flow has not seen before — use to drive paging, ticketing, or notifications.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     severity: Property.StaticMultiSelectDropdown({

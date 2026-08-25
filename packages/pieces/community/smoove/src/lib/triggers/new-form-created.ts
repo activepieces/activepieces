@@ -59,6 +59,9 @@ export const newFormCreated = createTrigger({
     name: 'newFormCreated',
     displayName: 'New Form Created',
     description: 'Fires when a new form/landing page is created in your Smoove account',
+    aiMetadata: {
+      description: 'Fires when a new form or landing page is created in the connected Smoove account, optionally filtered to a specific form type (landing page, Facebook, mobile, embed, or popup).',
+    },
     props: {
         formType: Property.StaticDropdown({
             displayName: 'Form Type Filter',

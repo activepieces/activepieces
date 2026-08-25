@@ -8,6 +8,11 @@ export const blockKey = createAction({
   name: 'blockKey',
   displayName: 'Block Key',
   description: 'Block a license key to prevent it from being accessible by most Web API methods',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Blocks a specific license key for a product so it is rejected by most Cryptolens Web API methods (e.g. activation/validation). Use to revoke or suspend a license. Requires the product ID and the serial key string. Blocking is a state change, but re-blocking an already-blocked key has no additional effect.',
+    idempotent: true,
+  },
   props: {
     productId: Property.Number({
       displayName: 'Product ID',

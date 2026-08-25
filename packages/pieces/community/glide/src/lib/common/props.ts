@@ -1,5 +1,5 @@
 import { Property } from '@activepieces/pieces-framework';
-import { tryCatch } from '@activepieces/shared';
+import { tryCatch } from '@activepieces/pieces-framework';
 
 import { glideAuth } from '../auth';
 import { listGlideTables } from './client';

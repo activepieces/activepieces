@@ -15,6 +15,8 @@ export const updateCurrencyRateAction = createAction({
   name: 'updateCurrencyRate',
   displayName: 'Resources - Currency Rates - Update',
   description: 'Update Currency Rate.',
+  audience: 'both',
+  aiMetadata: { description: 'Update the exchange rate value of an existing AMPECO currency-rate record, identified by numeric currency-rate ID. Only the rate (base-to-target multiplier) is changed; the base and target currencies are fixed. Not idempotent in the create sense: the record must already exist. Use the create currency rate action to add a new base/target pair.', idempotent: false },
   props: {
         
   currencyRate: Property.Number({

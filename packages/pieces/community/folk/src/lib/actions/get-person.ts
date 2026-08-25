@@ -8,6 +8,11 @@ export const getPerson = createAction({
   name: 'getPerson',
   displayName: 'Get Person',
   description: 'Retrieve detailed information about a person from your Folk workspace.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches the full record of a single Folk person (contact) by their person ID. Use when you already have the person ID and need their current details; if you only have a name or email, find the ID first with List People. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     personId: folkProps.person_id(true),
   },

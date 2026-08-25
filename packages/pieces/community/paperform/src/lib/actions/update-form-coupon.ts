@@ -10,6 +10,8 @@ export const updateFormCoupon = createAction({
   name: 'updateFormCoupon',
   displayName: 'Update Form Coupon',
   description:'Updates an existing form coupon.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing discount coupon on a Paperform form, identified by its coupon code, modifying only the supplied fields (enabled state, target, discount amount or percentage, expiry). Use to change coupon terms; repeating with the same input yields the same end state, so it is idempotent.', idempotent: true },
   props: {
     formId: paperformCommonProps.formId,
     couponCode: paperformCommonProps.couponCode,

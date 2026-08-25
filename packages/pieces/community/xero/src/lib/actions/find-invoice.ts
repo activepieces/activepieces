@@ -13,6 +13,12 @@ export const xeroFindInvoice = createAction({
   name: 'xero_find_invoice',
   displayName: 'Find Invoice',
   description: 'Finds an invoice by number or reference.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Look up Xero invoices by exact invoice number, exact reference, or a fuzzy search term, optionally filtered to sales invoices (ACCREC) or bills (ACCPAY). Read-only and idempotent; use it to resolve an invoice ID before recording a payment, sending, or allocating a credit note. The search-term mode matches invoice number or reference more loosely than the exact modes.',
+    idempotent: true,
+  },
   props: {
     tenant_id: props.tenant_id,
     search_by: Property.StaticDropdown({

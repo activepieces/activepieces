@@ -9,7 +9,7 @@ import {
 	extractTablesFromPdf,
 	addBarcodeToPdf,
 } from './lib/actions';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { pdfCoAuth } from './lib/auth';
 
 export const pdfCo = createPiece({

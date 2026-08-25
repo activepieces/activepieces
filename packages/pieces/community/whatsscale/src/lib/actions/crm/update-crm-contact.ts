@@ -7,8 +7,11 @@ import { whatsscaleProps } from '../../common/props';
 export const updateCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_update_crm_contact',
+  classification: 'WRITE',
   displayName: 'Update a CRM Contact',
   description: 'Update the name or tags of an existing CRM contact',
+  audience: 'both',
+  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale (comma-separated), not merged. Idempotent: re-running with the same values converges the contact to the same state.', idempotent: true },
   props: {
     contactId: whatsscaleProps.crmContact,
     name: Property.ShortText({

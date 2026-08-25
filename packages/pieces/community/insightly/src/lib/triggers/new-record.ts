@@ -10,6 +10,9 @@ export const newRecord = createTrigger({
     name: 'new_record',
     displayName: 'New Record',
     description: 'Fires when a new record is created in Insightly (requires webhook setup)',
+    aiMetadata: {
+        description: 'Fires when a new record is created in the selected Insightly object type (Contact, Lead, Opportunity, Organization, Project, Task, or Event). Each event carries the newly created record. Requires a webhook to be configured manually in Insightly Workflow Automation for the chosen object type.',
+    },
     type: TriggerStrategy.WEBHOOK,
     props: {
         objectType: Property.StaticDropdown({

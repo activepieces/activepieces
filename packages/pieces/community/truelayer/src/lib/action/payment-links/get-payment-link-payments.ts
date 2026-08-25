@@ -7,6 +7,8 @@ export const getPaymentLinkPayments = createAction({
   name: 'get-payment-link-payments',
   displayName: 'Get Payments',
   description: 'List all the payments associated with the payment link. This API must be called using a backend bearer token.',
+  audience: 'both',
+  aiMetadata: { description: 'List the payments made against a specific payment link, identified by the link ID, with cursor-based pagination. Use to reconcile or review payments collected through a payment link; read-only and safe to repeat. To fetch the link itself use Get Payment Link.', idempotent: true },
   props: {
     id: Property.ShortText({
       displayName: 'Payment Link ID',

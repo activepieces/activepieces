@@ -9,6 +9,12 @@ export const createOrUpdateUser = createAction({
   displayName: 'Create or Update User',
   description:
     'Create a new user profile or update an existing user profile with custom properties',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Upserts a Vero user profile keyed on the supplied user ID, setting the email and any custom properties and communication channels (e.g. push device tokens). Use to register a new contact or to enrich/refresh an existing one. ID and email are required; because it is keyed on the stable ID, repeating the same call is idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'User ID',

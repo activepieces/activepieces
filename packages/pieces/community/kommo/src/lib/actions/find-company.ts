@@ -8,6 +8,8 @@ export const findCompanyAction = createAction({
   name: 'find_company',
   displayName: 'Find Company',
   description: 'Find an existing company.',
+  audience: 'both',
+  aiMetadata: { description: 'Searches companies in a Kommo CRM account by a free-text query matched against the companies\' filled fields, returning all matching companies. Use to resolve a company record (e.g. by name) before referencing or linking it; the query is required. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

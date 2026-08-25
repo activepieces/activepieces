@@ -9,7 +9,7 @@ import { updateOpportunityStage } from './lib/actions/update-opportunity-stage';
 import { listOpportunityForms } from './lib/actions/list-opportunity-forms';
 import { listOpportunityFeedback } from './lib/actions/list-opportunity-feedback';
 import { addFeedbackToOpportunity } from './lib/actions/add-feedback-to-opportunity';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const LEVER_BASE_URL = 'https://api.lever.co/v1';
 

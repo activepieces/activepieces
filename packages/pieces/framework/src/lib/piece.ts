@@ -4,12 +4,11 @@ import {
   EventPayload,
   ParseEventResponse,
   PieceCategory,
-} from '@activepieces/shared';
+} from '@activepieces/core-piece-types';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
 import { ContextVersion, LATEST_CONTEXT_VERSION, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION } from './context/versioning';
-import * as semver from 'semver';
 
 
 
@@ -32,8 +31,9 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly deprecated?: boolean,
   ) {
-    if(!semver.valid(minimumSupportedRelease) || semver.lt(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
+    if (!isValidSimpleSemver(minimumSupportedRelease) || isSemverLessThan(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
       this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
     }
     actions.forEach((action) => (this._actions[action.name] = action));
@@ -50,9 +50,10 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | u
       categories: this.categories,
       description: this.description,
       authors: this.authors,
-      auth: this.auth,
+      auth: withConnectionIdentifierFlag(this.auth),
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      deprecated: this.deprecated,
       contextInfo: this.getContextInfo?.()
     };
   }
@@ -97,6 +98,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.deprecated,
   );
 };
 
@@ -114,6 +116,7 @@ type CreatePieceParams<
   actions: Action[];
   triggers: Trigger[];
   categories?: PieceCategory[];
+  deprecated?: boolean;
 };
 
 type PieceEventProcessors = {
@@ -128,5 +131,30 @@ type PieceEventProcessors = {
 type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
+}
+
+function withConnectionIdentifierFlag(
+  auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
+): PieceAuthProperty | PieceAuthProperty[] | undefined {
+  if (auth === undefined) {
+    return undefined;
+  }
+  return Array.isArray(auth) ? auth.map(flagConnectionIdentifier) : flagConnectionIdentifier(auth);
+}
+
+function flagConnectionIdentifier(auth: PieceAuthProperty): PieceAuthProperty {
+  return { ...auth, hasConnectionIdentifier: auth.getConnectionIdentifier !== undefined };
+}
+
+function isValidSimpleSemver(version: string): boolean {
+  return /^\d+\.\d+\.\d+$/.test(version);
+}
+
+function isSemverLessThan(a: string, b: string): boolean {
+  const [a1, a2, a3] = a.split('.').map(Number);
+  const [b1, b2, b3] = b.split('.').map(Number);
+  if (a1 !== b1) return a1 < b1;
+  if (a2 !== b2) return a2 < b2;
+  return a3 < b3;
 }
 

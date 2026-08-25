@@ -9,6 +9,8 @@ export const createKey = createAction({
   name: 'createKey',
   displayName: 'Create Key',
   description: 'Create one or more keys in your Lokalise project',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new translation key in a Lokalise project, tagged to one or more platforms (iOS, Android, web, etc.). Requires the project ID and key name; platforms are mandatory. Not idempotent: each call adds a key even if the name repeats.', idempotent: false },
   props: {
     projectId: projectDropdown,
     keyName: Property.ShortText({

@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { alaiAuth } from './lib/common/auth';
 import { generatePresentation } from './lib/actions/generate-presentation';
 import { getGeneration } from './lib/actions/get-generation';

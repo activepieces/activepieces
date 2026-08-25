@@ -11,8 +11,11 @@ import {
 export const sendMedia = createAction({
 	auth: whatsappAuth,
 	name: 'sendMedia',
+	classification: 'WRITE',
 	displayName: 'Send Media',
 	description: 'Send a media message through WhatsApp',
+	audience: 'both',
+	aiMetadata: { description: 'Sends an image, video, audio, document, or sticker to a WhatsApp recipient by referencing the media via a public URL. Choose this when the message payload is a file rather than plain text; captions are supported for media types that allow them and a filename can be set for documents. Requires the sender phone number ID, recipient phone number, media type, and a reachable media URL; subject to WhatsApp messaging-window rules. Not idempotent — each call delivers a new message.', idempotent: false },
 	props: {
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({

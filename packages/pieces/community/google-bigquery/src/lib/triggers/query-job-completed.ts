@@ -150,9 +150,14 @@ const polling: Polling<
 export const queryJobCompletedTrigger = createTrigger({
   auth: bigQueryAuth,
   name: 'query_job_completed',
+  classification: 'READ',
   displayName: 'Query Job Completed (With Row Data)',
   description:
     'Triggers when a BigQuery query job finishes successfully. Each flow run receives the job metadata and the result rows from that query.',
+  aiMetadata: {
+    description:
+      'Fires when a successful (non-errored) QUERY-type job completes in the BigQuery project, detected by polling the project job history. Each event represents one finished query job and carries its metadata plus the fetched result rows. Only query jobs are surfaced; load, copy, and extract jobs are ignored.',
+  },
   props,
   sampleData: {
     job_id: 'job_abc123',

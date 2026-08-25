@@ -9,6 +9,9 @@ export const newComment = createTrigger({
   name: 'new_comment',
   displayName: 'New Comment',
   description: 'Triggers when new comments are added to conversations',
+  aiMetadata: {
+    description: 'Fires when a team member posts an internal comment on a Missive conversation or task. Delivered via a manually configured Missive webhook rule; each event carries the conversation and the comment (author, content, mentions). Use to react to internal collaboration rather than customer-facing messages.',
+  },
   auth: missiveAuth,
   props: {
     setupInstructions: Property.MarkDown({

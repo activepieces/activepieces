@@ -4,7 +4,7 @@ import { createContact } from './lib/actions/create-contact';
 import { findContactByName } from './lib/actions/find-contact-by-name';
 import { deleteContact } from './lib/actions/delete-contact';
 import { newContact } from './lib/triggers/new-contact';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 export const echowin = createPiece({
   displayName: 'Echowin',

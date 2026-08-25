@@ -6,8 +6,12 @@ import { props } from '../common/props';
 export const linearRemovedIssue = createTrigger({
   auth: linearAuth,
   name: 'removed_issue',
+  classification: 'READ',
   displayName: 'Removed Issue',
   description: 'Triggers when an existing Linear issue is removed',
+  aiMetadata: {
+    description: 'Fires when an existing issue is deleted from the selected Linear team. Represents the issue as it was at the time of removal.',
+  },
   props: {
     team_id: props.team_id()
   },
@@ -60,6 +64,13 @@ export const linearRemovedIssue = createTrigger({
       createdAt: '2023-09-05T12:00:00.000Z',
       updatedAt: '2023-09-05T12:00:00.000Z',
     },
+    type: 'Issue',
+    actor: { id: 'user_1', name: 'Test user', type: 'user' },
+    createdAt: '2023-09-05T12:00:00.000Z',
+    url: 'https://linear.app/test-team/issue/1',
+    organizationId: 'org_1',
+    webhookTimestamp: 1693915200000,
+    webhookId: 'webhook_1',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -90,7 +101,7 @@ export const linearRemovedIssue = createTrigger({
   async run(context) {
     const body = context.payload.body as { action: string; data: unknown};
     if (body.action === 'remove') {
-      return [body.data];
+      return [body];
     }
     return [];
   }

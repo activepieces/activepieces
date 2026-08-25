@@ -17,6 +17,8 @@ export const getItemCommentsAction = createAction({
   name: 'get_item_comments',
   displayName: 'Get Item Comments',
   description: 'Get comments for an item.',
+  audience: 'both',
+  aiMetadata: { description: 'Retrieve the comments on a specific Weekdone item by its ID; the user/team/period filters only help locate the item. Use to read discussion or to find a comment ID before deleting one. Read-only and idempotent.', idempotent: true },
   props: {
     user_id_filter: Property.Dropdown({
       auth: weekdoneAuth,

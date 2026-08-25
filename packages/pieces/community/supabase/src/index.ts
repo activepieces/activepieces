@@ -5,13 +5,15 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createClient } from '@supabase/supabase-js';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { uploadFile } from './lib/actions/upload-file';
 import { createRow } from './lib/actions/create-row';
 import { deleteRows } from './lib/actions/delete-rows';
 import { updateRow } from './lib/actions/update-row';
 import { upsertRow } from './lib/actions/upsert-row';
 import { searchRows } from './lib/actions/search-rows';
+import { listTables } from './lib/actions/list-tables';
+import { getTableSchema } from './lib/actions/get-table-schema';
 import { newRow } from './lib/triggers/new-row';
 import { supabaseAuth } from './lib/auth';
 
@@ -55,6 +57,8 @@ export const supabase = createPiece({
     upsertRow,
     deleteRows,
     searchRows,
+    listTables,
+    getTableSchema,
     createCustomApiCallAction({
       baseUrl: (auth) => auth?.props?.url || '',
       auth: supabaseAuth,

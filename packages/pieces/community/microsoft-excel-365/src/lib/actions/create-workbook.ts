@@ -6,8 +6,11 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const createWorkbook = createAction({
   auth: excelAuth,
   name: 'createWorkbook',
+  classification: 'WRITE',
   displayName: 'Create Workbook',
   description: 'Create a new workbook at the specified location',
+  audience: 'both',
+  aiMetadata: { description: 'Create a new, empty .xlsx workbook file in OneDrive or a SharePoint document library. Use to provision a fresh spreadsheet before adding worksheets or data. Not idempotent — name conflicts are auto-renamed, so re-running produces an additional file rather than reusing an existing one.', idempotent: false },
   props: {
     storageSource: commonProps.storageSource,
     siteId: commonProps.siteId,

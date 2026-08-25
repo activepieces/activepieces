@@ -14,6 +14,8 @@ export const electricityRateDeleteAction = createAction({
   name: 'electricityRateDelete',
   displayName: 'Resources - Electricity Rates - Delete',
   description: 'Delete a Electricity rate.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an electricity rate from AMPECO by its numeric id. Destructive and cannot be undone; repeating after success fails because the rate no longer exists. Confirm the correct id before calling.', idempotent: false },
   props: {
         
   electricityRate: Property.Number({

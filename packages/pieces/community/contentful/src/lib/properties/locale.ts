@@ -1,6 +1,6 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, makeClient } from '../common';
-import { isEmpty } from '@activepieces/shared';
+import { isEmpty } from '@activepieces/pieces-framework';
 
 const Locale = Property.Dropdown({
   auth: ContentfulAuth,

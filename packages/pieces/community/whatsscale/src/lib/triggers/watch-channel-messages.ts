@@ -7,9 +7,14 @@ import { whatsscaleProps } from '../common/props';
 export const watchChannelMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
   name: 'watch_channel_messages',
+  classification: 'READ',
   displayName: 'Watch Channel Messages',
   description:
     'Triggers when a new message is posted to any WhatsApp Channel (includes own posts).',
+  aiMetadata: {
+    description:
+      'Fires when a new message is posted to any WhatsApp Channel the connected session follows, including the session owner\'s own posts. Each event represents a single channel post and includes the originating channel ID, message body, and media details. Use to monitor channel activity across all followed channels rather than a single chosen one.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     session: whatsscaleProps.session,

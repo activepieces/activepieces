@@ -1,26 +1,33 @@
-import path from 'path'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { environmentMigrations } from '@activepieces/server-utils'
-import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 export type SystemProp = AppSystemProp
 
-let cachedVersion: string | undefined
-
 export enum AppSystemProp {
+    ALLOW_DISPOSABLE_EMAILS = 'ALLOW_DISPOSABLE_EMAILS',
+    ALLOW_OPEN_SIGN_UP = 'ALLOW_OPEN_SIGN_UP',
+    ALLOWED_EMBED_ORIGINS = 'ALLOWED_EMBED_ORIGINS',
     API_KEY = 'API_KEY',
     TEMPLATES_API_KEY = 'TEMPLATES_API_KEY',
     TEMPLATE_MANAGER_API_KEY = 'TEMPLATE_MANAGER_API_KEY',
     API_RATE_LIMIT_AUTHN_ENABLED = 'API_RATE_LIMIT_AUTHN_ENABLED',
     API_RATE_LIMIT_AUTHN_MAX = 'API_RATE_LIMIT_AUTHN_MAX',
     API_RATE_LIMIT_AUTHN_WINDOW = 'API_RATE_LIMIT_AUTHN_WINDOW',
+    API_RATE_LIMIT_EMAIL_CODE_MAX = 'API_RATE_LIMIT_EMAIL_CODE_MAX',
     APP_WEBHOOK_SECRETS = 'APP_WEBHOOK_SECRETS',
     APPSUMO_TOKEN = 'APPSUMO_TOKEN',
+    APOLLO_API_KEY = 'APOLLO_API_KEY',
+    AUTUMN_CONSOLE_URL = 'AUTUMN_CONSOLE_URL',
+    AXIOM_TOKEN = 'AXIOM_TOKEN',
+    AXIOM_DATASET = 'AXIOM_DATASET',
     BETTERSTACK_HOST = 'BETTERSTACK_HOST',
     BETTERSTACK_TOKEN = 'BETTERSTACK_TOKEN',
     CLIENT_REAL_IP_HEADER = 'CLIENT_REAL_IP_HEADER',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
+    CLOUD_CHAT_ROLLOUT_CAP = 'CLOUD_CHAT_ROLLOUT_CAP',
     CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
     CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
+    CLOUDFLARE_SAAS_FALLBACK_ORIGIN = 'CLOUDFLARE_SAAS_FALLBACK_ORIGIN',
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     CONFIG_PATH = 'CONFIG_PATH',
     DB_TYPE = 'DB_TYPE',
@@ -28,6 +35,7 @@ export enum AppSystemProp {
     DEV_PIECES = 'DEV_PIECES',
     EDITION = 'EDITION',
     ENABLE_FLOW_ON_PUBLISH = 'ENABLE_FLOW_ON_PUBLISH',
+    ENFORCE_CONNECTION_PIECE_BINDING = 'ENFORCE_CONNECTION_PIECE_BINDING',
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
     ENVIRONMENT = 'ENVIRONMENT',
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
@@ -44,6 +52,7 @@ export enum AppSystemProp {
     ISSUE_ARCHIVE_DAYS = 'ISSUE_ARCHIVE_DAYS',
     JWT_SECRET = 'JWT_SECRET',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'LOAD_TRANSLATIONS_FOR_DEV_PIECES',
+    LOG_FILE = 'LOG_FILE',
     LOG_LEVEL = 'LOG_LEVEL',
     LOG_PRETTY = 'LOG_PRETTY',
     LOKI_PASSWORD = 'LOKI_PASSWORD',
@@ -56,9 +65,9 @@ export enum AppSystemProp {
     WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB = 'WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB',
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     OTEL_ENABLED = 'OTEL_ENABLED',
+    OTEL_QUEUE_METRICS_ENABLED = 'OTEL_QUEUE_METRICS_ENABLED',
     PAGE_ONCALL_WEBHOOK = 'PAGE_ONCALL_WEBHOOK',
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
-    PIECES_CACHE_MAX_ENTRIES = 'PIECES_CACHE_MAX_ENTRIES',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     WORKERS = 'WORKERS',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -100,31 +109,39 @@ export enum AppSystemProp {
     SANDBOX_MEMORY_LIMIT = 'SANDBOX_MEMORY_LIMIT',
     SANDBOX_PROPAGATED_ENV_VARS = 'SANDBOX_PROPAGATED_ENV_VARS',
     SCIM_DEFAULT_PROJECT_ROLE = 'SCIM_DEFAULT_PROJECT_ROLE',
-    SECRET_MANAGER_API_KEY = 'SECRET_MANAGER_API_KEY',
     SENTRY_DSN = 'SENTRY_DSN',
+    FRONTEND_SENTRY_DSN = 'FRONTEND_SENTRY_DSN',
     SKIP_PROJECT_LIMITS_CHECK = 'SKIP_PROJECT_LIMITS_CHECK',
     SMTP_HOST = 'SMTP_HOST',
     SMTP_PASSWORD = 'SMTP_PASSWORD',
     SMTP_PORT = 'SMTP_PORT',
     SMTP_SENDER_EMAIL = 'SMTP_SENDER_EMAIL',
     SMTP_SENDER_NAME = 'SMTP_SENDER_NAME',
+    SMTP_TLS_REJECT_UNAUTHORIZED = 'SMTP_TLS_REJECT_UNAUTHORIZED',
     SMTP_USERNAME = 'SMTP_USERNAME',
-    STRIPE_SECRET_KEY = 'STRIPE_SECRET_KEY',
-    STRIPE_WEBHOOK_SECRET = 'STRIPE_WEBHOOK_SECRET',
     TELEMETRY_ENABLED = 'TELEMETRY_ENABLED',
+    TURNSTILE_SECRET_KEY = 'TURNSTILE_SECRET_KEY',
+    TURNSTILE_SITE_KEY = 'TURNSTILE_SITE_KEY',
+    AGENTS_ENABLED = 'AGENTS_ENABLED',
+    TOOL_SEARCH_ENABLED = 'TOOL_SEARCH_ENABLED',
     TRIGGER_DEFAULT_POLL_INTERVAL = 'TRIGGER_DEFAULT_POLL_INTERVAL',
     TRIGGER_HOOKS_TIMEOUT_SECONDS = 'TRIGGER_HOOKS_TIMEOUT_SECONDS',
     TRIGGER_TIMEOUT_SECONDS = 'TRIGGER_TIMEOUT_SECONDS',
+    USE_CDN_FOR_BUNDLES = 'USE_CDN_FOR_BUNDLES',
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
     OPENROUTER_PROVISION_KEY = 'OPENROUTER_PROVISION_KEY',
+    OPENAI_API_KEY = 'OPENAI_API_KEY',
     EVENT_DESTINATION_TIMEOUT_SECONDS = 'EVENT_DESTINATION_TIMEOUT_SECONDS',
     CANARY_APP_URL = 'CANARY_APP_URL',
+    IS_CANARY_APP = 'IS_CANARY_APP',
     SSRF_ALLOW_LIST = 'SSRF_ALLOW_LIST',
     NETWORK_MODE = 'NETWORK_MODE',
-    MCP_OAUTH_ISSUER_URL = 'MCP_OAUTH_ISSUER_URL',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
     FRONTEND_URL = 'FRONTEND_URL',
     PORT = 'PORT',
+    CONSOLE_API_SECRET_KEY = 'CONSOLE_API_SECRET_KEY',
+    LOG_SAMPLE_RATE_INFO = 'LOG_SAMPLE_RATE_INFO',
+    LOG_KEEP_SLOW_MS = 'LOG_KEEP_SLOW_MS',
 }
 
 export enum ContainerType {
@@ -147,8 +164,7 @@ export const environmentVariables = {
         return value ? value === 'true' : undefined
     },
     getEnvironment: (prop: AppSystemProp): string | undefined => {
-        const environmnetVariables = environmentMigrations.migrate()
-        return environmnetVariables['AP_' + prop]
+        return environmentMigrations.migrate('AP_' + prop)
     },
     getEnvironmentOrThrow: (prop: AppSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)
@@ -157,33 +173,3 @@ export const environmentVariables = {
     },
 }
 
-export const apVersionUtil = {
-    async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require(path.resolve(process.cwd(), 'package.json'))
-        return packageJson.version
-    },
-    async getLatestRelease(): Promise<string> {
-        try {
-            if (cachedVersion) {
-                return cachedVersion
-            }
-            const response = await fetch(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-                {
-                    signal: AbortSignal.timeout(5000),
-                },
-            )
-            const data: PackageJson = await response.json()
-            cachedVersion = data.version
-            return data.version
-        }
-        catch (ex) {
-            return '0.0.0'
-        }
-    },
-}
-
-type PackageJson = {
-    version: string
-}

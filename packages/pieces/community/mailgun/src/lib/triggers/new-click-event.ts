@@ -5,6 +5,10 @@ export const newClickEvent = createMailgunWebhookTrigger({
   displayName: 'New Click Event',
   description:
     'Triggers when a recipient clicks a tracked link in an email in Mailgun',
+  aiMetadata: {
+    description:
+      'Fires when a recipient clicks a tracked link in an email in Mailgun. Represents a single click event including the clicked URL plus client and device details; requires click tracking enabled on the domain.',
+  },
   eventType: 'clicked',
   testEventFilter: { event: 'clicked' },
   sampleData: {

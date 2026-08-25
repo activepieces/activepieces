@@ -4,8 +4,14 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const createPaymentLink = createAction({
   name: 'create-payment-link',
+  classification: 'WRITE',
   displayName: 'Create Payment Link',
   description: 'Creates a payment link in Cashfree Payment Gateway',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Creates a shareable Cashfree payment link for a given amount, currency, and purpose that a customer can pay through, optionally sending it via SMS/email and supporting partial payments. Use this to collect payment without building a full checkout. Targets sandbox or production via the Environment prop; if no Link ID is supplied a unique one is auto-generated, so each call creates a new link and is not idempotent.',
+    idempotent: false,
+  },
   auth: cashfreePaymentsAuth,
   props: {
     environment: Property.StaticDropdown({

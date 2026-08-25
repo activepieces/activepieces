@@ -1,0 +1,27 @@
+scale to 4 issued at 2026-07-02T10:15:53Z (epoch 1782987353.604)
+new pods: worker-6ddc79c544-gk96c worker-6ddc79c544-kqgv5
+=== worker-6ddc79c544-gk96c ===
+  node               : gke-ap-sandbox-bench-default-pool-452661e9-c8c2
+  created            : +  -0.60s
+  PodScheduled       : +  -0.60s
+  Initialized        : +   0.40s
+  Ready              : +   2.40s
+  containerStarted   : +   2.40s
+  event Scheduled   : +  -0.60s  Successfully assigned default/worker-6ddc79c544-gk96c to gke-ap-sandbox-bench-default-pool-452661e9-c8c2
+  event Pulling     : +   0.40s  Pulling image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench"
+  event Pulled      : +   2.40s  Successfully pulled image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+  event Created     : +   2.40s  Container created
+  event Started     : +   2.40s  Container started
+=== worker-6ddc79c544-kqgv5 ===
+  node               : gke-ap-sandbox-bench-default-pool-452661e9-ncx1
+  created            : +  -0.60s
+  PodScheduled       : +  -0.60s
+  Initialized        : +   0.40s
+  Ready              : +   2.40s
+  containerStarted   : +   2.40s
+  event Scheduled   : +   0.40s  Successfully assigned default/worker-6ddc79c544-kqgv5 to gke-ap-sandbox-bench-default-pool-452661e9-ncx1
+  event Pulling     : +   0.40s  Pulling image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench"
+  event Pulled      : +   2.40s  Successfully pulled image "us-central1-docker.pkg.dev/activepieces-b3803/sandbox-bench/ap-worker:sandbox-bench
+  event Created     : +   2.40s  Container created
+  event Started     : +   2.40s  Container started
+  log WorkerPolling  : +   4.57s

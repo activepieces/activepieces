@@ -14,6 +14,8 @@ export const paymentMethodsListingAction = createAction({
   name: 'paymentMethodsListing',
   displayName: 'Resources - Users - Payment Methods Listing',
   description: 'Get all payment methods for a user.',
+  audience: 'both',
+  aiMetadata: { description: 'List all payment methods registered to a single AMPECO user, identified by user id. Read-only and idempotent. Enable Paginate Results to fetch every page up to the Per page cap. Use to discover payment method ids before Payment Method Read, Update, or Delete.', idempotent: true },
   props: {
         
   user: Property.Number({

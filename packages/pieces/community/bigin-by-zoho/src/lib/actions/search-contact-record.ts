@@ -5,8 +5,11 @@ import { biginApiService } from '../common/request';
 export const searchContactRecord = createAction({
   auth: biginAuth,
   name: 'searchContactRecord',
+  classification: 'SEARCH',
   displayName: 'Search Contact Record',
   description: 'Searches contacts by criteria, email, phone, or word',
+  audience: 'both',
+  aiMetadata: { description: 'Searches contact (person) records in Bigin CRM and returns matches. The search mode selects what the term is matched against: Criteria (name/email/mobile with equals or starts-with), a dedicated Email lookup, a dedicated Phone lookup, or a free-text Word search. Use to find a person by name, email, or phone before referencing or updating them. Idempotent: read-only, repeating the search returns the same matches.', idempotent: true },
   props: {
     mode: Property.StaticDropdown({
       displayName: 'Search Mode',

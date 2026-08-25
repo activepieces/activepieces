@@ -10,6 +10,12 @@ export const convertPdfToTextAction = createAction({
 	auth: doctlyAuth,
 	displayName: 'Convert PDF to Text',
 	description: 'Converts PDF document to text file with markdown formatting.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Uploads a PDF file to Doctly AI and converts it to markdown-formatted text, returning the extracted text. The action submits the document, then blocks while polling Doctly until the conversion completes (up to a 5-minute timeout), so a single call can take a while. Requires a PDF file as input. Each call creates a new conversion job on Doctly, so it is not idempotent.',
+		idempotent: false,
+	},
 	props: {
 		file: Property.File({
 			displayName: 'Document File',

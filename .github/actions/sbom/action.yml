@@ -1,0 +1,90 @@
+name: SBOM
+description: Generates CycloneDX + SPDX SBOMs for a Docker image, scans them with Grype and Trivy, and conditionally uploads to GitHub Releases and the Security tab.
+
+inputs:
+  image:
+    description: Full image reference with tag (e.g. ghcr.io/activepieces/activepieces:0.83.0).
+    required: true
+  version:
+    description: Version string used to name the SBOM files and as the Grype/Trivy SARIF category.
+    required: true
+  upload-release:
+    description: If 'true', attach both SBOMs as assets to the GitHub Release named after `version`.
+    required: false
+    default: 'false'
+  upload-sarif:
+    description: "If 'true', upload the Grype and Trivy SARIF reports to the GitHub Security tab. Requires security-events write permission on the calling job."
+    required: false
+    default: 'false'
+  github-token:
+    description: Token used for `gh release upload`. Required when `upload-release` is true.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+
+    - name: Generate SBOMs (CycloneDX + SPDX)
+      shell: bash
+      run: |
+        syft "${{ inputs.image }}" \
+          -o "cyclonedx-json=activepieces-${{ inputs.version }}.cdx.json" \
+          -o "spdx-json=activepieces-${{ inputs.version }}.spdx.json"
+
+    - name: Scan SBOM with Grype
+      id: grype
+      uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e # v6.5.1
+      with:
+        sbom: activepieces-${{ inputs.version }}.cdx.json
+        output-format: sarif
+        fail-build: false
+        severity-cutoff: critical
+
+    - name: Upload Grype SARIF to GitHub Security tab
+      if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+      with:
+        sarif_file: ${{ steps.grype.outputs.sarif }}
+        category: grype-${{ inputs.version }}
+
+    - name: Scan image with Trivy
+      uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+      with:
+        scan-type: image
+        image-ref: ${{ inputs.image }}
+        format: sarif
+        output: trivy-${{ inputs.version }}.sarif
+        severity: CRITICAL,HIGH
+        limit-severities-for-sarif: 'true'
+        exit-code: '0'
+
+    - name: Upload Trivy SARIF to GitHub Security tab
+      if: inputs.upload-sarif == 'true'
+      uses: github/codeql-action/upload-sarif@1521896cd211af95be3f02edf6f436e10b819c27 # v3.35.4
+      with:
+        sarif_file: trivy-${{ inputs.version }}.sarif
+        category: trivy-${{ inputs.version }}
+
+    - name: Attach SBOMs to GitHub Release
+      if: inputs.upload-release == 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh release upload "${{ inputs.version }}" \
+          "activepieces-${{ inputs.version }}.cdx.json" \
+          "activepieces-${{ inputs.version }}.spdx.json"
+
+    - name: Upload SBOMs + SARIF as workflow artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: sbom-${{ inputs.version }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: |
+          activepieces-${{ inputs.version }}.cdx.json
+          activepieces-${{ inputs.version }}.spdx.json
+          ${{ steps.grype.outputs.sarif }}
+          trivy-${{ inputs.version }}.sarif
+        retention-days: 30
+        if-no-files-found: error

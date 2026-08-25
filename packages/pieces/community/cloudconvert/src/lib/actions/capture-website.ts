@@ -196,6 +196,8 @@ export const captureWebsite = createAction({
   name: 'capture_website',
   displayName: 'Capture Website',
   description: 'Capture webpage as PDF, screenshot PNG, or JPG from a URL',
+  audience: 'both',
+  aiMetadata: { description: 'Renders a live webpage at a given URL and captures it as a PDF, PNG, or JPG via CloudConvert, with optional page sizing, margins, and render-wait controls. Choose this to snapshot or archive a web page rather than convert an existing file. Requires a reachable URL and an output_format. Each call creates a new capture task, so it is not idempotent.', idempotent: false },
   auth: cloudconvertAuth,
   requireAuth: true,
   props: captureWebsiteProps(),

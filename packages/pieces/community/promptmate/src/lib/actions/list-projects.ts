@@ -7,6 +7,8 @@ export const listProjects = createAction({
   name: 'list_projects',
   displayName: 'List Projects',
   description: 'Retrieve a list of available PromptMate projects',
+  audience: 'both',
+  aiMetadata: { description: 'Lists the PromptMate projects available to the authenticated account. Use it to discover which projects exist for organizing apps. Takes no input; read-only and safe to repeat.', idempotent: true },
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest({

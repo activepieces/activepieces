@@ -14,6 +14,8 @@ export const evseDowntimePeriodDeleteAction = createAction({
   name: 'evseDowntimePeriodDelete',
   displayName: 'Resources - Evse Downtime Periods - Delete',
   description: 'Delete Manual Created EVSE Downtime Period.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete a manually created EVSE downtime period by its numeric ID. Destructive and irreversible; a repeat call fails once the period is gone. Only manually created periods can be removed.', idempotent: false },
   props: {
         
   evseDowntimePeriod: Property.Number({

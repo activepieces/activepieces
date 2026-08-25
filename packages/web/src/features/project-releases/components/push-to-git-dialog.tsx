@@ -1,9 +1,9 @@
+import { assertNotNullOrUndefined } from '@activepieces/core-utils';
 import {
   GitPushOperationType,
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,
   PushTablesGitRepoRequest,
-  assertNotNullOrUndefined,
   PopulatedFlow,
   Table,
 } from '@activepieces/shared';

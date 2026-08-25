@@ -7,6 +7,8 @@ export const searchDeals = createAction({
     name: 'search_deals',
     displayName: 'Search Deals',
     description: 'List or filter deals',
+    audience: 'both',
+    aiMetadata: { description: 'Look up sales deals in Teamleader, optionally narrowing by a free-text term, customer, phase, status (open/won/lost), responsible user, or closing/updated/created date ranges, with paging and sorting. With no filters it lists all deals; supply filters to find specific matches (e.g. resolve a deal ID before updating). Read-only and idempotent.', idempotent: true },
     auth: teamleaderAuth,
     props: {
         term: Property.ShortText({

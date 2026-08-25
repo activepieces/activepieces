@@ -23,7 +23,7 @@ import {
   AirtableTable,
   AirtableView,
 } from './models';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 
 

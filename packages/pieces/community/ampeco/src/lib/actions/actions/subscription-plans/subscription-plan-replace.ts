@@ -14,6 +14,8 @@ export const subscriptionPlanReplaceAction = createAction({
   name: 'subscriptionPlanReplace',
   displayName: 'Actions - Subscription Plans - Replace',
   description: 'Replace a subscription plan with another one.',
+  audience: 'both',
+  aiMetadata: { description: 'Replace one subscription plan with a different plan across all tariff restrictions and charge points that reference the old plan, optionally scheduled for a future date (immediate if left empty). A reason note is required for change tracking. Not idempotent: each call records a new replacement and applies the swap.', idempotent: false },
   props: {
         
   subscriptionPlan: Property.Number({

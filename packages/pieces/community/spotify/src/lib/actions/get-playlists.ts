@@ -3,8 +3,14 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playlists',
+  classification: 'SEARCH',
   displayName: 'Get Playlists',
   description: 'Retrieves the list of playlists that you created or followed',
+  audience: 'both',
+  aiMetadata: {
+    description: "Lists the current user's own and followed playlists. Use it to discover a playlist's id before reading, updating, or modifying it. By default returns one paged page (limit/offset); enable the All option to auto-page through and return every playlist in one call. Read-only and repeatable.",
+    idempotent: true,
+  },
   auth: spotifyCommon.authentication,
   props: {
     offset: Property.Number({

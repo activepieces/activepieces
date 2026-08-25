@@ -8,6 +8,12 @@ export const createACustomer = createAction({
   name: 'createACustomer',
   displayName: 'Create a customer',
   description: 'Create a new customer in Waitwhile',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new customer record in Waitwhile from the provided contact details (first name required; last name, phone, email, and tags optional). Choose this when adding a person to the system before booking or queuing them. Not idempotent: each call creates a separate customer even with identical input.',
+    idempotent: false,
+  },
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',

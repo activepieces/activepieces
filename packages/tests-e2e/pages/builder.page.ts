@@ -57,4 +57,22 @@ export class BuilderPage extends BasePage {
     await this.page.waitForSelector('.react-flow__nodes', { state: 'visible' });
     await this.page.waitForSelector('.react-flow__node', { state: 'visible' });
   }
-} 
+
+  // A freshly published version may not serve synchronous requests immediately
+  // (the sync URL can briefly 404), so poll until the Return Response reflects
+  // the published flow.
+  async expectSyncWebhookResponse(params: { url: string; key: string; expected: string }) {
+    await expect
+      .poll(
+        async () => {
+          const response = await this.page.context().request.get(params.url);
+          const body: Record<string, unknown> = await response
+            .json()
+            .catch(() => ({}));
+          return body[params.key];
+        },
+        { timeout: 60000, intervals: [2000, 3000, 5000] },
+      )
+      .toBe(params.expected);
+  }
+}

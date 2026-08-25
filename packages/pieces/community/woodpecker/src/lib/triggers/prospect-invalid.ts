@@ -7,6 +7,9 @@ export const prospectInvalid = createTrigger({
   name: 'prospect_invalid',
   displayName: 'Prospect Invalid',
   description: 'Triggers when a prospect email is marked as invalid',
+  aiMetadata: {
+    description: 'Fires when a prospect email address is marked INVALID (failed verification or rejected as undeliverable). Represents a bad-address event for a single prospect.',
+  },
   props: {},
   sampleData: {
     method: 'prospect_invalid',

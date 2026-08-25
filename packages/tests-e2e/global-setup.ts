@@ -1,5 +1,6 @@
 import { chromium } from '@playwright/test';
 import { AuthenticationPage } from './pages/authentication.page';
+import { AutomationsPage } from './pages/automations.page';
 
 export const DEFAULT_EMAIL = 'test@activepieces.com';
 export const DEFAULT_PASSWORD = 'TestPassword123!@#';
@@ -32,8 +33,7 @@ async function globalSetup() {
       });
     }
 
-    // Wait for successful authentication (redirect to automations page)
-    await page.waitForURL('**/automations', { timeout: 15000 });
+    await new AutomationsPage(page).open();
 
     console.log('✓ Global setup completed successfully');
   } catch (error) {

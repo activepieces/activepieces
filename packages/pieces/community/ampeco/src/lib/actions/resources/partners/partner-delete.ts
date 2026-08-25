@@ -14,6 +14,8 @@ export const partnerDeleteAction = createAction({
   name: 'partnerDelete',
   displayName: 'Resources - Partners - Delete',
   description: 'Delete a partner.',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently delete an AMPECO partner by its numeric ID. Destructive and not reversible; re-running on an already-deleted partner will fail. Confirm the partner ID via the read or listing action first.', idempotent: false },
   props: {
         
   partner: Property.Number({

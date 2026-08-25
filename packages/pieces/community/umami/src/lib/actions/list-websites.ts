@@ -8,6 +8,12 @@ export const listWebsites = createAction({
   name: 'list_websites',
   displayName: 'List Websites',
   description: 'Returns all websites tracked in your Umami account.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'List all websites tracked in the connected Umami account, returning each website ID, name, and domain. Use this first to discover the website ID that the analytics and event actions require. Takes only an optional result limit. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     limit: Property.Number({
       displayName: 'Max Results',

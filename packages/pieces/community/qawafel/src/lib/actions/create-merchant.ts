@@ -10,6 +10,12 @@ export const createMerchant = createAction({
   displayName: 'Create Merchant (Customer or Supplier)',
   description:
     'Add a new customer or supplier to your Qawafel tenant. Use this when onboarding a new B2B partner from your CRM, signup form, or another system.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new merchant in the Qawafel tenant as either a Customer (buys from you) or a Supplier (you buy from them). Use when onboarding a B2B partner; requires legal name, English/Arabic trade names, contact email and phone, a Commercial Registration number, a VAT number, and a full address. Not idempotent: each call creates a new merchant.',
+    idempotent: false,
+  },
   props: {
     type: Property.StaticDropdown<'customer' | 'supplier'>({
       displayName: 'Merchant Type',

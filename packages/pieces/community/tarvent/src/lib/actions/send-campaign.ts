@@ -9,6 +9,8 @@ export const sendCampaign = createAction({
   name: 'tarvent_send_campaign',
   displayName: 'Send Campaign',
   description: 'Sends a copy of a campaign.',
+  audience: 'both',
+  aiMetadata: { description: 'Triggers Tarvent to send a copy of an existing, fully configured campaign to its audience. Use to dispatch a prepared campaign; the campaign must already have its from address, subject, and content set up. Not idempotent: each call sends the campaign again.', idempotent: false },
   props: {
     campaignId: tarventCommon.campaignId(true, 'Select which campaign to send. **NOTE:** Make sure all campaign settings are correct (from, subject, content) before configuring this automation.', true),
   },

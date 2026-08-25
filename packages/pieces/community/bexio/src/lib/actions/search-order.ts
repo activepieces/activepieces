@@ -5,8 +5,11 @@ import { BexioClient } from '../common/client';
 export const searchOrderAction = createAction({
   auth: bexioAuth,
   name: 'search_order',
+  classification: 'SEARCH',
   displayName: 'Search Order',
   description: 'Search for orders using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Searches Bexio sales orders by one or more field criteria (document number, contact, status, totals, dates, etc.) with operators such as contains, equals, or comparison, with ordering and paging. Use to locate orders before referencing or processing them; pick Search Invoice or Search Quote for those document types. Read-only and idempotent.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

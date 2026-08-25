@@ -5,8 +5,11 @@ import { BexioClient } from '../common/client';
 export const findPersonAction = createAction({
   auth: bexioAuth,
   name: 'find_person',
+  classification: 'SEARCH',
   displayName: 'Find Person',
   description: 'Search for person contacts using various criteria',
+  audience: 'both',
+  aiMetadata: { description: 'Search Bexio person contacts (contact_type 2; companies are excluded) by one or more field/operator/value criteria such as name, email, phone, or contact number. Read-only and repeatable; returns matching person records and supports ordering, limit, and offset paging. Use to look up a person before referencing them in another action; for company contacts use the company-oriented lookup instead.', idempotent: true },
   props: {
     search_criteria: Property.Array({
       displayName: 'Search Criteria',

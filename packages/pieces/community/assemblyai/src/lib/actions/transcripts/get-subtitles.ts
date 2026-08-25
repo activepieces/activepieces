@@ -5,10 +5,17 @@ import { getAssemblyAIClient } from '../../client';
 
 export const getSubtitles = createAction({
   name: 'getSubtitles',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript Subtitles',
   description: 'Export the transcript as SRT or VTT subtitles.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Exports an existing transcript, identified by its ID, as a subtitle file in either SRT or VTT format (selectable). Use this to produce captions from a completed transcript, optionally capping characters per caption. Requires a valid transcript ID; read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     id: Property.ShortText({
       displayName: 'Transcript ID',

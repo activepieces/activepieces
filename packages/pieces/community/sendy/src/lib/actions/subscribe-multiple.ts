@@ -5,7 +5,7 @@ import {
 import { subscribe } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const subscribeMultipleAction = createAction({
@@ -13,6 +13,8 @@ export const subscribeMultipleAction = createAction({
   auth: sendyAuth,
   displayName: 'Subscribe Multiple Lists',
   description: 'Add a new subscriber to a multiple lists',
+  audience: 'both',
+  aiMetadata: { description: 'Adds the same subscriber (by email, plus optional name, country, IP, referrer) to several Sendy lists in one call, iterating over each selected list. Use when a contact should join multiple lists at once; for a single list use Subscribe instead. Honors each list\'s double opt-in unless the silent flag forces single opt-in. Effectively an upsert on the email, so re-running with the same input is safe.', idempotent: true },
   props: {
     lists: Property.MultiSelectDropdown({
       auth: sendyAuth,
@@ -65,8 +67,8 @@ export const subscribeMultipleAction = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      email: z.string().email(),
-      referrer: z.string().url().optional(),
+      email: z.string().check(z.email()),
+      referrer: z.optional(z.string().check(z.url())),
     });
 
     const returnValues: any[] = [];

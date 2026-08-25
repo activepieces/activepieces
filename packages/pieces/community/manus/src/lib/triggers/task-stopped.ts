@@ -9,6 +9,9 @@ export const taskStopped = createTrigger({
   name: 'task_stopped',
   displayName: 'Task Stopped',
   description: 'Triggers when a task reaches a stopping point - either completion or requiring user input',
+  aiMetadata: {
+    description: 'Fires when a Manus task reaches a stopping point — either it finished or it is paused waiting for user input — carrying the task ID, the agent\'s message, any output attachments, and a stop reason. Use to act on a task\'s result or to respond when the agent needs more input.',
+  },
   props: {},
   auth: manusAuth,
   sampleData: {

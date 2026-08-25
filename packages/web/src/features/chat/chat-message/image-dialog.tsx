@@ -1,7 +1,12 @@
+import { t } from 'i18next';
 import { Download, X } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React from 'react';
 
+import ImageWithFallback from '@/components/custom/image-with-fallback';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+
+import { downloadImage } from './download-image';
 
 interface ImageDialogProps {
   open: boolean;
@@ -14,55 +19,41 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
   onOpenChange,
   imageUrl,
 }) => {
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onOpenChange(false);
-    };
-    document.addEventListener('keydown', handler);
-
-    return () => {
-      document.removeEventListener('keydown', handler);
-    };
-  }, [onOpenChange]);
-  return open ? (
-    <div
-      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center transition-colors duration-300"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onOpenChange(false);
-      }}
-    >
-      <div className="bg-transparent border-none shadow-none flex items-center justify-center px-4">
-        <div className="relative">
-          <img
-            src={imageUrl || ''}
-            alt="Full size image"
-            className="h-auto object-contain max-h-[90vh] sm:max-w-[90vw] shadow-xs rounded-md"
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex w-auto max-w-[90vw] items-center justify-center border-none bg-transparent p-0 shadow-none sm:max-w-[90vw]"
+      >
+        <DialogTitle className="sr-only">{t('Image preview')}</DialogTitle>
+        <div className="relative flex items-center justify-center">
+          <ImageWithFallback
+            src={imageUrl ?? ''}
+            alt={t('Image preview')}
+            className="max-h-[85vh] max-w-[90vw] h-auto w-auto rounded-md object-contain"
           />
+          <div className="absolute right-3 top-3 flex gap-2">
+            <Button
+              size="icon"
+              variant="accent"
+              title={t('Download')}
+              onClick={() => imageUrl && downloadImage(imageUrl)}
+            >
+              <Download className="h-4 w-4" />
+              <span className="sr-only">{t('Download')}</span>
+            </Button>
+            <Button
+              size="icon"
+              variant="accent"
+              title={t('Close')}
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">{t('Close')}</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 absolute top-2 right-2">
-          <Button
-            size="icon"
-            variant="accent"
-            onClick={() => {
-              const link = document.createElement('a');
-              link.href = imageUrl || '';
-              link.download = 'image';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="accent"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  ) : null;
+      </DialogContent>
+    </Dialog>
+  );
 };

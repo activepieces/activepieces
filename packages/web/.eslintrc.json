@@ -79,6 +79,9 @@
                 "from": [
                   "./src/features",
                   "./src/app"
+                ],
+                "except": [
+                  "../app/query-client.ts"
                 ]
               }
             ]

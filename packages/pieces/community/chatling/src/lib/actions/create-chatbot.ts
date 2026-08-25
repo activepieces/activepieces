@@ -7,8 +7,15 @@ import { templateIdDropdown } from '../common/props';
 export const createChatbot = createAction({
   auth: chatlingAuth,
   name: 'create_chatbot',
+  classification: 'WRITE',
   displayName: 'Create Chatbot',
   description: 'Create a new chatbot using a template or from scratch.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Create a new Chatling chatbot in the account, either seeded from an existing template or built from scratch when no template is given. Use when an agent needs to provision a new bot. Requires a name; the template ID is optional. Not idempotent — each call creates a separate chatbot, even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

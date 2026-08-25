@@ -38,8 +38,12 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof togglTrackAuth>,
 export const newWorkspace = createTrigger({
   auth: togglTrackAuth,
   name: 'new_workspace',
+  classification: 'READ',
   displayName: 'New or Updated Workspace',
   description: 'Fires when a workspace is created or updated (Toggl only supports workspace updated events).',
+  aiMetadata: {
+    description: 'Fires when a workspace accessible to the authenticated user is created or modified, delivering the workspace record. Polls Toggl periodically and emits each workspace whose last-modified timestamp is new since the previous poll.',
+  },
   props: {},
   sampleData: {
     id: 20763798,

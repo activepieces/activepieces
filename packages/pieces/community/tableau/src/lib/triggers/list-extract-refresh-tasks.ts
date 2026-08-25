@@ -105,6 +105,9 @@ export const listExtractRefreshTasksTrigger = createTrigger({
   name: 'list_extract_refresh_tasks',
   displayName: 'List Extract Refresh Tasks',
   description: 'Lists extract refresh tasks for the site',
+  aiMetadata: {
+    description: 'Polls the configured extract refresh tasks on the Tableau site and fires for each newly seen task, surfacing its schedule and the workbook or datasource it targets. Use to detect when a new extract refresh task is added to the site.',
+  },
   auth: tableauAuth,
   type: TriggerStrategy.POLLING,
   props: {},

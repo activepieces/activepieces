@@ -13,18 +13,15 @@ async function processBatches<T>(items: T[], batchSize: number, processor: (item
 
 const main = async () => {
   const piecesMetadata = await findAllPiecesDirectoryInSource()
-  const sharedDeps = ['packages/pieces/framework', 'packages/pieces/common']
-  
-  const sharedResults = await Promise.all(sharedDeps.map(packagePrePublishChecks))
-  const validationResults = await processBatches(
-    piecesMetadata.filter(p => !sharedDeps.includes(p)),
+  // pieces-framework, pieces-common and @activepieces/shared are no longer published to npm:
+  // pieces are self-contained bundles that inline these at build time. Exclude them from the
+  // publishable-package validation and only validate the pieces themselves.
+  const notPublished = ['packages/pieces/framework', 'packages/pieces/common']
+  await processBatches(
+    piecesMetadata.filter(p => !notPublished.includes(p)),
     10,
     packagePrePublishChecks
   )
-
-  if (!sharedResults.every(p => p)) {
-    validationResults.push(await packagePrePublishChecks('packages/shared'))
-  }
 }
 
 main();

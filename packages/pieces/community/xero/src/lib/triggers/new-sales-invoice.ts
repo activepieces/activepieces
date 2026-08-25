@@ -14,6 +14,9 @@ export const xeroNewSalesInvoice = createTrigger({
   name: 'xero_new_sales_invoice',
   displayName: 'New Sales Invoice',
   description: 'Fires when a new sales invoice (Accounts Receivable) is created.',
+  aiMetadata: {
+    description: 'Fires when a new sales invoice (Accounts Receivable, Type ACCREC) is created in the connected Xero organisation. Delivered through a Xero webhook on the INVOICE category filtered to CREATE events; the full invoice is fetched and only ACCREC (sales) invoices are emitted, so bills (ACCPAY) are excluded. Each item is the full invoice (number, status, contact, line items, totals). Represents a brand-new sales invoice, not an update to an existing one.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookInstructions: Property.MarkDown({

@@ -4,7 +4,7 @@ import {
     QueryParams,
 } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { pickBy } from '@activepieces/shared';
+import { pickBy } from '@activepieces/pieces-framework';
 
 const baseRequestProperties = {
   url: Property.ShortText({

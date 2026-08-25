@@ -11,6 +11,12 @@ export const createSupplierCreditMemo = createAction({
 	name: 'create_supplier_credit_memo',
 	displayName: 'Create Supplier Credit Memo',
 	description: 'Creates a new supplier credit memo in Workday.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Submits a supplier invoice adjustment (credit memo) against a supplier (by WID) with an adjustment date and control-total amount, plus an optional memo. Use to record a credit owed by a supplier. Not idempotent: each call submits a separate credit memo.',
+		idempotent: false,
+	},
 	props: {
 		supplierId: Property.ShortText({
 			displayName: 'Supplier ID',

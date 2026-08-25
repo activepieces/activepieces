@@ -21,6 +21,9 @@ export const newDisputedCase = createTrigger({
     name: 'new_disputed_case',
     displayName: 'New Disputed Case',
     description: "Triggers when a collection process was disputed by the debtor.",
+    aiMetadata: {
+      description: 'Fires when a debtor disputes (contests) an ongoing collection case, carrying the debtor/invoice details plus the dispute context and any attachment. Use to react to a contested debt that may need manual review.',
+    },
     auth: respaidAuth,
     props: {},
     sampleData: {

@@ -9,6 +9,12 @@ export const createExpense = createAction({
   name: 'createExpense',
   displayName: 'Create Expense',
   description: 'Create a new expense in MoonInvoice',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Records a new expense against a contact under a MoonInvoice company, optionally as a recurring expense on a chosen interval. Use when logging a cost or vendor payment. Requires the company, contact, an expense number, and a date; tax IDs are supplied as a JSON array. Not idempotent — each call creates a new expense regardless of the expense number.',
+    idempotent: false,
+  },
   props: {
     companyId: companyIdProp,
     date: Property.ShortText({

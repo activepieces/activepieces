@@ -8,6 +8,8 @@ export const listDroplets = createAction({
   name: 'list_droplets',
   displayName: 'List All Droplets',
   description: 'Retrieve a list of all Droplets in your account.',
+  audience: 'both',
+  aiMetadata: { description: 'Lists Droplets (virtual machines) on the authenticated DigitalOcean account, paginated. Returns all Droplets by default, or filters to a single tag, an exact name, or a Droplet type (standard vs. GPU); tag filtering cannot be combined with name or type. Use to discover Droplets or resolve a Droplet id before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     per_page: Property.Number({
       displayName: 'Results Per Page',

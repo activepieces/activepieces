@@ -1,0 +1,25 @@
+{
+    "id": "product-nav-awareness",
+    "description": "Capability: the assistant knows how the app is laid out and points the user to the right place (managing connected accounts lives under Connections). Pins the <product_model> briefing. Judgment-heavy → capability.",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "Where in the app do I manage the accounts I've connected, like my Gmail?"
+    ],
+    "recordedToolCalls": [],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "knows_app_layout",
+            "rubric": "The assistant correctly points the user to where connected accounts/integrations are managed — the Connections area/section of the app — in plain language. Naming 'Connections' or clearly describing the connected-accounts area is a PASS. Sending them to an unrelated or invented place, or saying it doesn't know where things are, is a FAIL. Offering to do it for them in addition is fine.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

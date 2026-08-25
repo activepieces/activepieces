@@ -1,0 +1,78 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.stage{width:1000px;padding:42px 56px 34px;background:#fff}
+.head{text-align:center;margin-bottom:34px}
+.head h1{font-size:29px;font-weight:750;color:#0f172a;letter-spacing:-.025em}
+.head p{font-size:15px;color:#64748b;margin-top:9px;font-weight:450;line-height:1.45}
+.chart{position:relative}
+.lane{display:flex;align-items:center;margin-bottom:20px}
+.lab{width:110px;flex:0 0 auto;text-align:right;padding-right:18px}
+.lab .t{font-size:17px;font-weight:740;color:#0f172a;line-height:1}
+.lab .s{font-size:12px;color:#94a3b8;font-weight:550;margin-top:4px;line-height:1.3}
+.plot{position:relative;width:700px;flex:0 0 auto;height:46px}
+.grid{position:absolute;top:-8px;bottom:-8px;width:1px;background:#eef2f7}
+.tick{position:absolute;top:-26px;font-size:11.5px;color:#cbd5e1;font-weight:600;transform:translateX(-50%)}
+.bar{display:flex;height:46px;border-radius:9px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+.seg{display:flex;flex-direction:column;justify-content:center;padding:0 12px;color:#fff;overflow:hidden;white-space:nowrap}
+.seg .n{font-size:12.5px;font-weight:700;line-height:1.1;text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.seg .m{font-size:11px;font-weight:600;opacity:.92;margin-top:2px}
+.total{position:absolute;top:50%;transform:translateY(-50%);font-size:16px;font-weight:760;white-space:nowrap}
+.legend{display:flex;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin-top:30px;padding-top:24px;border-top:1px solid #eef2f7}
+.lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569;font-weight:600}
+.lg i{width:12px;height:12px;border-radius:3px;flex:0 0 auto}
+.note{text-align:center;font-size:13px;color:#94a3b8;margin-top:24px;font-weight:500;line-height:1.5}
+.note b{color:#475569;font-weight:650}
+</style></head><body>
+<div class="stage">
+  <div class="head">
+    <h1>How fast new worker capacity arrives</h1>
+    <p>From the scale command to a worker polling for jobs, measured on GKE with the cluster autoscaler. Node provisioning and the image pull dominate the new-node path — the worker's own boot is seconds.</p>
+  </div>
+
+  <div class="chart">
+    <div style="position:relative;height:0">
+      <div style="position:absolute;left:110px;width:700px;height:0">
+        <div class="grid" style="left:0"></div><div class="tick" style="left:0">0</div>
+        <div class="grid" style="left:233px"></div><div class="tick" style="left:233px">30s</div>
+        <div class="grid" style="left:467px"></div><div class="tick" style="left:467px">60s</div>
+        <div class="grid" style="left:700px"></div><div class="tick" style="left:700px">90s</div>
+      </div>
+    </div>
+
+    <div style="height:34px"></div>
+
+    <div class="lane">
+      <div class="lab"><div class="t">Warm node</div><div class="s">cluster has room,<br>image cached</div></div>
+      <div class="plot">
+        <div class="bar" style="width:39px">
+          <div class="seg" style="background:#38bdf8;width:16px"></div>
+          <div class="seg" style="background:#8b5cf6;flex:1"></div>
+        </div>
+        <div class="total" style="left:51px;color:#7c3aed">~5 s</div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lab"><div class="t">New node</div><div class="s">cluster autoscaler<br>adds a VM</div></div>
+      <div class="plot">
+        <div class="bar" style="width:677px">
+          <div class="seg" style="background:#94a3b8;width:467px"><div class="n">Provision node</div><div class="m">~60 s</div></div>
+          <div class="seg" style="background:#f59e0b;width:187px"><div class="n">Pull image</div><div class="m">~24 s</div></div>
+          <div class="seg" style="background:#8b5cf6;width:23px"></div>
+        </div>
+        <div class="total" style="left:689px;color:#475569">~87 s</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="lg"><i style="background:#94a3b8"></i>Provision node (VM boot + join)</div>
+      <div class="lg"><i style="background:#f59e0b"></i>Pull worker image (126 MB, uncached)</div>
+      <div class="lg"><i style="background:#38bdf8"></i>Start container (image cached)</div>
+      <div class="lg"><i style="background:#8b5cf6"></i>Boot worker + connect (~3 s)</div>
+    </div>
+  </div>
+
+  <div class="note">Scaling on a metric through an HPA adds its reaction time (typically 15–60 s) in front of both paths. The first run on a fresh worker adds a one-time <b>~2–3 s cold start</b>.</div>
+</div>
+</body></html>

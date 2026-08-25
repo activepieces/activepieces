@@ -74,6 +74,9 @@ export const newRecord = createTrigger({
   name: 'new_record',
   displayName: 'New Record',
   description: 'Triggers when a new record is created in a Quickbase table',
+  aiMetadata: {
+    description: 'Fires when a new record is added to the selected Quickbase table. Detected by polling the table ordered on its created-timestamp field, so the table must have a timestamp field whose name contains "created". Represents a freshly created row, not edits to existing ones.',
+  },
   auth: quickbaseAuth,
   props,
   type: TriggerStrategy.POLLING,

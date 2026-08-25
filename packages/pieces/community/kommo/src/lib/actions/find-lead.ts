@@ -8,6 +8,8 @@ export const findLeadAction = createAction({
   name: 'find_lead',
   displayName: 'Find Lead',
   description: "Finds an existing lead.",
+  audience: 'both',
+  aiMetadata: { description: 'Searches leads in a Kommo CRM account by a free-text query matched against the leads\' filled fields, returning all matching leads. Use to look up a lead (e.g. by name, contact info, or other field content) before referencing, updating, or reporting on it; the query is required. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
       displayName: 'Query',

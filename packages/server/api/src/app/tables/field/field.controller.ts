@@ -1,4 +1,5 @@
-import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
+import { Permission } from '@activepieces/core-utils'
+import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, ReorderFieldsRequest, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -40,6 +41,15 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
     },
     )
 
+    fastify.post('/reorder', ReorderRequest, async (request) => {
+        return fieldService.reorder({
+            projectId: request.projectId,
+            tableId: request.body.tableId,
+            fieldIds: request.body.fieldIds,
+        })
+    },
+    )
+
     fastify.post('/:id', UpdateRequest, async (request) => {
         return fieldService.update({
             id: request.params.id,
@@ -51,7 +61,7 @@ export const fieldController: FastifyPluginAsyncZod = async (fastify) => {
 }
 const CreateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.BODY,
@@ -71,7 +81,7 @@ const CreateRequest = {
 
 const GetFieldByIdRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -85,7 +95,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -99,7 +109,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
             entitySourceType: EntitySourceType.QUERY,
@@ -116,7 +126,7 @@ const GetFieldsRequest = {
 
 const UpdateRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -126,5 +136,22 @@ const UpdateRequest = {
             id: z.string(),
         }),
         body: UpdateFieldRequest,
+    },
+}
+
+const ReorderRequest = {
+    config: {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
+        }),
+    },
+    schema: {
+        body: ReorderFieldsRequest,
     },
 }

@@ -7,6 +7,8 @@ export const deleteVideo = createAction({
   name: 'delete_video',
   displayName: 'Delete Video',
   description: 'Delete a video from Vimeo',
+  audience: 'both',
+  aiMetadata: { description: 'Permanently deletes a video from the authenticated user\'s Vimeo account, identified by its video ID. Use to remove content the user owns. This is destructive and not idempotent: the first call removes the video, and repeating it on an already-deleted ID has no further effect or errors.', idempotent: false },
   auth: vimeoAuth,
   props: {
     videoId: userVideoDropdown,

@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { omnihrAuth } from '../auth';
-import { getAuthHeaders, OmniHrAuth } from '../common/client';
 
 export const getEmployeeOrganizationalChart = createAction({
   auth: omnihrAuth,
@@ -9,6 +8,12 @@ export const getEmployeeOrganizationalChart = createAction({
   displayName: 'Get Employee Organizational Chart',
   description:
     'Retrieves employee organizational relationships including the complete management chain, direct reports, and peers',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Builds the organizational context for one OmniHR employee identified by their numeric system ID: the full management chain up to the top (walked by following each manager's snapshot), direct reports, peers, and career journey. Use when you need where someone sits in the org hierarchy rather than just their profile. Read-only and idempotent.",
+    idempotent: true,
+  },
   props: {
     system_id: Property.Number({
       displayName: 'System ID',
@@ -18,8 +23,11 @@ export const getEmployeeOrganizationalChart = createAction({
   },
   async run(context) {
     const { system_id } = context.propsValue;
-    const auth = context.auth as OmniHrAuth;
-    const headers = await getAuthHeaders(auth);
+    const headers = {
+      Authorization: `Bearer ${context.auth.access_token}`,
+      'Content-Type': 'application/json',
+      Origin: context.auth.props.origin,
+    };
 
     const snapshotResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,

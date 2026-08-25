@@ -5,6 +5,10 @@ export const recipientAuthenticationFailed = createEnvelopeEventTrigger({
   displayName: 'Person Failed Identity Check',
   description:
     'Triggers when a recipient fails the identity verification step before signing.',
+  aiMetadata: {
+    description:
+      'Fires when a specific recipient fails the identity verification (authentication) step required before signing a DocuSign envelope. Represents a per-recipient access/security event (the payload identifies the recipient), useful for flagging failed signing attempts.',
+  },
   docusignEvent: 'recipient-authenticationfailed',
   sampleData: {
     event: 'recipient-authenticationfailed',

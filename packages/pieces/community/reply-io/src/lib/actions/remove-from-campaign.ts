@@ -10,6 +10,8 @@ export const removeFromCampaignAction = createAction({
   displayName: 'Remove Contact from Campaign',
   description:
     'Stop a contact from receiving further emails in a specific campaign. The contact\'s record is kept in Reply.io.',
+  audience: 'both',
+  aiMetadata: { description: 'Remove a contact (by email) from one specific campaign so they stop receiving its outreach, while keeping their contact record and any other campaign enrolments intact. Use to pull a contact out of a single sequence; use Remove Contact from All Campaigns to halt every sequence at once. Requires the target campaign id and the contact email. Idempotent: repeating leaves the contact removed from that campaign.', idempotent: true },
   auth: replyIoAuth,
   props: {
     campaignId: campaignIdProp,

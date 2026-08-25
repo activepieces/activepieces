@@ -1,11 +1,11 @@
+import { ActivepiecesError, ErrorCode, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ErrorCode, SAMLAttributeMapping, SAMLAuthnProviderConfig, tryCatch } from '@activepieces/shared'
+import { SAMLAttributeMapping, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import * as saml from 'samlify'
-import { domainHelper } from '../../custom-domains/domain-helper'
 import { resolveSamlAttributes, SamlAttributes } from './saml-attributes'
 
-export const createSamlClient = async (platformId: string, samlProvider: SAMLAuthnProviderConfig): Promise<SamlClient> => {
+export const createSamlClient = async ({ platformId, samlProvider, acsUrl }: CreateSamlClientArgs): Promise<SamlClient> => {
     const cached = instanceCache.get(platformId)
     if (cached) {
         return cached
@@ -13,7 +13,7 @@ export const createSamlClient = async (platformId: string, samlProvider: SAMLAut
     saml.setSchemaValidator(validator)
     const metadataXml = await resolveIdpMetadata(samlProvider.idpMetadata)
     const idp = createIdp(metadataXml)
-    const sp = await createSp({ platformId, privateKey: samlProvider.idpCertificate })
+    const sp = createSp({ privateKey: samlProvider.idpCertificate, acsUrl })
     const client = samlClient({ idp, sp, attributeMapping: samlProvider.attributeMapping })
     instanceCache.set(platformId, client)
     return client
@@ -29,7 +29,10 @@ const samlClient = ({ idp, sp, attributeMapping }: SamlClientArgs) => ({
     },
     async parseAndValidateLoginResponse(idpLoginResponse: IdpLoginResponse): Promise<SamlAttributes> {
         const { data: loginResult, error: parseError } = await tryCatch(
-            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, idpLoginResponse),
+            () => sp.parseLoginResponse(idp, LOGIN_RESPONSE_BINDING, {
+                body: toStringRecord(idpLoginResponse.body),
+                query: toStringRecord(idpLoginResponse.query),
+            }),
         )
         if (parseError !== null) {
             throw new ActivepiecesError({
@@ -87,8 +90,7 @@ const resolveIdpMetadata = async (idpMetadata: string): Promise<string> => {
     return typeof response.data === 'string' ? response.data : String(response.data)
 }
 
-const createSp = async ({ platformId, privateKey }: CreateSpArgs): Promise<saml.ServiceProviderInstance> => {
-    const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs', platformId })
+const createSp = ({ privateKey, acsUrl }: CreateSpArgs): saml.ServiceProviderInstance => {
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
@@ -109,6 +111,22 @@ const toErrorMessage = (error: unknown): string => {
     return error instanceof Error ? error.message : String(error)
 }
 
+const firstString = (value: unknown): string | undefined => {
+    if (typeof value === 'string') {
+        return value
+    }
+    if (Array.isArray(value)) {
+        return value.find((item): item is string => typeof item === 'string')
+    }
+    return undefined
+}
+
+const toStringRecord = (input: Record<string, unknown>): Record<string, string | undefined> => {
+    return Object.fromEntries(
+        Object.entries(input).map(([key, value]) => [key, firstString(value)]),
+    )
+}
+
 const LOGIN_REQUEST_BINDING = 'redirect'
 const LOGIN_RESPONSE_BINDING = 'post'
 
@@ -123,8 +141,14 @@ type SamlClientArgs = {
 }
 
 type CreateSpArgs = {
-    platformId: string
     privateKey: string
+    acsUrl: string
+}
+
+type CreateSamlClientArgs = {
+    platformId: string
+    samlProvider: SAMLAuthnProviderConfig
+    acsUrl: string
 }
 
 export type IdpLoginResponse = {

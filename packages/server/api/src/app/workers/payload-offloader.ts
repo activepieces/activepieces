@@ -1,16 +1,21 @@
-import {
-    apId,
-    FileCompression,
-    FileType,
-    JobPayload,
-} from '@activepieces/shared'
+import { apId } from '@activepieces/core-utils'
+import { FileCompression, FileType, JobPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 
 function getPayloadSizeInBytes(payload: unknown): number {
-    return Buffer.byteLength(JSON.stringify(payload), 'utf8')
+    let bufferBytes = 0
+    const json = JSON.stringify(payload, function (this: Record<string, unknown>, key, value) {
+        const original = this[key]
+        if (Buffer.isBuffer(original)) {
+            bufferBytes += original.length
+            return ''
+        }
+        return value
+    })
+    return Buffer.byteLength(json ?? '', 'utf8') + bufferBytes
 }
 
 async function offloadPayload(

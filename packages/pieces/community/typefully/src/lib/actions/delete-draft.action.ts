@@ -9,6 +9,12 @@ export const deleteDraftAction = createAction({
 	name: 'typefully_delete_draft',
 	displayName: 'Delete Draft',
 	description: 'Delete an existing draft.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Permanently deletes a Typefully draft identified by its draft ID within a social set. Use to remove an unwanted draft; this is destructive and cannot be undone. Requires both the social set ID and the draft ID. Repeating the call on an already-deleted draft has no further effect.',
+		idempotent: false,
+	},
 	props: {
 		social_set_id: socialSetDropdown,
 		draft_id: Property.ShortText({

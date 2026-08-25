@@ -15,6 +15,8 @@ export const partnerInviteUpdateAction = createAction({
   name: 'partnerInviteUpdate',
   displayName: 'Resources - Partner Invites - Update',
   description: 'Update a invite.',
+  audience: 'both',
+  aiMetadata: { description: 'Updates an existing partner invite in AMPECO by its numeric ID, changing the partner association and billing/access option flags. Use to amend an outstanding invite; to issue a new one use the Create action. Only supplied fields change, so repeating the same call converges to the same state and is idempotent.', idempotent: true },
   props: {
         
   partnerInvite: Property.Number({

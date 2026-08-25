@@ -9,6 +9,11 @@ export const getPostAnalytics = createAction({
   displayName: 'Get Post Analytics',
   description:
     'Retrieve analytics (likes, comments, shares, impressions) for a specific published post',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Retrieves engagement analytics (likes, comments, shares, impressions and their change) for a single published post over a configurable lookback window in days. Use to measure how one specific post performed. Requires the post ID (from List Posts or the New Published Post trigger). Idempotent — a read-only lookup.',
+    idempotent: true,
+  },
   props: {
     postId: Property.ShortText({
       displayName: 'Post ID',

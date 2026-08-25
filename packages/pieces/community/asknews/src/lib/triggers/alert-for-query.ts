@@ -9,8 +9,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const alertForQuery = createTrigger({
   auth: asknewsAuth,
   name: 'alertForQuery',
+  classification: 'READ',
   displayName: 'Alert for Query',
   description: 'Trigger when a new alert is created for a specific news query',
+  aiMetadata: {
+    description:
+      'Fires when an AskNews alert matches a monitored natural-language news query on its cron schedule (or on every scheduled check if "Always Trigger" is enabled), delivering the matching alert payload. Represents a newly detected news development matching the query of interest.',
+  },
   props: {
     query: Property.LongText({
       displayName: 'Alert Query',

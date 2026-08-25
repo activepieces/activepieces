@@ -1,8 +1,5 @@
-import {
-  ApFlagId,
-  ErrorCode,
-  FlowRunWithRetryError,
-} from '@activepieces/shared';
+import { ErrorCode } from '@activepieces/core-utils';
+import { ApFlagId, FlowRunWithRetryError } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink } from 'lucide-react';
 

@@ -1,5 +1,5 @@
+import { SeekPage } from '@activepieces/core-utils';
 import {
-  SeekPage,
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,

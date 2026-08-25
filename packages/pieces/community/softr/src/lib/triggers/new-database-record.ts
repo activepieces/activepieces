@@ -70,6 +70,9 @@ export const newDatabaseRecord = createTrigger({
 	name: 'newDatabaseRecord',
 	displayName: 'New Database Record',
 	description: 'Triggers when a new record is added.',
+	aiMetadata: {
+		description: 'Fires when a new record is added to the selected table of a Softr database. Polls on a schedule and emits each newly created record, deduplicated by creation time.',
+	},
 	props: {
 		databaseId: databaseIdDropdown,
 		tableId: tableIdDropdown,

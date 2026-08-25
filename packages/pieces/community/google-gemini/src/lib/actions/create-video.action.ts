@@ -1,32 +1,27 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { googleGeminiAuth } from '../auth';
+import { getGeminiVideoModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
+import { createVideoActionOutputSchema } from '../output-schemas';
 
 export const createVideoAction = createAction({
+  audience: 'both',
   name: 'create_video',
+  classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Create Video',
   description: 'Generate a video from a text prompt using Google Veo models.',
+  aiMetadata: { description: 'Generates a short video with a Google Veo model from a text prompt, optionally seeded by a start image (image-to-video) or by both a start and end image (interpolation between those frames), polling the long-running generation job for up to 10 minutes before returning the finished MP4 as a file. Use it whenever the required output is video; text goes through generate_content and speech through text-to-speech. Note the model-dependent limits: 1080p needs Veo 3.0 or newer, 4K needs Veo 3.1, and both require an 8-second duration. Not idempotent: each call renders a new video.', idempotent: false },
   props: {
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
+      auth: googleGeminiAuth,
+      refreshers: [],
       defaultValue: 'veo-3.1-generate-preview',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Veo 3.1 Preview', value: 'veo-3.1-generate-preview' },
-          {
-            label: 'Veo 3.1 Fast Preview',
-            value: 'veo-3.1-fast-generate-preview',
-          },
-          { label: 'Veo 3.0', value: 'veo-3.0-generate-001' },
-          { label: 'Veo 3.0 Fast', value: 'veo-3.0-fast-generate-001' },
-          { label: 'Veo 2.0', value: 'veo-2.0-generate-001' },
-        ],
-      },
+      options: async ({ auth }) => getGeminiVideoModelOptions({ auth }),
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -126,6 +121,7 @@ export const createVideoAction = createAction({
       },
     }),
   },
+  outputSchema: createVideoActionOutputSchema,
   async run(context) {
     const {
       model,

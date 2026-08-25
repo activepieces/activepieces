@@ -7,8 +7,11 @@ import { taskIdDropdown } from '../common/props';
 export const deleteTaskAction = createAction({
 	auth: attioAuth,
 	name: 'delete_task',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Permanently delete a task by its ID.',
+	audience: 'both',
+	aiMetadata: { description: 'Permanently deletes a task identified by its ID. Use this to remove a task you no longer need; the deletion cannot be undone. Effectively idempotent on end-state — once the task is gone, repeating the call has no further effect (though the second call may error on the missing task).', idempotent: true },
 	props: {
 		task_id: taskIdDropdown({
 			displayName: 'Task',

@@ -6,6 +6,12 @@ export const createProduct = createAction({
   name: 'createProduct',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Imports a product into the Linka/Sperse CRM catalog, keyed by its unique SKU (product code), with type (General, Event, Subscription, or Digital), pricing, unit, and subscription/billing options. Use to add a sellable product. Idempotent on the SKU: re-importing the same code updates the existing product rather than creating a duplicate. Price/unit/cycle fields are required depending on the product type.',
+    idempotent: true,
+  },
   auth: linkaAuth,
   props: {
     productType: Property.StaticDropdown({

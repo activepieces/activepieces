@@ -5,7 +5,7 @@ import { findFormByTitle } from './lib/actions/find-form-by-title';
 import { newFormResponse } from './lib/triggers/new-form-response';
 import { createCustomApiCallAction, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { makeRequest } from './lib/common';
 import { filloutFormsAuth } from './lib/auth';
 

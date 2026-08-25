@@ -121,8 +121,12 @@ const getEventCategory = (eventType: string): string => {
 export const mailChimpNewSegmentTagSubscriberTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'new_segment_tag_subscriber',
+  classification: 'READ',
   displayName: 'New Segment Tag Subscriber',
   description: 'Fires when a subscriber joins a specific segment or tag',
+  aiMetadata: {
+    description: 'Fires when a subscriber in the selected audience (list) joins a segment or is given a tag; an optional segment ID or tag name narrows it to a specific segment/tag, otherwise it monitors all of them. The event carries the subscriber email and segment/tag details.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,

@@ -8,6 +8,8 @@ export const updateContact = createAction({
     name: 'update_contact',
     displayName: 'Update Contact',
     description: 'Modify fields for an existing contact',
+    audience: 'both',
+    aiMetadata: { description: 'Update an existing Missive contact identified by its contact ID, changing names, notes, infos, memberships, or moving it to another contact book. Use when you already have the target contact and want to edit it rather than create one. Note that any provided infos/memberships replace the existing sets rather than merging. Idempotent in effect for a fixed set of fields, but each call mutates the contact.', idempotent: false },
     auth: missiveAuth,
     props: {
         contact_book: contactBookDropdown,

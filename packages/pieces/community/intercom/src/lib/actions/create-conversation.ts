@@ -11,6 +11,12 @@ export const createConversationAction = createAction({
 	name: 'create-conversation',
 	displayName: 'Create Conversation',
 	description: 'Creates a new conversation from a contact.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Start a new Intercom conversation on behalf of an existing contact by sending an initial message body from that contact. Pick this to open a fresh thread tied to a known user or lead; it does not reply to or search existing conversations. Requires a valid contact ID and the matching contact type (user or lead). Not idempotent — each call creates a separate conversation.',
+		idempotent: false,
+	},
 	props: {
 		contactType: Property.StaticDropdown({
 			displayName: 'Contact Type',

@@ -9,6 +9,8 @@ export const deleteBucketDefaultObjectAcl = createAction({
   name: 'delete_bucket_default_object_acl',
   displayName: 'Delete Bucket Default Object ACL',
   description: 'Remove default ACL settings from a bucket. Perfect for reverting to default behavior.',
+  audience: 'both',
+  aiMetadata: { description: 'Removes an entity\'s entry from a bucket\'s default object ACL, so it no longer applies to future uploads. Use to revert a default-permission rule for new objects. Not idempotent: the first call removes the entry and a repeat fails because it no longer exists, and it does not affect already-uploaded objects. Only works on buckets using fine-grained ACLs, not uniform bucket-level access; requires bucket and entity.', idempotent: false },
   props: {
     projectId: projectIdProperty,
     bucket: bucketDropdown,

@@ -9,6 +9,10 @@ export const emailSent = createTrigger({
   name: 'emailSent',
   displayName: 'Email Sent',
   description: '',
+  aiMetadata: {
+    description:
+      'Fires when Vero dispatches an email to a recipient, representing the send event (before delivery confirmation) for a specific user and campaign.',
+  },
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup

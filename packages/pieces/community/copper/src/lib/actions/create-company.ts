@@ -8,6 +8,12 @@ export const createCompany = createAction({
   name: 'createCompany',
   displayName: 'Create Company',
   description: 'Adds a new company.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a new company in Copper CRM with a name and optional email domain, details, phone numbers, address, and a primary contact. Use to add an organization record. Not idempotent: each call creates a separate company even with identical input.',
+    idempotent: false,
+  },
   props: {
     name: Property.ShortText({ displayName: 'Full Name', required: true }),
     email_domain: Property.ShortText({

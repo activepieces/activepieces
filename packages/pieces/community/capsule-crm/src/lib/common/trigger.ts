@@ -9,6 +9,7 @@ type TriggerParams = {
   name: string;
   displayName: string;
   description: string;
+  aiMetadata: { description: string };
   event: string;
   sampleData: unknown;
 };
@@ -17,14 +18,17 @@ export const capsuleCrmCreateTrigger = ({
   name,
   displayName,
   description,
+  aiMetadata,
   event,
   sampleData,
 }: TriggerParams) => {
   return createTrigger({
     auth: capsuleCrmAuth,
     name: name,
+    classification: 'READ',
     displayName: displayName,
     description: description,
+    aiMetadata: aiMetadata,
     props: {},
     type: TriggerStrategy.WEBHOOK,
     sampleData: sampleData,

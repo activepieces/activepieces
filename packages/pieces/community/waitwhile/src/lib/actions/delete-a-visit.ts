@@ -10,6 +10,12 @@ export const deleteAVisit = createAction({
   displayName: 'Delete a visit',
   description:
     'Permanently remove a visit from the database. The visit will no longer be retrievable and will not be factored into analytics.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Permanently deletes a visit in Waitwhile by its visit id; the visit becomes unretrievable and is excluded from analytics. Use to purge a queue or appointment entry. Requires a valid visit id and is destructive: re-running on the same id will error once the visit is gone.',
+    idempotent: false,
+  },
   props: {
     visitId: visitIdDropdown,
   },

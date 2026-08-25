@@ -14,6 +14,9 @@ export const newJob = createTrigger({
   name: 'new_job',
   displayName: 'New Job Event',
   description: 'Triggers when a new job has been created',
+  aiMetadata: {
+    description: 'Fires when a new CloudConvert job is created (job.created webhook event), before its tasks have run. Represents a freshly queued conversion/merge/archive/optimize job and carries the job with its waiting tasks.',
+  },
   auth: cloudconvertAuth,
   type: TriggerStrategy.WEBHOOK,
   props: {},

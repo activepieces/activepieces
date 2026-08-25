@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
 import Redis from 'ioredis'
 
 export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) => ({
@@ -19,6 +19,22 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         if (!value) return null
 
         return JSON.parse(value) as T
+    },
+
+    async putIfAbsent(key: string, value: unknown, ttlInSeconds: number): Promise<boolean> {
+        const serializedValue = JSON.stringify(value)
+        const redisClient = await getRedisClient()
+        const result = await redisClient.set(key, serializedValue, 'EX', ttlInSeconds, 'NX')
+        return result === 'OK'
+    },
+
+    async runOnceWithin(key: string, ttlInSeconds: number, fn: () => Promise<unknown>): Promise<boolean> {
+        const claimed = await this.putIfAbsent(key, '1', ttlInSeconds)
+        if (!claimed) {
+            return false
+        }
+        await fn()
+        return true
     },
 
     async delete(keys: string | string[]): Promise<void> {

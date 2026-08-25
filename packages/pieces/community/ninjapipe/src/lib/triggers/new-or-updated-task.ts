@@ -11,6 +11,9 @@ export const newOrUpdatedTask = createTrigger({
   name: 'new_or_updated_task',
   displayName: 'New or Updated Task',
   description: 'Triggers when a task in the selected project is created or updated.',
+  aiMetadata: {
+    description: 'Fires whenever a task in the selected NinjaPipe project is created or has any field changed, detected by polling on the task last-updated timestamp. The event payload is the current state of the affected task, including its id, project_id, title, description, status, priority, assignee_id, due_date, parent_id, tags, and timestamps. A given task can fire this multiple times as it progresses (e.g. status moving to In Progress); the payload does not distinguish a first creation from a later update.',
+  },
   type: TriggerStrategy.POLLING,
   sampleData: {
     id: 'a97381c8-75d3-4773-92d7-80ad97cf06f9',

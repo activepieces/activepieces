@@ -9,8 +9,13 @@ import { ticketFormDropdown } from '../common/props';
 export const ticketStatusChanged = createTrigger({
   auth: aidbaseAuth,
   name: 'ticket_status_changed',
+  classification: 'READ',
   displayName: 'Ticket Status Changed',
   description: 'Fires when a ticket’s overall status changes.',
+  aiMetadata: {
+    description:
+      'Fires when an Aidbase ticket transitions to a new status (e.g. Open, Assigned, Need More Info, Resolved, Closed), representing a workflow state change on a support ticket. Can be filtered to a specific target status and/or ticket form, or left open to fire on any status change.',
+  },
 
   props: {
     ticket_form_id: ticketFormDropdown,

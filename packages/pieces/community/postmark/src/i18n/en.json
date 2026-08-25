@@ -1,0 +1,10 @@
+{
+  "pieceName": "Postmark",
+  "pieceDescription": "Send transactional email and inspect delivery and bounce data using Postmark.",
+  "authDisplayName": "Server API Token",
+  "authDescription": "Create a server token in Postmark under Servers → API Tokens.",
+  "sendEmail": "Send Email",
+  "sendEmailWithTemplate": "Send Email With Template",
+  "getEmailBounces": "Get Email Bounces",
+  "getDeliveryStats": "Get Delivery Stats"
+}

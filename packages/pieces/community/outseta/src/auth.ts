@@ -41,7 +41,7 @@ Need help? See [Outseta API docs](https://documenter.getpostman.com/view/3613332
           apiSecret: auth.apiSecret,
         });
 
-        await client.get<any>(`/api/v1/crm/people?$top=1`);
+        await client.get<any>(`/api/v1/crm/people?limit=1`);
 
         return {
           valid: true,

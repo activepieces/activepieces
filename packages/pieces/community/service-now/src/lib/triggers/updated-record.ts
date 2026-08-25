@@ -41,6 +41,10 @@ export const updatedRecordTrigger = createTrigger({
   name: 'updated_record',
   displayName: 'Updated Record',
   description: 'Triggers when a record is updated in a table',
+  aiMetadata: {
+    description:
+      'Fires when an existing record in the selected ServiceNow table is modified, optionally narrowed by an encoded filter query. Polls by sys_updated_on and excludes records created in the same window, so each item represents an edit to a pre-existing record rather than a new one.',
+  },
   type: TriggerStrategy.POLLING,
   props: {
     table: tableDropdown,

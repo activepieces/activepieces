@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { ModelModality } from '@aws-sdk/client-bedrock';
-import { awsBedrockAuth } from '../auth';
+import { awsBedrockCombinedAuth } from '../auth';
 import {
   createBedrockRuntimeClient,
   getBedrockModelOptions,
@@ -9,19 +9,22 @@ import {
 } from '../common';
 
 export const generateImage = createAction({
-  auth: awsBedrockAuth,
+  audience: 'both',
+  auth: awsBedrockCombinedAuth,
   name: 'generate_image',
+  classification: 'READ',
   displayName: 'Generate Image',
   description:
     'Generate an image from a text prompt using Amazon Titan Image Generator or Stability AI models.',
+  aiMetadata: { description: 'Generates one image from a text prompt using a Bedrock image model (Amazon Titan Image Generator, Nova Canvas, or Stability AI) and stores it as a file reference; supports a negative prompt, width and height, and a seed for reproducible output. Pick this to create new imagery from a description - use Generate Content from Image to interpret an existing image, and Ask Bedrock for text output. Requires an image-output model enabled in the connected AWS region, at a resolution that model supports. Not idempotent: each call invokes the model and writes a new file, though a fixed seed with the same prompt reproduces the same picture.', idempotent: false },
   props: {
     model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      auth: awsBedrockAuth,
+      auth: awsBedrockCombinedAuth,
       description: 'The image generation model to use.',
       refreshers: [],
-      options: async ({ auth }) => {
+      options: async ({ auth }, { server }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -31,7 +34,7 @@ export const generateImage = createAction({
         }
         return getBedrockModelOptions(auth.props, {
           outputModality: ModelModality.IMAGE,
-        });
+        }, server);
       },
     }),
     prompt: Property.LongText({
@@ -64,8 +67,8 @@ export const generateImage = createAction({
         'A seed for reproducible results. Use the same seed and prompt to get the same image.',
     }),
   },
-  async run({ auth, propsValue, files }) {
-    const client = createBedrockRuntimeClient(auth.props);
+  async run({ auth, propsValue, files, server }) {
+    const client = await createBedrockRuntimeClient({ auth: auth.props, server });
     const { model, prompt, negativePrompt, width, height, seed } = propsValue;
 
     const isTitan = model.startsWith('amazon.titan-image');

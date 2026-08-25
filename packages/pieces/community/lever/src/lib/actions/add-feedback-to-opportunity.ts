@@ -16,6 +16,12 @@ export const addFeedbackToOpportunity = createAction({
   name: 'addFeedbackToOpportunity',
   displayName: 'Add feedback to opportunity',
   description: 'Provide feedback to a candidate after an interview',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Submit a completed interview feedback form against a Lever opportunity, authored on behalf of a chosen user. The form's fields are derived either from a selected interview (panel plus interview) or from a standalone feedback template; requires the opportunity ID, the author, and the resolved field values. Not idempotent: each call creates a new feedback entry.",
+    idempotent: false,
+  },
   auth: leverAuth,
   props: {
     performAs: Property.Dropdown({

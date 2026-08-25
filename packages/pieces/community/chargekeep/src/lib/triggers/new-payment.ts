@@ -5,8 +5,12 @@ import { chargekeepCommon } from '../common/common';
 export const newPayment = createTrigger({
   auth: chargekeepAuth,
   name: 'new_payment',
+  classification: 'READ',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
+  aiMetadata: {
+    description: 'Fires when a new payment is recorded in the ChargeKeep/Sperse CRM, emitting the payment transaction along with its related contact and invoice.',
+  },
   props: {},
   type: TriggerStrategy.WEBHOOK,
   sampleData: {

@@ -1,3 +1,4 @@
+import { ApErrorParams, ErrorCode } from '@activepieces/core-utils';
 import {
   AddPieceRequestBody,
   ApFlagId,
@@ -143,20 +144,27 @@ const InstallPieceDialog = ({
     },
     onError: (error) => {
       if (api.isError(error)) {
-        switch (error.response?.status) {
-          case HttpStatusCode.Conflict:
-            form.setError('root.serverError', {
-              message: t(
-                'A piece with this name and version is already installed. Please update the version number in package.json and try again.',
-              ),
-            });
-            break;
-          default:
-            form.setError('root.serverError', {
-              message: t('Something went wrong, please try again later'),
-            });
-            break;
+        if (error.response?.status === HttpStatusCode.Conflict) {
+          form.setError('root.serverError', {
+            message: t(
+              'A piece with this name and version is already installed. Please update the version number in package.json and try again.',
+            ),
+          });
+          return;
         }
+        const responseData = error.response?.data as ApErrorParams | undefined;
+        if (
+          responseData?.code === ErrorCode.ENGINE_OPERATION_FAILURE &&
+          responseData.params.message
+        ) {
+          form.setError('root.serverError', {
+            message: responseData.params.message,
+          });
+          return;
+        }
+        form.setError('root.serverError', {
+          message: t('Something went wrong, please try again later'),
+        });
       }
     },
   });
@@ -174,7 +182,7 @@ const InstallPieceDialog = ({
           <DialogDescription>
             <ApMarkdown
               markdown={
-                'Use this to install a [custom piece]("https://www.activepieces.com/docs/build-pieces/building-pieces/create-action") that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
+                'Use this to install a [custom piece](https://www.activepieces.com/docs/build-pieces/building-pieces/create-action) that you (or someone else) created. Once the piece is installed, you can use it in the flow builder.\n\nWarning: Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.'
               }
             />
           </DialogDescription>

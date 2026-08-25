@@ -4,7 +4,7 @@ import {
   propsValidation,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { joggAiAuth } from '../..';
 
 export const getGeneratedVideo = createAction({
@@ -12,6 +12,12 @@ export const getGeneratedVideo = createAction({
   displayName: 'Get Generated Video',
   description:
     'Get information about a specific generated video project using its ID',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves the current status and details of a JoggAI video project by its project_id. Use to poll an in-progress avatar/template video generation job for completion or to fetch the finished video URL. Idempotent: a read-only lookup with no side effects.',
+    idempotent: true,
+  },
   auth: joggAiAuth,
   props: {
     project_id: Property.ShortText({
@@ -25,7 +31,7 @@ export const getGeneratedVideo = createAction({
     const { project_id } = propsValue;
 
     await propsValidation.validateZod(propsValue, {
-      project_id: z.string().min(1, 'Project ID cannot be empty'),
+      project_id: z.string().check(z.minLength(1, 'Project ID cannot be empty')),
     });
 
     const response = await httpClient.sendRequest({

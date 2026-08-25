@@ -8,6 +8,12 @@ export const deleteFinetune = createAction({
   name: 'delete_finetune',
   displayName: 'Delete Finetune',
   description: 'Deletes a fine-tune entry from the selected chatbot.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Removes a specific fine-tune entry from a SiteSpeakAI chatbot, identified by chatbot ID and fine-tune ID. Use to undo or clean up a previously added Q&A. Idempotent in effect: once the entry is gone, repeating the call leaves it absent.',
+    idempotent: true,
+  },
   auth: SiteSpeakAuth,
   props: {
     chatbotId: chatbotIdDropdown,

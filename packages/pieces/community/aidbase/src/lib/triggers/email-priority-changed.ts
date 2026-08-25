@@ -9,8 +9,13 @@ import { emailInboxDropdown } from '../common/props';
 export const emailPriorityChanged = createTrigger({
   auth: aidbaseAuth,
   name: 'email_priority_changed',
+  classification: 'READ',
   displayName: 'Email Priority Changed',
   description: 'Fires when an email’s priority is changed.',
+  aiMetadata: {
+    description:
+      'Fires when an Aidbase email’s priority changes (Low, Medium, High), representing a re-prioritization of a support email. Can be filtered to a specific target priority and/or inbox, or left open to fire on any priority change.',
+  },
 
   props: {
     inbox_id: emailInboxDropdown,

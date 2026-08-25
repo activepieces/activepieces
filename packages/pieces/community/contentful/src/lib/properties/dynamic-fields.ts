@@ -2,7 +2,7 @@ import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
 import { FieldTransformers } from './transformers';
 import { FieldType } from 'contentful-management';
-import { isEmpty, isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/pieces-framework';
 
 const DynamicFields = Property.DynamicProperties({
   auth: ContentfulAuth,

@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 
 import { cancelSubscriptionAction } from './lib/actions/cancel-subscription';
 import { createTransactionAction } from './lib/actions/create-transaction';

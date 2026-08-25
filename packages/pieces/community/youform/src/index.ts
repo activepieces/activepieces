@@ -1,6 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { youformAuth } from './lib/common/auth';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { newSubmissionTrigger } from './lib/triggers/new-form-submission';
 
 export const youform = createPiece({

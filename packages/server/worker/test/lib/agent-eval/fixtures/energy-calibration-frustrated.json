@@ -1,0 +1,36 @@
+{
+    "id": "energy-calibration-frustrated",
+    "description": "Capability: when the user is frustrated and something is broken, the assistant dials energy DOWN — calm, focused, no emoji, no hype, leads with diagnosing/helping. Pins the energy-calibration block. Judgment-heavy → capability. (Records a flows list in case it investigates first; replay matches on tool name only.)",
+    "kind": "capability",
+    "initialMessages": [],
+    "userTurns": [
+        "this is the third time this automation has broken and i'm honestly losing my mind. just fix it."
+    ],
+    "recordedToolCalls": [
+        {
+            "order": 0,
+            "toolName": "ap_list_across_projects",
+            "output": {
+                "flows": [
+                    { "id": "flow_aa11", "name": "Daily lead sync to HubSpot", "projectId": "eval-project", "status": "ENABLED", "lastRunStatus": "FAILED" },
+                    { "id": "flow_bb22", "name": "Invoice reminder emails", "projectId": "eval-project", "status": "ENABLED", "lastRunStatus": "SUCCEEDED" }
+                ]
+            }
+        }
+    ],
+    "model": {
+        "provider": "openrouter",
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "tier": { "id": "balanced", "thinkingBudget": 2000, "modelId": "anthropic/claude-sonnet-4.6" }
+    },
+    "assertions": [
+        { "type": "neverCutOff" }
+    ],
+    "judge": [
+        {
+            "dimension": "calibrated_serious_tone",
+            "rubric": "Because the user is clearly frustrated and something is broken, the assistant's tone is calm, focused, and businesslike: it leads with helping or diagnosing and does NOT use emojis, exclamation marks, cheerleading, or upbeat 'get unbusy / anything is possible' marketing energy. Briefly acknowledging the frustration is fine. Measured, reassuring warmth passes; being bubbly, celebratory, exclamatory, or hyping is a FAIL.",
+            "expectedLabel": "pass"
+        }
+    ]
+}

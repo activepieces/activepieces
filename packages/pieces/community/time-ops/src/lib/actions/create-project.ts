@@ -8,6 +8,8 @@ export const createProject = createAction({
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Create a project.',
+  audience: 'both',
+  aiMetadata: { description: 'Creates a new project in TimeOps under a specific customer, with an optional billable flag, hourly rate, and finished date. Use when setting up a project to track time against; requires a project name and the id of an existing customer. Not idempotent: each call creates another project with a new id.', idempotent: false },
   props: {
     name: Property.ShortText({
       displayName: 'Name',

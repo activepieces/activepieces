@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { createMemAction } from './lib/actions/create-mem';
 import { createNoteAction } from './lib/actions/create-note';
 import { deleteNoteAction } from './lib/actions/delete-note';

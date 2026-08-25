@@ -9,6 +9,12 @@ export const createSegmentAction = createAction({
   displayName: 'Create Segment',
   description:
     'Create a new contact segment in Elastic Email using a SQL-like rule.',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Creates a named contact segment in Elastic Email defined by a SQL-like rule that selects which contacts belong to it. Use to build a reusable audience for campaigns. The rule must follow Elastic Email segment-rule syntax. Each call creates a separate segment, so it is not idempotent.',
+    idempotent: false,
+  },
   auth: elasticEmailAuth,
   props: {
     name: Property.ShortText({

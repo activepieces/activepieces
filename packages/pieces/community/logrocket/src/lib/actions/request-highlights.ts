@@ -7,6 +7,8 @@ export const requestHighlights = createAction({
   name: 'requestHighlights',
   displayName: 'Request Highlights',
   description: 'Request session highlights for a user. Results will be sent to the webhook URL when ready.',
+  audience: 'both',
+  aiMetadata: { description: 'Kicks off an asynchronous LogRocket job that generates AI summaries of a user\'s recorded sessions; the results are not returned inline but POSTed to the given webhook URL once ready (pair with the "Highlights Ready" trigger). Identify the user by either email or user ID (one is required), and optionally scope to a time range (both start and end must be set together). Not idempotent: each call enqueues a new highlights request.', idempotent: false },
   props: {
     orgId: Property.ShortText({
       displayName: 'Organization ID',

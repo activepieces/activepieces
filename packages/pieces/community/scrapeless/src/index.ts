@@ -6,7 +6,7 @@ import { crawlCrawlApi } from './lib/actions/crawl-crawl';
 import { googleTrendsApi } from './lib/actions/google-trends-api';
 import { universalScrapingApi } from './lib/actions/universal-scraping-api';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { scrapelessApiAuth } from './lib/auth';
 
 export const scrapeless = createPiece({

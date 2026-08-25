@@ -4,7 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 import { ContentfulProperty } from '../../properties';
-import { z } from 'zod';
+import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const ContentfulSearchRecordsAction = createAction({
@@ -12,6 +12,8 @@ export const ContentfulSearchRecordsAction = createAction({
   auth: ContentfulAuth,
   displayName: 'Search Records',
   description: 'Searches for records of a given Content Model',
+  audience: 'both',
+  aiMetadata: { description: 'Lists entries of a given Contentful content type within a space, optionally filtered by a raw Content Delivery API query formula and paginated via limit/skip. Use to find or retrieve multiple records by criteria; pass an empty query to fetch all entries of the content type. Read-only and idempotent. Requires the content model (content type) ID; the query formula uses Contentful search-parameter syntax.', idempotent: true },
   props: {
     [PropertyKeys.CONTENT_MODEL]: ContentfulProperty.ContentModel,
     [PropertyKeys.LOCALE]: ContentfulProperty.Locale,
@@ -45,7 +47,7 @@ export const ContentfulSearchRecordsAction = createAction({
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
-      [PropertyKeys.QUERY_INCLUDE]: z.number().min(1),
+      [PropertyKeys.QUERY_INCLUDE]: z.number().check(z.minimum(1)),
     });
 
     const { client } = makeClient(auth);

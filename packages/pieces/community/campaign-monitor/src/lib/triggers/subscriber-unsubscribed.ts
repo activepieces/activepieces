@@ -5,15 +5,20 @@ import {
 } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest, transformCustomFields } from '../common/client';
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/pieces-framework';
 import { campaignMonitorAuth } from '../auth';
 import { clientId, listId } from '../common/props';
 
 export const subscriberUnsubscribedTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'subscriber_unsubscribed',
+  classification: 'READ',
   displayName: 'Subscriber Unsubscribed',
   description: 'Triggered when a subscriber unsubscribes from a list',
+  aiMetadata: {
+    description:
+      'Fires when a contact unsubscribes from the specified Campaign Monitor list under a client, via a Deactivate webhook event with an Unsubscribed state, and reports the affected subscriber and their details.',
+  },
   props: {
     clientId: clientId,
     listId: listId,

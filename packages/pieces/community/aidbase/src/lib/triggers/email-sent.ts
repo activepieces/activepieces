@@ -5,8 +5,13 @@ import { emailInboxDropdown } from '../common/props';
 export const emailSent = createTrigger({
   auth: aidbaseAuth,
   name: 'email_sent',
+  classification: 'READ',
   displayName: 'Email Sent',
   description: 'Fires when an email is sent from Aidbase.',
+  aiMetadata: {
+    description:
+      'Fires when an outbound email is sent from Aidbase (e.g. an agent reply on a support thread), representing a new outgoing message. Can be scoped to a specific inbox or left open to fire for any inbox.',
+  },
 
   props: {
     inbox_id: emailInboxDropdown,

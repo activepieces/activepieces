@@ -8,9 +8,14 @@ import { telnyxAuth } from '../auth';
 export const messageReceivedTrigger = createTrigger({
   auth: telnyxAuth,
   name: 'message_received',
+  classification: 'READ',
   displayName: 'Message Received',
   description:
     'Triggers when Telnyx delivers a message.received webhook event.',
+  aiMetadata: {
+    description:
+      'Fires when Telnyx delivers an inbound message via its message.received webhook, representing an incoming SMS/MMS received on a configured messaging profile. Requires manually configuring the Telnyx messaging webhook (v2) to the given URL; events for other event types are ignored.',
+  },
   props: {
     webhook_instructions: Property.MarkDown({
       value: `

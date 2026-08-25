@@ -6,8 +6,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getNoteAction = createAction({
 	auth: pipedriveAuth,
 	name: 'get-note',
+	classification: 'READ',
 	displayName: 'Retrieve a Note',
 	description: 'Finds a note by ID.',
+	audience: 'both',
+	aiMetadata: {
+		description:
+			'Retrieves a single note by its numeric note ID. Use when you already have the note ID; to list the notes attached to a deal, lead, person, or organization, use Find Notes instead. Read-only and idempotent.',
+		idempotent: true,
+	},
 	props: {
 		noteId: Property.Number({
 			displayName: 'Note ID',

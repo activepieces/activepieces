@@ -6,6 +6,8 @@ export const listSiteDeploys = createAction({
   name: "list_site_deploys",
   displayName: "List Site Deploys",
   description: "Returns a list of all deploys for a specific site.",
+  audience: 'both',
+  aiMetadata: { description: 'Lists the deploys (builds) for a Netlify site by its site ID, ordered most-recent first, with optional page and per-page pagination. Use it to inspect deploy history or find a deploy state/ID. Read-only and idempotent.', idempotent: true },
   props: {
     siteId: Property.Dropdown({
       auth: netlifyAuth,      displayName: "Site",

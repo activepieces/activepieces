@@ -6,9 +6,12 @@ import { makeRequest } from '../common/client';
 export const askQuestions = createAction({
   auth: ChatAidAuth,
   name: 'askQuestions',
+  classification: 'READ',
   displayName: 'Ask Questions',
   description:
     'Query your Chat Aid knowledge base and receive AI-generated answers with source citations',
+  audience: 'both',
+  aiMetadata: { description: 'Ask a natural-language question against the Chat Aid knowledge base and get back an AI-generated answer with source citations; the call submits the prompt then polls until the answer is ready (timing out after ~2 minutes). Optionally pass parent and message timestamps to thread follow-up questions within an ongoing conversation. Use this to retrieve answers grounded in ingested sources. Not idempotent: each call generates a fresh completion and conversation turn.', idempotent: false },
   props: {
     prompt: Property.LongText({
       displayName: 'Question',

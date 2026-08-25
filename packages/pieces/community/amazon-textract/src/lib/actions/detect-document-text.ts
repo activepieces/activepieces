@@ -11,9 +11,12 @@ import {
 export const detectDocumentText = createAction({
   auth: amazonTextractAuth,
   name: 'detect-document-text',
+  classification: 'READ',
   displayName: 'Detect Document Text',
   description:
     'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only.',
+  audience: 'both',
+  aiMetadata: { description: 'Synchronously OCR a single-page document with AWS Textract and return its plain text content (lines and words), without forms, tables, or signatures. Choose it when you only need the raw text — it is faster and cheaper than Analyze Document. The source can be an uploaded file (JPEG/PNG only) or an S3 object (also PDF/TIFF, single-page only). Idempotent: it is a stateless read-only inference that returns the same result for the same input.', idempotent: true },
   props: {
     source: Property.StaticDropdown({
       displayName: 'Document Source',

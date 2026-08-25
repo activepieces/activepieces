@@ -33,6 +33,8 @@ export const updateTask = createAction({
   auth: manusAuth,
   displayName: 'Update Task',
   description: 'Update a task\'s metadata such as title, sharing settings, and visibility in the task list',
+  audience: 'both',
+  aiMetadata: { description: 'Updates metadata on an existing Manus task identified by its ID — its title, public-sharing toggle, and visibility in the task list. Use to rename a task or change its sharing/visibility, not to alter what the agent does. Idempotent: re-applying the same values leaves the task in the same state.', idempotent: true },
   props: {
     taskId: Property.Dropdown({
       auth: manusAuth,

@@ -6,8 +6,15 @@ import { callGraphApi, getResourceOptionsForType } from '../common';
 export const resetCustomAttributesAction = createAction({
     auth: azureAdAuth,
     name: 'reset_custom_attributes',
+    classification: 'DESTRUCTIVE',
     displayName: 'Reset Custom Attributes',
     description: 'Clears extension/custom attributes on a user or group. Provide the resource type and ID, and the extension property names to clear.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Clears extension/custom attribute values on a chosen user or group by setting them to null; pass specific extension property names, or leave empty to clear every detected extension_*/ext_* key (broader blast radius). Destructive to the attribute data but idempotent — re-running finds nothing left to clear and becomes a no-op.',
+        idempotent: true,
+    },
     props: {
         resourceType: Property.StaticDropdown({
             displayName: 'Resource Type',

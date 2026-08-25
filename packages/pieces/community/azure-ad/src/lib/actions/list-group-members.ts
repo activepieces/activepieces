@@ -6,8 +6,15 @@ import { callGraphApi, flattenObject, groupDropdown } from '../common';
 export const listGroupMembersAction = createAction({
     auth: azureAdAuth,
     name: 'list_group_members',
+    classification: 'SEARCH',
     displayName: 'List Group Members',
     description: 'Lists members of an Azure AD group.',
+    audience: 'both',
+    aiMetadata: {
+        description:
+            'Lists the direct members (users, groups, devices) of an Azure AD group, returning only the first page of up to 999 entries. Read-only and idempotent. Note it does not expand transitive/nested group membership.',
+        idempotent: true,
+    },
     props: {
         groupId: groupDropdown,
         top: Property.Number({

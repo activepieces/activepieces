@@ -10,6 +10,12 @@ export const declareRegistrationFolderServicedone = createAction({
   displayName: "Passer un dossier de formation à l'état : Service fait déclaré",
   description:
     "Passe le dossier dans l'état 'service fait déclaré' s'il est dans l'état 'sortie de formation' ou dans l'état 'en formation'. Si depuis l'état 'en formation', le passage à l'état intermédiaire 'sortie de formation' se fera automatiquement.",
+  audience: 'both',
+  aiMetadata: {
+    description:
+      "Transitions a training registration folder into the 'service done declared' state, recording exit reason, exit date, and absence details. Works from either the 'in training' or 'terminated' state; from 'in training' it auto-passes through 'terminated' first. Not idempotent: it advances the folder's lifecycle and should be called once after training is complete.",
+    idempotent: false,
+  },
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',

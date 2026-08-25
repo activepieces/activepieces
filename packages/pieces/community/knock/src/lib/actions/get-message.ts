@@ -8,6 +8,11 @@ export const getMessage = createAction({
   name: 'get_message',
   displayName: 'Get Message',
   description: 'Retrieve a Knock message by its ID.',
+  audience: 'both',
+  aiMetadata: {
+    description: 'Fetches a single Knock message (a delivered or queued notification instance) by its unique message ID. Choose this to inspect the status or contents of one notification. Read-only and idempotent.',
+    idempotent: true,
+  },
   props: {
     messageId: Property.ShortText({
       displayName: 'Message ID',

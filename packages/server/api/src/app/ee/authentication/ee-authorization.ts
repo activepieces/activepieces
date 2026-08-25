@@ -1,12 +1,5 @@
-import {
-    ActivepiecesError,
-    ErrorCode,
-    isNil,
-    PlatformRole,
-    PlatformWithoutSensitiveData,
-    PrincipalType,
-    ProjectType,
-} from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { PlatformRole, PlatformWithoutSensitiveData, PrincipalType, ProjectType } from '@activepieces/shared'
 import { FastifyRequest, onRequestAsyncHookHandler } from 'fastify'
 import { getProjectIdFromRequest } from '../../core/security/v2/authz/authorization-middleware'
 import { platformService } from '../../platform/platform.service'

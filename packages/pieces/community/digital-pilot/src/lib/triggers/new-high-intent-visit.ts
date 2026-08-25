@@ -7,6 +7,9 @@ export const newHighIntentVisitTrigger = createTrigger({
   name: 'new_high_intent_visit',
   displayName: 'New High Intent Visit',
   description: 'Triggers when a business exhibits high intent behavior on your website',
+  aiMetadata: {
+    description: 'Fires when DigitalPilot detects high-intent browsing behavior (e.g. elevated intent score, repeated page views, extended time on site) from an identified business visitor for the configured tag. Each event represents one such visit and carries the visiting account domain and engagement signals.',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     tagId: tagIdProp,

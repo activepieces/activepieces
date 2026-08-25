@@ -9,6 +9,10 @@ export const paymentFailed = createTrigger({
   displayName: 'Payment Failed',
   description:
     'Triggers when a transaction payment fails — trigger retry logic or alert the customer.',
+  aiMetadata: {
+    description:
+      'Fires on the Paddle transaction.payment_failed event, when a payment attempt on a transaction is declined or otherwise fails. Represents a failed collection for a customer, useful for retry/dunning logic or customer alerts.',
+  },
   props: {},
   sampleData: {
     event_id: 'evt_01abc127',

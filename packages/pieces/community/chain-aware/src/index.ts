@@ -1,6 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/pieces-framework';
 import { auditWalletAddress } from './lib/actions/audit-wallet-address';
 import { creditScore } from './lib/actions/credit-score';
 import { fraudCheck } from './lib/actions/fraud-check';

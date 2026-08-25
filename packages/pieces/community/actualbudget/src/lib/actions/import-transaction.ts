@@ -10,8 +10,11 @@ import { initializeAndDownloadBudget } from '../common/common';
 export const importTransaction = createAction({
   auth: actualBudgetAuth,
   name: 'import_transaction',
+  classification: 'WRITE',
   displayName: 'Import Transaction',
   description: 'Add a transaction',
+  audience: 'both',
+  aiMetadata: { description: 'Adds a single transaction to a specified account in Actual Budget. Use it to record one transaction with fields such as date, amount, payee, category, and notes; the target account ID is required. Not idempotent — each call appends another transaction unless an Imported ID is supplied, which Actual uses to deduplicate against prior imports.', idempotent: false },
   props: {
     account_id: Property.ShortText({
       displayName: 'Account ID',

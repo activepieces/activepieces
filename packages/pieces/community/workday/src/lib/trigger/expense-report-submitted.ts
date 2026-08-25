@@ -24,6 +24,10 @@ export const expenseReportSubmitted = createTrigger({
 	name: 'expense_report_submitted',
 	displayName: 'Expense Report Submitted',
 	description: 'Triggers when an expense report is submitted in Workday.',
+	aiMetadata: {
+		description:
+			'Fires when a new expense report (expense item) appears in Workday, detected by polling the expenseItems dataset. Represents an expense submission event. Use to start expense review or reimbursement automation.',
+	},
 	props: {},
 	sampleData: { id: 'exp-001', descriptor: 'Q1 Travel Expenses', createdDate: '2026-04-01T09:00:00Z' },
 	type: TriggerStrategy.POLLING,

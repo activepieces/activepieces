@@ -7,6 +7,8 @@ export const runQuery = createAction({
   name: 'run-query',
   displayName: 'Run Query',
   description: 'Run a query in SurrealDB.',
+  audience: 'both',
+  aiMetadata: { description: 'Executes an arbitrary SurrealQL statement against a SurrealDB database, returning the result body. Use this for any read or write the dedicated actions do not cover (SELECT/CREATE/UPDATE/DELETE/relate/define). Pass parameters via the args object (reference them as $name in the query) rather than interpolating values, to avoid injection. Not idempotent in general: the effect depends entirely on the statement, so write/mutating queries change state on each call while plain SELECTs do not.', idempotent: false },
   props: {
     markdown: Property.MarkDown({
       value: `

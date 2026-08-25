@@ -307,6 +307,10 @@ export const triggers = [
     name: "lead_post_save_update",
     displayName: "Contact Updated",
     description: "Triggers when a contact is updated.",
+    aiMetadata: {
+      description:
+        "Fires when an existing contact (lead) in Mautic is saved after being modified, representing a change to that contact's field values. Use to react to edits on already-existing contacts; for newly created contacts use the New Contact trigger.",
+    },
     sampleData: {
       "mautic.lead_post_save_update": [contactTestData]
     },
@@ -316,6 +320,10 @@ export const triggers = [
     name: "lead_company_change",
     displayName: "Contact Company Subscription Change",
     description: "Triggers when a commpany is added or removed to/from contact.",
+    aiMetadata: {
+      description:
+        "Fires when a contact's company association changes in Mautic — that is, when the contact is added to or removed from a company. Use to react to a contact's organization membership changing.",
+    },
     sampleData: {
       "mautic.lead_company_change": [contactTestData]
     },
@@ -325,6 +333,10 @@ export const triggers = [
     name: "lead_channel_subscription_changed",
     displayName: "Contact Channel Subscription Change",
     description: "Triggers when a contact's channel subscription status changes.",
+    aiMetadata: {
+      description:
+        "Fires when a contact's subscription status for a communication channel (such as email) changes in Mautic — for example when they opt in or out of receiving messages. Use to react to contactability/consent changes for a channel.",
+    },
     sampleData: {
       "mautic.lead_channel_subscription_changed": [contactTestData]
     },
@@ -334,6 +346,10 @@ export const triggers = [
     name: "lead_post_save_new",
     displayName: "New Contact",
     description: "Triggers when a new contact is created.",
+    aiMetadata: {
+      description:
+        "Fires when a new contact (lead) is created in Mautic, representing a freshly added person. Use to react to contact creation; for changes to existing contacts use the Contact Updated trigger.",
+    },
     sampleData: {
       "mautic.lead_post_save_new": [contactTestData]
     },
@@ -347,12 +363,14 @@ function registerTrigger({
   displayName,
   eventType,
   description,
+  aiMetadata,
   sampleData
 }: {
   name: string;
   displayName: string;
   eventType: string;
   description: string;
+  aiMetadata: { description: string };
   sampleData: unknown;
 }) {
   return createTrigger({
@@ -360,6 +378,7 @@ function registerTrigger({
     name: `mautic_${name}_trigger`,
     displayName,
     description,
+    aiMetadata,
     props: {
       name: Property.ShortText({
         displayName: "Webhook Name",
