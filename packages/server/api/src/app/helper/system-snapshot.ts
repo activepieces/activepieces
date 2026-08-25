@@ -1,7 +1,7 @@
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
 import { createLogger } from '@activepieces/server-utils'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { ApEdition, isNil, tryCatchSync } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
 import { jobQueue } from '../workers/job-queue/job-queue'
@@ -17,19 +17,18 @@ function mbRounded(bytes: number): number {
 }
 
 function readPoolStats(): Record<string, number> {
-    const { driver } = databaseConnection()
-    if (!('master' in driver)) {
-        return {}
-    }
-    const pool = driver.master
-    if (!isPgPoolLike(pool)) {
-        return {}
-    }
-    return {
-        pgPoolTotal: pool.totalCount,
-        pgPoolIdle: pool.idleCount,
-        pgPoolWaiting: pool.waitingCount,
-    }
+    const { data } = tryCatchSync((): Record<string, number> => {
+        const { driver } = databaseConnection()
+        if (!('master' in driver) || !isPgPoolLike(driver.master)) {
+            return {}
+        }
+        return {
+            pgPoolTotal: driver.master.totalCount,
+            pgPoolIdle: driver.master.idleCount,
+            pgPoolWaiting: driver.master.waitingCount,
+        }
+    })
+    return data ?? {}
 }
 
 function isPgPoolLike(value: unknown): value is PgPoolLike {
