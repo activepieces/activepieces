@@ -210,25 +210,37 @@ describe('AI provider key status', () => {
         expect(String(second.statusUpdated)).toBe(String(first.statusUpdated))
     })
 
-    it('keeps the newest observation, whatever order the observations arrive in', async () => {
-        const key = await azureKey('raced')
-        await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401: old failure' })
+    it('writes an unchanged status once, unless the caller skips the throttle', async () => {
+        const key = await azureKey('throttled')
         const health = aiProviderHealth(app!.log)
-        const observedAt = Date.now()
+        const signal = { statusCode: 503, body: 'Service Unavailable' }
 
-        const recovered = await health.record({
+        const firstWrite = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal })
+        const throttledAgain = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal })
+        const forced = await health.record({ platformId: ctx.platform.id, providerId: key.id, signal, throttled: false })
+
+        expect(firstWrite).toBe('unreachable')
+        expect(throttledAgain).toBeNull()
+        expect(forced).toBe('unreachable')
+    })
+
+    it('lets the next call correct a status a late observation got wrong', async () => {
+        const key = await azureKey('raced')
+        const health = aiProviderHealth(app!.log)
+
+        const late = await health.record({
             platformId: ctx.platform.id,
             providerId: key.id,
-            signal: { statusCode: 200, observedAt },
+            signal: { statusCode: 401, body: 'invalid api key' },
         })
-        const stale = await health.record({
+        const afterRetry = await health.record({
             platformId: ctx.platform.id,
             providerId: key.id,
-            signal: { statusCode: 401, body: 'invalid api key', observedAt: observedAt - 5000 },
+            signal: { statusCode: 200 },
         })
 
-        expect(recovered).toBe('active')
-        expect(stale).toBeNull()
+        expect(late).toBe('rejected')
+        expect(afterRetry).toBe('active')
         const row = await statusOf(key.id)
         expect(row.status).toBe('active')
         expect(row.statusReason).toBeNull()

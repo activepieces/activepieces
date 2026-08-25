@@ -2507,5 +2507,9 @@
   "Recently used": "Recently used",
   "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
   "Show all projects": "Show all projects",
-  "Sort pinned projects": "Sort pinned projects"
+  "Sort pinned projects": "Sort pinned projects",
+  "Key rejected": "Key rejected",
+  "Unreachable": "Unreachable",
+  "Recheck": "Recheck",
+  "Last checked {when}": "Last checked {when}"
 }

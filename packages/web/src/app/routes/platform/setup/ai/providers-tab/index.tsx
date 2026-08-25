@@ -48,6 +48,7 @@ import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { KeyStatusBadge } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -80,6 +81,10 @@ export function ProvidersTab() {
     });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
+      onSuccess: () => refetch(),
+    });
+  const { mutate: recheckProvider, isPending: isRechecking } =
+    aiProviderMutations.useRecheckAiProvider({
       onSuccess: () => refetch(),
     });
   const { mutate: updateProvider, isPending: isSaving } =
@@ -163,6 +168,8 @@ export function ProvidersTab() {
             closeConfig();
           }}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          isRechecking={isRechecking}
+          onRecheck={() => recheckProvider(activeConfig.id)}
           onBack={closeConfig}
         />
         <ConnectProviderDialog
@@ -384,6 +391,7 @@ function ConfigRow({
               {t('Chat')}
             </span>
           )}
+          <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>

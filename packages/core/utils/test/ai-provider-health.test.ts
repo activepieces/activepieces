@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { classifyProviderOutcome, nextObservedAt, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
+import { classifyProviderOutcome, observedProviderFetch, ProviderOutcomeSignal } from '../src/lib/ai-provider-health'
 
 describe('classifyProviderOutcome', () => {
     it('reads a 2xx as a working key', () => {
@@ -178,40 +178,6 @@ describe('observedProviderFetch', () => {
         expect(pulled).toBeLessThan(10)
     })
 
-    it('stamps an observation when it arrived, so a slow failure cannot look newer than the retry that succeeded', async () => {
-        const failure = new Response('{"error":"overloaded"}', { status: 500 })
-        const slowClone = new Response(new ReadableStream<Uint8Array>({
-            async pull(controller) {
-                await new Promise((resolve) => setTimeout(resolve, 40))
-                controller.enqueue(new TextEncoder().encode('{"error":"overloaded"}'))
-                controller.close()
-            },
-        }), { status: 500 })
-        vi.spyOn(failure, 'clone').mockReturnValue(slowClone)
-        const responses = [failure, new Response('{}', { status: 200 })]
-
-        const signals: ProviderOutcomeSignal[] = []
-        const original = globalThis.fetch
-        globalThis.fetch = vi.fn(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 5))
-            return responses.shift()!
-        }) as unknown as typeof globalThis.fetch
-        try {
-            const observed = observedProviderFetch((signal) => signals.push(signal))
-            await observed?.('https://api.openai.com/v1/chat/completions')
-            await observed?.('https://api.openai.com/v1/chat/completions')
-            await new Promise((resolve) => setTimeout(resolve, 120))
-        }
-        finally {
-            globalThis.fetch = original
-        }
-
-        expect(signals.map((signal) => signal.statusCode)).toEqual([200, 500])
-        const failed = signals.find((signal) => signal.statusCode === 500)
-        const succeeded = signals.find((signal) => signal.statusCode === 200)
-        expect(failed?.observedAt).toBeLessThan(succeeded?.observedAt ?? 0)
-    })
-
     it('keeps a slow reporter off the call path', async () => {
         const signals: ProviderOutcomeSignal[] = []
         const original = globalThis.fetch
@@ -230,20 +196,4 @@ describe('observedProviderFetch', () => {
         }
         expect(signals).toMatchObject([{ statusCode: 200 }])
     })
-})
-
-describe('nextObservedAt', () => {
-    it('separates two observations taken inside the same millisecond', () => {
-        const clock = vi.spyOn(Date, 'now').mockReturnValue(1787088827101)
-        try {
-            const first = nextObservedAt()
-            const second = nextObservedAt()
-
-            expect(second).toBeGreaterThan(first)
-        }
-        finally {
-            clock.mockRestore()
-        }
-    })
-
 })

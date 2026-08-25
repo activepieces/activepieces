@@ -1,10 +1,10 @@
 import { QueryRunner } from 'typeorm'
 import { Migration } from '../../migration'
 
-export class AddAiProviderStatus1829000000000 implements Migration {
-    name = 'AddAiProviderStatus1829000000000'
+export class AddAiProviderStatus1834000000000 implements Migration {
+    name = 'AddAiProviderStatus1834000000000'
     breaking = false
-    release = '0.88.1'
+    release = '0.88.4'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -12,9 +12,6 @@ export class AddAiProviderStatus1829000000000 implements Migration {
             ADD COLUMN IF NOT EXISTS "status" character varying DEFAULT 'active',
             ADD COLUMN IF NOT EXISTS "statusReason" character varying,
             ADD COLUMN IF NOT EXISTS "statusUpdated" TIMESTAMP WITH TIME ZONE
-        `)
-        await queryRunner.query(`
-            UPDATE "ai_provider" SET "status" = 'active' WHERE "status" IS NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider"

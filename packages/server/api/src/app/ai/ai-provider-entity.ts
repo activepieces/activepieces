@@ -1,4 +1,4 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { AIProviderConfig, AiProviderModelScope, AiProviderProjectScope, Platform } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { z } from 'zod'
@@ -17,6 +17,9 @@ const AIProviderEncrypted = z.object({
     modelIds: z.array(z.string()).default([]),
     projectScope: AiProviderProjectScope.default('all'),
     projectIds: z.array(z.string()).default([]),
+    status: AiProviderKeyStatus,
+    statusReason: z.string().nullable(),
+    statusUpdated: z.string().nullable(),
 })
 type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
@@ -53,6 +56,19 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: Boolean,
             nullable: false,
             default: false,
+        },
+        status: {
+            type: String,
+            nullable: false,
+            default: 'active',
+        },
+        statusReason: {
+            type: String,
+            nullable: true,
+        },
+        statusUpdated: {
+            type: 'timestamp with time zone',
+            nullable: true,
         },
         modelScope: {
             type: String,

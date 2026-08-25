@@ -1,4 +1,4 @@
-import { AiProviderKeyStatus, classifyProviderOutcome, isNil, nextObservedAt, PlatformId, ProviderOutcomeSignal } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, classifyProviderOutcome, isNil, PlatformId, ProviderOutcomeSignal } from '@activepieces/core-utils'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
@@ -16,16 +16,16 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
             return null
         }
         const reason = status === 'active' ? null : buildReason(signal)
-        const observedSecondsAgo = secondsSince(signal.observedAt)
-        const refreshSecondsAgo = throttled ? observedSecondsAgo + REFRESH_UNCHANGED_AFTER_MINUTES * 60 : observedSecondsAgo
+        const refreshAfterMinutes = throttled ? REFRESH_UNCHANGED_AFTER_MINUTES : 0
         const rows = await aiProviderRepo().query(
             `UPDATE "ai_provider"
-             SET "status" = $1, "statusReason" = $2, "statusUpdated" = now() - make_interval(secs => $3)
-             WHERE "id" = $4 AND "platformId" = $5
-               AND ("statusUpdated" IS NULL OR "statusUpdated" < now() - make_interval(secs => $3))
-               AND ("status" <> $1 OR "statusUpdated" IS NULL OR "statusUpdated" < now() - make_interval(secs => $6))
+             SET "status" = $1, "statusReason" = $2, "statusUpdated" = now()
+             WHERE "id" = $3 AND "platformId" = $4
+               AND ("status" <> $1
+                    OR "statusUpdated" IS NULL
+                    OR "statusUpdated" <= now() - make_interval(mins => $5))
              RETURNING "status"`,
-            [status, reason, observedSecondsAgo, providerId, platformId, refreshSecondsAgo],
+            [status, reason, providerId, platformId, refreshAfterMinutes],
         )
 
         const applied = Array.isArray(rows) && rows.length > 0
@@ -33,13 +33,6 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
         return applied ? status : null
     },
 })
-
-function secondsSince(observedAt: number | undefined): number {
-    if (isNil(observedAt)) {
-        return 0
-    }
-    return Math.max(0, (nextObservedAt() - observedAt) / 1000)
-}
 
 function printable(text: string | undefined): string | undefined {
     return isNil(text) ? undefined : text.replace(/[\u0000-\u001f\u007f]/g, ' ')
