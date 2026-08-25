@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
 import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
@@ -160,5 +161,17 @@ describe('stepResultFrom — a partial transcript is not a finished one', () => 
         const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: '2026-08-07T00:00:00.000Z', stillRunning: true })
 
         expect(result.status).toBe('IN_PROGRESS')
+    })
+})
+
+describe('UNATTENDED_WEB_TOOLS — the unattended set is listed, not subtracted', () => {
+    it('names only tools that need nobody present', () => {
+        expect(UNATTENDED_WEB_TOOLS).toEqual(['ap_fetch_url', 'ap_web_search', 'ap_scrape_url'])
+    })
+
+    it('excludes every tool that asks the user something', () => {
+        for (const chatTool of ['ap_show_connection_picker', 'ap_show_quick_replies', 'ap_discover_action_auth', 'ap_load_guide', 'ap_execute_action', 'ap_run_code', 'ap_explore_data', 'ap_list_across_projects']) {
+            expect(UNATTENDED_WEB_TOOLS).not.toContain(chatTool)
+        }
     })
 })

@@ -5,6 +5,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const removeEmailSubscriptionAction = createAction({
 	auth: hubspotAuth,
 	name: 'remove-email-subscription',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Remove Email Subscription',
 	description: 'Removes email subscription.',
 	audience: 'both',

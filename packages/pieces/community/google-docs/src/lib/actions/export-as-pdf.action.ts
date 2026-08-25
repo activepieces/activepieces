@@ -8,6 +8,7 @@ import { exportAsPdfActionOutputSchema } from '../output-schemas';
 export const exportAsPdf = createAction({
 	auth: googleDocsAuth,
 	name: 'export_as_pdf',
+	classification: 'READ',
 	displayName: 'Export as PDF',
 	description: 'Export a Google Docs document as a PDF file.',
 	audience: 'ai',

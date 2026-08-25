@@ -255,7 +255,7 @@ export function createSandbox(
                     stderr: (input: EngineStderr) => {
                         stdError += input.message
                     },
-                })
+                }, log)
 
                 timeout = setTimeout(async () => {
                     killedByTimeout = true

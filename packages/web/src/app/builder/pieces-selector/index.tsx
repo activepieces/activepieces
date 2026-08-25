@@ -141,7 +141,7 @@ const PieceSelectorContent = ({
       });
     }
   }, [isOpen]);
-  const { data: aiProviders } = aiProviderQueries.useAiProviders();
+  const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
   const {
     pieceModel: aiPieceModel,
     isError: isAiPieceError,
@@ -174,7 +174,9 @@ const PieceSelectorContent = ({
       modal={false}
       onOpenChange={(open) => {
         if (open) {
-          setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          if (isForEmptyTrigger || openSelectorOnClick) {
+            setOpenedPieceSelectorStepNameOrAddButtonId(id);
+          }
           return;
         }
         clearSearch();

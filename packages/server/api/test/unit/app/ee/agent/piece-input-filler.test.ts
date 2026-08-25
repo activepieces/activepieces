@@ -30,6 +30,35 @@ function portsWith(answers: Record<string, unknown>[], resolveProperty: ResolveP
 const sendMessage = (properties: PiecePropertyMap) => ({ name: 'send_message', properties })
 
 describe('pieceInputFiller.fillInput', () => {
+    it('omits an optional input the instruction said nothing about, rather than sending null', async () => {
+        const ports = portsWith([{ q: 'is:unread', include_spam_trash: null, max_results: 5 }])
+
+        const filled = await pieceInputFiller.fillInput({
+            action: sendMessage(props({
+                q: prop({ type: PropertyType.SHORT_TEXT, required: true }),
+                include_spam_trash: prop({ type: PropertyType.CHECKBOX }),
+                max_results: prop({ type: PropertyType.NUMBER }),
+            })),
+            instruction: 'find my unread emails, at most 5',
+            ports,
+        })
+
+        expect(filled).toEqual({ q: 'is:unread', max_results: 5 })
+        expect('include_spam_trash' in filled).toBe(false)
+    })
+
+    it('drops a null nested inside an object input too', async () => {
+        const ports = portsWith([{ headers: { 'X-Trace': 'abc', 'X-Skip': null } }])
+
+        const filled = await pieceInputFiller.fillInput({
+            action: sendMessage(props({ headers: prop({ type: PropertyType.OBJECT }) })),
+            instruction: 'send it with a trace header',
+            ports,
+        })
+
+        expect(filled).toEqual({ headers: { 'X-Trace': 'abc' } })
+    })
+
     it('asks once per dependency wave, not once per input', async () => {
         const ports = portsWith([{ workspace: 'W1' }, { channel: 'C1' }])
 

@@ -75,6 +75,7 @@ interface OrganizationListResponseV2 {
 export const organizationMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'organization-matching-filter',
+	classification: 'READ',
 	displayName: 'Organization Matching Filter',
 	description: 'Triggers when an organization newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {

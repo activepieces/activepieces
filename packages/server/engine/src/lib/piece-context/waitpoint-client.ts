@@ -1,8 +1,9 @@
 import { CreateWaitpointRequest, CreateWaitpointResponse, EngineGenericError } from '@activepieces/shared'
+import { retryFetch } from '../api/retry-fetch'
 
 export const waitpointClient = {
     create: async ({ apiUrl, engineToken, ...body }: CreateWaitpointClientRequest): Promise<CreateWaitpointResponse> => {
-        const response = await fetch(`${apiUrl}v1/waitpoints`, {
+        const response = await retryFetch(`${apiUrl}v1/waitpoints`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

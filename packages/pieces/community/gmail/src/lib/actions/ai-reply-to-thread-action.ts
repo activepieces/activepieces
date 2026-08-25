@@ -6,6 +6,7 @@ import { gmailAiReplyToThreadActionOutputSchema } from '../output-schemas';
 export const gmailAiReplyToThreadAction = createAction({
   auth: gmailAuth,
   name: 'gmail_reply_to_thread',
+  classification: 'WRITE',
   displayName: 'Reply to Thread',
   description: 'Reply to an existing email thread.',
   audience: 'ai',

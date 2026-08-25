@@ -35,6 +35,15 @@ export class ConnectionLoadingError extends ExecutionError {
     }
 }
 
+export class ConnectionPieceMismatchError extends ExecutionError {
+    constructor(connectionName: string, pieceName: string | undefined, cause?: unknown) {
+        const message = pieceName === undefined
+            ? `connection (${connectionName}) can't be used here: this step type has no piece identity to bind to`
+            : `connection (${connectionName}) does not belong to piece (${pieceName})`
+        super('ConnectionPieceMismatch', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class ConnectionExpiredError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
         super('ConnectionExpired', formatMessage(`connection (${connectionName}) expired, reconnect again`), ExecutionErrorType.USER, cause)
@@ -72,6 +81,16 @@ export class FileStoreError extends ExecutionError {
 export class PausedFlowTimeoutError extends ExecutionError {
     constructor(cause?: unknown, maximumPauseDurationDays?: number) {
         super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorType.USER, cause)
+    }
+}
+
+export class PieceMemoryLimitError extends ExecutionError {
+    constructor(heapLimitMb: string | undefined, standardError?: string, cause?: unknown) {
+        super('PieceMemoryLimitError', JSON.stringify({
+            message: 'The piece ran out of memory',
+            heapLimitMb,
+            standardError,
+        }), ExecutionErrorType.USER, cause)
     }
 }
 

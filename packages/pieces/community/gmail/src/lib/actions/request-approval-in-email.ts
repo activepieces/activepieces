@@ -15,6 +15,7 @@ import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
   name: 'request_approval_in_mail',
+  classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',

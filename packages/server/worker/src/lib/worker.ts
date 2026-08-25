@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -138,7 +138,7 @@ export const worker = {
             apiClient,
             getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
             log: logger,
-        }))
+        }), logger)
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
@@ -416,9 +416,11 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
-                const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
-                if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                if (response.EDITION === ApEdition.CLOUD) {
+                    const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+                    if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
+                        throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    }
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {
@@ -617,6 +619,10 @@ async function sweepActionRunCache(): Promise<void> {
     if (error) {
         logger.warn({ error }, 'Action-run code cache sweep failed')
     }
+    // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
+    // sweep rather than startup because it can only run once the rollout grace period has passed,
+    // which is long after a worker boots.
+    await cacheUtils(sandboxConfig.getCacheBasePath()).deleteStaleCache(logger)
 }
 
 function startPollWatchdog(): void {

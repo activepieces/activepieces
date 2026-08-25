@@ -54,6 +54,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof discordAuth>, { 
 export const newMember = createTrigger({
   auth: discordAuth,
   name: 'new_member',
+  classification: 'READ',
   displayName: 'New Member',
   description: 'Triggers when a new member joins a guild',
   aiMetadata: {

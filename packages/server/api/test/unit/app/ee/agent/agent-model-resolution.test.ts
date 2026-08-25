@@ -78,3 +78,31 @@ describe('resolveModelIdForAnalytics', () => {
         expect(forAnalytics({ provider: null, selectedModel: '<script>alert(1)</script>' })).toBeNull()
     })
 })
+
+describe('chatUsageTracker — a flow step is not billed as a chat message', () => {
+    it('returns before doing any work, since the flow run meters its own AI usage', async () => {
+        const { chatUsageTracker } = await import('../../../../../src/app/ee/agent/chat-usage-tracker')
+        const log = { info: () => undefined, warn: () => undefined, error: () => undefined }
+
+        await expect(chatUsageTracker(log as never).track({
+            conversation: { id: 'conv-1', source: 'FLOW_STEP', platformId: 'plat-1', modelName: 'anthropic/claude-opus-4.6' } as never,
+        })).resolves.toBeUndefined()
+    })
+})
+
+describe('runScopeOrThrow', () => {
+    it('scopes a run to its project', () => {
+        expect(agentHelpers.runScopeOrThrow({ projectId: 'proj-1' })).toEqual({ type: 'project', projectId: 'proj-1' })
+    })
+
+    it('refuses a run with no project instead of widening to every platform key', () => {
+        expect(() => agentHelpers.runScopeOrThrow({ projectId: null })).toThrow()
+    })
+})
+
+describe('resolveChatProviderName', () => {
+    it('reports no provider for a conversation with no project, rather than guessing one platform-wide', async () => {
+        const log = { info: () => undefined, warn: () => undefined, error: () => undefined, debug: () => undefined }
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: null, log: log as never })).resolves.toBeNull()
+    })
+})

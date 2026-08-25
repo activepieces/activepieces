@@ -116,7 +116,7 @@ const TimeUnitPickerInputInner = React.forwardRef<
         id={id || picker}
         name={name || picker}
         className={cn(
-          'hover:bg-accent caret-primary w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
+          'hover:bg-accent caret-primary w-12 h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
           className,
           {
             'bg-background': isActive,

@@ -27,6 +27,8 @@ export enum Permission {
     WRITE_KNOWLEDGE_BASE = 'WRITE_KNOWLEDGE_BASE',
     READ_VARIABLE = 'READ_VARIABLE',
     WRITE_VARIABLE = 'WRITE_VARIABLE',
+    READ_AGENT = 'READ_AGENT',
+    WRITE_AGENT = 'WRITE_AGENT',
 }
 
 export enum RoleType {
@@ -54,4 +56,10 @@ export enum AIProviderName {
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
     MISTRAL = 'mistral',
+    XAI = 'xai',
+    DEEPSEEK = 'deepseek',
+    ZAI = 'zai',
+    QWEN = 'qwen',
+    MINIMAX = 'minimax',
+    MOONSHOT = 'moonshot',
 }

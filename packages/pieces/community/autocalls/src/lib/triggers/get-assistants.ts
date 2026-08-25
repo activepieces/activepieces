@@ -65,6 +65,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof autocallsAuth>, 
 export const getAssistants = createTrigger({
     auth:autocallsAuth,
 name: 'getAssistants',
+classification: 'READ',
     displayName: 'Updated Assistant',
     description: 'Triggers when assistants are fetched or updated in your Autocalls account.',
     aiMetadata: {

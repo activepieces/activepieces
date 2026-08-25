@@ -5,6 +5,7 @@ export const defaultValue = createAction({
   audience: 'both',
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'defaultValue',
+  classification: 'READ',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

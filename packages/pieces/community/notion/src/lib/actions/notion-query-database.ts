@@ -7,6 +7,7 @@ import { notionQueryDatabaseActionOutputSchema } from '../output-schemas';
 export const notionQueryDatabase = createAction({
   auth: notionAuth,
   name: 'notion_query_database',
+  classification: 'SEARCH',
   displayName: 'Query Database',
   description:
     "Queries a Notion database with the API's native filter and sort JSON objects (compound AND/OR, ranges, dates, contains, etc.).",

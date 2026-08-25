@@ -1,6 +1,7 @@
-import { isNil, unique } from '@activepieces/core-utils'
+import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -17,6 +18,7 @@ import { PieceMetadataEntity } from '../../pieces/metadata/piece-metadata-entity
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { ToolSearchIndexEntity } from '../../tool-search/tool-search-index.entity'
+import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { userRepo } from '../../user/user-service'
 import { userInvitationRepo } from '../../user-invitations/user-invitation.service'
 import { VariableEntity } from '../../variable/variable.entity'
@@ -40,7 +42,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
         const { platformId } = data
 
-        await cutOffPlatformAccess({ platformId, log })
+        await beginPlatformTeardown({ platformId, log })
 
         const flows = await listFlowsByPlatform(platformId)
         await drainFlows({ flows, log })
@@ -55,7 +57,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         await signingKeyRepo().delete({ platformId })
 
-        await fileRepo().delete({ platformId })
+        await fileRepo().delete({ platformId, projectId: IsNull() })
         await projectRoleRepo().delete({ platformId })
         await userInvitationRepo().delete({ platformId })
         await mcpOAuthTokenRepo().delete({ platformId })
@@ -78,28 +80,54 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     },
 })
 
-export async function cutOffPlatformAccess({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
+export async function beginPlatformTeardown({ platformId, log }: BeginPlatformTeardownParams): Promise<void> {
     await userRepo().update({ platformId }, { status: UserStatus.INACTIVE })
     await apiKeyService.deleteAllByPlatformId({ platformId })
     await stopPlatformExecution({ platformId, log })
 }
 
-async function stopPlatformExecution({ platformId, log }: CutOffPlatformAccessParams): Promise<void> {
+async function stopPlatformExecution({ platformId, log }: BeginPlatformTeardownParams): Promise<void> {
     const flows = await listFlowsByPlatform(platformId)
     for (const flow of flows) {
         if (flow.status === FlowStatus.DISABLED || isNil(flow.publishedVersionId)) {
             continue
         }
-        await flowService(log).update({
+        const { error } = await tryCatch(async () => flowService(log).update({
             id: flow.id,
             userId: null,
             projectId: flow.projectId,
             platformId,
+            emitEvents: false,
             operation: {
                 type: FlowOperationType.CHANGE_STATUS,
                 request: { status: FlowStatus.DISABLED },
             },
-        })
+        }))
+        if (isNil(error)) {
+            continue
+        }
+        log.warn({
+            error,
+            flow: { id: flow.id },
+            project: { id: flow.projectId },
+            platform: { id: platformId },
+        }, '[stopPlatformExecution] Trigger disable failed; forcing trigger-source removal so no new webhooks admit runs')
+        const { error: fallbackError } = await tryCatch(async () => triggerSourceService(log).disable({
+            flowId: flow.id,
+            projectId: flow.projectId,
+            simulate: false,
+            ignoreError: true,
+        }))
+        if (!isNil(fallbackError)) {
+            log.warn({
+                error: fallbackError,
+                flow: { id: flow.id },
+                project: { id: flow.projectId },
+                platform: { id: platformId },
+            }, '[stopPlatformExecution] Fallback trigger-source disable also failed; teardown will continue and drainFlows will hard-delete the flow row anyway')
+        }
+        await flowRepo().update({ id: flow.id }, { status: FlowStatus.DISABLED })
+        await flowExecutionCache(log).invalidate(flow.id)
     }
     await flowExecutionCache(log).invalidate(...flows.map((flow) => flow.id))
 }
@@ -151,7 +179,7 @@ type DrainFlowsParams = {
     log: FastifyBaseLogger
 }
 
-type CutOffPlatformAccessParams = {
+type BeginPlatformTeardownParams = {
     platformId: string
     log: FastifyBaseLogger
 }

@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'video_generation_completed_trigger';
 export const videoGenerationCompletedTrigger = createTrigger({
 	auth: heygenAuth,
 	name: 'video_generation_completed',
+	classification: 'READ',
 	displayName: 'New Avatar Video Event (Success)',
 	description: 'Triggers when a video is generated successfully.',
 	aiMetadata: {

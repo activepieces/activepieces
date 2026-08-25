@@ -10,6 +10,7 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const findRecords = createAction({
 	name: 'find_records',
+	classification: 'SEARCH',
 	displayName: 'Find Records',
 	description: 'Searches for records in the specified table based on criteria.',
 	audience: 'both',

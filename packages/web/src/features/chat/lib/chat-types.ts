@@ -51,6 +51,7 @@ const DISPLAY_TOOL_NAMES = new Set([
   'ap_show_project_picker',
   'ap_show_questions',
   'ap_show_quick_replies',
+  'ap_show_showcase',
 ]);
 
 function isDisplayTool(name: string): boolean {
@@ -309,10 +310,6 @@ export type TypedToolOutput<T> =
   | { state: 'pending' }
   | { state: 'success'; data: T }
   | { state: 'error'; errorText: string };
-
-export type CreditsWarning = {
-  percentage: number;
-};
 
 export type QuickRepliesData = {
   replies: string[];

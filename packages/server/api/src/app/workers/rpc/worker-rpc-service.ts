@@ -5,9 +5,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
+import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -277,16 +279,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return
             }
             const platformId = await projectService(log).getPlatformId(projectId)
-            await flowService(log).update({
+            const disabledFlow = await flowService(log).update({
                 id: flowId,
                 userId: null,
                 projectId,
                 platformId,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: { status: FlowStatus.DISABLED },
                 },
             })
+            flowSideEffects(log).onDisabledByWorker({ flow: disabledFlow, projectId, platformId })
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
@@ -333,6 +337,14 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
         },
 
+        async executeKnowledgeBaseTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeKnowledgeBaseTool(input)
+        },
+
+        async executeFlowTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeFlowTool(input)
+        },
+
         async updateFlowStepProgress(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
         },
@@ -343,6 +355,26 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
+        },
+
+        async getPersonalizationConfig(input) {
+            return chatPersonalizationService(log).getConfigForWorker(input)
+        },
+
+        async getPersonalizationPrefillConfig(input) {
+            return chatPersonalizationService(log).getPrefillConfigForWorker(input)
+        },
+
+        async savePersonalizationResult(input) {
+            return chatPersonalizationService(log).saveResult(input)
+        },
+
+        async savePersonalizationPrefill(input) {
+            return chatPersonalizationService(log).savePrefill(input)
+        },
+
+        async sendPersonalizationProgress(input) {
+            return chatPersonalizationService(log).sendProgress(input)
         },
     }
 }

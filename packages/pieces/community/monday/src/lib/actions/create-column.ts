@@ -6,6 +6,7 @@ import { COLUMN_TYPE_OPTIONS } from '../common/constants';
 export const createColumnAction = createAction({
   auth: mondayAuth,
   name: 'monday_create_column',
+  classification: 'WRITE',
   displayName: 'Create Column',
   description: 'Creates a new column in board.',
   audience: 'both',

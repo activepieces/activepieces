@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const rotatePdfAction = createAction({
   auth: iloveapiAuth,
   name: 'rotate_pdf',
+  classification: 'READ',
   displayName: 'Rotate PDF',
   description: 'Rotate every page of a PDF by 90, 180, or 270 degrees.',
   audience: 'both',

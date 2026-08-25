@@ -9,6 +9,7 @@ import { moxieCRMAuth } from '../auth';
 export const moxieCreateProjectAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_project',
+  classification: 'WRITE',
   description: 'Creates a new project in moxie CRM.',
   displayName: 'Create a Project',
   audience: 'both',
