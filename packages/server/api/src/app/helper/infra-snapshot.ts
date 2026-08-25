@@ -83,15 +83,15 @@ async function collectDatabaseSnapshot(): Promise<Record<string, number> | null>
 }
 
 async function collectCatalogSnapshot(): Promise<Record<string, unknown>[]> {
-    const rows = await withStatsConnection(async (runner) => {
+    const catalog = await withStatsConnection(async (runner) => {
         const tables = infraSnapshotParsers.asRows(await runner.query(TABLE_STATS_SQL, [TOP_ROWS]))
             .map((row) => ({ event: 'db.table', table: infraSnapshotParsers.toText(row['table']), ...infraSnapshotParsers.numericFields(row) }))
         const indexes = infraSnapshotParsers.asRows(await runner.query(INDEX_STATS_SQL, [UNUSED_INDEX_MIN_BYTES, TOP_ROWS]))
             .map((row) => ({ event: 'db.index', table: infraSnapshotParsers.toText(row['table']), index: infraSnapshotParsers.toText(row['index']), ...infraSnapshotParsers.numericFields(row) }))
-        const statements = await collectStatements(runner)
-        return [...tables, ...indexes, ...statements]
+        return [...tables, ...indexes]
     })
-    return rows ?? []
+    const statements = await withStatsConnection((runner) => collectStatements(runner))
+    return [...(catalog ?? []), ...(statements ?? [])]
 }
 
 async function collectStatements(runner: QueryRunner): Promise<Record<string, unknown>[]> {
