@@ -729,10 +729,11 @@ function createAgentSurfaceTools({ executeTool }: {
         }),
 
         ap_remove_agent_tool: tool({
-            description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call.',
+            description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call. If two of the agent\'s pieces share an action name, pass pieceName to say which one.',
             inputSchema: z.object({
                 agentId: z.string().describe('The id returned by ap_list_agents'),
                 actionNames: z.array(z.string()).describe('Action names to remove, e.g. ["gmail_search_mail"]'),
+                pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
                 publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
             }),
             execute: async (toolInput) => {

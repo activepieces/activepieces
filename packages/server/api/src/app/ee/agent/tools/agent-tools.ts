@@ -337,14 +337,17 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
     if (actionNames.length === 0) {
         return { error: 'Removing tools needs at least one action name.' }
     }
-    const matched = agent.draft.tools.flatMap((tool) => {
-        const action = pieceActionOf(tool)
-        return !isNil(action) && actionNames.includes(action.actionName) ? action.pieceName : []
-    })
-    const pieces = unique(matched)
-    if (pieces.length > 1) {
-        return { error: `More than one piece on ${agent.displayName} has an action by that name: ${pieces.join(', ')}. Say which piece to take it from.` }
+    const requestedPiece = nonEmpty(toolInput.pieceName)
+    const scopedPiece = isNil(requestedPiece) ? undefined : mcpUtils.normalizePieceName(requestedPiece) ?? requestedPiece
+    const targets = agent.draft.tools.flatMap((tool) => pieceActionOf(tool) ?? [])
+        .filter((action) => actionNames.includes(action.actionName))
+        .filter((action) => isNil(scopedPiece) || action.pieceName === scopedPiece)
+    const ambiguous = actionNames.filter((actionName) => unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)).length > 1)
+    if (ambiguous.length > 0) {
+        const pieces = unique(targets.filter((target) => ambiguous.includes(target.actionName)).map((target) => target.pieceName))
+        return { error: `${ambiguous.join(' and ')} is on more than one piece here: ${pieces.join(', ')}. Call this again with pieceName set to the one you mean.` }
     }
+    const removing = new Set(targets.map((target) => `${target.pieceName}:${target.actionName}`))
     const updated = await agentService(log).editDraftTools({
         id: agent.id,
         projectId,
@@ -352,7 +355,7 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
         edit: (tools) => {
             const kept = tools.filter((tool) => {
                 const action = pieceActionOf(tool)
-                return isNil(action) || !actionNames.includes(action.actionName)
+                return isNil(action) || !removing.has(`${action.pieceName}:${action.actionName}`)
             })
             return kept.length === tools.length ? null : kept
         },

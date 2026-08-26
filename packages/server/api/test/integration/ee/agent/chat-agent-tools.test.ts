@@ -278,8 +278,33 @@ describe('the chat tools that build agents, against the real service', () => {
 
         const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', { agentId, actionNames: ['save_note'] }) as { error?: string }
 
-        expect(result.error).toContain('More than one piece')
+        expect(result.error).toContain('more than one piece')
         expect((await agentRow(agentId)).draft.tools).toHaveLength(2)
+
+        const resolved = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['save_note'], pieceName: RIVAL_PIECE,
+        }) as { error?: string }
+
+        expect(resolved.error).toBeUndefined()
+        const left = (await agentRow(agentId)).draft.tools as Array<{ pieceMetadata: { pieceName: string } }>
+        expect(left.map((tool) => tool.pieceMetadata.pieceName)).toEqual([TOOL_PIECE])
+    })
+
+    it('removes two actions that live on different pieces without asking anything', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['read_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['read_note', 'save_note'],
+        }) as { error?: string }
+
+        expect(result.error).toBeUndefined()
+        expect((await agentRow(agentId)).draft.tools).toHaveLength(0)
     })
 
     it('keeps both tools when the model adds two at once', async () => {
