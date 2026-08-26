@@ -7,6 +7,7 @@ import { gmailGetMailActionOutputSchema } from '../output-schemas';
 export const gmailGetEmailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_mail',
+  classification: 'READ',
   description: 'Get an email via Id.',
   audience: 'human',
   aiMetadata: {

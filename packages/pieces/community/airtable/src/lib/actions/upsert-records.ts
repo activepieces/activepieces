@@ -12,6 +12,7 @@ import { upsertRecordsActionOutputSchema } from '../output-schemas';
 export const airtableUpsertRecordsAction = createAction({
   auth: airtableAuth,
   name: 'upsert_records',
+  classification: 'WRITE',
   displayName: 'Upsert Records (Agent)',
   description: 'Create or update up to 10 records in one batch call.',
   audience: 'ai',

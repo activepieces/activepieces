@@ -7,6 +7,7 @@ import { searchYoutubeAiOutputSchema } from '../output-schemas';
 export const searchYoutubeAi = createAction({
   auth: serpApiAuth,
   name: 'search_youtube_ai',
+  classification: 'SEARCH',
   displayName: 'YouTube Search (Agent)',
   description: 'Search YouTube for videos matching a query.',
   audience: 'ai',

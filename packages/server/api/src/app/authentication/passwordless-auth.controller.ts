@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, RequestEmailCodeRequest, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { ApplicationEventName, RequestEmailCodeRequest, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -54,27 +54,6 @@ export const passwordlessAuthController: FastifyPluginAsyncZod = async (
 
         return response
     })
-
-    app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
-        const { response, signedUp } = await passwordlessAuthService(request.log).completeSignUp({
-            identityId: request.principal.id,
-            fullName: request.body.fullName,
-        })
-
-        if (signedUp && !isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.clientIp(request),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_UP,
-                data: {},
-            })
-        }
-
-        return response
-    })
 }
 
 const RequestEmailCodeRequestOptions = {
@@ -94,15 +73,5 @@ const VerifyEmailCodeRequestOptions = {
     },
     schema: {
         body: VerifyEmailCodeRequest,
-    },
-}
-
-const CompleteSignUpRequestOptions = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.ONBOARDING]),
-        rateLimit: authnRateLimit,
-    },
-    schema: {
-        body: CompleteSignUpRequest,
     },
 }

@@ -67,6 +67,29 @@ type ExprToken =
   | { kind: 'newline' }
   | { kind: 'text'; value: string };
 
+function stringStateAfter({
+  expr,
+  from,
+  to,
+  state,
+}: {
+  expr: string;
+  from: number;
+  to: number;
+  state: '"' | "'";
+}): '"' | "'" | null {
+  let current: '"' | "'" | null = state;
+  for (let j = from; j < to; j++) {
+    const c = expr[j];
+    if (current) {
+      if (c === current && expr[j - 1] !== '\\') current = null;
+    } else if ((c === '"' || c === "'") && expr[j - 1] !== '\\') {
+      current = c;
+    }
+  }
+  return current;
+}
+
 function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
   const tokens: ExprToken[] = [];
   const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
@@ -74,20 +97,6 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
   let fnDepth = 0;
 
   while (i < expr.length) {
-    if (expr[i] === '{' && expr[i + 1] === '{') {
-      const end = expr.indexOf('}}', i + 2);
-      if (end !== -1) {
-        tokens.push({ kind: 'variable', value: expr.slice(i, end + 2) });
-        i = end + 2;
-        continue;
-      }
-      // Unclosed "{{": emit it as literal text and advance so the tokenizer
-      // doesn't spin forever while the user is still typing the closing braces.
-      tokens.push({ kind: 'text', value: '{{' });
-      i += 2;
-      continue;
-    }
-
     if (expr[i] === '\n') {
       tokens.push({ kind: 'newline' });
       i++;
@@ -126,6 +135,29 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
     let inString: '"' | "'" | null = null;
     while (i < expr.length) {
       const ch = expr[i];
+      if (ch === '{' && expr[i + 1] === '{') {
+        const end = expr.indexOf('}}', i + 2);
+        if (end === -1) {
+          // Unclosed "{{": keep it as literal text and advance so the tokenizer
+          // doesn't spin forever while the user is still typing the closing braces.
+          text += '{{';
+          i += 2;
+          continue;
+        }
+        if (text) tokens.push({ kind: 'text', value: text });
+        text = '';
+        tokens.push({ kind: 'variable', value: expr.slice(i, end + 2) });
+        if (inString) {
+          inString = stringStateAfter({
+            expr,
+            from: i + 2,
+            to: end,
+            state: inString,
+          });
+        }
+        i = end + 2;
+        continue;
+      }
       if (inString) {
         if (ch === inString && expr[i - 1] !== '\\') inString = null;
         text += ch;
@@ -138,7 +170,6 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
         i++;
         continue;
       }
-      if (ch === '{' && expr[i + 1] === '{') break;
       if (ch === '\n') break;
       if (ch === ')') break;
       if (ch === ';' && fnDepth > 0) break;

@@ -9,11 +9,20 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         }
     })
 
-    it('only Anthropic and Mistral reject image generation', () => {
+    it('only the text-only vendors reject image generation', () => {
         const noImage = Object.values(AIProviderName).filter(
             (provider) => !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration,
         )
-        expect(noImage.sort()).toEqual([AIProviderName.ANTHROPIC, AIProviderName.MISTRAL].sort())
+        expect(noImage.sort()).toEqual([
+            AIProviderName.ANTHROPIC,
+            AIProviderName.MISTRAL,
+            AIProviderName.XAI,
+            AIProviderName.DEEPSEEK,
+            AIProviderName.ZAI,
+            AIProviderName.QWEN,
+            AIProviderName.MINIMAX,
+            AIProviderName.MOONSHOT,
+        ].sort())
     })
 
     it('marks embedding support iff a default embedding model exists', () => {

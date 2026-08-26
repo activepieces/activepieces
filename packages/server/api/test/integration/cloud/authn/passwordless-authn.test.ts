@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
+import { ApFlagId, OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
@@ -86,6 +86,13 @@ beforeEach(async () => {
 })
 
 describe('Passwordless Authentication API', () => {
+    it('tells the frontend the code flow is on', async () => {
+        const response = await app?.inject({ method: 'GET', url: '/api/v1/flags' })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json()[ApFlagId.EMAIL_CODE_AUTH_ENABLED]).toBe(true)
+    })
+
     describe('Request code endpoint', () => {
         it('creates an unverified identity and issues a 6 digit code', async () => {
             const statusCode = await requestCode(EMAIL)
@@ -144,7 +151,7 @@ describe('Passwordless Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
 
-        it('issues a code with no captcha token when no challenge is configured', async () => {
+        it('issues a stored six-digit code once the challenge is solved', async () => {
             const statusCode = await requestCode(EMAIL)
 
             expect(statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -231,7 +238,30 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('platform').count()).toBe(0)
         })
 
-        it('creates the platform from the name once the name step completes', async () => {
+        it('skips the name step for a member whose name we already have', async () => {
+            await userIdentityService(app!.log).create({
+                email: EMAIL,
+                password: 'password-that-verifies',
+                firstName: 'Ahmad',
+                lastName: 'Tash',
+                trackEvents: false,
+                newsLetter: false,
+                provider: UserIdentityProvider.EMAIL,
+                verified: true,
+            })
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+
+            const response = await verifyCode({ email: EMAIL, code: otp!.value })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body?.platformId).not.toBeNull()
+            expect(body?.projectId).not.toBeNull()
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        })
+
+        it('names the platform after the company on a work address', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
             const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
@@ -250,6 +280,28 @@ describe('Passwordless Authentication API', () => {
             const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
             expect(identity?.firstName).toBe('Ahmad')
             expect(identity?.lastName).toBe('Bin Tash')
+            const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
+            expect(platform?.name).toBe('Example')
+            const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
+            expect(project?.displayName).toBe('Example\'s Project')
+        })
+
+        it('falls back to the person when the address is a consumer provider', async () => {
+            const consumerEmail = 'ahmad.tash@gmail.com'
+            await requestCode(consumerEmail)
+            const otp = await storedOtp(consumerEmail)
+            const onboarding = await verifyCode({ email: consumerEmail, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
             expect(platform?.name).toBe('Ahmad\'s Platform')
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })

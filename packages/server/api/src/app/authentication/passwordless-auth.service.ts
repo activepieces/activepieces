@@ -117,7 +117,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                 projectId: null,
             })
         }
-        return authenticationUtils(log).getOnboardingResponse({ identityId: verifiedIdentity.id })
+        return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
     },
 
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
@@ -128,7 +128,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
-            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+            name: signupNames.platformNameFromSignup({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,

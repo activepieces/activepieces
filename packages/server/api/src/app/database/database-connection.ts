@@ -12,6 +12,7 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
 import { AgentEntity } from '../ee/agent/agent-entity'
 import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
+import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-personalization-entity'
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
@@ -56,7 +57,6 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
-import { TeamsBotInstallationEntity } from '../teams-bot/teams-bot-installation.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -109,11 +109,11 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         AgentEntity,
         AgentConversationEntity,
+        ChatPersonalizationEntity,
         ChatRolloutUserEntity,
         UserMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
-        TeamsBotInstallationEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,

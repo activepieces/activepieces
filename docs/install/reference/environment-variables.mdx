@@ -145,6 +145,7 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_EXECUTION_MODE` | Sandbox strategy: `UNSANDBOXED`, `SANDBOX_PROCESS`, `SANDBOX_CODE_ONLY`, or `SANDBOX_CODE_AND_PROCESS`. | `UNSANDBOXED` |
 | `AP_CONTAINER_TYPE` | Which services run in the container: `APP` (API only), `WORKER` (worker only), or `WORKER_AND_APP` (both). | `WORKER_AND_APP` |
 | `AP_WORKER_CONCURRENCY` | Concurrent jobs a worker processes at once. Each job uses one sandbox instance. | `5` |
+| `AP_PREWARM_CACHE_ON_STARTUP` | Pre-fill the worker's local piece and code cache on startup by resolving every enabled flow on the platform, instead of filling it lazily on each flow's first run. Enabling it removes the one-time cold-start latency of the first run after a worker (re)starts, but the warm-up itself costs memory and CPU proportional to the number of enabled flows — on instances with many flows it can pin the worker at its CPU limit for the duration of the warm-up and spike memory enough to OOM-kill small workers, especially when all workers restart at once during an upgrade. Keep it disabled unless your instance has a modest number of enabled flows, your workers have memory headroom, and first-run latency after deploys matters to you. | `false` |
 | `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. | `1048576` |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS` | Comma-separated environment variables propagated into sandboxed code. For pieces, keep everything in the authentication object so it works across instances. | `None` |
 | `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. | `600` |
@@ -213,6 +214,11 @@ until you supply Turnstile keys.
 The challenge is only served when **both** Turnstile variables are set. With
 either missing, the sign-in page renders no widget and the server verifies
 nothing, so a self-hosted instance needs no Cloudflare account.
+
+Signing in with an emailed code depends on that pair. It is served on
+Activepieces Cloud only, and there only when both variables are set — without
+them the endpoints are not registered and the sign-in card opens on the
+password form.
 
 ### Email (SMTP)
 

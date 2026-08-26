@@ -6,6 +6,7 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 export const hubSpotListsAddContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'add_contact_to_list',
+	classification: 'WRITE',
 	displayName: 'Add contact To List',
 	description: 'Add contact to list',
 	audience: 'both',

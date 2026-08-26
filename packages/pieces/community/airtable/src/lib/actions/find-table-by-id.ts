@@ -6,6 +6,7 @@ import { findTableByIdActionOutputSchema } from '../output-schemas';
 export const airtableFindTableByIdAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_table_by_id',
+  classification: 'READ',
   displayName: 'Find Table by ID',
   description: "Get a table's details and schema using its ID.",
   audience: 'both',

@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const createReply = createAction({
   name: 'create-reply',
+  classification: 'WRITE',
   displayName: 'Create or Update Reply',
   description: 'Create or update a reply to a review if it already exists',
   audience: 'both',

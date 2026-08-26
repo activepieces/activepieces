@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+// The chunk reducer pulls in `@/features/projects` → `embed-provider.tsx`, which reads
+// `window.opener` at module load, so this suite needs a DOM.
 import { UIMessageChunk } from 'ai';
 import { describe, expect, it } from 'vitest';
 

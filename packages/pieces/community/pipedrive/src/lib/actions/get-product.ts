@@ -11,6 +11,7 @@ import { GetField } from '../common/types';
 export const getProductAction = createAction({
 	auth: pipedriveAuth,
 	name: 'get-product',
+	classification: 'READ',
 	displayName: 'Retrieve a Product',
 	description: 'Finds a product by ID.',
 	audience: 'both',

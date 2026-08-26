@@ -28,6 +28,7 @@ interface ZendeskTicket {
 
 export const newSuspendedTicket = createTrigger({
   name: 'new_suspended_ticket',
+  classification: 'READ',
   displayName: 'New Suspended Ticket',
   description: 'Fires when a ticket is suspended. Requires a Zendesk Trigger with Notify active webhook. Suspended tickets auto-delete after 14 days.',
   aiMetadata: {

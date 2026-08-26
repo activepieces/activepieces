@@ -7,6 +7,7 @@ import { folderOutputSchema } from '../../output-schemas';
 export const clickupUpdateFolder = createAction({
   auth: clickupAuth,
   name: 'clickup_update_folder',
+  classification: 'WRITE',
   description: 'Rename an existing ClickUp folder',
   audience: 'ai',
   aiMetadata: {

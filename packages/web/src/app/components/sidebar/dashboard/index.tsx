@@ -1,5 +1,6 @@
 import { Permission, isNil } from '@activepieces/core-utils';
 import {
+  ApFlagId,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
@@ -48,6 +49,7 @@ import {
   useAuthorization,
   useIsPlatformAdmin,
 } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -64,6 +66,9 @@ import { SidebarUser } from '../sidebar-user';
 export function ProjectDashboardSidebar({
   className,
 }: { className?: string } = {}) {
+  const { data: agentsEnabledFlag } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AGENTS_ENABLED,
+  );
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -168,7 +173,7 @@ export function ProjectDashboardSidebar({
     type: 'link',
     to: '/agents',
     label: t('Agents'),
-    show: platform.plan.agentsEnabled,
+    show: platform.plan.agentsEnabled && agentsEnabledFlag === true,
     icon: BotIcon,
     hasPermission: checkAccess(Permission.READ_AGENT),
     isSubItem: false,
@@ -319,11 +324,12 @@ export function ProjectDashboardSidebar({
                     )}
                   />
                 ) : (
-                  isSearchMode && (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">
-                      {state === 'expanded' && t('No projects found.')}
-                    </div>
-                  )
+                  <div className="px-2 py-2 text-sm text-muted-foreground">
+                    {state === 'expanded' &&
+                      (isSearchMode
+                        ? t('No projects found.')
+                        : t('No projects yet'))}
+                  </div>
                 )}
               </div>
               {shouldShowInlineAddButton && state === 'expanded' && (

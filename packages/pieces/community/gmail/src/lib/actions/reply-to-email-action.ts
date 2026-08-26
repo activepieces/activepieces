@@ -10,6 +10,7 @@ import { replyToEmailActionOutputSchema } from '../output-schemas';
 export const gmailReplyToEmailAction = createAction({
   auth: gmailAuth,
   name: 'reply_to_email',
+  classification: 'WRITE',
   displayName: 'Reply to Email',
   description: 'Reply to an existing email.',
   audience: 'human',

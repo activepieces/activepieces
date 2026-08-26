@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeCapturePaymentIntent = createAction({
   name: 'capture_payment_intent',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Capture Payment Intent (Agent)',
   description: 'Capture funds from an authorized PaymentIntent.',

@@ -6,6 +6,7 @@ import { sheetsExportWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsExportWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_export_worksheet',
+	classification: 'READ',
 	displayName: 'Export Worksheet (CSV/TSV)',
 	description: 'Download a worksheet as a CSV or TSV file.',
 	audience: 'ai',

@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const createRedditComment = createAction({
   auth: redditAuth,
   name: 'createRedditComment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Comment on a Reddit post or reply to a comment.',
   audience: 'both',

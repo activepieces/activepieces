@@ -818,9 +818,7 @@ function CodeStep({
     authMutations.useVerifyEmailCode({
       onSuccess: (data) => {
         authenticationSession.saveResponse(data, false);
-        // A brand-new member arrives on the pre-platform onboarding token, so
-        // there is no project yet: ask their name before building the platform.
-        if (isNil(data.projectId)) {
+        if (isNil(data.platformId)) {
           onNeedsName();
           return;
         }

@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const removeCrmContactTagAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_remove_crm_contact_tag',
+  classification: 'WRITE',
   displayName: 'Remove a Tag from a CRM Contact',
   description: 'Remove a single tag from a CRM contact',
   audience: 'both',

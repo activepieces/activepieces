@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createList = createAction({
   name: 'create-list',
+  classification: 'WRITE',
   auth: sendfoxAuth,
   displayName: 'Create List',
   description: 'Create a new list',

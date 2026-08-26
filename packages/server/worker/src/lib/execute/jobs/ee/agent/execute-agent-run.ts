@@ -88,10 +88,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const config = await ctx.apiClient.getAgentConfig({
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
+                ...spreadIfDefined('messageSource', data.messageSource),
                 ...spreadIfDefined('provider', data.provider),
+                ...spreadIfDefined('providerConfigId', data.providerConfigId),
                 ...spreadIfDefined('projectId', projectId),
                 ...spreadIfDefined('promptOverride', promptOverride),
                 ...spreadIfDefined('dryRun', dryRun),
+                ...spreadIfDefined('discoveryOnly', discoveryOnly),
             })
 
             const provider = config.provider as AIProviderName
@@ -184,10 +187,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
 
             const allTools = buildToolSet({
                 provider,
+                providerConfigId: config.providerConfigId,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
                 projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
+                agentsAvailable: config.agentsAvailable,
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
@@ -460,9 +465,10 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, abortSignal, source, provider, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
+    providerConfigId: string
     eventEmitter: ReturnType<typeof agentWorkerTools.createEventEmitter>
     log: JobContext['log']
     phaseState: { phase: AgentPhase }
@@ -480,6 +486,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     dryRun: boolean
     discoveryOnly: boolean
     emailEnabled: boolean
+    agentsAvailable: boolean
     abortSignal: AbortSignal
     configuredPieceTools: AgentPieceTool[]
     configuredFlowTools: ResolvedAgentFlowTool[]
@@ -556,8 +563,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const selectedConnectionByPiece = new Map<string, string>()
     const localTools = agentWorkerTools.createLocalTools({
         onSetProjectContext: async (projectId) => {
+            const { error } = await tryCatch(() => ctx.apiClient.updateProjectContext({ conversationId, runId, projectId, provider, providerConfigId }))
+            if (!isNil(error)) {
+                log.warn({ error, conversation: { id: conversationId }, project: projectId ? { id: projectId } : undefined }, '[executeAgentRun] Refused a project switch')
+                return { success: false, error: 'Could not switch to that project on this chat — the AI provider key this chat runs on is not available there. Start a new chat in that project instead.' }
+            }
             projectState.projectId = projectId
-            await ctx.apiClient.updateProjectContext({ conversationId, runId, projectId })
+            return { success: true }
         },
         projects,
     })
@@ -589,6 +601,9 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         onGateOpened: storePendingGate,
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
+    const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool })
+        : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
         phaseState.phase = phase
@@ -633,7 +648,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId }),
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
@@ -643,7 +658,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider }),
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
         log,
     })
     const completionTool = structuredOutput.length === 0
@@ -660,6 +675,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             phase: phaseTools,
             buildPlan: buildPlanTools,
             email: emailTools,
+            agentSurface: agentSurfaceTools,
             mcp: mcpTools as ToolSet,
             configuredPiece: configuredTools,
             configuredFlow: configuredFlowToolSet,

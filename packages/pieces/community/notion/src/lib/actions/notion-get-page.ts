@@ -7,6 +7,7 @@ import { notionGetPageActionOutputSchema } from '../output-schemas';
 export const notionGetPage = createAction({
   auth: notionAuth,
   name: 'notion_get_page',
+  classification: 'READ',
   displayName: 'Get Page',
   description:
     "Fetches a single page's metadata and property values by id (a database row is a page).",

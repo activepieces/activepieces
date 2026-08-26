@@ -19,6 +19,7 @@ interface BroadcastRecord {
 
 export const listBroadcasts = createAction({
   name: 'list_broadcasts',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Broadcasts',
   outputSchema: listBroadcastsOutputSchema,

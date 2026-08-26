@@ -4,19 +4,15 @@ import {
     ExecuteResolveConnectionIdentifierOperation,
     ExecuteResolveConnectionIdentifierResponse,
 } from '@activepieces/shared'
-import { EngineConstants } from '../handler/context/engine-constants'
-import { pieceHelper } from '../helper/piece-helper'
+import { pieceAuth } from '../core/piece/piece-auth'
 
 export const resolveConnectionIdentifierOperation = {
     execute: async (operation: ExecuteResolveConnectionIdentifierOperation): Promise<EngineResponse<ExecuteResolveConnectionIdentifierResponse>> => {
-        const output = await pieceHelper.executeResolveConnectionIdentifier({
-            params: operation,
-            devPieces: EngineConstants.DEV_PIECES,
-        })
-
+        const call = await pieceAuth.callMethod({ operation, authValueType: operation.connectionType, methodPath: ['getConnectionIdentifier'] })
+        const identifier = call.called ? call.result : undefined
         return {
             status: EngineResponseStatus.OK,
-            response: output,
+            response: { identifier: typeof identifier === 'string' ? identifier : undefined },
         }
     },
 }

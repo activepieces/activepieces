@@ -196,6 +196,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: system.getBoolean(AppSystemProp.AGENTS_ENABLED) ?? false,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.TOOL_SEARCH_ENABLED,
                 value: isToolSearchEnabled(),
                 created,

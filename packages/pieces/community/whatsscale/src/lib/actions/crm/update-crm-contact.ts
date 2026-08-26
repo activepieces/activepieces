@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const updateCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_update_crm_contact',
+  classification: 'WRITE',
   displayName: 'Update a CRM Contact',
   description: 'Update the name or tags of an existing CRM contact',
   audience: 'both',

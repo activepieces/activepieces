@@ -5,6 +5,7 @@ import { mailerLiteAuth } from '../..';
 export const findSubscriberAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'find_subscriber',
+	classification: 'READ',
 	displayName: 'Find a Subscriber',
 	description: 'Search for subscriber by email or name.',
 	audience: 'both',

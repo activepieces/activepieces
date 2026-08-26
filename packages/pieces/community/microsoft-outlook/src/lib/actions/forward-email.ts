@@ -3,14 +3,17 @@ import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { messageIdDropdown } from '../common/props';
+import { forwardEmailActionOutputSchema } from '../output-schemas';
 
 export const forwardEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'forwardEmail',
+	classification: 'WRITE',
 	displayName: 'Forward Email',
 	description: 'Forwards an email message.',
 	audience: 'both',
 	aiMetadata: { description: 'Forwards an existing Outlook message (by message ID) to new recipients, preserving the original body and attachments and prepending an optional comment. Use this to pass an existing email along rather than composing a new one. Not idempotent: each call sends a new forwarded email.', idempotent: false },
+	outputSchema: forwardEmailActionOutputSchema,
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',
@@ -48,7 +51,7 @@ export const forwardEmailAction = createAction({
 			attachments: message.attachments,
 		};
 
-		const response = await client
+		await client
 			.api(`${outlookCommon.mailboxPrefix(context.auth)}/messages/${messageId}/forward`)
 			.post({
 				message:messagePayload,
@@ -57,8 +60,7 @@ export const forwardEmailAction = createAction({
 		return {
 			success: true,
 			message: 'Email forwarded successfully.',
-			messageId: response.id,
-			...response,
+			messageId,
 		};
 	},
 });
