@@ -156,8 +156,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
         const agentConfig = agent?.published ?? agent?.draft ?? null
-        // The builder is not the agent it is building: it answers on the platform's chat provider,
-        // reads the draft rather than the published copy, and never runs the agent's own tools.
         const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
@@ -196,9 +194,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: isNil(agent) || isBuilder ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
+                modelName: conversation.source === AgentRunSource.AGENT ? agentConfig?.modelName ?? null : conversation.modelName ?? null,
                 files,
-                ...spreadIfDefined('source', isBuilder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
                 ...(isNil(agentConfig) || isBuilder ? {} : {

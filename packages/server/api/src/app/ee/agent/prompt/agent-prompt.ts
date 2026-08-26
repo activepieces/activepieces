@@ -74,8 +74,6 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
-// The builder is told the agent's shape rather than left to call a tool for it, because the first
-// thing it needs is what it is looking at and the first turn should not spend a round trip on that.
 function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
     const state = isNil(agent)
         ? 'No agent yet. Create one as soon as you know what job it should do, then keep changing that one.'

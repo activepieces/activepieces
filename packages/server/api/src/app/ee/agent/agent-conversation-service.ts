@@ -16,16 +16,23 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
-        const builderProjectId = request.builder === true
+        const builder = request.builder === true
+        const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
+        const existingBuilder = builder && !isNil(agent)
+            ? await agentHelpers.conversationRepo().findOneBy({ agentId: agent.id, userId, platformId, source: AgentRunSource.AGENT_BUILDER })
+            : null
+        if (!isNil(existingBuilder)) {
+            return existingBuilder
+        }
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
             projectId: agent?.projectId ?? builderProjectId,
             userId,
             agentId: agent?.id ?? null,
-            source: builderSourceFor({ builder: request.builder === true, agent }),
+            source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
@@ -169,16 +176,6 @@ type ListConversationsParams = {
     agentId?: string
 }
 
-function builderSourceFor({ builder, agent }: { builder: boolean, agent: Agent | null }): AgentRunSource {
-    if (builder) {
-        return AgentRunSource.AGENT_BUILDER
-    }
-    return isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT
-}
-
-// A builder either edits an agent that exists, taking that agent's project, or builds a new one in a
-// project the caller can reach. Without one of the two it has nowhere to write, and the first tool
-// call would fail with a project it cannot choose.
 async function resolveBuilderProject({ agent, requestedProjectId, platformId, userId, log }: {
     agent: Agent | null
     requestedProjectId?: string

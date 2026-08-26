@@ -65,9 +65,11 @@ describe('what the agent builder may reach', () => {
         expect(names).toContain('ap_update_thinking_status')
     })
 
-    it('never reaches the flow-building surface it sits beside', () => {
+    it('never reaches the flow-building surface it sits beside, nor the web', () => {
         const names = namesFor(AgentRunSource.AGENT_BUILDER)
 
+        expect(names).not.toContain('ap_web_search')
+        expect(names).not.toContain('ap_fetch_url')
         expect(names).not.toContain('ap_create_flow')
         expect(names).not.toContain('ap_test_flow')
         expect(names).not.toContain('ap_set_build_plan')

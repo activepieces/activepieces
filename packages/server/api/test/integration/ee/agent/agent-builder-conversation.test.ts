@@ -3,6 +3,7 @@ import { AgentIcon, AgentRunSource, ColorName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { agentPrompt } from '../../../../src/app/ee/agent/prompt/agent-prompt'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -14,6 +15,7 @@ let app: FastifyInstance
 const CONVERSATIONS_URL = '/v1/agents/conversations'
 
 beforeAll(async () => {
+    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
 })
 
@@ -122,6 +124,32 @@ describe('whose model a builder run answers on', () => {
         expect(refused.statusCode).toBe(StatusCodes.CONFLICT)
         expect(refused.json().params.message).toContain('Pick a model')
         expect(accepted.statusCode).toBe(StatusCodes.OK)
+    })
+})
+
+describe('what the builder can actually reach at run time', () => {
+    // The worker lists ap_research_pieces and ap_list_connections for the builder, and those come
+    // from the project MCP set, which only exists when the run carries MCP credentials. The tool
+    // policy test cannot see this: it hand-builds the group. So assert the config the worker is
+    // handed, which is where the tools either exist or silently do not.
+    it('is handed the mcp credentials its piece lookup depends on', async () => {
+        const ctx = await context()
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+        const agent = await createAgent(ctx)
+        const conversation = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId: conversation.json().id,
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            userMessage: 'give it a gmail tool',
+            modelName: null,
+            source: AgentRunSource.AGENT_BUILDER,
+        })
+
+        expect(config.mcpCredentials).not.toBeNull()
+        expect(config.agentsAvailable).toBe(true)
     })
 })
 

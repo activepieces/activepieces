@@ -38,9 +38,6 @@ const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pend
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
-// The agent tools are the builder's whole job, so the chat-only gate has to know about it. Listing a
-// tool on a surface the server then refuses is the mistake this feature has made four times.
-const SOURCES_BY_TOOL: Record<string, AgentRunSource[]> = Object.fromEntries(AGENT_SURFACE_TOOLS.map((name) => [name, [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]]))
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
@@ -93,13 +90,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUserEmail] = !carriesChatContext
-            ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, '']
-            : await Promise.all([
-                agentMcp.getCredentials({ platformId, userId, log }),
-                agentHelpers.getUserMemory({ platformId, userId }),
-                userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email),
-            ])
+        const [scopedMcpCredentials, runMemory, runUserEmail] = await Promise.all([
+            carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
+            carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
+            carriesChatContext ? userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email) : '',
+        ])
 
         if (isFlowStep !== (conversation.source === AgentRunSource.FLOW_STEP)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The run asked for a different surface than the conversation it belongs to' } })
@@ -540,7 +535,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
             && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
-        const allowedSources = SOURCES_BY_TOOL[input.toolName] ?? [AgentRunSource.CHAT]
+        const allowedSources = AGENT_SURFACE_TOOLS.includes(input.toolName)
+            ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]
+            : [AgentRunSource.CHAT]
         if (chatOnlyTool && !allowedSources.includes(input.source)) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
