@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeft,
@@ -39,9 +40,11 @@ export function ConnectSteps({
 }) {
   const { view, clientKey } = useMcpNav();
   const { websiteName } = flagsHooks.useWebsiteBranding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const clients = useMemo(
-    () => mcpClientCatalog.clients(serverUrl, websiteName),
-    [serverUrl, websiteName],
+    () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
+    [serverUrl, websiteName, isCloud],
   );
   const selected = clients.find((client) => client.key === clientKey) ?? null;
 
@@ -77,7 +80,7 @@ function ConnectLanding({
 
   return (
     <div className="flex flex-col bg-background">
-      <PageContent className="flex flex-col gap-16 px-6 py-12 lg:flex-row lg:px-14">
+      <PageContent className="flex flex-col gap-16 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
           <h1 className="max-w-[455px] text-[40px] font-bold leading-[46px] tracking-[-0.035em]">
             {t('One link for everywhere you use AI.')}
@@ -145,16 +148,13 @@ function ClientBrowser({
   const [search, setSearch] = useState('');
   const query = search.trim().toLowerCase();
   const matchingClients = clients.filter(
-    (client) =>
-      query === '' ||
-      client.name.toLowerCase().includes(query) ||
-      client.hint.toLowerCase().includes(query),
+    (client) => query === '' || client.name.toLowerCase().includes(query),
   );
 
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <PageContent className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageContent className="flex flex-col gap-4.5 pb-6 pt-8">
           <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
@@ -198,7 +198,7 @@ function ClientBrowser({
         </PageContent>
       </div>
 
-      <PageContent className="flex flex-col gap-7 px-6 py-7 lg:px-12">
+      <PageContent className="flex flex-col gap-7 py-7">
         {mcpClientCatalog.groups().map((group) => {
           const groupClients = matchingClients.filter(
             (client) => client.group === group.key,
@@ -302,7 +302,7 @@ function ClientInstructions({
   return (
     <div className="flex flex-col bg-background">
       <div className="border-b">
-        <PageContent className="flex flex-col gap-4.5 px-6 pb-6 pt-8 lg:px-12">
+        <PageContent className="flex flex-col gap-4.5 pb-6 pt-8">
           <BackLink label={t('All clients')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-center gap-4">
             <ClientIcon icon={client.icon} className="size-[52px] rounded-xl" />
@@ -324,7 +324,7 @@ function ClientInstructions({
         </PageContent>
       </div>
 
-      <PageContent className="flex flex-col gap-8 px-6 pb-10 pt-8 lg:flex-row lg:px-12">
+      <PageContent className="flex flex-col gap-8 pb-10 pt-8 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col">
           {client.steps.map((step, index) => (
             <ConnectStepRow

@@ -127,6 +127,11 @@ describe('formatUtils.urlIsNotLocalhostOrIp', () => {
   it('returns false for http URL with valid domain', () => {
     expect(formatUtils.urlIsNotLocalhostOrIp('http://example.com')).toBe(false);
   });
+
+  it('returns false for a value that is not a URL at all', () => {
+    expect(formatUtils.urlIsNotLocalhostOrIp('')).toBe(false);
+    expect(formatUtils.urlIsNotLocalhostOrIp('not a url')).toBe(false);
+  });
 });
 
 describe('formatUtils.formatDateToAgo', () => {

@@ -42,6 +42,12 @@ function mcpServersJson(slug: string, serverConfig: object): string {
   return prettyJson({ mcpServers: { [slug]: serverConfig } });
 }
 
+const CLOUD_LISTINGS = {
+  claude: 'https://claude.ai/directory/cloud-activepieces-com',
+  cursor:
+    'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
+};
+
 function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
   return [
     {
@@ -123,6 +129,18 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       addStep: {
         body: t('Opens Cursor and writes the server into ~/.cursor/mcp.json.'),
         action: { label: t('Add to Cursor'), href: cursorDeepLink(url, slug) },
+      },
+      cloud: {
+        docsUrl: CLOUD_LISTINGS.cursor,
+        addStep: {
+          body: t(
+            'Installs the published plugin from the Cursor directory into ~/.cursor/mcp.json.',
+          ),
+          action: {
+            label: t('Add to Cursor'),
+            href: cursorDeepLink(url, slug),
+          },
+        },
       },
       config: {
         path: '~/.cursor/mcp.json',
@@ -221,6 +239,18 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
           requiresInternetReachableUrl: true,
         },
       },
+      cloud: {
+        docsUrl: CLOUD_LISTINGS.claude,
+        addStep: {
+          body: t(
+            'This server is already listed in Claude’s directory — add it there in one click.',
+          ),
+          action: {
+            label: t('Add from the Claude directory'),
+            href: CLOUD_LISTINGS.claude,
+          },
+        },
+      },
     },
     {
       key: 'chatgpt',
@@ -251,15 +281,54 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
   ];
 }
 
-function addStepTitle(entry: CatalogEntry): string {
-  const byGroup = {
-    terminal: () => t('Run this in your terminal'),
-    editors: () => t('Add the server'),
-    chat: () => t('Add the connector'),
-    other: () => t('Paste the server URL'),
-  };
-  return byGroup[entry.group]();
+function localAuthStepBody(client: string): string {
+  return t(
+    '{client} opens your browser on the first tool call. Approve the project.',
+    { client },
+  );
 }
+
+const GROUP_ORDER: ClientGroupKey[] = ['terminal', 'editors', 'chat', 'other'];
+
+const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
+  terminal: {
+    label: () => t('Terminal'),
+    tagline: () => t('one command, nothing to edit'),
+    addStepTitle: () => t('Run this in your terminal'),
+    kind: () => t('Terminal · runs locally'),
+    authBody: ({ client }) => localAuthStepBody(client),
+  },
+  editors: {
+    label: () => t('Editors'),
+    tagline: () => t('we write the config for you'),
+    addStepTitle: () => t('Add the server'),
+    kind: (entry) =>
+      entry.formFactor === 'extension'
+        ? t('Editor extension · runs locally')
+        : t('Editor · runs locally'),
+    authBody: ({ client }) => localAuthStepBody(client),
+  },
+  chat: {
+    label: () => t('Chat apps'),
+    tagline: () => t('desktop and web, needs a public HTTPS URL'),
+    addStepTitle: () => t('Add the connector'),
+    kind: () => t('Desktop and web · needs a public HTTPS address'),
+    authBody: ({ client, brand }) =>
+      t(
+        '{client} opens {brand} in your browser. Approve the project it can reach.',
+        { client, brand },
+      ),
+  },
+  other: {
+    label: () => t('Anything else'),
+    addStepTitle: () => t('Paste the server URL'),
+    kind: () => t('Streamable HTTP · OAuth'),
+    authBody: () =>
+      t(
+        'The client opens an OAuth prompt on the first tool call. Approve the project.',
+      ),
+  },
+};
 
 function addStepBody(entry: CatalogEntry): string {
   return (
@@ -269,43 +338,6 @@ function addStepBody(entry: CatalogEntry): string {
       { client: entry.name },
     )
   );
-}
-
-function localAuthStepBody(client: string): string {
-  return t(
-    '{client} opens your browser on the first tool call. Approve the project.',
-    { client },
-  );
-}
-
-function authStepBody(entry: CatalogEntry, brandName: string): string {
-  const byGroup = {
-    chat: () =>
-      t(
-        '{client} opens {brand} in your browser. Approve the project it can reach.',
-        { client: entry.name, brand: brandName },
-      ),
-    other: () =>
-      t(
-        'The client opens an OAuth prompt on the first tool call. Approve the project.',
-      ),
-    terminal: () => localAuthStepBody(entry.name),
-    editors: () => localAuthStepBody(entry.name),
-  };
-  return entry.auth ?? byGroup[entry.group]();
-}
-
-function kindLabel(entry: CatalogEntry): string {
-  const byGroup = {
-    terminal: () => t('Terminal · runs locally'),
-    editors: () =>
-      entry.formFactor === 'extension'
-        ? t('Editor extension · runs locally')
-        : t('Editor · runs locally'),
-    chat: () => t('Desktop and web · needs a public HTTPS address'),
-    other: () => t('Streamable HTTP · OAuth'),
-  };
-  return byGroup[entry.group]();
 }
 
 function configLabel(config: EntryConfig): string {
@@ -330,13 +362,14 @@ function toConnectableClient({
   url: string;
   brandName: string;
 }): ConnectableClient {
+  const groupCopy = GROUP_COPY[entry.group];
   return {
     key: entry.key,
     icon: entry.icon,
     name: entry.name,
     group: entry.group,
     hint: entry.hint,
-    kind: kindLabel(entry),
+    kind: groupCopy.kind(entry),
     docsUrl: entry.docsUrl,
     config: entry.config && {
       label: configLabel(entry.config),
@@ -344,12 +377,17 @@ function toConnectableClient({
     },
     steps: [
       {
-        title: addStepTitle(entry),
+        title: groupCopy.addStepTitle(),
         body: addStepBody(entry),
         command: entry.addStep ? entry.addStep.command : url,
         action: entry.addStep?.action,
       },
-      { title: t('Authenticate'), body: authStepBody(entry, brandName) },
+      {
+        title: t('Authenticate'),
+        body:
+          entry.auth ??
+          groupCopy.authBody({ client: entry.name, brand: brandName }),
+      },
       {
         title: t('Check it works'),
         body: t('If it answers with your tools, you’re set.'),
@@ -360,32 +398,32 @@ function toConnectableClient({
 }
 
 export const mcpClientCatalog = {
-  clients: (serverUrl: string, websiteName: string): ConnectableClient[] =>
+  clients: ({
+    serverUrl,
+    websiteName,
+    isCloud,
+  }: {
+    serverUrl: string;
+    websiteName: string;
+    isCloud: boolean;
+  }): ConnectableClient[] =>
     catalogEntries(serverUrl, {
       name: websiteName,
       slug: slugify(websiteName),
-    }).map((entry) =>
-      toConnectableClient({ entry, url: serverUrl, brandName: websiteName }),
-    ),
+    })
+      .map((entry) =>
+        isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
+      )
+      .map((entry) =>
+        toConnectableClient({ entry, url: serverUrl, brandName: websiteName }),
+      ),
 
-  groups: (): ClientGroup[] => [
-    {
-      key: 'terminal',
-      label: t('Terminal'),
-      tagline: t('one command, nothing to edit'),
-    },
-    {
-      key: 'editors',
-      label: t('Editors'),
-      tagline: t('we write the config for you'),
-    },
-    {
-      key: 'chat',
-      label: t('Chat apps'),
-      tagline: t('desktop and web, needs a public HTTPS URL'),
-    },
-    { key: 'other', label: t('Anything else') },
-  ],
+  groups: (): ClientGroup[] =>
+    GROUP_ORDER.map((key) => ({
+      key,
+      label: GROUP_COPY[key].label(),
+      tagline: GROUP_COPY[key].tagline?.(),
+    })),
 };
 
 export const POPULAR_CLIENT_KEYS = ['claude-code', 'cursor', 'claude'];
@@ -432,6 +470,14 @@ type ConnectAction = {
   requiresInternetReachableUrl?: boolean;
 };
 
+type GroupCopy = {
+  label: () => string;
+  tagline?: () => string;
+  addStepTitle: () => string;
+  kind: (entry: CatalogEntry) => string;
+  authBody: (params: { client: string; brand: string }) => string;
+};
+
 type EntryConfig = {
   path?: string;
   snippet: string;
@@ -452,4 +498,5 @@ type CatalogEntry = {
   };
   auth?: string;
   config?: EntryConfig;
+  cloud?: Pick<CatalogEntry, 'addStep'> & { docsUrl?: string };
 };

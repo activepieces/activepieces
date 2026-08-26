@@ -342,7 +342,7 @@ export function DataTable<
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar noPaddingX={bordered}>
+        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {filters &&

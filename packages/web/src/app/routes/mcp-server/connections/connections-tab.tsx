@@ -7,7 +7,12 @@ import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { DataTable, DataTableFilters } from '@/components/custom/data-table';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  DataTableFilters,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import {
   Empty,
@@ -39,8 +44,8 @@ export function ConnectionsTab() {
   const { data: users } = platformUserHooks.useUsers();
   const request = useMemo(
     () => ({
-      cursor: searchParams.get('cursor') ?? undefined,
-      limit: Number(searchParams.get('limit')) || DEFAULT_PAGE_SIZE,
+      cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+      limit: Number(searchParams.get(LIMIT_QUERY_PARAM)) || DEFAULT_PAGE_SIZE,
       projectIds: undefinedIfEmpty(searchParams.getAll('project')),
       memberIds: undefinedIfEmpty(searchParams.getAll('member')),
       clientKeys: undefinedIfEmpty(
@@ -54,7 +59,10 @@ export function ConnectionsTab() {
     request.memberIds !== undefined ||
     request.clientKeys !== undefined;
 
-  const { data, isLoading } = mcpGrantsQueries.useGrants(request);
+  const { data, isLoading } = mcpGrantsQueries.useGrants({
+    request,
+    showErrorDialog: true,
+  });
   const revoke = mcpGrantsMutations.useRevoke();
 
   const columns = buildConnectionsColumns({
@@ -66,7 +74,7 @@ export function ConnectionsTab() {
 
   if (!isLoading && !hasActiveFilters && (data?.data.length ?? 0) === 0) {
     return (
-      <PageContent className="px-6 py-8 lg:px-12">
+      <PageContent className="py-8">
         <Empty className="border border-dashed py-20">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -88,7 +96,7 @@ export function ConnectionsTab() {
   }
 
   return (
-    <PageContent className="flex flex-col gap-2 px-6 py-8 lg:px-12">
+    <PageContent className="flex flex-col gap-2 py-8">
       <DataTable
         columns={columns}
         page={data}

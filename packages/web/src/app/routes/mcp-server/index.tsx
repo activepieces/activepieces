@@ -29,7 +29,7 @@ export default function McpServerPage() {
     <div className="flex w-full flex-col gap-2">
       <PageHeader showSidebarToggle={true} title={t('MCP')} />
       <div className="border-b">
-        <PageContent className="px-6 lg:px-12">
+        <PageContent>
           <Tabs value={nav.tab} onValueChange={showTab}>
             <TabsList variant="outline">
               <TabsTrigger variant="outline" value="connect">

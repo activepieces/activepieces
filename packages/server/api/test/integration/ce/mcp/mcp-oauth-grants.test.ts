@@ -137,6 +137,19 @@ describe('MCP OAuth connected clients', () => {
                 member: { id: ctx.user.id, email: ctx.userIdentity.email },
             })
         })
+
+        it('renders a null member when the user who signed in has been deleted', async () => {
+            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+            const orphaned = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
+            await db.delete('user', member.user.id)
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants')).json()
+
+            expect(data.find((grant: { id: string }) => grant.id === orphaned)).toMatchObject({
+                clientKey: 'claude',
+                member: null,
+            })
+        })
     })
 
     describe('GET /v1/mcp-oauth/grants filters', () => {

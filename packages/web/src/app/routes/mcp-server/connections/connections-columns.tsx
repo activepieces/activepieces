@@ -87,6 +87,9 @@ export function buildConnectionsColumns({
       ),
       cell: ({ row }) => {
         const { member } = row.original;
+        if (!member) {
+          return <div className="text-muted-foreground">—</div>;
+        }
         const name = `${member.firstName} ${member.lastName}`.trim();
         return (
           <TextWithTooltip tooltipMessage={member.email}>

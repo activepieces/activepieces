@@ -1,3 +1,4 @@
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
@@ -211,7 +212,10 @@ export const formatUtils = {
     return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
   },
   urlIsNotLocalhostOrIp(url: string): boolean {
-    const parsed = new URL(url);
+    const { data: parsed } = tryCatchSync(() => new URL(url));
+    if (isNil(parsed)) {
+      return false;
+    }
     if (
       parsed.hostname === 'localhost' ||
       parsed.hostname === '127.0.0.1' ||

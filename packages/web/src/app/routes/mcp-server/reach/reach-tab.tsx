@@ -42,7 +42,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <PageContent className="flex flex-col gap-6 px-6 py-8 lg:px-12">
+    <PageContent className="flex flex-col gap-6 py-8">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
           {t(

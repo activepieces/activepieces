@@ -10,7 +10,9 @@ export function PageContent({
   children: ReactNode;
 }) {
   return (
-    <div className={cn('mx-auto w-full max-w-[1198px]', className)}>
+    <div
+      className={cn('mx-auto w-full max-w-[1198px] px-6 lg:px-12', className)}
+    >
       {children}
     </div>
   );

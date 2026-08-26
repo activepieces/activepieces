@@ -1,31 +1,22 @@
 import { McpOAuthGrant } from '@activepieces/shared';
-import i18next, { t } from 'i18next';
+import dayjs from 'dayjs';
+import { t } from 'i18next';
 
-function isToday(date: Date): boolean {
-  const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-}
+import { formatUtils } from '@/lib/format-utils';
 
 function formatLastUsed(row: McpOAuthGrant): LastUsed {
   if (row.lastUsedAt === null) {
     return { label: t('Never used'), isActiveToday: false };
   }
-  const lastUsedAt = new Date(row.lastUsedAt);
-  if (isToday(lastUsedAt)) {
-    return { label: t('Active today'), isActiveToday: true };
-  }
+  const lastUsedAt = dayjs(row.lastUsedAt);
+  const isActiveToday = lastUsedAt.isSame(dayjs(), 'day');
   return {
-    label: t('Last used {date}', {
-      date: Intl.DateTimeFormat(i18next.language, {
-        month: 'short',
-        day: 'numeric',
-      }).format(lastUsedAt),
-    }),
-    isActiveToday: false,
+    label: isActiveToday
+      ? t('Active today')
+      : t('Last used {date}', {
+          date: formatUtils.formatDate(lastUsedAt.toDate()),
+        }),
+    isActiveToday,
   };
 }
 

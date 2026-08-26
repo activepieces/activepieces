@@ -16,16 +16,19 @@ const MAX_SHOWN = 3;
 
 export function RecentlyConnected() {
   const nav = useMcpNav();
-  const { data, isLoading } = mcpGrantsQueries.useGrants({ limit: MAX_SHOWN });
+  const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
+    request: { limit: MAX_SHOWN },
+    showErrorDialog: false,
+  });
   const recent = data?.data ?? [];
 
-  if (isLoading) {
+  if (isLoading || isError) {
     return null;
   }
 
   return (
     <div className="border-t">
-      <PageContent className="flex flex-wrap items-center gap-4 px-6 py-5 lg:px-14">
+      <PageContent className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
         <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           {t('Recently connected')}
         </span>

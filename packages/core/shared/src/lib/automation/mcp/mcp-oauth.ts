@@ -60,7 +60,7 @@ export const McpOAuthGrant = z.object({
     clientName: z.string().nullable(),
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
-    member: UserWithMetaInformation,
+    member: UserWithMetaInformation.nullable(),
     created: z.string(),
     lastUsedAt: z.string().nullable(),
 })

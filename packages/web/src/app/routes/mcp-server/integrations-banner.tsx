@@ -27,7 +27,7 @@ export function IntegrationsBanner() {
 
   return (
     <div className="border-t bg-muted/30 pb-9 pt-8">
-      <PageContent className="flex flex-col gap-6">
+      <PageContent className="flex flex-col gap-6 px-0 lg:px-0">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
           <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
             {t('Your AI gets all of this')}

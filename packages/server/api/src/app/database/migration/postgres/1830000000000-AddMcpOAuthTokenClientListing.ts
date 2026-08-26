@@ -21,18 +21,13 @@ export class AddMcpOAuthTokenClientListing1830000000000 implements Migration {
         `)
         const concurrently = isPGlite() ? '' : 'CONCURRENTLY'
         await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_mcp_oauth_token_user_revoked"
-            ON "mcp_oauth_token" ("userId", "revoked")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_mcp_oauth_token_platform_revoked"
-            ON "mcp_oauth_token" ("platformId", "revoked")
+            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_mcp_oauth_token_platform_user_revoked"
+            ON "mcp_oauth_token" ("platformId", "userId", "revoked")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_platform_revoked"')
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_user_revoked"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_platform_user_revoked"')
         await queryRunner.query('ALTER TABLE "mcp_oauth_token" DROP COLUMN IF EXISTS "clientKey"')
         await queryRunner.query('ALTER TABLE "mcp_oauth_token" DROP COLUMN IF EXISTS "lastUsedAt"')
     }

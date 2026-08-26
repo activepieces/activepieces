@@ -53,12 +53,8 @@ export const McpOAuthTokenEntity = new EntitySchema<McpOAuthToken>({
             unique: true,
         },
         {
-            name: 'idx_mcp_oauth_token_user_revoked',
-            columns: ['userId', 'revoked'],
-        },
-        {
-            name: 'idx_mcp_oauth_token_platform_revoked',
-            columns: ['platformId', 'revoked'],
+            name: 'idx_mcp_oauth_token_platform_user_revoked',
+            columns: ['platformId', 'userId', 'revoked'],
         },
     ],
 })

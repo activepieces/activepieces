@@ -1,14 +1,14 @@
 import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_GRANT_FILTER_VALUE, PlatformRole, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_GRANT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
 import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../../project/project-repo'
-import { userRepo } from '../../../user/user-service'
+import { mapToUserWithMetaInformation, userRepo } from '../../../user/user-service'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -153,7 +153,7 @@ export const mcpOAuthTokenService = {
         })
         const queryBuilder = applyScope(repo().createQueryBuilder(TOKEN_ALIAS), { platformId, userId })
         if (!isNil(clientKeys)) {
-            queryBuilder.andWhere(`COALESCE(${TOKEN_ALIAS}."clientKey", '${UNKNOWN_CLIENT_KEY}') IN (:...clientKeys)`, { clientKeys })
+            queryBuilder.andWhere(`COALESCE(${TOKEN_ALIAS}."clientKey", :unknownClientKey) IN (:...clientKeys)`, { clientKeys, unknownClientKey: UNKNOWN_CLIENT_KEY })
         }
         if (!isNil(memberIds)) {
             queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
@@ -174,7 +174,7 @@ export const mcpOAuthTokenService = {
             clientName: clientNames.get(token.clientId) ?? null,
             projectId: token.projectId,
             projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
-            member: members.get(token.userId) ?? unknownMember(token.userId),
+            member: members.get(token.userId) ?? null,
             created: token.created,
             lastUsedAt: token.lastUsedAt,
         }))
@@ -213,17 +213,14 @@ function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBu
     if (isNil(projectIds)) {
         return
     }
-    const includesPlatformWide = projectIds.includes(PLATFORM_WIDE_GRANT_FILTER_VALUE)
     const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_GRANT_FILTER_VALUE)
+    const includesPlatformWide = projectIds.length !== scopedProjectIds.length
     queryBuilder.andWhere(new Brackets((qb) => {
         if (scopedProjectIds.length > 0) {
             qb.orWhere(`${TOKEN_ALIAS}."projectId" IN (:...scopedProjectIds)`, { scopedProjectIds })
         }
         if (includesPlatformWide) {
             qb.orWhere(`${TOKEN_ALIAS}."projectId" IS NULL`)
-        }
-        if (scopedProjectIds.length === 0 && !includesPlatformWide) {
-            qb.orWhere('1 = 0')
         }
     }))
 }
@@ -253,42 +250,9 @@ async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaI
     }
     const users = await userRepo().find({ where: { id: In(distinct) }, relations: { identity: true } })
     return new Map(users.flatMap((user) => {
-        const identity = user.identity
-        if (isNil(identity)) {
-            return []
-        }
-        return [[user.id, {
-            id: user.id,
-            email: identity.email,
-            firstName: identity.firstName,
-            lastName: identity.lastName,
-            platformId: user.platformId,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            created: user.created,
-            updated: user.updated,
-            lastActiveDate: user.lastActiveDate,
-            imageUrl: identity.imageUrl,
-        }] as const]
+        const member = mapToUserWithMetaInformation(user)
+        return isNil(member) ? [] : [[user.id, member] as const]
     }))
-}
-
-function unknownMember(userId: string): UserWithMetaInformation {
-    return {
-        id: userId,
-        email: '',
-        firstName: '',
-        lastName: '',
-        platformId: null,
-        platformRole: PlatformRole.MEMBER,
-        status: UserStatus.INACTIVE,
-        externalId: null,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        lastActiveDate: null,
-        imageUrl: null,
-    }
 }
 
 export class OAuthTokenError extends Error {
