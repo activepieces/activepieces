@@ -1,9 +1,7 @@
 import {
   AgentIcon,
-  AgentDraftFields,
   AgentTemplate,
   ColorName,
-  DraftAgentResponse,
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,10 +46,9 @@ const CreateAgentFormSchema = z.object({
 });
 
 type CreateAgentFormValues = z.infer<typeof CreateAgentFormSchema>;
-type PickedDraft = AgentDraftFields & Partial<DraftAgentResponse>;
 
 const buildDefaultValues = (
-  draft: PickedDraft | null,
+  draft: AgentTemplate | null,
 ): CreateAgentFormValues => ({
   displayName: draft?.displayName ?? '',
   description: draft?.description ?? '',
@@ -88,7 +85,7 @@ const CreateAgentForm = ({
   draft,
   onOpenChange,
 }: {
-  draft: PickedDraft | null;
+  draft: AgentTemplate | null;
   onOpenChange: (open: boolean) => void;
 }) => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -114,12 +111,7 @@ const CreateAgentForm = ({
     form.clearErrors('root.serverError');
     createAgent.mutate(
       createAgentUtils.buildCreateRequest({
-        draft: {
-          ...values,
-          tools: draft?.tools ?? [],
-          provider: draft?.provider ?? null,
-          modelName: draft?.modelName ?? null,
-        },
+        draft: values,
         projectId: project.id,
       }),
     );
@@ -229,7 +221,7 @@ const CreateAgentForm = ({
 const StartStep = ({
   onPicked,
 }: {
-  onPicked: (draft: PickedDraft | null) => void;
+  onPicked: (draft: AgentTemplate | null) => void;
 }) => {
   const { data: templates, isLoading } = agentsQueries.useAgentTemplates();
 
@@ -268,7 +260,7 @@ const CreateAgentDialogBody = ({
 }: {
   onOpenChange: (open: boolean) => void;
 }) => {
-  const [draft, setDraft] = useState<PickedDraft | null>(null);
+  const [draft, setDraft] = useState<AgentTemplate | null>(null);
   const [reviewing, setReviewing] = useState(false);
 
   if (!reviewing) {

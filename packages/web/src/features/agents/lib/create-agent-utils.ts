@@ -20,7 +20,6 @@ const buildCreateRequest = ({
   draft: {
     instructions: draft.instructions,
     provider: draft.provider ?? null,
-    providerConfigId: null,
     modelName: draft.modelName ?? null,
     maxSteps: DEFAULT_AGENT_MAX_STEPS,
     tools: draft.tools ?? [],

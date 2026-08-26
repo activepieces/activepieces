@@ -5,6 +5,7 @@ import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
 
 const MAX_AGENT_TEXT_LENGTH = 51_200
+const MAX_SUGGESTED_AGENT_TOOLS = 4
 const MAX_AGENT_TOOLS = 100
 const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
@@ -95,13 +96,9 @@ const AgentDraftFields = z.object({
 })
 
 const DraftAgentResponse = AgentDraftFields.extend({
-    tools: z.array(AgentTool).max(MAX_AGENT_TOOLS),
+    tools: z.array(AgentTool).max(MAX_SUGGESTED_AGENT_TOOLS),
     provider: Nullable(z.enum(AIProviderName)),
     modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
-})
-
-const DraftAgentReply = AgentDraftFields.extend({
-    tools: z.array(z.object({ pieceName: z.string(), actionName: z.string() })).default([]),
 })
 
 const AgentTemplate = AgentDraftFields.extend({ id: z.string() })
@@ -133,7 +130,6 @@ export {
     DEFAULT_AGENT_MAX_STEPS,
     DraftAgentRequest,
     AgentDraftFields,
-    DraftAgentReply,
     DraftAgentResponse,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
@@ -146,6 +142,7 @@ export {
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
     MAX_AGENT_TOOLS,
+    MAX_SUGGESTED_AGENT_TOOLS,
     UpdateAgentRequest,
 }
 
@@ -156,7 +153,6 @@ export type AgentTemplate = z.infer<typeof AgentTemplate>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
-export type DraftAgentReply = z.infer<typeof DraftAgentReply>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

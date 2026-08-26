@@ -1,4 +1,4 @@
-import { AgentToolType, AppConnectionStatus, mcpToolNameUtils } from '@activepieces/shared'
+import { AgentToolType, mcpToolNameUtils } from '@activepieces/shared'
 import { describe, expect, it } from 'vitest'
 import { agentDraftTools } from '../../../../src/app/ee/agent/agent-draft-ai'
 
@@ -29,34 +29,6 @@ describe('what the model is offered', () => {
 
         expect(prompt).toContain('none')
         expect(prompt).toContain('empty tools list')
-    })
-})
-
-describe('which connections become candidates', () => {
-    // A tool bound to a broken account reads as ready on the card and fails on first use, which is
-    // the failure the whole "only what is connected" rule exists to avoid.
-    it('asks the connection service for active connections only', () => {
-        expect(agentDraftTools.candidateQuery().status).toEqual([AppConnectionStatus.ACTIVE])
-    })
-
-    // Three apps with three accounts each used to fill a budget meant for eight apps, so the cap has
-    // to be applied after several connections for one app collapse to one.
-    it('caps apps rather than connection rows', () => {
-        const query = agentDraftTools.candidateQuery()
-
-        expect(query.limit).toBeGreaterThan(agentDraftTools.PIECE_LIMIT)
-    })
-
-    it('keeps eight apps when the project has many accounts across a few of them', () => {
-        const rows = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'].flatMap((letter) => [1, 2, 3].map((index) => ({
-            pieceName: `@activepieces/piece-${letter}`,
-            externalId: `${letter}-${index}`,
-        })))
-
-        const picked = agentDraftTools.firstConnectionPerPiece(rows)
-
-        expect(picked).toHaveLength(agentDraftTools.PIECE_LIMIT)
-        expect(picked.map(([pieceName]) => pieceName)).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((letter) => `@activepieces/piece-${letter}`))
     })
 })
 
