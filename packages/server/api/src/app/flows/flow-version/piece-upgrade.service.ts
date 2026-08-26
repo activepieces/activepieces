@@ -19,6 +19,7 @@ export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
 })
 
 const auditEventRepo = repoFactory(AuditEventEntity)
+const MAX_UPGRADE_EVENTS_PER_FLOW = 100
 
 async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceUpgradeResult> {
     const flow = await flowRepo().findOneBy({ id: flowId })
@@ -28,9 +29,11 @@ async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceU
     const platformId = await projectService(log).getPlatformId(flow.projectId)
     const events = await auditEventRepo().createQueryBuilder('event')
         .where('event.platformId = :platformId', { platformId })
+        .andWhere('event.projectId = :projectId', { projectId: flow.projectId })
         .andWhere('event.action = :action', { action: ApplicationEventName.FLOW_PIECES_UPGRADED })
         .andWhere('event.data->>\'flowId\' = :flowId', { flowId })
         .orderBy('event.created', 'DESC')
+        .limit(MAX_UPGRADE_EVENTS_PER_FLOW)
         .getMany()
     const upgradeEvents = events.map((event) => FlowPiecesUpgradedEvent.shape.data.parse(event.data))
     if (upgradeEvents.length === 0) {
@@ -96,7 +99,11 @@ async function revertFlowVersion({ flow, platformId, flowVersion, versionReverts
             },
         }
     })
-    await flowVersionRepo().update(flowVersion.id, { trigger: newFlowVersion.trigger })
+    const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
+    if (!updated) {
+        log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping revert')
+        return []
+    }
 
     applicationEvents(log).sendUserEvent({ platformId, projectId: flow.projectId }, {
         action: ApplicationEventName.FLOW_PIECES_REVERTED,
@@ -165,7 +172,11 @@ async function upgradeFlowVersion({ flow, flowVersion, log }: UpgradeFlowVersion
                 },
             }
         })
-        await flowVersionRepo().update(flowVersion.id, { trigger: newFlowVersion.trigger })
+        const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
+        if (!updated) {
+            log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping upgrade')
+            return []
+        }
     }
 
     const platformId = await projectService(log).getPlatformId(flow.projectId)
@@ -233,6 +244,16 @@ async function resolveStepDecision({ step, flowVersion, log }: ResolveStepDecisi
             log.warn({ ...logContext, upgrade: { target: entry.target, flaggedStep: usedStepName } }, '[pieceUpgradeService] step flagged unsafe in upgrade register, keeping current version')
             return { ...base, decision: 'KEPT', newVersion: null }
     }
+}
+
+async function updateTriggerIfUnchanged({ flowVersion, newTrigger }: UpdateTriggerIfUnchangedParams): Promise<boolean> {
+    const updateResult = await flowVersionRepo().createQueryBuilder()
+        .update()
+        .set({ trigger: newTrigger })
+        .where('id = :id', { id: flowVersion.id })
+        .andWhere('trigger = CAST(:snapshot AS jsonb)', { snapshot: JSON.stringify(flowVersion.trigger) })
+        .execute()
+    return updateResult.affected === 1
 }
 
 function getUsedStepName(step: FlowAction | FlowTrigger): string | undefined {
@@ -303,6 +324,11 @@ type RevertFlowParams = {
 type StepRevert = {
     prevVersion: string
     newVersion: string
+}
+
+type UpdateTriggerIfUnchangedParams = {
+    flowVersion: FlowVersion
+    newTrigger: FlowVersion['trigger']
 }
 
 type RevertFlowVersionParams = {
