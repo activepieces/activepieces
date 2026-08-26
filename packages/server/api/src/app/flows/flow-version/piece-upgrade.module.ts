@@ -17,6 +17,10 @@ const pieceUpgradeController: FastifyPluginAsyncZod = async (app) => {
     app.post('/upgrade-pieces', UpgradeFlowPiecesRequest, async (req) => {
         return pieceUpgradeService(req.log).upgradeFlows(req.body)
     })
+
+    app.post('/revert-upgrade', RevertFlowPiecesRequest, async (req) => {
+        return pieceUpgradeService(req.log).revertFlows(req.body)
+    })
 }
 
 async function checkAdminApiKeyPreHandler(req: FastifyRequest, res: FastifyReply): Promise<void> {
@@ -33,6 +37,17 @@ const UpgradeFlowPiecesRequest = {
         body: z.object({
             flowIds: z.array(z.string()).min(1),
             projectId: z.string().optional(),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const RevertFlowPiecesRequest = {
+    schema: {
+        body: z.object({
+            flowIds: z.array(z.string()).min(1),
         }),
     },
     config: {

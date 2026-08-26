@@ -18,13 +18,14 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     memory: RunMemory
 }): string {
     const isChat = source === AgentRunSource.CHAT
+    const readsTheWeb = source !== AgentRunSource.AGENT_BUILDER
     return (isChat && !isNil(userIdentity) ? agentUserIdentity.buildNote(userIdentity) : '')
         + buildCapabilitiesNote({
             currentDate,
-            searchAvailable,
-            fetchAvailable,
-            scrapeAvailable,
-            imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP,
+            searchAvailable: searchAvailable && readsTheWeb,
+            fetchAvailable: fetchAvailable && readsTheWeb,
+            scrapeAvailable: scrapeAvailable && readsTheWeb,
+            imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
             emailAvailable: emailAvailable && isChat,
             userEmail,
         })

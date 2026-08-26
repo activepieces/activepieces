@@ -15,6 +15,7 @@ import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
+import { agentPrompt } from './prompt/agent-prompt'
 import { findConnectionsForPiece } from './tools/agent-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -155,9 +156,10 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
         const agentConfig = agent?.published ?? agent?.draft ?? null
+        const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
-        if (!isNil(agent) && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
+        if (!isNil(agent) && !isBuilder && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Pick a model for this agent before talking to it' },
@@ -192,11 +194,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: isNil(agent) ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
+                modelName: conversation.source === AgentRunSource.AGENT ? agentConfig?.modelName ?? null : conversation.modelName ?? null,
                 files,
-                ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
-                ...(isNil(agentConfig) ? {} : {
+                ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
+                ...(isNil(agentConfig) || isBuilder ? {} : {
                     tools: agentConfig.tools,
                     structuredOutput: agentConfig.structuredOutput,
                     maxSteps: agentConfig.maxSteps,
