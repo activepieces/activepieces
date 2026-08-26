@@ -113,6 +113,7 @@ export const newOrUpdatedFile = createTrigger({
     await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
+    const deadline = Date.now() + CONTENT_BUDGET_MS;
     const items = await pollingHelper.poll(polling, context);
 
     return await withFileContent({
@@ -120,9 +121,11 @@ export const newOrUpdatedFile = createTrigger({
       files: context.files,
       items,
       includeFileContent: context.propsValue.include_file_content,
+      deadline,
     });
   },
   test: async (context) => {
+    const deadline = Date.now() + CONTENT_BUDGET_MS;
     const items = await pollingHelper.test(polling, context);
 
     return await withFileContent({
@@ -130,6 +133,7 @@ export const newOrUpdatedFile = createTrigger({
       files: context.files,
       items,
       includeFileContent: context.propsValue.include_file_content,
+      deadline,
     });
   },
 
@@ -191,26 +195,36 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function jitterMs(): number {
+  return Math.floor(Math.random() * CONTENT_RETRY_JITTER_MS);
+}
+
 async function downloadContent({
   auth,
   files,
   file,
+  deadline,
 }: {
   auth: GoogleDriveAuthValue;
   files: FilesService;
   file: DriveFile;
+  deadline: number;
 }): Promise<DriveFileContent> {
-  let lastError = '';
+  let lastError = CONTENT_BUDGET_EXCEEDED;
   for (let attempt = 1; attempt <= CONTENT_DOWNLOAD_ATTEMPTS; attempt++) {
+    if (Date.now() >= deadline) {
+      return { error: lastError };
+    }
     const { data, error } = await tryCatch(() =>
       downloadFileFromDrive(auth, files, file.id, file.name)
     );
-    if (data !== null) {
+    if (error === null && data !== null) {
       return { content: data };
     }
-    lastError = error === null ? 'download failed' : error.message;
-    if (attempt < CONTENT_DOWNLOAD_ATTEMPTS) {
-      await delay(attempt * CONTENT_RETRY_DELAY_MS);
+    lastError = error === null ? 'Download returned no content' : error.message;
+    const backoff = attempt * CONTENT_RETRY_DELAY_MS + jitterMs();
+    if (attempt < CONTENT_DOWNLOAD_ATTEMPTS && Date.now() + backoff < deadline) {
+      await delay(backoff);
     }
   }
   return { error: lastError };
@@ -221,11 +235,13 @@ async function withFileContent({
   files,
   items,
   includeFileContent,
+  deadline,
 }: {
   auth: GoogleDriveAuthValue;
   files: FilesService;
   items: unknown[];
   includeFileContent: boolean | undefined;
+  deadline: number;
 }): Promise<unknown[]> {
   if (!includeFileContent) {
     return items;
@@ -239,10 +255,15 @@ async function withFileContent({
         if (!isDriveFile(item)) {
           return item;
         }
-        const { content, error } = await downloadContent({ auth, files, file: item });
-        return error === undefined
-          ? { ...item, content }
-          : { ...item, contentError: error };
+        const result = await downloadContent({
+          auth,
+          files,
+          file: item,
+          deadline,
+        });
+        return 'content' in result
+          ? { ...item, content: result.content }
+          : { ...item, contentError: result.error };
       })
     );
     enriched.push(...withContent);
@@ -253,13 +274,14 @@ async function withFileContent({
 const FILE_CONTENT_CONCURRENCY = 5;
 const CONTENT_DOWNLOAD_ATTEMPTS = 3;
 const CONTENT_RETRY_DELAY_MS = 500;
+const CONTENT_RETRY_JITTER_MS = 250;
+const CONTENT_BUDGET_MS = 40_000;
+const CONTENT_BUDGET_EXCEEDED =
+  'Timed out before the file content could be downloaded';
 
 type DriveFileChangeType = 'created' | 'updated';
 
-type DriveFileContent = {
-  content?: string;
-  error?: string;
-};
+type DriveFileContent = { content: string } | { error: string };
 
 type DriveFile = {
   id: string;
