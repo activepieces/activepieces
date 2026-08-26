@@ -1,6 +1,6 @@
-import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentIcon, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -303,7 +303,7 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     }
     const added: AgentTool[] = actionNames.map((actionName) => ({
         type: AgentToolType.PIECE,
-        toolName: actionName,
+        toolName: mcpToolNameUtils.createPieceToolName(normalizedPiece, actionName),
         pieceMetadata: {
             pieceName: normalizedPiece,
             pieceVersion: piece.version,
@@ -315,7 +315,10 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
         id: agent.id,
         projectId,
         userId,
-        edit: (tools) => tools.some((tool) => actionNames.includes(tool.toolName)) ? null : [...tools, ...added],
+        edit: (tools) => tools.some((tool) => {
+            const action = pieceActionOf(tool)
+            return action?.pieceName === normalizedPiece && actionNames.includes(action.actionName)
+        }) ? null : [...tools, ...added],
     })
     if (isNil(updated)) {
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
@@ -334,18 +337,48 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
     if (actionNames.length === 0) {
         return { error: 'Removing tools needs at least one action name.' }
     }
+    const requestedPiece = nonEmpty(toolInput.pieceName)
+    const scopedPiece = isNil(requestedPiece) ? undefined : mcpUtils.normalizePieceName(requestedPiece) ?? requestedPiece
+    const targets = agent.draft.tools.flatMap((tool) => pieceActionOf(tool) ?? [])
+        .filter((action) => actionNames.includes(action.actionName))
+        .filter((action) => isNil(scopedPiece) || action.pieceName === scopedPiece)
+    const resolved = actionNames.map((actionName) => ({
+        actionName,
+        pieces: unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)),
+    }))
+    const ambiguous = resolved.filter((entry) => entry.pieces.length > 1)
+    if (ambiguous.length > 0) {
+        return { error: `${ambiguous.map((entry) => entry.actionName).join(' and ')} is on more than one piece here: ${unique(ambiguous.flatMap((entry) => entry.pieces)).join(', ')}. Call this again with pieceName set to the one you mean.` }
+    }
+    const unmatched = resolved.filter((entry) => entry.pieces.length === 0).map((entry) => entry.actionName)
+    if (unmatched.length > 0) {
+        return { error: isNil(scopedPiece)
+            ? `${agent.displayName} has no tool for ${unmatched.join(' or ')}, so there is nothing to remove. List its tools with ap_list_agents.`
+            : `${unmatched.join(' and ')} is not on ${scopedPiece}, so there is nothing to remove. Take those away in their own call, without pieceName.` }
+    }
+    const removing = new Set(targets.map((target) => `${target.pieceName}:${target.actionName}`))
     const updated = await agentService(log).editDraftTools({
         id: agent.id,
         projectId,
         userId,
-        edit: (tools) => tools.some((tool) => actionNames.includes(tool.toolName))
-            ? tools.filter((tool) => !actionNames.includes(tool.toolName))
-            : null,
+        edit: (tools) => {
+            const kept = tools.filter((tool) => {
+                const action = pieceActionOf(tool)
+                return isNil(action) || !removing.has(`${action.pieceName}:${action.actionName}`)
+            })
+            return kept.length === tools.length ? null : kept
+        },
     })
     if (isNil(updated)) {
         return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
     }
     return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
+    return tool.type === AgentToolType.PIECE
+        ? { pieceName: tool.pieceMetadata.pieceName, actionName: tool.pieceMetadata.actionName }
+        : undefined
 }
 
 function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
