@@ -31,6 +31,13 @@ beforeAll(async () => {
                 requireAuth: true,
                 props: {},
             },
+            read_note: {
+                name: 'read_note',
+                displayName: 'Read Note',
+                description: 'Read a note',
+                requireAuth: true,
+                props: {},
+            },
         },
     }))
 })
@@ -203,6 +210,40 @@ describe('the chat tools that build agents, against the real service', () => {
         expect((await agentRow(agentId)).published).toBeNull()
     })
 
+    it('keeps both tools when the model adds two at once', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+
+        await Promise.all([
+            runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'] }),
+            runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['read_note'] }),
+        ])
+
+        const tools = (await agentRow(agentId)).draft.tools as Array<{ toolName: string }>
+        expect(tools.map((tool) => tool.toolName).sort()).toEqual(['read_note', 'save_note'])
+    })
+
+    it('takes a tool away again, and says so when there is none to take', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'] })
+
+        const removed = await runTool(ctx, conversationId, 'ap_remove_agent_tool', { agentId, actionNames: ['save_note'], publish: true })
+        const again = await runTool(ctx, conversationId, 'ap_remove_agent_tool', { agentId, actionNames: ['save_note'] })
+
+        expect(removed).toEqual(expect.objectContaining({ published: true }))
+        expect(again).toEqual({ error: expect.stringContaining('nothing to remove') })
+        const stored = await agentRow(agentId)
+        expect(stored.draft.tools).toEqual([])
+        expect(stored.published?.tools).toEqual([])
+    })
+
     it('refuses until the conversation has a project to write to', async () => {
         const ctx = await context()
         const response = await ctx.post('/v1/agents/conversations', {})
@@ -255,7 +296,7 @@ describe('the chat tools that build agents, against the real service', () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: false, chatEnabled: true } })
         const conversationId = await startConversation(ctx)
 
-        for (const toolName of ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool']) {
+        for (const toolName of ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']) {
             const result = await runTool(ctx, conversationId, toolName, { displayName: 'x', instructions: 'y', agentId: 'z' })
             expect(result, toolName).toEqual({ error: expect.stringContaining('not available here') })
         }

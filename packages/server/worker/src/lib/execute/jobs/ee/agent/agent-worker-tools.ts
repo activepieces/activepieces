@@ -728,6 +728,18 @@ function createAgentSurfaceTools({ executeTool }: {
             },
         }),
 
+        ap_remove_agent_tool: tool({
+            description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents'),
+                actionNames: z.array(z.string()).describe('Action names to remove, e.g. ["gmail_search_mail"]'),
+                publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remove_agent_tool', toolInput)
+            },
+        }),
+
         ap_update_agent: tool({
             description: 'Change a saved agent\'s name, description or instructions, and publish it. Send the full new instructions, not a diff — they replace what is there. Pass publish: true whenever the user wants the result live, including when they only ask you to publish and change nothing else.',
             inputSchema: z.object({

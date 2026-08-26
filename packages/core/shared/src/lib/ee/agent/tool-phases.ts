@@ -35,6 +35,10 @@ const BUILD_ONLY_TOOL_NAMES = new Set<string>([
     'ap_manage_fields',
     'ap_delete_table',
     'ap_run_action',
+    'ap_create_agent',
+    'ap_update_agent',
+    'ap_add_agent_tool',
+    'ap_remove_agent_tool',
 ])
 
 /**

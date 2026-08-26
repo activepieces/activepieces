@@ -16,7 +16,7 @@ const GROUPS: AgentToolGroups = {
     phase: toolSet('ap_set_phase'),
     buildPlan: toolSet('ap_set_build_plan'),
     email: toolSet('ap_send_email'),
-    agentSurface: toolSet('ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool'),
+    agentSurface: toolSet('ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool'),
     mcp: toolSet('ap_create_flow', 'ap_test_flow'),
     configuredPiece: toolSet('gmail_find_email'),
     configuredFlow: toolSet('run_my_flow'),
@@ -42,7 +42,7 @@ describe('what a chat run may reach', () => {
 })
 
 describe('what may reach the tools that build saved agents', () => {
-    const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool']
+    const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 
     it('only a chat run, since the other surfaces have nobody to review what was made', () => {
         for (const toolName of AGENT_SURFACE_TOOLS) {

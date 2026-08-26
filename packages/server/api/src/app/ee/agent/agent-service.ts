@@ -5,6 +5,7 @@ import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAg
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -141,6 +142,27 @@ export const agentService = (log: FastifyBaseLogger) => ({
             .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
             .execute()
         return this.getOneOrThrow({ id, projectId, userId })
+    },
+
+    // Editing the tool list is read-modify-write on one jsonb column, and the model issues these in
+    // parallel, so the row is locked for the whole edit rather than losing whichever write lands first.
+    async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
+        return transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const agent = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id AND agent."projectId" = :projectId', { id, projectId })
+                .getOne()
+            if (isNil(agent)) {
+                return null
+            }
+            const tools = edit(agent.draft.tools)
+            if (isNil(tools)) {
+                return null
+            }
+            await repo.save({ ...omit(agent, ['published']), draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            return this.getOneOrThrow({ id, projectId, userId })
+        })
     },
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
@@ -284,6 +306,10 @@ type ListParams = {
     projectId?: ProjectId
     cursor?: Cursor
     limit?: number
+}
+
+type EditDraftToolsParams = GetParams & {
+    edit: (tools: AgentConfig['tools']) => AgentConfig['tools'] | null
 }
 
 type GetParams = {

@@ -281,7 +281,7 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const pieceName = nonEmpty(toolInput.pieceName)
-    const actionNames = Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
+    const actionNames = toolNamesFrom(toolInput)
     if (isNil(pieceName) || actionNames.length === 0) {
         return { error: 'Adding tools needs the piece name and at least one action name.' }
     }
@@ -301,10 +301,6 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
             return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
         }
     }
-    const alreadyThere = actionNames.filter((actionName) => agent.draft.tools.some((tool) => tool.toolName === actionName))
-    if (alreadyThere.length > 0) {
-        return { error: `${agent.displayName} already has ${alreadyThere.join(' and ')}. Nothing to add.` }
-    }
     const added: AgentTool[] = actionNames.map((actionName) => ({
         type: AgentToolType.PIECE,
         toolName: actionName,
@@ -315,13 +311,45 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
             ...(isNil(connectionExternalId) ? {} : { predefinedInput: { auth: connectionExternalId, fields: {} } }),
         },
     }))
-    const updated = await agentService(log).update({
+    const updated = await agentService(log).editDraftTools({
         id: agent.id,
         projectId,
         userId,
-        request: { draft: { ...agent.draft, tools: [...agent.draft.tools, ...added] } },
+        edit: (tools) => tools.some((tool) => actionNames.includes(tool.toolName)) ? null : [...tools, ...added],
     })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
+    }
     return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const actionNames = toolNamesFrom(toolInput)
+    if (actionNames.length === 0) {
+        return { error: 'Removing tools needs at least one action name.' }
+    }
+    const updated = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => tools.some((tool) => actionNames.includes(tool.toolName))
+            ? tools.filter((tool) => !actionNames.includes(tool.toolName))
+            : null,
+    })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
+    }
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
+    return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
 }
 
 async function afterDraftChange({ agent, publish, projectId, userId, log }: {
@@ -454,6 +482,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
         case 'ap_list_agents':
         case 'ap_update_agent':
         case 'ap_add_agent_tool':
+        case 'ap_remove_agent_tool':
         case 'ap_create_agent': {
             if (!await agentHelpers.agentsSurfaceAvailable({ platformId, log })) {
                 return { error: 'Agents are not available here, so there is nothing to list, create or change.' }
@@ -483,9 +512,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (isNil(agent)) {
                 return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
             }
-            return toolName === 'ap_update_agent'
-                ? updateAgentFromChat({ toolInput, agent, projectId, userId, log })
-                : addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
+            if (toolName === 'ap_update_agent') {
+                return updateAgentFromChat({ toolInput, agent, projectId, userId, log })
+            }
+            if (toolName === 'ap_remove_agent_tool') {
+                return removeAgentToolFromChat({ toolInput, agent, projectId, userId, log })
+            }
+            return addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
         }
         case 'ap_execute_action': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
