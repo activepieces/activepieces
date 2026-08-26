@@ -8,7 +8,7 @@ import {
   StepMetadataWithSuggestions,
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
 } from '@/features/pieces';
-import { CLASSIFICATION_BADGE } from '@/features/pieces/utils/action-classification';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
@@ -78,12 +78,13 @@ const GenericActionOrTriggerItem = ({
             {pieceSelectorItemInfo.classification && (
               <Badge
                 variant={
-                  CLASSIFICATION_BADGE[pieceSelectorItemInfo.classification]
-                    .variant
+                  ACTION_CLASSIFICATION_BADGES[
+                    pieceSelectorItemInfo.classification
+                  ].variant
                 }
                 className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
               >
-                {CLASSIFICATION_BADGE[
+                {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification
                 ].label()}
               </Badge>

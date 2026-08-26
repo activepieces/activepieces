@@ -10,7 +10,7 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 
 **Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants`.
 **Client** — one `mcp_oauth_client` registration row. Not a stable identity: Claude Code and Codex re-run DCR per sign-in, so one client-as-a-product yields many rows, and one user re-authenticating yields many grants. _Avoid_: using "client" for the thing being revoked.
-**Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the UI string "Connected clients" is deliberate copy, not the domain term.
+**Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the tab label "Connections" and the `/mcp-server/connections` URL are deliberate copy, not the domain term — the code under `app/routes/mcp-server/grants/` says grant.
 
 ### Entities & services
 

@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_GRANT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
+import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_PROJECT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
 import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -63,7 +63,7 @@ export const mcpOAuthTokenService = {
             id: apId(),
             refreshToken: hashedRefreshToken,
             clientId: params.clientId,
-            clientKey: mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: params.redirectUris }),
+            clientKey: mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }),
             userId: params.userId,
             projectId: params.projectId,
             platformId: params.platformId,
@@ -104,7 +104,7 @@ export const mcpOAuthTokenService = {
 
         await repo().update({ id: record.id }, {
             lastUsedAt: new Date().toISOString(),
-            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: params.redirectUris }) : undefined),
+            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }) : undefined),
         })
 
         const accessToken = await issueAccessToken({
@@ -151,7 +151,8 @@ export const mcpOAuthTokenService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = applyScope(repo().createQueryBuilder(TOKEN_ALIAS), { platformId, userId })
+        const queryBuilder = repo().createQueryBuilder(TOKEN_ALIAS)
+        applyGrantScope(queryBuilder, { platformId, userId })
         if (!isNil(clientKeys)) {
             queryBuilder.andWhere(`COALESCE(${TOKEN_ALIAS}."clientKey", :unknownClientKey) IN (:...clientKeys)`, { clientKeys, unknownClientKey: UNKNOWN_CLIENT_KEY })
         }
@@ -198,7 +199,7 @@ export const mcpOAuthTokenService = {
     },
 }
 
-function applyScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, { platformId, userId }: GrantScope): SelectQueryBuilder<T> {
+function applyGrantScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, { platformId, userId }: GrantScope): void {
     queryBuilder
         .where(`${TOKEN_ALIAS}."platformId" = :platformId`, { platformId })
         .andWhere(`${TOKEN_ALIAS}.revoked = false`)
@@ -206,14 +207,13 @@ function applyScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>
     if (!isNil(userId)) {
         queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" = :userId`, { userId })
     }
-    return queryBuilder
 }
 
 function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined): void {
     if (isNil(projectIds)) {
         return
     }
-    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_GRANT_FILTER_VALUE)
+    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_PROJECT_FILTER_VALUE)
     const includesPlatformWide = projectIds.length !== scopedProjectIds.length
     queryBuilder.andWhere(new Brackets((qb) => {
         if (scopedProjectIds.length > 0) {

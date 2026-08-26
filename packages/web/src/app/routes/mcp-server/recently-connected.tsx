@@ -10,7 +10,7 @@ import { ClientIcon } from './client-icon';
 import { mcpClientDisplay } from './mcp-client-display';
 import { mcpGrantsQueries } from './mcp-grants-hooks';
 import { useMcpNav } from './mcp-nav';
-import { PageContent } from './page-content';
+import { PageBand } from './page-band';
 
 const MAX_SHOWN = 3;
 
@@ -28,7 +28,7 @@ export function RecentlyConnected() {
 
   return (
     <div className="border-t">
-      <PageContent className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
+      <PageBand className="flex flex-wrap items-center gap-4 py-5 lg:px-14">
         <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           {t('Recently connected')}
         </span>
@@ -60,13 +60,13 @@ export function RecentlyConnected() {
             <Button
               variant="link"
               className="ml-auto h-auto p-0 text-[13px] font-semibold"
-              onClick={nav.showConnections}
+              onClick={() => nav.showTab('connections')}
             >
               {t('Manage connections')}
             </Button>
           </>
         )}
-      </PageContent>
+      </PageBand>
     </div>
   );
 }
@@ -79,7 +79,10 @@ function ClientChip({ row }: { row: McpOAuthGrant }) {
         className="size-[22px] rounded-md"
       />
       <span className="text-[13px] font-medium">
-        {mcpClientDisplay.label(row.clientKey, row.clientName)}
+        {mcpClientDisplay.label({
+          key: row.clientKey,
+          clientName: row.clientName,
+        })}
       </span>
       {row.lastUsedAt === null ? (
         <Badge variant="outline" className="gap-1.5 font-normal">

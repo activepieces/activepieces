@@ -45,7 +45,7 @@ async function grantAccess({ userId, projectId, platformId, redirectUris, expire
         id,
         refreshToken: apId() + apId(),
         clientId,
-        clientKey: unidentified ? null : mcpOAuthClientIdentity.clientKeyFrom({ redirectUris }),
+        clientKey: unidentified ? null : mcpOAuthClientIdentity.detectClientKey({ redirectUris }),
         userId,
         projectId,
         platformId: platformId ?? ctx.platform.id,

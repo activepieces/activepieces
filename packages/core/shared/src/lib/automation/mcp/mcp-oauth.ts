@@ -2,7 +2,7 @@ import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/cor
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
 
-export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'windsurf', 'unknown'])
+export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'gemini-cli', 'opencode', 'windsurf', 'unknown'])
 
 export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
 
@@ -91,4 +91,4 @@ export const RevokeMcpOAuthGrantsRequestBody = z.object({
 
 export type RevokeMcpOAuthGrantsRequestBody = z.infer<typeof RevokeMcpOAuthGrantsRequestBody>
 
-export const PLATFORM_WIDE_GRANT_FILTER_VALUE = 'platform-wide'
+export const PLATFORM_WIDE_PROJECT_FILTER_VALUE = 'platform-wide'

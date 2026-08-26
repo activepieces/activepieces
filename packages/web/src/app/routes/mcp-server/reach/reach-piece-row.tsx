@@ -10,12 +10,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { PieceIcon } from '@/features/pieces';
-import { CLASSIFICATION_BADGE } from '@/features/pieces/utils/action-classification';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 
-import { ReachRow } from './reach-utils';
+import { ReachablePiece } from './reach-utils';
 
-export function ReachPieceRow({ row }: { row: ReachRow }) {
+export function ReachPieceRow({ row }: { row: ReachablePiece }) {
   const [open, setOpen] = useState(false);
   const isOpen = row.forceExpanded || open;
 
@@ -44,13 +44,13 @@ export function ReachPieceRow({ row }: { row: ReachRow }) {
           </TextWithTooltip>
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-3">
-          {row.destructiveCount > 0 && (
+          {row.destructiveActionCount > 0 && (
             <Badge
               variant="destructive"
               className="px-1.5 py-0 text-[10px] font-normal"
             >
               {t('destructiveActionCount', {
-                count: row.destructiveCount,
+                count: row.destructiveActionCount,
               })}
             </Badge>
           )}
@@ -79,7 +79,7 @@ export function ReachPieceRow({ row }: { row: ReachRow }) {
                       : 'text-muted-foreground',
                   )}
                 >
-                  {CLASSIFICATION_BADGE[group.classification].label()}
+                  {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
                 </span>
                 <span className="text-[11px] text-muted-foreground">
                   {group.actions.length}

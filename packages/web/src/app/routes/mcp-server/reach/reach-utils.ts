@@ -15,11 +15,17 @@ const CLASSIFICATION_ORDER: ActionClassification[] = [
 
 const DEFAULT_CLASSIFICATION: ActionClassification = 'WRITE';
 
-function containsQuery(text: string | undefined, query: string): boolean {
+function containsQuery({
+  text,
+  query,
+}: {
+  text: string | undefined;
+  query: string;
+}): boolean {
   return (text ?? '').toLowerCase().includes(query);
 }
 
-function groupByClassification(actions: ActionBase[]): ReachActionGroup[] {
+function groupByClassification(actions: ActionBase[]): ActionGroup[] {
   return CLASSIFICATION_ORDER.map((classification) => ({
     classification,
     actions: actions.filter(
@@ -42,30 +48,34 @@ function orderPopularFirst(
   );
 }
 
-function toPieceRow(
-  piece: PieceMetadataModelSummary,
-  actions: ActionBase[],
-  forceExpanded: boolean,
-): ReachRow {
+function toReachablePiece({
+  piece,
+  actions,
+  forceExpanded,
+}: {
+  piece: PieceMetadataModelSummary;
+  actions: ActionBase[];
+  forceExpanded: boolean;
+}): ReachablePiece {
   const groups = groupByClassification(actions);
   return {
     piece,
     groups,
     actionCount: actions.length,
-    destructiveCount: actions.filter(
+    destructiveActionCount: actions.filter(
       (action) => action.classification === 'DESTRUCTIVE',
     ).length,
     forceExpanded,
   };
 }
 
-function buildRows({
+function toReachablePieces({
   pieces,
   searchQuery,
 }: {
   pieces: PieceMetadataModelSummary[];
   searchQuery: string;
-}): ReachRow[] {
+}): ReachablePiece[] {
   const ordered = orderPopularFirst(
     pieces.filter((piece) => (piece.suggestedActions ?? []).length > 0),
   );
@@ -73,41 +83,51 @@ function buildRows({
 
   if (query === '') {
     return ordered.map((piece) =>
-      toPieceRow(piece, piece.suggestedActions ?? [], false),
+      toReachablePiece({
+        piece,
+        actions: piece.suggestedActions ?? [],
+        forceExpanded: false,
+      }),
     );
   }
 
   return ordered.flatMap((piece) => {
     const actions = piece.suggestedActions ?? [];
     const pieceMatches =
-      containsQuery(piece.displayName, query) ||
-      containsQuery(piece.description, query);
+      containsQuery({ text: piece.displayName, query }) ||
+      containsQuery({ text: piece.description, query });
     if (pieceMatches) {
-      return [toPieceRow(piece, actions, false)];
+      return [toReachablePiece({ piece, actions, forceExpanded: false })];
     }
     const matchingActions = actions.filter(
       (action) =>
-        containsQuery(action.displayName, query) ||
-        containsQuery(action.description, query),
+        containsQuery({ text: action.displayName, query }) ||
+        containsQuery({ text: action.description, query }),
     );
     if (matchingActions.length === 0) {
       return [];
     }
-    return [toPieceRow(piece, matchingActions, true)];
+    return [
+      toReachablePiece({
+        piece,
+        actions: matchingActions,
+        forceExpanded: true,
+      }),
+    ];
   });
 }
 
-export const reachUtils = { buildRows };
+export const reachUtils = { toReachablePieces };
 
-export type ReachActionGroup = {
+export type ActionGroup = {
   classification: ActionClassification;
   actions: ActionBase[];
 };
 
-export type ReachRow = {
+export type ReachablePiece = {
   piece: PieceMetadataModelSummary;
-  groups: ReachActionGroup[];
+  groups: ActionGroup[];
   actionCount: number;
-  destructiveCount: number;
+  destructiveActionCount: number;
   forceExpanded: boolean;
 };

@@ -8,7 +8,7 @@ vi.mock('i18next', () => ({
 }));
 
 const { grantUtils } = await import(
-  '@/app/routes/mcp-server/connections/grant-utils'
+  '@/app/routes/mcp-server/grants/grant-utils'
 );
 
 function grant(lastUsedAt: string | null): McpOAuthGrant {

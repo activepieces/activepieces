@@ -1,6 +1,6 @@
 import {
   McpOAuthClientKey,
-  PLATFORM_WIDE_GRANT_FILTER_VALUE,
+  PLATFORM_WIDE_PROJECT_FILTER_VALUE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { CheckIcon, FolderOpen, Plug, User } from 'lucide-react';
@@ -29,14 +29,14 @@ import { userHooks } from '@/hooks/user-hooks';
 import { mcpClientDisplay } from '../mcp-client-display';
 import { mcpGrantsMutations, mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
-import { PageContent } from '../page-content';
+import { PageBand } from '../page-band';
 
-import { buildConnectionsColumns } from './connections-columns';
+import { buildGrantsColumns } from './grants-columns';
 
 const DOCS_URL = 'https://www.activepieces.com/docs/mcp/overview';
 const DEFAULT_PAGE_SIZE = 10;
 
-export function ConnectionsTab() {
+export function GrantsTab() {
   const nav = useMcpNav();
   const [searchParams] = useSearchParams();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -65,7 +65,7 @@ export function ConnectionsTab() {
   });
   const revoke = mcpGrantsMutations.useRevoke();
 
-  const columns = buildConnectionsColumns({
+  const columns = buildGrantsColumns({
     currentUserId: currentUser?.id,
     onRevoke: async (ids) => {
       await revoke.mutateAsync(ids);
@@ -74,7 +74,7 @@ export function ConnectionsTab() {
 
   if (!isLoading && !hasActiveFilters && (data?.data.length ?? 0) === 0) {
     return (
-      <PageContent className="py-8">
+      <PageBand className="py-8">
         <Empty className="border border-dashed py-20">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -86,17 +86,17 @@ export function ConnectionsTab() {
                 'When a client signs in with the link, it appears here with what it can reach.',
               )}
             </EmptyDescription>
-            <Button className="mt-4" onClick={nav.showConnect}>
+            <Button className="mt-4" onClick={() => nav.showTab('connect')}>
               {t('Set it up in your client')} →
             </Button>
           </EmptyHeader>
         </Empty>
-      </PageContent>
+      </PageBand>
     );
   }
 
   return (
-    <PageContent className="flex flex-col gap-2 py-8">
+    <PageBand className="flex flex-col gap-2 py-8">
       <DataTable
         columns={columns}
         page={data}
@@ -127,7 +127,7 @@ export function ConnectionsTab() {
                 }}
               >
                 <Button variant="destructive" size="sm">
-                  {t('revokeCount', { count: rows.length })}
+                  {t('revokeSelectedCount', { count: rows.length })}
                 </Button>
               </ConfirmationDeleteDialog>
             ),
@@ -153,7 +153,7 @@ export function ConnectionsTab() {
           {t('How connecting works')} ↗
         </a>
       </div>
-    </PageContent>
+    </PageBand>
   );
 }
 
@@ -187,7 +187,7 @@ function buildFilters({
         })),
         {
           label: t('All projects'),
-          value: PLATFORM_WIDE_GRANT_FILTER_VALUE,
+          value: PLATFORM_WIDE_PROJECT_FILTER_VALUE,
         },
       ],
     });
@@ -212,7 +212,7 @@ function buildFilters({
     accessorKey: 'client',
     icon: CheckIcon,
     options: McpOAuthClientKey.options.map((clientKey) => ({
-      label: mcpClientDisplay.label(clientKey, null),
+      label: mcpClientDisplay.label({ key: clientKey, clientName: null }),
       value: clientKey,
       icon: mcpClientDisplay.icon(clientKey),
     })),

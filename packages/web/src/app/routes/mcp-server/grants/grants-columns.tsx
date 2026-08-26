@@ -16,7 +16,7 @@ import { mcpClientDisplay } from '../mcp-client-display';
 
 import { grantUtils } from './grant-utils';
 
-export function buildConnectionsColumns({
+export function buildGrantsColumns({
   currentUserId,
   onRevoke,
 }: {
@@ -35,10 +35,10 @@ export function buildConnectionsColumns({
         />
       ),
       cell: ({ row }) => {
-        const label = mcpClientDisplay.label(
-          row.original.clientKey,
-          row.original.clientName,
-        );
+        const label = mcpClientDisplay.label({
+          key: row.original.clientKey,
+          clientName: row.original.clientName,
+        });
         return (
           <div className="flex min-w-0 items-center gap-3">
             <ClientIcon
@@ -140,10 +140,10 @@ export function buildConnectionsColumns({
             message={t(
               'Access ends within 15 minutes. The client will ask to sign in again.',
             )}
-            entityName={mcpClientDisplay.label(
-              row.original.clientKey,
-              row.original.clientName,
-            )}
+            entityName={mcpClientDisplay.label({
+              key: row.original.clientKey,
+              clientName: row.original.clientName,
+            })}
             buttonText={t('Revoke')}
             isDanger
             showToast={false}

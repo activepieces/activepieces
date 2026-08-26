@@ -4,6 +4,8 @@ const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '::1', '[::1]']
 const CURSOR_LOOPBACK_PORT = '8787'
 const VSCODE_LOOPBACK_PORT = '33418'
 const CODEX_CALLBACK_PATH = /^\/callback\/[^/]+$/
+const GEMINI_CLI_CALLBACK_PATH = '/oauth/callback'
+const OPENCODE_CALLBACK_PATH = '/mcp/oauth/callback'
 
 function parseRedirectUri(redirectUri: string): URL | null {
     try {
@@ -38,6 +40,12 @@ function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
     if (loopback && CODEX_CALLBACK_PATH.test(url.pathname)) {
         return 'codex'
     }
+    if (loopback && url.pathname === OPENCODE_CALLBACK_PATH) {
+        return 'opencode'
+    }
+    if (loopback && url.pathname === GEMINI_CLI_CALLBACK_PATH) {
+        return 'gemini-cli'
+    }
     if (loopback && url.pathname === '/callback') {
         return 'claude-code'
     }
@@ -48,7 +56,7 @@ function clientKeyFromUrl(url: URL): McpOAuthClientKey | null {
 }
 
 export const mcpOAuthClientIdentity = {
-    clientKeyFrom({ redirectUris }: ClientKeyFromParams): McpOAuthClientKey {
+    detectClientKey({ redirectUris }: DetectClientKeyParams): McpOAuthClientKey {
         return redirectUris
             .map(parseRedirectUri)
             .filter((url): url is URL => url !== null)
@@ -57,6 +65,6 @@ export const mcpOAuthClientIdentity = {
     },
 }
 
-type ClientKeyFromParams = {
+type DetectClientKeyParams = {
     redirectUris: string[]
 }

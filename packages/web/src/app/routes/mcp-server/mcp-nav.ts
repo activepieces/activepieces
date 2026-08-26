@@ -20,14 +20,10 @@ export function useMcpNav(): McpNav {
     showLanding: () => setParams({}),
     showBrowse: () => setParams({ browse: '1' }),
     showClient: (key: string) => setParams({ client: key }),
-    showReach: () => navigate('/mcp-server/reach'),
-    showConnections: () => navigate('/mcp-server/connections'),
-    showConnect: () => navigate('/mcp-server/connect'),
-    selectProject: (projectId: string) => setParams({ project: projectId }),
+    showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
+    showProject: (projectId: string) => setParams({ project: projectId }),
   };
 }
-
-export const MCP_TABS: McpTab[] = ['connect', 'reach', 'connections'];
 
 export type McpTab = 'connect' | 'reach' | 'connections';
 
@@ -41,8 +37,6 @@ export type McpNav = {
   showLanding: () => void;
   showBrowse: () => void;
   showClient: (key: string) => void;
-  showReach: () => void;
-  showConnections: () => void;
-  showConnect: () => void;
-  selectProject: (projectId: string) => void;
+  showTab: (value: string) => void;
+  showProject: (projectId: string) => void;
 };

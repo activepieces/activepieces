@@ -1,8 +1,8 @@
 import { t } from 'i18next';
 
-import { MCP_CLIENT_DISPLAY } from './mcp-client-display';
+import { MCP_CLIENT_BRANDING } from './mcp-client-display';
 
-const GENERIC_ICON = MCP_CLIENT_DISPLAY.unknown.icon;
+const GENERIC_ICON = MCP_CLIENT_BRANDING.unknown.icon;
 
 function slugify(websiteName: string): string {
   return (
@@ -13,7 +13,13 @@ function slugify(websiteName: string): string {
   );
 }
 
-function claudeDeepLink(serverUrl: string, brandName: string): string {
+function claudeDeepLink({
+  serverUrl,
+  brandName,
+}: {
+  serverUrl: string;
+  brandName: string;
+}): string {
   const params = new URLSearchParams({
     modal: 'add-custom-connector',
     connectorName: brandName,
@@ -22,14 +28,26 @@ function claudeDeepLink(serverUrl: string, brandName: string): string {
   return `https://claude.ai/customize/connectors?${params.toString()}`;
 }
 
-function cursorDeepLink(serverUrl: string, slug: string): string {
+function cursorDeepLink({
+  serverUrl,
+  slug,
+}: {
+  serverUrl: string;
+  slug: string;
+}): string {
   const config = btoa(JSON.stringify({ url: serverUrl }));
   return `cursor://anysphere.cursor-deeplink/mcp/install?name=${slug}&config=${encodeURIComponent(
     config,
   )}`;
 }
 
-function vscodeDeepLink(serverUrl: string, slug: string): string {
+function vscodeDeepLink({
+  serverUrl,
+  slug,
+}: {
+  serverUrl: string;
+  slug: string;
+}): string {
   const config = JSON.stringify({ name: slug, type: 'http', url: serverUrl });
   return `vscode:mcp/install?${encodeURIComponent(config)}`;
 }
@@ -38,7 +56,13 @@ function prettyJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
 
-function mcpServersJson(slug: string, serverConfig: object): string {
+function mcpServersJson({
+  slug,
+  serverConfig,
+}: {
+  slug: string;
+  serverConfig: object;
+}): string {
   return prettyJson({ mcpServers: { [slug]: serverConfig } });
 }
 
@@ -48,20 +72,26 @@ const CLOUD_LISTINGS = {
     'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
 };
 
-const TUTORIAL_VIDEOS = {
+const SELF_HOSTED_SETUP_VIDEOS = {
   claude:
     'https://cdn.activepieces.com/videos/mcp-tutorials/Claude%20MCP%20-%20Step%201.mp4',
   chatgpt:
     'https://cdn.activepieces.com/videos/mcp-tutorials/ChatGPT%20MCP%20-%20Step%201.mp4',
 };
 
-function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
+function catalogEntries({
+  url,
+  brand: { name, slug },
+}: {
+  url: string;
+  brand: Brand;
+}): CatalogEntry[] {
   return [
     {
       key: 'claude-code',
-      ...MCP_CLIENT_DISPLAY['claude-code'],
+      ...MCP_CLIENT_BRANDING['claude-code'],
       group: 'terminal',
-      hint: t('One command'),
+      setupHint: t('One command'),
       docsUrl: 'https://docs.claude.com/en/docs/claude-code/mcp',
       addStep: {
         body: t('From the folder you want the tools available in.'),
@@ -70,14 +100,14 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       auth: t('Run /mcp inside Claude Code and pick Authenticate.'),
       config: {
         path: '.mcp.json',
-        snippet: mcpServersJson(slug, { type: 'http', url }),
+        snippet: mcpServersJson({ slug, serverConfig: { type: 'http', url } }),
       },
     },
     {
       key: 'codex',
-      ...MCP_CLIENT_DISPLAY.codex,
+      ...MCP_CLIENT_BRANDING.codex,
       group: 'terminal',
-      hint: t('One command'),
+      setupHint: t('One command'),
       docsUrl: 'https://developers.openai.com/codex/mcp',
       addStep: {
         body: t('From the folder you want the tools available in.'),
@@ -90,10 +120,9 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
     },
     {
       key: 'gemini-cli',
-      icon: GENERIC_ICON,
-      name: 'Gemini CLI',
+      ...MCP_CLIENT_BRANDING['gemini-cli'],
       group: 'terminal',
-      hint: t('One command'),
+      setupHint: t('One command'),
       docsUrl:
         'https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html',
       addStep: {
@@ -102,15 +131,14 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       },
       config: {
         path: '~/.gemini/settings.json',
-        snippet: mcpServersJson(slug, { httpUrl: url }),
+        snippet: mcpServersJson({ slug, serverConfig: { httpUrl: url } }),
       },
     },
     {
       key: 'opencode',
-      icon: GENERIC_ICON,
-      name: 'OpenCode',
+      ...MCP_CLIENT_BRANDING.opencode,
       group: 'terminal',
-      hint: t('Config file'),
+      setupHint: t('Config file'),
       docsUrl: 'https://opencode.ai/docs/mcp-servers/',
       config: {
         path: '~/.config/opencode/opencode.json',
@@ -120,14 +148,34 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       },
     },
     {
-      key: 'cursor',
-      ...MCP_CLIENT_DISPLAY.cursor,
+      key: 'windsurf',
+      ...MCP_CLIENT_BRANDING.windsurf,
       group: 'editors',
-      hint: t('One click install'),
+      setupHint: t('Config file'),
+      docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
+      addStep: {
+        body: t(
+          'Open Cascade, click the plugins icon, then Manage plugins → View raw config.',
+        ),
+        command: url,
+      },
+      config: {
+        path: '~/.codeium/windsurf/mcp_config.json',
+        snippet: mcpServersJson({ slug, serverConfig: { serverUrl: url } }),
+      },
+    },
+    {
+      key: 'cursor',
+      ...MCP_CLIENT_BRANDING.cursor,
+      group: 'editors',
+      setupHint: t('One click install'),
       docsUrl: 'https://docs.cursor.com/context/mcp',
       addStep: {
         body: t('Opens Cursor and writes the server into ~/.cursor/mcp.json.'),
-        action: { label: t('Add to Cursor'), href: cursorDeepLink(url, slug) },
+        action: {
+          label: t('Add to Cursor'),
+          href: cursorDeepLink({ serverUrl: url, slug }),
+        },
       },
       cloud: {
         docsUrl: CLOUD_LISTINGS.cursor,
@@ -137,26 +185,29 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
           ),
           action: {
             label: t('Add to Cursor'),
-            href: cursorDeepLink(url, slug),
+            href: cursorDeepLink({ serverUrl: url, slug }),
           },
         },
       },
       config: {
         path: '~/.cursor/mcp.json',
-        snippet: mcpServersJson(slug, { url }),
+        snippet: mcpServersJson({ slug, serverConfig: { url } }),
       },
     },
     {
       key: 'vscode',
-      ...MCP_CLIENT_DISPLAY.vscode,
+      ...MCP_CLIENT_BRANDING.vscode,
       group: 'editors',
-      hint: t('One click install'),
+      setupHint: t('One click install'),
       docsUrl: 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers',
       addStep: {
         body: t(
           'Opens VS Code and writes the server into .vscode/mcp.json for this workspace.',
         ),
-        action: { label: t('Add to VS Code'), href: vscodeDeepLink(url, slug) },
+        action: {
+          label: t('Add to VS Code'),
+          href: vscodeDeepLink({ serverUrl: url, slug }),
+        },
       },
       config: {
         path: '.vscode/mcp.json',
@@ -165,10 +216,10 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
     },
     {
       key: 'claude',
-      ...MCP_CLIENT_DISPLAY.claude,
+      ...MCP_CLIENT_BRANDING.claude,
       group: 'chat',
-      hint: t('Add a connector'),
-      selfHostedVideoUrl: TUTORIAL_VIDEOS.claude,
+      setupHint: t('Add a connector'),
+      selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.claude,
       docsUrl:
         'https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp',
       addStep: {
@@ -177,7 +228,7 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
         ),
         action: {
           label: t('Add to Claude'),
-          href: claudeDeepLink(url, name),
+          href: claudeDeepLink({ serverUrl: url, brandName: name }),
           requiresInternetReachableUrl: true,
         },
       },
@@ -196,10 +247,10 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
     },
     {
       key: 'chatgpt',
-      ...MCP_CLIENT_DISPLAY.chatgpt,
+      ...MCP_CLIENT_BRANDING.chatgpt,
       group: 'chat',
-      hint: t('Add a connector'),
-      selfHostedVideoUrl: TUTORIAL_VIDEOS.chatgpt,
+      setupHint: t('Add a connector'),
+      selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.chatgpt,
       docsUrl: 'https://platform.openai.com/docs/mcp',
       addStep: {
         body: t(
@@ -213,13 +264,15 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       icon: GENERIC_ICON,
       name: t('Any MCP client'),
       group: 'other',
-      hint: t('Streamable HTTP or SSE. Point it at the link and it works.'),
+      setupHint: t(
+        'Streamable HTTP or SSE. Point it at the link and it works.',
+      ),
       docsUrl: 'https://modelcontextprotocol.io/clients',
       addStep: {
         body: t('Check your client’s docs for where the server URL goes.'),
         command: url,
       },
-      config: { snippet: mcpServersJson(slug, { url }) },
+      config: { snippet: mcpServersJson({ slug, serverConfig: { url } }) },
     },
   ];
 }
@@ -238,21 +291,21 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
     label: () => t('Terminal'),
     tagline: () => t('one command, nothing to edit'),
     addStepTitle: () => t('Run this in your terminal'),
-    kind: () => t('Terminal · runs locally'),
+    subtitle: () => t('Terminal · runs locally'),
     authBody: ({ client }) => localAuthStepBody(client),
   },
   editors: {
     label: () => t('Editors'),
     tagline: () => t('we write the config for you'),
     addStepTitle: () => t('Add the server'),
-    kind: () => t('Editor · runs locally'),
+    subtitle: () => t('Editor · runs locally'),
     authBody: ({ client }) => localAuthStepBody(client),
   },
   chat: {
     label: () => t('Chat apps'),
     tagline: () => t('desktop and web, needs a public HTTPS URL'),
     addStepTitle: () => t('Add the connector'),
-    kind: () => t('Desktop and web · needs a public HTTPS address'),
+    subtitle: () => t('Desktop and web · needs a public HTTPS address'),
     authBody: ({ client, brand }) =>
       t(
         '{client} opens {brand} in your browser. Approve the project it can reach.',
@@ -262,7 +315,7 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
   other: {
     label: () => t('Anything else'),
     addStepTitle: () => t('Paste the server URL'),
-    kind: () => t('Streamable HTTP · OAuth'),
+    subtitle: () => t('Streamable HTTP · OAuth'),
     authBody: () =>
       t(
         'The client opens an OAuth prompt on the first tool call. Approve the project.',
@@ -280,7 +333,7 @@ function addStepBody(entry: CatalogEntry): string {
   );
 }
 
-function configLabel(config: EntryConfig): string {
+function configLabel(config: ConfigSnippet): string {
   return config.path
     ? t('Or edit {path}', { path: config.path })
     : t('MCP server JSON');
@@ -293,7 +346,7 @@ function verifyPrompts(brandName: string): string[] {
   ];
 }
 
-function toConnectableClient({
+function toCatalogClient({
   entry,
   url,
   brandName,
@@ -303,17 +356,17 @@ function toConnectableClient({
   url: string;
   brandName: string;
   isCloud: boolean;
-}): ConnectableClient {
+}): CatalogClient {
   const groupCopy = GROUP_COPY[entry.group];
   return {
     key: entry.key,
     icon: entry.icon,
     name: entry.name,
     group: entry.group,
-    hint: entry.hint,
-    kind: groupCopy.kind(),
+    setupHint: entry.setupHint,
+    subtitle: groupCopy.subtitle(),
     docsUrl: entry.docsUrl,
-    videoUrl: isCloud ? undefined : entry.selfHostedVideoUrl,
+    setupVideoUrl: isCloud ? undefined : entry.selfHostedVideoUrl,
     config: entry.config && {
       label: configLabel(entry.config),
       snippet: entry.config.snippet,
@@ -349,16 +402,16 @@ export const mcpClientCatalog = {
     serverUrl: string;
     websiteName: string;
     isCloud: boolean;
-  }): ConnectableClient[] =>
-    catalogEntries(serverUrl, {
-      name: websiteName,
-      slug: slugify(websiteName),
+  }): CatalogClient[] =>
+    catalogEntries({
+      url: serverUrl,
+      brand: { name: websiteName, slug: slugify(websiteName) },
     })
       .map((entry) =>
         isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
       )
       .map((entry) =>
-        toConnectableClient({
+        toCatalogClient({
           entry,
           url: serverUrl,
           brandName: websiteName,
@@ -392,15 +445,15 @@ export type ConnectStep = {
   action?: ConnectAction;
 };
 
-export type ConnectableClient = {
+export type CatalogClient = {
   key: string;
   icon: string;
   name: string;
   group: ClientGroupKey;
-  hint: string;
-  kind: string;
+  setupHint: string;
+  subtitle: string;
   docsUrl: string;
-  videoUrl?: string;
+  setupVideoUrl?: string;
   config?: {
     label: string;
     snippet: string;
@@ -423,11 +476,11 @@ type GroupCopy = {
   label: () => string;
   tagline?: () => string;
   addStepTitle: () => string;
-  kind: () => string;
+  subtitle: () => string;
   authBody: (params: { client: string; brand: string }) => string;
 };
 
-type EntryConfig = {
+type ConfigSnippet = {
   path?: string;
   snippet: string;
 };
@@ -437,7 +490,7 @@ type CatalogEntry = {
   icon: string;
   name: string;
   group: ClientGroupKey;
-  hint: string;
+  setupHint: string;
   docsUrl: string;
   addStep?: {
     body: string;
@@ -446,6 +499,6 @@ type CatalogEntry = {
   };
   auth?: string;
   selfHostedVideoUrl?: string;
-  config?: EntryConfig;
+  config?: ConfigSnippet;
   cloud?: Pick<CatalogEntry, 'addStep'> & { docsUrl?: string };
 };

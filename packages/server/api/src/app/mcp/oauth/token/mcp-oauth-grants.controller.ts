@@ -16,7 +16,7 @@ export const mcpOAuthGrantsController: FastifyPluginAsyncZod = async (app) => {
     app.get('/v1/mcp-oauth/grants', ListGrantsRequest, async (req): Promise<ListMcpOAuthGrantsResponse> => {
         return mcpOAuthTokenService.listGrants({
             platformId: req.principal.platform.id,
-            userId: await resolveScopedUserId(req),
+            userId: await resolveUserIdFilter(req),
             projectIds: req.query.projectIds,
             memberIds: req.query.memberIds,
             clientKeys: req.query.clientKeys,
@@ -29,13 +29,13 @@ export const mcpOAuthGrantsController: FastifyPluginAsyncZod = async (app) => {
         await mcpOAuthTokenService.revokeGrants({
             ids: req.body.ids,
             platformId: req.principal.platform.id,
-            userId: await resolveScopedUserId(req),
+            userId: await resolveUserIdFilter(req),
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
-async function resolveScopedUserId(req: FastifyRequest): Promise<string | null> {
+async function resolveUserIdFilter(req: FastifyRequest): Promise<string | null> {
     const user = await userService(req.log).getOneOrFail({ id: req.principal.id })
     return userService(req.log).isUserPrivileged(user) ? null : req.principal.id
 }

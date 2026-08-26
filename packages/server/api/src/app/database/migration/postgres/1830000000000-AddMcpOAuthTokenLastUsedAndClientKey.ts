@@ -4,8 +4,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class AddMcpOAuthTokenClientListing1830000000000 implements Migration {
-    name = 'AddMcpOAuthTokenClientListing1830000000000'
+export class AddMcpOAuthTokenLastUsedAndClientKey1830000000000 implements Migration {
+    name = 'AddMcpOAuthTokenLastUsedAndClientKey1830000000000'
     breaking = false
     release = '0.88.4'
     transaction = false

@@ -17,7 +17,7 @@ function action(
     props: {},
     requireAuth: true,
     classification,
-  } as ActionBase;
+  };
 }
 
 function piece(
@@ -52,9 +52,9 @@ const gmail = piece({
   suggestedActions: [action('Send Email', 'WRITE')],
 });
 
-describe('reachUtils.buildRows', () => {
+describe('reachUtils.toReachablePieces', () => {
   it('returns every piece collapsed when there is no query', () => {
-    const rows = reachUtils.buildRows({
+    const rows = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
       searchQuery: '',
     });
@@ -65,17 +65,17 @@ describe('reachUtils.buildRows', () => {
   });
 
   it('counts destructive actions per piece', () => {
-    const [slackRow, gmailRow] = reachUtils.buildRows({
+    const [slackRow, gmailRow] = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
       searchQuery: '',
     });
 
-    expect(slackRow.destructiveCount).toBe(1);
-    expect(gmailRow.destructiveCount).toBe(0);
+    expect(slackRow.destructiveActionCount).toBe(1);
+    expect(gmailRow.destructiveActionCount).toBe(0);
   });
 
   it('groups actions in READ, SEARCH, WRITE, DESTRUCTIVE order and omits empty groups', () => {
-    const [slackRow, gmailRow] = reachUtils.buildRows({
+    const [slackRow, gmailRow] = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
       searchQuery: '',
     });
@@ -98,7 +98,7 @@ describe('reachUtils.buildRows', () => {
       suggestedActions: [action('Do Something', undefined)],
     });
 
-    const [row] = reachUtils.buildRows({
+    const [row] = reachUtils.toReachablePieces({
       pieces: [unknown],
       searchQuery: '',
     });
@@ -106,11 +106,11 @@ describe('reachUtils.buildRows', () => {
     expect(row.groups).toEqual([
       expect.objectContaining({ classification: 'WRITE' }),
     ]);
-    expect(row.destructiveCount).toBe(0);
+    expect(row.destructiveActionCount).toBe(0);
   });
 
   it('keeps a piece collapsed with all its actions when the piece name matches', () => {
-    const rows = reachUtils.buildRows({
+    const rows = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
       searchQuery: 'slack',
     });
@@ -122,7 +122,7 @@ describe('reachUtils.buildRows', () => {
   });
 
   it('auto-expands and narrows to matching actions on an action-level match', () => {
-    const rows = reachUtils.buildRows({
+    const rows = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
       searchQuery: 'archive channel',
     });
@@ -138,7 +138,7 @@ describe('reachUtils.buildRows', () => {
 
   it('drops pieces that match neither by name nor by any action', () => {
     expect(
-      reachUtils.buildRows({
+      reachUtils.toReachablePieces({
         pieces: [slack, gmail],
         searchQuery: 'zzzz',
       })
@@ -153,7 +153,7 @@ describe('reachUtils.buildRows', () => {
     });
 
     expect(
-      reachUtils.buildRows({ pieces: [actionless], searchQuery: '' })
+      reachUtils.toReachablePieces({ pieces: [actionless], searchQuery: '' })
     ).toEqual([]);
   });
 });

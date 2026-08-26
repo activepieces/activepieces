@@ -1,7 +1,7 @@
 import type { ActionClassification } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 
-export const CLASSIFICATION_BADGE: Record<
+export const ACTION_CLASSIFICATION_BADGES: Record<
   ActionClassification,
   { label: () => string; variant: 'accent' | 'destructive' }
 > = {

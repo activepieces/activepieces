@@ -17,7 +17,7 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { PageContent } from '../page-content';
+import { PageBand } from '../page-band';
 
 import { ProjectPicker } from './project-picker';
 import { reachQueries } from './reach-hooks';
@@ -35,14 +35,17 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   const { pieces, isLoading } = reachQueries.useReachablePieces(projectId);
   const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
-  const rows = reachUtils.buildRows({ pieces: pieces ?? [], searchQuery });
+  const rows = reachUtils.toReachablePieces({
+    pieces: pieces ?? [],
+    searchQuery,
+  });
   const isSearching = searchQuery.trim() !== '';
   const visibleRows =
     isSearching || showAll ? rows : rows.slice(0, COLLAPSED_PIECE_COUNT);
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <PageContent className="flex flex-col gap-6 py-8">
+    <PageBand className="flex flex-col gap-6 py-8">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
           {t(
@@ -102,7 +105,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
           )}
         </div>
       )}
-    </PageContent>
+    </PageBand>
   );
 }
 
