@@ -1,6 +1,12 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
+
+const getChatProviderName = vi.fn()
+
+vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
+    aiProviderService: () => ({ getChatProviderName }),
+}))
 
 const resolve = ({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }) =>
     agentHelpers.resolveModelIdForProvider({ provider, selectedModel })
@@ -101,8 +107,27 @@ describe('runScopeOrThrow', () => {
 })
 
 describe('resolveChatProviderName', () => {
+    const log = { info: () => undefined, warn: () => undefined, error: () => undefined, debug: () => undefined } as never
+
     it('reports no provider for a conversation with no project, rather than guessing one platform-wide', async () => {
-        const log = { info: () => undefined, warn: () => undefined, error: () => undefined, debug: () => undefined }
-        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: null, log: log as never })).resolves.toBeNull()
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: null, log })).resolves.toBeNull()
+    })
+
+    it('reads a lookup failure as no provider, so telemetry and billing keep going', async () => {
+        getChatProviderName.mockRejectedValueOnce(new Error('connection terminated'))
+
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })).resolves.toBeNull()
+    })
+
+    it('lets a lookup failure surface, so nothing saves an agent nobody can talk to', async () => {
+        getChatProviderName.mockRejectedValueOnce(new Error('connection terminated'))
+
+        await expect(agentHelpers.chatProviderNameOrThrow({ platformId: 'plat-1', projectId: 'proj-1', log })).rejects.toThrow('connection terminated')
+    })
+
+    it('still reports an unconfigured platform as no provider', async () => {
+        getChatProviderName.mockResolvedValueOnce(null)
+
+        await expect(agentHelpers.chatProviderNameOrThrow({ platformId: 'plat-1', projectId: 'proj-1', log })).resolves.toBeNull()
     })
 })

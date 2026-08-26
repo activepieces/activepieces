@@ -202,7 +202,7 @@ async function withDefaultModel({ draft, projectId, log }: {
         return draft
     }
     const platformId = await projectService(log).getPlatformId(projectId)
-    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
+    const provider = await agentHelpers.chatProviderNameOrThrow({ platformId, projectId, log })
     if (isNil(provider)) {
         return draft
     }

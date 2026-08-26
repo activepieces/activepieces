@@ -222,11 +222,15 @@ async function resolveEmbeddingModel({ platformId, provider, providerConfigId, s
 // Analytics and billing label a turn with the provider that served it. A conversation with no
 // project has no key to name, and guessing platform-wide would report a credential the run was
 // never allowed to use, so the provider stays unknown.
+async function chatProviderNameOrThrow({ platformId, projectId, log }: { platformId: string, projectId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    return aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'project', projectId } })
+}
+
 async function resolveChatProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
     if (isNil(projectId)) {
         return null
     }
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'project', projectId } }))
+    const result = await tryCatch(() => chatProviderNameOrThrow({ platformId, projectId, log }))
     return result.error ? null : result.data
 }
 
@@ -349,6 +353,7 @@ export const agentHelpers = {
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,
+    chatProviderNameOrThrow,
     runScopeOrThrow,
     selectRunProject,
     assertProjectSwitchKeepsKey,
