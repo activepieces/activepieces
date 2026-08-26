@@ -5,7 +5,12 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { createPost } from './lib/actions/create-post';
 import { createReply } from './lib/actions/create-reply';
+import { deletePost } from './lib/actions/delete-post';
+import { getPost } from './lib/actions/get-post';
+import { listPosts } from './lib/actions/list-posts';
+import { updatePost } from './lib/actions/update-post';
 import { newReview } from './lib/triggers/new-review';
 
 export const googleAuth = PieceAuth.OAuth2({
@@ -24,6 +29,11 @@ export const googleBusiness = createPiece({
   authors: ["kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.MARKETING],
   actions: [
+    createPost,
+    listPosts,
+    getPost,
+    updatePost,
+    deletePost,
     createReply,
     createCustomApiCallAction({
       baseUrl: () => {
