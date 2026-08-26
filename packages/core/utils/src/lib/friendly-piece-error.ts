@@ -7,7 +7,6 @@ const HTTP_ERROR_MESSAGE_MAX_LENGTH = 2000
 const RAW_ERROR_MAX_LENGTH = 16000
 const HTTP_STATUS_MIN = 100
 const HTTP_STATUS_MAX = 599
-const CAUSE_CHAIN_MAX_LENGTH = 3
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> => {
     return !isNil(value) && typeof value === 'object' && !Array.isArray(value)
@@ -230,31 +229,6 @@ const readErrorMessage = (error: Record<string, unknown>): string => {
     return 'Unknown error'
 }
 
-const readCauseChain = (error: Record<string, unknown>): string | undefined => {
-    const parts: string[] = []
-    let current = error['cause']
-    while (isObjectRecord(current) && parts.length < CAUSE_CHAIN_MAX_LENGTH) {
-        const causeMessage = readString(current, 'message')
-        const code = readString(current, 'code')
-        const described = isNil(causeMessage) || causeMessage.length === 0
-            ? code
-            : (isNil(code) || causeMessage.includes(code) ? causeMessage : `${causeMessage} (${code})`)
-        if (!isNil(described) && described.length > 0 && !parts.includes(described)) {
-            parts.push(described)
-        }
-        current = current['cause']
-    }
-    return parts.length > 0 ? parts.join(': ') : undefined
-}
-
-const withCauseChain = ({ error, rawMessage }: { error: Record<string, unknown>, rawMessage: string }): string => {
-    const causeChain = readCauseChain(error)
-    if (isNil(causeChain) || rawMessage.includes(causeChain)) {
-        return rawMessage
-    }
-    return `${rawMessage}: ${causeChain}`
-}
-
 const pickPlainMessage = ({ httpDetails, rawMessage }: { httpDetails: HttpDetails | null, rawMessage: string }): string => {
     if (httpDetails?.apiMessage) {
         return httpDetails.apiMessage
@@ -310,7 +284,7 @@ export const formatPieceError = (error: unknown, options?: FormatPieceErrorOptio
 
     const httpDetails = extractHttpDetails(error)
     const errorName = readErrorName(error)
-    const rawMessage = withCauseChain({ error, rawMessage: readErrorMessage(error) })
+    const rawMessage = readErrorMessage(error)
     const message = pickPlainMessage({ httpDetails, rawMessage })
 
     return withRaw({
