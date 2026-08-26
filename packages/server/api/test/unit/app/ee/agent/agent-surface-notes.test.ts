@@ -13,7 +13,7 @@ const CHAT_ONLY_TOOLS = [
     'ap_discover_action_auth',
 ]
 
-const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true }
+const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true, agentsAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
     return agentSurfaceNotes.buildRunNotes({
@@ -27,6 +27,12 @@ function notesFor(source: AgentRunSource): string {
 }
 
 describe('what each surface is told it can do', () => {
+    it('only tells a chat run about saved agents, and only where the surface exists', () => {
+        expect(notesFor(AgentRunSource.CHAT)).toContain('Saved agents')
+        expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('Saved agents')
+        expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
+    })
+
     it('tells a chat run about everything it has', () => {
         const notes = notesFor(AgentRunSource.CHAT)
 
@@ -75,13 +81,14 @@ describe('what each surface is told it can do', () => {
         const notes = agentSurfaceNotes.buildRunNotes({
             source: AgentRunSource.CHAT,
             currentDate: 'Tuesday, August 18, 2026',
-            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false,
+            searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false, agentsAvailable: false,
             userEmail: 'owner@acme.com',
             connections: null,
             memory: { instructions: null, memories: [] },
         })
 
         expect(notes).toContain('NOT available')
+        expect(notes).not.toContain('Saved agents')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
     })

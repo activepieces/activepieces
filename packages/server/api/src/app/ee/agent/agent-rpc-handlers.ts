@@ -36,7 +36,7 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', 'ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
@@ -73,7 +73,7 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
 
 export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, source: requestedSource, projectId: requestedProjectId } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId } = input
 
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
@@ -127,7 +127,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
-        const emailEnabled = !dryRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
+        const actingRun = !dryRun && !discoveryOnly
+        const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
+        const agentsAvailable = actingRun && carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
@@ -194,8 +196,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
+            imageAvailable: actingRun && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
+            agentsAvailable,
             userEmail: runUserEmail,
             connections: inventoryResult && !inventoryResult.error
                 ? { connections: inventoryResult.data.data, truncated: inventoryResult.data.data.length >= CONNECTION_INVENTORY_LIMIT }
@@ -288,6 +291,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             guides,
             aiTools,
             emailEnabled,
+            agentsAvailable,
             userEmail: runUserEmail,
             source: conversation.source,
         }

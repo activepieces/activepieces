@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -10,6 +10,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     scrapeAvailable: boolean
     imageAvailable: boolean
     emailAvailable: boolean
+    agentsAvailable: boolean
     userEmail: string
     connections: ConnectionInventory | null
     memory: RunMemory
@@ -24,6 +25,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
         emailAvailable: emailAvailable && isChat,
         userEmail,
     })
+        + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
@@ -126,6 +128,13 @@ function buildMemoryNote({ instructions, memories }: RunMemory): string {
 }
 
 export const agentSurfaceNotes = { buildRunNotes }
+
+const AGENTS_NOTE = [
+    '\n\n## Saved agents',
+    'This project can hold saved agents: named, reusable agents with their own instructions and tools, which the user can chat with and reuse.',
+    'Offer one when the user describes something recurring they will run again or across several flows, rather than a single automation. A one-off automation is still a flow.',
+    'What you edit is the draft; what runs unattended is the published version. Publish only when the user asks to make changes live, and do it with the `publish` flag on the edit rather than a separate publish call.',
+].join('\n')
 
 type ConnectionInventory = {
     connections: { displayName: string, pieceName: string, status: string }[]
