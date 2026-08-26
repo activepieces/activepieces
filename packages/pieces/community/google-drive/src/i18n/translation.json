@@ -314,5 +314,13 @@
   "Trigger when a new file is uploaded.": "Trigger when a new file is uploaded.",
   "Trigger when a new folder is created or uploaded.": "Trigger when a new folder is created or uploaded.",
   "Include File Content": "Include File Content",
-  "Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.": "Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files."
+  "Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.": "Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.",
+  "New or Updated File": "New or Updated File",
+  "Trigger when a file is created or updated. Each event carries a Change Type of created or updated. Renames and metadata edits count as updates. Trashing a file is not an event, and neither is restoring one from the bin or moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.": "Trigger when a file is created or updated. Each event carries a Change Type of created or updated. Renames and metadata edits count as updates. Trashing a file is not an event, and neither is restoring one from the bin or moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.",
+  "File Types": "File Types",
+  "Only fire for files of these types. Leave empty to watch every type. If the type you need is not listed, switch this field to 'Dynamic value' (the toggle next to the field) and provide a list of MIME types.": "Only fire for files of these types. Leave empty to watch every type. If the type you need is not listed, switch this field to 'Dynamic value' (the toggle next to the field) and provide a list of MIME types.",
+  "Excel 97-2003 (XLS)": "Excel 97-2003 (XLS)",
+  "PNG": "PNG",
+  "JPEG": "JPEG",
+  "ZIP": "ZIP"
 }

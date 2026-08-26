@@ -477,6 +477,42 @@ export const newFileTriggerOutputSchema: OutputSchema = {
   ],
 };
 
+export const newOrUpdatedFileTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'changeType',
+      label: 'Change Type',
+    },
+    {
+      key: 'name',
+      label: 'File Name',
+    },
+    {
+      key: 'webViewLink',
+      label: 'View Link',
+      format: 'url',
+    },
+    {
+      key: 'mimeType',
+      label: 'MIME Type',
+    },
+    {
+      key: 'createdTime',
+      label: 'Created Time',
+      format: 'datetime',
+    },
+    {
+      key: 'modifiedTime',
+      label: 'Modified Time',
+      format: 'datetime',
+    },
+    {
+      key: 'id',
+      label: 'File ID',
+    },
+  ],
+};
+
 export const newFolderTriggerOutputSchema: OutputSchema = {
   fields: [
     {
