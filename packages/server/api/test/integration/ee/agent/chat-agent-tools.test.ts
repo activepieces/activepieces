@@ -127,12 +127,12 @@ describe('the chat tools that build agents, against the real service', () => {
         const result = await runTool(ctx, conversationId, 'ap_add_agent_tool', {
             agentId,
             pieceName: TOOL_PIECE,
-            actionName: 'save_note',
+            actionNames: ['save_note'],
             connectionExternalId: connection.externalId,
             publish: true,
         })
 
-        expect(result).toEqual(expect.objectContaining({ published: true, changed: ['tool save_note'] }))
+        expect(result).toEqual(expect.objectContaining({ published: true }))
         const stored = await agentRow(agentId)
         const [tool] = stored.draft.tools as Array<{ type: string, toolName: string, pieceMetadata: { pieceVersion: string, predefinedInput?: { auth: string } } }>
         expect(tool.type).toBe(AgentToolType.PIECE)
@@ -153,11 +153,64 @@ describe('the chat tools that build agents, against the real service', () => {
         const result = await runTool(ctx, conversationId, 'ap_add_agent_tool', {
             agentId,
             pieceName: TOOL_PIECE,
-            actionName: 'invented_action',
+            actionNames: ['invented_action'],
         })
 
         expect(result).toEqual({ error: expect.stringContaining('no action called') })
         expect((await agentRow(agentId)).draft.tools).toEqual([])
+    })
+
+    it('keeps the tools an agent already has when its instructions change', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'], publish: true })
+
+        const result = await runTool(ctx, conversationId, 'ap_update_agent', { agentId, instructions: 'Keep fewer notes.' })
+
+        expect(result).toEqual(expect.objectContaining({ note: expect.stringContaining('do not tell the user the change is live') }))
+        const stored = await agentRow(agentId)
+        expect(stored.draft.instructions).toBe('Keep fewer notes.')
+        expect(stored.draft.tools).toHaveLength(1)
+    })
+
+    it('publishes on request alone, with nothing else to change', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+
+        const result = await runTool(ctx, conversationId, 'ap_update_agent', { agentId, publish: true })
+
+        expect(result).toEqual(expect.objectContaining({ published: true }))
+        expect((await agentRow(agentId)).published?.instructions).toBe('Keep notes.')
+    })
+
+    it('says nothing is live when the publish after an edit fails', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await db.update('agent', agentId, { draft: { instructions: '  ', maxSteps: 20, tools: [], structuredOutput: [] } })
+
+        const result = await runTool(ctx, conversationId, 'ap_update_agent', { agentId, displayName: 'Renamed', publish: true })
+
+        expect(result).toEqual(expect.objectContaining({ published: false, note: expect.stringContaining('nothing is live yet') }))
+        expect((await agentRow(agentId)).published).toBeNull()
+    })
+
+    it('refuses until the conversation has a project to write to', async () => {
+        const ctx = await context()
+        const response = await ctx.post('/v1/agents/conversations', {})
+        const conversationId = response.json().id
+
+        const result = await runTool(ctx, conversationId, 'ap_create_agent', { displayName: 'x', instructions: 'y' })
+
+        expect(result).toEqual({ error: expect.stringContaining('No project is selected') })
     })
 
     it('lists the project\'s agents with whether a flow could run them', async () => {
@@ -167,7 +220,7 @@ describe('the chat tools that build agents, against the real service', () => {
             displayName: 'Published one',
             instructions: 'Do the thing.',
         }) as { agentId: string }
-        await runTool(ctx, conversationId, 'ap_publish_agent', { agentId })
+        await runTool(ctx, conversationId, 'ap_update_agent', { agentId, publish: true })
         await runTool(ctx, conversationId, 'ap_create_agent', { displayName: 'Draft one', instructions: 'Not ready.' })
 
         const listed = await runTool(ctx, conversationId, 'ap_list_agents') as Array<{ displayName: string, published: boolean }>
@@ -188,11 +241,11 @@ describe('the chat tools that build agents, against the real service', () => {
         }) as { agentId: string }
         const myConversation = await startConversation(mine)
 
-        const updated = await runTool(mine, myConversation, 'ap_update_agent', { agentId, instructions: 'Mine now.' })
-        const published = await runTool(mine, myConversation, 'ap_publish_agent', { agentId })
+        const updated = await runTool(mine, myConversation, 'ap_update_agent', { agentId, instructions: 'Mine now.', publish: true })
+        const tooled = await runTool(mine, myConversation, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'] })
 
         expect(updated).toEqual({ error: expect.stringContaining('No agent with that id') })
-        expect(published).toEqual({ error: expect.stringContaining('Could not publish') })
+        expect(tooled).toEqual({ error: expect.stringContaining('No agent with that id') })
         const stored = await agentRow(agentId)
         expect(stored.draft.instructions).toBe('Private.')
         expect(stored.published).toBeNull()
@@ -202,7 +255,7 @@ describe('the chat tools that build agents, against the real service', () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: false, chatEnabled: true } })
         const conversationId = await startConversation(ctx)
 
-        for (const toolName of ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_publish_agent', 'ap_add_agent_tool']) {
+        for (const toolName of ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool']) {
             const result = await runTool(ctx, conversationId, toolName, { displayName: 'x', instructions: 'y', agentId: 'z' })
             expect(result, toolName).toEqual({ error: expect.stringContaining('not available here') })
         }

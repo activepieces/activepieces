@@ -715,31 +715,21 @@ function createAgentSurfaceTools({ executeTool }: {
         }),
 
         ap_add_agent_tool: tool({
-            description: 'Give a saved agent a piece action it can call, so it can actually do the work rather than only reason about it. Look the action up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection) and pass the connection the user already has for that app. Adding a tool edits the draft, so pass publish: true when the user wants it live. Say what the agent can now do.',
+            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
             inputSchema: z.object({
                 agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
                 pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
-                actionName: z.string().describe('Action name within that piece, e.g. "gmail_search_mail"'),
+                actionNames: z.array(z.string()).describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
                 connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
-                publish: z.boolean().optional().describe('Make the agent live with this tool in the same step'),
+                publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
             }),
             execute: async (toolInput) => {
                 return executeTool('ap_add_agent_tool', toolInput)
             },
         }),
 
-        ap_publish_agent: tool({
-            description: 'Publish a saved agent so flows and chats run whatever its draft currently holds. Use it only when nothing else in this turn is changing the agent — if you are also editing it, call ap_update_agent with publish: true instead, or the version you publish may be the one from before your edit. Never publish on your own initiative. Say what went live afterwards.',
-            inputSchema: z.object({
-                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
-            }),
-            execute: async (toolInput) => {
-                return executeTool('ap_publish_agent', toolInput)
-            },
-        }),
-
         ap_update_agent: tool({
-            description: 'Change a saved agent\'s name, description or instructions, and optionally publish the result. Use it when the user wants their existing agent to behave differently, instead of creating a second one. Send the full new instructions, not a diff — they replace what is there. Pass publish: true when the user wants the change live, so the change and the publish happen together; never call ap_publish_agent alongside this one.',
+            description: 'Change a saved agent\'s name, description or instructions, and publish it. Send the full new instructions, not a diff — they replace what is there. Pass publish: true whenever the user wants the result live, including when they only ask you to publish and change nothing else.',
             inputSchema: z.object({
                 agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
                 displayName: z.string().optional(),
@@ -753,7 +743,7 @@ function createAgentSurfaceTools({ executeTool }: {
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Use it when the user wants a reusable agent rather than a one-off flow step — something they will run again, chat with, or attach to several flows. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. It is created as a draft with no tools, so tell the user to open it to add tools and publish it.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),

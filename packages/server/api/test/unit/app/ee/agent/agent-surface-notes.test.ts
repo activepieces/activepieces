@@ -33,20 +33,6 @@ describe('what each surface is told it can do', () => {
         expect(notesFor(AgentRunSource.AGENT)).not.toContain('Saved agents')
     })
 
-    it('says nothing about saved agents when the instance has them turned off', () => {
-        const notes = agentSurfaceNotes.buildRunNotes({
-            source: AgentRunSource.CHAT,
-            currentDate: 'Tuesday, August 18, 2026',
-            ...EVERYTHING_AVAILABLE,
-            agentsAvailable: false,
-            userEmail: 'owner@acme.com',
-            connections: null,
-            memory: { instructions: null, memories: [] },
-        })
-
-        expect(notes).not.toContain('Saved agents')
-    })
-
     it('tells a chat run about everything it has', () => {
         const notes = notesFor(AgentRunSource.CHAT)
 
@@ -102,6 +88,7 @@ describe('what each surface is told it can do', () => {
         })
 
         expect(notes).toContain('NOT available')
+        expect(notes).not.toContain('Saved agents')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
     })
