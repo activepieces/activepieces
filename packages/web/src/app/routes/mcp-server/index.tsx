@@ -9,6 +9,7 @@ import { GrantsTab } from './grants/grants-tab';
 import { useMcpNav } from './mcp-nav';
 import { useMcpServerUrl } from './mcp-server-url';
 import { PageBand } from './page-band';
+import { ReachTab } from './reach/reach-tab';
 
 export default function McpServerPage() {
   const { serverUrl, isReachableFromInternet } = useMcpServerUrl();
@@ -25,6 +26,9 @@ export default function McpServerPage() {
               <TabsTrigger variant="outline" value="connect">
                 {t('Connect')}
               </TabsTrigger>
+              <TabsTrigger variant="outline" value="reach">
+                {t('Reach')}
+              </TabsTrigger>
               <TabsTrigger variant="outline" value="connections">
                 {t('Connections')}
               </TabsTrigger>
@@ -33,7 +37,12 @@ export default function McpServerPage() {
         </PageBand>
       </div>
       <div className="w-full">
-        {nav.tab === 'connections' ? (
+        {nav.tab === 'reach' ? (
+          <ReachTab
+            projectId={nav.projectId}
+            onSelectProject={nav.showProject}
+          />
+        ) : nav.tab === 'connections' ? (
           <GrantsTab />
         ) : (
           <ConnectTab
