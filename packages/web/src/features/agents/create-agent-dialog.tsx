@@ -1,5 +1,6 @@
 import {
   AgentIcon,
+  AgentDraftFields,
   AgentTemplate,
   ColorName,
   DraftAgentResponse,
@@ -47,9 +48,10 @@ const CreateAgentFormSchema = z.object({
 });
 
 type CreateAgentFormValues = z.infer<typeof CreateAgentFormSchema>;
+type PickedDraft = AgentDraftFields & Partial<DraftAgentResponse>;
 
 const buildDefaultValues = (
-  draft: DraftAgentResponse | null,
+  draft: PickedDraft | null,
 ): CreateAgentFormValues => ({
   displayName: draft?.displayName ?? '',
   description: draft?.description ?? '',
@@ -86,7 +88,7 @@ const CreateAgentForm = ({
   draft,
   onOpenChange,
 }: {
-  draft: DraftAgentResponse | null;
+  draft: PickedDraft | null;
   onOpenChange: (open: boolean) => void;
 }) => {
   const { project } = projectCollectionUtils.useCurrentProject();
@@ -112,7 +114,12 @@ const CreateAgentForm = ({
     form.clearErrors('root.serverError');
     createAgent.mutate(
       createAgentUtils.buildCreateRequest({
-        draft: values,
+        draft: {
+          ...values,
+          tools: draft?.tools ?? [],
+          provider: draft?.provider ?? null,
+          modelName: draft?.modelName ?? null,
+        },
         projectId: project.id,
       }),
     );
@@ -222,7 +229,7 @@ const CreateAgentForm = ({
 const StartStep = ({
   onPicked,
 }: {
-  onPicked: (draft: DraftAgentResponse | null) => void;
+  onPicked: (draft: PickedDraft | null) => void;
 }) => {
   const { data: templates, isLoading } = agentsQueries.useAgentTemplates();
 
@@ -261,7 +268,7 @@ const CreateAgentDialogBody = ({
 }: {
   onOpenChange: (open: boolean) => void;
 }) => {
-  const [draft, setDraft] = useState<DraftAgentResponse | null>(null);
+  const [draft, setDraft] = useState<PickedDraft | null>(null);
   const [reviewing, setReviewing] = useState(false);
 
   if (!reviewing) {

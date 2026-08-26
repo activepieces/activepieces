@@ -1,4 +1,5 @@
 import {
+  AgentDraftFields,
   CreateAgentRequest,
   DEFAULT_AGENT_MAX_STEPS,
   DraftAgentResponse,
@@ -8,7 +9,7 @@ const buildCreateRequest = ({
   draft,
   projectId,
 }: {
-  draft: DraftAgentResponse;
+  draft: AgentDraftFields & Partial<DraftAgentResponse>;
   projectId: string;
 }): CreateAgentRequest => ({
   projectId,
@@ -18,10 +19,11 @@ const buildCreateRequest = ({
   color: draft.color,
   draft: {
     instructions: draft.instructions,
-    provider: null,
-    modelName: null,
+    provider: draft.provider ?? null,
+    providerConfigId: null,
+    modelName: draft.modelName ?? null,
     maxSteps: DEFAULT_AGENT_MAX_STEPS,
-    tools: [],
+    tools: draft.tools ?? [],
     structuredOutput: [],
   },
 });
