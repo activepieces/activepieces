@@ -283,6 +283,43 @@ const dealProductFields: OutputSchema['fields'] = [
 	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
 ];
 
+const followerFields: OutputSchema['fields'] = [
+	{ key: 'user_id', label: 'User ID', format: 'number' },
+	{ key: 'add_time', label: 'Followed At', format: 'datetime' },
+];
+
+const fileFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'File ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'file_name', label: 'Stored File Name' },
+	{ key: 'file_type', label: 'File Type' },
+	{ key: 'file_size', label: 'File Size', format: 'number' },
+	{ key: 'url', label: 'Download URL', format: 'url' },
+	{ key: 'description', label: 'Description' },
+	{ key: 'user_id', label: 'User ID', format: 'number' },
+	{ key: 'active_flag', label: 'Active', format: 'boolean' },
+	{ key: 'inline_flag', label: 'Inline', format: 'boolean' },
+	{ key: 'remote_location', label: 'Remote Location' },
+	{ key: 'remote_id', label: 'Remote ID' },
+	{ key: 'deal_id', label: 'Deal ID', format: 'number' },
+	{ key: 'deal_name', label: 'Deal Name' },
+	{ key: 'lead_id', label: 'Lead ID' },
+	{ key: 'lead_name', label: 'Lead Name' },
+	{ key: 'person_id', label: 'Person ID', format: 'number' },
+	{ key: 'person_name', label: 'Person Name' },
+	{ key: 'org_id', label: 'Organization ID', format: 'number' },
+	{ key: 'org_name', label: 'Organization Name' },
+	{ key: 'product_id', label: 'Product ID', format: 'number' },
+	{ key: 'product_name', label: 'Product Name' },
+	{ key: 'activity_id', label: 'Activity ID', format: 'number' },
+	{ key: 'log_id', label: 'Log ID', format: 'number' },
+	{ key: 'mail_message_id', label: 'Mail Message ID', format: 'number' },
+	{ key: 'mail_template_id', label: 'Mail Template ID', format: 'number' },
+	{ key: 'cid', label: 'Content ID' },
+	{ key: 'add_time', label: 'Created At', format: 'datetime' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+];
+
 function envelope(label: string, fields: OutputSchema['fields']): OutputSchema {
 	return {
 		fields: [
@@ -381,6 +418,8 @@ export const findProductsActionOutputSchema = search({
 	fields: productSearchFields,
 	labelKey: 'name',
 });
+export const addFollowerActionOutputSchema = envelope('Follower', followerFields);
+export const attachFileActionOutputSchema = envelope('File', fileFields);
 
 export const newPersonTriggerOutputSchema: OutputSchema = { fields: personDetailFields };
 export const updatedPersonTriggerOutputSchema: OutputSchema = { fields: personDetailFields };
