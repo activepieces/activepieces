@@ -19,7 +19,6 @@ export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
 })
 
 const auditEventRepo = repoFactory(AuditEventEntity)
-const MAX_UPGRADE_EVENTS_PER_FLOW = 100
 
 async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceUpgradeResult> {
     const flow = await flowRepo().findOneBy({ id: flowId })
@@ -29,11 +28,9 @@ async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceU
     const platformId = await projectService(log).getPlatformId(flow.projectId)
     const events = await auditEventRepo().createQueryBuilder('event')
         .where('event.platformId = :platformId', { platformId })
-        .andWhere('event.projectId = :projectId', { projectId: flow.projectId })
         .andWhere('event.action = :action', { action: ApplicationEventName.FLOW_PIECES_UPGRADED })
         .andWhere('event.data->>\'flowId\' = :flowId', { flowId })
         .orderBy('event.created', 'DESC')
-        .limit(MAX_UPGRADE_EVENTS_PER_FLOW)
         .getMany()
     const upgradeEvents = events.map((event) => FlowPiecesUpgradedEvent.shape.data.parse(event.data))
     if (upgradeEvents.length === 0) {
