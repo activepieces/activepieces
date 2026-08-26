@@ -8,14 +8,6 @@ icon: "hammer"
 
 ### What has changed?
 
-#### A newly created agent comes with a model already chosen
-
-Creating an agent without naming a model used to leave `draft.modelName` empty, so nobody could talk to that agent until someone opened it and picked one. Creation now fills in the platform's default chat model. A request that names a model still gets exactly that model, and with no AI provider configured the field stays empty.
-
-#### What you need to do
-
-Nothing, and existing agents are untouched. If you create agents through the API and assert that a new one has no model, drop that assertion.
-
 #### Workers no longer pre-warm the flow cache on startup by default
 
 Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
