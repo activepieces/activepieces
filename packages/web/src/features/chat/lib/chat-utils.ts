@@ -98,29 +98,20 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
-// A configured piece tool is named by mcpToolNameUtils.createPieceToolName, which joins the piece to
-// the action and appends a hash and an _mcp marker. Read straight out that renders as
-// "Google-calendar-google Calendar Get Events 74s8ib Mcp". The piece and action cannot be split apart
-// again, because piece names contain hyphens too, so the name is not carved up: the generated suffix
-// goes, and the piece repeated at the front (google-calendar-google_calendar_...) collapses to once.
-function cleanPieceToolName(raw: string): string | null {
-  const generated = /^(.+)_[a-z0-9]{6}_mcp$/.exec(raw);
-  if (!generated) return null;
-  const words = generated[1].split(/[-_]+/).filter(Boolean);
-  return formatUtils.convertEnumToHumanReadable(
-    withoutLeadingRepeat(words).join('_'),
-  );
-}
-
-function withoutLeadingRepeat(words: string[]): string[] {
-  for (let size = Math.floor(words.length / 2); size > 0; size--) {
-    const head = words.slice(0, size);
-    const next = words.slice(size, size * 2);
-    if (head.every((word, index) => word === next[index])) {
-      return words.slice(size);
-    }
+function labelForRawToolName(raw: string, variant: 'active' | 'done'): string {
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
   }
-  return words;
+  const generated = /^(.+)_[a-z0-9]{6}_mcp$/.exec(raw);
+  if (generated) {
+    return formatUtils.convertEnumToHumanReadable(
+      generated[1].replace(/-/g, '_').replace(/^(.+)_\1(?=_|$)/, '$1'),
+    );
+  }
+  return (
+    TOOL_LABELS[raw]?.[variant] ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
 }
 
 function formatToolName({
@@ -137,19 +128,7 @@ function formatToolName({
   }
 
   const raw = chatPartUtils.getToolPartName(part);
-
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-
-  const pieceLabel = cleanPieceToolName(raw);
-  if (pieceLabel) {
-    return pieceLabel;
-  }
-
-  const baseName =
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
+  const baseName = labelForRawToolName(raw, 'active');
 
   if (!includeContext) return baseName;
   const context = extractToolContext({ input });
@@ -387,13 +366,7 @@ function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
     return input.activeTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'active');
 }
 
 function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
@@ -402,13 +375,7 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
     return input.doneTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.done ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'done');
 }
 
 function extractReceiptsFromHistory(
