@@ -6,6 +6,8 @@ icon: 📜
 
 Records security-relevant actions for compliance and forensics, persisted to the `audit_event` table and queryable by platform admins. Enterprise/Cloud only, gated by `platform.plan.auditLogEnabled`.
 
+Each event is also mirrored to evlog (`audit-event-service.ts` `emitAuditEventToEvlog`), so it reaches the configured remote drain — in Cloud, OTLP → ClickHouse — and is queryable there independently of Postgres.
+
 ### Entities & services
 - **ApplicationEvent**: discriminated union of all auditable types; **ApplicationEventName** is a 27-value enum (`flow.created`, `flow.published`, `user.signed.in`, `variable.value.revealed`, etc.).
 - `audit_event` entity: `action`, `userEmail`, `userId`, `projectId` (nullable), `data` (jsonb), `ip`. Composite indices on `(platformId, projectId, userId, action)` and narrower.
