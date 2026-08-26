@@ -22,9 +22,9 @@ export const agentAudit = { describePublished }
 export const agentRedaction = { withoutToolSecrets }
 
 export const agentService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, ownerId, request }: CreateParams): Promise<Agent> {
+    async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        const draft = await withDefaultModel({ draft: request.draft, projectId, log })
+        const draft = await withDefaultModel({ draft: request.draft, platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -193,16 +193,16 @@ async function isProjectAdministrator({ projectId, userId, log }: { projectId: P
     return role?.name === DefaultProjectRole.ADMIN
 }
 
-async function withDefaultModel({ draft, projectId, log }: {
+async function withDefaultModel({ draft, platformId, projectId, log }: {
     draft: AgentConfig
+    platformId: PlatformId
     projectId: ProjectId
     log: FastifyBaseLogger
 }): Promise<AgentConfig> {
     if (!isNil(draft.modelName)) {
         return draft
     }
-    const platformId = await projectService(log).getPlatformId(projectId)
-    const provider = await agentHelpers.chatProviderNameOrThrow({ platformId, projectId, log })
+    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
     if (isNil(provider)) {
         return draft
     }
@@ -310,6 +310,7 @@ function agentNotFound(id: ApId): ActivepiecesError {
 }
 
 type CreateParams = {
+    platformId: PlatformId
     projectId: ProjectId
     ownerId: UserId
     request: CreateAgentRequest

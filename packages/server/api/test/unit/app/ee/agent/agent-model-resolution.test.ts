@@ -113,21 +113,17 @@ describe('resolveChatProviderName', () => {
         await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: null, log })).resolves.toBeNull()
     })
 
-    it('reads a lookup failure as no provider, so telemetry and billing keep going', async () => {
+    it('lets a lookup failure surface, so no caller reads a fault as a platform with no provider', async () => {
         getChatProviderName.mockRejectedValueOnce(new Error('connection terminated'))
 
-        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })).resolves.toBeNull()
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })).rejects.toThrow('connection terminated')
     })
 
-    it('lets a lookup failure surface, so nothing saves an agent nobody can talk to', async () => {
-        getChatProviderName.mockRejectedValueOnce(new Error('connection terminated'))
+    it('asks only for keys the project may use, never platform-wide', async () => {
+        getChatProviderName.mockResolvedValueOnce(AIProviderName.OPENROUTER)
 
-        await expect(agentHelpers.chatProviderNameOrThrow({ platformId: 'plat-1', projectId: 'proj-1', log })).rejects.toThrow('connection terminated')
-    })
+        await agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })
 
-    it('still reports an unconfigured platform as no provider', async () => {
-        getChatProviderName.mockResolvedValueOnce(null)
-
-        await expect(agentHelpers.chatProviderNameOrThrow({ platformId: 'plat-1', projectId: 'proj-1', log })).resolves.toBeNull()
+        expect(getChatProviderName).toHaveBeenCalledWith({ platformId: 'plat-1', scope: { type: 'project', projectId: 'proj-1' } })
     })
 })

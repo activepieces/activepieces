@@ -52,17 +52,25 @@ describe('agent crud', () => {
 
         const agent = await createAgent(ctx)
 
-        expect(agent.draft.modelName).not.toBeNull()
+        expect(agent.draft.modelName).toBe('anthropic/claude-sonnet-4.6')
         expect(agent.draft.provider).toBe(AIProviderName.OPENROUTER)
     })
 
-    it('keeps a model the request did name', async () => {
+    it('keeps a model the request did name, even where a default was available', async () => {
         const ctx = await context()
-        const body = agentBody(ctx.project.id)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
 
-        const agent = await createAgent(ctx, { draft: { ...body.draft, provider: AIProviderName.OPENROUTER, modelName: 'anthropic/claude-haiku-4.5' } })
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, provider: AIProviderName.OPENROUTER, modelName: 'anthropic/claude-haiku-4.5' } })
 
         expect(agent.draft.modelName).toBe('anthropic/claude-haiku-4.5')
+    })
+
+    it('leaves the model empty where the platform has no chat provider', async () => {
+        const ctx = await context()
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBeNull()
     })
 
     it('creates an agent owned by the caller, in draft, unpublished', async () => {
@@ -74,7 +82,6 @@ describe('agent crud', () => {
         expect(agent.visibility).toBe(AgentVisibility.PROJECT)
         expect(agent.published).toBeNull()
         expect(agent.draft.instructions).toBe('Draft launch posts.')
-        expect(agent.draft.modelName).toBeNull()
     })
 
     it('updates only the fields the request names', async () => {
