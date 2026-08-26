@@ -129,7 +129,8 @@ export const common = {
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    if (search?.parent)
+      q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
         `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
@@ -192,7 +193,8 @@ export const common = {
     const drive = googleDrive({ version: 'v3', auth: authClient });
 
     const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    if (search?.parent)
+      q.push(`'${escapeDriveQueryLiteral(search.parent)}' in parents`);
     if (search?.createdTime)
       q.push(
         `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(

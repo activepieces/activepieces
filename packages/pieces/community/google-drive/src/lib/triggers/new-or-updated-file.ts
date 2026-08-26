@@ -4,6 +4,7 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
+  tryCatch,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -37,10 +38,14 @@ const polling: Polling<
         'modifiedTime desc'
       )) ?? [];
 
-    return files.filter(hasUsableTimestamp).map((file) => ({
-      epochMilliSeconds: changedAtEpoch(file),
-      data: { ...file, changeType: resolveChangeType({ file, lastFetchEpochMS }) },
-    }));
+    const now = Date.now();
+
+    return files
+      .filter((file) => isDeliverable({ file, now }))
+      .map((file) => ({
+        epochMilliSeconds: changedAtEpoch(file),
+        data: { ...file, changeType: resolveChangeType({ file, lastFetchEpochMS }) },
+      }));
   },
 };
 
@@ -50,7 +55,7 @@ export const newOrUpdatedFile = createTrigger({
   classification: 'READ',
   displayName: 'New or Updated File',
   description:
-    'Trigger when a file is created or updated. Each event carries a Change Type of created or updated. Renames and metadata edits count as updates. Trashing a file is not an event, and neither is restoring one from the bin or moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.',
+    'Trigger when a file is created or updated, checked on a schedule. Each event carries a Change Type of created or updated, and several edits between two checks arrive as a single event. Renaming a file counts as an update. Trashing a file is not an event, and neither is restoring one from the bin nor moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.',
   aiMetadata: {
     description:
       'Fires when a file is created or modified in Google Drive, based on its creation and last-modified times (polling), optionally scoped to a parent folder and to specific file types. Each event represents one file and its metadata, carries a changeType of created or updated, and can include the file content, falling back to a contentError field when a download fails. Choose this over New File when edits to files that already exist should also trigger the flow.',
@@ -93,7 +98,7 @@ export const newOrUpdatedFile = createTrigger({
     include_file_content: Property.Checkbox({
       displayName: 'Include File Content',
       description:
-        'Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files.',
+        'Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files. If a download fails the event still arrives, carrying a File Content Error instead of the content.',
       required: false,
       defaultValue: false,
     }),
@@ -101,27 +106,13 @@ export const newOrUpdatedFile = createTrigger({
   outputSchema: newOrUpdatedFileTriggerOutputSchema,
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      isRepublish: context.isRepublish,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    const items = await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const items = await pollingHelper.poll(polling, context);
 
     return await withFileContent({
       auth: context.auth,
@@ -131,12 +122,7 @@ export const newOrUpdatedFile = createTrigger({
     });
   },
   test: async (context) => {
-    const items = await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    const items = await pollingHelper.test(polling, context);
 
     return await withFileContent({
       auth: context.auth,
@@ -169,8 +155,9 @@ function changedAtEpoch(file: DriveFile): number {
   return Math.max(epochOf(file.modifiedTime), epochOf(file.createdTime));
 }
 
-function hasUsableTimestamp(file: DriveFile): boolean {
-  return changedAtEpoch(file) > 0;
+function isDeliverable({ file, now }: { file: DriveFile; now: number }): boolean {
+  const changedAt = changedAtEpoch(file);
+  return changedAt > 0 && changedAt <= now;
 }
 
 function resolveChangeType({
@@ -214,13 +201,15 @@ async function downloadContent({
 }): Promise<DriveFileContent> {
   let lastError = '';
   for (let attempt = 1; attempt <= CONTENT_DOWNLOAD_ATTEMPTS; attempt++) {
-    try {
-      return { content: await downloadFileFromDrive(auth, files, file.id, file.name) };
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : String(error);
-      if (attempt < CONTENT_DOWNLOAD_ATTEMPTS) {
-        await delay(attempt * CONTENT_RETRY_DELAY_MS);
-      }
+    const { data, error } = await tryCatch(() =>
+      downloadFileFromDrive(auth, files, file.id, file.name)
+    );
+    if (data !== null) {
+      return { content: data };
+    }
+    lastError = error === null ? 'download failed' : error.message;
+    if (attempt < CONTENT_DOWNLOAD_ATTEMPTS) {
+      await delay(attempt * CONTENT_RETRY_DELAY_MS);
     }
   }
   return { error: lastError };

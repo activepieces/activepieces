@@ -457,6 +457,11 @@ export const newFileTriggerOutputSchema: OutputSchema = {
       label: 'File Name',
     },
     {
+      key: 'modifiedTime',
+      label: 'Modified Time',
+      format: 'datetime',
+    },
+    {
       key: 'webViewLink',
       label: 'View Link',
       format: 'url',
