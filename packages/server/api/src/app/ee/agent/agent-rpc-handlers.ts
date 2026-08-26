@@ -16,6 +16,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
 import { runFlowAsTool } from '../../mcp/mcp-server-builder'
+import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
@@ -26,8 +27,10 @@ import { agentHelpers } from './agent-helpers'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatUsageTracker } from './chat-usage-tracker'
 import { agentMcp } from './mcp/agent-mcp'
+import { chatPersonalizationService } from './personalization/chat-personalization-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { agentSurfaceNotes } from './prompt/agent-surface-notes'
+import { UserIdentity } from './prompt/agent-user-identity'
 import { executeCrossProjectTool } from './tools/agent-tools'
 import { pieceToolRunner } from './tools/piece-tool-runner'
 
@@ -90,11 +93,23 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUserEmail] = await Promise.all([
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
             carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
             carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
-            carriesChatContext ? userService(log).getMetaInformation({ id: userId }).then((meta) => meta.email) : '',
+            carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
+            carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
+            carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
         ])
+        const runUserEmail = runUser?.email ?? ''
+        const userIdentity: UserIdentity | null = isNil(runUser)
+            ? null
+            : {
+                firstName: runUser.firstName,
+                lastName: runUser.lastName,
+                email: runUser.email,
+                platformName: platformResult && !platformResult.error ? platformResult.data.name : null,
+                identity: identityResult && !identityResult.error ? identityResult.data : null,
+            }
 
         if (isFlowStep !== (conversation.source === AgentRunSource.FLOW_STEP)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'The run asked for a different surface than the conversation it belongs to' } })
@@ -200,6 +215,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
+            userIdentity,
             connections: inventoryResult && !inventoryResult.error
                 ? { connections: inventoryResult.data.data, truncated: inventoryResult.data.data.length >= CONNECTION_INVENTORY_LIMIT }
                 : null,

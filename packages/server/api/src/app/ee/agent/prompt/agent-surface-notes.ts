@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
+import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -12,20 +13,22 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     emailAvailable: boolean
     agentsAvailable: boolean
     userEmail: string
+    userIdentity: UserIdentity | null
     connections: ConnectionInventory | null
     memory: RunMemory
 }): string {
     const isChat = source === AgentRunSource.CHAT
     const readsTheWeb = source !== AgentRunSource.AGENT_BUILDER
-    return buildCapabilitiesNote({
-        currentDate,
-        searchAvailable: searchAvailable && readsTheWeb,
-        fetchAvailable: fetchAvailable && readsTheWeb,
-        scrapeAvailable: scrapeAvailable && readsTheWeb,
-        imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
-        emailAvailable: emailAvailable && isChat,
-        userEmail,
-    })
+    return (isChat && !isNil(userIdentity) ? agentUserIdentity.buildNote(userIdentity) : '')
+        + buildCapabilitiesNote({
+            currentDate,
+            searchAvailable: searchAvailable && readsTheWeb,
+            fetchAvailable: fetchAvailable && readsTheWeb,
+            scrapeAvailable: scrapeAvailable && readsTheWeb,
+            imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
+            emailAvailable: emailAvailable && isChat,
+            userEmail,
+        })
         + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')

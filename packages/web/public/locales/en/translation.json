@@ -2275,6 +2275,7 @@
   "Others": "Others",
   "Powerful Node.js & TypeScript code with npm": "Powerful Node.js & TypeScript code with npm",
   "Loop on Items": "Loop on Items",
+  "Iterate over a list of items": "Iterate over a list of items",
   "Router": "Router",
   "Split your flow into branches depending on condition(s)": "Split your flow into branches depending on condition(s)",
   "Empty Trigger": "Empty Trigger",
@@ -2514,5 +2515,8 @@
   "Recently used": "Recently used",
   "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
   "Show all projects": "Show all projects",
-  "Sort pinned projects": "Sort pinned projects"
+  "Sort pinned projects": "Sort pinned projects",
+  "Flow pieces upgraded": "Flow pieces upgraded",
+  "kept at {version}": "kept at {version}",
+  "Flow pieces reverted": "Flow pieces reverted"
 }

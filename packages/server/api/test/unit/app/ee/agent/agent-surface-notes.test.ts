@@ -13,6 +13,17 @@ const CHAT_ONLY_TOOLS = [
     'ap_discover_action_auth',
 ]
 
+const IDENTITY = {
+    firstName: 'Dana',
+    lastName: 'Okwu',
+    email: 'dana@acme.com',
+    platformName: 'Acme Automate',
+    identity: {
+        company: { name: 'Acme', description: 'a logistics company', industry: 'Transport' },
+        role: 'Operations Lead',
+    },
+}
+
 const EVERYTHING_AVAILABLE = { searchAvailable: true, fetchAvailable: true, scrapeAvailable: true, imageAvailable: true, emailAvailable: true, agentsAvailable: true }
 
 function notesFor(source: AgentRunSource): string {
@@ -21,6 +32,7 @@ function notesFor(source: AgentRunSource): string {
         currentDate: 'Tuesday, August 18, 2026',
         ...EVERYTHING_AVAILABLE,
         userEmail: 'owner@acme.com',
+        userIdentity: IDENTITY,
         connections: { connections: [{ displayName: 'Gmail', pieceName: '@activepieces/piece-gmail', status: 'ACTIVE' }], truncated: true },
         memory: { instructions: 'Answer in Arabic', memories: ['Prefers TypeScript'] },
     })
@@ -92,6 +104,7 @@ describe('what each surface is told it can do', () => {
             currentDate: 'Tuesday, August 18, 2026',
             searchAvailable: false, fetchAvailable: false, scrapeAvailable: false, imageAvailable: false, emailAvailable: false, agentsAvailable: false,
             userEmail: 'owner@acme.com',
+            userIdentity: null,
             connections: null,
             memory: { instructions: null, memories: [] },
         })
@@ -100,5 +113,76 @@ describe('what each surface is told it can do', () => {
         expect(notes).not.toContain('Saved agents')
         expect(notes).not.toContain('ap_web_search')
         expect(notes).not.toContain('ap_send_email')
+    })
+})
+
+describe('who the agent is told it is talking to', () => {
+    function identityNoteFor({ source, userIdentity }: { source: AgentRunSource, userIdentity: typeof IDENTITY | null }): string {
+        return agentSurfaceNotes.buildRunNotes({
+            source,
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            userEmail: userIdentity?.email ?? 'owner@acme.com',
+            userIdentity,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+    }
+
+    it('gives a chat run the researched company and the caller\'s own role', () => {
+        const notes = identityNoteFor({ source: AgentRunSource.CHAT, userIdentity: IDENTITY })
+
+        expect(notes).toContain('Who you\'re talking to')
+        expect(notes).toContain('Dana Okwu')
+        expect(notes).toContain('Acme')
+        expect(notes).toContain('Operations Lead')
+        expect(notes).toContain('Acme Automate')
+    })
+
+    it('falls back to the email domain when nothing has been researched', () => {
+        const notes = identityNoteFor({ source: AgentRunSource.CHAT, userIdentity: { ...IDENTITY, identity: null } })
+
+        expect(notes).toContain('dana@acme.com')
+        expect(notes).toContain('the company is likely')
+        expect(notes).not.toContain('a logistics company')
+    })
+
+    it('still names the role when only the company research is missing', () => {
+        const notes = identityNoteFor({
+            source: AgentRunSource.CHAT,
+            userIdentity: { ...IDENTITY, identity: { company: null, role: 'Operations Lead' } },
+        })
+
+        expect(notes).toContain('Operations Lead')
+        expect(notes).toContain('the company is likely')
+    })
+
+    it('guesses no company from a personal mailbox', () => {
+        const notes = identityNoteFor({
+            source: AgentRunSource.CHAT,
+            userIdentity: { ...IDENTITY, email: 'dana@gmail.com', identity: null },
+        })
+
+        expect(notes).not.toContain('the company is likely')
+    })
+
+    it('leaves the person out of a surface with nobody in the room', () => {
+        expect(identityNoteFor({ source: AgentRunSource.FLOW_STEP, userIdentity: IDENTITY })).not.toContain('Who you\'re talking to')
+        expect(identityNoteFor({ source: AgentRunSource.AGENT, userIdentity: IDENTITY })).not.toContain('Who you\'re talking to')
+    })
+
+    it('puts the person above the first-message note that points back at them', () => {
+        const notes = agentSurfaceNotes.buildRunNotes({
+            source: AgentRunSource.CHAT,
+            messageSource: 'onboarding',
+            currentDate: 'Tuesday, August 18, 2026',
+            ...EVERYTHING_AVAILABLE,
+            userEmail: IDENTITY.email,
+            userIdentity: IDENTITY,
+            connections: null,
+            memory: { instructions: null, memories: [] },
+        })
+
+        expect(notes.indexOf('Who you\'re talking to')).toBeLessThan(notes.indexOf('FIRST message ever'))
     })
 })
