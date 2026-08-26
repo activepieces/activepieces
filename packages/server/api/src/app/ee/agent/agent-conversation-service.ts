@@ -82,7 +82,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (![AgentRunSource.CHAT, AgentRunSource.AGENT].includes(conversation.source)) {
+        if (![AgentRunSource.CHAT, AgentRunSource.AGENT, AgentRunSource.AGENT_BUILDER].includes(conversation.source)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         return conversation
