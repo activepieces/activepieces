@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, tryCatch, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
 import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
@@ -22,9 +22,9 @@ export const agentAudit = { describePublished }
 export const agentRedaction = { withoutToolSecrets }
 
 export const agentService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, platformId, ownerId, request }: CreateParams): Promise<Agent> {
+    async create({ projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
-        const draft = await withDefaultModel({ draft: request.draft, projectId, platformId, log })
+        const draft = await withDefaultModel({ draft: request.draft, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -193,25 +193,20 @@ async function isProjectAdministrator({ projectId, userId, log }: { projectId: P
     return role?.name === DefaultProjectRole.ADMIN
 }
 
-async function withDefaultModel({ draft, projectId, platformId, log }: {
+async function withDefaultModel({ draft, projectId, log }: {
     draft: AgentConfig
     projectId: ProjectId
-    platformId: PlatformId
     log: FastifyBaseLogger
 }): Promise<AgentConfig> {
     if (!isNil(draft.modelName)) {
         return draft
     }
-    const { data: resolved } = await tryCatch(() => agentHelpers.resolveTierModel({
-        platformId,
-        tierId: DEFAULT_CHAT_TIER_ID,
-        scope: agentHelpers.runScopeOrThrow({ projectId }),
-        log,
-    }))
-    if (isNil(resolved)) {
+    const platformId = await projectService(log).getPlatformId(projectId)
+    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
+    if (isNil(provider)) {
         return draft
     }
-    return { ...draft, provider: resolved.provider, modelName: resolved.modelId }
+    return { ...draft, provider, modelName: agentHelpers.resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }) }
 }
 
 async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {
@@ -316,7 +311,6 @@ function agentNotFound(id: ApId): ActivepiecesError {
 
 type CreateParams = {
     projectId: ProjectId
-    platformId: PlatformId
     ownerId: UserId
     request: CreateAgentRequest
 }

@@ -10,13 +10,11 @@ icon: "hammer"
 
 #### A newly created agent comes with a model already chosen
 
-Creating an agent without naming a model used to leave `draft.modelName` empty, which meant the agent could not be talked to until someone opened it and picked one. A starter template, a blank agent, and an agent built for you by chat all landed on that screen. Creation now fills in the platform's own default chat model, so a new agent is ready to answer immediately.
-
-Naming a model still wins: a request that sends `draft.modelName` gets exactly that model. And when the platform has no AI provider configured there is nothing to choose from, so the field stays empty and the agent keeps asking for one, which is the honest state on a fresh install.
+Creating an agent without naming a model used to leave `draft.modelName` empty, so nobody could talk to that agent until someone opened it and picked one. Creation now fills in the platform's default chat model. A request that names a model still gets exactly that model, and with no AI provider configured the field stays empty.
 
 #### What you need to do
 
-Nothing. No configuration and nothing to migrate, and existing agents are untouched. If you create agents through the API and assert that a new one has no model, update that assertion: `POST /v1/agents` now answers with a model whenever your platform has a provider configured.
+Nothing, and existing agents are untouched. If you create agents through the API and assert that a new one has no model, drop that assertion.
 
 #### Workers no longer pre-warm the flow cache on startup by default
 
