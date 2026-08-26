@@ -326,7 +326,11 @@ async function agentsSurfaceAvailable({ platformId, log }: { platformId: string,
     if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
         return false
     }
-    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
+    if (!isNil(error) || isNil(plan)) {
+        log.error({ error, platform: { id: platformId } }, '[agentHelpers#agentsSurfaceAvailable] Could not read the plan, treating agents as unavailable')
+        return false
+    }
     return plan.agentsEnabled
 }
 

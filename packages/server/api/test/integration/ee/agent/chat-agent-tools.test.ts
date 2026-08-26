@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { AgentToolType, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -208,6 +209,22 @@ describe('the chat tools that build agents, against the real service', () => {
 
         expect(result).toEqual(expect.objectContaining({ published: false, note: expect.stringContaining('nothing is live yet') }))
         expect((await agentRow(agentId)).published).toBeNull()
+    })
+
+    it('hides the surface rather than failing the turn when the plan cannot be read', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+
+        const result = await executeCrossProjectTool({
+            toolName: 'ap_list_agents',
+            toolInput: {},
+            platformId: apId(),
+            userId: ctx.user.id,
+            conversationId,
+            log: app.log,
+        }) as { error?: string }
+
+        expect(result.error).toContain('not available')
     })
 
     it('keeps both tools when the model adds two at once', async () => {
