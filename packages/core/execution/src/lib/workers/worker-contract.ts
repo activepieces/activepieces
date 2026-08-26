@@ -127,6 +127,7 @@ export type GetAgentConfigRequest = {
     files?: Array<{ name: string, mimeType: string, data: string }>
     promptOverride?: AgentPromptOverride
     dryRun?: boolean
+    discoveryOnly?: boolean
 }
 
 export type ResolvedAiToolConfig = {
@@ -158,6 +159,7 @@ export type AgentConfigResponse = {
     guides: Record<string, string>
     aiTools: AgentAiToolsConfig
     emailEnabled: boolean
+    agentsAvailable: boolean
     userEmail: string
     source: AgentRunSource
 }

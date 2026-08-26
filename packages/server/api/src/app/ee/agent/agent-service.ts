@@ -5,6 +5,7 @@ import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAg
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -143,6 +144,25 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
+    async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
+        return transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const agent = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id AND agent."projectId" = :projectId', { id, projectId })
+                .getOne()
+            if (isNil(agent)) {
+                return null
+            }
+            const tools = edit(agent.draft.tools)
+            if (isNil(tools)) {
+                return null
+            }
+            await repo.save({ ...omit(agent, ['published']), draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            return this.getOneOrThrow({ id, projectId, userId })
+        })
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await agentRepo().delete({ id, projectId })
@@ -233,6 +253,7 @@ async function resolveReadableProjects({ platformId, userId, projectId, log }: R
 function toSummary(agent: Agent, project?: Project): AgentSummary {
     return {
         ...omit(agent, ['draft', 'published']),
+        isPublished: !isNil(agent.published),
         projectDisplayName: project?.displayName ?? '',
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,
@@ -283,6 +304,10 @@ type ListParams = {
     projectId?: ProjectId
     cursor?: Cursor
     limit?: number
+}
+
+type EditDraftToolsParams = GetParams & {
+    edit: (tools: AgentConfig['tools']) => AgentConfig['tools'] | null
 }
 
 type GetParams = {
