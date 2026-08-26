@@ -1,5 +1,6 @@
-import { BaseModelSchema } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { UserWithMetaInformation } from '../../core/user/user'
 
 export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'gemini-cli', 'opencode', 'windsurf', 'unknown'])
 
@@ -52,3 +53,42 @@ export const McpOAuthAuthorizationCode = z.object({
 })
 
 export type McpOAuthAuthorizationCode = z.infer<typeof McpOAuthAuthorizationCode>
+
+export const McpOAuthGrant = z.object({
+    id: z.string(),
+    clientKey: McpOAuthClientKey,
+    clientName: z.string().nullable(),
+    projectId: z.string().nullable(),
+    projectName: z.string().nullable(),
+    member: UserWithMetaInformation.nullable(),
+    created: z.string(),
+    lastUsedAt: z.string().nullable(),
+})
+
+export type McpOAuthGrant = z.infer<typeof McpOAuthGrant>
+
+export const ListMcpOAuthGrantsResponse = z.object({
+    data: z.array(McpOAuthGrant),
+    next: z.string().nullable(),
+    previous: z.string().nullable(),
+})
+
+export type ListMcpOAuthGrantsResponse = z.infer<typeof ListMcpOAuthGrantsResponse>
+
+export const ListMcpOAuthGrantsRequestQuery = z.object({
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    projectIds: OptionalArrayFromQuery(z.string()),
+    memberIds: OptionalArrayFromQuery(ApId),
+    clientKeys: OptionalArrayFromQuery(McpOAuthClientKey),
+})
+
+export type ListMcpOAuthGrantsRequestQuery = z.infer<typeof ListMcpOAuthGrantsRequestQuery>
+
+export const RevokeMcpOAuthGrantsRequestBody = z.object({
+    ids: z.array(ApId).min(1).max(100),
+})
+
+export type RevokeMcpOAuthGrantsRequestBody = z.infer<typeof RevokeMcpOAuthGrantsRequestBody>
+
+export const PLATFORM_WIDE_PROJECT_FILTER_VALUE = 'platform-wide'
