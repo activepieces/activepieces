@@ -3,6 +3,7 @@ import {
   AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
+  PlatformRole,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -30,6 +31,7 @@ import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -188,6 +190,7 @@ function ChatBoxContent({
   const [hasInput, setHasInput] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
@@ -202,7 +205,8 @@ function ChatBoxContent({
   const isFirstRun =
     personalization.personalStatus === ChatPersonalizationStatus.UNSET;
   const companyLocked =
-    isFirstRun && (personalization.companyInput ?? '').trim().length > 0;
+    (personalization.companyInput ?? '').trim().length > 0 &&
+    currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
     isEmpty && !incognito && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
