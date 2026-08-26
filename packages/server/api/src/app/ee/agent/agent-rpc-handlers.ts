@@ -128,7 +128,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const emailEnabled = !dryRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = !dryRun && carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
