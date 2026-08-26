@@ -342,10 +342,19 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
     const targets = agent.draft.tools.flatMap((tool) => pieceActionOf(tool) ?? [])
         .filter((action) => actionNames.includes(action.actionName))
         .filter((action) => isNil(scopedPiece) || action.pieceName === scopedPiece)
-    const ambiguous = actionNames.filter((actionName) => unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)).length > 1)
+    const resolved = actionNames.map((actionName) => ({
+        actionName,
+        pieces: unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)),
+    }))
+    const ambiguous = resolved.filter((entry) => entry.pieces.length > 1)
     if (ambiguous.length > 0) {
-        const pieces = unique(targets.filter((target) => ambiguous.includes(target.actionName)).map((target) => target.pieceName))
-        return { error: `${ambiguous.join(' and ')} is on more than one piece here: ${pieces.join(', ')}. Call this again with pieceName set to the one you mean.` }
+        return { error: `${ambiguous.map((entry) => entry.actionName).join(' and ')} is on more than one piece here: ${unique(ambiguous.flatMap((entry) => entry.pieces)).join(', ')}. Call this again with pieceName set to the one you mean.` }
+    }
+    const unmatched = resolved.filter((entry) => entry.pieces.length === 0).map((entry) => entry.actionName)
+    if (unmatched.length > 0) {
+        return { error: isNil(scopedPiece)
+            ? `${agent.displayName} has no tool for ${unmatched.join(' or ')}, so there is nothing to remove. List its tools with ap_list_agents.`
+            : `${unmatched.join(' and ')} is not on ${scopedPiece}, so there is nothing to remove. Take those away in their own call, without pieceName.` }
     }
     const removing = new Set(targets.map((target) => `${target.pieceName}:${target.actionName}`))
     const updated = await agentService(log).editDraftTools({

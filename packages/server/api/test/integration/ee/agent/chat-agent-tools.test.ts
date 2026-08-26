@@ -290,6 +290,23 @@ describe('the chat tools that build agents, against the real service', () => {
         expect(left.map((tool) => tool.pieceMetadata.pieceName)).toEqual([TOOL_PIECE])
     })
 
+    it('removes nothing when pieceName would silently skip one of the actions asked for', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note', 'read_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['save_note', 'read_note'], pieceName: RIVAL_PIECE,
+        }) as { error?: string }
+
+        expect(result.error).toContain('read_note is not on')
+        expect((await agentRow(agentId)).draft.tools).toHaveLength(3)
+    })
+
     it('removes two actions that live on different pieces without asking anything', async () => {
         const ctx = await context()
         const conversationId = await startConversation(ctx)
