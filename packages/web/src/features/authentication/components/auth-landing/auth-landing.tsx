@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useStashTrialKeyFromUrl } from '@/lib/automatic-trial-activation';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 import { AuthBackdrop } from './auth-backdrop';
@@ -12,6 +13,7 @@ import { AuthDrawerBody, AuthMode } from './auth-drawer-body';
 const NUDGE_STREAK_WINDOW_MS = 700;
 
 export function AuthLanding({ initialMode }: AuthLandingProps) {
+  useStashTrialKeyFromUrl();
   const { setForceLightMode } = useTheme();
   const redirectAfterLogin = useRedirectAfterLogin();
   const signedIn =

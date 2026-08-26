@@ -15,6 +15,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const createDealAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-deal',
+	classification: 'WRITE',
 	displayName: 'Create Deal',
 	description: 'Creates a new deal.',
 	audience: 'both',

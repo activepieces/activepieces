@@ -49,7 +49,10 @@ export const platformHooks = {
       },
     };
   },
-  useUpdateLisenceKey: (queryClient: QueryClient) => {
+  useUpdateLisenceKey: ({
+    queryClient,
+    messages,
+  }: UseUpdateLicenseKeyParams) => {
     const currentPlatformId = authenticationSession.getPlatformId();
 
     return useMutation({
@@ -67,11 +70,23 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: ['platform-billing-subscription'],
         });
-        toast.success(t('License activated successfully!'));
+        toast.success(
+          messages?.success ?? t('License activated successfully!'),
+        );
       },
       onError: () => {
-        toast.error(t('Activation failed, invalid license key'));
+        toast.error(
+          messages?.error ?? t('Activation failed, invalid license key'),
+        );
       },
     });
   },
+};
+
+export type UseUpdateLicenseKeyParams = {
+  queryClient: QueryClient;
+  messages?: {
+    success: string;
+    error: string;
+  };
 };

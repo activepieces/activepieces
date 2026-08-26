@@ -8,6 +8,7 @@ import { AddEventEvent } from '../common/types';
 export const addEventUpdateEventAction = createAction({
   auth: addEventAuth,
   name: 'update_event',
+  classification: 'WRITE',
   displayName: 'Update Event',
   description:
     'Updates an event on your AddEvent calendar. Only the fields you fill in are changed.',

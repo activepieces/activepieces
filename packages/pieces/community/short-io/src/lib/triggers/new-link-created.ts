@@ -9,6 +9,7 @@ const LAST_LINK_IDS_KEY = 'shortio-last-link-ids';
 export const newLinkCreatedTrigger = createTrigger({
   auth: shortIoAuth,
   name: 'new_link_created',
+  classification: 'READ',
   displayName: 'New Link Created',
   description: 'Fires when a new short link is created on a domain. Useful to sync newly created links to other systems.',
   aiMetadata: {

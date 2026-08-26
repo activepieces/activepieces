@@ -5,6 +5,7 @@ import { resolveS3Client } from '../common';
 export const moveFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'moveFile',
+  classification: 'WRITE',
   displayName: 'Move File',
   description: 'Move a File to Another Folder',
   audience: 'both',

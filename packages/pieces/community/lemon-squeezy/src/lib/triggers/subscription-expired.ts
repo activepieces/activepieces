@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionExpiredTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_expired',
+  classification: 'READ',
   displayName: 'Subscription Expired',
   description: 'Triggers when a subscription has ended after being previously cancelled',
   aiMetadata: {

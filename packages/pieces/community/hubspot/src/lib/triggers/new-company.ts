@@ -16,6 +16,7 @@ type Props = {
 };
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -72,6 +73,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCompanyTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-company',
+	classification: 'READ',
 	displayName: 'New Company',
 	description: 'Trigger when a new company is added.',
 	aiMetadata: {
@@ -93,6 +95,7 @@ export const newCompanyTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

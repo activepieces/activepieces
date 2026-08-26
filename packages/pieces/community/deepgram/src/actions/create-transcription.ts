@@ -8,6 +8,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createTranscriptionCallbackAction = createAction({
   auth: deepgramAuth,
   name: 'create_transcription_callback',
+  classification: 'READ',
   displayName: 'Create Transcription (Callback)',
   description: 'Creates a transcription using a callback URL.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { cancelScheduledEmailOutputSchema } from '../output-schemas';
 
 export const cancelScheduledEmail = createAction({
   name: 'cancel_scheduled_email',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Cancel Scheduled Email',
   outputSchema: cancelScheduledEmailOutputSchema,

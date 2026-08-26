@@ -16,6 +16,7 @@ const CHUNK_SIZE = 10485760; // Use 10MiB per chunk (a multiple of 320KiB, as On
 export const uploadFile = createAction({
   auth: oneDriveAuth,
   name: 'upload_onedrive_file',
+  classification: 'WRITE',
   description: 'Upload a file to your Microsoft OneDrive with chunked upload if the file is larger than 4MiB',
   audience: 'both',
   aiMetadata: { description: 'Upload a file to a Microsoft OneDrive folder, given a target file name, the file content, and an optional parent folder (defaults to the drive root). Large files (over 4MiB) are uploaded in chunks automatically. Idempotent: uploading the same file name to the same folder overwrites the existing item rather than creating a duplicate.', idempotent: true },

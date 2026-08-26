@@ -45,6 +45,7 @@ function toWebhookList(raw: unknown): { id: number; url?: string }[] {
 export const newMessage = createTrigger({
   auth: chatwootAuth,
   name: 'new_message',
+  classification: 'READ',
   displayName: 'New Incoming Message',
   description:
     'Triggers when a contact sends a new message in a Chatwoot conversation',

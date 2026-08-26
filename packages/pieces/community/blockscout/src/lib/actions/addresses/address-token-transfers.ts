@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressTokenTransfers = createAction({
   name: 'get_address_token_transfers',
+  classification: 'SEARCH',
   displayName: 'Get Address Token Transfers',
   description: 'Get list of token transfers for an address',
   audience: 'both',

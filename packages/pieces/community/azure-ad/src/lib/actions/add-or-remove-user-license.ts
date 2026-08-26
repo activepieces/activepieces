@@ -6,6 +6,7 @@ import { callGraphApi, flattenUser, userDropdown } from '../common';
 export const addOrRemoveUserLicenseAction = createAction({
     auth: azureAdAuth,
     name: 'add_or_remove_user_license',
+    classification: 'DESTRUCTIVE',
     displayName: 'Add or Remove User License',
     description: 'Assigns or removes licenses for a user. Use addLicenses to add (include disabledPlans to disable specific service plans) and removeLicenses to remove by SkuId.',
     audience: 'both',

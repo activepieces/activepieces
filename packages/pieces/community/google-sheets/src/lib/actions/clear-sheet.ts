@@ -7,6 +7,7 @@ import { clearSheetActionOutputSchema } from '../output-schemas';
 export const clearSheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'clear_sheet',
+	classification: 'DESTRUCTIVE',
 	description: 'Clears all rows on an existing sheet.',
 	audience: 'human',
 	aiMetadata: {

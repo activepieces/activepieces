@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const affiliateActivatedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'affiliate_activated',
+  classification: 'READ',
   displayName: 'Affiliate Activated',
   description: 'Triggers when an affiliate is activated',
   aiMetadata: {

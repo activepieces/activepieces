@@ -12,6 +12,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addLabelToPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'add-labels-to-person',
+	classification: 'WRITE',
 	displayName: 'Add Labels to Person',
 	description: 'Adds existing labels to an existing person.',
 	audience: 'both',

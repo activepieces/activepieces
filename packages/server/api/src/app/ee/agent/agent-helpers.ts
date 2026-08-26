@@ -5,12 +5,15 @@ import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
-import { aiProviderService } from '../../ai/ai-provider-service'
+import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
 import { UserMemoryEntity } from './user-memory-entity'
 
@@ -62,15 +65,56 @@ async function getUserProjects({ platformId, userId, log }: { platformId: string
     return allProjects.filter((p) => p.type !== ProjectType.PERSONAL || p.ownerId === userId)
 }
 
-async function resolveRunProvider({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
-    if (isNil(provider)) {
-        return resolveChatProvider({ platformId, log })
+// A run always resolves its credential inside a project. Coercing a missing project to platform
+// scope would make every key on the platform eligible, ignoring the project restrictions their
+// owner set, so a run with nowhere to happen is refused instead.
+function runScopeOrThrow({ projectId }: { projectId: string | null }): ProviderScope {
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'project', entityType: 'Project' },
+        }, 'this chat belongs to no project, so no AI provider key can be resolved for it')
     }
-    return aiProviderService(log).getConfigOrThrow({ platformId, provider })
+    return { type: 'project', projectId }
 }
 
-async function resolveChatProvider({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
-    const chatProvider = await aiProviderService(log).getChatProvider({ platformId })
+// The project a chat turn runs in: the conversation's own if the user still reaches it, else the
+// first they can see. Admission and the run both read it, so a message is accepted against the
+// same project whose credentials will serve it.
+function selectRunProject({ conversationProjectId, projects }: { conversationProjectId: string | null, projects: Project[] }): string | null {
+    const stillReachable = !isNil(conversationProjectId) && projects.some((project) => project.id === conversationProjectId)
+    return stillReachable ? conversationProjectId : projects[0]?.id ?? null
+}
+
+async function assertProjectSwitchKeepsKey({ platformId, provider, providerConfigId, fromProjectId, toProjectId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, fromProjectId: string | null, toProjectId: string | null, log: FastifyBaseLogger }): Promise<void> {
+    if (isNil(fromProjectId) || fromProjectId === toProjectId) {
+        return
+    }
+    const serves = await aiProviderService(log).keyServesScope({
+        platformId,
+        ...spreadIfDefined('provider', provider),
+        ...spreadIfDefined('configId', providerConfigId),
+        resolvedFor: { type: 'project', projectId: fromProjectId },
+        target: isNil(toProjectId) ? { type: 'platform' } : { type: 'project', projectId: toProjectId },
+    })
+    if (serves) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'the AI provider key this run resolved is not available to the project it tried to switch to' },
+    })
+}
+
+async function resolveRunProvider({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    if (isNil(provider)) {
+        return resolveChatProvider({ platformId, scope, log })
+    }
+    return aiProviderService(log).getConfigOrThrow({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId) })
+}
+
+async function resolveChatProvider({ platformId, scope, log }: { platformId: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<GetProviderConfigResponse> {
+    const chatProvider = await aiProviderService(log).getChatProvider({ platformId, scope })
     if (isNil(chatProvider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
@@ -80,9 +124,9 @@ async function resolveChatProvider({ platformId, log }: { platformId: string, lo
     return chatProvider
 }
 
-async function assertRunProviderConfigured({ platformId, provider, log }: { platformId: string, provider?: AIProviderName | null, log: FastifyBaseLogger }): Promise<void> {
+async function assertRunProviderConfigured({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName | null, providerConfigId?: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<void> {
     if (isNil(provider)) {
-        const chatProvider = await aiProviderService(log).getChatProviderName({ platformId })
+        const chatProvider = await aiProviderService(log).getChatProviderName({ platformId, scope })
         if (isNil(chatProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -91,12 +135,14 @@ async function assertRunProviderConfigured({ platformId, provider, log }: { plat
         }
         return
     }
-    const configured = await aiProviderService(log).exists({ platformId, provider })
+    const configured = await aiProviderService(log).exists({ platformId, provider, scope, ...spreadIfDefined('configId', providerConfigId ?? undefined) })
     if (!configured) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityId: provider, entityType: 'AIProvider' },
-        }, `the ${provider} AI provider is not configured on this platform`)
+        }, scope.type === 'platform'
+            ? `the ${provider} AI provider is not configured on this platform`
+            : `no ${provider} AI provider key is available to this project`)
     }
 }
 
@@ -141,8 +187,8 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-async function resolveTierModel({ platformId, tierId, provider, log }: { platformId: string, tierId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
-    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
     return {
         model: agentAiUtils.createChatModel({
@@ -156,16 +202,16 @@ async function resolveTierModel({ platformId, tierId, provider, log }: { platfor
     }
 }
 
-async function resolveFastModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, log, ...spreadIfDefined('provider', provider) })).model
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
 }
 
 function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
 }
 
-async function resolveEmbeddingModel({ platformId, provider, log }: { platformId: string, provider?: AIProviderName, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
-    const providerConfig = await resolveRunProvider({ platformId, log, ...spreadIfDefined('provider', provider) })
+async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+    const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     return agentAiUtils.createEmbeddingModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,
@@ -173,8 +219,14 @@ async function resolveEmbeddingModel({ platformId, provider, log }: { platformId
     })
 }
 
-async function resolveChatProviderName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId }))
+// Analytics and billing label a turn with the provider that served it. A conversation with no
+// project has no key to name, and guessing platform-wide would report a credential the run was
+// never allowed to use, so the provider stays unknown.
+async function resolveChatProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    if (isNil(projectId)) {
+        return null
+    }
+    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'project', projectId } }))
     return result.error ? null : result.data
 }
 
@@ -270,7 +322,20 @@ async function saveUserMemory({ platformId, userId, instructions, memories, base
     })
 }
 
+async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
+    if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
+        return false
+    }
+    const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
+    if (!isNil(error) || isNil(plan)) {
+        log.error({ error, platform: { id: platformId } }, '[agentHelpers#agentsSurfaceAvailable] Could not read the plan, treating agents as unavailable')
+        return false
+    }
+    return plan.agentsEnabled
+}
+
 export const agentHelpers = {
+    agentsSurfaceAvailable,
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
@@ -284,6 +349,9 @@ export const agentHelpers = {
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,
+    runScopeOrThrow,
+    selectRunProject,
+    assertProjectSwitchKeepsKey,
     recoverAllStaleStreamingConversations,
     incrementAndCheckLimit,
     conversationRepo,

@@ -5,6 +5,7 @@ import { transcriptIdProp } from './shared-props';
 
 export const getRedactedAudio = createAction({
   name: 'getRedactedAudio',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript Redacted Audio',

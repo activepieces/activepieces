@@ -8,6 +8,7 @@ import { getMessageReactionsOutputSchema } from '../../output-schemas';
 export const getClickupMessageReactions = createAction({
   auth: clickupAuth,
   name: 'get_message_reactions',
+  classification: 'SEARCH',
   description: 'Gets the reactions of a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Read-only: list the emoji reactions on a specific Chat message in a ClickUp workspace, given the workspace and message IDs. Use to inspect who reacted and with what; does not modify the message. Safe to call repeatedly.', idempotent: true },

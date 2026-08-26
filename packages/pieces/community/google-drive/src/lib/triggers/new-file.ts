@@ -39,6 +39,7 @@ const polling: Polling<
 export const newFile = createTrigger({
   auth: googleDriveAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
   aiMetadata: {

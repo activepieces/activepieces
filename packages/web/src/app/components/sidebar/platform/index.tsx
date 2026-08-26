@@ -4,7 +4,6 @@ import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import {
   ChevronLeftIcon,
@@ -66,12 +65,7 @@ export function PlatformSidebar() {
     },
     {
       to: '/platform/setup/ai',
-      label: t('AI Providers'),
-      icon: BotIcon,
-    },
-    {
-      to: '/platform/setup/ai-capabilities',
-      label: t('AI Capabilities'),
+      label: t('AI Center'),
       icon: SparklesIcon,
     },
     {
@@ -260,7 +254,7 @@ export function PlatformSidebar() {
         </SidebarContent>
       </div>
 
-      <SidebarFooter>
+      <SidebarFooter className="pb-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

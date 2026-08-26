@@ -39,6 +39,7 @@ enum AgentIcon {
 const AgentConfig = z.object({
     instructions: z.string().max(MAX_AGENT_TEXT_LENGTH),
     provider: Nullable(z.enum(AIProviderName)),
+    providerConfigId: Nullable(ApId),
     modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
     maxSteps: z.number().int().positive().max(MAX_AGENT_STEP_BUDGET).default(DEFAULT_AGENT_MAX_STEPS),
     tools: z.array(AgentTool).max(MAX_AGENT_TOOLS).default([]),
@@ -65,6 +66,7 @@ const Agent = z.object({
 })
 
 const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
+    isPublished: z.boolean(),
     toolCount: z.number(),
     toolPieceNames: z.array(z.string()),
     projectDisplayName: z.string(),

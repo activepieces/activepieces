@@ -7,6 +7,7 @@ export const readDocument = createAction({
   displayName: 'Read Document',
   auth: googleDocsAuth,
   name: 'read_document',
+  classification: 'READ',
   description: 'Read a document from Google Docs',
   audience: 'human',
   aiMetadata: {

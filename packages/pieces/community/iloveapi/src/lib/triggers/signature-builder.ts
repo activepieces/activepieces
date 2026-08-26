@@ -15,6 +15,7 @@ export function buildSignatureTrigger(spec: SignatureTriggerSpec) {
   return createTrigger({
     auth: iloveapiAuth,
     name: spec.name,
+    classification: 'READ',
     displayName: spec.displayName,
     description: spec.description,
     aiMetadata: spec.aiMetadata,

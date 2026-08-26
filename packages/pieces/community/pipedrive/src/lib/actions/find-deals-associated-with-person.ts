@@ -14,6 +14,7 @@ import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
 export const findDealsAssociatedWithPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-deals-associated-with-person',
+	classification: 'SEARCH',
 	displayName: 'Find Deals Associated With Person',
 	description: 'Finds multiple deals related to a specific person.',
 	audience: 'both',

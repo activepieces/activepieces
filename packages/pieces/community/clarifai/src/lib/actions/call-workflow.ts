@@ -11,6 +11,7 @@ import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 export const workflowPredictAction = createAction({
   auth: clarifaiAuth,
   name: 'workflow_predict',
+  classification: 'READ',
   description: 'Call a Clarifai workflow',
   audience: 'both',
   aiMetadata: {

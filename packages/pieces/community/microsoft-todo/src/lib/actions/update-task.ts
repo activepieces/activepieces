@@ -6,6 +6,7 @@ import { Importance, TaskStatus, TodoTask } from '@microsoft/microsoft-graph-typ
 export const updateTaskAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'update_task',
+	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task.',
 	audience: 'both',

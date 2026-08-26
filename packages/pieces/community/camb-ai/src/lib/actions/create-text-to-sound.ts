@@ -7,6 +7,7 @@ import { listFoldersDropdown } from '../common';
 export const createTextToSound = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_sound',
+    classification: 'READ',
     displayName: 'Create Text-to-Sound',
     description: 'Convert input text into “sound effects” using an AI model.',
     audience: 'both',

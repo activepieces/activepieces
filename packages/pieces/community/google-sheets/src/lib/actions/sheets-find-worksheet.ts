@@ -7,6 +7,7 @@ import { sheetsFindWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsFindWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_find_worksheet',
+	classification: 'SEARCH',
 	displayName: 'Find Worksheets',
 	description: 'Find a worksheet(s) by title.',
 	audience: 'ai',

@@ -5,14 +5,17 @@ import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
+import { contactSearchOutputSchema } from '../output-schemas';
 
 export const findContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-contact',
+	classification: 'SEARCH',
 	displayName: 'Find Contact',
 	description: 'Finds a contact by searching.',
 	audience: 'both',
 	aiMetadata: { description: 'Search HubSpot contacts by one or two property/value pairs (matched with equality) and return the matching contacts. Read-only and repeatable. Use this to resolve a contact before updating or enrolling it; pick a create action instead when no match should exist.', idempotent: true },
+	outputSchema: contactSearchOutputSchema,
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{

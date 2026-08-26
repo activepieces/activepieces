@@ -14,6 +14,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const createOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-organization',
+	classification: 'WRITE',
 	displayName: 'Create Organization',
 	description: 'Creates a new organization.',
 	audience: 'both',

@@ -8,6 +8,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const inviteUserToChannelAction = createAction({
 	auth: slackAuth,
 	name: 'invite-user-to-channel',
+	classification: 'WRITE',
 	displayName: 'Invite User to Channel',
 	description: 'Invites an existing User to an existing channel.',
 	audience: 'human',
