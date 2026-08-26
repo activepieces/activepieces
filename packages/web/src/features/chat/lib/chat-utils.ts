@@ -98,6 +98,31 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
+// A configured piece tool is named by mcpToolNameUtils.createPieceToolName, which joins the piece to
+// the action and appends a hash and an _mcp marker. Read straight out that renders as
+// "Google-calendar-google Calendar Get Events 74s8ib Mcp". The piece and action cannot be split apart
+// again, because piece names contain hyphens too, so the name is not carved up: the generated suffix
+// goes, and the piece repeated at the front (google-calendar-google_calendar_...) collapses to once.
+function cleanPieceToolName(raw: string): string | null {
+  const generated = /^(.+)_[a-z0-9]{6}_mcp$/.exec(raw);
+  if (!generated) return null;
+  const words = generated[1].split(/[-_]+/).filter(Boolean);
+  return formatUtils.convertEnumToHumanReadable(
+    withoutLeadingRepeat(words).join('_'),
+  );
+}
+
+function withoutLeadingRepeat(words: string[]): string[] {
+  for (let size = Math.floor(words.length / 2); size > 0; size--) {
+    const head = words.slice(0, size);
+    const next = words.slice(size, size * 2);
+    if (head.every((word, index) => word === next[index])) {
+      return words.slice(size);
+    }
+  }
+  return words;
+}
+
 function formatToolName({
   part,
   includeContext = true,
@@ -115,6 +140,11 @@ function formatToolName({
 
   if (raw.startsWith('mcp__')) {
     return cleanMcpToolName(raw);
+  }
+
+  const pieceLabel = cleanPieceToolName(raw);
+  if (pieceLabel) {
+    return pieceLabel;
   }
 
   const baseName =
