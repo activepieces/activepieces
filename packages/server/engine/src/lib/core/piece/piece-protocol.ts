@@ -21,34 +21,46 @@ export const pieceProtocol = {
     },
 
     serializeError: (error: unknown): SerializedError => {
-        if (!(error instanceof Error)) {
-            return { message: String(error) }
-        }
-        const details: Record<string, unknown> = {}
-        for (const key of [...Object.keys(error), ...ERROR_DETAIL_KEYS]) {
-            const { data } = readJsonSafe(() => Reflect.get(error, key))
-            if (data !== undefined) {
-                details[key] = data
-            }
-        }
-        return {
-            ...details,
-            message: error.message,
-            name: error.name === 'Error' ? error.constructor.name : error.name,
-            stack: error.stack,
-            type: error instanceof ExecutionError ? error.type : undefined,
-        }
+        return serializeErrorAtDepth({ error, depth: 0 })
     },
 
-    deserializeError: ({ message, name, stack, type, ...details }: SerializedError): Error => {
+    deserializeError: ({ message, name, stack, type, cause, ...details }: SerializedError): Error => {
         if (!isNil(type)) {
             return new ExecutionError(name ?? 'ExecutionError', message, type)
         }
         const error = Object.assign(new Error(message), details)
         error.name = name ?? error.name
         error.stack = stack ?? error.stack
+        if (isSerializedError(cause)) {
+            error.cause = pieceProtocol.deserializeError(cause)
+        }
         return error
     },
+}
+
+function serializeErrorAtDepth({ error, depth }: { error: unknown, depth: number }): SerializedError {
+    if (!(error instanceof Error)) {
+        return { message: String(error) }
+    }
+    const details = Object.fromEntries(
+        [...Object.keys(error), ...ERROR_DETAIL_KEYS]
+            .map((key) => [key, readJsonSafe(() => Reflect.get(error, key)).data] as const)
+            .filter(([, data]) => data !== undefined),
+    )
+    return {
+        ...details,
+        message: error.message,
+        name: error.name === 'Error' ? error.constructor.name : error.name,
+        stack: error.stack,
+        type: error instanceof ExecutionError ? error.type : undefined,
+        cause: isNil(error.cause) || depth >= CAUSE_MAX_DEPTH
+            ? undefined
+            : serializeErrorAtDepth({ error: error.cause, depth: depth + 1 }),
+    }
+}
+
+function isSerializedError(value: unknown): value is SerializedError {
+    return isObject(value) && typeof value.message === 'string'
 }
 
 function isThenable(value: unknown): boolean {
@@ -65,6 +77,8 @@ function readJsonSafe(read: () => unknown): { data: unknown } {
 }
 
 const ERROR_DETAIL_KEYS = ['response', 'request', 'status', 'headers', 'body', 'error']
+
+const CAUSE_MAX_DEPTH = 3
 
 type PieceIdentity = {
     piecePath: string
