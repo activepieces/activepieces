@@ -1,5 +1,5 @@
 import { auditEvent, type AuditEventInput } from '@activepieces/server-utils'
-import { Cursor, isNil, SeekPage } from '@activepieces/core-utils'
+import { Cursor, isNil, SeekPage, tryCatchSync } from '@activepieces/core-utils'
 import { ApplicationEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
@@ -12,10 +12,6 @@ import { AuditEventEntity } from './audit-event-entity'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
-// Mirrors each audit event to evlog so it reaches the configured remote drain
-// (in Cloud, OTLP -> ClickHouse) and becomes queryable there, independently of
-// the Postgres `audit_event` persistence. Fire-and-forget: an emission failure
-// must never break the audit save path.
 function emitAuditEventToEvlog(event: ApplicationEvent): void {
     const actor = event.userId
         ? { type: 'user' as const, id: event.userId, email: event.userEmail }
@@ -29,12 +25,7 @@ function emitAuditEventToEvlog(event: ApplicationEvent): void {
             data: event.data,
         },
     }
-    try {
-        auditEvent(auditInput)
-    }
-    catch {
-        // evlog emission is best-effort; dropping here must not surface.
-    }
+    tryCatchSync(() => auditEvent(auditInput))
 }
 
 export const auditLogService = (log: FastifyBaseLogger) => ({
