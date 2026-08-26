@@ -48,6 +48,13 @@ const CLOUD_LISTINGS = {
     'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
 };
 
+const TUTORIAL_VIDEOS = {
+  claude:
+    'https://cdn.activepieces.com/videos/mcp-tutorials/Claude%20MCP%20-%20Step%201.mp4',
+  chatgpt:
+    'https://cdn.activepieces.com/videos/mcp-tutorials/ChatGPT%20MCP%20-%20Step%201.mp4',
+};
+
 function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
   return [
     {
@@ -99,26 +106,18 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       },
     },
     {
-      key: 'goose',
+      key: 'opencode',
       icon: GENERIC_ICON,
-      name: 'goose',
+      name: 'OpenCode',
       group: 'terminal',
       hint: t('Config file'),
-      docsUrl:
-        'https://block.github.io/goose/docs/getting-started/using-extensions',
+      docsUrl: 'https://opencode.ai/docs/mcp-servers/',
       config: {
-        path: '~/.config/goose/config.yaml',
-        snippet: `extensions:\n  ${slug}:\n    enabled: true\n    type: streamable_http\n    name: ${slug}\n    uri: ${url}\n    timeout: 60`,
+        path: '~/.config/opencode/opencode.json',
+        snippet: prettyJson({
+          mcp: { [slug]: { type: 'remote', url, enabled: true } },
+        }),
       },
-    },
-    {
-      key: 'warp',
-      icon: GENERIC_ICON,
-      name: 'Warp',
-      group: 'terminal',
-      hint: t('Add in settings'),
-      docsUrl: 'https://docs.warp.dev/agent-platform/capabilities/mcp',
-      config: { snippet: prettyJson({ [slug]: { url } }) },
     },
     {
       key: 'cursor',
@@ -165,68 +164,11 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       },
     },
     {
-      key: 'windsurf',
-      ...MCP_CLIENT_DISPLAY.windsurf,
-      group: 'editors',
-      hint: t('Config file'),
-      docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
-      config: {
-        path: '~/.codeium/windsurf/mcp_config.json',
-        snippet: mcpServersJson(slug, { serverUrl: url }),
-      },
-    },
-    {
-      key: 'cline',
-      icon: GENERIC_ICON,
-      name: 'Cline',
-      group: 'editors',
-      formFactor: 'extension',
-      hint: t('Add in settings'),
-      docsUrl: 'https://docs.cline.bot/mcp/mcp-overview',
-      config: {
-        path: 'cline_mcp_settings.json',
-        snippet: mcpServersJson(slug, { type: 'streamableHttp', url }),
-      },
-    },
-    {
-      key: 'zed',
-      icon: GENERIC_ICON,
-      name: 'Zed',
-      group: 'editors',
-      hint: t('Config file'),
-      docsUrl: 'https://zed.dev/docs/ai/mcp',
-      config: {
-        path: 'settings.json',
-        snippet: prettyJson({ context_servers: { [slug]: { url } } }),
-      },
-    },
-    {
-      key: 'jetbrains',
-      icon: GENERIC_ICON,
-      name: 'JetBrains IDEs',
-      group: 'editors',
-      hint: t('Add in settings'),
-      docsUrl: 'https://www.jetbrains.com/help/ai-assistant/mcp.html',
-      config: { snippet: mcpServersJson(slug, { url }) },
-    },
-    {
-      key: 'continue',
-      icon: GENERIC_ICON,
-      name: 'Continue',
-      group: 'editors',
-      formFactor: 'extension',
-      hint: t('Config file'),
-      docsUrl: 'https://docs.continue.dev/customize/deep-dives/mcp',
-      config: {
-        path: '~/.continue/config.yaml',
-        snippet: `mcpServers:\n  - name: ${slug}\n    type: streamable-http\n    url: ${url}`,
-      },
-    },
-    {
       key: 'claude',
       ...MCP_CLIENT_DISPLAY.claude,
       group: 'chat',
       hint: t('Add a connector'),
+      selfHostedVideoUrl: TUTORIAL_VIDEOS.claude,
       docsUrl:
         'https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp',
       addStep: {
@@ -257,6 +199,7 @@ function catalogEntries(url: string, { name, slug }: Brand): CatalogEntry[] {
       ...MCP_CLIENT_DISPLAY.chatgpt,
       group: 'chat',
       hint: t('Add a connector'),
+      selfHostedVideoUrl: TUTORIAL_VIDEOS.chatgpt,
       docsUrl: 'https://platform.openai.com/docs/mcp',
       addStep: {
         body: t(
@@ -302,10 +245,7 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
     label: () => t('Editors'),
     tagline: () => t('we write the config for you'),
     addStepTitle: () => t('Add the server'),
-    kind: (entry) =>
-      entry.formFactor === 'extension'
-        ? t('Editor extension · runs locally')
-        : t('Editor · runs locally'),
+    kind: () => t('Editor · runs locally'),
     authBody: ({ client }) => localAuthStepBody(client),
   },
   chat: {
@@ -357,10 +297,12 @@ function toConnectableClient({
   entry,
   url,
   brandName,
+  isCloud,
 }: {
   entry: CatalogEntry;
   url: string;
   brandName: string;
+  isCloud: boolean;
 }): ConnectableClient {
   const groupCopy = GROUP_COPY[entry.group];
   return {
@@ -369,8 +311,9 @@ function toConnectableClient({
     name: entry.name,
     group: entry.group,
     hint: entry.hint,
-    kind: groupCopy.kind(entry),
+    kind: groupCopy.kind(),
     docsUrl: entry.docsUrl,
+    videoUrl: isCloud ? undefined : entry.selfHostedVideoUrl,
     config: entry.config && {
       label: configLabel(entry.config),
       snippet: entry.config.snippet,
@@ -415,7 +358,12 @@ export const mcpClientCatalog = {
         isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
       )
       .map((entry) =>
-        toConnectableClient({ entry, url: serverUrl, brandName: websiteName }),
+        toConnectableClient({
+          entry,
+          url: serverUrl,
+          brandName: websiteName,
+          isCloud,
+        }),
       ),
 
   groups: (): ClientGroup[] =>
@@ -452,6 +400,7 @@ export type ConnectableClient = {
   hint: string;
   kind: string;
   docsUrl: string;
+  videoUrl?: string;
   config?: {
     label: string;
     snippet: string;
@@ -474,7 +423,7 @@ type GroupCopy = {
   label: () => string;
   tagline?: () => string;
   addStepTitle: () => string;
-  kind: (entry: CatalogEntry) => string;
+  kind: () => string;
   authBody: (params: { client: string; brand: string }) => string;
 };
 
@@ -488,7 +437,6 @@ type CatalogEntry = {
   icon: string;
   name: string;
   group: ClientGroupKey;
-  formFactor?: 'extension';
   hint: string;
   docsUrl: string;
   addStep?: {
@@ -497,6 +445,7 @@ type CatalogEntry = {
     action?: ConnectAction;
   };
   auth?: string;
+  selfHostedVideoUrl?: string;
   config?: EntryConfig;
   cloud?: Pick<CatalogEntry, 'addStep'> & { docsUrl?: string };
 };

@@ -326,6 +326,20 @@ function ClientInstructions({
 
       <PageContent className="flex flex-col gap-8 pb-10 pt-8 lg:flex-row">
         <div className="flex min-w-0 flex-1 flex-col">
+          {client.videoUrl && (
+            <div className="mb-8 flex flex-col gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                {t('Watch the full setup')}
+              </span>
+              <video
+                src={client.videoUrl}
+                controls
+                preload="metadata"
+                playsInline
+                className="w-full rounded-[11px] border bg-black"
+              />
+            </div>
+          )}
           {client.steps.map((step, index) => (
             <ConnectStepRow
               key={step.title}
