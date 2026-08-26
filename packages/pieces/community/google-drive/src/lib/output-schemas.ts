@@ -484,6 +484,14 @@ export const newOrUpdatedFileTriggerOutputSchema: OutputSchema = {
       label: 'Change Type',
     },
     {
+      key: 'content',
+      label: 'File Content',
+    },
+    {
+      key: 'contentError',
+      label: 'File Content Error',
+    },
+    {
       key: 'name',
       label: 'File Name',
     },

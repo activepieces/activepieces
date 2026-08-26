@@ -53,7 +53,7 @@ export const newOrUpdatedFile = createTrigger({
     'Trigger when a file is created or updated. Each event carries a Change Type of created or updated. Renames and metadata edits count as updates. Trashing a file is not an event, and neither is restoring one from the bin or moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.',
   aiMetadata: {
     description:
-      'Fires when a file is created or modified in Google Drive, based on its creation and last-modified times (polling), optionally scoped to a parent folder and to specific file types. Each event represents one file and its metadata, carries a changeType of created or updated, and can include the file content. Choose this over New File when edits to files that already exist should also trigger the flow.',
+      'Fires when a file is created or modified in Google Drive, based on its creation and last-modified times (polling), optionally scoped to a parent folder and to specific file types. Each event represents one file and its metadata, carries a changeType of created or updated, and can include the file content, falling back to a contentError field when a download fails. Choose this over New File when edits to files that already exist should also trigger the flow.',
   },
   props: {
     parentFolder: common.properties.parentFolder,
@@ -199,7 +199,7 @@ function isDriveFile(value: unknown): value is DriveFile {
   );
 }
 
-async function downloadContentOrSkip({
+async function downloadContent({
   auth,
   files,
   file,
@@ -207,12 +207,16 @@ async function downloadContentOrSkip({
   auth: GoogleDriveAuthValue;
   files: FilesService;
   file: DriveFile;
-}): Promise<string | undefined> {
-  try {
-    return await downloadFileFromDrive(auth, files, file.id, file.name);
-  } catch {
-    return undefined;
+}): Promise<DriveFileContent> {
+  let lastError = '';
+  for (let attempt = 1; attempt <= CONTENT_DOWNLOAD_ATTEMPTS; attempt++) {
+    try {
+      return { content: await downloadFileFromDrive(auth, files, file.id, file.name) };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
   }
+  return { error: lastError };
 }
 
 async function withFileContent({
@@ -238,8 +242,10 @@ async function withFileContent({
         if (!isDriveFile(item)) {
           return item;
         }
-        const content = await downloadContentOrSkip({ auth, files, file: item });
-        return content === undefined ? item : { ...item, content };
+        const { content, error } = await downloadContent({ auth, files, file: item });
+        return error === undefined
+          ? { ...item, content }
+          : { ...item, contentError: error };
       })
     );
     enriched.push(...withContent);
@@ -248,8 +254,14 @@ async function withFileContent({
 }
 
 const FILE_CONTENT_CONCURRENCY = 5;
+const CONTENT_DOWNLOAD_ATTEMPTS = 2;
 
 type DriveFileChangeType = 'created' | 'updated';
+
+type DriveFileContent = {
+  content?: string;
+  error?: string;
+};
 
 type DriveFile = {
   id: string;
