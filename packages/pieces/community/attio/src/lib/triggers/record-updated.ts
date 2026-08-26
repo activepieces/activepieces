@@ -127,6 +127,7 @@ export const recordUpdatedTrigger = createTrigger({
 					accessToken: context.auth.secret_text,
 					method: HttpMethod.GET,
 					resourceUri: `/objects/${objectTypeId}/records/${recordId}`,
+					retries: 2,
 				}).then((response) => response.data),
 			),
 		);
