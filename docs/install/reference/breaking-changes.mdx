@@ -10,17 +10,19 @@ icon: "hammer"
 
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
-Three changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
+Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
 
-The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and the two checkboxes no longer default to off, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
+The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
 
 The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
 
-`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. Existing steps keep working, because a stored numeric id is still sent as before.
+`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
+
+The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
 
 #### What you need to do
 
-Nothing to configure or migrate. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. When you next open such a step, re-select its lists before saving, since the stored ids may not appear selected in the new dropdown.
+Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
 
 #### A new workspace is named after the company in the sign-up email
 

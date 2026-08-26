@@ -49,9 +49,9 @@ export const createOrUpdateContact = createAction({
 			displayName: 'Lists',
 			description: 'Lists to add the contact to.',
 		}),
-		smtp_blacklist_sender: Property.Checkbox({
-			displayName: 'SMTP Blacklist Sender',
-			description: `transactional email forbidden sender for contact. Use only for email Contact ( only available if updateEnabled = true )`,
+		blocked_sender_addresses: Property.Array({
+			displayName: 'Blocked Sender Addresses',
+			description: `Sender email addresses this contact must not receive transactional email from. Leave empty to change nothing.`,
 			required: false,
 		}),
 	},
@@ -63,12 +63,16 @@ export const createOrUpdateContact = createAction({
 			email_blacklisted,
 			sms_blacklisted,
 			list_ids,
-			smtp_blacklist_sender,
+			blocked_sender_addresses,
 		} = context.propsValue;
 
 		const listIds = (list_ids ?? [])
 			.map((listId) => Number(listId))
 			.filter((listId) => Number.isFinite(listId));
+
+		const blockedSenders = (Array.isArray(blocked_sender_addresses) ? blocked_sender_addresses : [])
+			.map((sender) => String(sender).trim())
+			.filter((sender) => sender.length > 0);
 
 		const contact = {
 			email,
@@ -77,7 +81,7 @@ export const createOrUpdateContact = createAction({
 			emailBlacklisted: email_blacklisted,
 			smsBlacklisted: sms_blacklisted,
 			listIds: listIds.length > 0 ? listIds : undefined,
-			smtpBlacklistSender: smtp_blacklist_sender,
+			smtpBlacklistSender: blockedSenders.length > 0 ? blockedSenders : undefined,
 			updateEnabled: true,
 		};
 
