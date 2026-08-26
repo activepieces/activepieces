@@ -74,6 +74,7 @@ import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
+import { pieceUpgradeModule } from './flows/flow-version/piece-upgrade.module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
@@ -308,6 +309,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(pieceUpgradeModule)
             await app.register(adminPlatformTemplatesCloudModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
@@ -347,6 +349,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
