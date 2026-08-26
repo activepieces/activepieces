@@ -37,7 +37,7 @@ const polling: Polling<
         'modifiedTime desc'
       )) ?? [];
 
-    return files.filter(hasUsableModifiedTime).map((file) => ({
+    return files.filter(hasUsableTimestamp).map((file) => ({
       epochMilliSeconds: changedAtEpoch(file),
       data: { ...file, changeType: resolveChangeType({ file, lastFetchEpochMS }) },
     }));
@@ -159,18 +159,18 @@ export const newOrUpdatedFile = createTrigger({
   },
 });
 
-function hasUsableModifiedTime(file: DriveFile): boolean {
-  return typeof file.modifiedTime === 'string' && dayjs(file.modifiedTime).isValid();
-}
-
-function createdAtEpoch(file: DriveFile): number {
-  return typeof file.createdTime === 'string' && dayjs(file.createdTime).isValid()
-    ? dayjs(file.createdTime).valueOf()
+function epochOf(timestamp: string | undefined): number {
+  return typeof timestamp === 'string' && dayjs(timestamp).isValid()
+    ? dayjs(timestamp).valueOf()
     : 0;
 }
 
 function changedAtEpoch(file: DriveFile): number {
-  return Math.max(dayjs(file.modifiedTime).valueOf(), createdAtEpoch(file));
+  return Math.max(epochOf(file.modifiedTime), epochOf(file.createdTime));
+}
+
+function hasUsableTimestamp(file: DriveFile): boolean {
+  return changedAtEpoch(file) > 0;
 }
 
 function resolveChangeType({
@@ -181,9 +181,9 @@ function resolveChangeType({
   lastFetchEpochMS: number;
 }): DriveFileChangeType {
   if (lastFetchEpochMS > 0) {
-    return createdAtEpoch(file) > lastFetchEpochMS ? 'created' : 'updated';
+    return epochOf(file.createdTime) > lastFetchEpochMS ? 'created' : 'updated';
   }
-  return dayjs(file.modifiedTime).valueOf() > createdAtEpoch(file)
+  return epochOf(file.modifiedTime) > epochOf(file.createdTime)
     ? 'updated'
     : 'created';
 }
@@ -197,6 +197,22 @@ function isDriveFile(value: unknown): value is DriveFile {
     'name' in value &&
     typeof value.name === 'string'
   );
+}
+
+async function downloadContentOrSkip({
+  auth,
+  files,
+  file,
+}: {
+  auth: GoogleDriveAuthValue;
+  files: FilesService;
+  file: DriveFile;
+}): Promise<string | undefined> {
+  try {
+    return await downloadFileFromDrive(auth, files, file.id, file.name);
+  } catch {
+    return undefined;
+  }
 }
 
 async function withFileContent({
@@ -218,14 +234,13 @@ async function withFileContent({
   for (let index = 0; index < items.length; index += FILE_CONTENT_CONCURRENCY) {
     const batch = items.slice(index, index + FILE_CONTENT_CONCURRENCY);
     const withContent = await Promise.all(
-      batch.map(async (item) =>
-        isDriveFile(item)
-          ? {
-              ...item,
-              content: await downloadFileFromDrive(auth, files, item.id, item.name),
-            }
-          : item
-      )
+      batch.map(async (item) => {
+        if (!isDriveFile(item)) {
+          return item;
+        }
+        const content = await downloadContentOrSkip({ auth, files, file: item });
+        return content === undefined ? item : { ...item, content };
+      })
     );
     enriched.push(...withContent);
   }
