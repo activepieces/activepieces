@@ -1,10 +1,9 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil } from '@activepieces/core-utils'
 import { FlowAction, FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
-import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { pieceUpgradeRegister } from './piece-upgrade-register'
 import { Migration } from '.'
-import { PieceStepUsage, pieceVersionCompatibility } from './piece-version-compatibility'
 
 export const migrateV23UpgradePieceVersions: Migration = {
     targetSchemaVersion: '23',
@@ -45,8 +44,8 @@ async function resolveStepUpgrade({ step, flowVersion, log }: ResolveStepUpgrade
     if (step.type !== FlowActionType.PIECE && step.type !== FlowTriggerType.PIECE) {
         return undefined
     }
-    const usage = getPieceStepUsage(step)
-    if (isNil(usage)) {
+    const usedStepName = getUsedStepName(step)
+    if (isNil(usedStepName)) {
         return undefined
     }
     const { pieceName, pieceVersion } = step.settings
@@ -56,55 +55,31 @@ async function resolveStepUpgrade({ step, flowVersion, log }: ResolveStepUpgrade
         piece: { name: pieceName, version: pieceVersion },
     }
 
-    const { data: decision, error } = await tryCatch(() => pieceVersionCompatibility.resolveUpgrade({
-        usage,
-        currentVersion: pieceVersion,
-        getMetadata: async ({ version }) => pieceMetadataService(log).get({
-            name: pieceName,
-            version,
-            platformId: undefined,
-            projectId: undefined,
-        }),
-    }))
-
-    if (!isNil(error)) {
-        log.error({ ...logContext, migrationError: error }, '[migrateV23UpgradePieceVersions] failed to resolve upgrade, keeping current version')
+    const entry = await pieceUpgradeRegister.lookup({ pieceName, pieceVersion, log })
+    if (isNil(entry)) {
+        log.info(logContext, '[migrateV23UpgradePieceVersions] piece version not in upgrade register, keeping current version')
         return undefined
     }
 
+    const decision = pieceUpgradeRegister.resolveDecision({ entry, usedStepName })
     switch (decision.outcome) {
         case 'upgraded':
-            log.info({ ...logContext, upgrade: { toVersion: decision.toVersion, candidate: decision.candidate, attempts: decision.attempts } }, '[migrateV23UpgradePieceVersions] piece upgrade pass')
+            log.info({ ...logContext, upgrade: { toVersion: decision.toVersion } }, '[migrateV23UpgradePieceVersions] piece upgrade pass')
             return decision.toVersion
         case 'kept':
-            log.warn({ ...logContext, upgrade: { reason: decision.reason, attempts: decision.attempts } }, '[migrateV23UpgradePieceVersions] piece upgrade fail, keeping current version')
-            return undefined
-        case 'skipped':
-            log.info({ ...logContext, upgrade: { reason: decision.reason } }, '[migrateV23UpgradePieceVersions] piece upgrade skipped')
+            log.warn({ ...logContext, upgrade: { target: entry.target, flaggedStep: usedStepName } }, '[migrateV23UpgradePieceVersions] step flagged unsafe in upgrade register, keeping current version')
             return undefined
     }
 }
 
-function getPieceStepUsage(step: FlowAction | FlowTrigger): PieceStepUsage | undefined {
+function getUsedStepName(step: FlowAction | FlowTrigger): string | undefined {
     if (step.type === FlowTriggerType.PIECE) {
-        const { triggerName, input } = step.settings
-        if (isNil(triggerName)) {
-            return undefined
-        }
-        return { kind: 'trigger', stepName: triggerName, inputKeys: getInputKeys(input) }
+        return step.settings.triggerName ?? undefined
     }
     if (step.type === FlowActionType.PIECE) {
-        const { actionName, input } = step.settings
-        if (isNil(actionName)) {
-            return undefined
-        }
-        return { kind: 'action', stepName: actionName, inputKeys: getInputKeys(input) }
+        return step.settings.actionName ?? undefined
     }
     return undefined
-}
-
-function getInputKeys(input: Record<string, unknown> | undefined): string[] {
-    return Object.keys(input ?? {}).filter((key) => key !== 'auth')
 }
 
 type ResolveStepUpgradeParams = {
