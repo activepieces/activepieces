@@ -199,6 +199,10 @@ function isDriveFile(value: unknown): value is DriveFile {
   );
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function downloadContent({
   auth,
   files,
@@ -214,6 +218,9 @@ async function downloadContent({
       return { content: await downloadFileFromDrive(auth, files, file.id, file.name) };
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
+      if (attempt < CONTENT_DOWNLOAD_ATTEMPTS) {
+        await delay(attempt * CONTENT_RETRY_DELAY_MS);
+      }
     }
   }
   return { error: lastError };
@@ -254,7 +261,8 @@ async function withFileContent({
 }
 
 const FILE_CONTENT_CONCURRENCY = 5;
-const CONTENT_DOWNLOAD_ATTEMPTS = 2;
+const CONTENT_DOWNLOAD_ATTEMPTS = 3;
+const CONTENT_RETRY_DELAY_MS = 500;
 
 type DriveFileChangeType = 'created' | 'updated';
 

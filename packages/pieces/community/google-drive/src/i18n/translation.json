@@ -320,6 +320,7 @@
   "File Types": "File Types",
   "Only fire for files of these types. Leave empty to watch every type. If the type you need is not listed, switch this field to 'Dynamic value' (the toggle next to the field) and provide a list of MIME types.": "Only fire for files of these types. Leave empty to watch every type. If the type you need is not listed, switch this field to 'Dynamic value' (the toggle next to the field) and provide a list of MIME types.",
   "Excel 97-2003 (XLS)": "Excel 97-2003 (XLS)",
+  "Plain Text (TXT)": "Plain Text (TXT)",
   "PNG": "PNG",
   "JPEG": "JPEG",
   "ZIP": "ZIP"
