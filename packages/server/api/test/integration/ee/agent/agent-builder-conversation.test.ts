@@ -109,11 +109,15 @@ describe('whose model a builder run answers on', () => {
     // An agent that names no model cannot be talked to, and that is the point of the guard. The
     // builder is not that agent: refusing it here would leave a half-made agent unbuildable, which
     // is exactly the state the builder exists to get you out of.
-    it('builds an agent that names no model, where talking to that agent is refused', async () => {
+    it('builds an agent whose model was cleared, where talking to that agent is refused', async () => {
         const ctx = await context()
         const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
         await db.update('ai_provider', saved.id, { enabledForChat: true })
         const agent = await createAgent(ctx)
+        const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
+            draft: { ...agent.draft, provider: null, modelName: null },
+        })
+        expect(cleared.json().draft.modelName).toBeNull()
 
         const asAgent = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id })
         const refused = await ctx.post(`${CONVERSATIONS_URL}/${asAgent.json().id}/messages`, { content: 'hello' })
