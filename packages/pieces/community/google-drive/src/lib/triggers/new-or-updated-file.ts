@@ -105,6 +105,7 @@ export const newOrUpdatedFile = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      isRepublish: context.isRepublish,
     });
   },
   onDisable: async (context) => {
@@ -213,17 +214,25 @@ async function withFileContent({
     return items;
   }
 
-  return await Promise.all(
-    items.map(async (item) =>
-      isDriveFile(item)
-        ? {
-            ...item,
-            content: await downloadFileFromDrive(auth, files, item.id, item.name),
-          }
-        : item
-    )
-  );
+  const enriched: unknown[] = [];
+  for (let index = 0; index < items.length; index += FILE_CONTENT_CONCURRENCY) {
+    const batch = items.slice(index, index + FILE_CONTENT_CONCURRENCY);
+    const withContent = await Promise.all(
+      batch.map(async (item) =>
+        isDriveFile(item)
+          ? {
+              ...item,
+              content: await downloadFileFromDrive(auth, files, item.id, item.name),
+            }
+          : item
+      )
+    );
+    enriched.push(...withContent);
+  }
+  return enriched;
 }
+
+const FILE_CONTENT_CONCURRENCY = 5;
 
 type DriveFileChangeType = 'created' | 'updated';
 
