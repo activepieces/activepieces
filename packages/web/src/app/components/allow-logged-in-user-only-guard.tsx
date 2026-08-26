@@ -5,6 +5,7 @@ import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { AutomaticTrialActivation } from '@/lib/automatic-trial-activation';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -29,5 +30,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
-  return <SocketProvider>{children}</SocketProvider>;
+  return (
+    <SocketProvider>
+      <AutomaticTrialActivation />
+      {children}
+    </SocketProvider>
+  );
 };
