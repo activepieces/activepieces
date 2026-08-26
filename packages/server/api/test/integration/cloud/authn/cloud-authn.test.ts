@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
+import { safeHttp } from '@activepieces/server-utils'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { jwtUtils } from '../../../../src/app/helper/jwt-utils'
@@ -61,6 +62,38 @@ beforeEach(async () => {
 })
 describe('Authentication API', () => {
     describe('Sign up Endpoint', () => {
+        it('answers a zerobounce-refused address exactly like an unverified sign-up, and creates nothing', async () => {
+            await mockAndSaveBasicSetup({
+                platform: { id: CLOUD_PLATFORM_ID, emailAuthEnabled: true },
+                plan: { ssoEnabled: false },
+            })
+            const mockSignUpRequest = createMockSignUpRequest()
+            const email = mockSignUpRequest.email.toLocaleLowerCase().trim()
+            const answer = vi.spyOn(safeHttp.axios, 'get')
+                .mockResolvedValue({ data: { status: 'do_not_mail', sub_status: 'disposable' } })
+            process.env.AP_ZEROBOUNCE_API_KEY = 'test-api-key'
+
+            try {
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/sign-up',
+                    body: mockSignUpRequest,
+                })
+
+                expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+                expect(response?.json()).toEqual({
+                    code: 'EMAIL_IS_NOT_VERIFIED',
+                    params: { email },
+                })
+                const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email })
+                expect(identity).toBeNull()
+            }
+            finally {
+                delete process.env.AP_ZEROBOUNCE_API_KEY
+                answer.mockRestore()
+            }
+        })
+
         it('Create new user for the cloud user and then ask to verify email if email is not verified', async () => {
             const edition = system.getEdition()
             await mockAndSaveBasicSetup({

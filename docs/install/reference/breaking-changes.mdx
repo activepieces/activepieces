@@ -8,6 +8,18 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Disposable-address blocking now needs a ZeroBounce key, and `AP_ALLOW_DISPOSABLE_EMAILS` is gone
+
+Sign-up used to be checked against a blocklist of throwaway domains bundled into the server, switched off with `AP_ALLOW_DISPOSABLE_EMAILS=true`. That list shipped with the release, so it went stale between releases and never saw a domain registered after the build.
+
+The check now asks ZeroBounce about the address instead, and it only runs when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed: leaving the key unset is how you accept every address, and setting it is how you refuse the junk. An instance that still carries `AP_ALLOW_DISPOSABLE_EMAILS` in its environment boots fine — the variable is ignored, and needs no cleanup.
+
+So on upgrade, an instance with no ZeroBounce key accepts throwaway addresses where it previously refused them. Rate limits and invitation-only sign-up are unchanged, and remain the controls that do not need a third-party account.
+
+#### What you need to do
+
+Nothing, unless you were relying on the bundled blocklist to keep throwaway addresses out. To keep refusing them, get a ZeroBounce API key and set `AP_ZEROBOUNCE_API_KEY`. If you had set `AP_ALLOW_DISPOSABLE_EMAILS=true`, you can drop the line.
+
 #### Workers no longer pre-warm the flow cache on startup by default
 
 Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
