@@ -37,7 +37,7 @@ export const googleBusiness = createPiece({
     createReply,
     createCustomApiCallAction({
       baseUrl: () => {
-        return 'https://www.googleapis.com/business/v4';
+        return 'https://mybusiness.googleapis.com/v4';
       },
       auth: googleAuth,
       authMapping: async (auth) => ({
