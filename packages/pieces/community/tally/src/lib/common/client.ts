@@ -16,6 +16,7 @@ export const tallyApiClient = {
 	createWebhook,
 	deleteWebhook,
 	fetchRecentSubmissions,
+	request,
 };
 
 async function validateApiKey(apiKey: string): Promise<void> {
@@ -103,6 +104,22 @@ async function fetchRecentSubmissions({
 	});
 }
 
+async function request<T>({
+	method,
+	path,
+	apiKey,
+	body,
+	queryParams,
+}: {
+	method: HttpMethod;
+	path: string;
+	apiKey: string;
+	body?: unknown;
+	queryParams?: Record<string, string>;
+}): Promise<T> {
+	return makeApiCall<T>({ method, path, apiKey, body, queryParams });
+}
+
 async function makeApiCall<T>({
 	method,
 	path,
@@ -128,6 +145,9 @@ async function makeApiCall<T>({
 			const status = error.response.status;
 			const responseBody = error.response.body as { message?: string } | undefined;
 			if (status === 401) throw new Error('Authentication failed. Check your API key.');
+			if (status === 403) throw new Error(`Permission denied (403): ${responseBody?.message ?? 'The API key lacks access to this resource, or the plan required for it (Pro) is not active.'}`);
+			if (status === 404) throw new Error(`Not found (404): ${responseBody?.message ?? 'The requested resource does not exist.'}`);
+			if (status === 429) throw new Error(`Rate limited (429): Tally allows 100 requests per minute. Consider using webhooks instead of polling.`);
 			throw new Error(`API error (${status}): ${responseBody?.message ?? 'Unknown error'}`);
 		}
 		throw error;
