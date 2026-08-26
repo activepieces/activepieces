@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentTool, AgentToolType, CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentReply, DraftAgentResponse, isAppSumoCreditedPlan, mcpToolNameUtils } from '@activepieces/shared'
+import { AgentTool, AgentToolType, AppConnectionStatus, CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentReply, DraftAgentResponse, isAppSumoCreditedPlan, mcpToolNameUtils } from '@activepieces/shared'
 import { APICallError, generateText, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
@@ -17,6 +17,7 @@ const REPLY_LOG_LIMIT = 500
 const REASON_LIMIT = 200
 const FAST_TIER_ID = 'fast'
 const CANDIDATE_PIECE_LIMIT = 8
+const CANDIDATE_CONNECTION_LIMIT = 100
 const CANDIDATE_ACTION_LIMIT = 25
 const SUGGESTED_TOOL_LIMIT = 4
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
@@ -35,27 +36,27 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         // an account that can serve one and not the other has working chat and failing drafts. A
         // refused key will refuse again, but anything else is worth one attempt on chat's own model.
         const candidates = await connectedCandidates({ projectId, platformId, log })
-        let attempt = await runDraft({ model: resolved.model, prompt: withCandidates({ prompt, candidates }) })
-        let usedModelId = resolved.modelId
-        if (!isNil(attempt.error) && !rejectedCredentials(statusOf(attempt.error))) {
+        // The attempt and the model that made it move together, so the agent cannot be written down
+        // as running the model that failed. Two separate variables drifted once already.
+        let run = { attempt: await runDraft({ model: resolved.model, prompt: withCandidates({ prompt, candidates }) }), on: resolved }
+        if (!isNil(run.attempt.error) && !rejectedCredentials(statusOf(run.attempt.error))) {
             const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
             if (!isNil(fallback) && fallback.modelId !== resolved.modelId) {
                 log.warn({ from: resolved.modelId, to: fallback.modelId, platform: { id: platformId } }, '[agentDraftAi] Retrying the draft on the model chat runs on')
-                attempt = await runDraft({ model: fallback.model, prompt: withCandidates({ prompt, candidates }) })
-                usedModelId = fallback.modelId
+                run = { attempt: await runDraft({ model: fallback.model, prompt: withCandidates({ prompt, candidates }) }), on: fallback }
             }
         }
 
-        const { data: raw, error: generateError } = attempt
+        const { data: raw, error: generateError } = run.attempt
         if (!isNil(generateError) || isNil(raw)) {
             const reason = describeError(generateError)
             const status = statusOf(generateError)
-            log.error({ error: generateError, reason, status, provider: resolved.provider, model: { id: usedModelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
+            log.error({ error: generateError, reason, status, provider: run.on.provider, model: { id: run.on.modelId }, platform: { id: platformId } }, '[agentDraftAi] The model call failed while drafting an agent')
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: rejectedCredentials(status)
-                    ? `${resolved.provider} rejected the API key. Update it in the AI settings and try again.`
-                    : `The ${resolved.provider} provider could not run ${usedModelId}: ${reason.slice(0, REASON_LIMIT)}` },
+                    ? `${run.on.provider} rejected the API key. Update it in the AI settings and try again.`
+                    : `The ${run.on.provider} provider could not run ${run.on.modelId}: ${reason.slice(0, REASON_LIMIT)}` },
             })
         }
 
@@ -71,8 +72,8 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         return {
             ...parsed,
             tools: resolveToolPicks({ picks: parsed.tools, candidates }),
-            provider: resolved.provider,
-            modelName: resolved.modelId,
+            provider: run.on.provider,
+            modelName: run.on.modelId,
         }
     },
 })
@@ -83,18 +84,11 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
 async function connectedCandidates({ projectId, platformId, log }: { projectId: ProjectId, platformId: PlatformId, log: FastifyBaseLogger }): Promise<Candidate[]> {
     const { data: page } = await tryCatch(() => appConnectionService(log).list({
         projectId, platformId,
-        pieceName: undefined, displayName: undefined, status: undefined,
+        pieceName: undefined, displayName: undefined,
         cursorRequest: null, scope: undefined, externalIds: undefined,
-        limit: CANDIDATE_PIECE_LIMIT,
+        ...candidateQuery(),
     }))
-    const connections = page?.data ?? []
-    const byPiece = new Map<string, string>()
-    for (const connection of connections) {
-        if (!byPiece.has(connection.pieceName)) {
-            byPiece.set(connection.pieceName, connection.externalId)
-        }
-    }
-    const resolved = await Promise.all([...byPiece].map(async ([pieceName, connectionExternalId]) => {
+    const resolved = await Promise.all(firstConnectionPerPiece(page?.data ?? []).map(async ([pieceName, connectionExternalId]) => {
         const { data: piece } = await tryCatch(() => pieceMetadataService(log).get({ name: pieceName, projectId, platformId }))
         if (isNil(piece)) {
             return []
@@ -108,6 +102,23 @@ async function connectedCandidates({ projectId, platformId, log }: { projectId: 
         return [candidate]
     }))
     return resolved.flat().filter((candidate) => candidate.actionNames.length > 0)
+}
+
+// A tool bound to a broken account reads as ready and fails on first use, so only working
+// connections are offered. The cap is on apps, which means it has to be applied after several
+// accounts for one app collapse to one: capping the rows let three apps fill a budget meant for eight.
+function candidateQuery(): { status: AppConnectionStatus[], limit: number } {
+    return { status: [AppConnectionStatus.ACTIVE], limit: CANDIDATE_CONNECTION_LIMIT }
+}
+
+function firstConnectionPerPiece(connections: { pieceName: string, externalId: string }[]): [string, string][] {
+    const byPiece = new Map<string, string>()
+    for (const connection of connections) {
+        if (!byPiece.has(connection.pieceName)) {
+            byPiece.set(connection.pieceName, connection.externalId)
+        }
+    }
+    return [...byPiece].slice(0, CANDIDATE_PIECE_LIMIT)
 }
 
 function withCandidates({ prompt, candidates }: { prompt: string, candidates: Candidate[] }): string {
@@ -219,7 +230,7 @@ async function debitDraft({ platformId, projectId, log }: { platformId: Platform
     }
 }
 
-export const agentDraftTools = { withCandidates, resolveToolPicks }
+export const agentDraftTools = { withCandidates, resolveToolPicks, candidateQuery, firstConnectionPerPiece, PIECE_LIMIT: CANDIDATE_PIECE_LIMIT }
 
 type Candidate = {
     pieceName: string
