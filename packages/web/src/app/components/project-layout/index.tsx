@@ -90,6 +90,7 @@ export function ProjectDashboardLayout({
   const hideHeader =
     hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
+    location.pathname.includes('/mcp-server') ||
     isPlatformPage;
 
   const inner = (
