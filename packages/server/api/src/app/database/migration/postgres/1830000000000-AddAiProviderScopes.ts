@@ -13,7 +13,7 @@ import { Migration } from '../../migration'
 // key exists the old shape no longer fits the data, so the rollback is one-way.
 export class AddAiProviderScopes1830000000000 implements Migration {
     name = 'AddAiProviderScopes1830000000000'
-    breaking = true
+    breaking = false
     release = '0.88.3'
     transaction = false
 
