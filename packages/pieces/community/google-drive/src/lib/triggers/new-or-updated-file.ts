@@ -24,7 +24,7 @@ const polling: Polling<
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const isTestMode = lastFetchEpochMS === 0;
-    const files: DriveFile[] =
+    const listed: unknown[] =
       (await common.getFiles(
         auth,
         {
@@ -40,7 +40,8 @@ const polling: Polling<
 
     const now = Date.now();
 
-    return files
+    return listed
+      .filter(isDriveFile)
       .filter((file) => isDeliverable({ file, now }))
       .map((file) => ({
         epochMilliSeconds: changedAtEpoch(file),
