@@ -39,6 +39,15 @@ function notesFor(source: AgentRunSource): string {
 }
 
 describe('what each surface is told it can do', () => {
+    it('never tells the builder it can read the web, because its tool set has no web in it', () => {
+        const notes = notesFor(AgentRunSource.AGENT_BUILDER)
+
+        expect(notes).not.toContain('ap_web_search')
+        expect(notes).not.toContain('ap_fetch_url')
+        expect(notes).not.toContain('ap_scrape_url')
+        expect(notes).not.toContain('ap_generate_image')
+    })
+
     it('only tells a chat run about saved agents, and only where the surface exists', () => {
         expect(notesFor(AgentRunSource.CHAT)).toContain('Saved agents')
         expect(notesFor(AgentRunSource.FLOW_STEP)).not.toContain('Saved agents')

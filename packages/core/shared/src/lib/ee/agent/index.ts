@@ -219,6 +219,8 @@ export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),
     modelName: z.optional(Nullable(z.string())),
     agentId: z.optional(z.string()),
+    builder: z.optional(z.boolean()),
+    projectId: z.optional(z.string()),
 })
 export type CreateAgentConversationRequest = z.infer<typeof CreateAgentConversationRequest>
 
