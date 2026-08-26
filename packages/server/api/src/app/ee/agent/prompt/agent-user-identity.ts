@@ -38,17 +38,19 @@ function buildUserIdentityNote({ firstName, lastName, email, platformName, ident
             : `You're helping the person at **${email}**.`,
     ]
 
-    if (!isNil(identity)) {
-        lines.push(`- They work at **${identity.companyName}**, ${identity.description} (industry: ${identity.industry}). This is researched, not a guess, so use it to ground your suggestions in their world.`)
-        if (!isNil(identity.role)) {
-            lines.push(`- Their own role is **${identity.role}**. Pick examples and defaults that fit that role, and never attribute it to anyone else on their team.`)
-        }
+    const company = identity?.company ?? null
+    if (!isNil(company)) {
+        lines.push(`- They work at **${company.name}**, ${company.description} (industry: ${company.industry}). This is researched, not a guess, so use it to ground your suggestions in their world.`)
     }
     else {
         const hint = companyHintFromEmail({ email })
         if (!isNil(hint)) {
             lines.push(`- Their email domain is **${hint.domain}**, so the company is likely **${hint.company}**. Treat this as a hint for grounding your help, and verify before stating it as fact.`)
         }
+    }
+
+    if (!isNil(identity?.role)) {
+        lines.push(`- Their own role is **${identity.role}**, which they told us themselves. Pick examples and defaults that fit that role, and never attribute it to anyone else on their team.`)
     }
 
     if (!isNil(platformName)) {
