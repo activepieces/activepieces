@@ -28,6 +28,7 @@ async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceU
     const platformId = await projectService(log).getPlatformId(flow.projectId)
     const events = await auditEventRepo().createQueryBuilder('event')
         .where('event.platformId = :platformId', { platformId })
+        .andWhere('event.projectId = :projectId', { projectId: flow.projectId })
         .andWhere('event.action = :action', { action: ApplicationEventName.FLOW_PIECES_UPGRADED })
         .andWhere('event.data->>\'flowId\' = :flowId', { flowId })
         .orderBy('event.created', 'DESC')
