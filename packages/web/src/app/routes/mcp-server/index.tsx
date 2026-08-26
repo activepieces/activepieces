@@ -16,7 +16,7 @@ export default function McpServerPage() {
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <PageHeader showSidebarToggle={true} title={t('MCP')} />
+      <PageHeader title={t('MCP')} />
       <div className="border-b">
         <PageBand>
           <Tabs value={nav.tab} onValueChange={nav.showTab}>

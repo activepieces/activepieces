@@ -20,6 +20,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
             ...groups.phase,
             ...groups.buildPlan,
             ...groups.email,
+            ...groups.agentSurface,
             ...groups.mcp,
         }
     }
@@ -31,7 +32,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
     if (source === AgentRunSource.AGENT) {
         return {
             ...configured,
-            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies'] }),
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase'] }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,
@@ -57,6 +58,7 @@ export type AgentToolGroups = {
     phase: ToolSet
     buildPlan: ToolSet
     email: ToolSet
+    agentSurface: ToolSet
     mcp: ToolSet
     configuredPiece: ToolSet
     configuredFlow: ToolSet

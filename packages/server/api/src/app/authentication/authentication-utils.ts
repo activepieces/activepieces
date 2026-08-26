@@ -41,14 +41,6 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const project = isNil(params.projectId)
             ? findPersonalProject(projects, params.userId) ?? projects?.[0]
             : projects.find((project) => project.id === params.projectId)
-        if (isNil(project)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVITATION_ONLY_SIGN_UP,
-                params: {
-                    message: 'No project found for user',
-                },
-            })
-        }
         const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
         if (!identity.verified) {
             throw new ActivepiecesError({
@@ -83,7 +75,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             newsLetter: identity.newsLetter,
             verified: identity.verified,
             token,
-            projectId: project.id,
+            projectId: project?.id ?? null,
         }
     },
 

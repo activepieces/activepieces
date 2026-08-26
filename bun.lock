@@ -97,7 +97,7 @@
     },
     "packages/core/ai-providers": {
       "name": "@activepieces/ai-providers",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -149,7 +149,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.141.0",
+      "version": "0.144.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -187,7 +187,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "ipaddr.js": "2.3.0",
@@ -334,7 +334,7 @@
     },
     "packages/pieces/community/ai": {
       "name": "@activepieces/piece-ai",
-      "version": "0.6.1",
+      "version": "0.8.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -844,7 +844,7 @@
     },
     "packages/pieces/community/attio": {
       "name": "@activepieces/piece-attio",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -1952,7 +1952,7 @@
     },
     "packages/pieces/community/clickup": {
       "name": "@activepieces/piece-clickup",
-      "version": "0.7.12",
+      "version": "0.7.13",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3017,7 +3017,7 @@
     },
     "packages/pieces/community/facebook-pages": {
       "name": "@activepieces/piece-facebook-pages",
-      "version": "0.2.7",
+      "version": "0.2.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3220,7 +3220,7 @@
     },
     "packages/pieces/community/flow-helper": {
       "name": "@activepieces/piece-flow-helper",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3789,7 +3789,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.8.5",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3824,7 +3824,7 @@
     },
     "packages/pieces/community/google-gemini": {
       "name": "@activepieces/piece-google-gemini",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4100,7 +4100,7 @@
     },
     "packages/pieces/community/grok-xai": {
       "name": "@activepieces/piece-grok-xai",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5870,7 +5870,7 @@
     },
     "packages/pieces/community/microsoft-teams-bot": {
       "name": "@activepieces/piece-microsoft-teams-bot",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6489,7 +6489,7 @@
     },
     "packages/pieces/community/openai": {
       "name": "@activepieces/piece-openai",
-      "version": "0.10.4",
+      "version": "0.10.5",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7006,7 +7006,7 @@
     },
     "packages/pieces/community/pollybot-ai": {
       "name": "@activepieces/piece-pollybot-ai",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10195,7 +10195,7 @@
     },
     "packages/pieces/core/approval": {
       "name": "@activepieces/piece-approval",
-      "version": "0.1.27",
+      "version": "0.1.28",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10316,7 +10316,7 @@
     },
     "packages/pieces/core/file-helper": {
       "name": "@activepieces/piece-file-helper",
-      "version": "0.1.29",
+      "version": "0.1.30",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10430,7 +10430,7 @@
     },
     "packages/pieces/core/pdf": {
       "name": "@activepieces/piece-pdf",
-      "version": "0.5.10",
+      "version": "0.5.11",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10500,7 +10500,7 @@
     },
     "packages/pieces/core/smtp": {
       "name": "@activepieces/piece-smtp",
-      "version": "0.4.7",
+      "version": "0.4.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10632,7 +10632,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.36.0",
+      "version": "0.37.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10759,6 +10759,7 @@
       "devDependencies": {
         "@activepieces/piece-facebook-leads": "workspace:*",
         "@activepieces/piece-intercom": "workspace:*",
+        "@activepieces/piece-microsoft-teams-bot": "workspace:*",
         "@activepieces/piece-slack": "workspace:*",
         "@activepieces/piece-square": "workspace:*",
         "@faker-js/faker": "8.2.0",

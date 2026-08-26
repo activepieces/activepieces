@@ -262,10 +262,14 @@ export const InstructAgentMemoryRequest = z.object({
 })
 export type InstructAgentMemoryRequest = z.infer<typeof InstructAgentMemoryRequest>
 
+export const AgentMessageSource = z.enum(['onboarding'])
+export type AgentMessageSource = z.infer<typeof AgentMessageSource>
+
 export const SendAgentMessageRequest = z.object({
     content: z.string().max(MAX_AGENT_TEXT_LENGTH),
     runId: z.string().optional(),
     files: z.array(AgentMessageFile).max(10).optional(),
+    messageSource: AgentMessageSource.optional(),
 }).refine(
     (val) => val.content.length > 0 || (val.files && val.files.length > 0),
     { message: formErrors.messageRequiresContentOrFiles },
@@ -319,6 +323,7 @@ export type AgentToolOutputs = {
     ap_show_project_picker: { displayed: boolean }
     ap_show_questions: { displayed: boolean }
     ap_show_quick_replies: { displayed: boolean }
+    ap_show_showcase: { displayed: boolean }
     ap_update_thinking_status: { success: boolean }
 }
 
@@ -370,3 +375,4 @@ export * from './agent'
 export { agentToolClassification } from './tool-classification'
 export { agentToolPhases, type AgentPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
+export * from './chat-personalization'
