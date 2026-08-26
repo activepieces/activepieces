@@ -765,7 +765,6 @@ function createAgentSurfaceTools({ executeTool }: {
                 return executeTool('ap_create_agent', toolInput)
             },
         }),
-
     }
 }
 

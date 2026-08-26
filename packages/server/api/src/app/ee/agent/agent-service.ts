@@ -144,8 +144,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
-    // Editing the tool list is read-modify-write on one jsonb column, and the model issues these in
-    // parallel, so the row is locked for the whole edit rather than losing whichever write lands first.
     async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
         return transaction(async (entityManager) => {
             const repo = entityManager.getRepository(AgentEntity)
