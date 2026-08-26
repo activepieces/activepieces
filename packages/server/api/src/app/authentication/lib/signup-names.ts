@@ -114,12 +114,17 @@ function splitFullName({ fullName, email }: SplitFullNameParams): SplitName {
     }
 }
 
+function isPlaceholderName({ firstName, lastName, email }: IsPlaceholderNameParams): boolean {
+    return lastName.trim().length === 0 && firstName.trim().toLowerCase() === firstNameFromEmail(email).toLowerCase()
+}
+
 export const signupNames = {
     firstNameFromEmail,
     platformNameFromPerson,
     platformNameFromSignup,
     companyNameFromWorkEmail,
     splitFullName,
+    isPlaceholderName,
 }
 
 type PlatformNameFromPersonParams = {
@@ -129,6 +134,12 @@ type PlatformNameFromPersonParams = {
 
 type PlatformNameFromSignupParams = {
     firstName: string
+    email: string
+}
+
+type IsPlaceholderNameParams = {
+    firstName: string
+    lastName: string
     email: string
 }
 
