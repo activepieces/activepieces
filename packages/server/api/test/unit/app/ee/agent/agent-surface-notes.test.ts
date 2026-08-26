@@ -19,9 +19,7 @@ const IDENTITY = {
     email: 'dana@acme.com',
     platformName: 'Acme Automate',
     identity: {
-        companyName: 'Acme',
-        description: 'a logistics company',
-        industry: 'Transport',
+        company: { name: 'Acme', description: 'a logistics company', industry: 'Transport' },
         role: 'Operations Lead',
     },
 }
@@ -138,6 +136,16 @@ describe('who the agent is told it is talking to', () => {
         expect(notes).toContain('dana@acme.com')
         expect(notes).toContain('the company is likely')
         expect(notes).not.toContain('a logistics company')
+    })
+
+    it('still names the role when only the company research is missing', () => {
+        const notes = identityNoteFor({
+            source: AgentRunSource.CHAT,
+            userIdentity: { ...IDENTITY, identity: { company: null, role: 'Operations Lead' } },
+        })
+
+        expect(notes).toContain('Operations Lead')
+        expect(notes).toContain('the company is likely')
     })
 
     it('guesses no company from a personal mailbox', () => {

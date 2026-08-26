@@ -395,15 +395,14 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
     async getIdentityEnrichment({ platformId, userId }: { platformId: string, userId: string }): Promise<PersonalizationIdentity | null> {
         const view = await this.getEffectiveView({ platformId, userId })
-        if (view.status !== ChatPersonalizationStatus.READY || isNil(view.profile)) {
+        const company = view.status === ChatPersonalizationStatus.READY && !isNil(view.profile)
+            ? { name: view.profile.companyName, description: view.profile.description, industry: view.profile.industry }
+            : null
+        const role = view.roleInput ?? null
+        if (isNil(company) && isNil(role)) {
             return null
         }
-        return {
-            companyName: view.profile.companyName,
-            description: view.profile.description,
-            industry: view.profile.industry,
-            role: view.roleInput ?? null,
-        }
+        return { company, role }
     },
 
 })
@@ -844,8 +843,12 @@ type ValidatedResult = {
 }
 
 export type PersonalizationIdentity = {
-    companyName: string
+    company: PersonalizationIdentityCompany | null
+    role: string | null
+}
+
+export type PersonalizationIdentityCompany = {
+    name: string
     description: string
     industry: string
-    role: string | null
 }
