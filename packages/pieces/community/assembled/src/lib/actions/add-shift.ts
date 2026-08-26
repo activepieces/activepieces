@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const addShift = createAction({
   auth: assembledAuth,
   name: 'add_shift',
+  classification: 'WRITE',
   displayName: 'Add Shift on Assembled',
   description: 'Add a new shift to a user\'s schedule in Assembled',
   audience: 'both',
