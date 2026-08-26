@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -16,13 +16,16 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
+        const builderProjectId = request.builder === true
+            ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
+            : null
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
-            projectId: agent?.projectId ?? null,
+            projectId: agent?.projectId ?? builderProjectId,
             userId,
             agentId: agent?.id ?? null,
-            source: isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
+            source: builderSourceFor({ builder: request.builder === true, agent }),
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
@@ -164,6 +167,42 @@ type ListConversationsParams = {
     cursor?: string
     limit: number
     agentId?: string
+}
+
+function builderSourceFor({ builder, agent }: { builder: boolean, agent: Agent | null }): AgentRunSource {
+    if (builder) {
+        return AgentRunSource.AGENT_BUILDER
+    }
+    return isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT
+}
+
+// A builder either edits an agent that exists, taking that agent's project, or builds a new one in a
+// project the caller can reach. Without one of the two it has nowhere to write, and the first tool
+// call would fail with a project it cannot choose.
+async function resolveBuilderProject({ agent, requestedProjectId, platformId, userId, log }: {
+    agent: Agent | null
+    requestedProjectId?: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<string> {
+    if (!isNil(agent)) {
+        return agent.projectId
+    }
+    if (isNil(requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'A builder conversation needs either an agentId to change or a projectId to build in' },
+        })
+    }
+    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    if (!projects.some((project) => project.id === requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: requestedProjectId, entityType: 'Project' },
+        })
+    }
+    return requestedProjectId
 }
 
 type ConversationIdentifier = {
