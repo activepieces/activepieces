@@ -121,7 +121,7 @@ export const recordUpdatedTrigger = createTrigger({
 
 		const { objectTypeId, filter_attribute, filter_value } = context.propsValue;
 
-		const records = await Promise.all(
+		const results = await Promise.allSettled(
 			recordIds.map((recordId) =>
 				attioApiCall<{ data: Record<string, unknown> }>({
 					accessToken: context.auth.secret_text,
@@ -130,6 +130,10 @@ export const recordUpdatedTrigger = createTrigger({
 				}).then((response) => response.data),
 			),
 		);
+
+		const records = results
+			.filter((result) => result.status === 'fulfilled')
+			.map((result) => result.value);
 
 		return records.filter((record) => recordMatchesFilter(record, filter_attribute, filter_value));
 	},
