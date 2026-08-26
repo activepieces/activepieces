@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 import {
   QueryClient,
@@ -70,9 +71,13 @@ export const platformHooks = {
         queryClient.invalidateQueries({
           queryKey: ['platform-billing-subscription'],
         });
-        toast.success(
-          messages?.success ?? t('License activated successfully!'),
-        );
+        const successMessage =
+          messages?.success === undefined
+            ? t('License activated successfully!')
+            : messages.success;
+        if (!isNil(successMessage)) {
+          toast.success(successMessage);
+        }
       },
       onError: () => {
         toast.error(
@@ -86,7 +91,7 @@ export const platformHooks = {
 export type UseUpdateLicenseKeyParams = {
   queryClient: QueryClient;
   messages?: {
-    success: string;
-    error: string;
+    success?: string | null;
+    error?: string;
   };
 };

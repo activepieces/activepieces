@@ -2,10 +2,10 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/providers/socket-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
+import { AutomaticTrialActivation } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { AutomaticTrialActivation } from '@/lib/automatic-trial-activation';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
