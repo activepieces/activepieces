@@ -1,8 +1,9 @@
-import { apId } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
 import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
@@ -45,6 +46,43 @@ afterAll(async () => {
 })
 
 describe('agent crud', () => {
+    // An agent with no model cannot be talked to, so a created one is given the platform's default
+    // rather than landing the person on a checklist before they can say anything to it.
+    it('fills in the platform model when the request names none', async () => {
+        const ctx = await context()
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).not.toBeNull()
+        expect(agent.draft.provider).toBe(AIProviderName.OPENROUTER)
+    })
+
+    it('keeps a model the request did name', async () => {
+        const ctx = await context()
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+        const body = agentBody(ctx.project.id)
+
+        const response = await ctx.post('/v1/agents', {
+            ...body,
+            draft: { ...body.draft, provider: AIProviderName.OPENROUTER, modelName: 'anthropic/claude-haiku-4.5' },
+        })
+
+        expect(response.json().draft.modelName).toBe('anthropic/claude-haiku-4.5')
+    })
+
+    // On a fresh install there is nothing to pick, and saying so beats inventing a model that
+    // cannot run.
+    it('leaves the model empty when the platform has no provider to answer on', async () => {
+        const ctx = await context()
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBeNull()
+    })
+
     it('creates an agent owned by the caller, in draft, unpublished', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

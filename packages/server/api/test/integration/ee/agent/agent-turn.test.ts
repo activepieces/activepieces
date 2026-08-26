@@ -98,10 +98,18 @@ describe('an agent conversation', () => {
 })
 
 describe('the model an agent answers on', () => {
-    it('refuses to run an agent that names no model, even when the platform has a chat provider', async () => {
+    // Creating an agent fills in the platform's default model, so the model-less state now comes
+    // from clearing it afterwards. The guard still matters: an agent must answer on its own model
+    // or not at all, never by silently falling back to whatever chat runs on.
+    it('refuses to run an agent whose model was cleared, even when the platform has a chat provider', async () => {
         const ctx = await context()
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
-        const agent = await createAgent(ctx, { provider: null, modelName: null })
+        const agent = await createAgent(ctx)
+        const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
+            draft: { ...agent.draft, provider: null, modelName: null },
+        })
+        expect(cleared.statusCode).toBe(StatusCodes.OK)
+        expect(cleared.json().draft.modelName).toBeNull()
         const conversation = await startConversation(ctx, agent.id)
 
         const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, {
