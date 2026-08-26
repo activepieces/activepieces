@@ -193,4 +193,23 @@ describe('signupNames', () => {
         })
     })
 
+    describe('isPlaceholderName', () => {
+        it.each([
+            ['ahmad@activepieces.com', 'Ahmad', ''],
+            ['ahmad.tash@activepieces.com', 'Ahmad', ''],
+            ['...@activepieces.com', 'there', ''],
+            ['ahmadtash@activepieces.com', 'AhmadTash', ''],
+        ])('reads the name seeded from %s as a placeholder', (email, firstName, lastName) => {
+            expect(signupNames.isPlaceholderName({ firstName, lastName, email })).toBe(true)
+        })
+
+        it.each([
+            ['ahmad@activepieces.com', 'Ahmad', 'Tash'],
+            ['ahmad@activepieces.com', 'Sam', ''],
+            ['ahmad.tash@activepieces.com', 'Ahmad Tash', ''],
+        ])('reads %s named %s %s as a name its owner gave', (email, firstName, lastName) => {
+            expect(signupNames.isPlaceholderName({ firstName, lastName, email })).toBe(false)
+        })
+    })
+
 })

@@ -1,5 +1,6 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentToolType, PackageType, PieceType } from '@activepieces/shared'
+import { unique } from '@activepieces/core-utils'
+import { AgentToolType, mcpToolNameUtils, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -13,6 +14,7 @@ let app: FastifyInstance
 
 const TOOL_PIECE = '@activepieces/piece-test-notes'
 const TOOL_PIECE_VERSION = '0.4.2'
+const RIVAL_PIECE = '@activepieces/piece-test-memos'
 
 beforeAll(async () => {
     process.env.AP_AGENTS_ENABLED = 'true'
@@ -36,6 +38,23 @@ beforeAll(async () => {
                 name: 'read_note',
                 displayName: 'Read Note',
                 description: 'Read a note',
+                requireAuth: true,
+                props: {},
+            },
+        },
+    }))
+    await db.save('piece_metadata', createMockPieceMetadata({
+        name: RIVAL_PIECE,
+        displayName: 'Test Memos',
+        version: '1.0.0',
+        pieceType: PieceType.OFFICIAL,
+        packageType: PackageType.REGISTRY,
+        platformId: undefined,
+        actions: {
+            save_note: {
+                name: 'save_note',
+                displayName: 'Save Note',
+                description: 'Save a memo',
                 requireAuth: true,
                 props: {},
             },
@@ -71,6 +90,11 @@ async function runTool(ctx: TestContext, conversationId: string, toolName: strin
         conversationId,
         log: app.log,
     })
+}
+
+async function actionNamesOn(id: string): Promise<string[]> {
+    const tools = (await agentRow(id)).draft.tools as Array<{ pieceMetadata?: { actionName: string } }>
+    return tools.flatMap((tool) => tool.pieceMetadata?.actionName ?? [])
 }
 
 async function agentRow(id: string) {
@@ -142,9 +166,10 @@ describe('the chat tools that build agents, against the real service', () => {
 
         expect(result).toEqual(expect.objectContaining({ published: true }))
         const stored = await agentRow(agentId)
-        const [tool] = stored.draft.tools as Array<{ type: string, toolName: string, pieceMetadata: { pieceVersion: string, predefinedInput?: { auth: string } } }>
+        const [tool] = stored.draft.tools as Array<{ type: string, toolName: string, pieceMetadata: { actionName: string, pieceVersion: string, predefinedInput?: { auth: string } } }>
         expect(tool.type).toBe(AgentToolType.PIECE)
-        expect(tool.toolName).toBe('save_note')
+        expect(tool.pieceMetadata.actionName).toBe('save_note')
+        expect(tool.toolName).toBe(mcpToolNameUtils.createPieceToolName(TOOL_PIECE, 'save_note'))
         expect(tool.pieceMetadata.pieceVersion).toBe(TOOL_PIECE_VERSION)
         expect(tool.pieceMetadata.predefinedInput?.auth).toBe(connection.externalId)
         expect((stored.published?.tools as unknown[])).toHaveLength(1)
@@ -227,6 +252,78 @@ describe('the chat tools that build agents, against the real service', () => {
         expect(result.error).toContain('not available')
     })
 
+    it('keeps two pieces that name their action the same, under distinct tool names', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const tools = (await agentRow(agentId)).draft.tools as Array<{ toolName: string, pieceMetadata: { pieceName: string } }>
+        expect(tools.map((tool) => tool.pieceMetadata.pieceName).sort()).toEqual([RIVAL_PIECE, TOOL_PIECE])
+        expect(unique(tools.map((tool) => tool.toolName))).toHaveLength(2)
+    })
+
+    it('asks which piece when an action name is on more than one of them', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', { agentId, actionNames: ['save_note'] }) as { error?: string }
+
+        expect(result.error).toContain('more than one piece')
+        expect((await agentRow(agentId)).draft.tools).toHaveLength(2)
+
+        const resolved = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['save_note'], pieceName: RIVAL_PIECE,
+        }) as { error?: string }
+
+        expect(resolved.error).toBeUndefined()
+        const left = (await agentRow(agentId)).draft.tools as Array<{ pieceMetadata: { pieceName: string } }>
+        expect(left.map((tool) => tool.pieceMetadata.pieceName)).toEqual([TOOL_PIECE])
+    })
+
+    it('removes nothing when pieceName would silently skip one of the actions asked for', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['save_note', 'read_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['save_note', 'read_note'], pieceName: RIVAL_PIECE,
+        }) as { error?: string }
+
+        expect(result.error).toContain('read_note is not on')
+        expect((await agentRow(agentId)).draft.tools).toHaveLength(3)
+    })
+
+    it('removes two actions that live on different pieces without asking anything', async () => {
+        const ctx = await context()
+        const conversationId = await startConversation(ctx)
+        const { agentId } = await runTool(ctx, conversationId, 'ap_create_agent', {
+            displayName: 'Storer', instructions: 'Keep notes.',
+        }) as { agentId: string }
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['read_note'] })
+        await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: RIVAL_PIECE, actionNames: ['save_note'] })
+
+        const result = await runTool(ctx, conversationId, 'ap_remove_agent_tool', {
+            agentId, actionNames: ['read_note', 'save_note'],
+        }) as { error?: string }
+
+        expect(result.error).toBeUndefined()
+        expect((await agentRow(agentId)).draft.tools).toHaveLength(0)
+    })
+
     it('keeps both tools when the model adds two at once', async () => {
         const ctx = await context()
         const conversationId = await startConversation(ctx)
@@ -239,8 +336,7 @@ describe('the chat tools that build agents, against the real service', () => {
             runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: TOOL_PIECE, actionNames: ['read_note'] }),
         ])
 
-        const tools = (await agentRow(agentId)).draft.tools as Array<{ toolName: string }>
-        expect(tools.map((tool) => tool.toolName).sort()).toEqual(['read_note', 'save_note'])
+        expect((await actionNamesOn(agentId)).sort()).toEqual(['read_note', 'save_note'])
     })
 
     it('takes a tool away again, and says so when there is none to take', async () => {
