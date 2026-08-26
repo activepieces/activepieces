@@ -94,6 +94,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('projectId', projectId),
                 ...spreadIfDefined('promptOverride', promptOverride),
                 ...spreadIfDefined('dryRun', dryRun),
+                ...spreadIfDefined('discoveryOnly', discoveryOnly),
             })
 
             const provider = config.provider as AIProviderName

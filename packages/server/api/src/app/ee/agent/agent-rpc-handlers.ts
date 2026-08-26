@@ -73,7 +73,7 @@ async function updateConversationForRun({ conversationId, runId, updates }: {
 
 export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, source: requestedSource, projectId: requestedProjectId } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId } = input
 
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
@@ -127,8 +127,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const userContent = await buildUserContentWithFiles({ text: userMessage, files, attachmentNote: buildAttachmentNote(attachmentRefs) })
 
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
-        const emailEnabled = !dryRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = !dryRun && carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const actingRun = !dryRun && !discoveryOnly
+        const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
+        const agentsAvailable = actingRun && carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
@@ -195,7 +196,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: fetchAvailable && !isNil(aiTools.imageGeneration),
+            imageAvailable: actingRun && !isNil(aiTools.imageGeneration),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
