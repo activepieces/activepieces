@@ -1,6 +1,5 @@
 import {
   McpOAuthClientKey,
-  McpOAuthGrantFacets,
   PLATFORM_WIDE_GRANT_FILTER_VALUE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -18,9 +17,11 @@ import {
   EmptyTitle,
 } from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
+import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
+import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { mcpClientBranding } from '../mcp-client-branding';
+import { mcpClientDisplay } from '../mcp-client-display';
 import { mcpGrantsMutations, mcpGrantsQueries } from '../mcp-grants-hooks';
 import { useMcpNav } from '../mcp-nav';
 import { PageContent } from '../page-content';
@@ -28,15 +29,18 @@ import { PageContent } from '../page-content';
 import { buildConnectionsColumns } from './connections-columns';
 
 const DOCS_URL = 'https://www.activepieces.com/docs/mcp/overview';
+const DEFAULT_PAGE_SIZE = 10;
 
 export function ConnectionsTab() {
   const nav = useMcpNav();
   const [searchParams] = useSearchParams();
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { data: projects = [] } = projectCollectionUtils.useAll();
+  const { data: users } = platformUserHooks.useUsers();
   const request = useMemo(
     () => ({
       cursor: searchParams.get('cursor') ?? undefined,
-      limit: Number(searchParams.get('limit')) || undefined,
+      limit: Number(searchParams.get('limit')) || DEFAULT_PAGE_SIZE,
       projectIds: undefinedIfEmpty(searchParams.getAll('project')),
       memberIds: undefinedIfEmpty(searchParams.getAll('member')),
       clientKeys: undefinedIfEmpty(
@@ -53,7 +57,6 @@ export function ConnectionsTab() {
   const { data, isLoading } = mcpGrantsQueries.useGrants(request);
   const revoke = mcpGrantsMutations.useRevoke();
 
-  const facets = data?.facets;
   const columns = buildConnectionsColumns({
     currentUserId: currentUser?.id,
     onRevoke: async (ids) => {
@@ -61,7 +64,7 @@ export function ConnectionsTab() {
     },
   });
 
-  if (!isLoading && !hasActiveFilters && (facets?.total ?? 0) === 0) {
+  if (!isLoading && !hasActiveFilters && (data?.data.length ?? 0) === 0) {
     return (
       <PageContent className="px-6 py-8 lg:px-12">
         <Empty className="border border-dashed py-20">
@@ -75,7 +78,7 @@ export function ConnectionsTab() {
                 'When a client signs in with the link, it appears here with what it can reach.',
               )}
             </EmptyDescription>
-            <Button className="mt-4" onClick={nav.showLanding}>
+            <Button className="mt-4" onClick={nav.showConnect}>
               {t('Set it up in your client')} →
             </Button>
           </EmptyHeader>
@@ -90,13 +93,11 @@ export function ConnectionsTab() {
         columns={columns}
         page={data}
         isLoading={isLoading}
-        filters={buildFilters(facets)}
+        filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
         bordered={true}
         toolbarButtons={[
-          <span key="count" className="text-sm text-muted-foreground">
-            {t('connectionsCount', { count: facets?.total ?? 0 })}
-            {' · '}
+          <span key="expiry" className="text-sm text-muted-foreground">
             {t('each expires 30 days after sign-in')}
           </span>,
         ]}
@@ -156,39 +157,43 @@ function isClientKey(value: string): value is McpOAuthClientKey {
   return McpOAuthClientKey.safeParse(value).success;
 }
 
-function buildFilters(
-  facets: McpOAuthGrantFacets | undefined,
-): DataTableFilters<string>[] {
-  if (!facets) {
-    return [];
-  }
-
+function buildFilters({
+  projects,
+  members,
+}: {
+  projects: { id: string; displayName: string }[];
+  members: { id: string; email: string; firstName: string; lastName: string }[];
+}): DataTableFilters<string>[] {
   const filters: DataTableFilters<string>[] = [];
 
-  if (facets.byProject.length > 1) {
+  if (projects.length > 1) {
     filters.push({
       type: 'select',
       title: t('Project'),
       accessorKey: 'project',
       icon: FolderOpen,
-      options: facets.byProject.map(({ projectId, projectName, count }) => ({
-        label: projectName ?? t('All projects'),
-        value: projectId ?? PLATFORM_WIDE_GRANT_FILTER_VALUE,
-        count,
-      })),
+      options: [
+        ...projects.map((project) => ({
+          label: project.displayName,
+          value: project.id,
+        })),
+        {
+          label: t('All projects'),
+          value: PLATFORM_WIDE_GRANT_FILTER_VALUE,
+        },
+      ],
     });
   }
 
-  if (facets.byMember.length > 1) {
+  if (members.length > 1) {
     filters.push({
       type: 'select',
       title: t('Member'),
       accessorKey: 'member',
       icon: User,
-      options: facets.byMember.map(({ member, count }) => ({
+      options: members.map((member) => ({
         label: `${member.firstName} ${member.lastName}`.trim() || member.email,
         value: member.id,
-        count,
       })),
     });
   }
@@ -198,11 +203,10 @@ function buildFilters(
     title: t('Client'),
     accessorKey: 'client',
     icon: CheckIcon,
-    options: facets.byClient.map(({ clientKey, clientName, count }) => ({
-      label: mcpClientBranding.label(clientKey, clientName),
+    options: McpOAuthClientKey.options.map((clientKey) => ({
+      label: mcpClientDisplay.label(clientKey, null),
       value: clientKey,
-      icon: mcpClientBranding.icon(clientKey),
-      count,
+      icon: mcpClientDisplay.icon(clientKey),
     })),
   });
 

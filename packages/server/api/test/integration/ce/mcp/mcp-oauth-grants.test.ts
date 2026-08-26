@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { DefaultProjectRole, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { mcpOAuthClientIdentity } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client-identity'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
@@ -16,13 +17,14 @@ const CLAUDE_REDIRECT = 'https://claude.ai/api/mcp/auth_callback'
 const CURSOR_REDIRECT = 'cursor://anysphere.cursor-retrieval/oauth/callback'
 const CODEX_REDIRECT = 'http://localhost:1455/callback/abc'
 
-async function grantAccess({ userId, projectId, platformId, redirectUris, expiresAt = IN_30_DAYS(), revoked = false }: {
+async function grantAccess({ userId, projectId, platformId, redirectUris, expiresAt = IN_30_DAYS(), revoked = false, unidentified = false }: {
     userId: string
     projectId: string | null
     platformId?: string
     redirectUris: string[]
     expiresAt?: string
     revoked?: boolean
+    unidentified?: boolean
 }): Promise<string> {
     const clientId = apId()
     await db.save('mcp_oauth_client', {
@@ -43,6 +45,7 @@ async function grantAccess({ userId, projectId, platformId, redirectUris, expire
         id,
         refreshToken: apId() + apId(),
         clientId,
+        clientKey: unidentified ? null : mcpOAuthClientIdentity.clientKeyFrom({ redirectUris }),
         userId,
         projectId,
         platformId: platformId ?? ctx.platform.id,
@@ -78,9 +81,8 @@ describe('MCP OAuth connected clients', () => {
             const response = await ctx.get('/v1/mcp-oauth/grants')
 
             expect(response.statusCode).toBe(200)
-            const { data, facets } = response.json()
+            const { data } = response.json()
             expect(data.map((row: { id: string }) => row.id).sort()).toEqual([mine, theirs].sort())
-            expect(facets.total).toBe(2)
         })
 
         it('lists every members grant for a platform operator', async () => {
@@ -99,11 +101,10 @@ describe('MCP OAuth connected clients', () => {
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
             const theirs = await grantAccess({ userId: member.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
 
-            const { data, facets } = (await member.get('/v1/mcp-oauth/grants')).json()
+            const { data } = (await member.get('/v1/mcp-oauth/grants')).json()
 
             expect(data).toHaveLength(1)
             expect(data[0]).toMatchObject({ id: theirs, clientKey: 'cursor' })
-            expect(facets.total).toBe(1)
         })
 
         it('never crosses a platform boundary', async () => {
@@ -119,10 +120,9 @@ describe('MCP OAuth connected clients', () => {
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], expiresAt: YESTERDAY() })
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], revoked: true })
 
-            const { data, facets } = (await ctx.get('/v1/mcp-oauth/grants')).json()
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants')).json()
 
             expect(data).toHaveLength(0)
-            expect(facets.total).toBe(0)
         })
 
         it('renders a platform-wide grant with no project name, and the member who signed in', async () => {
@@ -139,32 +139,15 @@ describe('MCP OAuth connected clients', () => {
         })
     })
 
-    describe('GET /v1/mcp-oauth/grants facets and filters', () => {
-        it('counts the whole scope by client, member and project', async () => {
-            const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
+    describe('GET /v1/mcp-oauth/grants filters', () => {
+        it('filters by client key', async () => {
             await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
-            await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: [CLAUDE_REDIRECT] })
-            await grantAccess({ userId: other.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+            const cursor = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
 
-            const { facets } = (await ctx.get('/v1/mcp-oauth/grants')).json()
-
-            expect(facets.total).toBe(3)
-            expect(sumCounts(facets.byClient)).toBe(3)
-            expect(sumCounts(facets.byMember)).toBe(3)
-            expect(sumCounts(facets.byProject)).toBe(3)
-            expect(facets.byClient.find((bucket: { clientKey: string }) => bucket.clientKey === 'claude').count).toBe(2)
-            expect(facets.byProject.find((bucket: { projectId: string | null }) => bucket.projectId === null).count).toBe(1)
-        })
-
-        it('keeps the facet counts over the whole scope while the rows are filtered', async () => {
-            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] })
-            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
-
-            const { data, facets } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['cursor'] })).json()
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['cursor'] })).json()
 
             expect(data).toHaveLength(1)
-            expect(data[0].clientKey).toBe('cursor')
-            expect(facets.total).toBe(2)
+            expect(data[0].id).toBe(cursor)
         })
 
         it('returns an empty page, not everything, when no client matches the key', async () => {
@@ -173,6 +156,24 @@ describe('MCP OAuth connected clients', () => {
             const { data } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['windsurf'] })).json()
 
             expect(data).toHaveLength(0)
+        })
+
+        it('reads a grant stored before the client key existed as unknown', async () => {
+            const legacy = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], unidentified: true })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants')).json()
+
+            expect(data[0]).toMatchObject({ id: legacy, clientKey: 'unknown', clientName: 'A Registered Name' })
+        })
+
+        it('matches a grant with no stored client key on the unknown key', async () => {
+            const legacy = await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT], unidentified: true })
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+
+            const { data } = (await ctx.get('/v1/mcp-oauth/grants', { clientKeys: ['unknown'] })).json()
+
+            expect(data).toHaveLength(1)
+            expect(data[0].id).toBe(legacy)
         })
 
         it('filters by member', async () => {
@@ -237,7 +238,3 @@ describe('MCP OAuth connected clients', () => {
         })
     })
 })
-
-function sumCounts(buckets: { count: number }[]): number {
-    return buckets.reduce((total, bucket) => total + bucket.count, 0)
-}

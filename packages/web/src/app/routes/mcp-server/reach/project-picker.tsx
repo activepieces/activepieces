@@ -16,7 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 
 type ProjectPickerProps = {
-  projectId: string;
+  projectId: string | null;
   onSelect: (projectId: string) => void;
 };
 

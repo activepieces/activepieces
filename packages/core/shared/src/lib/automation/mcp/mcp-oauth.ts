@@ -2,6 +2,10 @@ import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/cor
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
 
+export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'windsurf', 'unknown'])
+
+export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
+
 export const McpOAuthClient = z.object({
     ...BaseModelSchema,
     clientId: z.string(),
@@ -20,6 +24,7 @@ export const McpOAuthToken = z.object({
     ...BaseModelSchema,
     refreshToken: z.string(),
     clientId: z.string(),
+    clientKey: McpOAuthClientKey.nullable(),
     userId: z.string(),
     projectId: z.string().nullable(),
     platformId: z.string(),
@@ -49,10 +54,6 @@ export const McpOAuthAuthorizationCode = z.object({
 
 export type McpOAuthAuthorizationCode = z.infer<typeof McpOAuthAuthorizationCode>
 
-export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'windsurf', 'unknown'])
-
-export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
-
 export const McpOAuthGrant = z.object({
     id: z.string(),
     clientKey: McpOAuthClientKey,
@@ -66,20 +67,10 @@ export const McpOAuthGrant = z.object({
 
 export type McpOAuthGrant = z.infer<typeof McpOAuthGrant>
 
-export const McpOAuthGrantFacets = z.object({
-    total: z.number(),
-    byMember: z.array(z.object({ member: UserWithMetaInformation, count: z.number() })),
-    byClient: z.array(z.object({ clientKey: McpOAuthClientKey, clientName: z.string().nullable(), count: z.number() })),
-    byProject: z.array(z.object({ projectId: z.string().nullable(), projectName: z.string().nullable(), count: z.number() })),
-})
-
-export type McpOAuthGrantFacets = z.infer<typeof McpOAuthGrantFacets>
-
 export const ListMcpOAuthGrantsResponse = z.object({
     data: z.array(McpOAuthGrant),
     next: z.string().nullable(),
     previous: z.string().nullable(),
-    facets: McpOAuthGrantFacets,
 })
 
 export type ListMcpOAuthGrantsResponse = z.infer<typeof ListMcpOAuthGrantsResponse>

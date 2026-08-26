@@ -8,7 +8,7 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 
 ### Vocabulary
 
-**Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants/me`.
+**Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants`.
 **Client** — one `mcp_oauth_client` registration row. Not a stable identity: Claude Code and Codex re-run DCR per sign-in, so one client-as-a-product yields many rows, and one user re-authenticating yields many grants. _Avoid_: using "client" for the thing being revoked.
 **Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the UI string "Connected clients" is deliberate copy, not the domain term.
 
@@ -35,6 +35,12 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 ### Gotchas
 
 - **`mcp_server.token` is dead — nothing reads it.** It is written by the `getOrCreate` defaults and by both `/rotate` routes (`mcpServerService.rotateToken` / `rotatePlatformToken`), and consulted by **no authenticator**, so "rotating" it rotates a secret that grants nothing. It is still on the public `McpServer` zod schema, so the API keeps shipping a secret-shaped 72-char string that authenticates nothing — do not reach for it as a credential, and do not tell a self-hoster to. The settings panel is consistent with reality already (`mcp-credentials.tsx` renders the URL and *"Authentication is handled via OAuth"*, never a token). Deleting the column, the two routes, and the schema field is a breaking API-response change and has not been done.
+- **`mcp_oauth_token.clientKey` is decided once, at sign-in.** `exchangeCode` derives it from the registration's
+  redirect URIs via `mcpOAuthClientIdentity`, so the grants list can filter and group in SQL instead of loading
+  every `mcp_oauth_client` row on the platform to re-derive keys in memory. Two consequences: sharpening the
+  heuristic later does **not** relabel existing grants (they age out in 30 days, and an active client relabels on
+  its next refresh, which backfills a NULL key), and `NULL` is not a third state — it means "signed in before the
+  column existed" and reads as `unknown` everywhere, including the `?clientKeys=unknown` filter.
 - **Claude Code and Codex re-run Dynamic Client Registration on *every* sign-in**, registering the exact
   ephemeral loopback port they are about to bind (`http://localhost:<port>/callback`,
   `http://127.0.0.1:<port>/callback/<callback_id>`). So the exact-string `validateRedirectUri` works and

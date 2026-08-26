@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { ClientIcon } from '../client-icon';
-import { mcpClientBranding } from '../mcp-client-branding';
+import { mcpClientDisplay } from '../mcp-client-display';
 
 import { grantUtils } from './grant-utils';
 
@@ -35,14 +35,14 @@ export function buildConnectionsColumns({
         />
       ),
       cell: ({ row }) => {
-        const label = mcpClientBranding.label(
+        const label = mcpClientDisplay.label(
           row.original.clientKey,
           row.original.clientName,
         );
         return (
           <div className="flex min-w-0 items-center gap-3">
             <ClientIcon
-              icon={mcpClientBranding.icon(row.original.clientKey)}
+              icon={mcpClientDisplay.icon(row.original.clientKey)}
               className="size-7"
             />
             <div className="min-w-0">
@@ -137,7 +137,7 @@ export function buildConnectionsColumns({
             message={t(
               'Access ends within 15 minutes. The client will ask to sign in again.',
             )}
-            entityName={mcpClientBranding.label(
+            entityName={mcpClientDisplay.label(
               row.original.clientKey,
               row.original.clientName,
             )}

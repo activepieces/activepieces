@@ -14,6 +14,7 @@ import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { ClientIcon } from './client-icon';
@@ -37,9 +38,10 @@ export function ConnectSteps({
   isReachableFromInternet: boolean;
 }) {
   const { view, clientKey } = useMcpNav();
+  const { websiteName } = flagsHooks.useWebsiteBranding();
   const clients = useMemo(
-    () => mcpClientCatalog.clients(serverUrl),
-    [serverUrl],
+    () => mcpClientCatalog.clients(serverUrl, websiteName),
+    [serverUrl, websiteName],
   );
   const selected = clients.find((client) => client.key === clientKey) ?? null;
 

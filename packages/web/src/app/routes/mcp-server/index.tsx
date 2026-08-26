@@ -5,8 +5,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { ConnectSteps } from './connect-steps';
 import { ConnectionsTab } from './connections/connections-tab';
-import { useMcpServerUrl } from './mcp-client-branding';
 import { McpTab, useMcpNav } from './mcp-nav';
+import { useMcpServerUrl } from './mcp-server-url';
 import { PageContent } from './page-content';
 import { ReachTab } from './reach/reach-tab';
 
@@ -21,7 +21,7 @@ export default function McpServerPage() {
       case 'connections':
         return nav.showConnections();
       case 'connect':
-        return nav.showLanding();
+        return nav.showConnect();
     }
   };
 

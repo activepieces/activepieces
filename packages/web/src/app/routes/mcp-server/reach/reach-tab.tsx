@@ -33,7 +33,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   const [showAll, setShowAll] = useState(false);
 
   const { pieces, isLoading } = reachQueries.useReachablePieces(projectId);
-  const { data: mcpServer } = mcpHooks.useMcpServer(projectId);
+  const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
   const rows = reachUtils.buildRows({ pieces: pieces ?? [], searchQuery });
   const isSearching = searchQuery.trim() !== '';
@@ -58,9 +58,10 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
 
       <PieceSetBanner projectId={projectId} />
 
-      {mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
-        <RunActionDisabledAlert projectId={projectId} />
-      )}
+      {projectId !== null &&
+        mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
+          <RunActionDisabledAlert projectId={projectId} />
+        )}
 
       <div className="flex flex-wrap items-center gap-3">
         <ProjectPicker projectId={projectId} onSelect={onSelectProject} />
@@ -139,7 +140,7 @@ function RunActionDisabledAlert({ projectId }: { projectId: string }) {
   );
 }
 
-function PieceSetBanner({ projectId }: { projectId: string }) {
+function PieceSetBanner({ projectId }: { projectId: string | null }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const isPlatformAdmin = useIsPlatformAdmin();
   const { data: projects = [] } = projectCollectionUtils.useAll();
@@ -195,6 +196,6 @@ function PieceSetBanner({ projectId }: { projectId: string }) {
 }
 
 type ReachTabProps = {
-  projectId: string;
+  projectId: string | null;
   onSelectProject: (projectId: string) => void;
 };

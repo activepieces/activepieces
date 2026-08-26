@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthGrantFacets, McpOAuthToken, PLATFORM_WIDE_GRANT_FILTER_VALUE, PlatformRole, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
+import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_GRANT_FILTER_VALUE, PlatformRole, UserStatus, UserWithMetaInformation } from '@activepieces/shared'
 import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -22,6 +22,7 @@ const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 const DEFAULT_GRANT_PAGE_SIZE = 20
 const TOKEN_ALIAS = 'mcp_oauth_token'
+const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
 
 function generateRefreshToken(): string {
     return randomBytes(48).toString('base64url')
@@ -62,6 +63,7 @@ export const mcpOAuthTokenService = {
             id: apId(),
             refreshToken: hashedRefreshToken,
             clientId: params.clientId,
+            clientKey: mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: params.redirectUris }),
             userId: params.userId,
             projectId: params.projectId,
             platformId: params.platformId,
@@ -100,7 +102,10 @@ export const mcpOAuthTokenService = {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
 
-        await repo().update({ id: record.id }, { lastUsedAt: new Date().toISOString() })
+        await repo().update({ id: record.id }, {
+            lastUsedAt: new Date().toISOString(),
+            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: params.redirectUris }) : undefined),
+        })
 
         const accessToken = await issueAccessToken({
             userId: record.userId,
@@ -136,24 +141,6 @@ export const mcpOAuthTokenService = {
     },
 
     async listGrants({ platformId, userId, projectIds, memberIds, clientKeys, cursor, limit }: ListGrantsParams): Promise<ListMcpOAuthGrantsResponse> {
-        const scope = { platformId, userId }
-        const groups = await countGrantsByGroup(scope)
-        const [clients, members, projectNames] = await Promise.all([
-            findClientsById(groups.map((group) => group.clientId)),
-            findMembers(groups.map((group) => group.userId)),
-            findProjectNames(groups.map((group) => group.projectId)),
-        ])
-        const clientKeyOf = (clientId: string): McpOAuthClientKey =>
-            mcpOAuthClientIdentity.clientKeyFrom({ redirectUris: clients.get(clientId)?.redirectUris ?? [] })
-        const facets = buildFacets({ groups, clients, members, projectNames, clientKeyOf })
-
-        const clientIds = isNil(clientKeys)
-            ? undefined
-            : unique(groups.map((group) => group.clientId).filter((clientId) => clientKeys.includes(clientKeyOf(clientId))))
-        if (!isNil(clientIds) && clientIds.length === 0) {
-            return { ...paginationHelper.createPage<McpOAuthGrant>([], null), facets }
-        }
-
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: McpOAuthTokenEntity,
@@ -164,9 +151,9 @@ export const mcpOAuthTokenService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = applyScope(repo().createQueryBuilder(TOKEN_ALIAS), scope)
-        if (!isNil(clientIds)) {
-            queryBuilder.andWhere(`${TOKEN_ALIAS}."clientId" IN (:...clientIds)`, { clientIds })
+        const queryBuilder = applyScope(repo().createQueryBuilder(TOKEN_ALIAS), { platformId, userId })
+        if (!isNil(clientKeys)) {
+            queryBuilder.andWhere(`COALESCE(${TOKEN_ALIAS}."clientKey", '${UNKNOWN_CLIENT_KEY}') IN (:...clientKeys)`, { clientKeys })
         }
         if (!isNil(memberIds)) {
             queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
@@ -175,10 +162,16 @@ export const mcpOAuthTokenService = {
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
+        const [clientNames, members, projectNames] = await Promise.all([
+            findClientNames(data.filter((token) => isNil(token.clientKey) || token.clientKey === UNKNOWN_CLIENT_KEY).map((token) => token.clientId)),
+            findMembers(data.map((token) => token.userId)),
+            findProjectNames(data.map((token) => token.projectId)),
+        ])
+
         const rows = data.map((token) => ({
             id: token.id,
-            clientKey: clientKeyOf(token.clientId),
-            clientName: clients.get(token.clientId)?.clientName ?? null,
+            clientKey: token.clientKey ?? UNKNOWN_CLIENT_KEY,
+            clientName: clientNames.get(token.clientId) ?? null,
             projectId: token.projectId,
             projectName: isNil(token.projectId) ? null : projectNames.get(token.projectId) ?? null,
             member: members.get(token.userId) ?? unknownMember(token.userId),
@@ -186,7 +179,7 @@ export const mcpOAuthTokenService = {
             lastUsedAt: token.lastUsedAt,
         }))
 
-        return { ...paginationHelper.createPage<McpOAuthGrant>(rows, nextCursor), facets }
+        return paginationHelper.createPage<McpOAuthGrant>(rows, nextCursor)
     },
 
     async revokeGrants({ ids, userId, platformId }: RevokeGrantsParams): Promise<void> {
@@ -235,55 +228,13 @@ function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBu
     }))
 }
 
-async function countGrantsByGroup(scope: GrantScope): Promise<GrantGroupCount[]> {
-    const rows = await applyScope(repo().createQueryBuilder(TOKEN_ALIAS), scope)
-        .select(`${TOKEN_ALIAS}."clientId"`, 'clientId')
-        .addSelect(`${TOKEN_ALIAS}."userId"`, 'userId')
-        .addSelect(`${TOKEN_ALIAS}."projectId"`, 'projectId')
-        .addSelect('COUNT(*)', 'count')
-        .groupBy(`${TOKEN_ALIAS}."clientId"`)
-        .addGroupBy(`${TOKEN_ALIAS}."userId"`)
-        .addGroupBy(`${TOKEN_ALIAS}."projectId"`)
-        .getRawMany<{ clientId: string, userId: string, projectId: string | null, count: string }>()
-    return rows.map((row) => ({ ...row, count: Number(row.count) }))
-}
-
-function buildFacets({ groups, clients, members, projectNames, clientKeyOf }: BuildFacetsParams): McpOAuthGrantFacets {
-    const byClient = new Map<McpOAuthClientKey, { clientName: string | null, count: number }>()
-    const byMember = new Map<string, number>()
-    const byProject = new Map<string, number>()
-
-    for (const group of groups) {
-        const clientKey = clientKeyOf(group.clientId)
-        const client = byClient.get(clientKey)
-        byClient.set(clientKey, {
-            clientName: client?.clientName ?? clients.get(group.clientId)?.clientName ?? null,
-            count: (client?.count ?? 0) + group.count,
-        })
-        byMember.set(group.userId, (byMember.get(group.userId) ?? 0) + group.count)
-        const projectKey = group.projectId ?? PLATFORM_WIDE_GRANT_FILTER_VALUE
-        byProject.set(projectKey, (byProject.get(projectKey) ?? 0) + group.count)
-    }
-
-    return {
-        total: groups.reduce((total, group) => total + group.count, 0),
-        byClient: [...byClient].map(([clientKey, { clientName, count }]) => ({ clientKey, clientName, count })),
-        byMember: [...byMember].map(([userId, count]) => ({ member: members.get(userId) ?? unknownMember(userId), count })),
-        byProject: [...byProject].map(([projectKey, count]) => ({
-            projectId: projectKey === PLATFORM_WIDE_GRANT_FILTER_VALUE ? null : projectKey,
-            projectName: projectNames.get(projectKey) ?? null,
-            count,
-        })),
-    }
-}
-
-async function findClientsById(clientIds: string[]): Promise<Map<string, { redirectUris: string[], clientName: string | null }>> {
+async function findClientNames(clientIds: string[]): Promise<Map<string, string | null>> {
     const distinct = unique(clientIds)
     if (distinct.length === 0) {
         return new Map()
     }
     const clients = await clientRepo().findBy({ clientId: In(distinct) })
-    return new Map(clients.map((client) => [client.clientId, { redirectUris: client.redirectUris, clientName: client.clientName }]))
+    return new Map(clients.map((client) => [client.clientId, client.clientName]))
 }
 
 async function findProjectNames(projectIds: (string | null)[]): Promise<Map<string, string>> {
@@ -358,6 +309,7 @@ type IssueAccessTokenParams = {
 }
 
 type ExchangeCodeParams = {
+    redirectUris: string[]
     codeVerifier: string
     codeChallenge: string
     codeChallengeMethod: string
@@ -378,21 +330,6 @@ type GrantScope = {
     userId: string | null
 }
 
-type GrantGroupCount = {
-    clientId: string
-    userId: string
-    projectId: string | null
-    count: number
-}
-
-type BuildFacetsParams = {
-    groups: GrantGroupCount[]
-    clients: Map<string, { redirectUris: string[], clientName: string | null }>
-    members: Map<string, UserWithMetaInformation>
-    projectNames: Map<string, string>
-    clientKeyOf: (clientId: string) => McpOAuthClientKey
-}
-
 type ListGrantsParams = GrantScope & {
     projectIds?: string[]
     memberIds?: string[]
@@ -406,6 +343,7 @@ type RevokeGrantsParams = GrantScope & {
 }
 
 type RefreshParams = {
+    redirectUris: string[]
     refreshToken: string
     clientId: string
 }

@@ -27,7 +27,6 @@ type DataTableSelectPopoverProps = {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }> | string;
-    count?: number;
   }[];
   facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
@@ -132,9 +131,9 @@ const DataTableSelectPopover = ({
                         <span>{option.label}</span>
                         <span className="hidden">{index}</span>
                       </div>
-                      {(option.count ?? facets?.get(option.value)) && (
+                      {facets?.get(option.value) && (
                         <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
-                          {option.count ?? facets?.get(option.value)}
+                          {facets.get(option.value)}
                         </span>
                       )}
                     </CommandItem>
