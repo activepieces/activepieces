@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
+import { pieceUpgradeService } from '../../../flows/flow-version/piece-upgrade.service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -83,6 +84,10 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId: canary ? CANARY_WORKER_GROUP_ID : null })
         await workerGroupService(req.log).updateCanary({ platformId, canary })
         return res.status(StatusCodes.OK).send()
+    })
+
+    app.post('/flows/upgrade-pieces', UpgradeFlowPiecesRequest, async (req) => {
+        return pieceUpgradeService(req.log).upgradeFlows(req.body)
     })
 
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
@@ -213,6 +218,18 @@ const CreatePieceRequest = {
 }
 
 const SyncAllConversationsRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const UpgradeFlowPiecesRequest = {
+    schema: {
+        body: z.object({
+            flowIds: z.array(z.string()).min(1),
+            projectId: z.string().optional(),
+        }),
+    },
     config: {
         security: securityAccess.public(),
     },

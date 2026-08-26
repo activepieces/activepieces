@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pieceUpgradeRegister } from '../../../../../src/app/flows/flow-version/migrations/piece-upgrade-register'
+import { pieceUpgradeRegister } from '../../../../../src/app/flows/flow-version/piece-upgrade-register'
 
 describe('pieceUpgradeRegister.resolveDecision', () => {
     it('upgrades when the version has no unsafe steps', () => {
