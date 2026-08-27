@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
+import { projectCollectionUtils } from '@/features/projects/stores/project-collection';
 import { api } from '@/lib/api';
 
 export const flowsApi = {
@@ -22,7 +23,10 @@ export const flowsApi = {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
   },
   create(request: CreateFlowRequest) {
-    return api.post<PopulatedFlow>('/v1/flows', request);
+    return api.post<PopulatedFlow>('/v1/flows', request).then((flow) => {
+      projectCollectionUtils.markFlowActivity(flow.projectId);
+      return flow;
+    });
   },
   update(
     flowId: string,
@@ -40,6 +44,10 @@ export const flowsApi = {
           });
         }
         throw error;
+      })
+      .then((flow) => {
+        projectCollectionUtils.markFlowActivity(flow.projectId);
+        return flow;
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {

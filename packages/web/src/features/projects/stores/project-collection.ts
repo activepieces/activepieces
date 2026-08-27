@@ -154,6 +154,22 @@ export const projectCollectionUtils = {
     projectCollection.delete(projectIds);
   },
   refetchProjects: () => projectCollection.utils.refetch(),
+  markFlowActivity: (projectId: string) => {
+    const write = () => {
+      const project = projectCollection.get(projectId);
+      if (isNil(project)) {
+        return;
+      }
+      projectCollection.utils.writeUpdate({
+        ...project,
+        analytics: {
+          ...project.analytics,
+          lastFlowUpdated: new Date().toISOString(),
+        },
+      });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(write));
+  },
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {
