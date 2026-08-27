@@ -235,7 +235,7 @@ async function maybeSliceOutput({ value, engineApi, sensitiveOutputPaths }: Mayb
         type: FileType.FLOW_RUN_LOG_SLICE,
         data: redactedData,
     })
-    return { ref: { fileId: rawUpload.fileId, size, url: redactedUpload.readUrl } }
+    return { ref: { fileId: rawUpload.fileId, size, url: redactedUpload.readUrl, redactedFileId: redactedUpload.fileId } }
 }
 
 async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {

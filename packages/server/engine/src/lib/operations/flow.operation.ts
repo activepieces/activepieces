@@ -143,12 +143,16 @@ async function collectTriggerSensitivePaths({ trigger, payload, devPieces }: Col
     if (trigger.type !== FlowTriggerType.PIECE || isNil(trigger.settings.triggerName)) {
         return undefined
     }
-    const { data: description } = await tryCatch(() => pieceRunner.describe({
+    const { data: description, error } = await tryCatch(() => pieceRunner.describe({
         pieceName: trigger.settings.pieceName,
         pieceVersion: trigger.settings.pieceVersion,
         devPieces,
     }))
-    const pieceTrigger = description?.metadata.triggers[trigger.settings.triggerName]
+    if (!isNil(error)) {
+        console.warn('[collectTriggerSensitivePaths] Failed to describe piece for sensitive-path collection; shipping trigger payload unredacted', error)
+        return undefined
+    }
+    const pieceTrigger = description.metadata.triggers[trigger.settings.triggerName]
     if (isNil(pieceTrigger)) {
         return undefined
     }
@@ -159,9 +163,7 @@ async function buildFailedTriggerContext({ input, baseContext, error, constants 
     const trigger = input.flowVersion.trigger
     const message = error instanceof ExecutionError ? utils.formatExecutionError(error) : utils.formatError(error)
     const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
-    const sensitiveOutputPaths = !isNil(constants)
-        ? await collectTriggerSensitivePaths({ trigger, payload: triggerPayload, devPieces: constants.devPieces })
-        : undefined
+    const sensitiveOutputPaths = await collectTriggerSensitivePaths({ trigger, payload: triggerPayload, devPieces: constants.devPieces })
     const failedTriggerOutput = GenericStepOutput.create({
         type: trigger.type,
         status: StepOutputStatus.FAILED,
@@ -302,7 +304,7 @@ type BuildFailedTriggerContextParams = {
     input: ResolvedExecuteFlowOperation
     baseContext: FlowExecutorContext
     error: Error
-    constants?: EngineConstants
+    constants: EngineConstants
 }
 
 type CollectTriggerSensitivePathsParams = {

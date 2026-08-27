@@ -45,13 +45,16 @@ export const flowRunProgressReporter = {
             if (isNil(step)) {
                 return
             }
+            const redactedStep = isNil(step.sensitiveOutputPaths) || step.sensitiveOutputPaths.length === 0
+                ? step
+                : { ...step, output: applySensitivePaths(step.output, step.sensitiveOutputPaths) }
             await sendUpdateProgress({
                 engineConstants,
                 request: {
                     step: {
                         name: stepNameToUpdate,
                         path: flowExecutorContext.currentPath.path,
-                        output: step,
+                        output: redactedStep,
                     },
                     flowRun: {
                         projectId: engineConstants.projectId,

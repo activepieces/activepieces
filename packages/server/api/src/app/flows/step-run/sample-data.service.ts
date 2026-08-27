@@ -15,7 +15,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
             sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
-            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT && !isNil(params.sensitiveOutputPaths) ? params.sensitiveOutputPaths : existingPaths,
+            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT ? params.sensitiveOutputPaths : existingPaths,
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {

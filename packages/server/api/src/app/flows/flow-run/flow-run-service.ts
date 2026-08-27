@@ -117,6 +117,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
+            redact: false,
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
@@ -483,7 +484,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
-                steps = redactSensitiveStepOutputs(stateFile.executionState.steps)
+                steps = params.redact ?? true ? redactSensitiveStepOutputs(stateFile.executionState.steps) : stateFile.executionState.steps
                 internalError = stateFile.internalError
             }
         }
@@ -807,6 +808,7 @@ type ListParams = {
 type GetOneParams = {
     id: FlowRunId
     projectId: ProjectId | undefined
+    redact?: boolean
 }
 
 type ResolveStepOutputParams = {

@@ -6,8 +6,19 @@ export function collectSensitiveOutputPaths(outputSchema: OutputSchema | undefin
     if (isNil(outputSchema) || isNil(outputSchema.fields) || outputSchema.fields.length === 0) {
         return undefined
     }
+    if (!schemaHasSensitiveFields(outputSchema.fields)) {
+        return undefined
+    }
     const paths = walkFields({ fields: outputSchema.fields, rawValue: rawOutput, prefix: '' })
     return paths.length > 0 ? paths : undefined
+}
+
+function schemaHasSensitiveFields(fields: OutputSchemaField[]): boolean {
+    return fields.some((field) =>
+        field.sensitive ||
+        (!isNil(field.children) && schemaHasSensitiveFields(field.children)) ||
+        (!isNil(field.listItems) && schemaHasSensitiveFields(field.listItems)),
+    )
 }
 
 function walkFields({ fields, rawValue, prefix }: WalkParams): string[] {
@@ -18,6 +29,9 @@ function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawV
     const encodedKey = escapeSensitivePathSegment(field.key)
     const currentPath = prefix === '' ? encodedKey : `${prefix}.${encodedKey}`
     if (field.sensitive) {
+        if (isNil(readAt(rawValue, field.key))) {
+            console.warn(`[collectSensitiveOutputPaths] "${currentPath}" is declared sensitive in the output schema but is missing from the actual output; redaction for this path will be a no-op`)
+        }
         return [currentPath]
     }
     const nested = readAt(rawValue, field.key)
@@ -35,9 +49,11 @@ function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawV
 }
 
 function readAt(value: unknown, key: string): unknown {
-    if (isNil(value) || typeof value !== 'object') return undefined
-    const record = value as Record<string, unknown>
-    return Object.hasOwn(record, key) ? record[key] : undefined
+    return isRecord(value) && Object.hasOwn(value, key) ? value[key] : undefined
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return !isNil(value) && typeof value === 'object'
 }
 
 type WalkParams = {

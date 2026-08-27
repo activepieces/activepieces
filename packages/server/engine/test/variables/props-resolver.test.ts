@@ -1,6 +1,6 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, SENSITIVE_VALUE_REDACTED, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -875,7 +875,7 @@ describe('Props resolver', () => {
             executionState: state,
         })
         expect(resolvedInput).toEqual('Bearer sk-real for my-secret')
-        expect(censoredInput).toEqual('Bearer **REDACTED** for my-secret')
+        expect(censoredInput).toEqual(`Bearer ${SENSITIVE_VALUE_REDACTED} for my-secret`)
     })
 
     test('cross-step: sibling step inside the same loop iteration produces a sensitive output — a later sibling gets **REDACTED** in censoredInput', async () => {
@@ -907,7 +907,7 @@ describe('Props resolver', () => {
             executionState: state,
         })
         expect(resolvedInput).toEqual('Bearer sk-loop-secret')
-        expect(censoredInput).toEqual('Bearer **REDACTED**')
+        expect(censoredInput).toEqual(`Bearer ${SENSITIVE_VALUE_REDACTED}`)
     })
 
 })

@@ -6,16 +6,20 @@ export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): R
 }
 
 function redactStep(step: StepOutput): StepOutput {
-    const { sensitiveOutputPaths, ...rest } = step
-    const output = applySensitivePaths(rest.output, sensitiveOutputPaths)
-    if (step.type !== FlowActionType.LOOP_ON_ITEMS || !isLoopStepResult(output)) {
-        return { ...rest, output } as StepOutput
+    if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+        const output = applySensitivePaths(step.output, step.sensitiveOutputPaths)
+        if (!isLoopStepResult(output)) {
+            return step
+        }
+        return {
+            ...step,
+            output: {
+                ...output,
+                iterations: output.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
+            },
+        }
     }
-    const withRedactedIterations: LoopStepResult = {
-        ...output,
-        iterations: output.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
-    }
-    return { ...rest, output: withRedactedIterations } as StepOutput
+    return { ...step, output: applySensitivePaths(step.output, step.sensitiveOutputPaths) }
 }
 
 function isLoopStepResult(value: unknown): value is LoopStepResult {

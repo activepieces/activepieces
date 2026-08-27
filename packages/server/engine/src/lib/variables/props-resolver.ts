@@ -43,13 +43,13 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
             }
             const getStepView = createMemoizedStepViewGetter(executionState)
             const censoredStepView = createMemoizedStepViewGetter(executionState, true)
-            const scriptSession = scriptEvaluator.initSession()
+            const rawScriptSession = scriptEvaluator.initSession()
+            const censoredScriptSession = scriptEvaluator.initSession()
             try {
                 const resolveOptions = {
                     engineToken,
                     projectId,
                     apiUrl,
-                    scriptSession,
                     stepNames,
                     pieceName,
                 }
@@ -58,6 +58,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     (token) => resolveInputAsync({
                         ...resolveOptions,
                         getStepView,
+                        scriptSession: rawScriptSession,
                         input: token,
                         censoredInput: false,
                         contextVersion,
@@ -67,6 +68,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     (token) => resolveInputAsync({
                         ...resolveOptions,
                         getStepView: censoredStepView,
+                        scriptSession: censoredScriptSession,
                         input: token,
                         censoredInput: true,
                         contextVersion,
@@ -77,7 +79,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                await scriptSession.dispose()
+                await Promise.all([rawScriptSession.dispose(), censoredScriptSession.dispose()])
             }
         },
     }

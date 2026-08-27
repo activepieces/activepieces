@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, applySensitivePaths, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StepRunResponse, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { fileCompressor } from '../../file/file-compressor'
@@ -56,7 +56,7 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         await runsMetadataQueue(log).add(logData)
 
         if (request.stepResponse && request.streamStepProgress === StreamStepProgress.WEBSOCKET) {
-            const stepData = { ...request.stepResponse, projectId }
+            const stepData = { ...redactStepRunResponse(request.stepResponse), projectId }
             if (!isTerminal) {
                 websocketService.to(projectId).emit(WebsocketClientEvent.TEST_STEP_PROGRESS, stepData)
             }
@@ -105,6 +105,13 @@ async function ensureLogsFileExists({ log, projectId, logsFileId, internalError 
     if (error) {
         log.error({ error, logsFileId, project: { id: projectId } }, '[uploadRunLog] Failed to ensure logs file exists')
     }
+}
+
+function redactStepRunResponse(stepResponse: StepRunResponse): StepRunResponse {
+    if (isNil(stepResponse.sensitiveOutputPaths) || stepResponse.sensitiveOutputPaths.length === 0) {
+        return stepResponse
+    }
+    return { ...stepResponse, output: applySensitivePaths(stepResponse.output, stepResponse.sensitiveOutputPaths) }
 }
 
 type UpdateRunProgressParams = {
