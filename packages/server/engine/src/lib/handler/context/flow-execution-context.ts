@@ -214,27 +214,21 @@ async function maybeSliceOutput({ value, engineApi, sensitiveOutputPaths }: Mayb
     if (size <= SLICE_THRESHOLD_BYTES) {
         return undefined
     }
-    const rawData = new TextEncoder().encode(serialized)
-    const rawUpload = await engineFileApi.upload({
+    const uploadSlice = async (payload: string): Promise<{ fileId: string, readUrl: string }> => engineFileApi.upload({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,
         fileId: apId(),
         type: FileType.FLOW_RUN_LOG_SLICE,
-        data: rawData,
+        data: new TextEncoder().encode(payload),
     })
-    const hasSensitive = !isNil(sensitiveOutputPaths) && sensitiveOutputPaths.length > 0
-    if (!hasSensitive) {
+    if (isNil(sensitiveOutputPaths) || sensitiveOutputPaths.length === 0) {
+        const rawUpload = await uploadSlice(serialized)
         return { ref: { fileId: rawUpload.fileId, size, url: rawUpload.readUrl } }
     }
-    const redactedSerialized = JSON.stringify(applySensitivePaths(value, sensitiveOutputPaths)) ?? ''
-    const redactedData = new TextEncoder().encode(redactedSerialized)
-    const redactedUpload = await engineFileApi.upload({
-        apiUrl: engineApi.internalApiUrl,
-        engineToken: engineApi.engineToken,
-        fileId: apId(),
-        type: FileType.FLOW_RUN_LOG_SLICE,
-        data: redactedData,
-    })
+    const [rawUpload, redactedUpload] = await Promise.all([
+        uploadSlice(serialized),
+        uploadSlice(JSON.stringify(applySensitivePaths(value, sensitiveOutputPaths)) ?? ''),
+    ])
     return { ref: { fileId: rawUpload.fileId, size, url: redactedUpload.readUrl } }
 }
 

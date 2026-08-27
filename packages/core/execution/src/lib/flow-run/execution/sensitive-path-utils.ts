@@ -1,7 +1,9 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, isObject } from '@activepieces/core-utils'
 import { SENSITIVE_VALUE_REDACTED, SENSITIVE_WHOLE_OUTPUT_PATH } from '../../engine/engine-constants'
 
-export { escapeSensitivePathSegment } from '@activepieces/core-utils'
+export function escapeSensitivePathSegment(segment: string): string {
+    return segment.replace(/[\\.]/g, (match) => `\\${match}`)
+}
 
 export function applySensitivePaths(value: unknown, paths: string[] | undefined): unknown {
     if (isNil(paths) || paths.length === 0) {
@@ -13,7 +15,7 @@ export function applySensitivePaths(value: unknown, paths: string[] | undefined)
     return paths.reduce<unknown>((acc, path) => redactAtPath(acc, splitSensitivePath(path)), value)
 }
 
-export function splitSensitivePath(path: string): string[] {
+function splitSensitivePath(path: string): string[] {
     const segments: string[] = []
     let current = ''
     let i = 0
@@ -41,7 +43,7 @@ function redactAtPath(value: unknown, segments: string[]): unknown {
     if (segments.length === 0) {
         return SENSITIVE_VALUE_REDACTED
     }
-    if (!isRecord(value) && !Array.isArray(value)) {
+    if (!isObject(value) && !Array.isArray(value)) {
         return value
     }
     const [head, ...tail] = segments
@@ -69,6 +71,3 @@ function redactAtPath(value: unknown, segments: string[]): unknown {
     return { ...value, [head]: next }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return !isNil(value) && typeof value === 'object' && !Array.isArray(value)
-}

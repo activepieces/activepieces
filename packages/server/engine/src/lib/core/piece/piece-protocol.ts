@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 import { isNil, isObject } from '@activepieces/core-utils'
-import { ContextVersion, OutputSchema, PieceMetadata } from '@activepieces/pieces-framework'
+import { ContextVersion, PieceMetadata } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, ExecutionType, PropertySettings, ResumePayload, ScheduleOptions } from '@activepieces/shared'
 import { HookResponse } from '../../utils'
 
@@ -85,7 +85,6 @@ export type PieceRuntime = {
     actionRunMode: boolean
     workerHandlerId?: string
     httpRequestId?: string
-    outputSchema?: OutputSchema
 }
 
 export type ActionContextRequest = {

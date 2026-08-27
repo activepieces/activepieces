@@ -476,7 +476,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const results = await query.getRawMany()
         return results.map((r: { status: FlowRunStatus, count: string }) => ({ status: r.status, count: parseInt(r.count, 10) }))
     },
-    async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
+    async getOnePopulatedOrThrow(params: GetOneParams & { redact?: boolean }): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps: Record<string, StepOutput> = {}
         let internalError: RunInternalError | undefined = undefined
@@ -808,7 +808,6 @@ type ListParams = {
 type GetOneParams = {
     id: FlowRunId
     projectId: ProjectId | undefined
-    redact?: boolean
 }
 
 type ResolveStepOutputParams = {

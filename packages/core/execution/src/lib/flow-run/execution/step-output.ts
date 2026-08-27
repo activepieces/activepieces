@@ -104,16 +104,6 @@ export enum StepOutputType {
     SLICE = 'slice',
 }
 
-/**
- * Payload stored in `StepOutput.output` when the host step has `outputType: StepOutputType.SLICE`.
- * Distinguished structurally by the step's `outputType` field, so the ref itself
- * carries no marker.
- *
- * `fileId` and `url` intentionally point at different files: `fileId` is the raw
- * upload (the engine and retry read it during execution, where the real value is
- * required), `url` is the redacted upload (for any consumer that only needs a
- * safe-to-display copy).
- */
 export type LogSliceRef = {
     fileId: string
     size: number

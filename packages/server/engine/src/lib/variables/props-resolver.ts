@@ -219,11 +219,6 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
-type CreateMemoizedStepViewGetterParams = {
-    executionState: FlowExecutorContext
-    censor: boolean
-}
-
 function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<string, string[]> {
     const layers: Array<Record<string, StepOutput>> = [executionState.steps]
     let target: Record<string, StepOutput> = executionState.steps
@@ -357,6 +352,11 @@ type ResolveInputInternalParams = {
     scriptSession: SharedScriptSession
     stepNames: string[]
     pieceName?: string
+}
+
+type CreateMemoizedStepViewGetterParams = {
+    executionState: FlowExecutorContext
+    censor: boolean
 }
 
 type ResolveInputParams = {

@@ -76,7 +76,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             path: ['actions', actionName, useTestMethod ? 'test' : 'run'],
             context: {
                 kind: 'action',
-                runtime: buildRuntime({ constants, pieceName, contextVersion, outputSchema: actionDescription.outputSchema }),
+                runtime: buildRuntime({ constants, pieceName, contextVersion }),
                 actionName,
                 stepName: action.name,
                 resolvedInput,
@@ -109,24 +109,22 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
 
         const stepEndTime = performance.now()
+        const finished = stepOutput.setOutput(output).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
         if (hookResponse.type === 'stopped') {
             if (isNil(hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
-            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
-            return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({
+            return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.SUCCEEDED))).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: hookResponse.response.response,
             })
         }
         if (hookResponse.type === 'paused') {
-            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
-            return (await newExecutionContext.upsertStep(action.name, paused))
+            return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.PAUSED)))
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
-        return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.SUCCEEDED))).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 
@@ -155,7 +153,7 @@ function getResponse(hookResponse: HookResponse): RespondResponse | undefined {
     }
 }
 
-export function buildRuntime({ constants, pieceName, contextVersion, outputSchema }: BuildRuntimeParams): PieceRuntime {
+export function buildRuntime({ constants, pieceName, contextVersion }: BuildRuntimeParams): PieceRuntime {
     return {
         internalApiUrl: constants.internalApiUrl,
         publicApiUrl: constants.publicApiUrl,
@@ -169,7 +167,6 @@ export function buildRuntime({ constants, pieceName, contextVersion, outputSchem
         actionRunMode: constants.actionRunMode,
         workerHandlerId: constants.workerHandlerId ?? undefined,
         httpRequestId: constants.httpRequestId ?? undefined,
-        outputSchema,
     }
 }
 
@@ -177,5 +174,4 @@ type BuildRuntimeParams = {
     constants: EngineConstants
     pieceName: string
     contextVersion?: PieceRuntime['contextVersion']
-    outputSchema?: PieceRuntime['outputSchema']
 }

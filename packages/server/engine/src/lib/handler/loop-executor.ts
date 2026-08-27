@@ -94,7 +94,7 @@ function itemsCarrySensitiveValues(resolvedItems: readonly unknown[], censoredIn
     if (!Array.isArray(censoredItems)) {
         return true
     }
-    return JSON.stringify(resolvedItems) !== JSON.stringify(censoredItems)
+    return resolvedItems.some((item, index) => JSON.stringify(item) !== JSON.stringify(censoredItems[index]))
 }
 
 type LoopOnActionResolvedSettings = {

@@ -191,7 +191,9 @@ async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, consta
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
-            }).setOutput(newPayload).setSensitiveOutputPaths(sensitiveOutputPaths))
+                output: newPayload,
+                sensitiveOutputPaths,
+            }))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
     const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT

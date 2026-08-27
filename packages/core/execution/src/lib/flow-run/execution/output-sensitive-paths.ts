@@ -1,11 +1,12 @@
-import { escapeSensitivePathSegment, isNil } from '@activepieces/core-utils'
+import { isNil } from '@activepieces/core-utils'
 import { SENSITIVE_WHOLE_OUTPUT_PATH } from '../../engine/engine-constants'
+import { escapeSensitivePathSegment } from './sensitive-path-utils'
 
 export function collectSensitiveOutputPaths(outputSchema: SensitiveOutputSchema | undefined, rawOutput: unknown): string[] | undefined {
-    const fields = outputSchema?.fields
-    if (isNil(fields) || fields.length === 0 || !schemaHasSensitiveFields(fields)) {
+    if (!outputSchemaHasSensitiveFields(outputSchema)) {
         return undefined
     }
+    const fields = outputSchema.fields
     const unsupported = findUnsupportedSensitiveShape(fields, rawOutput)
     if (!isNil(unsupported)) {
         console.error(`[collectSensitiveOutputPaths] ${unsupported}; redacting the entire step output as a fail-safe`)
@@ -15,7 +16,7 @@ export function collectSensitiveOutputPaths(outputSchema: SensitiveOutputSchema 
     return paths.length > 0 ? paths : undefined
 }
 
-export function outputSchemaHasSensitiveFields(outputSchema: SensitiveOutputSchema | undefined): boolean {
+export function outputSchemaHasSensitiveFields(outputSchema: SensitiveOutputSchema | undefined): outputSchema is SensitiveOutputSchema {
     const fields = outputSchema?.fields
     return !isNil(fields) && fields.length > 0 && schemaHasSensitiveFields(fields)
 }
@@ -33,12 +34,14 @@ function findUnsupportedSensitiveShape(fields: SensitiveOutputField[], rawOutput
 
 function findValueOverriddenSensitiveField(fields: SensitiveOutputField[]): string | undefined {
     for (const field of fields) {
-        if (!isNil(field.value) && field.value !== field.key && schemaHasSensitiveFields([field])) {
+        const nested = [...field.children ?? [], ...field.listItems ?? []]
+        const overridden = !isNil(field.value) && field.value !== field.key
+        if (overridden && (field.sensitive || schemaHasSensitiveFields(nested))) {
             return field.key
         }
-        const nested = findValueOverriddenSensitiveField([...field.children ?? [], ...field.listItems ?? []])
-        if (!isNil(nested)) {
-            return nested
+        const inner = findValueOverriddenSensitiveField(nested)
+        if (!isNil(inner)) {
+            return inner
         }
     }
     return undefined
@@ -63,22 +66,24 @@ function walkField({ field, rawValue, prefix }: { field: SensitiveOutputField, r
         return [currentPath]
     }
     const nested = readAt(rawValue, field.key)
-    if (field.dynamicKey && field.children && field.children.length > 0) {
-        if (!isRecord(nested)) {
+    const children = field.children ?? []
+    const listItems = field.listItems ?? []
+    if (field.dynamicKey && children.length > 0) {
+        if (!isIndexable(nested)) {
             return []
         }
         return Object.keys(nested).flatMap((mapKey) => walkFields({
-            fields: field.children!,
+            fields: children,
             rawValue: nested[mapKey],
             prefix: `${currentPath}.${escapeSensitivePathSegment(mapKey)}`,
         }))
     }
-    const childPaths = field.children && field.children.length > 0
-        ? walkFields({ fields: field.children, rawValue: nested, prefix: currentPath })
+    const childPaths = children.length > 0
+        ? walkFields({ fields: children, rawValue: nested, prefix: currentPath })
         : []
-    const itemPaths = field.listItems && field.listItems.length > 0 && Array.isArray(nested)
+    const itemPaths = listItems.length > 0 && Array.isArray(nested)
         ? nested.flatMap((item, index) => walkFields({
-            fields: field.listItems!,
+            fields: listItems,
             rawValue: item,
             prefix: `${currentPath}.${index}`,
         }))
@@ -87,10 +92,10 @@ function walkField({ field, rawValue, prefix }: { field: SensitiveOutputField, r
 }
 
 function readAt(value: unknown, key: string): unknown {
-    return isRecord(value) && Object.hasOwn(value, key) ? value[key] : undefined
+    return isIndexable(value) && Object.hasOwn(value, key) ? value[key] : undefined
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+function isIndexable(value: unknown): value is Record<string, unknown> {
     return !isNil(value) && typeof value === 'object'
 }
 
