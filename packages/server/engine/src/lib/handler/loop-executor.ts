@@ -92,7 +92,7 @@ function itemsCarrySensitiveValues(resolvedItems: readonly unknown[], censoredIn
     }
     const censoredItems = censoredInput.items
     if (!Array.isArray(censoredItems)) {
-        return false
+        return true
     }
     return JSON.stringify(resolvedItems) !== JSON.stringify(censoredItems)
 }
