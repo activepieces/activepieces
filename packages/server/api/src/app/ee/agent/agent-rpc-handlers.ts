@@ -39,7 +39,8 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', 'ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
@@ -83,7 +84,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const isFlowStep = requestedSource === AgentRunSource.FLOW_STEP
         // A saved agent answers from its own instructions, so one person's remembered preferences
         // must not change how it behaves for everyone else who talks to it.
-        const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT
+        const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
+        const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
             loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
@@ -91,15 +93,13 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = !carriesChatContext
-            ? [{ mcpServerUrl: null, mcpToken: null }, { instructions: null, memories: [] as string[] }, null, null, null]
-            : await Promise.all([
-                agentMcp.getCredentials({ platformId, userId, log }),
-                agentHelpers.getUserMemory({ platformId, userId }),
-                userService(log).getMetaInformation({ id: userId }),
-                tryCatch(() => platformService(log).getOneOrThrow(platformId)),
-                tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })),
-            ])
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
+            carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
+            carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
+            carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
+            carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
+            carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+        ])
         const runUserEmail = runUser?.email ?? ''
         const userIdentity: UserIdentity | null = isNil(runUser)
             ? null
@@ -144,7 +144,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && carriesChatContext && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && (carriesChatContext || isBuilder) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
@@ -173,8 +173,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const selectedModel = modelName ?? conversation.modelName ?? null
         // The tier resolver finds no tier for a concrete model id and silently returns the default,
         // so a source that names its own model must never be routed through it.
-        const tier = agentHelpers.resolveTier({ tierId: carriesChatContext ? selectedModel : null })
-        const resolvedModelId = !carriesChatContext && !isNil(modelName)
+        const namesItsOwnModel = requestedSource === AgentRunSource.FLOW_STEP || requestedSource === AgentRunSource.AGENT
+        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
+        const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? modelName
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
@@ -551,7 +552,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         }
         const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
             && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
-        if (chatOnlyTool && input.source !== AgentRunSource.CHAT) {
+        const allowedSources = AGENT_SURFACE_TOOLS.includes(input.toolName)
+            ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]
+            : [AgentRunSource.CHAT]
+        if (chatOnlyTool && !allowedSources.includes(input.source)) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

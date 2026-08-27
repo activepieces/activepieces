@@ -94,7 +94,10 @@ describe('worker settings override', () => {
     let port: number
 
     beforeEach(async () => {
-        httpServer = createServer()
+        httpServer = createServer((_req, res) => {
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            res.end('{}')
+        })
         ioServer = new IOServer(httpServer, { transports: ['websocket'], path: '/api/socket.io' })
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {

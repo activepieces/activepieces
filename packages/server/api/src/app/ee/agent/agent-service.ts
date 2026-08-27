@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -22,8 +22,9 @@ export const agentAudit = { describePublished }
 export const agentRedaction = { withoutToolSecrets }
 
 export const agentService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, ownerId, request }: CreateParams): Promise<Agent> {
+    async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
+        const draft = await withDefaultModel({ draft: request.draft, platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -35,7 +36,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             color: request.color,
             visibility,
             sharedWithUserIds: await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log }),
-            draft: sanitizeObjectForPostgresql(request.draft),
+            draft: sanitizeObjectForPostgresql(draft),
             published: null,
         })
     },
@@ -88,7 +89,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
     },
 
-    async update({ id, projectId, userId, request }: UpdateParams): Promise<Agent> {
+    async update({ id, projectId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
         const visibility = request.visibility ?? agent.visibility
@@ -100,7 +101,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
             log,
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
-        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, visibility, sharedWithUserIds })
+        const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
+        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -190,6 +192,22 @@ function visibleToUser({ userId, prefix, isProjectAdmin }: VisibilityParams): Br
 async function isProjectAdministrator({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<boolean> {
     const role = await projectMemberService(log).getRole({ projectId, userId })
     return role?.name === DefaultProjectRole.ADMIN
+}
+
+async function withDefaultModel({ draft, platformId, projectId, log }: {
+    draft: AgentConfig
+    platformId: PlatformId
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    if (!isNil(draft.modelName)) {
+        return draft
+    }
+    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
+    if (isNil(provider)) {
+        return draft
+    }
+    return { ...draft, provider, modelName: agentHelpers.resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }) }
 }
 
 async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {
@@ -293,6 +311,7 @@ function agentNotFound(id: ApId): ActivepiecesError {
 }
 
 type CreateParams = {
+    platformId: PlatformId
     projectId: ProjectId
     ownerId: UserId
     request: CreateAgentRequest
@@ -324,6 +343,7 @@ type GetByPlatformParams = {
 
 type UpdateParams = GetParams & {
     request: UpdateAgentRequest
+    goLive?: boolean
 }
 
 type ResolveProjectsParams = {
