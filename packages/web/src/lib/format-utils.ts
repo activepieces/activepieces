@@ -211,22 +211,40 @@ export const formatUtils = {
     }
     return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
   },
-  urlIsNotLocalhostOrIp(url: string): boolean {
+  urlIsPubliclyReachable(url: string): boolean {
     const { data: parsed } = tryCatchSync(() => new URL(url));
-    if (isNil(parsed)) {
+    if (isNil(parsed) || parsed.protocol !== 'https:') {
       return false;
     }
-    if (
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '::1'
-    ) {
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
       return false;
     }
-    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-    if (ipv4Regex.test(parsed.hostname)) {
-      return false;
+    if (hostname.includes(':')) {
+      return !/^(::1$|f[cd]|fe[89ab])/.test(hostname);
     }
-    return parsed.protocol === 'https:';
+    return !isPrivateIpv4(hostname);
   },
 };
+
+function isPrivateIpv4(hostname: string): boolean {
+  const octets = hostname.split('.').map(Number);
+  const isIpv4 =
+    octets.length === 4 &&
+    octets.every(
+      (octet) => Number.isInteger(octet) && octet >= 0 && octet <= 255,
+    );
+  if (!isIpv4) {
+    return false;
+  }
+  const [first, second] = octets;
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 100 && second >= 64 && second <= 127) ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
