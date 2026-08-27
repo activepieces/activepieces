@@ -297,4 +297,5 @@ export type AgentResult = {
     steps: AgentStepBlock[]
     status: AgentTaskStatus
     structuredOutput?: unknown
+    failure?: string
 }

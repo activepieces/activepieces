@@ -7,7 +7,7 @@ import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { classifyAgentRunError, delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -360,18 +360,17 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             })
         }
         catch (err) {
-            log.error({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId } }, '[executeAgentRun] Agent job failed')
+            const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
+            log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass } }, '[executeAgentRun] Agent job failed')
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-            const isCreditError = isCreditExhaustedError(errorMessage)
-            const errorCode = isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined
+            const isCreditError = errorClass === 'credit'
             // "User not found" is OpenRouter refusing a key, and reads like a missing account.
-            const attributed = isNil(runProvider) || isCreditError || isTransientFailureText(errorMessage)
-                ? errorMessage
-                : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
             const clientMessage = !isCreditError && isTransientFailureText(errorMessage)
                 ? 'The AI provider is temporarily unavailable. Please try again in a moment.'
-                : attributed
-            const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })
+                : isCreditError || isNil(runProvider)
+                    ? errorMessage
+                    : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
+            const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
@@ -382,17 +381,14 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, messages: [], uiMessages: [],
             }).catch(() => {})
             await sendEventWithRetry({
-                event: { type: AgentEventType.ERROR, data: { message: clientMessage, ...spreadIfDefined('code', errorCode) } },
+                event: { type: AgentEventType.ERROR, data: { message: clientMessage, ...spreadIfDefined('code', isCreditError ? ErrorCode.QUOTA_EXCEEDED : undefined) } },
             })
             await sendEventWithRetry({
                 event: { type: AgentEventType.FINISHED, data: { conversationId } },
             })
-            // Running out of AI credits is a user/billing condition, not an engine failure — the error has
-            // already been delivered to the user. Complete the job (OK); re-throwing would mark it
-            // INTERNAL_ERROR and fail+retry it (pointlessly — the user is still out of credits) and page.
-            if (isCreditError) {
+            if (errorClass !== 'internal') {
                 if (isNil(releaseError)) {
-                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.USER_FAILURE }
                 }
                 throw releaseError
             }
@@ -823,12 +819,6 @@ function sanitizeGeneratedTitle(rawTitle: string): string {
         .replace(/^["']+|["']+$/g, '')
         .trim()
         .slice(0, 100)
-}
-
-const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
-
-function isCreditExhaustedError(message: string): boolean {
-    return CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
 }
 
 function waitForAbort(signal: AbortSignal): Promise<void> {

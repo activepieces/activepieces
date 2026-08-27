@@ -78,7 +78,7 @@ const getResponse = async (
   const response = await httpClient.sendRequest<{
     reviews: { createTime: string }[];
   }>({
-    url: ` https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
+    url: `https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
     method: HttpMethod.GET,
     headers: {
       Authorization: `Bearer ${authentication.access_token}`,
