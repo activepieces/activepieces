@@ -142,6 +142,19 @@ describe('flowTriggerSideEffect', () => {
             })
         })
 
+        it('should throw when the worker skipped the enable hook (OK with undefined response)', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue({ ...okEngineResponse(), response: undefined })
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toThrow(ActivepiecesError)
+
+            expect(mockAddJob).not.toHaveBeenCalled()
+        })
+
         it('should keep engine-provided schedule options untouched', async () => {
             const engineSchedule = {
                 type: TriggerSourceScheduleType.CRON_EXPRESSION,
