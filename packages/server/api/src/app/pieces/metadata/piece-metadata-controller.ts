@@ -1,11 +1,13 @@
 import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
@@ -43,6 +45,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         }
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
+        await assertProjectAccess({ principal: req.principal, projectId, log: req.log })
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             includeHidden: query.includeHidden ?? false,
             projectId,
@@ -71,6 +74,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
+            await assertProjectAccess({ principal: req.principal, projectId: req.query.projectId, log: req.log })
             const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
@@ -91,6 +95,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
             const platformId = getPlatformId(req.principal)
+            await assertProjectAccess({ principal: req.principal, projectId: req.query.projectId, log: req.log })
             const piece = await pieceMetadataService(req.log).getOrThrow({
                 platformId,
                 name: decodedName,
@@ -149,6 +154,17 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
         },
     )
 
+}
+
+async function assertProjectAccess({ principal, projectId, log }: AssertProjectAccessParams): Promise<void> {
+    if (isNil(projectId) || isNil(getPlatformId(principal))) {
+        return
+    }
+    await rbacService(log).assertPrinicpalAccessToProject({
+        principal,
+        permission: undefined,
+        projectId,
+    })
 }
 
 function getPlatformId(principal: Principal): string | undefined {
@@ -250,4 +266,10 @@ const DeletePieceRequest = {
             id: z.string(),
         }),
     },
+}
+
+type AssertProjectAccessParams = {
+    principal: Principal
+    projectId: string | undefined
+    log: FastifyBaseLogger
 }
