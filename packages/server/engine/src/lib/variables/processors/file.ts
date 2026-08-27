@@ -52,6 +52,13 @@ function handleBase64File(propertyValue: string): ApFile | null {
 
 async function handleUrlFile(path: string): Promise<ApFile | null> {
     const fileResponse = await fetch(path)
+    // A 4xx/5xx body is the server's error page, not the file. Buffering it
+    // produced an ApFile named after the url and filled with the error text,
+    // which then travelled on as if it were the attachment. The streaming
+    // path already refuses one; this is the same refusal.
+    if (!fileResponse.ok) {
+        return null
+    }
 
     const filename = getFileName(path, fileResponse.headers.get('content-disposition'), fileResponse.headers.get('content-type') ?? undefined) ?? 'unknown'
     const extension = extensionFromFilename(filename)
