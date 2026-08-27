@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
@@ -54,9 +54,7 @@ export function ProjectDashboardLayout({
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
-  if (isNil(currentProjectId) || currentProjectId === '') {
-    return <Navigate to="/sign-in" replace />;
-  }
+  const hasNoProject = isNil(currentProjectId) || currentProjectId === '';
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
@@ -90,21 +88,30 @@ export function ProjectDashboardLayout({
   ];
 
   const hideHeader =
+    hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  const inner = (
+    <GlobalSearchProvider>
+      <ProjectDashboardLayoutInner
+        hideHeader={hideHeader}
+        isEmbedded={isEmbedded}
+        currentProjectId={currentProjectId ?? ''}
+      >
+        {children}
+      </ProjectDashboardLayoutInner>
+      {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+    </GlobalSearchProvider>
+  );
+
+  if (hasNoProject) {
+    return inner;
+  }
+
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <GlobalSearchProvider>
-        <ProjectDashboardLayoutInner
-          hideHeader={hideHeader}
-          isEmbedded={isEmbedded}
-          currentProjectId={currentProjectId}
-        >
-          {children}
-        </ProjectDashboardLayoutInner>
-        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      </GlobalSearchProvider>
+    <ProjectChangedRedirector currentProjectId={currentProjectId!}>
+      {inner}
     </ProjectChangedRedirector>
   );
 }

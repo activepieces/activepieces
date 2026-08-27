@@ -25,15 +25,16 @@ export const useAgentsEnabled = (): boolean => {
   return agentsEnabled === true;
 };
 
-export const useAgentsNavVisible = (): boolean => {
-  const agentsEnabled = useAgentsEnabled();
+export const useAgentsAvailable = (): boolean => {
+  const releaseEnabled = useAgentsEnabled();
   const { platform } = platformHooks.useCurrentPlatform();
+  return releaseEnabled && platform.plan.agentsEnabled;
+};
+
+export const useAgentsNavVisible = (): boolean => {
+  const available = useAgentsAvailable();
   const { checkAccess } = useAuthorization();
-  return (
-    agentsEnabled &&
-    platform.plan.agentsEnabled &&
-    checkAccess(Permission.READ_AGENT)
-  );
+  return available && checkAccess(Permission.READ_AGENT);
 };
 
 export const agentsQueries = {

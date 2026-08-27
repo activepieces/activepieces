@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -21,8 +22,9 @@ export const agentAudit = { describePublished }
 export const agentRedaction = { withoutToolSecrets }
 
 export const agentService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, ownerId, request }: CreateParams): Promise<Agent> {
+    async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
         const visibility = request.visibility ?? AgentVisibility.PROJECT
+        const draft = await withDefaultModel({ draft: request.draft, platformId, projectId, log })
         return agentRepo().save({
             id: apId(),
             projectId,
@@ -34,7 +36,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             color: request.color,
             visibility,
             sharedWithUserIds: await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log }),
-            draft: sanitizeObjectForPostgresql(request.draft),
+            draft: sanitizeObjectForPostgresql(draft),
             published: null,
         })
     },
@@ -143,6 +145,25 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
+    async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
+        return transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const agent = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id AND agent."projectId" = :projectId', { id, projectId })
+                .getOne()
+            if (isNil(agent)) {
+                return null
+            }
+            const tools = edit(agent.draft.tools)
+            if (isNil(tools)) {
+                return null
+            }
+            await repo.save({ ...omit(agent, ['published']), draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            return this.getOneOrThrow({ id, projectId, userId })
+        })
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await agentRepo().delete({ id, projectId })
@@ -170,6 +191,22 @@ function visibleToUser({ userId, prefix, isProjectAdmin }: VisibilityParams): Br
 async function isProjectAdministrator({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<boolean> {
     const role = await projectMemberService(log).getRole({ projectId, userId })
     return role?.name === DefaultProjectRole.ADMIN
+}
+
+async function withDefaultModel({ draft, platformId, projectId, log }: {
+    draft: AgentConfig
+    platformId: PlatformId
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    if (!isNil(draft.modelName)) {
+        return draft
+    }
+    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
+    if (isNil(provider)) {
+        return draft
+    }
+    return { ...draft, provider, modelName: agentHelpers.resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }) }
 }
 
 async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {
@@ -233,6 +270,7 @@ async function resolveReadableProjects({ platformId, userId, projectId, log }: R
 function toSummary(agent: Agent, project?: Project): AgentSummary {
     return {
         ...omit(agent, ['draft', 'published']),
+        isPublished: !isNil(agent.published),
         projectDisplayName: project?.displayName ?? '',
         projectIsPrivate: project?.type === ProjectType.PERSONAL,
         toolCount: agent.draft.tools.length,
@@ -272,6 +310,7 @@ function agentNotFound(id: ApId): ActivepiecesError {
 }
 
 type CreateParams = {
+    platformId: PlatformId
     projectId: ProjectId
     ownerId: UserId
     request: CreateAgentRequest
@@ -283,6 +322,10 @@ type ListParams = {
     projectId?: ProjectId
     cursor?: Cursor
     limit?: number
+}
+
+type EditDraftToolsParams = GetParams & {
+    edit: (tools: AgentConfig['tools']) => AgentConfig['tools'] | null
 }
 
 type GetParams = {
