@@ -124,7 +124,9 @@ activepiecesConfig:
 ```
 
 <Warning>
-Set both. `AP_EDITION=ee` with the default execution mode is rejected at startup and the app will not boot.
+Set both, and set each variable in **one place only**. `activepiecesConfig` writes plain values into the pod, while `activepiecesEnvVariables` pulls the same names from Kubernetes secrets you create yourself and renders *after* it, so a secret that holds the key wins. The chart lists `AP_EDITION` and `AP_EXECUTION_MODE` under `activepieces-config-secrets` by default, so either remove them from there or set them in that secret instead of here.
+
+`AP_EDITION=ee` with the default execution mode is rejected at startup and the app will not boot.
 </Warning>
 
 
@@ -191,7 +193,7 @@ kubectl get all --namespace default
 
 ## Environment Variables
 
-For a complete list of configuration options, see the [Environment Variables](/install/reference/environment-variables) documentation. Most environment variables can be configured through the Helm values file under the `activepiecesConfig` section.
+For a complete list of configuration options, see the [Environment Variables](/install/reference/environment-variables) documentation. Most environment variables can be configured through the Helm values file, either as plain values under `activepiecesConfig` or injected from your own secrets under `activepiecesEnvVariables`.
 
 ## Execution Modes
 
