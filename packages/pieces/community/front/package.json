@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-front",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -11,11 +11,13 @@
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "vitest": "3.2.6"
   },
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   }
 }

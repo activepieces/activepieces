@@ -1,6 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { makeRequest, makeMultipartRequest } from '../common/client';
+import {
+  attachmentsProperty,
+  buildMultipartBody,
+  toApFiles,
+} from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   channelIdDropdown,
@@ -49,11 +54,7 @@ export const createDraftReply = createAction({
       description: 'List of BCC recipient handles.',
       required: false,
     }),
-    attachments: Property.Array({
-      displayName: 'Attachments',
-      description: 'List of attachment URLs.',
-      required: false,
-    }),
+    attachments: attachmentsProperty,
     mode: Property.StaticDropdown({
       displayName: 'Mode',
       description: 'Mode of the draft reply',
@@ -103,12 +104,23 @@ export const createDraftReply = createAction({
     if (to) requestBody['to'] = to;
     if (cc) requestBody['cc'] = cc;
     if (bcc) requestBody['bcc'] = bcc;
-    if (attachments) requestBody['attachments'] = attachments;
     if (mode) requestBody['mode'] = mode;
     if (signature_id) requestBody['signature_id'] = signature_id;
     if (should_add_default_signature !== undefined)
       requestBody['should_add_default_signature'] =
         should_add_default_signature;
+
+    // Front drops attachments from a JSON request without complaining.
+    const files = toApFiles(attachments);
+    if (files.length > 0) {
+      return await makeMultipartRequest(
+        auth,
+        HttpMethod.POST,
+        path,
+        buildMultipartBody(requestBody, attachments)
+      );
+    }
+
     return await makeRequest(auth, HttpMethod.POST, path, requestBody);
   },
 });
