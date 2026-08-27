@@ -304,7 +304,7 @@ function AddFilterPopover({
       <PopoverContent align="start" className="w-72 p-0">
         <Command>
           <CommandInput placeholder={t('Filter by…')} />
-          <CommandList>
+          <CommandList className="overflow-y-auto">
             <CommandEmpty>{t('No filters found')}</CommandEmpty>
             {builderGroups.map((group) => {
               const items = group.props.filter((name) => !!props[name]);

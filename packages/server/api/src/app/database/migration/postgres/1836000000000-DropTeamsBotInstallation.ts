@@ -3,7 +3,7 @@ import { Migration } from '../../migration'
 
 export class DropTeamsBotInstallation1836000000000 implements Migration {
     name = 'DropTeamsBotInstallation1836000000000'
-    breaking = true
+    breaking = false
     release = '0.88.4'
     transaction = true
 

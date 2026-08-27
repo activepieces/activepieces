@@ -1,10 +1,11 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentRunSource, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentApprovalGate } from './agent-approval-gate'
@@ -15,9 +16,13 @@ import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
+import { agentPrompt } from './prompt/agent-prompt'
 import { findConnectionsForPiece } from './tools/agent-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
+
+// Tools configured before 0.87 stored the pin as a template rather than the bare id.
+const CONNECTION_TEMPLATE = /^\{\{connections\['([^']+)'\]\}\}$/
 
 export const agentConversationController: FastifyPluginAsyncZod = async (app) => {
 
@@ -155,9 +160,10 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
         const agentConfig = agent?.published ?? agent?.draft ?? null
+        const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
-        if (!isNil(agent) && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
+        if (!isNil(agent) && !isBuilder && (isNil(agentConfig?.provider) || isNil(agentConfig?.modelName))) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Pick a model for this agent before talking to it' },
@@ -192,11 +198,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: isNil(agent) ? conversation.modelName ?? null : agentConfig?.modelName ?? null,
+                modelName: conversation.source === AgentRunSource.AGENT ? agentConfig?.modelName ?? null : conversation.modelName ?? null,
                 files,
-                ...spreadIfDefined('source', isNil(agent) ? undefined : AgentRunSource.AGENT),
+                ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
-                ...(isNil(agentConfig) ? {} : {
+                ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
+                ...(isNil(agentConfig) || isBuilder ? {} : {
                     tools: agentConfig.tools,
                     structuredOutput: agentConfig.structuredOutput,
                     maxSteps: agentConfig.maxSteps,
@@ -261,19 +268,20 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const conversationId = request.params.id
         const platformId = request.principal.platform.id
         const userId = request.principal.id
-        await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
+        const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
+        const pinned = await pinnedAccounts({ conversation, pieceName, platformId, userId, log: request.log })
         const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
         if (cached.length > 0) {
-            return reply.status(StatusCodes.OK).send(cached)
+            return reply.status(StatusCodes.OK).send(connectionOffer({ connections: cached, pinned }))
         }
         const projects = await agentHelpers.getUserProjects({ platformId, userId, log: request.log })
         const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
-        if ('pickConnection' in result) {
-            await agentApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
-            return reply.status(StatusCodes.OK).send(result.connections)
+        if (!('pickConnection' in result)) {
+            return reply.status(StatusCodes.OK).send(connectionOffer({ connections: [], pinned }))
         }
-        return reply.status(StatusCodes.OK).send([])
+        await agentApprovalGate.storeAvailableConnections({ conversationId, pieceName, connections: result.connections })
+        return reply.status(StatusCodes.OK).send(connectionOffer({ connections: result.connections, pinned }))
     })
 
     app.get('/memory', GetMemoryRoute, async (request) => {
@@ -318,6 +326,51 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
 const CHAT_MESSAGES_PER_WINDOW = 40
 const CHAT_MESSAGE_RATE_WINDOW_SECONDS = 10 * 60
+
+// A saved agent's configured tools carry their pinned auth themselves and never consult the run's
+// selection, so any other account offered here would report a switch that never happens.
+async function pinnedAccounts({ conversation, pieceName, platformId, userId, log }: {
+    conversation: AgentConversation
+    pieceName: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<PinnedAccounts | null> {
+    const { agentId } = conversation
+    if (conversation.source !== AgentRunSource.AGENT || isNil(agentId)) {
+        return null
+    }
+    const agent = await agentService(log).getOneOrThrowByPlatform({ id: agentId, platformId, userId })
+    const normalizedPiece = normalizePiece(pieceName)
+    const config = agent.published ?? agent.draft
+    const externalIds = config.tools.flatMap((tool) => {
+        if (tool.type !== AgentToolType.PIECE || normalizePiece(tool.pieceMetadata.pieceName) !== normalizedPiece) {
+            return []
+        }
+        const auth = tool.pieceMetadata.predefinedInput?.auth
+        return isNil(auth) ? [] : [auth.match(CONNECTION_TEMPLATE)?.[1] ?? auth]
+    })
+    return { externalIds, projectId: agent.projectId }
+}
+
+// externalId is caller-supplied and its index is not unique, so two projects on one platform can
+// carry the same one. The agent's own project has to match or a lookalike row slips through.
+function connectionOffer<T extends { externalId: string, projectId: string }>({ connections, pinned }: {
+    connections: T[]
+    pinned: PinnedAccounts | null
+}): { connections: T[], reconnectOnly: boolean } {
+    if (isNil(pinned) || pinned.externalIds.length === 0) {
+        return { connections, reconnectOnly: false }
+    }
+    return {
+        connections: connections.filter((connection) => connection.projectId === pinned.projectId && pinned.externalIds.includes(connection.externalId)),
+        reconnectOnly: true,
+    }
+}
+
+function normalizePiece(pieceName: string): string {
+    return mcpUtils.normalizePieceName(pieceName) ?? pieceName
+}
 
 // Per-user flood guard: nothing else bounds how fast a user fires messages, and each one enqueues a
 // worker job and spends credits. Complements the credit balance, which bounds spend, not rate.
@@ -532,3 +585,7 @@ const CancelConversationRoute = {
     },
 }
 
+type PinnedAccounts = {
+    externalIds: string[]
+    projectId: string
+}

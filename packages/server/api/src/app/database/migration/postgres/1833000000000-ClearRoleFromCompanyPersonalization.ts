@@ -3,7 +3,7 @@ import { Migration } from '../../migration'
 
 export class ClearRoleFromCompanyPersonalization1833000000000 implements Migration {
     name = 'ClearRoleFromCompanyPersonalization1833000000000'
-    breaking = true
+    breaking = false
     release = '0.88.2'
     transaction = true
 

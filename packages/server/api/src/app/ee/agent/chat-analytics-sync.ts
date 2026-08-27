@@ -144,7 +144,7 @@ async function resolveLookups({ conversations, log }: {
         Promise.all(uniquePlatformIds.map(async (platformId): Promise<[string, string | null]> => [platformId, await resolvePlatformName({ platformId, log })])),
         Promise.all(uniqueScopes.map(async (conversation): Promise<[string, AIProviderName | null]> => [
             chatProviderCacheKey(conversation),
-            await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
+            await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log }),
         ])),
     ])
 
@@ -217,7 +217,7 @@ async function toSyncPayload({ conversation, licenseKey, log, userCache, platfor
 }): Promise<Record<string, unknown>> {
     const userEmail = userCache?.get(conversation.userId) ?? await resolveUserEmail({ userId: conversation.userId, log })
     const platformName = platformCache?.get(conversation.platformId) ?? await resolvePlatformName({ platformId: conversation.platformId, log })
-    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
+    const provider = providerCache?.get(chatProviderCacheKey(conversation)) ?? await resolveProviderName({ platformId: conversation.platformId, projectId: conversation.projectId ?? null, log })
 
     const messages = agentHistory.resolveMessages({ conversation, log })
 
@@ -273,6 +273,11 @@ async function resolveUserEmail({ userId, log }: { userId: string, log: FastifyB
 async function resolvePlatformName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string | null> {
     const result = await tryCatch(() => platformService(log).getOneOrThrow(platformId))
     return result.error ? null : result.data.name
+}
+
+async function resolveProviderName({ platformId, projectId, log }: { platformId: string, projectId: string | null, log: FastifyBaseLogger }): Promise<AIProviderName | null> {
+    const result = await tryCatch(() => agentHelpers.resolveChatProviderName({ platformId, projectId, log }))
+    return result.error ? null : result.data
 }
 
 type ConversationLookups = {

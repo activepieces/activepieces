@@ -15,6 +15,7 @@ import {
     PersonalizationProfile,
     PersonalizationScope,
     PersonalizationUseCase,
+    PlatformRole,
     SavePersonalizationPrefillRequest,
     SavePersonalizationResultRequest,
     SendPersonalizationProgressRequest,
@@ -52,7 +53,10 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
     async upsert({ platformId, userId, website, role: roleInput, personalize }: UpsertParams): Promise<ChatPersonalizationView> {
         const companyRow = await findRow({ platformId, userId: null })
         const trimmedInput = isNil(website) ? null : website.trim()
-        const hasCompanyInput = !isNil(trimmedInput) && trimmedInput.length > 0
+        const submittedCompany = !isNil(trimmedInput) && trimmedInput.length > 0
+        const companyIsSet = !isNil(companyRow) && (!isNil(companyRow.domain) || !isNil(companyRow.companyText))
+        const hasCompanyInput = submittedCompany
+            && (!companyIsSet || await callerMayEditCompany({ platformId, userId, log }))
         const normalizedWebsite = hasCompanyInput ? normalizeWebsite({ input: trimmedInput }) : null
         const freeTextCompany = hasCompanyInput && isNil(normalizedWebsite) ? trimmedInput.slice(0, 255) : null
         const role = isNil(roleInput) ? null : normalizeRoleTitle({ input: roleInput })
@@ -116,15 +120,16 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
 
         const allowed = await guardsAllowResearch({ platformId, log })
         if (!allowed) {
+            const discardStaleResearch = inputsChanged ? { profile: null, useCases: null } : {}
             await writeCompanyRow({
                 platformId,
                 existing: companyRow,
-                patch: { domain, companyText, status: ChatPersonalizationStatus.SKIPPED },
+                patch: { domain, companyText, status: ChatPersonalizationStatus.SKIPPED, ...discardStaleResearch },
             })
             await writeUserRow({
                 platformId,
                 userId,
-                patch: { domain, companyText, role, status: ChatPersonalizationStatus.SKIPPED },
+                patch: { domain, companyText, role, status: ChatPersonalizationStatus.SKIPPED, ...discardStaleResearch },
             })
             return this.getEffectiveView({ platformId, userId })
         }
@@ -388,12 +393,16 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         log.info({ platform: { id: platformId }, user: { id: userId }, hasRole: !isNil(role), confidence }, '[chatPersonalization] Prefill cached')
     },
 
-    async getIdentityEnrichment({ platformId, userId }: { platformId: string, userId: string }): Promise<PersonalizationProfile | null> {
+    async getIdentityEnrichment({ platformId, userId }: { platformId: string, userId: string }): Promise<PersonalizationIdentity | null> {
         const view = await this.getEffectiveView({ platformId, userId })
-        if (view.status !== ChatPersonalizationStatus.READY || isNil(view.profile)) {
+        const company = view.status === ChatPersonalizationStatus.READY && !isNil(view.profile)
+            ? { name: view.profile.companyName, description: view.profile.description, industry: view.profile.industry }
+            : null
+        const role = view.roleInput ?? null
+        if (isNil(company) && isNil(role)) {
             return null
         }
-        return view.profile
+        return { company, role }
     },
 
 })
@@ -580,6 +589,23 @@ async function writeCompanyRow({ platformId, existing, patch }: {
         }
     }
     await personalizationRepo().update({ platformId, userId: IsNull() }, patch)
+}
+
+async function callerMayEditCompany({ platformId, userId, log }: {
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<boolean> {
+    const user = await tryCatch(() => userService(log).getMetaInformation({ id: userId }))
+    if (user.error) {
+        log.warn({ platform: { id: platformId }, user: { id: userId }, error: user.error }, '[chatPersonalization] Could not read the platform role, leaving the company as it is')
+        return false
+    }
+    if (user.data.platformRole === PlatformRole.ADMIN) {
+        return true
+    }
+    log.info({ platform: { id: platformId }, user: { id: userId } }, '[chatPersonalization] Company edit ignored, the platform company is admin-owned')
+    return false
 }
 
 async function writeUserRow({ platformId, userId, patch }: {
@@ -814,4 +840,15 @@ type ValidatedResult = {
     status: ChatPersonalizationStatus
     profile: PersonalizationProfile | null
     useCases: PersonalizationUseCase[] | null
+}
+
+export type PersonalizationIdentity = {
+    company: PersonalizationIdentityCompany | null
+    role: string | null
+}
+
+export type PersonalizationIdentityCompany = {
+    name: string
+    description: string
+    industry: string
 }
