@@ -20,6 +20,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
             ...groups.phase,
             ...groups.buildPlan,
             ...groups.email,
+            ...groups.agentSurface,
             ...groups.mcp,
         }
     }
@@ -28,10 +29,18 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
         ...groups.configuredFlow,
         ...groups.knowledgeBase,
     }
+    if (source === AgentRunSource.AGENT_BUILDER) {
+        return {
+            ...groups.agentSurface,
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required'] }),
+            ...pick({ tools: groups.mcp, names: ['ap_research_pieces', 'ap_list_connections'] }),
+            ...groups.thinking,
+        }
+    }
     if (source === AgentRunSource.AGENT) {
         return {
             ...configured,
-            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase'] }),
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker'] }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,
@@ -57,6 +66,7 @@ export type AgentToolGroups = {
     phase: ToolSet
     buildPlan: ToolSet
     email: ToolSet
+    agentSurface: ToolSet
     mcp: ToolSet
     configuredPiece: ToolSet
     configuredFlow: ToolSet

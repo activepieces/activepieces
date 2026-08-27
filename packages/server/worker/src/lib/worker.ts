@@ -200,11 +200,15 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     })
 
     // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
-        log: logger, 
-        apiClient,
-        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-    })
+    // Opt-in via AP_PREWARM_CACHE_ON_STARTUP: the warm-up resolves and compiles every enabled flow,
+    // so its startup memory/CPU spike grows with flow count and can OOM small workers on large instances.
+    if (system.getBoolean(WorkerSystemProp.PREWARM_CACHE_ON_STARTUP) ?? false) {
+        void runtime.prewarm({
+            log: logger,
+            apiClient,
+            publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+        })
+    }
 
     logger.info({ concurrency }, 'Starting poll loops')
 

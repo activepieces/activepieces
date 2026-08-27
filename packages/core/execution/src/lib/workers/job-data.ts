@@ -301,6 +301,7 @@ export enum AgentRunSource {
     CHAT = 'CHAT',
     FLOW_STEP = 'FLOW_STEP',
     AGENT = 'AGENT',
+    AGENT_BUILDER = 'AGENT_BUILDER',
 }
 
 export const AgentPromptOverride = z.object({

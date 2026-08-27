@@ -17,7 +17,7 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         permission: Permission.WRITE_TABLE,
         description: 'Permanently delete one or more records by their IDs.',
         inputSchema: deleteRecordsInput.shape,
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, recordIds } = deleteRecordsInput.parse(args)
