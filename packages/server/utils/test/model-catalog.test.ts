@@ -33,6 +33,12 @@ async function freshCatalog(): Promise<typeof import('../src/model-catalog').mod
     return modelCatalog
 }
 
+async function lookup(provider: AIProviderName, modelId: string): Promise<unknown> {
+    const modelCatalog = await freshCatalog()
+    const catalog = await modelCatalog.load()
+    return catalog.lookup({ provider, modelId })
+}
+
 describe('modelCatalog.lookup', () => {
     beforeEach(() => {
         get.mockReset()
@@ -45,20 +51,17 @@ describe('modelCatalog.lookup', () => {
     })
 
     it('returns metadata for a native model id', async () => {
-        const modelCatalog = await freshCatalog()
-        await expect(modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' }))
+        await expect(lookup(AIProviderName.OPENAI, 'gpt-5.5'))
             .resolves.toEqual(CATALOG.providers[AIProviderName.OPENAI]['gpt-5.5'])
     })
 
     it('resolves activepieces against the openrouter block', async () => {
-        const modelCatalog = await freshCatalog()
-        await expect(modelCatalog.lookup({ provider: AIProviderName.ACTIVEPIECES, modelId: 'anthropic/claude-sonnet-5' }))
+        await expect(lookup(AIProviderName.ACTIVEPIECES, 'anthropic/claude-sonnet-5'))
             .resolves.toEqual(CATALOG.providers[AIProviderName.OPENROUTER]['anthropic/claude-sonnet-5'])
     })
 
     it.each(['us', 'eu', 'apac', 'global'])('strips the bedrock %s inference-profile prefix', async (region) => {
-        const modelCatalog = await freshCatalog()
-        await expect(modelCatalog.lookup({ provider: AIProviderName.BEDROCK, modelId: `${region}.anthropic.claude-fable-5:0` }))
+        await expect(lookup(AIProviderName.BEDROCK, `${region}.anthropic.claude-fable-5:0`))
             .resolves.toEqual(CATALOG.providers[AIProviderName.BEDROCK]['anthropic.claude-fable-5:0'])
     })
 
@@ -68,44 +71,40 @@ describe('modelCatalog.lookup', () => {
         [AIProviderName.CLOUDFLARE_GATEWAY, 'openai/gpt-4'],
         [AIProviderName.MISTRAL, 'gpt-5.5'],
     ])('returns undefined rather than throwing for %s / %s', async (provider, modelId) => {
-        const modelCatalog = await freshCatalog()
-        await expect(modelCatalog.lookup({ provider, modelId })).resolves.toBeUndefined()
+        await expect(lookup(provider, modelId)).resolves.toBeUndefined()
     })
 
     it('fetches once for concurrent lookups', async () => {
         const modelCatalog = await freshCatalog()
-        await Promise.all(Array.from({ length: 25 }, () =>
-            modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })))
+        await Promise.all(Array.from({ length: 25 }, () => modelCatalog.load()))
         expect(get).toHaveBeenCalledTimes(1)
     })
 
     it('reuses the cached catalog across later lookups', async () => {
         const modelCatalog = await freshCatalog()
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.load()
+        await modelCatalog.load()
         expect(get).toHaveBeenCalledTimes(1)
     })
 
     it('returns undefined and does not throw when the catalog is unreachable', async () => {
         get.mockRejectedValue(new Error('ENOTFOUND cdn.activepieces.com'))
-        const modelCatalog = await freshCatalog()
-        await expect(modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' }))
-            .resolves.toBeUndefined()
+        await expect(lookup(AIProviderName.OPENAI, 'gpt-5.5')).resolves.toBeUndefined()
     })
 
     it('backs off after a failure instead of refetching on every lookup', async () => {
         get.mockRejectedValue(new Error('ENOTFOUND cdn.activepieces.com'))
         const modelCatalog = await freshCatalog()
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.load()
+        await modelCatalog.load()
+        await modelCatalog.load()
         expect(get).toHaveBeenCalledTimes(1)
     })
 
     it('reads AP_MODEL_CATALOG_URL when set', async () => {
         process.env['AP_MODEL_CATALOG_URL'] = 'https://mirror.internal/model-catalog.json'
         const modelCatalog = await freshCatalog()
-        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.load()
         expect(get).toHaveBeenCalledWith('https://mirror.internal/model-catalog.json', expect.anything())
     })
 })

@@ -1,19 +1,24 @@
 import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { AIProviderModelMetadata } from '@activepieces/shared'
+import { z } from 'zod'
 import { apLogger } from './ap-logger'
 import { safeHttp } from './safe-http'
 
 const logger = apLogger.create()
 
 export const modelCatalog = {
-    async lookup({ provider, modelId }: { provider: AIProviderName, modelId: string }): Promise<AIProviderModelMetadata | undefined> {
+    async load(): Promise<ModelCatalogReader> {
         const catalog = await loadCatalog()
-        const source = CATALOG_SOURCE_PROVIDER[provider] ?? provider
-        const models = catalog?.providers[source]
-        if (isNil(models)) {
-            return undefined
+        return {
+            lookup({ provider, modelId }: { provider: AIProviderName, modelId: string }): AIProviderModelMetadata | undefined {
+                const source = CATALOG_SOURCE_PROVIDER[provider] ?? provider
+                const models = catalog?.providers[source]
+                if (isNil(models)) {
+                    return undefined
+                }
+                return models[normalizeModelId({ provider: source, modelId })]
+            },
         }
-        return models[normalizeModelId({ provider: source, modelId })]
     },
 }
 
@@ -52,10 +57,10 @@ function startFetch(): Promise<PublishedCatalog> {
 }
 
 async function fetchCatalog(): Promise<PublishedCatalog> {
-    const response = await safeHttp.retryingAxios.get<PublishedCatalog>(catalogUrl(), {
+    const response = await safeHttp.retryingAxios.get(catalogUrl(), {
         timeout: REQUEST_TIMEOUT_MS,
     })
-    return response.data
+    return PublishedCatalog.parse(response.data)
 }
 
 function catalogUrl(): string {
@@ -84,6 +89,12 @@ const CATALOG_SOURCE_PROVIDER: Partial<Record<AIProviderName, AIProviderName>> =
     [AIProviderName.ACTIVEPIECES]: AIProviderName.OPENROUTER,
 }
 
-type PublishedCatalog = {
-    providers: Partial<Record<AIProviderName, Record<string, AIProviderModelMetadata>>>
+const PublishedCatalog = z.object({
+    providers: z.partialRecord(z.enum(AIProviderName), z.record(z.string(), AIProviderModelMetadata)),
+})
+
+type PublishedCatalog = z.infer<typeof PublishedCatalog>
+
+type ModelCatalogReader = {
+    lookup(params: { provider: AIProviderName, modelId: string }): AIProviderModelMetadata | undefined
 }

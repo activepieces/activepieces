@@ -108,23 +108,10 @@ export const AIProviderConfig = z.union([
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
-export const AIProviderModelMetadata = z.object({
-    contextTokens: z.optional(z.number()),
-    maxOutputTokens: z.optional(z.number()),
-    releaseDate: z.optional(z.string()),
-    inputCostPerMillionTokens: z.optional(z.number()),
-    outputCostPerMillionTokens: z.optional(z.number()),
-    supportsToolCalling: z.optional(z.boolean()),
-    supportsReasoning: z.optional(z.boolean()),
-    supportsVision: z.optional(z.boolean()),
-})
-export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
-
 export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),
     type: z.enum(AIProviderModelType),
-    metadata: z.optional(AIProviderModelMetadata),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 

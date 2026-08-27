@@ -10865,6 +10865,7 @@
         "request-filtering-agent": "3.2.0",
         "systeminformation": "5.31.7",
         "tslib": "2.6.2",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "@types/node": "24.11.0",

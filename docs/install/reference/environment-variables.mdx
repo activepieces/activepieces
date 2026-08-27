@@ -154,6 +154,7 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
 | `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
 | `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+| `AP_MODEL_CATALOG_URL` | Source for AI model metadata (context window, pricing, capabilities), shown beside each model when picking one. Fetched once and cached for 24 hours. An install with no egress to the default CDN simply shows models without that metadata; point this at a self-hosted mirror of the same JSON to restore it. | `https://cdn.activepieces.com/ai/model-catalog.json` |
 
 ---
 
