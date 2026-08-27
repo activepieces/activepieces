@@ -4,6 +4,7 @@ import {
   PersistedAgentPartType,
   PersistedAgentRole,
 } from '@activepieces/shared';
+import { mcpToolNameUtils } from '@activepieces/shared';
 import { describe, expect, it } from 'vitest';
 
 import { AnyToolPart } from '@/features/chat/lib/chat-types';
@@ -200,6 +201,46 @@ function toolPart(
 }
 
 describe('chatUtils — tool pill active/done labels', () => {
+  it('names a configured piece tool by its app and action, not its generated id', () => {
+    const part = toolPart(
+      mcpToolNameUtils.createPieceToolName(
+        '@activepieces/piece-google-calendar',
+        'google_calendar_get_events',
+      ),
+      { instruction: 'this week' },
+    );
+
+    expect(chatUtils.formatToolActionName({ part })).toBe(
+      'Google Calendar Get Events',
+    );
+    expect(chatUtils.formatToolDoneTitle({ part })).toBe(
+      'Google Calendar Get Events',
+    );
+  });
+
+  it('keeps an action that does not repeat its app', () => {
+    const part = toolPart(
+      mcpToolNameUtils.createPieceToolName(
+        '@activepieces/piece-slack',
+        'send_channel_message',
+      ),
+      {},
+    );
+
+    expect(chatUtils.formatToolActionName({ part })).toBe(
+      'Slack Send Channel Message',
+    );
+  });
+
+  it('leaves a name that was never generated alone', () => {
+    expect(
+      chatUtils.formatToolActionName({ part: toolPart('ap_web_search', {}) }),
+    ).toBe('Searching the web');
+    expect(
+      chatUtils.formatToolDoneTitle({ part: toolPart('some_helper', {}) }),
+    ).toBe('Some Helper');
+  });
+
   it('uses the model-authored activeTitle (-ing) and doneTitle (-ed) when provided', () => {
     const part = toolPart('ap_generate_image', {
       activeTitle: 'Designing your Instagram post',

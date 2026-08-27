@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
+import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -12,23 +13,27 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     emailAvailable: boolean
     agentsAvailable: boolean
     userEmail: string
+    userIdentity: UserIdentity | null
     connections: ConnectionInventory | null
     memory: RunMemory
 }): string {
     const isChat = source === AgentRunSource.CHAT
-    return buildCapabilitiesNote({
-        currentDate,
-        searchAvailable,
-        fetchAvailable,
-        scrapeAvailable,
-        imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP,
-        emailAvailable: emailAvailable && isChat,
-        userEmail,
-    })
+    const readsTheWeb = source !== AgentRunSource.AGENT_BUILDER
+    return (isChat && !isNil(userIdentity) ? agentUserIdentity.buildNote(userIdentity) : '')
+        + buildCapabilitiesNote({
+            currentDate,
+            searchAvailable: searchAvailable && readsTheWeb,
+            fetchAvailable: fetchAvailable && readsTheWeb,
+            scrapeAvailable: scrapeAvailable && readsTheWeb,
+            imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
+            emailAvailable: emailAvailable && isChat,
+            userEmail,
+        })
         + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
+        + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
 }
 
 const ONBOARDING_FIRST_MESSAGE_NOTE = [
@@ -128,6 +133,14 @@ function buildMemoryNote({ instructions, memories }: RunMemory): string {
 }
 
 export const agentSurfaceNotes = { buildRunNotes }
+
+const RECONNECT_NOTE = [
+    '\n\n## When one of your tools cannot sign in',
+    'A tool failing with unauthorized, forbidden, invalid credentials or expired token means the account behind it needs reconnecting.',
+    'Say in one line which tool could not sign in, then call `ap_show_connection_picker` with that tool\'s piece and display name, which gives them a card to reconnect it. Show the card instead of explaining the problem, and never instead of saying anything.',
+    'The card only offers reconnecting the account this agent already uses. It does not list other accounts and returns nothing for you to pass anywhere.',
+    'If they reconnect, carry on with what you were asked. If they dismiss it, say what you cannot do without it rather than trying again.',
+].join('\n')
 
 const AGENTS_NOTE = [
     '\n\n## Saved agents',

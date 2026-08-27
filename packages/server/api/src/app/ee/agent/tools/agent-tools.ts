@@ -219,8 +219,9 @@ function nonEmpty(value: unknown): string | undefined {
     return isString(value) && value.trim().length > 0 ? value.trim() : undefined
 }
 
-async function createAgentFromChat({ toolInput, projectId, userId, log }: {
+async function createAgentFromChat({ toolInput, platformId, projectId, userId, log }: {
     toolInput: Record<string, unknown>
+    platformId: string
     projectId: string
     userId: string
     log: FastifyBaseLogger
@@ -231,6 +232,7 @@ async function createAgentFromChat({ toolInput, projectId, userId, log }: {
         return { error: 'An agent needs a name and instructions.' }
     }
     const agent = await agentService(log).create({
+        platformId,
         projectId,
         ownerId: userId,
         request: {
@@ -535,7 +537,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return data.map(({ id, displayName, description, isPublished, toolCount }) => ({ agentId: id, displayName, description, published: isPublished, toolCount }))
             }
             if (toolName === 'ap_create_agent') {
-                return createAgentFromChat({ toolInput, projectId, userId, log })
+                return createAgentFromChat({ toolInput, platformId, projectId, userId, log })
             }
             const agentId = nonEmpty(toolInput.agentId)
             if (isNil(agentId)) {
