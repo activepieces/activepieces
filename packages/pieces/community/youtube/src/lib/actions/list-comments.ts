@@ -49,6 +49,13 @@ export const youtubeListCommentsAction = createAction({
     const accessToken = context.auth.access_token;
     const { videoId, order, maxResults, pageToken } = context.propsValue;
 
+    if (maxResults !== undefined && maxResults !== null) {
+      const maxResultsNumber = Math.trunc(Number(maxResults));
+      if (maxResultsNumber < 1 || maxResultsNumber > 100) {
+        throw new Error('Max Results must be between 1 and 100.');
+      }
+    }
+
     const queryParams: Record<string, string> = {
       part: 'snippet,replies',
       videoId,

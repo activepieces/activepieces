@@ -33,7 +33,7 @@ export const listSubscribersAction = createAction({
 		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Maximum number of subscribers to return (default 25)',
+			description: 'Subscribers to return (1-1000, default 25).',
 			required: false,
 			defaultValue: 25,
 		}),
@@ -41,6 +41,10 @@ export const listSubscribersAction = createAction({
 	async run(context) {
 		const client = new MailerLite({ api_key: context.auth.secret_text });
 		const { status, limit } = context.propsValue;
+		const resolvedLimit = Math.trunc(Number(limit ?? 25));
+		if (resolvedLimit < 1 || resolvedLimit > 1000) {
+			throw new Error('Limit must be between 1 and 1000.');
+		}
 		const isKnownStatus =
 			status === 'active' ||
 			status === 'unsubscribed' ||
@@ -49,8 +53,8 @@ export const listSubscribersAction = createAction({
 			status === 'junk';
 		const response = await client.subscribers.get(
 			isKnownStatus
-				? { limit: limit ?? 25, filter: { status } }
-				: { limit: limit ?? 25 },
+				? { limit: resolvedLimit, filter: { status } }
+				: { limit: resolvedLimit },
 		);
 		return response.data;
 	},

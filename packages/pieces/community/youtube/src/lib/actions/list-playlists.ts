@@ -38,6 +38,13 @@ export const youtubeListPlaylistsAction = createAction({
     const accessToken = context.auth.access_token;
     const { channelId, maxResults, pageToken } = context.propsValue;
 
+    if (maxResults !== undefined && maxResults !== null) {
+      const maxResultsNumber = Math.trunc(Number(maxResults));
+      if (maxResultsNumber < 1 || maxResultsNumber > 50) {
+        throw new Error('Max Results must be between 1 and 50.');
+      }
+    }
+
     const queryParams: Record<string, string> = {
       part: 'snippet,contentDetails,status',
       channelId,
