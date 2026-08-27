@@ -261,6 +261,29 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('platform').count()).toBe(0)
         })
 
+        it('skips the name step for a member whose name we already have', async () => {
+            await userIdentityService(app!.log).create({
+                email: EMAIL,
+                password: 'password-that-verifies',
+                firstName: 'Ahmad',
+                lastName: 'Tash',
+                trackEvents: false,
+                newsLetter: false,
+                provider: UserIdentityProvider.EMAIL,
+                verified: true,
+            })
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+
+            const response = await verifyCode({ email: EMAIL, code: otp!.value })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body?.platformId).not.toBeNull()
+            expect(body?.projectId).not.toBeNull()
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        })
+
         it('names the platform after the company on a work address', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)

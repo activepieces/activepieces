@@ -120,7 +120,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                 projectId: null,
             })
         }
-        return authenticationUtils(log).getOnboardingResponse({ identityId: verifiedIdentity.id })
+        return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
     },
 
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {

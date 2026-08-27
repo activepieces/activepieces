@@ -1,14 +1,14 @@
 import { ProjectRole } from '@activepieces/core-utils'
-import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, Principal, PrincipalType, ProjectType, UserStatus } from '@activepieces/shared'
+import { safeHttp } from '@activepieces/server-utils'
+import { ApEdition, DefaultProjectRole, InvitationStatus, InvitationType, OtpType, PlatformRole, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { Mock } from 'vitest'
-import { safeHttp } from '@activepieces/server-utils'
+import { signupNames } from '../../../../src/app/authentication/lib/signup-names'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
-import { jwtUtils } from '../../../../src/app/helper/jwt-utils'
 import { system } from '../../../../src/app/helper/system/system'
 import { decodeToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
@@ -502,7 +502,7 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
 
-        it('Onboarding response if user status is INACTIVE', async () => {
+        it('Refuses a deactivated member instead of starting them over', async () => {
             // arrange
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
@@ -556,13 +556,8 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             // assert
-            // In non-cloud editions, the sign-in fails with FORBIDDEN because the platform
-            // is not found via Host header resolution. In cloud edition, it returns onboarding response for the user so he can create new platform.
-            expect([StatusCodes.OK]).toContain(response?.statusCode)
-            expect(responseBody?.token).toBeDefined()
-            const decoded = jwtUtils.decode<Principal>({ jwt: responseBody?.token })
-            expect(decoded.payload.type).toBe(PrincipalType.ONBOARDING)
-
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(responseBody?.code).toBe('USER_IS_INACTIVE')
         })
 
         it('Fails If the email auth is not enabled', async () => {
@@ -665,9 +660,13 @@ describe('Authentication API', () => {
 
     async function getOnboardingToken(): Promise<string> {
         const password = faker.internet.password()
+        const email = faker.internet.email().toLowerCase()
         const mockUserIdentity = createMockUserIdentity({
+            email,
             password,
             verified: true,
+            firstName: signupNames.firstNameFromEmail(email),
+            lastName: '',
         })
         await db.save('user_identity', mockUserIdentity)
 

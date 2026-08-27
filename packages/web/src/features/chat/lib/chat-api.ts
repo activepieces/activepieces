@@ -124,7 +124,7 @@ async function getPickerConnections({
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<ConnectionOption[]> {
+}): Promise<{ connections: ConnectionOption[]; reconnectOnly: boolean }> {
   return api.get(`/v1/agents/conversations/${conversationId}/connections`, {
     pieceName,
   });

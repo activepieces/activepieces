@@ -17,7 +17,7 @@ const GROUPS: AgentToolGroups = {
     buildPlan: toolSet('ap_set_build_plan'),
     email: toolSet('ap_send_email'),
     agentSurface: toolSet('ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool'),
-    mcp: toolSet('ap_create_flow', 'ap_test_flow'),
+    mcp: toolSet('ap_create_flow', 'ap_test_flow', 'ap_research_pieces', 'ap_list_connections'),
     configuredPiece: toolSet('gmail_find_email'),
     configuredFlow: toolSet('run_my_flow'),
     knowledgeBase: toolSet('search_handbook'),
@@ -44,12 +44,49 @@ describe('what a chat run may reach', () => {
 describe('what may reach the tools that build saved agents', () => {
     const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 
-    it('only a chat run, since the other surfaces have nobody to review what was made', () => {
+    it('a chat run and the builder, and no surface with nobody reading', () => {
         for (const toolName of AGENT_SURFACE_TOOLS) {
             expect(namesFor(AgentRunSource.CHAT), toolName).toContain(toolName)
+            expect(namesFor(AgentRunSource.AGENT_BUILDER), toolName).toContain(toolName)
             expect(namesFor(AgentRunSource.AGENT), toolName).not.toContain(toolName)
             expect(namesFor(AgentRunSource.FLOW_STEP), toolName).not.toContain(toolName)
         }
+    })
+})
+
+describe('what the agent builder may reach', () => {
+    it('reaches enough to find a piece and a connection for it', () => {
+        const names = namesFor(AgentRunSource.AGENT_BUILDER)
+
+        expect(names).toContain('ap_research_pieces')
+        expect(names).toContain('ap_list_connections')
+        expect(names).toContain('ap_show_connection_picker')
+        expect(names).toContain('ap_show_questions')
+        expect(names).toContain('ap_update_thinking_status')
+    })
+
+    it('never reaches the flow-building surface it sits beside, nor the web', () => {
+        const names = namesFor(AgentRunSource.AGENT_BUILDER)
+
+        expect(names).not.toContain('ap_web_search')
+        expect(names).not.toContain('ap_fetch_url')
+        expect(names).not.toContain('ap_create_flow')
+        expect(names).not.toContain('ap_test_flow')
+        expect(names).not.toContain('ap_set_build_plan')
+        expect(names).not.toContain('ap_set_phase')
+        expect(names).not.toContain('ap_select_project')
+        expect(names).not.toContain('ap_deselect_project')
+        expect(names).not.toContain('ap_execute_action')
+        expect(names).not.toContain('ap_send_email')
+    })
+
+    it('runs no tool the agent itself was configured with, since it is building that agent rather than being it', () => {
+        const names = namesFor(AgentRunSource.AGENT_BUILDER)
+
+        expect(names).not.toContain('gmail_find_email')
+        expect(names).not.toContain('run_my_flow')
+        expect(names).not.toContain('search_handbook')
+        expect(names).not.toContain('ap_return_output')
     })
 })
 
@@ -68,14 +105,14 @@ describe('what an agent conversation may reach', () => {
 
         expect(names).toContain('ap_show_questions')
         expect(names).toContain('ap_show_quick_replies')
+        expect(names).toContain('ap_show_connection_picker')
         expect(names).toContain('ap_generate_image')
         expect(names).toContain('ap_update_thinking_status')
     })
 
-    it('never offers to change a connection or project its owner pinned', () => {
+    it('never reaches the surfaces that switch project or hunt for other credentials', () => {
         const names = namesFor(AgentRunSource.AGENT)
 
-        expect(names).not.toContain('ap_show_connection_picker')
         expect(names).not.toContain('ap_show_connection_required')
         expect(names).not.toContain('ap_show_mcp_reconnect')
         expect(names).not.toContain('ap_show_project_picker')

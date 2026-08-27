@@ -226,8 +226,7 @@ async function resolveChatProviderName({ platformId, projectId, log }: { platfor
     if (isNil(projectId)) {
         return null
     }
-    const result = await tryCatch(() => aiProviderService(log).getChatProviderName({ platformId, scope: { type: 'project', projectId } }))
-    return result.error ? null : result.data
+    return aiProviderService(log).getChatProviderName({ platformId, scope: runScopeOrThrow({ projectId }) })
 }
 
 async function recoverAllStaleStreamingConversations({ log }: { log: FastifyBaseLogger }): Promise<{ recovered: number }> {

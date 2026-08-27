@@ -87,8 +87,8 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             await authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? '' })
             return authResponse
         }
-        log.info({ email: params.email, provider: params.provider }, 'User signed up without platform')
-        return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
+        log.info({ email: params.email, provider: params.provider }, 'User signed up without a platform to join')
+        return authenticationUtils(log).provisionOrOnboard({ identityId: userIdentity.id })
 
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
@@ -96,8 +96,8 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
 
         if (isNil(platformId)) { // always cloud
-            log.info({ email: params.email }, 'User signed in without an active platform on cloud, returning onboarding token')
-            return authenticationUtils(log).getOnboardingResponse({ identityId: identity.id })
+            log.info({ email: params.email }, 'User signed in without an active platform on cloud')
+            return authenticationUtils(log).provisionOrOnboard({ identityId: identity.id })
         }
 
         await authenticationUtils(log).assertEmailAuthIsEnabled({
@@ -129,7 +129,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(platformId)) { // always cloud
             if (!isNil(userIdentity)) {
-                return authenticationUtils(log).getOnboardingResponse({ identityId: userIdentity.id })
+                return authenticationUtils(log).provisionOrOnboard({ identityId: userIdentity.id })
             }
             return authenticationService(log).signUp({
                 email: params.email,
