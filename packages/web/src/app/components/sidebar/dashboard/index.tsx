@@ -16,7 +16,6 @@ import { SearchInput } from '@/components/custom/search-input';
 import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
-import { ConnectIcon } from '@/components/icons/connect';
 import { SendIcon } from '@/components/icons/send';
 import { ShieldIcon } from '@/components/icons/shield';
 import { useEmbedding } from '@/components/providers/embed-provider';
@@ -221,17 +220,7 @@ export function ProjectDashboardSidebar({
     },
   };
 
-  const mcpServerLink: SidebarItemType = {
-    type: 'link',
-    to: '/mcp-server',
-    label: t('MCP'),
-    icon: ConnectIcon,
-    show: true,
-    hasPermission: checkAccess(Permission.READ_MCP),
-    isSubItem: false,
-  };
-
-  const items = [chatLink, agentsLink, exploreLink, impactLink, mcpServerLink]
+  const items = [chatLink, agentsLink, exploreLink, impactLink]
     .filter((item) => item.show !== false)
     .filter(permissionFilter);
 

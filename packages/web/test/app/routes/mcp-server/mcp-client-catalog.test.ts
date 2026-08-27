@@ -9,10 +9,12 @@ const { mcpClientCatalog } = await import(
   '@/app/routes/mcp-server/mcp-client-catalog'
 );
 
+const SERVER_URL = 'https://cloud.activepieces.com/mcp';
+
 function clientNamed(key: string, isCloud: boolean) {
   return mcpClientCatalog
     .clients({
-      serverUrl: 'https://cloud.activepieces.com/mcp',
+      serverUrl: SERVER_URL,
       websiteName: 'Activepieces',
       isCloud,
     })
@@ -31,5 +33,36 @@ describe('mcpClientCatalog cloud overrides', () => {
 
   it('leaves clients without a cloud override untouched', () => {
     expect(clientNamed('codex', true)).toEqual(clientNamed('codex', false));
+  });
+
+  it('keeps the Cursor deep link on cloud and only swaps the docs link', () => {
+    const cloudCursor = clientNamed('cursor', true);
+    expect(cloudCursor?.docsUrl).toBe(
+      'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
+    );
+    expect(cloudCursor?.steps[0]).toEqual(clientNamed('cursor', false)?.steps[0]);
+  });
+});
+
+describe('mcpClientCatalog generated commands', () => {
+  it('encodes the server url into the Cursor deep link', () => {
+    const href = clientNamed('cursor', false)?.steps[0].action?.href ?? '';
+    const config = new URL(href).searchParams.get('config') ?? '';
+    expect(JSON.parse(atob(config))).toEqual({ url: SERVER_URL });
+  });
+
+  it('encodes the server url into the VS Code deep link', () => {
+    const href = clientNamed('vscode', false)?.steps[0].action?.href ?? '';
+    expect(JSON.parse(decodeURIComponent(href.split('?')[1]))).toEqual({
+      name: 'activepieces',
+      type: 'http',
+      url: SERVER_URL,
+    });
+  });
+
+  it('builds the Claude Code add command', () => {
+    expect(clientNamed('claude-code', false)?.steps[0].command).toBe(
+      `claude mcp add --transport http activepieces ${SERVER_URL}`,
+    );
   });
 });

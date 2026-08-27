@@ -2557,7 +2557,6 @@
   "{client} opens {brand} in your browser. Approve the project it can reach.": "{client} opens {brand} in your browser. Approve the project it can reach.",
   "What {brand} tools do you have?": "What {brand} tools do you have?",
   "Post a note in Slack that the deploy finished.": "Post a note in Slack that the deploy finished.",
-  "Installs the published plugin from the Cursor directory into ~/.cursor/mcp.json.": "Installs the published plugin from the Cursor directory into ~/.cursor/mcp.json.",
   "This server is already listed in Claude’s directory — add it there in one click.": "This server is already listed in Claude’s directory — add it there in one click.",
   "Add from the Claude directory": "Add from the Claude directory",
   "Open Cascade, click the plugins icon, then Manage plugins → View raw config.": "Open Cascade, click the plugins icon, then Manage plugins → View raw config.",

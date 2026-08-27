@@ -177,18 +177,7 @@ function catalogEntries({
           href: cursorDeepLink({ serverUrl: url, slug }),
         },
       },
-      cloud: {
-        docsUrl: CLOUD_LISTINGS.cursor,
-        addStep: {
-          body: t(
-            'Installs the published plugin from the Cursor directory into ~/.cursor/mcp.json.',
-          ),
-          action: {
-            label: t('Add to Cursor'),
-            href: cursorDeepLink({ serverUrl: url, slug }),
-          },
-        },
-      },
+      cloud: { docsUrl: CLOUD_LISTINGS.cursor },
       config: {
         path: '~/.cursor/mcp.json',
         snippet: mcpServersJson({ slug, serverConfig: { url } }),
