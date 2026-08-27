@@ -125,6 +125,9 @@ function ChatBoxContent({
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
+  const setStoreConversationId = useChatStoreContext(
+    (s) => s.setConversationId,
+  );
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
   const offerRecurringAutomation = useChatStoreContext(
     (s) => s.offerRecurringAutomation,
@@ -135,6 +138,12 @@ function ChatBoxContent({
       void setConversationId(initialConversationId);
     }
   }, [initialConversationId, setConversationId]);
+
+  // Cards rendered inside this chat read the conversation off the store, because only the surfaces
+  // that route by conversation carry it in the URL.
+  useEffect(() => {
+    setStoreConversationId(conversationId ?? null);
+  }, [conversationId, setStoreConversationId]);
 
   useEffect(() => {
     if (!isStreaming) return;

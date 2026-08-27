@@ -172,9 +172,11 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
 
         const selectedModel = modelName ?? conversation.modelName ?? null
         // The tier resolver finds no tier for a concrete model id and silently returns the default,
-        // so a source that names its own model must never be routed through it.
-        const tier = agentHelpers.resolveTier({ tierId: carriesChatContext ? selectedModel : null })
-        const resolvedModelId = !carriesChatContext && !isNil(modelName)
+        // so a source that stores its own concrete model must never be routed through it. The
+        // builder is not one of those: it inherits the chat surface's tier, so it resolves.
+        const namesItsOwnModel = requestedSource === AgentRunSource.FLOW_STEP || requestedSource === AgentRunSource.AGENT
+        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
+        const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? modelName
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 

@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, ColorName } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, DEFAULT_CHAT_TIER_ID, ColorName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -149,6 +149,29 @@ describe('what the builder can actually reach at run time', () => {
 
         expect(config.mcpCredentials).not.toBeNull()
         expect(config.agentsAvailable).toBe(true)
+    })
+
+    // The builder inherits the chat surface's model, which is a tier id. A source that stores its
+    // own concrete model skips the tier resolver, and putting the builder on that side sent the
+    // tier straight to the provider, which answered "smart is not a valid model ID".
+    it('resolves the tier it inherits from chat, rather than sending it to the provider', async () => {
+        const ctx = await context()
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+        const agent = await createAgent(ctx)
+        const conversation = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true, modelName: DEFAULT_CHAT_TIER_ID })
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId: conversation.json().id,
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            userMessage: 'give it a gmail tool',
+            modelName: DEFAULT_CHAT_TIER_ID,
+            source: AgentRunSource.AGENT_BUILDER,
+        })
+
+        expect(config.modelId).not.toBe(DEFAULT_CHAT_TIER_ID)
+        expect(config.modelId).toBe('anthropic/claude-sonnet-4.6')
     })
 })
 
