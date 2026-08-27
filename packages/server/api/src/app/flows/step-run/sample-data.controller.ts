@@ -5,6 +5,7 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
 import { sampleDataService } from './sample-data.service'
+import { sensitiveOutputPathsResolver } from './sensitive-output-paths-resolver'
 
 export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -33,7 +34,12 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
         if (request.query.type !== SampleDataFileType.OUTPUT) {
             return sampleData
         }
-        return applySensitivePaths(sampleData, step.settings.sampleData?.sensitiveOutputPaths)
+        const sensitiveOutputPaths = await sensitiveOutputPathsResolver(request.log).resolveForStep({
+            projectId: request.projectId,
+            step,
+            sampleData,
+        })
+        return applySensitivePaths(sampleData, sensitiveOutputPaths)
     })
 }
 

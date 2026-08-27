@@ -1,19 +1,20 @@
-import { isNil } from '@activepieces/core-utils'
-import { OutputSchema, OutputSchemaField } from '@activepieces/pieces-framework'
-import { escapeSensitivePathSegment } from '@activepieces/shared'
+import { escapeSensitivePathSegment, isNil } from '@activepieces/core-utils'
 
-export function collectSensitiveOutputPaths(outputSchema: OutputSchema | undefined, rawOutput: unknown): string[] | undefined {
-    if (isNil(outputSchema) || isNil(outputSchema.fields) || outputSchema.fields.length === 0) {
+export function collectSensitiveOutputPaths(outputSchema: SensitiveOutputSchema | undefined, rawOutput: unknown): string[] | undefined {
+    const fields = outputSchema?.fields
+    if (isNil(fields) || fields.length === 0 || !schemaHasSensitiveFields(fields)) {
         return undefined
     }
-    if (!schemaHasSensitiveFields(outputSchema.fields)) {
-        return undefined
-    }
-    const paths = walkFields({ fields: outputSchema.fields, rawValue: rawOutput, prefix: '' })
+    const paths = walkFields({ fields, rawValue: rawOutput, prefix: '' })
     return paths.length > 0 ? paths : undefined
 }
 
-function schemaHasSensitiveFields(fields: OutputSchemaField[]): boolean {
+export function outputSchemaHasSensitiveFields(outputSchema: SensitiveOutputSchema | undefined): boolean {
+    const fields = outputSchema?.fields
+    return !isNil(fields) && fields.length > 0 && schemaHasSensitiveFields(fields)
+}
+
+function schemaHasSensitiveFields(fields: SensitiveOutputField[]): boolean {
     return fields.some((field) =>
         field.sensitive ||
         (!isNil(field.children) && schemaHasSensitiveFields(field.children)) ||
@@ -25,7 +26,7 @@ function walkFields({ fields, rawValue, prefix }: WalkParams): string[] {
     return fields.flatMap((field) => walkField({ field, rawValue, prefix }))
 }
 
-function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawValue: unknown, prefix: string }): string[] {
+function walkField({ field, rawValue, prefix }: { field: SensitiveOutputField, rawValue: unknown, prefix: string }): string[] {
     const encodedKey = escapeSensitivePathSegment(field.key)
     const currentPath = prefix === '' ? encodedKey : `${prefix}.${encodedKey}`
     if (field.sensitive) {
@@ -67,7 +68,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 type WalkParams = {
-    fields: OutputSchemaField[]
+    fields: SensitiveOutputField[]
     rawValue: unknown
     prefix: string
+}
+
+export type SensitiveOutputField = {
+    key: string
+    sensitive?: boolean
+    dynamicKey?: boolean
+    children?: SensitiveOutputField[]
+    listItems?: SensitiveOutputField[]
+}
+
+export type SensitiveOutputSchema = {
+    fields: SensitiveOutputField[]
 }

@@ -1,5 +1,5 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
-import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
+import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil, isString, unique } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { applySensitivePaths, FlowActionType, FormulaEvaluationError, StepOutput } from '@activepieces/shared'
 
@@ -239,9 +239,7 @@ function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<st
                 continue
             }
             const existing = result[name]
-            result[name] = isNil(existing)
-                ? [...paths]
-                : Array.from(new Set([...existing, ...paths]))
+            result[name] = isNil(existing) ? [...paths] : unique([...existing, ...paths])
         }
     }
     return result

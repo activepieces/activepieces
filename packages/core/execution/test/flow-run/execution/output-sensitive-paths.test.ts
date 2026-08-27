@@ -1,4 +1,4 @@
-import { collectSensitiveOutputPaths } from '../../src/lib/variables/output-sensitive-paths'
+import { collectSensitiveOutputPaths } from '../../../src/lib/flow-run/execution/output-sensitive-paths'
 
 describe('collectSensitiveOutputPaths', () => {
     it('returns undefined when the schema is missing or empty', () => {

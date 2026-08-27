@@ -61,6 +61,7 @@ export const SampleDataSetting = z.object(
         sampleDataInputFileId: z.string().optional(),
         lastTestDate: z.string().optional(),
         sensitiveOutputPaths: z.array(z.string()).optional(),
+        sensitiveOutputPathsPieceVersion: z.string().optional(),
     },
 )
 

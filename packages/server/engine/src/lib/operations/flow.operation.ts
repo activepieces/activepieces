@@ -1,5 +1,5 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import { collectSensitiveOutputPaths, EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
 import { pieceRunner } from '../core/piece/piece-runner'
 import { triggerRunner } from '../core/piece/trigger-runner'
@@ -9,7 +9,6 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { utils } from '../utils'
-import { collectSensitiveOutputPaths } from '../variables/output-sensitive-paths'
 import { resolveJobPayload } from './utils/resolve-job-payload'
 
 export const flowOperation = {
@@ -149,7 +148,7 @@ async function collectTriggerSensitivePaths({ trigger, payload, devPieces }: Col
         devPieces,
     }))
     if (!isNil(error)) {
-        console.warn('[collectTriggerSensitivePaths] Failed to describe piece for sensitive-path collection; shipping trigger payload unredacted', error)
+        console.error('[collectTriggerSensitivePaths] Failed to describe piece for sensitive-path collection; shipping trigger payload unredacted', error)
         return undefined
     }
     const pieceTrigger = description.metadata.triggers[trigger.settings.triggerName]
