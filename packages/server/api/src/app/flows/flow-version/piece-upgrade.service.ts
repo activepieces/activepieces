@@ -38,6 +38,10 @@ const PIECE_UPGRADE_ENABLED_PLATFORMS_KEY = 'piece_upgrade_enabled_platforms'
 
 async function isPlatformMigrationEnabled(platformId: string): Promise<boolean> {
     const redis = await redisConnections.useExisting()
+    const gateExists = await redis.exists(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY)
+    if (gateExists === 0) {
+        return true
+    }
     return await redis.sismember(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY, platformId) === 1
 }
 
