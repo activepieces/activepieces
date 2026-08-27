@@ -45,6 +45,7 @@ export class FetchHttpClient extends BaseHttpClient {
       ? serializeBody(request.body, headers)
       : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
+    stripUnusableMultipartContentType(finalHeaders, body);
 
     const response = await sendWithRetries(async () => {
       const controller = new AbortController();
@@ -181,6 +182,28 @@ async function sendWithRetries(fn: () => Promise<Response>, retries: number): Pr
 function backoff(attempt: number): Promise<void> {
   const delayMs = Math.min(1000 * 2 ** attempt, 30000);
   return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+/**
+ * A multipart body can only be parsed with the boundary that separates its
+ * parts, and the boundary is chosen by fetch while it encodes the body. Any
+ * Content-Type decided before that point therefore names something the
+ * receiver cannot split on: the JSON default BaseHttpClient applies to every
+ * body, a caller writing `multipart/form-data` by hand with no boundary, and
+ * a caller carrying a boundary left over from an earlier encoding all fail
+ * the same way. Removing the header lets fetch write the whole thing itself.
+ *
+ * Only a global FormData body is affected. A `form-data` package instance has
+ * already been encoded into a stream by the time it reaches here, and its
+ * matching boundary arrives in extraHeaders, so it is left alone.
+ */
+function stripUnusableMultipartContentType(
+  headers: Record<string, string>,
+  body: BodyInit | undefined
+): void {
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    delete headers['content-type'];
+  }
 }
 
 function normalizeHeaders(headers: HttpHeaders): Record<string, string> {
