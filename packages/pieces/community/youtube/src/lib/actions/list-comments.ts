@@ -51,7 +51,7 @@ export const youtubeListCommentsAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 1 || maxResultsNumber > 100) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 1 || maxResultsNumber > 100) {
         throw new Error('Max Results must be between 1 and 100.');
       }
     }

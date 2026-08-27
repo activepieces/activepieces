@@ -28,7 +28,7 @@ export const listGroupSubscribersAction = createAction({
 	},
 	async run(context) {
 		const resolvedLimit = Math.trunc(Number(context.propsValue.limit ?? 25));
-		if (resolvedLimit < 1 || resolvedLimit > 1000) {
+		if (!Number.isFinite(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 1000) {
 			throw new Error('Limit must be between 1 and 1000.');
 		}
 		const client = new MailerLite({ api_key: context.auth.secret_text });

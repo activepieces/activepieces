@@ -40,7 +40,7 @@ export const youtubeListPlaylistsAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 1 || maxResultsNumber > 50) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 1 || maxResultsNumber > 50) {
         throw new Error('Max Results must be between 1 and 50.');
       }
     }

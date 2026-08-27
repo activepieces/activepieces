@@ -42,7 +42,7 @@ export const listSubscribersAction = createAction({
 		const client = new MailerLite({ api_key: context.auth.secret_text });
 		const { status, limit } = context.propsValue;
 		const resolvedLimit = Math.trunc(Number(limit ?? 25));
-		if (resolvedLimit < 1 || resolvedLimit > 1000) {
+		if (!Number.isFinite(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 1000) {
 			throw new Error('Limit must be between 1 and 1000.');
 		}
 		const isKnownStatus =

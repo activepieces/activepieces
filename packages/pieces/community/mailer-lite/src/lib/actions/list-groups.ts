@@ -34,12 +34,12 @@ export const listGroupsAction = createAction({
 		const { limit, page } = context.propsValue;
 
 		const resolvedLimit = Math.trunc(Number(limit ?? 100));
-		if (resolvedLimit < 1 || resolvedLimit > 1000) {
+		if (!Number.isFinite(resolvedLimit) || resolvedLimit < 1 || resolvedLimit > 1000) {
 			throw new Error('Limit must be between 1 and 1000.');
 		}
 
 		const resolvedPage = Math.trunc(Number(page ?? 1));
-		if (resolvedPage < 1) {
+		if (!Number.isFinite(resolvedPage) || resolvedPage < 1) {
 			throw new Error('Page must be 1 or greater.');
 		}
 
