@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, ColorName } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, DEFAULT_CHAT_TIER_ID, ColorName } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -51,6 +51,29 @@ describe('starting a builder conversation', () => {
         expect(response.json().source).toBe(AgentRunSource.AGENT_BUILDER)
         expect(response.json().projectId).toBe(ctx.project.id)
         expect(response.json().agentId).toBe(agent.id)
+    })
+
+    it('starts a fresh thread each time, so reopening does not resume an old edit session', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const first = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+        const second = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+
+        expect(first.statusCode).toBe(StatusCodes.CREATED)
+        expect(second.statusCode).toBe(StatusCodes.CREATED)
+        expect(second.json().id).not.toBe(first.json().id)
+    })
+
+    it('keeps the builder threads out of the agent conversation list', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+
+        const listed = await ctx.get(`${CONVERSATIONS_URL}?agentId=${agent.id}&limit=20`)
+
+        expect(listed.statusCode).toBe(StatusCodes.OK)
+        expect(listed.json().data).toEqual([])
     })
 
     it('builds a new agent in a project the caller names', async () => {
@@ -150,6 +173,26 @@ describe('what the builder can actually reach at run time', () => {
         expect(config.mcpCredentials).not.toBeNull()
         expect(config.agentsAvailable).toBe(true)
     })
+
+    it('resolves the tier it inherits from chat, rather than sending it to the provider', async () => {
+        const ctx = await context()
+        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', saved.id, { enabledForChat: true })
+        const agent = await createAgent(ctx)
+        const conversation = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true, modelName: DEFAULT_CHAT_TIER_ID })
+
+        const config = await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId: conversation.json().id,
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            userMessage: 'give it a gmail tool',
+            modelName: DEFAULT_CHAT_TIER_ID,
+            source: AgentRunSource.AGENT_BUILDER,
+        })
+
+        expect(config.modelId).not.toBe(DEFAULT_CHAT_TIER_ID)
+        expect(config.modelId).toBe('anthropic/claude-sonnet-4.6')
+    })
 })
 
 describe('what the builder is told', () => {
@@ -167,7 +210,8 @@ describe('what the builder is told', () => {
         expect(prompt).toContain('Inbox triage')
         expect(prompt).toContain('Sort unread mail.')
         expect(prompt).toContain('Tools: none')
-        expect(prompt).toContain('nothing runs this agent yet')
+        expect(prompt).toContain('Save and go live')
+        expect(prompt).not.toContain('until it is published')
     })
 
     it('says there is no agent yet when it is starting one', () => {
