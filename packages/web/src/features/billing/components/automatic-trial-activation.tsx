@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import { t } from 'i18next';
 import { Check, CircleX, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { FullLogo } from '@/components/custom/full-logo';
@@ -18,20 +18,27 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { trialKeyStash } from '@/lib/automatic-trial-activation';
-import { determineDefaultRoute } from '@/lib/route-utils';
+import {
+  determineDefaultRoute,
+  TRIAL_KEY_QUERY_PARAM,
+} from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 export const AutomaticTrialActivation = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isPlatformAdmin = useIsPlatformAdmin();
+  const [searchParams] = useSearchParams();
   const [pendingKey, setPendingKey] = useState<string | null>(() => {
-    const licenseKey = trialKeyStash.read();
+    const licenseKey = searchParams.get(TRIAL_KEY_QUERY_PARAM)?.trim();
     const platformLicenseKey = platform.plan.licenseKey;
     const alreadyLicensed =
       !isNil(platformLicenseKey) && !isEmpty(platformLicenseKey);
-    if (isNil(licenseKey) || edition === ApEdition.COMMUNITY) {
+    if (
+      isNil(licenseKey) ||
+      isEmpty(licenseKey) ||
+      edition === ApEdition.COMMUNITY
+    ) {
       return null;
     }
     return alreadyLicensed ? null : licenseKey;
@@ -58,6 +65,7 @@ const TrialActivationScreen = ({
   onDone,
 }: TrialActivationScreenProps) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -93,7 +101,6 @@ const TrialActivationScreen = ({
     activateLicenseKey(licenseKey, {
       onSuccess: () => {
         succeededAt.current = Date.now();
-        trialKeyStash.clear();
         burstConfetti(confettiCanvas.current);
         setTimeout(returnToApp, REDIRECT_SECONDS * 1000);
       },
@@ -104,6 +111,9 @@ const TrialActivationScreen = ({
     if (isPlatformAdmin) {
       activate();
     }
+    const scrubbed = new URLSearchParams(searchParams);
+    scrubbed.delete(TRIAL_KEY_QUERY_PARAM);
+    setSearchParams(scrubbed, { replace: true });
     // Re-renders TrialActivationScreen every TICK_MS so that progress,
     // the activation timeout and the redirect countdown stay derived from `now`.
     const ticker = setInterval(() => setNow(Date.now()), TICK_MS);
@@ -220,7 +230,7 @@ const TrialActivationScreen = ({
               )}
             />
             <CopyToClipboardInput
-              textToCopy={trialKeyStash.linkFor(licenseKey)}
+              textToCopy={activationLinkFor(licenseKey)}
               useInput
             />
             <p className="text-xs leading-relaxed text-muted-foreground/70">
@@ -298,6 +308,12 @@ function statusMessageFor(progress: number): string {
     .reverse()
     .find((candidate) => progress >= candidate.from);
   return t(step?.message ?? ACTIVATION_STEPS[0].message);
+}
+
+function activationLinkFor(licenseKey: string): string {
+  return `${
+    window.location.origin
+  }/?${TRIAL_KEY_QUERY_PARAM}=${encodeURIComponent(licenseKey)}`;
 }
 
 function burstConfetti(canvas: HTMLCanvasElement | null): void {
