@@ -44,7 +44,11 @@ mirror. This is a knowing exception to `.claude/rules/self-hosting.md`, not an o
 **Pricing data reaches production weekly with nobody reviewing the diff.** The generator's truncation
 guard — refuse to publish if a provider block disappears or the model count falls more than 20% against
 the currently published copy — is the only thing between a partial models.dev payload and every
-install. The published object carries `generatedAt` so staleness is diagnosable with a `curl`.
+install. Because it is the only check, it **fails closed**: only a `404` (nothing published yet) is
+allowed to skip it and bootstrap the first upload. A network error, a 5xx, or a non-JSON body all abort
+the run, because "cannot read the current catalog" is not the same as "there is no current catalog" —
+treating them alike lets a transient CDN blip disable the guard at exactly the moment it matters. The
+published object carries `generatedAt` so staleness is diagnosable with a `curl`.
 
 **The object must exist before the code ships.** Until the first `workflow_dispatch` run lands it,
 every install silently shows no metadata, including local dev.

@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { AIProviderName } from '../../packages/core/utils/src/lib/permission'
+import { tryCatch } from '../../packages/core/utils/src/lib/try-catch'
 
 const MODELS_DEV_API_URL = 'https://models.dev/api.json'
 
@@ -30,6 +31,8 @@ const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]
 
 const COST_PRECISION = 1_000
 
+const NOT_FOUND = 404
+
 const MIN_RETAINED_RATIO = 0.8
 
 async function main(): Promise<void> {
@@ -50,12 +53,21 @@ async function main(): Promise<void> {
 }
 
 async function fetchPublishedCatalog(): Promise<PublishedCatalog | undefined> {
-    const response = await fetch(PUBLISHED_CATALOG_URL).catch(() => undefined)
-    if (!response?.ok) {
-        process.stdout.write(`no published catalog to compare against (${PUBLISHED_CATALOG_URL}); skipping the truncation guard\n`)
+    const { data: response, error } = await tryCatch(() => fetch(PUBLISHED_CATALOG_URL))
+    if (error !== null) {
+        throw new Error(`refusing to publish: cannot reach ${PUBLISHED_CATALOG_URL} to validate against — ${error instanceof Error ? error.message : String(error)}`)
+    }
+    if (response.status === NOT_FOUND) {
+        process.stdout.write(`nothing published at ${PUBLISHED_CATALOG_URL} yet; publishing the first catalog without a truncation guard\n`)
         return undefined
     }
-    const published: PublishedCatalog = await response.json()
+    if (!response.ok) {
+        throw new Error(`refusing to publish: ${PUBLISHED_CATALOG_URL} returned ${response.status} ${response.statusText}, so the current catalog is unknown`)
+    }
+    const { data: published, error: parseError } = await tryCatch<PublishedCatalog>(() => response.json())
+    if (parseError !== null) {
+        throw new Error(`refusing to publish: ${PUBLISHED_CATALOG_URL} is not valid JSON, so the current catalog is unknown`)
+    }
     return published
 }
 
