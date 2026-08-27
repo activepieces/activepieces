@@ -151,6 +151,8 @@ Set `sensitive: true` on any leaf whose value is a secret (API token, password, 
 }
 ```
 
+`sensitive` is resolved against each field's **`key`** only. A sensitive leaf under a `value` path override, or on an action whose output is a **top-level array**, cannot be addressed — the collector fails closed and redacts the entire step output. Address sensitive leaves via `key` + `children`/`listItems`.
+
 Guarantee is **UI visibility only**, not encryption at rest — see decision [`brain/decisions/000017-sensitive-piece-io-is-piece-declared-and-scrubbed-on-serve.md`](../../../brain/decisions/000017-sensitive-piece-io-is-piece-declared-and-scrubbed-on-serve.md).
 
 ## Shared field-sets

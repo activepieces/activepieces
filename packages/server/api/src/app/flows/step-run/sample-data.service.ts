@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { getPieceComponentInfoForStep } from './piece-component-info'
+import { resolveSensitivitySetting } from './sample-data-sensitivity'
 export const sampleDataService = (log: FastifyBaseLogger) => ({
     async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<SampleDataSettings> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
@@ -14,12 +15,18 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
         const existingPaths = clonedStep.settings.sampleData?.sensitiveOutputPaths
         const existingPieceVersion = clonedStep.settings.sampleData?.sensitiveOutputPathsPieceVersion
         const currentPieceVersion = getPieceComponentInfoForStep(clonedStep)?.pieceVersion
+        const sensitivity = resolveSensitivitySetting({
+            type: params.type,
+            requestedPaths: params.sensitiveOutputPaths,
+            existingPaths,
+            existingPieceVersion,
+            currentPieceVersion,
+        })
         return {
             sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
             sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
-            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT ? (params.sensitiveOutputPaths ?? existingPaths) : existingPaths,
-            sensitiveOutputPathsPieceVersion: params.type === SampleDataFileType.OUTPUT ? currentPieceVersion : existingPieceVersion,
+            ...sensitivity,
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {

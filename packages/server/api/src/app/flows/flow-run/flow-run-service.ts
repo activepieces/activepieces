@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, redactSensitiveStepOutputs, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -23,7 +23,6 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
-import { redactSensitiveStepOutputs } from './step-output-redactor'
 import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
@@ -484,7 +483,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
-                steps = params.redact ?? true ? redactSensitiveStepOutputs(stateFile.executionState.steps) : stateFile.executionState.steps
+                const shouldRedact = params.redact ?? true
+                steps = shouldRedact ? redactSensitiveStepOutputs(stateFile.executionState.steps) : stateFile.executionState.steps
                 internalError = stateFile.internalError
             }
         }

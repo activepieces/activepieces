@@ -5,10 +5,6 @@ import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
 import { flowExecutor } from './flow-executor'
 
-type LoopOnActionResolvedSettings = {
-    items: readonly unknown[]
-}
-
 export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
     async handle({
         action,
@@ -50,6 +46,10 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             })
         }
 
+        if (itemsCarrySensitiveValues(resolvedInput.items, censoredInput)) {
+            stepOutput = new LoopStepOutput({ ...stepOutput, sensitiveOutputPaths: ['item'] })
+        }
+
         const firstLoopAction = action.firstLoopAction
 
 
@@ -84,4 +84,19 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
     },
+}
+
+function itemsCarrySensitiveValues(resolvedItems: readonly unknown[], censoredInput: unknown): boolean {
+    if (isNil(censoredInput) || typeof censoredInput !== 'object' || !('items' in censoredInput)) {
+        return false
+    }
+    const censoredItems = censoredInput.items
+    if (!Array.isArray(censoredItems)) {
+        return false
+    }
+    return JSON.stringify(resolvedItems) !== JSON.stringify(censoredItems)
+}
+
+type LoopOnActionResolvedSettings = {
+    items: readonly unknown[]
 }

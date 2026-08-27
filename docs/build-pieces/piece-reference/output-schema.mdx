@@ -91,6 +91,14 @@ outputSchema: {
 ```
 
 <Warning>
+`sensitive` cannot be combined with a `value` path override, and does not apply to an action whose
+output is a top-level array. In both cases the collector cannot resolve a reliable path, so it
+fails closed: the **entire step output** is replaced with `**REDACTED**` and an error is logged.
+Restructure the schema so every sensitive leaf is addressed by its `key` (nested through
+`children` / `listItems`) rather than by a `value` path.
+</Warning>
+
+<Warning>
 The guarantee is **UI visibility only**, not encryption at rest. The raw value still lives on
 `flow_run.steps.<name>.output` in the database, in run exports, and in the flow-version's stored
 sample data. For customers whose threat model reaches beyond casual over-the-shoulder viewing,

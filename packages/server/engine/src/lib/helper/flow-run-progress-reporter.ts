@@ -3,7 +3,7 @@ import { zstdCompress as zstdCompressCallback } from 'node:zlib'
 import { setTimeout } from 'timers/promises'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { OutputContext, OutputSchema } from '@activepieces/pieces-framework'
-import { applySensitivePaths, collectSensitiveOutputPaths, DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, outputSchemaHasSensitiveFields, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { collectSensitiveOutputPaths, DEFAULT_MCP_DATA, EngineGenericError, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, outputSchemaHasSensitiveFields, redactSensitiveStepOutputs, RunEnvironment, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import { engineFileApi } from '../api/engine-file-api'
@@ -44,9 +44,7 @@ export const flowRunProgressReporter = {
             if (isNil(step)) {
                 return
             }
-            const redactedStep = isNil(step.sensitiveOutputPaths) || step.sensitiveOutputPaths.length === 0
-                ? step
-                : { ...step, output: applySensitivePaths(step.output, step.sensitiveOutputPaths) }
+            const redactedStep = redactSensitiveStepOutputs({ [stepNameToUpdate]: step })[stepNameToUpdate]
             await sendUpdateProgress({
                 engineConstants,
                 request: {
@@ -225,7 +223,7 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
         success: isSuccess,
         input: stepOutput.input,
         output: stepOutput.output,
-        sensitiveOutputPaths: stepOutput.sensitiveOutputPaths,
+        sensitiveOutputPaths: stepOutput.sensitiveOutputPaths ?? [],
         standardError: isSuccess ? '' : (stepOutput.errorMessage ?? ''),
         standardOutput: '',
     }

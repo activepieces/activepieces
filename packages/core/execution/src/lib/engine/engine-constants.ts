@@ -13,3 +13,5 @@ export const ERROR_MESSAGES_TO_REDACT = [
 ]
 
 export const SENSITIVE_VALUE_REDACTED = '**REDACTED**'
+
+export const SENSITIVE_WHOLE_OUTPUT_PATH = '\\'

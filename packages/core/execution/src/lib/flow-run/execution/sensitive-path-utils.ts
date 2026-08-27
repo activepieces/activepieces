@@ -1,11 +1,14 @@
 import { isNil } from '@activepieces/core-utils'
-import { SENSITIVE_VALUE_REDACTED } from '../../engine/engine-constants'
+import { SENSITIVE_VALUE_REDACTED, SENSITIVE_WHOLE_OUTPUT_PATH } from '../../engine/engine-constants'
 
 export { escapeSensitivePathSegment } from '@activepieces/core-utils'
 
 export function applySensitivePaths(value: unknown, paths: string[] | undefined): unknown {
     if (isNil(paths) || paths.length === 0) {
         return value
+    }
+    if (paths.includes(SENSITIVE_WHOLE_OUTPUT_PATH)) {
+        return SENSITIVE_VALUE_REDACTED
     }
     return paths.reduce<unknown>((acc, path) => redactAtPath(acc, splitSensitivePath(path)), value)
 }

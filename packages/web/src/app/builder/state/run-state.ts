@@ -254,9 +254,7 @@ export const createRunState = (
           type: 'output',
           value: applySensitivePaths(
             response.output,
-            'sensitiveOutputPaths' in response
-              ? response.sensitiveOutputPaths
-              : undefined,
+            response.sensitiveOutputPaths,
           ),
         });
       };

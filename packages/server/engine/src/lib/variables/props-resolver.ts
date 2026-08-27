@@ -41,8 +41,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const getStepView = createMemoizedStepViewGetter(executionState)
-            const censoredStepView = createMemoizedStepViewGetter(executionState, true)
+            const getStepView = createMemoizedStepViewGetter({ executionState, censor: false })
+            const censoredStepView = createMemoizedStepViewGetter({ executionState, censor: true })
             const rawScriptSession = scriptEvaluator.initSession()
             const censoredScriptSession = scriptEvaluator.initSession()
             try {
@@ -79,7 +79,10 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                await Promise.allSettled([rawScriptSession.dispose(), censoredScriptSession.dispose()])
+                const disposals = await Promise.allSettled([rawScriptSession.dispose(), censoredScriptSession.dispose()])
+                disposals
+                    .filter((disposal) => disposal.status === 'rejected')
+                    .forEach((disposal) => console.error('[propsResolver] Failed to dispose script session', disposal.reason))
             }
         },
     }
@@ -216,6 +219,11 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
+type CreateMemoizedStepViewGetterParams = {
+    executionState: FlowExecutorContext
+    censor: boolean
+}
+
 function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<string, string[]> {
     const layers: Array<Record<string, StepOutput>> = [executionState.steps]
     let target: Record<string, StepOutput> = executionState.steps
@@ -267,7 +275,7 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
     return referencedSteps
 }
 
-function createMemoizedStepViewGetter(executionState: FlowExecutorContext, censor = false): GetStepView {
+function createMemoizedStepViewGetter({ executionState, censor }: CreateMemoizedStepViewGetterParams): GetStepView {
     const stepViewCache = new Map<string, Promise<StepView | undefined>>()
     const sensitiveStepPaths = censor ? buildSensitiveStepPaths(executionState) : undefined
     return (stepName: string) => {

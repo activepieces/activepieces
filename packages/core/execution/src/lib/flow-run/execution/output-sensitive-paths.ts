@@ -1,9 +1,15 @@
 import { escapeSensitivePathSegment, isNil } from '@activepieces/core-utils'
+import { SENSITIVE_WHOLE_OUTPUT_PATH } from '../../engine/engine-constants'
 
 export function collectSensitiveOutputPaths(outputSchema: SensitiveOutputSchema | undefined, rawOutput: unknown): string[] | undefined {
     const fields = outputSchema?.fields
     if (isNil(fields) || fields.length === 0 || !schemaHasSensitiveFields(fields)) {
         return undefined
+    }
+    const unsupported = findUnsupportedSensitiveShape(fields, rawOutput)
+    if (!isNil(unsupported)) {
+        console.error(`[collectSensitiveOutputPaths] ${unsupported}; redacting the entire step output as a fail-safe`)
+        return [SENSITIVE_WHOLE_OUTPUT_PATH]
     }
     const paths = walkFields({ fields, rawValue: rawOutput, prefix: '' })
     return paths.length > 0 ? paths : undefined
@@ -12,6 +18,30 @@ export function collectSensitiveOutputPaths(outputSchema: SensitiveOutputSchema 
 export function outputSchemaHasSensitiveFields(outputSchema: SensitiveOutputSchema | undefined): boolean {
     const fields = outputSchema?.fields
     return !isNil(fields) && fields.length > 0 && schemaHasSensitiveFields(fields)
+}
+
+function findUnsupportedSensitiveShape(fields: SensitiveOutputField[], rawOutput: unknown): string | undefined {
+    if (Array.isArray(rawOutput)) {
+        return 'the step output is a top-level array, whose schema fields address each item rather than the root'
+    }
+    const overridden = findValueOverriddenSensitiveField(fields)
+    if (!isNil(overridden)) {
+        return `field "${overridden}" carries a "value" path override on a sensitive subtree, which the path walker does not resolve`
+    }
+    return undefined
+}
+
+function findValueOverriddenSensitiveField(fields: SensitiveOutputField[]): string | undefined {
+    for (const field of fields) {
+        if (!isNil(field.value) && field.value !== field.key && schemaHasSensitiveFields([field])) {
+            return field.key
+        }
+        const nested = findValueOverriddenSensitiveField([...field.children ?? [], ...field.listItems ?? []])
+        if (!isNil(nested)) {
+            return nested
+        }
+    }
+    return undefined
 }
 
 function schemaHasSensitiveFields(fields: SensitiveOutputField[]): boolean {
@@ -30,9 +60,6 @@ function walkField({ field, rawValue, prefix }: { field: SensitiveOutputField, r
     const encodedKey = escapeSensitivePathSegment(field.key)
     const currentPath = prefix === '' ? encodedKey : `${prefix}.${encodedKey}`
     if (field.sensitive) {
-        if (isNil(readAt(rawValue, field.key))) {
-            console.warn(`[collectSensitiveOutputPaths] "${currentPath}" is declared sensitive in the output schema but is missing from the actual output; redaction for this path will be a no-op`)
-        }
         return [currentPath]
     }
     const nested = readAt(rawValue, field.key)
@@ -75,6 +102,7 @@ type WalkParams = {
 
 export type SensitiveOutputField = {
     key: string
+    value?: string
     sensitive?: boolean
     dynamicKey?: boolean
     children?: SensitiveOutputField[]
