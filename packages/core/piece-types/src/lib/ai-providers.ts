@@ -364,6 +364,11 @@ export const aiProviderUtils = {
     isCuratedChatModelId,
 }
 
+export const AI_PROVIDER_ENTITY_TYPES = {
+    provider: 'AIProvider',
+    chatProvider: 'ChatAiProvider',
+} as const
+
 export type AIWebSearchMode = 'native' | 'plugin'
 
 export type OpenAiCompatibleVendor =
