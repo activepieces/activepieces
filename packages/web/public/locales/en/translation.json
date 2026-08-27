@@ -2525,9 +2525,9 @@
   "Activepieces AI": "Activepieces AI",
   "Close Edit with AI": "Close Edit with AI",
   "Message the builder...": "Message the builder...",
-  "Tell me what to change": "Tell me what to change",
-  "Describe it in your own words and I will update {name} for you — its instructions, its tools, its model.": "Describe it in your own words and I will update {name} for you — its instructions, its tools, its model.",
   "Draft — not published yet": "Draft — not published yet",
   "Back to the agent": "Back to the agent",
-  "Draft — not saved yet": "Draft — not saved yet"
+  "Draft — not saved yet": "Draft — not saved yet",
+  "What should change?": "What should change?",
+  "Say it plainly, the way you would to a colleague. Try “only reply to paying customers”, “add Slack and Notion”, or “switch to a cheaper model”.": "Say it plainly, the way you would to a colleague. Try “only reply to paying customers”, “add Slack and Notion”, or “switch to a cheaper model”."
 }
