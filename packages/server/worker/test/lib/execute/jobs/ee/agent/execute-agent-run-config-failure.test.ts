@@ -66,6 +66,7 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(resumed).toHaveLength(1)
         expect(resumed[0].waitpointId).toBe('waitpoint-1')
         expect(JSON.stringify(resumed[0].output)).toContain('FAILED')
+        expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
     })
 
     it('tells the chat client the turn failed instead of leaving it streaming', async () => {

@@ -370,7 +370,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 : isCreditError || isNil(runProvider)
                     ? errorMessage
                     : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
-            const failedResult = answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })
+            const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The
