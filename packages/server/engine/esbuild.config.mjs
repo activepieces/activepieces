@@ -39,6 +39,7 @@ function rebuildLogger(outfile) {
       });
       build.onEnd((result) => {
         if (result.metafile) {
+          fs.mkdirSync(path.dirname(outfile), { recursive: true });
           fs.writeFileSync(
             outfile + '.meta.json',
             JSON.stringify(result.metafile)
