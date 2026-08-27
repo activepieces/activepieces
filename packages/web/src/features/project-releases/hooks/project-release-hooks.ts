@@ -19,7 +19,7 @@ export const projectReleaseQueries = {
         projectReleaseApi.list({
           projectId: authenticationSession.getProjectId()!,
         }),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: { showErrorToast: true, loadSubsetOptions: {} },
     }),
   useProjectRelease: (releaseId: string, enabled: boolean) =>
     useQuery({

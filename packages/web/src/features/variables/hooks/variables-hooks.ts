@@ -17,7 +17,7 @@ type UseVariablesProps = {
   request: ListVariablesRequestQuery;
   extraKeys: unknown[];
   enabled?: boolean;
-  showErrorDialog?: boolean;
+  showErrorToast?: boolean;
 };
 
 export const variablesQueries = {
@@ -25,12 +25,12 @@ export const variablesQueries = {
     request,
     extraKeys,
     enabled,
-    showErrorDialog,
+    showErrorToast,
   }: UseVariablesProps) => {
     return useQuery({
       queryKey: ['variables', ...extraKeys],
-      meta: showErrorDialog
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
+      meta: showErrorToast
+        ? { showErrorToast: true, loadSubsetOptions: {} }
         : undefined,
       queryFn: () => variablesApi.list(request),
       enabled,

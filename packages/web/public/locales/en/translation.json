@@ -731,7 +731,7 @@
   "Invalid Access": "Invalid Access",
   "You tried to access a project that you do not have access to.": "You tried to access a project that you do not have access to.",
   "Failed to load data": "Failed to load data",
-  "Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.": "Something went wrong while loading your data. Your data is safe — please try again by refreshing the page.",
+  "Please refresh the page to try again.": "Please refresh the page to try again.",
   "New Table": "New Table",
   "Response stopped": "Response stopped",
   "Retry": "Retry",

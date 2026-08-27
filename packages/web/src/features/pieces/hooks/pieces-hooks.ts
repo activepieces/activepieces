@@ -211,7 +211,7 @@ export const piecesHooks = {
       enabled,
       meta:
         showErrorDialog ?? isTableQuery
-          ? { showErrorDialog: true, loadSubsetOptions: {} }
+          ? { showErrorToast: true, loadSubsetOptions: {} }
           : undefined,
     });
     return {

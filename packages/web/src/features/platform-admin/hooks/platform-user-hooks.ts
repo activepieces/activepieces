@@ -52,7 +52,7 @@ export const platformUserHooks = {
       },
       queryKey: platformUserKeys.invitations,
       staleTime: 0,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: { showErrorToast: true, loadSubsetOptions: {} },
     });
   },
 };

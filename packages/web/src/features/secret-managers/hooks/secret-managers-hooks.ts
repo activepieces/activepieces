@@ -15,11 +15,11 @@ export const secretManagersHooks = {
   useListSecretManagerConnections: ({
     connectedOnly,
     listForPlatform,
-    showErrorDialog,
+    showErrorToast,
   }: {
     connectedOnly?: boolean;
     listForPlatform?: boolean;
-    showErrorDialog?: boolean;
+    showErrorToast?: boolean;
   } = {}) => {
     const { platform } = platformHooks.useCurrentPlatform();
     const projectId = listForPlatform
@@ -37,8 +37,8 @@ export const secretManagersHooks = {
         return result.data;
       },
       enabled: platform.plan.secretManagersEnabled,
-      meta: showErrorDialog
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
+      meta: showErrorToast
+        ? { showErrorToast: true, loadSubsetOptions: {} }
         : undefined,
     });
   },

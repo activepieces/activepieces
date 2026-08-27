@@ -10,7 +10,7 @@ export const platformMcpHooks = {
       queryKey: QUERY_KEY,
       queryFn: () => platformMcpApi.get(),
       retry: false,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: { showErrorToast: true, loadSubsetOptions: {} },
     });
   },
 

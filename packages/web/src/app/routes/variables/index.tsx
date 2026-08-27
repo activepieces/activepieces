@@ -88,7 +88,7 @@ function VariablesPage() {
       name ?? '',
       projectId,
     ],
-    showErrorDialog: true,
+    showErrorToast: true,
   });
 
   const { mutateAsync: deleteVariable } =

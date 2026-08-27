@@ -41,7 +41,7 @@ const SecretManagersPage = () => {
   const { data: connections, isLoading: isLoadingConnections } =
     secretManagersHooks.useListSecretManagerConnections({
       listForPlatform: true,
-      showErrorDialog: true,
+      showErrorToast: true,
     });
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();

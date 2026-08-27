@@ -107,7 +107,7 @@ export const RunsTable = () => {
     enabled: hasSeededDefaultRange,
     staleTime: 0,
     gcTime: 0,
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
+    meta: { showErrorToast: true, loadSubsetOptions: {} },
     queryFn: () => {
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');

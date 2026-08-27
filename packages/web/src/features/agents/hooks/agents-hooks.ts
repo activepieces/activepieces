@@ -75,7 +75,7 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: { showErrorToast: true, loadSubsetOptions: {} },
     }),
   useMovePreview: ({
     id,

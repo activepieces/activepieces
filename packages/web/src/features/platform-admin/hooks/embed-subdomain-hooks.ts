@@ -24,7 +24,7 @@ export const embedSubdomainQueries = {
       queryKey: embedSubdomainKeys.current,
       queryFn: () => embedSubdomainApi.get(),
       enabled: platform.plan.embeddingEnabled && edition === ApEdition.CLOUD,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+      meta: { showErrorToast: true, loadSubsetOptions: {} },
       refetchInterval: (query) => {
         const data = query.state.data;
         if (data?.status === EmbedSubdomainStatus.PENDING_VERIFICATION) {

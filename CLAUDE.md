@@ -59,9 +59,9 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Query Error Handling
 
-- **Global error dialog via `meta`** — `app.tsx` has a `QueryCache.onError` handler that shows an error dialog when `query.meta?.showErrorDialog` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorDialog: true }` to the query options.
-- **Do NOT add** `showErrorDialog` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
-- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorDialog: true }`.
+- **Global error toast via `meta`** — `query-client.ts` has a `QueryCache.onError` handler that shows a red error toast when `query.meta?.showErrorToast` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorToast: true }` to the query options.
+- **Do NOT add** `showErrorToast` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
+- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorToast: true }`.
 
 ## Key Utilities (`@activepieces/shared`)
 
