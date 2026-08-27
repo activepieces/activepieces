@@ -5,6 +5,7 @@ import { formErrors } from '../../form-errors'
 import { ColorName } from '../../management/project/project'
 
 const MAX_AGENT_TEXT_LENGTH = 51_200
+const MAX_SUGGESTED_AGENT_TOOLS = 4
 const MAX_AGENT_TOOLS = 100
 const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
@@ -86,7 +87,7 @@ const CreateAgentRequest = z.object({
 
 const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial()
 
-const DraftAgentResponse = z.object({
+const AgentDraftFields = z.object({
     displayName: z.string().min(1, formErrors.required).max(MAX_AGENT_NAME_LENGTH),
     description: z.string().max(MAX_AGENT_NAME_LENGTH),
     icon: z.enum(AgentIcon).catch(AgentIcon.BOT),
@@ -94,7 +95,13 @@ const DraftAgentResponse = z.object({
     instructions: z.string().min(1, formErrors.required).max(MAX_AGENT_TEXT_LENGTH),
 })
 
-const AgentTemplate = DraftAgentResponse.extend({ id: z.string() })
+const DraftAgentResponse = AgentDraftFields.extend({
+    tools: z.array(AgentTool).max(MAX_SUGGESTED_AGENT_TOOLS),
+    provider: Nullable(z.enum(AIProviderName)),
+    modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
+})
+
+const AgentTemplate = AgentDraftFields.extend({ id: z.string() })
 
 const DraftAgentRequest = z.object({
     projectId: ApId,
@@ -122,6 +129,7 @@ export {
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
     DraftAgentRequest,
+    AgentDraftFields,
     DraftAgentResponse,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
@@ -134,6 +142,7 @@ export {
     MAX_AGENT_STEP_BUDGET,
     MAX_AGENT_TEXT_LENGTH,
     MAX_AGENT_TOOLS,
+    MAX_SUGGESTED_AGENT_TOOLS,
     UpdateAgentRequest,
 }
 
@@ -143,6 +152,7 @@ export type AgentConfig = z.infer<typeof AgentConfig>
 export type AgentTemplate = z.infer<typeof AgentTemplate>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
+export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>
