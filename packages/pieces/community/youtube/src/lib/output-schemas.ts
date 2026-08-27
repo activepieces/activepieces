@@ -202,28 +202,225 @@ const captionItemFields: Fields = [
   ] },
 ];
 
-const pagedEnvelope = (label: string, itemFields: Fields, itemLabelKey: string, withRegionCode: boolean): OutputSchema => ({
+
+const videoItemFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Video ID' },
+  { key: 'snippet', label: 'Snippet', children: [
+    { key: 'publishedAt', label: 'Published At', format: 'datetime' },
+    { key: 'channelId', label: 'Channel ID' },
+    { key: 'channelTitle', label: 'Channel Title' },
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'tags', label: 'Tags' },
+    { key: 'categoryId', label: 'Category ID' },
+    { key: 'liveBroadcastContent', label: 'Live Broadcast Content' },
+    { key: 'defaultLanguage', label: 'Default Language' },
+    { key: 'defaultAudioLanguage', label: 'Default Audio Language' },
+    { key: 'localized', label: 'Localized', children: [
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    ] },
+    { key: 'thumbnails', label: 'Thumbnails', children: fullThumbnailSetFields },
+  ] },
+  { key: 'contentDetails', label: 'Content Details', children: [
+    { key: 'duration', label: 'Duration (ISO 8601)' },
+    { key: 'dimension', label: 'Dimension' },
+    { key: 'definition', label: 'Definition' },
+    { key: 'caption', label: 'Has Captions' },
+    { key: 'licensedContent', label: 'Licensed Content', format: 'boolean' },
+    { key: 'projection', label: 'Projection' },
+  ] },
+  { key: 'statistics', label: 'Statistics', children: [
+    { key: 'viewCount', label: 'View Count' },
+    { key: 'likeCount', label: 'Like Count' },
+    { key: 'favoriteCount', label: 'Favorite Count' },
+    { key: 'commentCount', label: 'Comment Count' },
+  ] },
+  { key: 'status', label: 'Status', children: [
+    { key: 'uploadStatus', label: 'Upload Status' },
+    { key: 'privacyStatus', label: 'Privacy Status' },
+    { key: 'license', label: 'License' },
+    { key: 'embeddable', label: 'Embeddable', format: 'boolean' },
+    { key: 'publicStatsViewable', label: 'Public Stats Viewable', format: 'boolean' },
+    { key: 'madeForKids', label: 'Made For Kids', format: 'boolean' },
+  ] },
+];
+
+const channelItemFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Channel ID' },
+  { key: 'snippet', label: 'Snippet', children: [
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'customUrl', label: 'Custom URL' },
+    { key: 'publishedAt', label: 'Created At', format: 'datetime' },
+    { key: 'country', label: 'Country' },
+    { key: 'localized', label: 'Localized', children: [
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    ] },
+    { key: 'thumbnails', label: 'Thumbnails', children: basicThumbnailSetFields },
+  ] },
+  { key: 'statistics', label: 'Statistics', children: [
+    { key: 'viewCount', label: 'View Count' },
+    { key: 'subscriberCount', label: 'Subscriber Count' },
+    { key: 'hiddenSubscriberCount', label: 'Hidden Subscriber Count', format: 'boolean' },
+    { key: 'videoCount', label: 'Video Count' },
+  ] },
+  { key: 'contentDetails', label: 'Content Details', children: [
+    { key: 'relatedPlaylists', label: 'Related Playlists', children: [
+      { key: 'uploads', label: 'Uploads Playlist ID' },
+      { key: 'likes', label: 'Likes Playlist ID' },
+    ] },
+  ] },
+];
+
+const playlistFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Playlist ID' },
+  { key: 'snippet', label: 'Snippet', children: [
+    { key: 'publishedAt', label: 'Created At', format: 'datetime' },
+    { key: 'channelId', label: 'Channel ID' },
+    { key: 'channelTitle', label: 'Channel Title' },
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'localized', label: 'Localized', children: [
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    ] },
+    { key: 'thumbnails', label: 'Thumbnails', children: fullThumbnailSetFields },
+  ] },
+  { key: 'contentDetails', label: 'Content Details', children: [
+    { key: 'itemCount', label: 'Item Count', format: 'number' },
+  ] },
+  { key: 'status', label: 'Status', children: [
+    { key: 'privacyStatus', label: 'Privacy Status' },
+  ] },
+];
+
+const commentSnippetFields: Fields = [
+  { key: 'channelId', label: 'Channel ID' },
+  { key: 'videoId', label: 'Video ID' },
+  { key: 'textDisplay', label: 'Text (HTML)', format: 'html' },
+  { key: 'textOriginal', label: 'Text' },
+  { key: 'authorDisplayName', label: 'Author' },
+  { key: 'authorProfileImageUrl', label: 'Author Avatar', format: 'url' },
+  { key: 'authorChannelUrl', label: 'Author Channel URL', format: 'url' },
+  { key: 'authorChannelId', label: 'Author Channel', children: [{ key: 'value', label: 'Channel ID' }] },
+  { key: 'canRate', label: 'Can Rate', format: 'boolean' },
+  { key: 'viewerRating', label: 'Viewer Rating' },
+  { key: 'likeCount', label: 'Like Count', format: 'number' },
+  { key: 'publishedAt', label: 'Published At', format: 'datetime' },
+  { key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+];
+
+const commentResourceFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Comment ID' },
+  { key: 'snippet', label: 'Snippet', children: commentSnippetFields },
+];
+
+const commentThreadFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Thread ID' },
+  { key: 'snippet', label: 'Snippet', children: [
+    { key: 'channelId', label: 'Channel ID' },
+    { key: 'videoId', label: 'Video ID' },
+    { key: 'canReply', label: 'Can Reply', format: 'boolean' },
+    { key: 'isPublic', label: 'Is Public', format: 'boolean' },
+    { key: 'totalReplyCount', label: 'Reply Count', format: 'number' },
+    { key: 'topLevelComment', label: 'Top Level Comment', children: commentResourceFields },
+  ] },
+  { key: 'replies', label: 'Replies', children: [
+    { key: 'comments', label: 'Comments', listItems: commentResourceFields, labelKey: 'id' },
+  ] },
+];
+
+const listEnvelope = ({
+  label,
+  itemFields,
+  itemLabelKey,
+  withPageInfo = true,
+  withNextPageToken = true,
+  withPrevPageToken = true,
+  withRegionCode = false,
+}: {
+  label: string;
+  itemFields: Fields;
+  itemLabelKey: string;
+  withPageInfo?: boolean;
+  withNextPageToken?: boolean;
+  withPrevPageToken?: boolean;
+  withRegionCode?: boolean;
+}): OutputSchema => ({
   fields: [
     { key: 'kind', label: 'Kind' },
     { key: 'etag', label: 'ETag' },
-    { key: 'nextPageToken', label: 'Next Page Token' },
-    { key: 'prevPageToken', label: 'Previous Page Token' },
+    ...(withNextPageToken ? [{ key: 'nextPageToken', label: 'Next Page Token' }] : []),
+    ...(withPrevPageToken ? [{ key: 'prevPageToken', label: 'Previous Page Token' }] : []),
     ...(withRegionCode ? [{ key: 'regionCode', label: 'Region Code' }] : []),
-    { key: 'pageInfo', label: 'Page Info', children: pageInfoFields },
+    ...(withPageInfo ? [{ key: 'pageInfo', label: 'Page Info', children: pageInfoFields }] : []),
     { key: 'items', label, listItems: itemFields, labelKey: itemLabelKey },
   ],
 });
 
-const plainEnvelope = (label: string, itemFields: Fields, itemLabelKey: string): OutputSchema => ({
-  fields: [
-    { key: 'kind', label: 'Kind' },
-    { key: 'etag', label: 'ETag' },
-    { key: 'items', label, listItems: itemFields, labelKey: itemLabelKey },
-  ],
-});
+
 
 export const newVideoTriggerOutputSchema: OutputSchema = { fields: newVideoTriggerFields };
 
-export const searchOutputSchema: OutputSchema = pagedEnvelope('Results', searchItemFields, 'etag', true);
-export const listPlaylistItemsOutputSchema: OutputSchema = pagedEnvelope('Playlist Items', playlistItemFields, 'id', false);
-export const listCaptionsOutputSchema: OutputSchema = plainEnvelope('Captions', captionItemFields, 'id');
+export const searchOutputSchema: OutputSchema = listEnvelope({
+  label: 'Results',
+  itemFields: searchItemFields,
+  itemLabelKey: 'etag',
+  withRegionCode: true,
+});
+
+export const listPlaylistItemsOutputSchema: OutputSchema = listEnvelope({
+  label: 'Playlist Items',
+  itemFields: playlistItemFields,
+  itemLabelKey: 'id',
+});
+
+export const listCaptionsOutputSchema: OutputSchema = listEnvelope({
+  label: 'Captions',
+  itemFields: captionItemFields,
+  itemLabelKey: 'id',
+  withPageInfo: false,
+  withNextPageToken: false,
+  withPrevPageToken: false,
+});
+
+export const getVideoOutputSchema: OutputSchema = listEnvelope({
+  label: 'Videos',
+  itemFields: videoItemFields,
+  itemLabelKey: 'id',
+  withNextPageToken: false,
+  withPrevPageToken: false,
+});
+
+export const getChannelOutputSchema: OutputSchema = listEnvelope({
+  label: 'Channels',
+  itemFields: channelItemFields,
+  itemLabelKey: 'id',
+  withNextPageToken: false,
+  withPrevPageToken: false,
+});
+
+export const listPlaylistsOutputSchema: OutputSchema = listEnvelope({
+  label: 'Playlists',
+  itemFields: playlistFields,
+  itemLabelKey: 'id',
+});
+
+export const listCommentsOutputSchema: OutputSchema = listEnvelope({
+  label: 'Comment Threads',
+  itemFields: commentThreadFields,
+  itemLabelKey: 'id',
+  withPrevPageToken: false,
+});
