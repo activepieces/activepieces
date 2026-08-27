@@ -19,12 +19,18 @@ import {
   ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
+  Rocket,
   Settings2,
   Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  unstable_useBlocker,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -33,6 +39,14 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -341,6 +355,59 @@ const ConfigureFields = ({
   </>
 );
 
+// Leaving with unsaved edits loses them, and there is no draft to come back to now that saving is
+// what goes live. The blocker covers moving inside the app; beforeunload covers a closed tab.
+const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
+  const blocker = unstable_useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasChanges && currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  useEffect(() => {
+    if (!hasChanges) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasChanges]);
+
+  return blocker;
+};
+
+const LeaveWithoutSavingDialog = ({
+  blocker,
+}: {
+  blocker: ReturnType<typeof unstable_useBlocker>;
+}) => (
+  <Dialog
+    open={blocker.state === 'blocked'}
+    onOpenChange={(open) => {
+      if (!open) blocker.reset?.();
+    }}
+  >
+    <DialogContent className="max-w-[420px]">
+      <DialogHeader>
+        <DialogTitle>{t('Leave without saving?')}</DialogTitle>
+        <DialogDescription>
+          {t(
+            'These edits have not gone live yet. Leave now and they are discarded.',
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => blocker.reset?.()}>
+          {t('Keep editing')}
+        </Button>
+        <Button variant="destructive" onClick={() => blocker.proceed?.()}>
+          {t('Discard changes')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
 const AgentEditScreen = ({
   agent,
   onExit,
@@ -364,24 +431,23 @@ const AgentEditScreen = ({
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
-  const publishAgent = agentsMutations.usePublishAgent({ id: agent.id });
+  const [justLaunched, setJustLaunched] = useState(false);
 
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
   // The model selector fills itself in on mount, which react-hook-form counts as the user editing.
   const hasChanges = JSON.stringify(values) !== JSON.stringify(defaults);
-  const publishedIsCurrent =
-    !isNil(agent.published) &&
-    JSON.stringify(agent.published) === JSON.stringify(agent.draft);
-  const canPublish = !hasChanges && !publishedIsCurrent && !formNeedsModel;
+  const leaveBlocker = useWarnBeforeLosingChanges(hasChanges);
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         form.reset(values);
-        toast(t('Agent saved'));
+        setJustLaunched(true);
+        window.setTimeout(() => setJustLaunched(false), 1600);
+        toast(t('Live — every flow using this agent just got the update'));
       },
       onError: (error) =>
         form.setError('root.serverError', {
@@ -396,6 +462,7 @@ const AgentEditScreen = ({
 
   return (
     <Form {...form}>
+      <LeaveWithoutSavingDialog blocker={leaveBlocker} />
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
         className="flex h-full w-full min-h-0 flex-col"
@@ -417,30 +484,35 @@ const AgentEditScreen = ({
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
               {hasChanges
                 ? t('Unsaved changes')
-                : publishedIsCurrent
-                ? t('Published')
-                : isNil(agent.published)
-                ? t('Not published yet')
-                : t('Changes not published')}
+                : justLaunched
+                ? t('Live')
+                : formNeedsModel
+                ? t('Needs a model before it can run')
+                : t('Live — flows using this agent run these settings')}
             </span>
           </div>
           <Button
             type="submit"
-            variant="outline"
             loading={updateAgent.isPending}
             disabled={!hasChanges}
-            className="h-[38px] shrink-0 rounded-lg px-[18px]"
+            className="h-[38px] shrink-0 gap-2 overflow-hidden rounded-lg px-[18px]"
           >
-            {t('Save changes')}
-          </Button>
-          <Button
-            type="button"
-            loading={publishAgent.isPending}
-            disabled={!canPublish}
-            onClick={() => publishAgent.mutate()}
-            className="h-[38px] shrink-0 rounded-lg px-[18px]"
-          >
-            {t('Publish')}
+            <motion.span
+              className="flex items-center"
+              animate={
+                justLaunched
+                  ? { x: 26, y: -26, rotate: 12, opacity: 0 }
+                  : { x: 0, y: 0, rotate: 0, opacity: 1 }
+              }
+              transition={
+                justLaunched
+                  ? { duration: 0.5, ease: 'easeOut' }
+                  : { duration: 0.2, delay: 0.35 }
+              }
+            >
+              <Rocket size={15} />
+            </motion.span>
+            {justLaunched ? t('Live') : t('Save and go live')}
           </Button>
         </div>
 
@@ -471,10 +543,10 @@ const AgentEditScreen = ({
             </div>
             <ScrollArea className="min-h-0 grow">
               <div className="flex flex-col gap-5 p-[18px]">
-                {!publishedIsCurrent && (
+                {hasChanges && (
                   <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 text-muted-foreground">
                     {t(
-                      'Flows run the published version. Publish to make these settings the ones they use. Talking to the agent here always uses your latest saved changes.',
+                      'Saving goes live right away. Every flow using this agent picks up these settings on its next run.',
                     )}
                   </p>
                 )}

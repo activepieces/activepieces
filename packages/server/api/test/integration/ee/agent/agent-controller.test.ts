@@ -115,16 +115,36 @@ describe('agent publish', () => {
         expect(response.json().published).toStrictEqual(response.json().draft)
     })
 
-    it('leaves the published copy alone when the draft moves on', async () => {
+    // Saving publishes, so there is one version. A second version means anyone looking at a flow has
+    // to ask which one it runs, and answering that needs history nobody asked for.
+    it('carries the published copy along when the draft is saved', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await ctx.post(`/v1/agents/${agent.id}/publish`)
 
         await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Rewritten.' } })
 
         const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
         expect(after.draft.instructions).toBe('Rewritten.')
-        expect(after.published.instructions).toBe('Draft launch posts.')
+        expect(after.published.instructions).toBe('Rewritten.')
+    })
+
+    it('publishes on the first save, so a flow can run an agent nobody published by hand', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        expect(agent.published).toBeNull()
+
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Now with a description.' })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).not.toBeNull()
+    })
+
+    it('publishes nothing while the instructions are empty, because there is nothing runnable to pin', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '' } })
+
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Still empty.' })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
     })
 
     it.each([['spaces', '   '], ['tabs', '\t\t'], ['newlines', '\n\n'], ['empty', '']])(
