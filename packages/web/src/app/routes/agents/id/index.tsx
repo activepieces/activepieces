@@ -406,6 +406,19 @@ const LeaveWithoutSavingDialog = ({
   </Dialog>
 );
 
+const formValuesOf = (agent: Agent): ConfigureAgentInput => ({
+  displayName: agent.displayName,
+  description: agent.description ?? '',
+  icon: agent.icon,
+  color: agent.color,
+  draft: agent.draft,
+});
+
+const liveValuesOf = (agent: Agent): ConfigureAgentInput | null =>
+  isNil(agent.published)
+    ? null
+    : { ...formValuesOf(agent), draft: agent.published };
+
 const AgentEditScreen = ({
   agent,
   onExit,
@@ -416,16 +429,12 @@ const AgentEditScreen = ({
   onEdited: () => void;
 }) => {
   const [tab, setTab] = useState('configure');
-  const defaults: ConfigureAgentInput = {
-    displayName: agent.displayName,
-    description: agent.description ?? '',
-    icon: agent.icon,
-    color: agent.color,
-    draft: agent.draft,
-  };
+  const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
+    formValuesOf(agent),
+  );
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: defaults,
+    defaultValues: syncedDraft,
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
@@ -434,15 +443,26 @@ const AgentEditScreen = ({
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
-  // The model selector fills itself in on mount, which react-hook-form counts as the user editing.
-  const hasChanges = JSON.stringify(values) !== JSON.stringify(defaults);
-  const leaveBlocker = useWarnBeforeLosingChanges(hasChanges);
+  const live = liveValuesOf(agent);
+  const hasChanges =
+    isNil(live) || JSON.stringify(values) !== JSON.stringify(live);
+  const unsavedTyping = JSON.stringify(values) !== JSON.stringify(syncedDraft);
+  const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
+
+  useEffect(() => {
+    const fromServer = formValuesOf(agent);
+    if (JSON.stringify(fromServer) === JSON.stringify(syncedDraft)) return;
+    if (unsavedTyping) return;
+    form.reset(fromServer);
+    setSyncedDraft(fromServer);
+  }, [agent, syncedDraft, unsavedTyping, form]);
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         form.reset(values);
+        setSyncedDraft(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
@@ -480,12 +500,14 @@ const AgentEditScreen = ({
               {agent.displayName}
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {hasChanges
-                ? t('Unsaved changes')
-                : justLaunched
+              {justLaunched
                 ? t('Live')
                 : formNeedsModel
                 ? t('Needs a model before it can run')
+                : isNil(live)
+                ? t('Not live yet')
+                : hasChanges
+                ? t('Changes not live yet')
                 : t('Live — flows using this agent run these settings')}
             </span>
           </div>
@@ -544,7 +566,7 @@ const AgentEditScreen = ({
                 {hasChanges && (
                   <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 text-muted-foreground">
                     {t(
-                      'Saving goes live right away. Every flow using this agent picks up these settings on its next run.',
+                      'These changes are not live. Save and go live to hand them to this agent and every flow using it.',
                     )}
                   </p>
                 )}
@@ -656,7 +678,7 @@ const AgentEditorContent = () => {
   if (isEditing) {
     return (
       <AgentEditScreen
-        key={agent.updated}
+        key={agent.id}
         agent={agent}
         onExit={() => setEditing(false)}
         onEdited={refetchAgent}

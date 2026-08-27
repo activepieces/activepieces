@@ -2532,8 +2532,10 @@
   "Needs a model before it can run": "Needs a model before it can run",
   "Live — flows using this agent run these settings": "Live — flows using this agent run these settings",
   "Live — every flow using this agent just got the update": "Live — every flow using this agent just got the update",
-  "Saving goes live right away. Every flow using this agent picks up these settings on its next run.": "Saving goes live right away. Every flow using this agent picks up these settings on its next run.",
   "Leave without saving?": "Leave without saving?",
   "These edits have not gone live yet. Leave now and they are discarded.": "These edits have not gone live yet. Leave now and they are discarded.",
-  "Keep editing": "Keep editing"
+  "Keep editing": "Keep editing",
+  "Not live yet": "Not live yet",
+  "Changes not live yet": "Changes not live yet",
+  "These changes are not live. Save and go live to hand them to this agent and every flow using it.": "These changes are not live. Save and go live to hand them to this agent and every flow using it."
 }

@@ -53,6 +53,29 @@ describe('starting a builder conversation', () => {
         expect(response.json().agentId).toBe(agent.id)
     })
 
+    it('starts a fresh thread each time, so reopening does not resume an old edit session', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const first = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+        const second = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+
+        expect(first.statusCode).toBe(StatusCodes.CREATED)
+        expect(second.statusCode).toBe(StatusCodes.CREATED)
+        expect(second.json().id).not.toBe(first.json().id)
+    })
+
+    it('keeps the builder threads out of the agent conversation list', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(CONVERSATIONS_URL, { agentId: agent.id, builder: true })
+
+        const listed = await ctx.get(`${CONVERSATIONS_URL}?agentId=${agent.id}&limit=20`)
+
+        expect(listed.statusCode).toBe(StatusCodes.OK)
+        expect(listed.json().data).toEqual([])
+    })
+
     it('builds a new agent in a project the caller names', async () => {
         const ctx = await context()
 
@@ -187,7 +210,8 @@ describe('what the builder is told', () => {
         expect(prompt).toContain('Inbox triage')
         expect(prompt).toContain('Sort unread mail.')
         expect(prompt).toContain('Tools: none')
-        expect(prompt).toContain('nothing runs this agent yet')
+        expect(prompt).toContain('Save and go live')
+        expect(prompt).not.toContain('until it is published')
     })
 
     it('says there is no agent yet when it is starting one', () => {
