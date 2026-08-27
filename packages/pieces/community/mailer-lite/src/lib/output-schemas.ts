@@ -37,6 +37,19 @@ const unsubscribedSubscriberFields: Fields = [
   { key: 'unsubscribe_reason', label: 'Unsubscribe Reason' },
 ];
 
+
+const webhookSubscriberFields: Fields = [
+  ...subscriberFields,
+  { key: 'deleted_at', label: 'Deleted At', format: 'datetime' },
+  { key: 'forget_at', label: 'Forget At', format: 'datetime' },
+  { key: 'location', label: 'Location' },
+];
+
+const webhookEnvelopeFields: Fields = [
+  { key: 'account_id', label: 'Account ID' },
+  { key: 'api_version', label: 'API Version' },
+];
+
 const groupFields: Fields = [
   { key: 'id', label: 'Group ID' },
   { key: 'name', label: 'Name' },
@@ -122,3 +135,22 @@ export const deleteSubscriberOutputSchema: OutputSchema = {
   ],
 };
 
+export const subscriberEventTriggerOutputSchema: OutputSchema = {
+  fields: [
+    ...webhookSubscriberFields,
+    { key: 'event', label: 'Event' },
+    ...webhookEnvelopeFields,
+  ],
+};
+
+export const subscriberAddedToGroupTriggerOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'type', label: 'Event' },
+    { key: 'subscriber', label: 'Subscriber', children: webhookSubscriberFields },
+    { key: 'group', label: 'Group', children: [
+      { key: 'id', label: 'Group ID' },
+      { key: 'name', label: 'Name' },
+    ] },
+    ...webhookEnvelopeFields,
+  ],
+};
