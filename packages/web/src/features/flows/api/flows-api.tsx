@@ -24,7 +24,10 @@ export const flowsApi = {
   },
   create(request: CreateFlowRequest) {
     return api.post<PopulatedFlow>('/v1/flows', request).then((flow) => {
-      projectCollectionUtils.markFlowActivity(flow.projectId);
+      projectCollectionUtils.markFlowActivity({
+        projectId: flow.projectId,
+        lastFlowUpdated: flow.updated,
+      });
       return flow;
     });
   },
@@ -46,7 +49,10 @@ export const flowsApi = {
         throw error;
       })
       .then((flow) => {
-        projectCollectionUtils.markFlowActivity(flow.projectId);
+        projectCollectionUtils.markFlowActivity({
+          projectId: flow.projectId,
+          lastFlowUpdated: flow.updated,
+        });
         return flow;
       });
   },
@@ -71,7 +77,9 @@ export const flowsApi = {
     );
   },
   delete(flowId: string) {
-    return api.delete<void>(`/v1/flows/${flowId}`);
+    return api.delete<void>(`/v1/flows/${flowId}`).then(() => {
+      projectCollectionUtils.refetchProjects();
+    });
   },
   count(query: CountFlowsRequest) {
     return api.get<number>('/v1/flows/count', query);

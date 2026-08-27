@@ -154,7 +154,13 @@ export const projectCollectionUtils = {
     projectCollection.delete(projectIds);
   },
   refetchProjects: () => projectCollection.utils.refetch(),
-  markFlowActivity: (projectId: string) => {
+  markFlowActivity: ({
+    projectId,
+    lastFlowUpdated,
+  }: {
+    projectId: string;
+    lastFlowUpdated: string;
+  }) => {
     const write = () => {
       const project = projectCollection.get(projectId);
       if (isNil(project)) {
@@ -164,7 +170,7 @@ export const projectCollectionUtils = {
         ...project,
         analytics: {
           ...project.analytics,
-          lastFlowUpdated: new Date().toISOString(),
+          lastFlowUpdated,
         },
       });
     };
