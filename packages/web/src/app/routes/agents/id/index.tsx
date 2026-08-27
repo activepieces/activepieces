@@ -16,13 +16,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Check,
+  ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
-  Circle,
   Settings2,
   Sparkles,
-  X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -134,58 +132,6 @@ const requirementsFor = (agent: Agent): AgentRequirement[] => {
     },
   ];
 };
-
-const AgentNotReady = ({
-  requirements,
-  onConfigure,
-}: {
-  requirements: AgentRequirement[];
-  onConfigure: () => void;
-}) => (
-  <div className="flex h-full flex-col items-center justify-center gap-5 px-6">
-    <div className="flex flex-col items-center gap-2 text-center">
-      <p className="text-xl leading-7 font-semibold tracking-[-0.02em]">
-        {t('Almost ready')}
-      </p>
-      <p className="max-w-[420px] text-sm leading-[150%] text-muted-foreground">
-        {t('Fill these in and you can start talking to this agent.')}
-      </p>
-    </div>
-
-    <ul className="flex w-full max-w-[420px] flex-col gap-2">
-      {requirements.map((requirement) => (
-        <li
-          key={requirement.label}
-          className="flex items-start gap-3 rounded-[10px] border border-border p-3"
-        >
-          {requirement.met ? (
-            <Check size={16} className="mt-[3px] shrink-0 text-success-700" />
-          ) : (
-            <Circle size={16} className="mt-[3px] shrink-0 text-neutral-400" />
-          )}
-          <span className="flex min-w-0 flex-col gap-[2px]">
-            <span
-              className={cn(
-                'text-sm font-semibold',
-                requirement.met && 'text-muted-foreground line-through',
-              )}
-            >
-              {requirement.label}
-            </span>
-            <span className="text-[13px] leading-4 text-muted-foreground">
-              {requirement.hint}
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
-
-    <Button className="gap-2" onClick={onConfigure}>
-      <Settings2 size={16} />
-      {t('Finish setting up')}
-    </Button>
-  </div>
-);
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -395,28 +341,29 @@ const ConfigureFields = ({
   </>
 );
 
-const ConfigurePanel = ({
-  agentId,
-  icon,
-  color,
-  displayName,
-  defaults,
-  onCollapse,
+const AgentEditScreen = ({
+  agent,
+  onExit,
+  onEdited,
 }: {
-  agentId: string;
-  icon: AgentIcon;
-  color: ColorName;
-  displayName: string;
-  defaults: ConfigureAgentInput;
-  onCollapse: () => void;
+  agent: Agent;
+  onExit: () => void;
+  onEdited: () => void;
 }) => {
   const [tab, setTab] = useState('configure');
+  const defaults: ConfigureAgentInput = {
+    displayName: agent.displayName,
+    description: agent.description ?? '',
+    icon: agent.icon,
+    color: agent.color,
+    draft: agent.draft,
+  };
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: defaults,
     mode: 'onChange',
   });
-  const updateAgent = agentsMutations.useUpdateAgent({ id: agentId });
+  const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
 
   const values = form.watch();
   const formNeedsModel =
@@ -446,72 +393,80 @@ const ConfigurePanel = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex h-full min-h-0 flex-col"
+        className="flex h-full w-full min-h-0 flex-col"
       >
-        <div className="flex shrink-0 flex-col border-b border-border">
-          <div className="flex items-center gap-[14px] px-[18px] py-3">
-            <AgentMark icon={icon} color={color} size="sm" />
-            <div className="flex min-w-0 grow basis-0 flex-col">
-              <span className="truncate text-sm font-semibold">
-                {displayName}
-              </span>
-              <span className="text-[13px] leading-4 text-muted-foreground">
-                {t('Agent configuration')}
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t('Collapse configuration')}
-              onClick={onCollapse}
-            >
-              <ChevronsRight size={16} />
-            </Button>
+        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+          <button
+            type="button"
+            aria-label={t('Back to the agent')}
+            onClick={onExit}
+            className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <AgentMark icon={agent.icon} color={agent.color} />
+          <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
+            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
+              {agent.displayName}
+            </span>
+            <span className="truncate text-[13px] leading-4 text-muted-foreground">
+              {hasChanges
+                ? t('Draft — not saved yet')
+                : isNil(agent.published)
+                ? t('Draft — not published yet')
+                : t('Published')}
+            </span>
           </div>
-          <Tabs value={tab} onValueChange={setTab} className="px-[18px]">
-            <TabsList variant="outline" className="gap-[22px]">
-              <TabsTrigger
-                value="configure"
-                variant="outline"
-                className="gap-2"
-              >
-                {t('Configure')}
-                {formNeedsModel && (
-                  <span className="size-[7px] rounded-full bg-destructive" />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settings" variant="outline">
-                {t('Settings')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        <ScrollArea className="min-h-0 grow">
-          <div className="flex flex-col gap-5 p-[18px]">
-            {tab === 'configure' ? (
-              <ConfigureFields form={form} needsModel={formNeedsModel} />
-            ) : (
-              <SettingsFields form={form} />
-            )}
-            {form.formState.errors.root?.serverError && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.root.serverError.message}
-              </p>
-            )}
-          </div>
-        </ScrollArea>
-
-        <div className="flex shrink-0 items-center justify-end gap-[10px] border-t border-border px-[18px] py-[14px]">
           <Button
             type="submit"
             loading={updateAgent.isPending}
             disabled={!hasChanges}
-            className="h-[38px] rounded-lg px-[18px]"
+            className="h-[38px] shrink-0 rounded-lg px-[18px]"
           >
             {t('Save changes')}
           </Button>
+        </div>
+
+        <div className="flex min-h-0 grow">
+          <div className="flex min-w-0 grow basis-0 flex-col border-r border-border">
+            <EditWithAIPane agent={agent} onEdited={onEdited} />
+          </div>
+
+          <div className="flex w-[452px] shrink-0 flex-col">
+            <div className="flex h-[52px] shrink-0 items-center border-b border-border px-[18px]">
+              <Tabs value={tab} onValueChange={setTab}>
+                <TabsList variant="outline" className="gap-[22px]">
+                  <TabsTrigger
+                    value="configure"
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    {t('Configure')}
+                    {formNeedsModel && (
+                      <span className="size-[7px] rounded-full bg-destructive" />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" variant="outline">
+                    {t('Settings')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            <ScrollArea className="min-h-0 grow">
+              <div className="flex flex-col gap-5 p-[18px]">
+                {tab === 'configure' ? (
+                  <ConfigureFields form={form} needsModel={formNeedsModel} />
+                ) : (
+                  <SettingsFields form={form} />
+                )}
+                {form.formState.errors.root?.serverError && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.root.serverError.message}
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
       </form>
     </Form>
@@ -535,11 +490,9 @@ const AgentBuilderWelcome = ({ displayName }: { displayName: string }) => (
 
 const EditWithAIPane = ({
   agent,
-  onClose,
   onEdited,
 }: {
   agent: Agent;
-  onClose: () => void;
   onEdited: () => void;
 }) => (
   <div className="flex h-full min-h-0 flex-col">
@@ -549,15 +502,6 @@ const EditWithAIPane = ({
       <span className="grow basis-0 truncate text-[13px] text-muted-foreground">
         {t('Activepieces AI')}
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label={t('Close Edit with AI')}
-        onClick={onClose}
-      >
-        <X size={16} />
-      </Button>
     </div>
     <div className="flex min-h-0 grow flex-col">
       <AIChatBox
@@ -576,7 +520,7 @@ const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
   const queryClient = useQueryClient();
   const agentsAvailable = useAgentsAvailable();
-  const [configureOpen, setConfigureOpen] = useState<boolean>();
+  const [editing, setEditing] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
@@ -614,7 +558,20 @@ const AgentEditorContent = () => {
 
   const requirements = requirementsFor(agent);
   const needsModel = requirements.some((requirement) => !requirement.met);
-  const isConfigureOpen = configureOpen ?? needsModel;
+  const isEditing = editing ?? needsModel;
+  const refetchAgent = () =>
+    queryClient.invalidateQueries({ queryKey: ['agents', 'one', agent.id] });
+
+  if (isEditing) {
+    return (
+      <AgentEditScreen
+        key={agent.updated}
+        agent={agent}
+        onExit={() => setEditing(false)}
+        onEdited={refetchAgent}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full">
@@ -657,13 +614,11 @@ const AgentEditorContent = () => {
               {agent.displayName}
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {isNil(agent.published)
-                ? t('Draft — not published yet')
-                : agent.description ?? t('No description yet')}
+              {agent.description ?? t('No description yet')}
             </span>
           </div>
           <div className="flex min-w-0 shrink items-center gap-2">
-            {agent.draft.modelName && !isConfigureOpen && (
+            {agent.draft.modelName && (
               <span className="flex h-[34px] max-w-[220px] items-center gap-[7px] overflow-hidden rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
                 <span
                   className="size-[11px] shrink-0 rounded-[3px]"
@@ -674,84 +629,38 @@ const AgentEditorContent = () => {
                 <span className="truncate">{agent.draft.modelName}</span>
               </span>
             )}
-            {!isConfigureOpen && (
-              <button
-                type="button"
-                aria-label={t('Expand configuration')}
-                onClick={() => setConfigureOpen(true)}
-                className="relative flex size-[34px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <ChevronsLeft size={16} />
-                {needsModel && (
-                  <span className="absolute top-[6px] right-[6px] size-[7px] rounded-full bg-destructive" />
-                )}
-              </button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+              onClick={() => setEditing(true)}
+            >
+              <Settings2 size={15} />
+              {t('Configure')}
+            </Button>
           </div>
         </div>
 
         <div className="flex min-h-0 grow flex-col">
-          {needsModel ? (
-            <AgentNotReady
-              requirements={requirements}
-              onConfigure={() => setConfigureOpen(true)}
-            />
-          ) : isConfigureOpen ? (
-            <EditWithAIPane
-              agent={agent}
-              onClose={() => setConfigureOpen(false)}
-              onEdited={() =>
-                queryClient.invalidateQueries({
-                  queryKey: ['agents', 'one', agent.id],
-                })
-              }
-            />
-          ) : (
-            <AIChatBox
-              key={openedConversationId ?? `new-${freshConversations}`}
-              incognito={false}
-              agentId={agent.id}
-              conversationId={openedConversationId ?? null}
-              onConversationCreated={writeConversationParam}
-              placeholder={t('Ask {name}...', { name: agent.displayName })}
-              footerNote={buildCapabilityNote(agent)}
-              emptyState={
-                <AgentChatWelcome
-                  displayName={agent.displayName}
-                  description={agent.description ?? null}
-                  icon={agent.icon}
-                  color={agent.color}
-                />
-              }
-            />
-          )}
-        </div>
-      </div>
-
-      <aside
-        className={cn(
-          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
-          isConfigureOpen ? 'w-[452px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[452px] flex-col">
-          <ConfigurePanel
-            key={agent.updated}
+          <AIChatBox
+            key={openedConversationId ?? `new-${freshConversations}`}
+            incognito={false}
             agentId={agent.id}
-            icon={agent.icon}
-            color={agent.color}
-            displayName={agent.displayName}
-            defaults={{
-              displayName: agent.displayName,
-              description: agent.description ?? '',
-              icon: agent.icon,
-              color: agent.color,
-              draft: agent.draft,
-            }}
-            onCollapse={() => setConfigureOpen(false)}
+            conversationId={openedConversationId ?? null}
+            onConversationCreated={writeConversationParam}
+            placeholder={t('Ask {name}...', { name: agent.displayName })}
+            footerNote={buildCapabilityNote(agent)}
+            emptyState={
+              <AgentChatWelcome
+                displayName={agent.displayName}
+                description={agent.description ?? null}
+                icon={agent.icon}
+                color={agent.color}
+              />
+            }
           />
         </div>
-      </aside>
+      </div>
     </div>
   );
 };
