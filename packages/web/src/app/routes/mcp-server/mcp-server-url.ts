@@ -11,6 +11,6 @@ export function useMcpServerUrl(): {
   const base = (publicUrl ?? '').replace(/\/$/, '');
   return {
     serverUrl: `${base}/mcp`,
-    isReachableFromInternet: formatUtils.urlIsNotLocalhostOrIp(base),
+    isReachableFromInternet: formatUtils.urlIsPubliclyReachable(base),
   };
 }
