@@ -115,8 +115,6 @@ describe('agent publish', () => {
         expect(response.json().published).toStrictEqual(response.json().draft)
     })
 
-    // Saving publishes, so there is one version. A second version means anyone looking at a flow has
-    // to ask which one it runs, and answering that needs history nobody asked for.
     it('carries the published copy along when the draft is saved', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

@@ -526,8 +526,6 @@ export function useAgentChat({
   }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
-  // The builder edits the agent server-side while it answers, so whoever renders this needs a
-  // signal to refetch once the turn is over. The stream is an external system, not derived state.
   const onTurnEndRef = useRef(onTurnEnd);
   onTurnEndRef.current = onTurnEnd;
   const wasStreamActiveRef = useRef(false);

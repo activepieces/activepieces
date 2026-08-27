@@ -151,9 +151,6 @@ describe('what the builder can actually reach at run time', () => {
         expect(config.agentsAvailable).toBe(true)
     })
 
-    // The builder inherits the chat surface's model, which is a tier id. A source that stores its
-    // own concrete model skips the tier resolver, and putting the builder on that side sent the
-    // tier straight to the provider, which answered "smart is not a valid model ID".
     it('resolves the tier it inherits from chat, rather than sending it to the provider', async () => {
         const ctx = await context()
         const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })

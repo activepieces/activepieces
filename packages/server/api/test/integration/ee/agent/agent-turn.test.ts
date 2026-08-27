@@ -98,8 +98,6 @@ describe('an agent conversation', () => {
 })
 
 describe('which version a conversation runs', () => {
-    // There is one version. Saving publishes, so what you see in the editor is what a conversation
-    // answers on and what every flow using this agent runs.
     it('answers on what was saved, with nothing left to publish afterwards', async () => {
         const ctx = await context()
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)

@@ -101,9 +101,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
             log,
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
-        // Saving publishes. Keeping a separate published version means anyone looking at a flow has
-        // to ask which version it runs, and answering that needs history nobody asked for. One
-        // version: what you see is what every flow using this agent runs.
         const published = agentUtils.isPublishable(draft) ? draft : agent.published
         await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })

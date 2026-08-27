@@ -139,8 +139,6 @@ function ChatBoxContent({
     }
   }, [initialConversationId, setConversationId]);
 
-  // Cards rendered inside this chat read the conversation off the store, because only the surfaces
-  // that route by conversation carry it in the URL.
   useEffect(() => {
     setStoreConversationId(conversationId ?? null);
   }, [conversationId, setStoreConversationId]);

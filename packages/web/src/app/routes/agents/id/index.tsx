@@ -355,8 +355,6 @@ const ConfigureFields = ({
   </>
 );
 
-// Leaving with unsaved edits loses them, and there is no draft to come back to now that saving is
-// what goes live. The blocker covers moving inside the app; beforeunload covers a closed tab.
 const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
   const blocker = unstable_useBlocker(
     ({ currentLocation, nextLocation }) =>

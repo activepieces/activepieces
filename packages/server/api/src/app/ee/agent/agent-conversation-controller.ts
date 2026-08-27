@@ -159,8 +159,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
-        // A conversation is where you try an agent, so it runs the draft. Flows run the published
-        // version, which is what publishing is for: it pins what they keep running while you edit.
         const agentConfig = agent?.draft ?? null
         const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
