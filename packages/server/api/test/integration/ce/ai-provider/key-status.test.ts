@@ -251,6 +251,42 @@ describe('AI provider key status', () => {
         expect((await statusOf(key.id)).status).toBe('rejected')
     })
 
+    it('drops a confirmation whose answer arrived after the key had already recovered', async () => {
+        const key = await azureKey('recovered-mid-check')
+        const health = aiProviderHealth(app!.log)
+        const before = await statusOf(key.id)
+
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 } })
+        const late = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+            throttled: false,
+            unchangedSince: before.statusUpdated,
+        })
+
+        expect(late).toBeNull()
+        expect((await statusOf(key.id)).status).toBe('active')
+    })
+
+    it('applies a confirmation when nothing moved while it ran', async () => {
+        const key = await azureKey('unchanged-during-check')
+        const health = aiProviderHealth(app!.log)
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 } })
+        const seen = await statusOf(key.id)
+
+        const applied = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+            throttled: false,
+            unchangedSince: seen.statusUpdated,
+        })
+
+        expect(applied).toBe('rejected')
+        expect((await statusOf(key.id)).status).toBe('rejected')
+    })
+
     it('takes a reported recovery at once, without asking the provider', async () => {
         const key = await azureKey('recovering')
         await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401: old failure' })

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -20,7 +20,10 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 const MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD = 500
 const MANAGED_OPENROUTER_KEY_LIMIT_RESET = 'monthly'
 
-const CONFIRM_DOWNGRADE_DEDUP_SECONDS = 60
+// A passing check must not lock out the next real failure, so the claim is a floor between
+// checks rather than a window that swallows them. A confirmed failure needs no floor: the row
+// stops being active, and only an active key asks for confirmation.
+const CONFIRM_MIN_INTERVAL_SECONDS = 10
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -193,12 +196,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         await distributedStore.runOnceWithin(
             getAiProviderConfirmKey(providerId),
-            CONFIRM_DOWNGRADE_DEDUP_SECONDS,
-            () => this.recheck({ platformId, providerId }),
+            CONFIRM_MIN_INTERVAL_SECONDS,
+            () => this.recheck({ platformId, providerId, unchangedSince: toIsoOrNull(aiProvider.statusUpdated) }),
         )
     },
 
-    async recheck({ platformId, providerId }: { platformId: PlatformId, providerId: string }): Promise<AiProviderKeyStatus> {
+    async recheck({ platformId, providerId, unchangedSince }: { platformId: PlatformId, providerId: string, unchangedSince?: string | null }): Promise<AiProviderKeyStatus> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             return aiProvider.status
@@ -206,7 +209,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await decryptRowAuth({ aiProvider, platformId })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
-        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false })
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('unchangedSince', unchangedSince) })
         return recorded ?? aiProvider.status
     },
 
@@ -276,6 +279,10 @@ function rankRows(rows: AIProviderSchema[]): AIProviderSchema[] {
         }
         return new Date(b.created).getTime() - new Date(a.created).getTime()
     })
+}
+
+function toIsoOrNull(statusUpdated: string | null): string | null {
+    return isNil(statusUpdated) ? null : new Date(statusUpdated).toISOString()
 }
 
 function provedHealthy(): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: string } {

@@ -10,7 +10,7 @@ const MAX_REASON_LENGTH = 300
 const REFRESH_UNCHANGED_AFTER_MINUTES = 15
 
 export const aiProviderHealth = (log: FastifyBaseLogger) => ({
-    async record({ platformId, providerId, signal, throttled = true }: RecordParams): Promise<AiProviderKeyStatus | null> {
+    async record({ platformId, providerId, signal, throttled = true, unchangedSince }: RecordParams): Promise<AiProviderKeyStatus | null> {
         const status = classifyProviderOutcome(signal)
         if (status === 'no_change') {
             return null
@@ -24,8 +24,9 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
                AND ("status" <> $1
                     OR "statusUpdated" IS NULL
                     OR "statusUpdated" <= now() - make_interval(mins => $5))
+               ${unchangedSinceClause(unchangedSince)}
              RETURNING "status"`,
-            [status, reason, providerId, platformId, refreshAfterMinutes],
+            [status, reason, providerId, platformId, refreshAfterMinutes, ...unchangedSinceParams(unchangedSince)],
         )
 
         const applied = Array.isArray(rows) && rows.length > 0
@@ -33,6 +34,17 @@ export const aiProviderHealth = (log: FastifyBaseLogger) => ({
         return applied ? status : null
     },
 })
+
+function unchangedSinceClause(unchangedSince: UnchangedSince): string {
+    if (unchangedSince === undefined) {
+        return ''
+    }
+    return isNil(unchangedSince) ? 'AND "statusUpdated" IS NULL' : 'AND "statusUpdated" = $6::timestamptz'
+}
+
+function unchangedSinceParams(unchangedSince: UnchangedSince): string[] {
+    return isNil(unchangedSince) ? [] : [unchangedSince]
+}
 
 function printable(text: string | undefined): string | undefined {
     return isNil(text) ? undefined : text.replace(/[\u0000-\u001f\u007f]/g, ' ')
@@ -52,4 +64,7 @@ type RecordParams = {
     providerId: string
     signal: ProviderOutcomeSignal
     throttled?: boolean
+    unchangedSince?: UnchangedSince
 }
+
+type UnchangedSince = string | null | undefined
