@@ -8,6 +8,12 @@ export const BasePropertySchema = z.object({
     displayName: z.string(),
     description: z.optional(z.string()),
     advanced: z.optional(z.boolean()),
+    displayOptions: z.optional(z.object({
+        show: z.union([
+            z.record(z.string(), z.array(z.unknown())),
+            z.array(z.record(z.string(), z.array(z.unknown()))),
+        ]),
+    })),
     width: z.optional(z.enum(['half', 'full'])),
     icon: z.optional(z.string()),
     placeholder: z.optional(z.string()),

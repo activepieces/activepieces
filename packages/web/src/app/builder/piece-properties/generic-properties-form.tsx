@@ -34,6 +34,13 @@ export const GenericPropertiesForm = React.memo(
     propertyGroups,
   }: GenericPropertiesFormProps) => {
     const form = useFormContext();
+    const allValues = form.watch();
+    const siblingValues = getValueAtPath(allValues, prefixValue);
+    const visibleProps = Object.fromEntries(
+      Object.entries(props).filter(([, property]) =>
+        isPropertyVisible({ property, siblingValues }),
+      ),
+    );
     const groupByPropName = buildGroupByPropName(propertyGroups);
     const renderedGroups = new Set<string>();
 
@@ -63,7 +70,7 @@ export const GenericPropertiesForm = React.memo(
               },
               propertyName,
               inputName: inputNameFor(propertyName),
-              property: props[propertyName],
+              property: visibleProps[propertyName],
               allowDynamicValues:
                 !isNil(propertySettings) && !options?.hideLabel,
               markdownVariables: markdownVariables ?? {},
@@ -81,7 +88,7 @@ export const GenericPropertiesForm = React.memo(
       );
     };
 
-    if (Object.keys(props).length === 0) {
+    if (Object.keys(visibleProps).length === 0) {
       return null;
     }
 
@@ -93,7 +100,7 @@ export const GenericPropertiesForm = React.memo(
       return (
         <FilterBuilderLayout
           groups={propertyGroups ?? []}
-          props={props}
+          props={visibleProps}
           prefixValue={prefixValue}
           disabled={disabled ?? false}
           renderField={renderField}
@@ -109,7 +116,7 @@ export const GenericPropertiesForm = React.memo(
       return (
         <FilterPropertiesLayout
           groups={propertyGroups ?? []}
-          props={props}
+          props={visibleProps}
           prefixValue={prefixValue}
           disabled={disabled ?? false}
           renderField={renderField}
@@ -119,7 +126,7 @@ export const GenericPropertiesForm = React.memo(
 
     return (
       <div className={cn('flex flex-col', GAP_SIZE_FOR_STEP_SETTINGS)}>
-        {Object.entries(props).map(([propertyName]) => {
+        {Object.entries(visibleProps).map(([propertyName]) => {
           const group = groupByPropName.get(propertyName);
           if (group) {
             if (renderedGroups.has(group.key)) {
@@ -129,8 +136,8 @@ export const GenericPropertiesForm = React.memo(
             const groupProperties = group.props.reduce<
               Record<string, PieceProperty>
             >((acc, key) => {
-              if (props[key]) {
-                acc[key] = props[key];
+              if (visibleProps[key]) {
+                acc[key] = visibleProps[key];
               }
               return acc;
             }, {});
@@ -167,6 +174,56 @@ function buildGroupByPropName(
   return map;
 }
 
+function isPropertyVisible({
+  property,
+  siblingValues,
+}: IsPropertyVisibleParams): boolean {
+  if (!('displayOptions' in property) || !isRecord(property.displayOptions)) {
+    return true;
+  }
+  const show = property.displayOptions['show'];
+  const conditions = Array.isArray(show) ? show : [show];
+  return conditions.some((condition) =>
+    matchesVisibilityCondition({ condition, siblingValues }),
+  );
+}
+
+function matchesVisibilityCondition({
+  condition,
+  siblingValues,
+}: MatchesVisibilityConditionParams): boolean {
+  if (!isRecord(condition)) {
+    return false;
+  }
+  return Object.entries(condition).every(
+    ([name, allowedValues]) =>
+      Array.isArray(allowedValues) &&
+      allowedValues.includes(siblingValues[name]),
+  );
+}
+
+function getValueAtPath(
+  values: Record<string, unknown>,
+  path: string,
+): Record<string, unknown> {
+  if (path.length === 0) {
+    return values;
+  }
+  let current = values;
+  for (const key of path.split('.')) {
+    const next = current[key];
+    if (!isRecord(next)) {
+      return {};
+    }
+    current = next;
+  }
+  return current;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 type GenericPropertiesFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
   /**Use this to allow user toggling property execution type */
@@ -180,4 +237,14 @@ type GenericPropertiesFormProps = {
   dynamicPropsInfo: SelectGenericFormComponentForPropertyParams['dynamicPropsInfo'];
   /**groups multiple props into a single widget (e.g. tabbed recipients) */
   propertyGroups?: PropertyGroup[];
+};
+
+type IsPropertyVisibleParams = {
+  property: PieceProperty;
+  siblingValues: Record<string, unknown>;
+};
+
+type MatchesVisibilityConditionParams = {
+  condition: unknown;
+  siblingValues: Record<string, unknown>;
 };

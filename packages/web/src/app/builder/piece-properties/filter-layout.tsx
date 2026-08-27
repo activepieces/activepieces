@@ -86,6 +86,9 @@ function PropertySection({
 }: PropertySectionProps) {
   const Icon = propertyIcons.get(group.icon);
   const memberNames = group.props.filter((name) => !!props[name]);
+  if (memberNames.length === 0) {
+    return null;
+  }
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-input bg-background p-4">
       <div className="flex items-center gap-2">
