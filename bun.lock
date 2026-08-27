@@ -5355,7 +5355,7 @@
     },
     "packages/pieces/community/mailer-lite": {
       "name": "@activepieces/piece-mailer-lite",
-      "version": "0.6.8",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
