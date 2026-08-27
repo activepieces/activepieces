@@ -13,6 +13,7 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Check,
@@ -20,6 +21,8 @@ import {
   ChevronsRight,
   Circle,
   Settings2,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -515,8 +518,63 @@ const ConfigurePanel = ({
   );
 };
 
+const AgentBuilderWelcome = ({ displayName }: { displayName: string }) => (
+  <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+    <Sparkles size={22} className="text-primary" />
+    <span className="text-base font-semibold">
+      {t('Tell me what to change')}
+    </span>
+    <span className="max-w-[320px] text-sm text-muted-foreground">
+      {t(
+        'Describe it in your own words and I will update {name} for you — its instructions, its tools, its model.',
+        { name: displayName },
+      )}
+    </span>
+  </div>
+);
+
+const EditWithAIPane = ({
+  agent,
+  onClose,
+  onEdited,
+}: {
+  agent: Agent;
+  onClose: () => void;
+  onEdited: () => void;
+}) => (
+  <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-[52px] shrink-0 items-center gap-2 border-b border-border px-[18px]">
+      <Sparkles size={15} className="shrink-0 text-primary" />
+      <span className="text-sm font-semibold">{t('Edit with AI')}</span>
+      <span className="grow basis-0 truncate text-[13px] text-muted-foreground">
+        {t('Activepieces AI')}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={t('Close Edit with AI')}
+        onClick={onClose}
+      >
+        <X size={16} />
+      </Button>
+    </div>
+    <div className="flex min-h-0 grow flex-col">
+      <AIChatBox
+        incognito={false}
+        agentId={agent.id}
+        builder
+        onTurnEnd={onEdited}
+        placeholder={t('Message the builder...')}
+        emptyState={<AgentBuilderWelcome displayName={agent.displayName} />}
+      />
+    </div>
+  </div>
+);
+
 const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
+  const queryClient = useQueryClient();
   const agentsAvailable = useAgentsAvailable();
   const [configureOpen, setConfigureOpen] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
@@ -599,7 +657,9 @@ const AgentEditorContent = () => {
               {agent.displayName}
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {agent.description ?? t('No description yet')}
+              {isNil(agent.published)
+                ? t('Draft — not published yet')
+                : agent.description ?? t('No description yet')}
             </span>
           </div>
           <div className="flex min-w-0 shrink items-center gap-2">
@@ -635,6 +695,16 @@ const AgentEditorContent = () => {
             <AgentNotReady
               requirements={requirements}
               onConfigure={() => setConfigureOpen(true)}
+            />
+          ) : isConfigureOpen ? (
+            <EditWithAIPane
+              agent={agent}
+              onClose={() => setConfigureOpen(false)}
+              onEdited={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ['agents', 'one', agent.id],
+                })
+              }
             />
           ) : (
             <AIChatBox

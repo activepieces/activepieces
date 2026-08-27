@@ -250,14 +250,18 @@ type SendStatus =
 
 export function useAgentChat({
   agentId,
+  builder,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
+  onTurnEnd,
 }: {
   agentId?: string;
+  builder?: boolean;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
+  onTurnEnd?: () => void;
 } = {}) {
   const store = useChatStoreApi();
 
@@ -522,6 +526,18 @@ export function useAgentChat({
   }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
+  // The builder edits the agent server-side while it answers, so whoever renders this needs a
+  // signal to refetch once the turn is over. The stream is an external system, not derived state.
+  const onTurnEndRef = useRef(onTurnEnd);
+  onTurnEndRef.current = onTurnEnd;
+  const wasStreamActiveRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamActiveRef.current && !isStreamActive) {
+      onTurnEndRef.current?.();
+    }
+    wasStreamActiveRef.current = isStreamActive;
+  }, [isStreamActive]);
+
   const isStreaming =
     isStreamActive ||
     sendStatusRef.current.type === 'submitting' ||
@@ -604,12 +620,13 @@ export function useAgentChat({
         title: title ?? null,
         modelName: modelName ?? null,
         ...(agentId === undefined ? {} : { agentId }),
+        ...(builder === undefined ? {} : { builder }),
       });
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
     },
-    [agentId],
+    [agentId, builder],
   );
 
   const sendMessage = useCallback(

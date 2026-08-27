@@ -2520,5 +2520,12 @@
   "kept at {version}": "kept at {version}",
   "Flow pieces reverted": "Flow pieces reverted",
   "The {name} account this agent uses is gone. Update the agent tools with a working account.": "The {name} account this agent uses is gone. Update the agent tools with a working account.",
-  "Could not load your accounts. Try again in a moment.": "Could not load your accounts. Try again in a moment."
+  "Could not load your accounts. Try again in a moment.": "Could not load your accounts. Try again in a moment.",
+  "Edit with AI": "Edit with AI",
+  "Activepieces AI": "Activepieces AI",
+  "Close Edit with AI": "Close Edit with AI",
+  "Message the builder...": "Message the builder...",
+  "Tell me what to change": "Tell me what to change",
+  "Describe it in your own words and I will update {name} for you — its instructions, its tools, its model.": "Describe it in your own words and I will update {name} for you — its instructions, its tools, its model.",
+  "Draft — not published yet": "Draft — not published yet"
 }
