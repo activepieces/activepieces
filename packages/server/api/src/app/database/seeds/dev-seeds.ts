@@ -47,7 +47,7 @@ const seedDevUser = async (): Promise<void> => {
     })
 
     await platformService(log).createPlatformWithProject({
-        identityId: response.id,
+        identityId: response.identityId,
         name: 'dev\'s Platform',
         invalidatePreviousTokens: true,
         isFirstPlatform: true,
