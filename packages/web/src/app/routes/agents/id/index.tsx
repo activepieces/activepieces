@@ -364,12 +364,17 @@ const AgentEditScreen = ({
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
+  const publishAgent = agentsMutations.usePublishAgent({ id: agent.id });
 
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
   // The model selector fills itself in on mount, which react-hook-form counts as the user editing.
   const hasChanges = JSON.stringify(values) !== JSON.stringify(defaults);
+  const publishedIsCurrent =
+    !isNil(agent.published) &&
+    JSON.stringify(agent.published) === JSON.stringify(agent.draft);
+  const canPublish = !hasChanges && !publishedIsCurrent && !formNeedsModel;
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
@@ -411,19 +416,31 @@ const AgentEditScreen = ({
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
               {hasChanges
-                ? t('Draft — not saved yet')
+                ? t('Unsaved changes')
+                : publishedIsCurrent
+                ? t('Published')
                 : isNil(agent.published)
-                ? t('Draft — not published yet')
-                : t('Published')}
+                ? t('Not published yet')
+                : t('Changes not published')}
             </span>
           </div>
           <Button
             type="submit"
+            variant="outline"
             loading={updateAgent.isPending}
             disabled={!hasChanges}
             className="h-[38px] shrink-0 rounded-lg px-[18px]"
           >
             {t('Save changes')}
+          </Button>
+          <Button
+            type="button"
+            loading={publishAgent.isPending}
+            disabled={!canPublish}
+            onClick={() => publishAgent.mutate()}
+            className="h-[38px] shrink-0 rounded-lg px-[18px]"
+          >
+            {t('Publish')}
           </Button>
         </div>
 
@@ -454,6 +471,13 @@ const AgentEditScreen = ({
             </div>
             <ScrollArea className="min-h-0 grow">
               <div className="flex flex-col gap-5 p-[18px]">
+                {!publishedIsCurrent && (
+                  <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 text-muted-foreground">
+                    {t(
+                      'Flows run the published version. Publish to make these settings the ones they use. Talking to the agent here always uses your latest saved changes.',
+                    )}
+                  </p>
+                )}
                 {tab === 'configure' ? (
                   <ConfigureFields form={form} needsModel={formNeedsModel} />
                 ) : (

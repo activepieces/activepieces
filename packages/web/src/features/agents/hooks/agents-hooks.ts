@@ -94,6 +94,16 @@ export const agentsMutations = {
       onError: internalErrorToast,
     });
   },
+  usePublishAgent: ({ id }: { id: string }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: () => agentsApi.publish(id),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+      },
+      onError: internalErrorToast,
+    });
+  },
   useDraftAgent: () =>
     useMutation({
       mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),

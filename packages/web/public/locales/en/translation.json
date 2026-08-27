@@ -2525,9 +2525,10 @@
   "Activepieces AI": "Activepieces AI",
   "Close Edit with AI": "Close Edit with AI",
   "Message the builder...": "Message the builder...",
-  "Draft — not published yet": "Draft — not published yet",
   "Back to the agent": "Back to the agent",
-  "Draft — not saved yet": "Draft — not saved yet",
   "Describe a change": "Describe a change",
-  "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.": "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”."
+  "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.": "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.",
+  "Not published yet": "Not published yet",
+  "Changes not published": "Changes not published",
+  "Flows run the published version. Publish to make these settings the ones they use. Talking to the agent here always uses your latest saved changes.": "Flows run the published version. Publish to make these settings the ones they use. Talking to the agent here always uses your latest saved changes."
 }

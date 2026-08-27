@@ -97,6 +97,30 @@ describe('an agent conversation', () => {
     })
 })
 
+describe('which version a conversation runs', () => {
+    // Talking to an agent is how you try it, so it runs the draft. Flows run the published version,
+    // which is the whole point of publishing: it pins what they keep running while you edit.
+    it('runs the draft, so clearing the draft model stops the conversation even though a published one exists', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { modelName: CONFIGURED_MODEL, provider: AIProviderName.OPENROUTER })
+        expect((await ctx.post(`/v1/agents/${agent.id}/publish`, {})).statusCode).toBe(StatusCodes.OK)
+        const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
+            draft: { ...agent.draft, provider: null, modelName: null },
+        })
+        expect(cleared.statusCode).toBe(StatusCodes.OK)
+        expect(cleared.json().published.modelName).toBe(CONFIGURED_MODEL)
+        const conversation = await startConversation(ctx, agent.id)
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, {
+            content: 'hello',
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toContain('Pick a model')
+    })
+})
+
 describe('the model an agent answers on', () => {
     it('refuses to run an agent that names no model, even when the platform has a chat provider', async () => {
         const ctx = await context()
