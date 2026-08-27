@@ -11,7 +11,8 @@ export class AddAiProviderStatus1837000000000 implements Migration {
             ALTER TABLE "ai_provider"
             ADD COLUMN IF NOT EXISTS "status" character varying DEFAULT 'active',
             ADD COLUMN IF NOT EXISTS "statusReason" character varying,
-            ADD COLUMN IF NOT EXISTS "statusUpdated" TIMESTAMP WITH TIME ZONE
+            ADD COLUMN IF NOT EXISTS "statusUpdated" TIMESTAMP WITH TIME ZONE,
+            ADD COLUMN IF NOT EXISTS "statusVersion" integer NOT NULL DEFAULT 0
         `)
         await queryRunner.query(`
             ALTER TABLE "ai_provider"
@@ -24,7 +25,8 @@ export class AddAiProviderStatus1837000000000 implements Migration {
             ALTER TABLE "ai_provider"
             DROP COLUMN "status",
             DROP COLUMN "statusReason",
-            DROP COLUMN "statusUpdated"
+            DROP COLUMN "statusUpdated",
+            DROP COLUMN "statusVersion"
         `)
     }
 }

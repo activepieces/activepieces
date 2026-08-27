@@ -20,6 +20,7 @@ const AIProviderEncrypted = z.object({
     status: AiProviderKeyStatus,
     statusReason: z.string().nullable(),
     statusUpdated: z.string().nullable(),
+    statusVersion: z.number(),
 })
 type AIProviderEncrypted = z.infer<typeof AIProviderEncrypted>
 
@@ -69,6 +70,11 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
         statusUpdated: {
             type: 'timestamp with time zone',
             nullable: true,
+        },
+        statusVersion: {
+            type: Number,
+            nullable: false,
+            default: 0,
         },
         modelScope: {
             type: String,

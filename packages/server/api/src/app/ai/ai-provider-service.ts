@@ -86,7 +86,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             modelIds: [],
             projectScope: 'all',
             projectIds: [],
-            ...provedHealthy(),
+            ...provedHealthy({ previousVersion: 0 }),
         })
         return toConfigResponse(saved)
     },
@@ -133,7 +133,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('modelIds', request.modelIds),
             ...spreadIfDefined('projectScope', request.projectScope),
             ...spreadIfDefined('projectIds', request.projectIds),
-            ...(revalidated ? provedHealthy() : {}),
+            ...(revalidated ? provedHealthy({ previousVersion: aiProvider.statusVersion }) : {}),
             displayName: request.displayName,
         }
 
@@ -197,11 +197,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         await distributedStore.runOnceWithin(
             getAiProviderConfirmKey(providerId),
             CONFIRM_MIN_INTERVAL_SECONDS,
-            () => this.recheck({ platformId, providerId, unchangedSince: toIsoOrNull(aiProvider.statusUpdated) }),
+            () => this.recheck({ platformId, providerId, expectVersion: aiProvider.statusVersion }),
         )
     },
 
-    async recheck({ platformId, providerId, unchangedSince }: { platformId: PlatformId, providerId: string, unchangedSince?: string | null }): Promise<AiProviderKeyStatus> {
+    async recheck({ platformId, providerId, expectVersion }: { platformId: PlatformId, providerId: string, expectVersion?: number }): Promise<AiProviderKeyStatus> {
         const aiProvider = await getRowByIdOrThrow({ platformId, configId: providerId })
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             return aiProvider.status
@@ -209,7 +209,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const auth = await decryptRowAuth({ aiProvider, platformId })
         const { error } = await tryCatch(() => aiProviders[aiProvider.provider].validateConnection(auth, aiProvider.config, log))
         const signal = isNil(error) ? { statusCode: 200 } : toProviderOutcomeSignal(error)
-        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('unchangedSince', unchangedSince) })
+        const recorded = await aiProviderHealth(log).record({ platformId, providerId, signal, throttled: false, ...spreadIfNotUndefined('expectVersion', expectVersion) })
         return recorded ?? aiProvider.status
     },
 
@@ -281,12 +281,8 @@ function rankRows(rows: AIProviderSchema[]): AIProviderSchema[] {
     })
 }
 
-function toIsoOrNull(statusUpdated: string | null): string | null {
-    return isNil(statusUpdated) ? null : new Date(statusUpdated).toISOString()
-}
-
-function provedHealthy(): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: string } {
-    return { status: 'active', statusReason: null, statusUpdated: new Date().toISOString() }
+function provedHealthy({ previousVersion }: { previousVersion: number }): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: string, statusVersion: number } {
+    return { status: 'active', statusReason: null, statusUpdated: new Date().toISOString(), statusVersion: previousVersion + 1 }
 }
 
 function toConfigResponse(row: AIProviderSchema): AIProviderWithoutSensitiveData {

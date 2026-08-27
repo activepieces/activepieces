@@ -54,7 +54,7 @@ function httpFailure(status: number, body: unknown) {
 }
 
 async function statusOf(providerId: string) {
-    const row = await db.findOneByOrFail<{ status: string, statusReason: string | null, statusUpdated: string | null }>('ai_provider', { id: providerId })
+    const row = await db.findOneByOrFail<{ status: string, statusReason: string | null, statusUpdated: string | null, statusVersion: number }>('ai_provider', { id: providerId })
     return row
 }
 
@@ -262,7 +262,7 @@ describe('AI provider key status', () => {
             providerId: key.id,
             signal: { statusCode: 401, body: 'invalid api key' },
             throttled: false,
-            unchangedSince: before.statusUpdated,
+            expectVersion: before.statusVersion,
         })
 
         expect(late).toBeNull()
@@ -280,11 +280,22 @@ describe('AI provider key status', () => {
             providerId: key.id,
             signal: { statusCode: 401, body: 'invalid api key' },
             throttled: false,
-            unchangedSince: seen.statusUpdated,
+            expectVersion: seen.statusVersion,
         })
 
         expect(applied).toBe('rejected')
         expect((await statusOf(key.id)).status).toBe('rejected')
+    })
+
+    it('counts every status write, so a stale version can never match', async () => {
+        const key = await azureKey('versioned')
+        const health = aiProviderHealth(app!.log)
+        const start = await statusOf(key.id)
+
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 }, throttled: false })
+        await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 }, throttled: false })
+
+        expect((await statusOf(key.id)).statusVersion).toBe(start.statusVersion + 2)
     })
 
     it('takes a reported recovery at once, without asking the provider', async () => {
