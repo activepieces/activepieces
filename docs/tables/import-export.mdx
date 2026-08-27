@@ -11,6 +11,8 @@ Import a CSV straight into a table. If you're unsure of the expected shape, **ex
 
 <Warning>
 If a CSV can't be parsed, the import fails rather than importing part of it. Check that headers match your fields and that the file is genuinely comma-separated.
+
+A table holds [10,000 records](/install/reference/environment-variables) by default. A file with more rows than the table has room left for still imports, but only up to that limit and the remaining rows are dropped without an error, so check the record count afterwards.
 </Warning>
 
 ## Exporting

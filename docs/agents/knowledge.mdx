@@ -18,7 +18,11 @@ Attach a document or a table and the agent looks the answer up instead of guessi
   </Card>
 </CardGroup>
 
-Both live in the **Knowledge Base** section of the agent editor, below Agent Tools. Add one with **Upload File** or **Connect Table**.
+Both live in the **Knowledge Base** section of the agent editor, below Agent Tools. Add one with **Add File Source** or **Add Table Source**.
+
+<Note>
+Two things have to be in place or the section does not appear at all. Your Postgres needs the `pgvector` extension, which Activepieces installs on startup when the database offers it — Cloud and the standard self-hosted images are covered, but a managed Postgres without `pgvector` hides knowledge entirely. And the agent's model provider has to support embeddings: OpenAI, Google, Azure, and OpenRouter do.
+</Note>
 
 ## Which one
 
