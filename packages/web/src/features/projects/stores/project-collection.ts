@@ -166,6 +166,13 @@ export const projectCollectionUtils = {
       if (isNil(project)) {
         return;
       }
+      const current = project.analytics.lastFlowUpdated;
+      const isNewer =
+        isNil(current) ||
+        new Date(lastFlowUpdated).getTime() > new Date(current).getTime();
+      if (!isNewer) {
+        return;
+      }
       projectCollection.utils.writeUpdate({
         ...project,
         analytics: {
