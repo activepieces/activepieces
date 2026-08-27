@@ -114,8 +114,9 @@ async run(context) {
 
 ### Reading a file as a stream
 
-Add `streaming: true` to a `Property.File`. The property then resolves to an
-`ApStreamingFile` instead of an `ApFile`:
+Add `streaming: true` to a `Property.File`. On platforms 0.87.0 and later the property
+resolves to an `ApStreamingFile`; older engines still deliver a buffered `ApFile`, so the
+value is typed as `ApStreamingFile | ApFile`:
 
 ```ts
 type ApStreamingFile = {
@@ -124,6 +125,17 @@ type ApStreamingFile = {
   size?: number;      // may be undefined when the source doesn't report a length
   body: Readable;
 };
+```
+
+Never read `.body` or `.size` off the property directly — normalize it first with
+`streamUtils.toStreamingBody` from `@activepieces/pieces-common`. It passes an
+`ApStreamingFile` through untouched and wraps an `ApFile`'s buffer into a `Readable` with an
+exact `size`:
+
+```ts
+import { streamUtils } from '@activepieces/pieces-common';
+
+const { body, size } = streamUtils.toStreamingBody(context.propsValue.file);
 ```
 
 Consume `body` directly. How you hand it to the destination depends on what that destination's
@@ -143,7 +155,7 @@ props: {
   }),
 },
 async run(context) {
-  const { file } = context.propsValue;
+  const { body } = streamUtils.toStreamingBody(context.propsValue.file);
   const s3 = await resolveS3Client({ authProps, server: context.server });
 
   await new Upload({
@@ -151,30 +163,31 @@ async run(context) {
     params: {
       Bucket: bucket,
       Key: finalFileName,
-      Body: file.body,
+      Body: body,
     },
   }).done();
 }
 ```
 
 **2. An SDK that takes a stream directly.** Some clients accept a `Readable` as-is: Google
-Drive's `media.body`, SFTP's `client.put`. Just pass `file.body`.
+Drive's `media.body`, SFTP's `client.put`. Just pass `body`.
 
 **3. A single-request HTTP upload.** If the destination is a plain `PUT`/`POST` that needs an
-explicit `Content-Length`, you have to use `file.size`, and `size` is best-effort, so this
+explicit `Content-Length`, you have to use `size`, and `size` is best-effort, so this
 path needs a buffered fallback for when it is missing. Dropbox, SharePoint and OneDrive all
 look like this:
 
 ```ts
 import { buffer as readableToBuffer } from 'node:stream/consumers';
 
+const { body: streamedBody, size } = streamUtils.toStreamingBody(context.propsValue.file);
 const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
 let body;
-if (file.size != null) {
-  headers['Content-Length'] = String(file.size);
-  body = file.body;
+if (size != null) {
+  headers['Content-Length'] = String(size);
+  body = streamedBody;
 } else {
-  body = await readableToBuffer(file.body);
+  body = await readableToBuffer(streamedBody);
 }
 ```
 

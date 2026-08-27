@@ -100,8 +100,8 @@ describe('an agent conversation', () => {
 describe('the model an agent answers on', () => {
     it('refuses to run an agent that names no model, even when the platform has a chat provider', async () => {
         const ctx = await context()
+        const agent = await createAgent(ctx)
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
-        const agent = await createAgent(ctx, { provider: null, modelName: null })
         const conversation = await startConversation(ctx, agent.id)
 
         const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, {
