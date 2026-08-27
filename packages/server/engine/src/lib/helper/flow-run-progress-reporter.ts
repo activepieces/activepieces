@@ -78,14 +78,14 @@ export const flowRunProgressReporter = {
         return {
             update: async (updateParams: { data: unknown }) => {
                 const sensitivePaths = hasSensitiveFields ? collectSensitiveOutputPaths(outputSchema, updateParams.data) : undefined
-                const redactedOutput = applySensitivePaths(updateParams.data, sensitivePaths)
                 const { error } = await tryCatch(() => engineRunApi.updateStepProgress({
                     apiUrl: internalApiUrl,
                     engineToken,
                     request: {
                         projectId,
                         runId: flowRunId,
-                        output: redactedOutput,
+                        output: updateParams.data,
+                        sensitiveOutputPaths: sensitivePaths,
                     },
                 }))
                 if (error) {
