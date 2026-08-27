@@ -40,7 +40,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
     if (source === AgentRunSource.AGENT) {
         return {
             ...configured,
-            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase'] }),
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker'] }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,

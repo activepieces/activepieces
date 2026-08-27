@@ -105,14 +105,14 @@ describe('what an agent conversation may reach', () => {
 
         expect(names).toContain('ap_show_questions')
         expect(names).toContain('ap_show_quick_replies')
+        expect(names).toContain('ap_show_connection_picker')
         expect(names).toContain('ap_generate_image')
         expect(names).toContain('ap_update_thinking_status')
     })
 
-    it('never offers to change a connection or project its owner pinned', () => {
+    it('never reaches the surfaces that switch project or hunt for other credentials', () => {
         const names = namesFor(AgentRunSource.AGENT)
 
-        expect(names).not.toContain('ap_show_connection_picker')
         expect(names).not.toContain('ap_show_connection_required')
         expect(names).not.toContain('ap_show_mcp_reconnect')
         expect(names).not.toContain('ap_show_project_picker')
