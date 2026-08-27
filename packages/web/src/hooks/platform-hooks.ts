@@ -80,9 +80,13 @@ export const platformHooks = {
         }
       },
       onError: () => {
-        toast.error(
-          messages?.error ?? t('Activation failed, invalid license key'),
-        );
+        const errorMessage =
+          messages?.error === undefined
+            ? t('Activation failed, invalid license key')
+            : messages.error;
+        if (!isNil(errorMessage)) {
+          toast.error(errorMessage);
+        }
       },
     });
   },
@@ -92,6 +96,6 @@ export type UseUpdateLicenseKeyParams = {
   queryClient: QueryClient;
   messages?: {
     success?: string | null;
-    error?: string;
+    error?: string | null;
   };
 };
