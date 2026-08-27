@@ -75,10 +75,10 @@ export const wooCreateOrder = createAction({
 
     const body: Record<string, unknown> = {
       line_items: line_items.map((item) => {
-        const entry = item as { product_id: string; quantity: number };
+        const entry = Object(item);
         return {
-          product_id: Number(entry.product_id),
-          quantity: Number(entry.quantity),
+          product_id: Number(entry['product_id']),
+          quantity: Number(entry['quantity']),
         };
       }),
     };
