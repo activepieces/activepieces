@@ -136,6 +136,30 @@ describe('agent publish', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).not.toBeNull()
     })
 
+    it('stages the draft without going live, so a change can be tested first', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live now.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only for the test run.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only for the test run.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it('goes live on the next save, so staging is not a trap', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Ready' })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.published.instructions).toBe('Staged.')
+    })
+
     it('publishes nothing while the instructions are empty, because there is nothing runnable to pin', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '' } })

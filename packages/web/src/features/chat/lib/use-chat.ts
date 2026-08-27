@@ -773,6 +773,7 @@ export function useAgentChat({
 
   const setConversationId = useCallback(
     async (id: string) => {
+      if (conversationIdRef.current === id) return;
       stopStream();
       setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });
