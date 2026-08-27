@@ -23,7 +23,7 @@ export function ConnectLanding({
   ).filter((client): client is CatalogClient => client !== undefined);
 
   return (
-    <div className="flex flex-col bg-background">
+    <div className="flex flex-1 flex-col bg-background">
       <PageBand className="flex flex-col gap-16 py-12 lg:flex-row lg:px-14">
         <div className="flex max-w-[628px] flex-1 flex-col gap-5">
           <h1 className="max-w-[455px] text-[40px] font-bold leading-[46px] tracking-[-0.035em]">

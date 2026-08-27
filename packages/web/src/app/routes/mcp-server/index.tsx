@@ -9,14 +9,12 @@ export default function McpServerPage() {
   const { serverUrl, isReachableFromInternet } = useMcpServerUrl();
 
   return (
-    <div className="flex w-full flex-col gap-2">
+    <div className="flex min-h-full w-full flex-col gap-2">
       <PageHeader title={t('MCP')} />
-      <div className="w-full">
-        <ConnectTab
-          serverUrl={serverUrl}
-          isReachableFromInternet={isReachableFromInternet}
-        />
-      </div>
+      <ConnectTab
+        serverUrl={serverUrl}
+        isReachableFromInternet={isReachableFromInternet}
+      />
     </div>
   );
 }
