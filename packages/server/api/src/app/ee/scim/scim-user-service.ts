@@ -1,9 +1,10 @@
 import { isEnumValue, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { CreateScimUserRequest, parseScimFilter, PlatformRole, ReplaceScimUserRequest, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA, SCIM_LIST_RESPONSE_SCHEMA, SCIM_USER_SCHEMA, ScimError, ScimListResponse, ScimPatchRequest, ScimUserResource, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { CreateScimUserRequest, parseScimFilter, PlatformRole, ReplaceScimUserRequest, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA, SCIM_LIST_RESPONSE_SCHEMA, SCIM_USER_SCHEMA, ScimError, ScimListResponse, ScimPatchRequest, ScimUserResource, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
+import { userIdentityHelper } from '../../helper/user-identity-helper'
 import { userService } from '../../user/user-service'
 import { emailService } from '../helper/email/email-service'
 
@@ -47,6 +48,12 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
                 verified: true,
             })
         }
+        else if (userIdentityHelper(log).isEmbeddedIdentity(identity)) {
+            throw new ScimError(
+                StatusCodes.CONFLICT,
+                'User with email already exists',
+            )
+        }
 
         const existingUserForIdentity = await userService(log).getOneByIdentityAndPlatform({
             identityId: identity.id,
@@ -86,16 +93,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         userId: string
     }): Promise<ScimUserResource> {
         const { platformId, userId } = params
-        const user = await userService(log).get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ScimError(
-                StatusCodes.NOT_FOUND,
-                'User not found',
-            )
-        }
-
-        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
+        const { user, identity } = await getScimManagedUserOrThrow({ platformId, userId, log })
         return toScimUserResource(user, identity.email, identity.firstName, identity.lastName)
     },
 
@@ -107,32 +105,28 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
     }): Promise<ScimListResponse> {
         const { platformId, filter, startIndex = 1, count = 100 } = params
 
+        const emptyPage: ScimListResponse = {
+            schemas: [SCIM_LIST_RESPONSE_SCHEMA],
+            totalResults: 0,
+            startIndex,
+            itemsPerPage: count,
+            Resources: [],
+        }
+
         // Parse SCIM filter - we support "userName eq \"value\""
         const filterEmail = parseScimFilter(filter, 'userName')
 
         if (!isNil(filterEmail)) {
             const identity = await userIdentityService(log).getIdentityByEmail(filterEmail)
-            if (isNil(identity)) {
-                return {
-                    schemas: [SCIM_LIST_RESPONSE_SCHEMA],
-                    totalResults: 0,
-                    startIndex,
-                    itemsPerPage: count,
-                    Resources: [],
-                }
+            if (isNil(identity) || userIdentityHelper(log).isEmbeddedIdentity(identity)) {
+                return emptyPage
             }
             const user = await userService(log).getOneByIdentityAndPlatform({
                 identityId: identity.id,
                 platformId,
             })
             if (isNil(user)) {
-                return {
-                    schemas: [SCIM_LIST_RESPONSE_SCHEMA],
-                    totalResults: 0,
-                    startIndex,
-                    itemsPerPage: count,
-                    Resources: [],
-                }
+                return emptyPage
             }
             return {
                 schemas: [SCIM_LIST_RESPONSE_SCHEMA],
@@ -145,6 +139,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
 
         const usersPage = await userService(log).list({
             platformId,
+            excludeProvider: UserIdentityProvider.JWT,
             cursorRequest: null,
             limit: count,
         })
@@ -168,14 +163,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         request: ReplaceScimUserRequest
     }): Promise<ScimUserResource> {
         const { platformId, userId, request } = params
-        const user = await userService(log).get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ScimError(
-                StatusCodes.NOT_FOUND,
-                'User not found',
-            )
-        }
+        const { user, identity } = await getScimManagedUserOrThrow({ platformId, userId, log })
 
         const active = request.active !== false
         const status = active ? UserStatus.ACTIVE : UserStatus.INACTIVE
@@ -192,10 +180,14 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             firstName: request.name?.givenName,
             lastName: request.name?.familyName,
         })
-        const updatedIdentity = await userIdentityService(log).getBasicInformation(user.identityId)
 
         const updatedUser = await userService(log).getOrThrow({ id: userId })
-        return toScimUserResource(updatedUser, updatedIdentity.email, updatedIdentity.firstName, updatedIdentity.lastName)
+        return toScimUserResource(
+            updatedUser,
+            identity.email,
+            request.name?.givenName ?? identity.firstName,
+            request.name?.familyName ?? identity.lastName,
+        )
     },
 
     async patch(params: {
@@ -204,14 +196,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         request: ScimPatchRequest
     }): Promise<ScimUserResource> {
         const { platformId, userId, request } = params
-        const user = await userService(log).get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ScimError(
-                StatusCodes.NOT_FOUND,
-                'User not found',
-            )
-        }
+        const { user, identity } = await getScimManagedUserOrThrow({ platformId, userId, log })
 
         let addOperationFields: {
             platformRole?: PlatformRole
@@ -273,17 +258,19 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        let updatedUser: User | undefined
         if (!isNil(addOperationFields)) {
             const { platformRole, firstName, lastName, externalId, active } = addOperationFields
             await userService(log).update({ platformId, id: userId, platformRole, externalId, status: isNil(active) ? undefined : active ? UserStatus.ACTIVE : UserStatus.INACTIVE })
-            updatedUser = await userService(log).getOrThrow({ id: userId })
-            await userIdentityService(log).update(updatedUser.identityId, { firstName, lastName })
+            await userIdentityService(log).update(user.identityId, { firstName, lastName })
         }
 
-        updatedUser = updatedUser ?? await userService(log).getOrThrow({ id: userId })
-        const identity = await userIdentityService(log).getBasicInformation(updatedUser.identityId)
-        return toScimUserResource(updatedUser, identity.email, identity.firstName, identity.lastName)
+        const updatedUser = await userService(log).getOrThrow({ id: userId })
+        return toScimUserResource(
+            updatedUser,
+            identity.email,
+            addOperationFields?.firstName ?? identity.firstName,
+            addOperationFields?.lastName ?? identity.lastName,
+        )
     },
 
     async deactivate(params: {
@@ -291,14 +278,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         userId: string
     }): Promise<void> {
         const { platformId, userId } = params
-        const user = await userService(log).get({ id: userId })
-
-        if (isNil(user) || user.platformId !== platformId) {
-            throw new ScimError(
-                StatusCodes.NOT_FOUND,
-                'User not found',
-            )
-        }
+        await getScimManagedUserOrThrow({ platformId, userId, log })
 
         await userService(log).update({
             id: userId,
@@ -307,6 +287,28 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function getScimManagedUserOrThrow({ platformId, userId, log }: {
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<{ user: User, identity: UserIdentity }> {
+    const user = await userService(log).get({ id: userId })
+    if (isNil(user) || user.platformId !== platformId) {
+        throw new ScimError(
+            StatusCodes.NOT_FOUND,
+            'User not found',
+        )
+    }
+    const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
+    if (userIdentityHelper(log).isEmbeddedIdentity(identity)) {
+        throw new ScimError(
+            StatusCodes.NOT_FOUND,
+            'User not found',
+        )
+    }
+    return { user, identity }
+}
 
 function toScimUserResource(
     user: Pick<User, 'id' | 'externalId' | 'created' | 'updated' | 'status' | 'platformRole'>,
