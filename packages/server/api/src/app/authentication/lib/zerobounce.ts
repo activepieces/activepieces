@@ -10,7 +10,8 @@ const VALIDATE_URL = 'https://api.zerobounce.net/v2/validate'
 const VALIDATE_TIMEOUT_SECONDS = 5
 const REQUEST_TIMEOUT_MS = 7_000
 
-const DISPOSABLE_DOMAIN_TTL_SECONDS = 90 * 24 * 60 * 60
+const DISPOSABLE_DOMAIN_CACHE_KEY = 'zerobounce:disposable-domains:v1'
+const DISPOSABLE_DOMAIN_CACHE_SIZE = 500
 
 const REFUSED_STATUSES = new Set(['spamtrap', 'abuse'])
 const REFUSED_DO_NOT_MAIL_SUB_STATUSES = new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression'])
@@ -23,10 +24,6 @@ function apiKey(): string | undefined {
 function domainOf(email: string): string {
     const at = email.lastIndexOf('@')
     return at < 0 ? '' : email.slice(at + 1).trim().toLowerCase().replace(/\.$/, '')
-}
-
-function disposableDomainKey(domain: string): string {
-    return `zerobounce:disposable-domain:v1:${domain}`
 }
 
 function reasonOf(error: unknown): string {
@@ -45,23 +42,25 @@ function isDisposableVerdict(verdict: ValidateResponse): boolean {
     return verdict.status?.toLowerCase() === 'do_not_mail' && verdict.sub_status?.toLowerCase() === 'disposable'
 }
 
-async function cachedDisposableDomain({ domain, log }: CachedDisposableDomainParams): Promise<boolean> {
-    if (domain.length === 0) {
-        return false
-    }
-    const { data: cached, error } = await tryCatch(() => distributedStore.get<boolean>(disposableDomainKey(domain)))
+async function cachedDisposableDomains({ log }: CachedDisposableDomainsParams): Promise<string[]> {
+    const { data: cached, error } = await tryCatch(() => distributedStore.get<string[]>(DISPOSABLE_DOMAIN_CACHE_KEY))
     if (!isNil(error)) {
-        log.warn({ error: reasonOf(error) }, '[zerobounce#cachedDisposableDomain] the cache could not be read, asking zerobounce')
-        return false
+        log.warn({ error: reasonOf(error) }, '[zerobounce#cachedDisposableDomains] the cache could not be read, asking zerobounce')
+        return []
     }
-    return cached === true
+    return Array.isArray(cached) ? cached : []
 }
 
 async function rememberDisposableDomain({ domain, log }: RememberDisposableDomainParams): Promise<void> {
     if (domain.length === 0) {
         return
     }
-    const { error } = await tryCatch(() => distributedStore.put(disposableDomainKey(domain), true, DISPOSABLE_DOMAIN_TTL_SECONDS))
+    const known = await cachedDisposableDomains({ log })
+    if (known.includes(domain)) {
+        return
+    }
+    const next = [...known, domain].slice(-DISPOSABLE_DOMAIN_CACHE_SIZE)
+    const { error } = await tryCatch(() => distributedStore.put(DISPOSABLE_DOMAIN_CACHE_KEY, next))
     if (!isNil(error)) {
         log.warn({ error: reasonOf(error) }, '[zerobounce#rememberDisposableDomain] the verdict could not be cached, the next attempt will spend a credit')
     }
@@ -73,7 +72,7 @@ async function refuses({ email, log }: RefusesParams): Promise<boolean> {
         return false
     }
     const domain = domainOf(email)
-    const known = await cachedDisposableDomain({ domain, log })
+    const known = domain.length > 0 && (await cachedDisposableDomains({ log })).includes(domain)
     if (known) {
         log.info({ zerobounce: { domain, source: 'cache' } }, '[zerobounce#refuses] address refused')
         return true
@@ -129,8 +128,7 @@ type ValidateResponse = {
     error?: string
 }
 
-type CachedDisposableDomainParams = {
-    domain: string
+type CachedDisposableDomainsParams = {
     log: FastifyBaseLogger
 }
 

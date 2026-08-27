@@ -1,5 +1,6 @@
 import { safeHttp } from '@activepieces/server-utils'
 import { FastifyBaseLogger } from 'fastify'
+import { zerobounce } from '../../../../src/app/authentication/lib/zerobounce'
 
 const mockStoreGet = vi.fn()
 const mockStorePut = vi.fn()
@@ -17,8 +18,6 @@ vi.mock('../../../../src/app/user-invitations/user-invitation.service', () => ({
         hasAnyAcceptedInvitationsForEmail: (...args: unknown[]) => mockHasAcceptedInvitation(...args),
     }),
 }))
-
-const { zerobounce } = await import('../../../../src/app/authentication/lib/zerobounce')
 
 const log = { warn: vi.fn(), info: vi.fn(), error: vi.fn() } as unknown as FastifyBaseLogger
 
@@ -129,31 +128,61 @@ describe('zerobounce', () => {
     })
 
     describe('disposable-domain cache', () => {
-        it('remembers a disposable domain under a versioned key with a ttl', async () => {
+        it('appends a disposable domain to the list under a versioned key', async () => {
             answers({ status: 'do_not_mail', sub_status: 'disposable' })
+            mockStoreGet.mockResolvedValue(['already-known.com'])
 
             await maySignUp('first@mailinator.com')
 
             expect(mockStorePut).toHaveBeenCalledWith(
-                'zerobounce:disposable-domain:v1:mailinator.com',
-                true,
-                expect.any(Number),
+                'zerobounce:disposable-domains:v1',
+                ['already-known.com', 'mailinator.com'],
             )
+        })
+
+        it('drops the oldest entry once the list is full, keeping it at 500', async () => {
+            const full = Array.from({ length: 500 }, (_unused, index) => `domain-${index}.com`)
+            answers({ status: 'do_not_mail', sub_status: 'disposable' })
+            mockStoreGet.mockResolvedValue(full)
+
+            await maySignUp('first@mailinator.com')
+
+            const stored = mockStorePut.mock.calls[0][1] as string[]
+            expect(stored).toHaveLength(500)
+            expect(stored).not.toContain('domain-0.com')
+            expect(stored[0]).toBe('domain-1.com')
+            expect(stored[499]).toBe('mailinator.com')
+        })
+
+        it('does not rewrite the list for a domain it already holds', async () => {
+            answers({ status: 'do_not_mail', sub_status: 'disposable' })
+            mockStoreGet.mockResolvedValue(['mailinator.com'])
+
+            expect(await maySignUp('someone@mailinator.com')).toBe(false)
+            expect(mockStorePut).not.toHaveBeenCalled()
         })
 
         it('refuses a known disposable domain without spending a credit', async () => {
             const get = vi.spyOn(safeHttp.axios, 'get')
-            mockStoreGet.mockResolvedValue(true)
+            mockStoreGet.mockResolvedValue(['mailinator.com'])
 
             expect(await maySignUp('anyone@mailinator.com')).toBe(false)
             expect(get).not.toHaveBeenCalled()
         })
 
         it('still honours the invitation carve-out on a cached refusal', async () => {
-            mockStoreGet.mockResolvedValue(true)
+            mockStoreGet.mockResolvedValue(['mailinator.com'])
             mockHasAcceptedInvitation.mockResolvedValue(true)
 
             expect(await maySignUp('guest@mailinator.com')).toBe(true)
+        })
+
+        it('asks zerobounce when the stored value is not a list', async () => {
+            mockStoreGet.mockResolvedValue('not-a-list')
+            const get = answers({ status: 'valid', sub_status: '' })
+
+            expect(await maySignUp('someone@gmail.com')).toBe(true)
+            expect(get).toHaveBeenCalled()
         })
 
         it.each([
