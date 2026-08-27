@@ -476,10 +476,10 @@ const AgentEditScreen = ({
 const AgentBuilderWelcome = () => (
   <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
     <Sparkles size={22} className="text-primary" />
-    <span className="text-base font-semibold">{t('What should change?')}</span>
+    <span className="text-base font-semibold">{t('Describe a change')}</span>
     <span className="max-w-[340px] text-sm text-muted-foreground">
       {t(
-        'Say it plainly, the way you would to a colleague. Try “only reply to paying customers”, “add Slack and Notion”, or “switch to a cheaper model”.',
+        'Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.',
       )}
     </span>
   </div>

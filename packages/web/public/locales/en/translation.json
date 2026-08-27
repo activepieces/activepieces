@@ -2528,6 +2528,6 @@
   "Draft — not published yet": "Draft — not published yet",
   "Back to the agent": "Back to the agent",
   "Draft — not saved yet": "Draft — not saved yet",
-  "What should change?": "What should change?",
-  "Say it plainly, the way you would to a colleague. Try “only reply to paying customers”, “add Slack and Notion”, or “switch to a cheaper model”.": "Say it plainly, the way you would to a colleague. Try “only reply to paying customers”, “add Slack and Notion”, or “switch to a cheaper model”."
+  "Describe a change": "Describe a change",
+  "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.": "Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”."
 }
