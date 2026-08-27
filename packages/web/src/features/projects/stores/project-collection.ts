@@ -102,6 +102,8 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
   }),
 );
 
+let authoritativeProjectsGeneration = 0;
+
 export const projectCollectionUtils = {
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
@@ -153,7 +155,10 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
-  refetchProjects: () => projectCollection.utils.refetch(),
+  refetchProjects: () => {
+    authoritativeProjectsGeneration += 1;
+    return projectCollection.utils.refetch();
+  },
   markFlowActivity: ({
     projectId,
     lastFlowUpdated,
@@ -161,7 +166,11 @@ export const projectCollectionUtils = {
     projectId: string;
     lastFlowUpdated: string;
   }) => {
+    const generation = authoritativeProjectsGeneration;
     const write = () => {
+      if (generation !== authoritativeProjectsGeneration) {
+        return;
+      }
       const project = projectCollection.get(projectId);
       if (isNil(project)) {
         return;
