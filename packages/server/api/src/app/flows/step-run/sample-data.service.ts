@@ -15,11 +15,11 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
             sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
-            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT ? params.sensitiveOutputPaths : existingPaths,
+            sensitiveOutputPaths: params.type === SampleDataFileType.OUTPUT ? (params.sensitiveOutputPaths ?? existingPaths) : existingPaths,
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
+        const step = 'step' in params ? params.step : flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
         const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
         if (isNil(fileId)) {
@@ -63,7 +63,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             const data = await this.getOrReturnEmpty({
                 projectId,
                 flowVersion,
-                stepName: step.name,
+                step,
                 type,
             })
             return { [step.name]: data }
@@ -137,9 +137,8 @@ type DeleteSampleDataParams = {
 type GetSampleDataParams = {
     projectId: ProjectId
     type: SampleDataFileType
-    stepName: string
     flowVersion: FlowVersion
-}
+} & ({ step: FlowAction | FlowTrigger } | { stepName: string })
 
 type SaveSampleDataParams = {
     projectId: ProjectId

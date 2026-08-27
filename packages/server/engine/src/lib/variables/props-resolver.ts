@@ -79,7 +79,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                await Promise.all([rawScriptSession.dispose(), censoredScriptSession.dispose()])
+                await Promise.allSettled([rawScriptSession.dispose(), censoredScriptSession.dispose()])
             }
         },
     }

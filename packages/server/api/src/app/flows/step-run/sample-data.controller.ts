@@ -23,16 +23,16 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
             versionId: request.query.flowVersionId,
         })
+        const step = flowStructureUtil.getStepOrThrow(request.query.stepName, flow.version.trigger)
         const sampleData = await sampleDataService(request.log).getOrReturnEmpty({
             projectId: request.projectId,
             flowVersion: flow.version,
-            stepName: request.query.stepName,
+            step,
             type: request.query.type,
         })
         if (request.query.type !== SampleDataFileType.OUTPUT) {
             return sampleData
         }
-        const step = flowStructureUtil.getStepOrThrow(request.query.stepName, flow.version.trigger)
         return applySensitivePaths(sampleData, step.settings.sampleData?.sensitiveOutputPaths)
     })
 }

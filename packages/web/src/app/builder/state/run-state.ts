@@ -252,7 +252,10 @@ export const createRunState = (
         get().setSampleDataLocally({
           stepName: stepName,
           type: 'output',
-          value: response.output,
+          value: applySensitivePaths(
+            response.output,
+            response.sensitiveOutputPaths,
+          ),
         });
       };
       socket.on(WebsocketClientEvent.TEST_STEP_PROGRESS, handleOnProgress);

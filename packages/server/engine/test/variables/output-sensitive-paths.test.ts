@@ -70,6 +70,37 @@ describe('collectSensitiveOutputPaths', () => {
         expect(paths).toEqual(['blob'])
     })
 
+    it('materialises per-key paths for dynamicKey maps with sensitive children', () => {
+        const paths = collectSensitiveOutputPaths({
+            fields: [
+                {
+                    key: 'accounts',
+                    dynamicKey: true,
+                    children: [
+                        { key: 'accessToken', sensitive: true },
+                        { key: 'label' },
+                    ],
+                },
+            ],
+        }, { accounts: { acc_1: { accessToken: 'sk-a', label: 'x' }, acc_2: { accessToken: 'sk-b', label: 'y' } } })
+        expect(paths).toEqual(['accounts.acc_1.accessToken', 'accounts.acc_2.accessToken'])
+    })
+
+    it('returns undefined for a dynamicKey map whose raw value is missing', () => {
+        const paths = collectSensitiveOutputPaths({
+            fields: [
+                {
+                    key: 'accounts',
+                    dynamicKey: true,
+                    children: [
+                        { key: 'accessToken', sensitive: true },
+                    ],
+                },
+            ],
+        }, { accounts: null })
+        expect(paths).toBeUndefined()
+    })
+
     it('handles arrays that are missing or non-array raw values', () => {
         const paths = collectSensitiveOutputPaths({
             fields: [

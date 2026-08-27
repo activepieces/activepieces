@@ -35,6 +35,16 @@ function walkField({ field, rawValue, prefix }: { field: OutputSchemaField, rawV
         return [currentPath]
     }
     const nested = readAt(rawValue, field.key)
+    if (field.dynamicKey && field.children && field.children.length > 0) {
+        if (!isRecord(nested)) {
+            return []
+        }
+        return Object.keys(nested).flatMap((mapKey) => walkFields({
+            fields: field.children!,
+            rawValue: nested[mapKey],
+            prefix: `${currentPath}.${escapeSensitivePathSegment(mapKey)}`,
+        }))
+    }
     const childPaths = field.children && field.children.length > 0
         ? walkFields({ fields: field.children, rawValue: nested, prefix: currentPath })
         : []

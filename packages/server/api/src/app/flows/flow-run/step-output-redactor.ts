@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { applySensitivePaths, FlowActionType, LoopStepResult, StepOutput } from '@activepieces/shared'
 
 export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): Record<string, StepOutput> {
@@ -7,19 +8,18 @@ export function redactSensitiveStepOutputs(steps: Record<string, StepOutput>): R
 
 function redactStep(step: StepOutput): StepOutput {
     if (step.type === FlowActionType.LOOP_ON_ITEMS) {
-        const output = applySensitivePaths(step.output, step.sensitiveOutputPaths)
-        if (!isLoopStepResult(output)) {
+        if (!isLoopStepResult(step.output)) {
             return step
         }
-        return {
-            ...step,
-            output: {
-                ...output,
-                iterations: output.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
-            },
-        }
+        return step.setOutput({
+            ...step.output,
+            iterations: step.output.iterations.map((iteration) => redactSensitiveStepOutputs(iteration)),
+        })
     }
-    return { ...step, output: applySensitivePaths(step.output, step.sensitiveOutputPaths) }
+    if (isNil(step.sensitiveOutputPaths) || step.sensitiveOutputPaths.length === 0) {
+        return step
+    }
+    return step.setOutput(applySensitivePaths(step.output, step.sensitiveOutputPaths))
 }
 
 function isLoopStepResult(value: unknown): value is LoopStepResult {
