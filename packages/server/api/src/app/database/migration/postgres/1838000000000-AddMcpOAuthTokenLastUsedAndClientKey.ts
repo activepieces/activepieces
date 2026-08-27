@@ -20,14 +20,15 @@ export class AddMcpOAuthTokenLastUsedAndClientKey1838000000000 implements Migrat
             ADD COLUMN IF NOT EXISTS "clientKey" character varying(32)
         `)
         const concurrently = isPGlite() ? '' : 'CONCURRENTLY'
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_platform_user_revoked"')
         await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_mcp_oauth_token_platform_user_revoked"
-            ON "mcp_oauth_token" ("platformId", "userId", "revoked")
+            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_mcp_oauth_token_platform_user_revoked_created"
+            ON "mcp_oauth_token" ("platformId", "userId", "revoked", "created")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_platform_user_revoked"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_mcp_oauth_token_platform_user_revoked_created"')
         await queryRunner.query('ALTER TABLE "mcp_oauth_token" DROP COLUMN IF EXISTS "clientKey"')
         await queryRunner.query('ALTER TABLE "mcp_oauth_token" DROP COLUMN IF EXISTS "lastUsedAt"')
     }
