@@ -542,20 +542,31 @@ const AgentEditScreen = ({
           </div>
 
           <div className="flex w-[452px] shrink-0 flex-col">
-            <div className="flex h-[52px] shrink-0 items-center border-b border-border px-[18px]">
-              <Tabs value={tab} onValueChange={setTab}>
-                <TabsList variant="outline" className="gap-[22px]">
+            <div className="flex h-[52px] shrink-0 items-stretch border-b border-border px-[18px]">
+              <Tabs
+                value={tab}
+                onValueChange={setTab}
+                className="flex h-full items-stretch"
+              >
+                <TabsList
+                  variant="outline"
+                  className="h-full items-stretch gap-[22px]"
+                >
                   <TabsTrigger
                     value="configure"
                     variant="outline"
-                    className="gap-2"
+                    className="h-full items-center gap-2"
                   >
                     {t('Configure')}
                     {formNeedsModel && (
                       <span className="size-[7px] rounded-full bg-destructive" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="settings" variant="outline">
+                  <TabsTrigger
+                    value="settings"
+                    variant="outline"
+                    className="h-full items-center"
+                  >
                     {t('Settings')}
                   </TabsTrigger>
                 </TabsList>
