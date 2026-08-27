@@ -1,8 +1,9 @@
-import { apId } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
 import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
@@ -45,6 +46,33 @@ afterAll(async () => {
 })
 
 describe('agent crud', () => {
+    it('fills in the platform model when the request names none', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBe('anthropic/claude-sonnet-4.6')
+        expect(agent.draft.provider).toBe(AIProviderName.OPENROUTER)
+    })
+
+    it('keeps a model the request did name, even where a default was available', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, provider: AIProviderName.OPENROUTER, modelName: 'anthropic/claude-haiku-4.5' } })
+
+        expect(agent.draft.modelName).toBe('anthropic/claude-haiku-4.5')
+    })
+
+    it('leaves the model empty where the platform has no chat provider', async () => {
+        const ctx = await context()
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBeNull()
+    })
+
     it('creates an agent owned by the caller, in draft, unpublished', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

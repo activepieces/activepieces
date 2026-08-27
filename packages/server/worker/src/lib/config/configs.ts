@@ -51,6 +51,7 @@ export enum WorkerSystemProp {
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
+    PREWARM_CACHE_ON_STARTUP = 'AP_PREWARM_CACHE_ON_STARTUP',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -63,6 +64,9 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     // The destination is concurrency 1 + horizontal replicas (ADR 0003).
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
+    // Off by default: prewarm resolves and compiles every enabled flow on the platform, so its
+    // startup memory/CPU cost grows with flow count and can OOM small workers on large instances.
+    [WorkerSystemProp.PREWARM_CACHE_ON_STARTUP]: 'false',
 }
 
 export const system = {

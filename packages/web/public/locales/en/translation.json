@@ -1567,6 +1567,13 @@
   "No description provided": "No description provided",
   "Invitation only sign up": "Invitation only sign up",
   "Please ask your administrator to add you to the organization.": "Please ask your administrator to add you to the organization.",
+  "No projects yet": "No projects yet",
+  "Waiting for access": "Waiting for access",
+  "You're all signed in, but you've got no projects yet.": "You're all signed in, but you've got no projects yet.",
+  "You haven't been added to a project. Ask your workspace admin to invite you and you'll be up and running in no time.": "You haven't been added to a project. Ask your workspace admin to invite you and you'll be up and running in no time.",
+  "Automatic personal project creation": "Automatic personal project creation",
+  "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).": "Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).",
+  "Automatic personal project creation updated": "Automatic personal project creation updated",
   "View all": "View all",
   "No templates match your search criteria. Try adjusting your search terms.": "No templates match your search criteria. Try adjusting your search terms.",
   "Link copied to clipboard!": "Link copied to clipboard!",
@@ -2268,6 +2275,7 @@
   "Others": "Others",
   "Powerful Node.js & TypeScript code with npm": "Powerful Node.js & TypeScript code with npm",
   "Loop on Items": "Loop on Items",
+  "Iterate over a list of items": "Iterate over a list of items",
   "Router": "Router",
   "Split your flow into branches depending on condition(s)": "Split your flow into branches depending on condition(s)",
   "Empty Trigger": "Empty Trigger",
@@ -2507,5 +2515,10 @@
   "Recently used": "Recently used",
   "Resets in {days, plural, =1 {# day} other {# days}}": "Resets in {days, plural, =1 {# day} other {# days}}",
   "Show all projects": "Show all projects",
-  "Sort pinned projects": "Sort pinned projects"
+  "Sort pinned projects": "Sort pinned projects",
+  "Flow pieces upgraded": "Flow pieces upgraded",
+  "kept at {version}": "kept at {version}",
+  "Flow pieces reverted": "Flow pieces reverted",
+  "The {name} account this agent uses is gone. Update the agent tools with a working account.": "The {name} account this agent uses is gone. Update the agent tools with a working account.",
+  "Could not load your accounts. Try again in a moment.": "Could not load your accounts. Try again in a moment."
 }

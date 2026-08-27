@@ -52,10 +52,9 @@ export const uploadFile = createAction({
     // Chunked upload needs the total size upfront for the Content-Range header.
     // When the source doesn't report a size, buffer once and use its length —
     // same behaviour as before streaming — then re-wrap so both paths stream.
-    let fileSize = fileData.size;
-    let body = fileData.body;
+    let { body, size: fileSize } = streamUtils.toStreamingBody(fileData);
     if (fileSize == null) {
-      const buffered = await readableToBuffer(fileData.body);
+      const buffered = await readableToBuffer(body);
       fileSize = buffered.length;
       body = Readable.from(buffered);
     }
