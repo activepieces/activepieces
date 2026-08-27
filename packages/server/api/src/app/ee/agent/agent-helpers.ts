@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -118,7 +118,7 @@ async function resolveChatProvider({ platformId, scope, log }: { platformId: str
     if (isNil(chatProvider)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: platformId, entityType: 'ChatAiProvider' },
+            params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
         }, 'no AI provider on this platform is enabled for chat')
     }
     return chatProvider
@@ -130,7 +130,7 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
         if (isNil(chatProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: platformId, entityType: 'ChatAiProvider' },
+                params: { entityId: platformId, entityType: AI_PROVIDER_ENTITY_TYPES.chatProvider },
             }, 'no AI provider on this platform is enabled for chat')
         }
         return
@@ -139,7 +139,7 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     if (!configured) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: provider, entityType: 'AIProvider' },
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
         }, scope.type === 'platform'
             ? `the ${provider} AI provider is not configured on this platform`
             : `no ${provider} AI provider key is available to this project`)
