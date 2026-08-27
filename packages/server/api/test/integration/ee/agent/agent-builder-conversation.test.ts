@@ -111,9 +111,8 @@ describe('whose model a builder run answers on', () => {
     // is exactly the state the builder exists to get you out of.
     it('builds an agent that names no model, where talking to that agent is refused', async () => {
         const ctx = await context()
-        const saved = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
-        await db.update('ai_provider', saved.id, { enabledForChat: true })
         const agent = await createAgent(ctx)
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
 
         const asAgent = await ctx.post(CONVERSATIONS_URL, { agentId: agent.id })
         const refused = await ctx.post(`${CONVERSATIONS_URL}/${asAgent.json().id}/messages`, { content: 'hello' })
