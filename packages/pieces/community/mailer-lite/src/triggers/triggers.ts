@@ -1,6 +1,6 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { mailerLiteAuth } from '..';
+import { mailerLiteAuth } from '../lib/auth';
 
 const subscriberSample = {
 	id: '112375610569918142',
