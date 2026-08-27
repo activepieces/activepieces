@@ -202,7 +202,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId, platformId)
             return {
                 ...flow,
                 version: migratedVersion,
