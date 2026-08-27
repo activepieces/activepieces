@@ -1,9 +1,12 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
+import { searchOutputSchema } from '../output-schemas';
 
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: searchOutputSchema,
   name: 'search',
   classification: 'SEARCH',
   displayName: 'Search',

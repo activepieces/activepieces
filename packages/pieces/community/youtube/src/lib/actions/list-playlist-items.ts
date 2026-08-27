@@ -1,9 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { youtubeAuth } from '../common/auth';
+import { listPlaylistItemsOutputSchema } from '../output-schemas';
 
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: listPlaylistItemsOutputSchema,
   name: 'list_playlist_items',
   classification: 'SEARCH',
   displayName: 'List Playlist Items',
