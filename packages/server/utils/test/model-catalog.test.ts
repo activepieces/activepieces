@@ -1,53 +1,111 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { describe, expect, it } from 'vitest'
-import catalogFile from '../src/model-catalog.generated.json'
-import { modelCatalog } from '../src/model-catalog'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const catalog: Record<string, Record<string, unknown>> = catalogFile
+const get = vi.fn()
 
-function firstModelId(provider: string): string {
-    const [modelId] = Object.keys(catalog[provider])
-    return modelId
+vi.mock('../src/safe-http', () => ({
+    safeHttp: {
+        get retryingAxios() {
+            return { get }
+        },
+    },
+}))
+
+const CATALOG = {
+    notice: 'Model data from models.dev',
+    generatedAt: '2026-08-27T00:00:00.000Z',
+    providers: {
+        [AIProviderName.OPENAI]: {
+            'gpt-5.5': { contextTokens: 1_050_000, outputCostPerMillionTokens: 30 },
+        },
+        [AIProviderName.OPENROUTER]: {
+            'anthropic/claude-sonnet-5': { contextTokens: 1_000_000, outputCostPerMillionTokens: 10 },
+        },
+        [AIProviderName.BEDROCK]: {
+            'anthropic.claude-fable-5:0': { contextTokens: 1_000_000 },
+        },
+    },
+}
+
+async function freshCatalog(): Promise<typeof import('../src/model-catalog').modelCatalog> {
+    vi.resetModules()
+    const { modelCatalog } = await import('../src/model-catalog')
+    return modelCatalog
 }
 
 describe('modelCatalog.lookup', () => {
-    it('returns metadata for a native model id', () => {
-        const modelId = firstModelId(AIProviderName.OPENAI)
-        expect(modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId })).toEqual(catalog[AIProviderName.OPENAI][modelId])
+    beforeEach(() => {
+        get.mockReset()
+        get.mockResolvedValue({ data: CATALOG })
     })
 
-    it('strips the bedrock inference-profile region prefix', () => {
-        const foundationId = firstModelId(AIProviderName.BEDROCK)
-        const expected = catalog[AIProviderName.BEDROCK][foundationId]
-
-        for (const region of ['us', 'eu', 'apac', 'global']) {
-            expect(modelCatalog.lookup({ provider: AIProviderName.BEDROCK, modelId: `${region}.${foundationId}` })).toEqual(expected)
-        }
+    afterEach(() => {
+        vi.useRealTimers()
+        delete process.env['AP_MODEL_CATALOG_URL']
     })
 
-    it('keeps the bedrock version suffix, which is part of the upstream id', () => {
-        const versioned = Object.keys(catalog[AIProviderName.BEDROCK]).find((id) => id.includes(':'))
-        expect(versioned).toBeDefined()
-        expect(modelCatalog.lookup({ provider: AIProviderName.BEDROCK, modelId: versioned! })).toBeDefined()
-        expect(modelCatalog.lookup({ provider: AIProviderName.BEDROCK, modelId: versioned!.replace(/:\d+$/, '') })).toBeUndefined()
+    it('returns metadata for a native model id', async () => {
+        const modelCatalog = await freshCatalog()
+        await expect(modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' }))
+            .resolves.toEqual(CATALOG.providers[AIProviderName.OPENAI]['gpt-5.5'])
     })
 
-    it('resolves activepieces against the openrouter block', () => {
-        const modelId = firstModelId(AIProviderName.OPENROUTER)
-        expect(modelCatalog.lookup({ provider: AIProviderName.ACTIVEPIECES, modelId })).toEqual(catalog[AIProviderName.OPENROUTER][modelId])
+    it('resolves activepieces against the openrouter block', async () => {
+        const modelCatalog = await freshCatalog()
+        await expect(modelCatalog.lookup({ provider: AIProviderName.ACTIVEPIECES, modelId: 'anthropic/claude-sonnet-5' }))
+            .resolves.toEqual(CATALOG.providers[AIProviderName.OPENROUTER]['anthropic/claude-sonnet-5'])
     })
 
-    it('does not cross-match ids between providers', () => {
-        const openAiModelId = firstModelId(AIProviderName.OPENAI)
-        expect(modelCatalog.lookup({ provider: AIProviderName.MISTRAL, modelId: openAiModelId })).toBeUndefined()
+    it.each(['us', 'eu', 'apac', 'global'])('strips the bedrock %s inference-profile prefix', async (region) => {
+        const modelCatalog = await freshCatalog()
+        await expect(modelCatalog.lookup({ provider: AIProviderName.BEDROCK, modelId: `${region}.anthropic.claude-fable-5:0` }))
+            .resolves.toEqual(CATALOG.providers[AIProviderName.BEDROCK]['anthropic.claude-fable-5:0'])
     })
 
     it.each([
         [AIProviderName.AZURE, 'my-gpt5-deployment'],
         [AIProviderName.CUSTOM, 'some-self-hosted-model'],
         [AIProviderName.CLOUDFLARE_GATEWAY, 'openai/gpt-4'],
-        [AIProviderName.OPENAI, 'ft:gpt-4o:acme::abc123'],
-    ])('returns undefined rather than throwing for %s / %s', (provider, modelId) => {
-        expect(modelCatalog.lookup({ provider, modelId })).toBeUndefined()
+        [AIProviderName.MISTRAL, 'gpt-5.5'],
+    ])('returns undefined rather than throwing for %s / %s', async (provider, modelId) => {
+        const modelCatalog = await freshCatalog()
+        await expect(modelCatalog.lookup({ provider, modelId })).resolves.toBeUndefined()
+    })
+
+    it('fetches once for concurrent lookups', async () => {
+        const modelCatalog = await freshCatalog()
+        await Promise.all(Array.from({ length: 25 }, () =>
+            modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })))
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+
+    it('reuses the cached catalog across later lookups', async () => {
+        const modelCatalog = await freshCatalog()
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+
+    it('returns undefined and does not throw when the catalog is unreachable', async () => {
+        get.mockRejectedValue(new Error('ENOTFOUND cdn.activepieces.com'))
+        const modelCatalog = await freshCatalog()
+        await expect(modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' }))
+            .resolves.toBeUndefined()
+    })
+
+    it('backs off after a failure instead of refetching on every lookup', async () => {
+        get.mockRejectedValue(new Error('ENOTFOUND cdn.activepieces.com'))
+        const modelCatalog = await freshCatalog()
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+
+    it('reads AP_MODEL_CATALOG_URL when set', async () => {
+        process.env['AP_MODEL_CATALOG_URL'] = 'https://mirror.internal/model-catalog.json'
+        const modelCatalog = await freshCatalog()
+        await modelCatalog.lookup({ provider: AIProviderName.OPENAI, modelId: 'gpt-5.5' })
+        expect(get).toHaveBeenCalledWith('https://mirror.internal/model-catalog.json', expect.anything())
     })
 })

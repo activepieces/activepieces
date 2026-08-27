@@ -378,12 +378,12 @@ async function fetchModels({ aiProvider, platformId }: { aiProvider: AIProviderS
     const cacheKey = getModelsCacheKey({ provider, auth, config })
     if (!modelsCache.has(cacheKey) || 'models' in config) {
         const data = await aiProviders[provider].listModels(auth, config)
-        modelsCache.set(cacheKey, data.map(model => ({
+        modelsCache.set(cacheKey, await Promise.all(data.map(async model => ({
             id: model.id,
             name: model.name,
             type: model.type,
-            ...spreadIfDefined('metadata', modelCatalog.lookup({ provider, modelId: model.id })),
-        })))
+            ...spreadIfDefined('metadata', await modelCatalog.lookup({ provider, modelId: model.id })),
+        }))))
     }
     return modelsCache.get(cacheKey)!
 }

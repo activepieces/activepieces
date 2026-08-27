@@ -1,10 +1,14 @@
-import { readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { mkdirSync, writeFileSync } from 'fs'
+import { dirname, join } from 'path'
 import { AIProviderName } from '../../packages/core/utils/src/lib/permission'
 
 const MODELS_DEV_API_URL = 'https://models.dev/api.json'
 
-const OUTPUT_PATH = join(__dirname, '../../packages/server/utils/src/model-catalog.generated.json')
+const PUBLISHED_CATALOG_URL = process.env['AP_MODEL_CATALOG_URL'] ?? 'https://cdn.activepieces.com/ai/model-catalog.json'
+
+const NOTICE = 'Model data from models.dev, MIT licensed — https://github.com/anomalyco/models.dev'
+
+const OUTPUT_PATH = join(__dirname, '../../dist/model-catalog.json')
 
 const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.OPENAI]: 'openai',
@@ -14,6 +18,12 @@ const MODELS_DEV_PROVIDER: Partial<Record<AIProviderName, string>> = {
     [AIProviderName.BEDROCK]: 'amazon-bedrock',
     [AIProviderName.MISTRAL]: 'mistral',
     [AIProviderName.OPENROUTER]: 'openrouter',
+    [AIProviderName.XAI]: 'xai',
+    [AIProviderName.DEEPSEEK]: 'deepseek',
+    [AIProviderName.ZAI]: 'zai',
+    [AIProviderName.QWEN]: 'alibaba',
+    [AIProviderName.MINIMAX]: 'minimax',
+    [AIProviderName.MOONSHOT]: 'moonshotai',
 }
 
 const ALIASED_AT_LOOKUP: AIProviderName[] = [AIProviderName.ACTIVEPIECES]
@@ -23,14 +33,30 @@ const COST_PRECISION = 1_000
 const MIN_RETAINED_RATIO = 0.8
 
 async function main(): Promise<void> {
-    const previous = readPreviousCatalog()
+    const published = await fetchPublishedCatalog()
     const upstream = await fetchUpstream()
-    const catalog = buildCatalog(upstream)
+    const providers = buildCatalog(upstream)
 
-    assertNotTruncated({ previous, catalog })
+    assertNotTruncated({ previous: published?.providers, catalog: providers })
 
+    const catalog: PublishedCatalog = {
+        notice: NOTICE,
+        generatedAt: new Date().toISOString(),
+        providers,
+    }
+    mkdirSync(dirname(OUTPUT_PATH), { recursive: true })
     writeFileSync(OUTPUT_PATH, `${JSON.stringify(catalog, null, 2)}\n`)
-    printCoverage(catalog)
+    printCoverage(providers)
+}
+
+async function fetchPublishedCatalog(): Promise<PublishedCatalog | undefined> {
+    const response = await fetch(PUBLISHED_CATALOG_URL).catch(() => undefined)
+    if (!response?.ok) {
+        process.stdout.write(`no published catalog to compare against (${PUBLISHED_CATALOG_URL}); skipping the truncation guard\n`)
+        return undefined
+    }
+    const published: PublishedCatalog = await response.json()
+    return published
 }
 
 async function fetchUpstream(): Promise<ModelsDevApi> {
@@ -106,16 +132,6 @@ function printCoverage(catalog: ModelCatalogFile): void {
     ].join('\n'))
 }
 
-function readPreviousCatalog(): ModelCatalogFile | undefined {
-    try {
-        const previous: ModelCatalogFile = JSON.parse(readFileSync(OUTPUT_PATH, 'utf-8'))
-        return previous
-    }
-    catch {
-        return undefined
-    }
-}
-
 function roundCost(cost: number | undefined): number | undefined {
     if (cost === undefined) {
         return undefined
@@ -148,6 +164,12 @@ type ModelMetadata = {
 }
 
 type ModelCatalogFile = Record<string, Record<string, ModelMetadata>>
+
+type PublishedCatalog = {
+    notice: string
+    generatedAt: string
+    providers: ModelCatalogFile
+}
 
 type ModelsDevModel = {
     release_date?: string
