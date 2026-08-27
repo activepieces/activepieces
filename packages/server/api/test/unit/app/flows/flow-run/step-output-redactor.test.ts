@@ -43,4 +43,22 @@ describe('redactSensitiveStepOutputs', () => {
         const output = result.loop_step.output
         expect(output.iterations[0].inner_step.output).toEqual({ secret: '**REDACTED**' })
     })
+
+    it('redacts a router step carrying sensitiveOutputPaths when the step is plain JSON, not a class instance', () => {
+        const routerStep = GenericStepOutput.create({
+            type: FlowActionType.ROUTER,
+            input: {},
+            status: StepOutputStatus.SUCCEEDED,
+            output: { branches: [{ branchName: 'branch_1', branchIndex: 0, evaluation: true }] },
+            sensitiveOutputPaths: ['token'],
+        })
+        const steps = asPlainJson({ router_step: { ...routerStep, output: { ...routerStep.output, token: 'secret-value' } } })
+
+        const result = redactSensitiveStepOutputs(steps)
+
+        expect(result.router_step.output).toEqual({
+            branches: [{ branchName: 'branch_1', branchIndex: 0, evaluation: true }],
+            token: '**REDACTED**',
+        })
+    })
 })
