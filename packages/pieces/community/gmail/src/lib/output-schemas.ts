@@ -1059,3 +1059,52 @@ export const gmailListHistoryActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const gmailAddLabelToEmailActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailRemoveLabelFromEmailActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailRemoveLabelFromThreadActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Thread ID' },
+    {
+      key: 'messages',
+      label: 'Messages',
+      labelKey: 'id',
+      listItems: messageSendResultFields,
+    },
+  ],
+};
+
+export const gmailCreateLabelActionOutputSchema: OutputSchema = {
+  fields: [
+    ...gmailLabelBaseFields,
+    { key: 'messagesTotal', label: 'Messages Total', format: 'number' },
+    { key: 'messagesUnread', label: 'Messages Unread', format: 'number' },
+    { key: 'threadsTotal', label: 'Threads Total', format: 'number' },
+    { key: 'threadsUnread', label: 'Threads Unread', format: 'number' },
+  ],
+};
+
+export const gmailArchiveEmailActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const gmailDeleteEmailActionOutputSchema: OutputSchema = {
+  fields: messageSendResultFields,
+};
+
+export const newStarredEmailTriggerOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'History ID' },
+    {
+      key: 'message',
+      label: 'Message',
+      children: gmailMessageResourceFields,
+    },
+  ],
+};
