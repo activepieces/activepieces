@@ -30,6 +30,7 @@ async function getFields(auth: JiraAuth, projectId: string, issueTypeId: string)
 
 export const createIssueAction = createAction({
 	name: 'create_issue',
+	classification: 'WRITE',
 	displayName: 'Create Issue',
 	description: 'Creates a new issue in a project.',
 	audience: 'both',

@@ -8,6 +8,7 @@ import { jiraApiCall } from '../common';
 export const linkIssuesAction = createAction({
   auth: jiraCloudAuth,
   name: 'link-issues',
+  classification: 'WRITE',
   displayName: 'Link Issues',
   description: 'Creates a link between two issues.',
   audience: 'both',

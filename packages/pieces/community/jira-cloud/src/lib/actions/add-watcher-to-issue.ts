@@ -8,6 +8,7 @@ import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 export const addWatcherToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add-watcher-to-issue',
+	classification: 'WRITE',
 	displayName: 'Add Watcher to Issue',
 	description: 'Adds a new watcher to an issue.',
 	audience: 'both',

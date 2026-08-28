@@ -7,6 +7,7 @@ import { getIssueIdDropdown, getProjectIdDropdown } from '../common/props';
 export const deleteIssueCommentAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'delete_issue_comment',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Issue Comment',
 	description: 'Deletes a comment on a specific issue.',
 	audience: 'both',

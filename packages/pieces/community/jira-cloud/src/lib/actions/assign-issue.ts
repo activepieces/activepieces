@@ -7,6 +7,7 @@ import { getIssueIdDropdown, getProjectIdDropdown, getUsersDropdown } from '../c
 export const assignIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'assign_issue',
+	classification: 'WRITE',
 	displayName: 'Assign Issue',
 	description: 'Assigns an issue to a user.',
 	audience: 'both',

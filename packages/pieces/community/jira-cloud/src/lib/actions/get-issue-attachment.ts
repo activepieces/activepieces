@@ -6,6 +6,7 @@ import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,
     name: 'get-issue-attachment',
+    classification: 'READ',
     displayName: 'Get Issue Attachment',
     description: 'Retrieves an attachment from an issue.',
     audience: 'both',

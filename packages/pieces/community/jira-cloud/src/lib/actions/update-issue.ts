@@ -34,6 +34,7 @@ async function getFields(auth: JiraAuth, issueId: string): Promise<IssueFieldMet
 
 export const updateIssueAction = createAction({
 	name: 'update_issue',
+	classification: 'WRITE',
 	displayName: 'Update Issue',
 	description: 'Updates an existing issue.',
 	audience: 'both',

@@ -6,6 +6,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const findUserAction = createAction({
     auth:jiraCloudAuth,
     name:'find-user',
+    classification: 'SEARCH',
     displayName:'Find User',
     description:'Finds an existing user.',
     audience: 'both',
