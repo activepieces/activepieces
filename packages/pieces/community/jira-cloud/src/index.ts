@@ -22,6 +22,7 @@ import { getIssueAttachmentAction } from './lib/actions/get-issue-attachment';
 import { markdownToJiraFormat } from './lib/actions/markdown-to-jira-format';
 import { getIssueAction } from './lib/actions/get-issue';
 import { transitionIssueAction } from './lib/actions/transition-issue';
+import { listIssueTransitionsAction } from './lib/actions/list-issue-transitions';
 import { newComment } from './lib/triggers/new-comment';
 import { issueAssigned } from './lib/triggers/issue-assigned';
 import { newAttachment } from './lib/triggers/new-attachment';
@@ -55,6 +56,7 @@ export const jiraCloud = createPiece({
 		markdownToJiraFormat,
 		getIssueAction,
 		transitionIssueAction,
+		listIssueTransitionsAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
 				return auth ? `${(auth).props.instanceUrl}/rest/api/3` : '';
