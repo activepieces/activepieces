@@ -26,7 +26,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   unstable_useBlocker,
@@ -468,6 +468,7 @@ const AgentEditScreen = ({
   const unsavedTyping = JSON.stringify(values) !== JSON.stringify(syncedDraft);
   const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
   const [exitRequested, setExitRequested] = useState(false);
+  const testRequested = useRef(false);
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
@@ -488,9 +489,8 @@ const AgentEditScreen = ({
       { ...toUpdateRequest(values), goLive: false },
       {
         onSuccess: () => {
-          form.reset(values);
           setSyncedDraft(values);
-          setMode('test');
+          if (testRequested.current) setMode('test');
         },
         onError: (error) =>
           setServerError(
@@ -502,6 +502,7 @@ const AgentEditScreen = ({
   );
 
   const changeMode = (next: string) => {
+    testRequested.current = next === 'test';
     if (next !== 'test' || !unsavedTyping || !isNil(blockedFromTesting)) {
       setMode(next);
       return;
@@ -513,7 +514,6 @@ const AgentEditScreen = ({
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
-        form.reset(values);
         setSyncedDraft(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
