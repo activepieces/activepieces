@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { addToGlobalSuppression } from './lib/actions/add-to-global-suppression';
+import { checkGlobalSuppression } from './lib/actions/check-global-suppression';
 import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
 import { findListByName } from './lib/actions/find-list-by-name';
 import { removeFromGlobalSuppression } from './lib/actions/remove-from-global-suppression';
@@ -28,6 +29,7 @@ export const sendgrid = createPiece({
     findListByName,
     addToGlobalSuppression,
     removeFromGlobalSuppression,
+    checkGlobalSuppression,
     createCustomApiCallAction({
       baseUrl: (auth) => getBaseUrl(auth as SendgridAuthValue),
       auth: sendgridAuth,
