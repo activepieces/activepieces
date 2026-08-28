@@ -7,6 +7,7 @@ import {
 import { MeetingResponseBody } from '../common/models';
 import { zoomMeetingDropdown } from '../common/props';
 import { zoomAuth } from '../..';
+import { zoomFindMeetingOutputSchema } from '../output-schemas';
 
 export const zoomFindMeeting = createAction({
   auth: zoomAuth,
@@ -16,6 +17,7 @@ export const zoomFindMeeting = createAction({
   description: 'Retrieve the details of an existing meeting.',
   audience: 'both',
   aiMetadata: { description: 'Fetches the full details of an existing Zoom meeting by its meeting ID. Use to look up a meeting before acting on it; optionally target a specific occurrence of a recurring meeting or include all previous occurrences. Read-only and idempotent.', idempotent: true },
+  outputSchema: zoomFindMeetingOutputSchema,
   props: {
     meeting_id: zoomMeetingDropdown,
     occurrence_id: Property.ShortText({

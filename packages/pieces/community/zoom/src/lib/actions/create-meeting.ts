@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import { MeetingMessageBody, MeetingResponseBody } from '../common/models';
 import { zoomAuth } from '../..';
+import { zoomCreateMeetingOutputSchema } from '../output-schemas';
 
 const defaults = {
   agenda: 'My Meeting',
@@ -49,6 +50,7 @@ const action = () => {
     description: 'Create a new Zoom Meeting',
     audience: 'both',
     aiMetadata: { description: 'Schedules a new Zoom meeting on the authenticated user\'s account, returning the meeting ID and join URL. Use to set up a video call; only the topic is required, with optional start time, duration, password, and audio/recording settings. Each call creates a distinct meeting, so it is not idempotent.', idempotent: false },
+    outputSchema: zoomCreateMeetingOutputSchema,
     props: {
       topic: Property.ShortText({
         displayName: "Meeting's topic",
