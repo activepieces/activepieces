@@ -30,7 +30,20 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - run: bun install
+      - name: Get redis-memory-server version
+        id: redis-version
+        run: echo "version=$(node -p "require('./package.json').redisMemoryServer.version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache redis-memory-server binary
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/redis-binaries
+          key: ${{ runner.os }}-redis-binary-${{ steps.redis-version.outputs.version }}
+
+      - name: Install dependencies
+        run: bun install
+        env:
+          REDISMS_DOWNLOAD_DIR: /home/runner/.cache/redis-binaries
 
       - name: Turbo Cache
         uses: rharkor/caching-for-turbo@v2.4.2
@@ -83,7 +96,20 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - run: bun install
+      - name: Get redis-memory-server version
+        id: redis-version
+        run: echo "version=$(node -p "require('./package.json').redisMemoryServer.version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache redis-memory-server binary
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/redis-binaries
+          key: ${{ runner.os }}-redis-binary-${{ steps.redis-version.outputs.version }}
+
+      - name: Install dependencies
+        run: bun install
+        env:
+          REDISMS_DOWNLOAD_DIR: /home/runner/.cache/redis-binaries
 
       - name: Turbo Cache
         uses: rharkor/caching-for-turbo@v2.4.2
@@ -219,7 +245,20 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - run: bun install
+      - name: Get redis-memory-server version
+        id: redis-version
+        run: echo "version=$(node -p "require('./package.json').redisMemoryServer.version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache redis-memory-server binary
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/redis-binaries
+          key: ${{ runner.os }}-redis-binary-${{ steps.redis-version.outputs.version }}
+
+      - name: Install dependencies
+        run: bun install
+        env:
+          REDISMS_DOWNLOAD_DIR: /home/runner/.cache/redis-binaries
 
       - name: Turbo Cache
         uses: rharkor/caching-for-turbo@v2.4.2
