@@ -2189,6 +2189,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/context-dev": {
+      "name": "@activepieces/piece-context-dev",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/contextual-ai": {
       "name": "@activepieces/piece-contextual-ai",
       "version": "0.1.7",
@@ -11375,6 +11389,8 @@
     "@activepieces/piece-constant-contact": ["@activepieces/piece-constant-contact@workspace:packages/pieces/community/constant-contact"],
 
     "@activepieces/piece-contentful": ["@activepieces/piece-contentful@workspace:packages/pieces/community/contentful"],
+
+    "@activepieces/piece-context-dev": ["@activepieces/piece-context-dev@workspace:packages/pieces/community/context-dev"],
 
     "@activepieces/piece-contextual-ai": ["@activepieces/piece-contextual-ai@workspace:packages/pieces/community/contextual-ai"],
 
