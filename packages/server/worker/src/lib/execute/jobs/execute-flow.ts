@@ -181,17 +181,19 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
     // MEMORY_LIMIT_EXCEEDED / LOG_SIZE_EXCEEDED). Emit one structured error log so failed runs are
     // observable in log-based monitoring: the per-job wide event otherwise records FIRE_AND_FORGET
     // business failures as outcome:'success' (worker.ts), leaving them invisible at anything but debug.
-    // Carry the status under `flowRunStatus`, not `outcome` — worker.ts overwrites `outcome` back to
-    // 'success' after this handler returns.
+    // The status/environment/step sit under the canonical flowRun.*/step.* paths (not `outcome`, which
+    // worker.ts overwrites back to 'success' after this handler returns).
     ctx.log.error({
-        flowRun: { id: data.runId },
+        flowRun: {
+            id: data.runId,
+            status,
+            environment: data.environment,
+        },
         flow: { id: data.flowId },
         flowVersion: { id: data.flowVersionId },
         project: { id: data.projectId },
         platform: { id: data.platformId },
-        environment: data.environment,
-        flowRunStatus: status,
-        failedStep: failedStep?.name,
+        step: { name: failedStep?.name },
         errorMessage: internalError?.message,
     }, 'Flow run terminal failure')
 
