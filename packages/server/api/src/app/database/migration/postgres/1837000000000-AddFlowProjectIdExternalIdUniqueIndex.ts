@@ -4,10 +4,10 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class AddFlowProjectIdExternalIdUniqueIndex1824000000000 implements Migration {
-    name = 'AddFlowProjectIdExternalIdUniqueIndex1824000000000'
+export class AddFlowProjectIdExternalIdUniqueIndex1837000000000 implements Migration {
+    name = 'AddFlowProjectIdExternalIdUniqueIndex1837000000000'
     breaking = false
-    release = '0.87.0'
+    release = '0.88.4'
     // CONCURRENTLY (non-PGlite) is illegal inside a transaction, and a blocking
     // CREATE UNIQUE INDEX would stall flow writes on a large table during a rolling deploy.
     transaction = false
