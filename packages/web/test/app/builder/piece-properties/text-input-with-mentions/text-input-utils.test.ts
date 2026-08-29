@@ -23,6 +23,73 @@ describe('textMentionUtils.parseLabelFromMention — flattenNestedKeys', () => {
   });
 });
 
+describe('textMentionUtils.parseLabelFromMention: expressions render raw', () => {
+  it('shows the || fallback on a variable chip', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      "{{ variables['X'] || 'fallback' }}",
+      [],
+      [],
+    );
+    expect(label.displayText).toBe("variables['X'] || 'fallback'");
+    expect(label.isVariable).toBe(true);
+    expect(label.serverValue).toBe("{{ variables['X'] || 'fallback' }}");
+  });
+
+  it('keeps a plain variable chip label friendly', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      "{{ variables['X'] }}",
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('Variable · X');
+  });
+
+  it('shows a step expression whole instead of dot-splitting it', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      '{{ step_1.body.x || step_1.body.y }}',
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('step_1.body.x || step_1.body.y');
+  });
+
+  it('shows a parenthesized expression whole', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      '{{ (step_1.body.x || step_1.body.y) }}',
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('(step_1.body.x || step_1.body.y)');
+  });
+
+  it('keeps a pure accessor with array index on the friendly path', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      "{{ step_1['output'].items[0] }}",
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('(Missing) step_1');
+  });
+
+  it('keeps an escaped-quote bracket key on the friendly path', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      "{{ step_1['output']['it\\'s here'] }}",
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('(Missing) step_1');
+  });
+
+  it('keeps a non-ascii dot key on the friendly path', () => {
+    const label = textMentionUtils.parseLabelFromMention(
+      '{{ trigger.body.pełna }}',
+      [],
+      [],
+    );
+    expect(label.displayText).toBe('(Missing) trigger');
+  });
+});
+
 const convert = (text: string) =>
   textMentionUtils.convertTextToTipTapJsonContent(text, [], []);
 
@@ -58,7 +125,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
 
   describe('references inside quotes keep their mention node', () => {
     it.each([
-      '"{{step_4[\'output\'][\'result\']}}"',
+      "\"{{step_4['output']['result']}}\"",
       '"{{step_4["output"]["result"]}}"',
       "'{{step_4.result}}'",
       'fullText contains "{{step_4.result}}',
@@ -72,7 +139,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
     });
 
     it.each([
-      '"{{step_4[\'output\'][\'result\']}}"',
+      "\"{{step_4['output']['result']}}\"",
       '"{{step_4["output"]["result"]}}"',
       '"{{step_1.name}} upper(x)"',
       'ap-formula-v1::{upper("(CEO); still inside")}::ap-formula-v1',
