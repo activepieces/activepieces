@@ -24,6 +24,11 @@ vi.mock('fetch-retry', () => ({
     }),
 }))
 
+vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ readUrl: 'https://mock.read.url/logs' }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+})))
+
 import { flowRunProgressReporter } from '../../src/lib/helper/flow-run-progress-reporter'
 
 const buildUpdateParams = ({ status }: { status: FlowRunStatus }) => {
