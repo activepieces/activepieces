@@ -32,7 +32,6 @@ export const ConnectionDropdown = React.memo(
     const {
       data: connections,
       isLoading: connectionsLoading,
-      refetch: refetchConnections,
       isRefetching: isRefetchingConnections,
     } = appConnectionsQueries.useAppConnections({
       request: {
@@ -76,7 +75,6 @@ export const ConnectionDropdown = React.memo(
             setConnectionDialogOpen(open);
             if (connection) {
               onChange(connection.externalId);
-              refetchConnections();
             }
           }}
           reconnectConnection={null}
