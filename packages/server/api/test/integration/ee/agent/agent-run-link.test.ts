@@ -4,7 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
-import { WaitpointStatus } from '../../../../src/app/flows/flow-run/waitpoint/waitpoint-types'
+import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
@@ -131,8 +131,9 @@ describe('a flow step that links a saved agent', () => {
         const agent = await createAgent(ctx)
         await ctx.post(`/v1/agents/${agent.id}/publish`)
         // The draft now names a provider this platform does not have, so a resolver reading the
-        // draft would fail to find it while the published copy still runs.
-        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, provider: AIProviderName.ANTHROPIC, modelName: 'claude-x' } })
+        // draft would fail to find it while the published copy still runs. Written straight to the
+        // row because saving through the API publishes, which would move the copy under the test.
+        await db.update('agent', agent.id, { draft: { ...agent.draft, provider: AIProviderName.ANTHROPIC, modelName: 'claude-x' } })
 
         const response = await startRun(ctx, { agentId: agent.externalId })
 

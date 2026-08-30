@@ -121,6 +121,9 @@ export const runAgent = createAction({
       if (isNil(result)) {
         throw new Error('The agent did not report a result before this step timed out');
       }
+      if (!isNil(result.failure)) {
+        throw new Error(result.failure);
+      }
       return result;
     }
 

@@ -159,7 +159,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
-        const agentConfig = agent?.published ?? agent?.draft ?? null
+        const agentConfig = agent?.draft ?? null
         const isBuilder = conversation.source === AgentRunSource.AGENT_BUILDER
         // resolveRunProvider and the assertion below both fall through to the platform's chat
         // provider when no provider is named. An agent answers on its own model or it does not run.
@@ -335,7 +335,7 @@ async function pinnedAccounts({ conversation, pieceName, platformId, userId, log
     }
     const agent = await agentService(log).getOneOrThrowByPlatform({ id: agentId, platformId, userId })
     const normalizedPiece = normalizePiece(pieceName)
-    const config = agent.published ?? agent.draft
+    const config = agent.draft
     const externalIds = config.tools.flatMap((tool) => {
         if (tool.type !== AgentToolType.PIECE || normalizePiece(tool.pieceMetadata.pieceName) !== normalizedPiece) {
             return []

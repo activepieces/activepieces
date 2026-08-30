@@ -90,7 +90,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
     },
 
-    async update({ id, projectId, userId, request }: UpdateParams): Promise<Agent> {
+    async update({ id, projectId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
         const visibility = request.visibility ?? agent.visibility
@@ -102,7 +102,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
             log,
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
-        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, visibility, sharedWithUserIds })
+        const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
+        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -407,6 +408,7 @@ type GetByPlatformParams = {
 
 type UpdateParams = GetParams & {
     request: UpdateAgentRequest
+    goLive?: boolean
 }
 
 type ResolveProjectsParams = {

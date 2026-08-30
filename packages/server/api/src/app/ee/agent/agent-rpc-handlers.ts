@@ -10,7 +10,6 @@ import { filesService } from '../../file/files-service'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
-import { resumeService } from '../../flows/flow-run/waitpoint/resume-service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -18,6 +17,7 @@ import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.servic
 import { runFlowAsTool } from '../../mcp/mcp-server-builder'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { resumeService } from '../../waitpoints/resume-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
 import { agentApprovalGate } from './agent-approval-gate'
@@ -173,8 +173,9 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const selectedModel = modelName ?? conversation.modelName ?? null
         // The tier resolver finds no tier for a concrete model id and silently returns the default,
         // so a source that names its own model must never be routed through it.
-        const tier = agentHelpers.resolveTier({ tierId: carriesChatContext ? selectedModel : null })
-        const resolvedModelId = !carriesChatContext && !isNil(modelName)
+        const namesItsOwnModel = requestedSource === AgentRunSource.FLOW_STEP || requestedSource === AgentRunSource.AGENT
+        const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
+        const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? modelName
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
 
