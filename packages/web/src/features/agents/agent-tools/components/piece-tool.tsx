@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import { AgentPieceTool, mcpToolNameUtils } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, Puzzle, X } from 'lucide-react';
@@ -15,9 +16,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { appConnectionsQueries } from '@/features/connections/hooks/app-connections-hooks';
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
+import { authenticationSession } from '@/lib/authentication-session';
 
+import { agentToolAccount } from '../lib/agent-tool-account';
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
 
 type AgentPieceToolProps = {
@@ -49,6 +53,16 @@ export const AgentPieceToolComponent = ({
     (p) => p.pieceName === tools[0].pieceMetadata.pieceName,
   );
 
+  const { data: connections } = appConnectionsQueries.useAppConnections({
+    request: {
+      pieceName: tools[0].pieceMetadata.pieceName,
+      projectId: authenticationSession.getProjectId()!,
+      limit: 1000,
+    },
+    extraKeys: [tools[0].pieceMetadata.pieceName],
+    enabled: !isNil(pieceMetadata?.auth),
+  });
+
   if (!pieceMetadata) {
     return (
       <div className="flex  w-full items-center justify-between px-3 h-12  border-b last:border-0 py-2">
@@ -61,6 +75,12 @@ export const AgentPieceToolComponent = ({
       </div>
     );
   }
+
+  const accountLabel = agentToolAccount.label({
+    tools,
+    connections: connections?.data ?? [],
+    needsAccount: !isNil(pieceMetadata.auth),
+  });
 
   const handleEditTool = (tool: AgentPieceTool) => {
     openAddPieceToolDialog({ page: 'action-inputs', tool });
@@ -90,6 +110,9 @@ export const AgentPieceToolComponent = ({
               {pieceMetadata.displayName}
             </span>
           </div>
+          <span className="mr-2 truncate text-xs text-muted-foreground">
+            {accountLabel}
+          </span>
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 py-2">

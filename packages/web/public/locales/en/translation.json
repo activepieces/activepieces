@@ -1,4 +1,7 @@
 {
+  "No account": "No account",
+  "Several accounts": "Several accounts",
+  "Account not found": "Account not found",
   "Write instructions before testing": "Write instructions before testing",
   "Try it before it goes live": "Try it before it goes live",
   "Needs a model to run": "Needs a model to run",
