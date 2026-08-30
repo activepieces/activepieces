@@ -104,17 +104,17 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 },
             )
             assertRowsAffected(updateResult.affected)
-            if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
-                await triggerSourceService(log).disable({
-                    flowId: flow.id,
-                    projectId: flow.projectId,
-                    simulate: false,
-                    ignoreError: true,
-                })
-            }
             await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
         })
 
+        if (flow.status === FlowStatus.ENABLED && !isNil(flow.publishedVersionId)) {
+            await triggerSourceService(log).disable({
+                flowId: flow.id,
+                projectId: flow.projectId,
+                simulate: false,
+                ignoreError: true,
+            })
+        }
         await flowExecutionCache(log).invalidate(flow.id)
         await flowService(log).applyStatusChangeForPublishedFlow({
             id: flow.id,
