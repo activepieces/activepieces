@@ -382,9 +382,9 @@ describe('Waitpoint service', () => {
         })
     })
 
-    describe('findPreCompletedByFlowRunId', () => {
+    describe('findCompletedWaitpointIfRunIsIdle', () => {
         it('should return null when no waitpoint exists', async () => {
-            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: apId() })
+            const result = await waitpointService(app.log).findCompletedWaitpointIfRunIsIdle({ flowRunId: apId() })
             expect(result).toBeNull()
         })
 
@@ -404,7 +404,7 @@ describe('Waitpoint service', () => {
                 resumePayload: { body: { ok: true } },
             })
 
-            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            const result = await waitpointService(app.log).findCompletedWaitpointIfRunIsIdle({ flowRunId: flowRun.id })
             expect(result?.id).toBe(pause.waitpoint.id)
         })
 
@@ -430,7 +430,7 @@ describe('Waitpoint service', () => {
                 type: PauseType.WEBHOOK,
             })
 
-            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            const result = await waitpointService(app.log).findCompletedWaitpointIfRunIsIdle({ flowRunId: flowRun.id })
             expect(result).toBeNull()
         })
     })

@@ -118,12 +118,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {
-                                const preCompleted = await waitpointService(log).findPreCompletedByFlowRunId({ flowRunId: savedFlowRun.id })
-                                if (!isNil(preCompleted)) {
-                                    await resumeService(log).releaseBarrierWithoutLock({
+                                const idleCompletedWaitpoint = await waitpointService(log).findCompletedWaitpointIfRunIsIdle({ flowRunId: savedFlowRun.id })
+                                if (!isNil(idleCompletedWaitpoint)) {
+                                    await resumeService(log).resumeTrustedWithoutLock({
                                         flowRunId: savedFlowRun.id,
-                                        waitpointId: preCompleted.id,
-                                        resumePayload: preCompleted.resumePayload,
+                                        waitpointId: idleCompletedWaitpoint.id,
+                                        resumePayload: idleCompletedWaitpoint.resumePayload,
                                     })
                                 }
                             }
@@ -213,7 +213,7 @@ export async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).findNonBarrierByFlowRunId({ flowRunId: parentRunId, projectId: flowRun.projectId })
+    const existingWaitpoint = await waitpointService(log).findSubflowWaitpoint({ flowRunId: parentRunId, projectId: flowRun.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,

@@ -53,6 +53,16 @@ A **Subflow** is a flow invoked by another flow rather than by its own external 
 - **Batch** — the rows carried by one fan-out call: `{ batchIndex, headers, rows, extraData }`. *Avoid:* chunk, csv table, sub-table, shard.
 - Parent linkage is two headers (`x-parent-run-id`, `x-fail-parent-on-failure`); fan-out sets the latter false. Streaming bounds memory, not time — the step is still capped by `FLOW_TIMEOUT_SECONDS`.
 
+### Waitpoints
+A **waitpoint** is the row a paused run is parked on — one per pause, `DELAY` / `WEBHOOK` / `BARRIER`. Reference lives in the public docs; what belongs here is the vocabulary, because two verbs are easy to swap.
+- **Release** — what happens to a **barrier**: close it, write its summary, delete its signals. `barrierService.release`. *Avoid:* "resume the barrier".
+- **Resume** — what happens to a **run**: enqueue the job that re-invokes the step. `resumeService.resume*`. A release ends by asking for a resume; the reverse never happens. *Avoid:* "release the run".
+- **Trusted resume** — `resumeTrusted` / `resumeTrustedWithoutLock`: resume skipping the barrier guard, for internal callers only. Every HTTP route goes through `resumeFromWaitpoint`, which refuses barriers always.
+- **Waitpoint key** — the path-qualified step identity the engine sends in `stepName`, e.g. `loop_1:3/approval`. It is only ever an identity key inside `waitpoint-service`. Gives each loop iteration its own row; without it a pause inside a loop fired on iteration 1 only.
+- **Signal** — one `waitpoint_signal` row per awaited thing on a barrier, created up front. Deleted on release, so a returning approver sees only "already responded".
+- Gotcha: a run can hold a COMPLETED leftover *and* an open PENDING pause at once, so any per-run waitpoint lookup must say which it wants — `findCompletedWaitpointIfRunIsIdle` returns null while anything is still pending.
+- See [decision 000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md) and the public [Waitpoints](https://www.activepieces.com/docs/install/architecture/waitpoints) page.
+
 ### Folders
 Lightweight per-project grouping for flows and tables. Name unique case-insensitively per project.
 - `folder` entity (displayName, projectId, displayOrder). List returns `numberOfFlows`/`numberOfTables` via correlated subqueries. Create is an upsert by name.
@@ -71,6 +81,7 @@ Reusable flow/table blueprints. Types: OFFICIAL (Activepieces-curated, platformI
 - **Triggers** — POLLING / WEBHOOK / APP_WEBHOOK / MANUAL
 - **Human Input** — forms, approvals, the resume confirmation page
 - **Subflows** — flow-calls-flow: Callable Flow, Call Flow, streaming fan-out
+- **Waitpoints** — how a paused run is parked; release vs resume, barriers, signals
 - **Folders** — flow organization; the uncategorized sentinel
 - **Templates** — OFFICIAL / CUSTOM / SHARED blueprints
 - **Variables** — project-scoped values referenced from steps
