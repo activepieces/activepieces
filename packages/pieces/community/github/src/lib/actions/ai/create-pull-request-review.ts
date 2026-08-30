@@ -8,6 +8,7 @@ import { pullRequestReviewBodyOutputSchema } from '../../output-schemas';
 export const githubCreatePullRequestReviewAction = createAction({
   auth: githubAuth,
   name: 'create_pull_request_review',
+  classification: 'WRITE',
   displayName: 'Create Pull Request Review (Agent)',
   description: 'Submits a review on a pull request.',
   audience: 'ai',

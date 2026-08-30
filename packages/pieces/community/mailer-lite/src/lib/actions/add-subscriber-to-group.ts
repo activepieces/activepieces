@@ -6,6 +6,7 @@ import { mailerLiteCommon } from '../common';
 export const addSubscriberToGroupAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'add_subscriber_to_group',
+	classification: 'WRITE',
 	displayName: 'Add Subscriber to a Group',
 	description: 'Adds existing subscriber to a specific group.',
 	audience: 'both',

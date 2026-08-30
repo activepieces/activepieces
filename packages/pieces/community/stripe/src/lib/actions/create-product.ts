@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { productOutputSchema } from '../output-schemas';
 export const stripeCreateProduct = createAction({
   name: 'create_product',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Product',
   description: 'Create a new product object in Stripe.',

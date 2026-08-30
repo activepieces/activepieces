@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
+import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
@@ -354,6 +355,26 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
+        },
+
+        async getPersonalizationConfig(input) {
+            return chatPersonalizationService(log).getConfigForWorker(input)
+        },
+
+        async getPersonalizationPrefillConfig(input) {
+            return chatPersonalizationService(log).getPrefillConfigForWorker(input)
+        },
+
+        async savePersonalizationResult(input) {
+            return chatPersonalizationService(log).saveResult(input)
+        },
+
+        async savePersonalizationPrefill(input) {
+            return chatPersonalizationService(log).savePrefill(input)
+        },
+
+        async sendPersonalizationProgress(input) {
+            return chatPersonalizationService(log).sendProgress(input)
         },
     }
 }

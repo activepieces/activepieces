@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { disputeOutputSchema } from '../output-schemas';
 export const stripeGetDispute = createAction({
   name: 'get_dispute',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Dispute (Agent)',
   description: 'Retrieve a dispute by its ID.',

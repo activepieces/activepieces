@@ -14,6 +14,7 @@ import { findRowsActionOutputSchema } from '../output-schemas';
 export const findRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find_rows',
+	classification: 'SEARCH',
 description: 'Look up rows in a worksheet based on a column value.',
 	audience: 'human',
 	aiMetadata: {

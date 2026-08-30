@@ -6,6 +6,7 @@ import { deftformApiCall } from '../common';
 export const getSubmissionPdf = createAction({
     auth: deftformAuth,
     name: 'get_submission_pdf',
+    classification: 'READ',
     displayName: 'Get Submission PDF',
     description: 'Generates a PDF download link for a specific form submission by its unique response UUID.',
     audience: 'both',

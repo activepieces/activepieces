@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateCreatorTakeaways = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorTakeaways',
+  classification: 'READ',
   displayName: 'Generate Creator Takeaways',
   description:
     'Generates key takeaways for a YouTube video based on its content.',

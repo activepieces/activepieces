@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'trigger_new-contact'
 export const newContact = createTrigger({
   auth: aircallAuth,
   name: 'newContact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created.',
   aiMetadata: {

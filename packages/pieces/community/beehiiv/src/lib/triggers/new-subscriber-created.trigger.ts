@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-subscriber-created-trigger';
 export const newSubscriberCreatedTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_new_subscriber_created',
+	classification: 'READ',
 	displayName: 'New Subscriber Created',
 	description: 'Triggers when a new subscriber is created (before email confirmation).',
 	aiMetadata: {

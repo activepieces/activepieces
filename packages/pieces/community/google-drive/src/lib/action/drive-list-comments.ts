@@ -6,6 +6,7 @@ import { driveListCommentsOutputSchema } from '../output-schemas';
 export const driveListComments = createAction({
   auth: googleDriveAuth,
   name: 'drive_list_comments',
+  classification: 'SEARCH',
   displayName: 'List Comments',
   description: 'List the comments on a Drive file.',
   audience: 'ai',

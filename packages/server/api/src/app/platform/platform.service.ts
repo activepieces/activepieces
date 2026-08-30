@@ -55,6 +55,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             emailAuthEnabled: true,
+            autoCreatePersonalProjects: true,
             enforceAllowedAuthDomains: false,
             allowedAuthDomains: [],
             federatedAuthProviders: { saml: null },
@@ -176,6 +177,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('googleAuthEnabled', params.googleAuthEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
+            ...spreadIfDefined('autoCreatePersonalProjects', params.autoCreatePersonalProjects),
             ...spreadIfDefined(
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,

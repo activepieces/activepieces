@@ -8,18 +8,19 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string }) {
+async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
         headers: {
             Authorization: `Bearer ${params.engineToken}`,
         },
+        ...(params.configId === undefined ? {} : { queryParams: { configId: params.configId } }),
     })
     return body
 }
@@ -28,6 +29,7 @@ export function createAIModel(params: CreateAIModelParams<false>): Promise<Langu
 export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
     provider,
+    configId,
     modelId,
     engineToken,
     projectId,
@@ -37,7 +39,7 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId });
 
     if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
         throw new Error(`Provider ${provider} does not support image models`)
@@ -159,6 +161,19 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenAICompatible({ name: 'mistral', baseURL: 'https://api.mistral.ai/v1', apiKey }).chatModel(modelId)
+        }
+        case AIProviderName.XAI:
+        case AIProviderName.DEEPSEEK:
+        case AIProviderName.ZAI:
+        case AIProviderName.QWEN:
+        case AIProviderName.MINIMAX:
+        case AIProviderName.MOONSHOT: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({
+                name: provider,
+                baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider],
+                apiKey,
+            }).chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -325,6 +340,7 @@ const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage,
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
+    configId?: string;
     modelId: string;
     engineToken: string;
     projectId: string;

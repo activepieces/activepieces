@@ -8,6 +8,7 @@ import { MailchimpClient, CampaignCreateData, CampaignContentData } from '../com
 export const createCampaign = createAction({
   auth: mailchimpAuth,
   name: 'create_campaign',
+  classification: 'WRITE',
   displayName: 'Create Campaign',
   description: 'Create a new Mailchimp campaign',
   audience: 'both',

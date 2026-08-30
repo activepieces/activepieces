@@ -19,6 +19,7 @@ type Props = {
 };
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -78,6 +79,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-line-item',
+	classification: 'READ',
 	displayName: 'New Line Item',
 	description: 'Triggers when new line item is available.',
 	aiMetadata: {
@@ -99,6 +101,7 @@ export const newLineItemTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

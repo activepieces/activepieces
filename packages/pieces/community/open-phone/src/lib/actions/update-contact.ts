@@ -13,6 +13,7 @@ import { contactDropdown } from '../common/props';
 export const updateContact = createAction({
   auth: openPhoneAuth,
   name: 'update_contact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update an existing contact in your OpenPhone workspace',
   audience: 'both',

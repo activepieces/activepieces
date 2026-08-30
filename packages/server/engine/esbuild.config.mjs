@@ -10,7 +10,7 @@ const pieceChildOutfile = path.join(outdir, 'piece-child.js');
 
 const watch = process.argv.includes('--watch');
 
-fs.rmSync(outdir, { recursive: true, force: true });
+fs.mkdirSync(outdir, { recursive: true });
 
 const zodLocaleTrim = {
   // Drop zod's 46 unused locale packs (~184KB). The app surfaces validation
@@ -39,6 +39,7 @@ function rebuildLogger(outfile) {
       });
       build.onEnd((result) => {
         if (result.metafile) {
+          fs.mkdirSync(path.dirname(outfile), { recursive: true });
           fs.writeFileSync(
             outfile + '.meta.json',
             JSON.stringify(result.metafile)

@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { createAIModel } from '../../common/ai-sdk';
-import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/pieces-framework';
+import { aiProps, aiProviderSelection } from '../../common/props';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 export const classifyText = createAction({
   audience: 'both',
   name: 'classifyText',
+  classification: 'READ',
   displayName: 'Classify Text',
   description: 'Categorize any text input using custom labels, so your flow knows what to do next.',
   aiMetadata: { description: 'Assigns exactly one label from a caller-supplied Categories list to a block of text using a text model, and errors if the model answers with anything outside that list. Pick it for routing or branching where the outcomes are known up front; use extractStructuredData for multiple typed fields, summarizeText to shorten text, or askAi when the answer is not one of a fixed set. Requires the text plus a non-empty Categories array matched by exact string, so keep labels short; read-only and idempotent.', idempotent: true },
@@ -26,11 +27,12 @@ export const classifyText = createAction({
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
 
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

@@ -5,14 +5,17 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getDealAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-deal',
+	classification: 'READ',
 	displayName: 'Get Deal',
 	description: 'Gets a deal.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single deal by its HubSpot deal ID, returning default and any requested additional properties such as amount, stage, and close date. Use when you already have the deal ID. Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',

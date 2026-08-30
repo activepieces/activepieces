@@ -22,6 +22,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', CreateAgentRoute, async (request, reply) => {
         const ownerId = await resolveUserId(request)
         const agent = await agentService(request.log).create({
+            platformId: request.principal.platform.id,
             projectId: request.projectId,
             ownerId,
             request: request.body,
@@ -78,6 +79,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             userId: await resolveUserId(request),
             request: request.body,
+            goLive: true,
         })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.AGENT_UPDATED,

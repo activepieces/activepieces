@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordAddRoleAi = createAction({
   auth: discordAuth,
   name: 'discord_add_role',
+  classification: 'WRITE',
   displayName: 'Add Role to Member',
   description: 'Assign a role to a guild member.',
   audience: 'ai',

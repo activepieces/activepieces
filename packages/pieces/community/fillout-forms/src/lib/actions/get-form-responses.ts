@@ -7,6 +7,7 @@ import { filloutFormsAuth } from '../auth';
 export const getFormResponses = createAction({
   auth: filloutFormsAuth,
   name: 'getFormResponses',
+  classification: 'SEARCH',
   displayName: 'Get Form Responses',
   description: 'Fetch all responses for a Fillout form, with optional filters.',
   audience: 'both',

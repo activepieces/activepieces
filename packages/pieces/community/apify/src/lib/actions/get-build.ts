@@ -5,6 +5,7 @@ import { getBuildActionOutputSchema } from '../output-schemas';
 
 export const apifyGetBuild = createAction({
   name: 'apify_get_build',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Build',
   description: 'Retrieves the status and metadata of an Actor build by build ID.',
