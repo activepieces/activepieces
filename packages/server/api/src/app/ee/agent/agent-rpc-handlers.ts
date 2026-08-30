@@ -24,6 +24,8 @@ import { agentApprovalGate } from './agent-approval-gate'
 import { agentCompaction } from './agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from './agent-file-utils'
 import { agentHelpers } from './agent-helpers'
+import { agentService } from './agent-service'
+import { agentToolPinning } from './agent-tool-pinning'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatUsageTracker } from './chat-usage-tracker'
 import { agentMcp } from './mcp/agent-mcp'
@@ -607,6 +609,14 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
                     label: typeof label === 'string' ? label : connectionExternalId,
                     projectId: typeof projectId === 'string' ? projectId : '',
                 })
+                await pinConnectionToAgent({
+                    conversationId: input.conversationId,
+                    pieceName,
+                    externalId: connectionExternalId,
+                    platformId: input.platformId,
+                    userId: input.userId,
+                    log,
+                })
             }
             return { result: { success: true } }
         }
@@ -813,6 +823,32 @@ async function confinedProjectFor({ conversationId }: { conversationId?: string 
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run must be confined to a project' } })
     }
     return conversation.projectId
+}
+
+async function pinConnectionToAgent({ conversationId, pieceName, externalId, platformId, userId, log }: {
+    conversationId: string
+    pieceName: string
+    externalId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+    if (conversation.source !== AgentRunSource.AGENT || isNil(conversation.agentId)) {
+        return
+    }
+    const agent = await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
+    const pinned = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId: agent.projectId,
+        userId,
+        edit: (tools) => agentToolPinning.pinConnection({ tools, pieceName, externalId }),
+    })
+    log.info({
+        conversation: { id: conversationId },
+        connection: { id: externalId },
+        piece: { name: pieceName },
+    }, isNil(pinned) ? '[agentRpc#pinConnectionToAgent] No agent tool to pin' : '[agentRpc#pinConnectionToAgent] Pinned the account to the agent')
 }
 
 function byteLengthOf(value: unknown): number {

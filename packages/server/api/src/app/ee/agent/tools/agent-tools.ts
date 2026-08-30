@@ -14,6 +14,7 @@ import { runActionInput } from '../../../mcp/tools/ap-run-action'
 import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { projectService } from '../../../project/project-service'
 import { tableService } from '../../../tables/table/table.service'
 import { agentApprovalGate } from '../agent-approval-gate'
 import { agentHelpers } from '../agent-helpers'
@@ -274,6 +275,27 @@ async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }:
     return afterDraftChange({ agent: updated, publish, projectId, userId, log })
 }
 
+async function resolveConnectionToPin({ pieceName, projectId, platformId, log }: {
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId?: string } | { error: string }> {
+    const project = await projectService(log).getOneOrThrow(projectId)
+    const found = await findConnectionsForPiece({ pieceName, projects: [project], platformId, log })
+    if ('noAuthRequired' in found) {
+        return {}
+    }
+    if ('needsConnection' in found) {
+        return { error: `${found.displayName} has no connection in this project yet, so the agent would have to ask on every run. Have the user connect it first, then add the tool.` }
+    }
+    if (found.connections.length === 1) {
+        return { externalId: found.connections[0].externalId }
+    }
+    const choices = found.connections.map((connection) => `${connection.label} (${connection.externalId})`).join(', ')
+    return { error: `This project has more than one ${found.displayName} connection, so pick the one this agent should use and pass it as connectionExternalId: ${choices}` }
+}
+
 async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
@@ -293,9 +315,9 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     if (isNil(piece) || missing.length > 0) {
         return { error: `${normalizedPiece} has no action called ${missing.join(' or ')}. Look it up with ap_research_pieces before adding it.` }
     }
-    const connectionExternalId = nonEmpty(toolInput.connectionExternalId)
-    if (!isNil(connectionExternalId)) {
-        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: connectionExternalId })
+    const requested = nonEmpty(toolInput.connectionExternalId)
+    if (!isNil(requested)) {
+        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: requested })
         if (isNil(connection)) {
             return { error: 'No connection with that externalId in this project. Call ap_list_connections and pass one of those.' }
         }
@@ -303,6 +325,13 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
             return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
         }
     }
+    const resolved = isNil(requested)
+        ? await resolveConnectionToPin({ pieceName: normalizedPiece, projectId, platformId, log })
+        : { externalId: requested }
+    if ('error' in resolved) {
+        return resolved
+    }
+    const connectionExternalId = resolved.externalId
     const added: AgentTool[] = actionNames.map((actionName) => ({
         type: AgentToolType.PIECE,
         toolName: mcpToolNameUtils.createPieceToolName(normalizedPiece, actionName),
