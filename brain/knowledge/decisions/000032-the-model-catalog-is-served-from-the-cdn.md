@@ -44,7 +44,11 @@ mirror. This is a knowing exception to `.claude/rules/self-hosting.md`, not an o
 **Pricing data reaches production weekly with nobody reviewing the diff.** The generator's truncation
 guard — refuse to publish if a provider block disappears or the model count falls more than 20% against
 the currently published copy — is the only thing between a partial models.dev payload and every
-install. Because it is the only check, it **fails closed**: only a `404` (nothing published yet) is
+install. It compares **per provider**, not just in aggregate: a collapse inside one provider is
+otherwise hidden by growth in another — a previous catalog with openai at 200 against a regenerate at
+47 passes an aggregate check (794 of a required 554) while openai loses three quarters of its models.
+A loss of at most two models is tolerated regardless of ratio, so a three-model provider like deepseek
+does not trip the guard on one legitimate removal. Because it is the only check, it **fails closed**: only a `404` (nothing published yet) is
 allowed to skip it and bootstrap the first upload. A network error, a 5xx, or a non-JSON body all abort
 the run, because "cannot read the current catalog" is not the same as "there is no current catalog" —
 treating them alike lets a transient CDN blip disable the guard at exactly the moment it matters.
