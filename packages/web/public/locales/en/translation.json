@@ -1,4 +1,7 @@
 {
+  "Connect an account": "Connect an account",
+  "Different account per action": "Different account per action",
+  "Account was deleted": "Account was deleted",
   "Write instructions before testing": "Write instructions before testing",
   "Try it before it goes live": "Try it before it goes live",
   "Needs a model to run": "Needs a model to run",

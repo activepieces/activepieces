@@ -33,6 +33,7 @@ describe('TestPane', () => {
         blockedReason="Pick a model before testing"
         conversationId={null}
         onConversationCreated={vi.fn()}
+        onEdited={vi.fn()}
       />,
     );
 
@@ -47,6 +48,7 @@ describe('TestPane', () => {
         blockedReason="Write instructions before testing"
         conversationId={null}
         onConversationCreated={vi.fn()}
+        onEdited={vi.fn()}
       />,
     );
 
@@ -61,6 +63,7 @@ describe('TestPane', () => {
         blockedReason={null}
         conversationId={null}
         onConversationCreated={vi.fn()}
+        onEdited={vi.fn()}
       />,
     );
 
@@ -76,6 +79,7 @@ describe('TestPane', () => {
         blockedReason={null}
         conversationId="conv_9"
         onConversationCreated={vi.fn()}
+        onEdited={vi.fn()}
       />,
     );
 

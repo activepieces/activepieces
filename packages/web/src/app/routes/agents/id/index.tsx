@@ -678,6 +678,7 @@ const AgentEditScreen = ({
                 blockedReason={blockedFromTesting}
                 conversationId={testConversationId}
                 onConversationCreated={setTestConversationId}
+                onEdited={onEdited}
               />
             ) : (
               <EditWithAIPane agent={agent} onEdited={onEdited} />
@@ -751,11 +752,13 @@ const TestPane = ({
   blockedReason,
   conversationId,
   onConversationCreated,
+  onEdited,
 }: {
   agent: Agent;
   blockedReason: string | null;
   conversationId: string | null;
   onConversationCreated: (id: string) => void;
+  onEdited: () => void;
 }) =>
   !isNil(blockedReason) ? (
     <div className="flex min-h-0 grow flex-col items-center justify-center px-6 text-center">
@@ -768,6 +771,7 @@ const TestPane = ({
         agentId={agent.id}
         conversationId={conversationId}
         onConversationCreated={onConversationCreated}
+        onTurnEnd={onEdited}
         placeholder={t('Try {name}...', { name: agent.displayName })}
         footerNote={buildCapabilityNote(agent)}
         emptyState={<AgentTestWelcome />}
