@@ -99,14 +99,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
         await transaction(async (entityManager) => {
-            await flowApprovalRequestRepo(entityManager).update(
-                { id: approval.id },
+            const updateResult = await flowApprovalRequestRepo(entityManager).update(
+                { id: approval.id, state: FlowApprovalRequestState.PENDING },
                 {
                     state: FlowApprovalRequestState.APPROVED,
                     approverId,
                     decidedAt,
                 },
             )
+            assertRowsAffected(updateResult.affected)
             await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
         })
 
@@ -149,8 +150,8 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         const rejectionReason = reason ?? null
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
-        await flowApprovalRequestRepo().update(
-            { id: approval.id },
+        const rejectResult = await flowApprovalRequestRepo().update(
+            { id: approval.id, state: FlowApprovalRequestState.PENDING },
             {
                 state: FlowApprovalRequestState.REJECTED,
                 approverId,
@@ -158,6 +159,7 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
                 rejectionReason,
             },
         )
+        assertRowsAffected(rejectResult.affected)
 
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_REJECTED,
@@ -188,7 +190,11 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         })
 
         await transaction(async (entityManager) => {
-            await flowApprovalRequestRepo(entityManager).delete({ id: approval.id })
+            const deleteResult = await flowApprovalRequestRepo(entityManager).delete({
+                id: approval.id,
+                state: FlowApprovalRequestState.PENDING,
+            })
+            assertRowsAffected(deleteResult.affected)
             await flowVersionRepo(entityManager).update({ id: lockedVersion.id }, { state: FlowVersionState.DRAFT })
         })
 
@@ -263,6 +269,15 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
 
 function assertStateIsPending(state: FlowApprovalRequestState): void {
     if (state !== FlowApprovalRequestState.PENDING) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This approval request is no longer pending' },
+        })
+    }
+}
+
+function assertRowsAffected(affected: number | null | undefined): void {
+    if (!affected || affected === 0) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: 'This approval request is no longer pending' },
