@@ -478,6 +478,10 @@ const AgentEditScreen = ({
   });
   const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
   const [exitRequested, setExitRequested] = useState(false);
+  const leaveDecision = agentEditState.leaveGuard({
+    blockerState: leaveBlocker.state,
+    exitRequested,
+  });
   const testRequested = useRef(false);
   const writeSeq = useRef(0);
   const writeLock = useRef(agentEditState.createWriteLock());
@@ -564,14 +568,14 @@ const AgentEditScreen = ({
   return (
     <Form {...form}>
       <LeaveWithoutSavingDialog
-        open={leaveBlocker.state === 'blocked' || exitRequested}
+        open={leaveDecision.open}
         onKeepEditing={() => {
           setExitRequested(false);
           leaveBlocker.reset?.();
         }}
         onDiscard={() => {
           setExitRequested(false);
-          if (leaveBlocker.state === 'blocked') {
+          if (leaveDecision.discardAction === 'proceed') {
             leaveBlocker.proceed?.();
             return;
           }

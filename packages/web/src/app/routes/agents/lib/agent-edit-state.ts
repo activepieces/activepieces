@@ -45,6 +45,22 @@ function modeIntent({
   return 'stage';
 }
 
+function leaveGuard({
+  blockerState,
+  exitRequested,
+}: {
+  blockerState: string;
+  exitRequested: boolean;
+}): LeaveGuard {
+  if (blockerState !== 'blocked' && !exitRequested) {
+    return { open: false, discardAction: 'none' };
+  }
+  return {
+    open: true,
+    discardAction: blockerState === 'blocked' ? 'proceed' : 'exit',
+  };
+}
+
 function createWriteLock(): WriteLock {
   let held = false;
   return {
@@ -64,11 +80,16 @@ export const agentEditState = {
   sameConfig,
   headerStatus,
   modeIntent,
+  leaveGuard,
   createWriteLock,
 };
 
 export type HeaderStatus = 'needs-model' | 'live' | 'pending';
 export type ModeIntent = 'switch' | 'stage';
+export type LeaveGuard = {
+  open: boolean;
+  discardAction: 'proceed' | 'exit' | 'none';
+};
 export type WriteLock = {
   claim: () => boolean;
   release: () => void;

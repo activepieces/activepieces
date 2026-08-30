@@ -210,3 +210,38 @@ describe('createWriteLock', () => {
     expect(admitted).toHaveLength(1);
   });
 });
+
+describe('leaveGuard', () => {
+  it('stays closed when nothing is trying to leave', () => {
+    expect(
+      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: false }),
+    ).toStrictEqual({ open: false, discardAction: 'none' });
+  });
+
+  it('opens for a blocked router navigation and lets the router proceed', () => {
+    expect(
+      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: false }),
+    ).toStrictEqual({ open: true, discardAction: 'proceed' });
+  });
+
+  it('opens for the back arrow and exits in-app, since no navigation is pending', () => {
+    expect(
+      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: true }),
+    ).toStrictEqual({ open: true, discardAction: 'exit' });
+  });
+
+  it('prefers the router when both are pending, so the queued navigation is not dropped', () => {
+    expect(
+      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: true }),
+    ).toStrictEqual({ open: true, discardAction: 'proceed' });
+  });
+
+  it.each(['proceeding', 'unblocked'])(
+    'stays closed while the blocker is %s and no in-app exit was asked for',
+    (blockerState) => {
+      expect(
+        agentEditState.leaveGuard({ blockerState, exitRequested: false }).open,
+      ).toBe(false);
+    },
+  );
+});
