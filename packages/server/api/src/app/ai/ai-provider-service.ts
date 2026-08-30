@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -90,7 +90,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (isNil(aiProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: providerId, entityType: 'AIProvider' },
+                params: { entityId: providerId, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
             })
         }
 
@@ -315,7 +315,7 @@ async function resolveEligibleRow({ platformId, provider, scope }: { platformId:
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
                 entityId: provider,
-                entityType: 'AIProvider',
+                entityType: AI_PROVIDER_ENTITY_TYPES.provider,
             },
         }, scope.type === 'platform'
             ? `the ${provider} AI provider is not configured on this platform`
@@ -335,7 +335,7 @@ async function resolveRowForScope({ platformId, provider, scope, configId }: { p
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
                 entityId: configId,
-                entityType: 'AIProvider',
+                entityType: AI_PROVIDER_ENTITY_TYPES.provider,
             },
         }, scope.type === 'platform'
             ? `the ${provider} AI provider key is not configured on this platform`
@@ -365,7 +365,7 @@ async function getRowByIdOrThrow({ platformId, configId }: { platformId: Platfor
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
                 entityId: configId,
-                entityType: 'AIProvider',
+                entityType: AI_PROVIDER_ENTITY_TYPES.provider,
             },
         })
     }
