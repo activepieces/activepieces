@@ -11,12 +11,12 @@ export const BaseAIProviderAuthConfig = z.object({
 })
 export type BaseAIProviderAuthConfig = z.infer<typeof BaseAIProviderAuthConfig>
 
-export export const VertexProviderAuthConfig = z.object({
+export const VertexProviderAuthConfig = z.object({
     serviceAccountJson: z.string().min(1),
 })
 export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 
-const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
+export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
 export type AnthropicProviderAuthConfig = z.infer<typeof AnthropicProviderAuthConfig>
 
 export const ActivePiecesProviderAuthConfig = BaseAIProviderAuthConfig.extend({

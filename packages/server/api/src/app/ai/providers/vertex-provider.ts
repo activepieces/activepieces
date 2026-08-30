@@ -12,9 +12,6 @@ export const vertexProvider: AIProviderStrategy<VertexProviderAuthConfig, Vertex
         _log: FastifyBaseLogger,
     ): Promise<void> {
         const credentials = parseServiceAccount(authConfig.serviceAccountJson)
-        if (credentials.project_id !== config.project) {
-            throw new Error(`Service account belongs to project ${credentials.project_id}, not ${config.project}`)
-        }
 
         const { data: token, error } = await tryCatch(() => new GoogleAuth({
             credentials,
