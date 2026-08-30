@@ -52,7 +52,7 @@ export const listGroupParticipantsAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.GET,
-      `/v1/groups/${groupId}/participants`,
+      `/v1/groups/${encodeURIComponent(groupId)}/participants`,
       undefined,
       queryParams,
     );

@@ -27,7 +27,7 @@ export const removeParticipantsFromGroupAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${group}/participants/remove`,
+      `/v1/groups/${encodeURIComponent(group)}/participants/remove`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);

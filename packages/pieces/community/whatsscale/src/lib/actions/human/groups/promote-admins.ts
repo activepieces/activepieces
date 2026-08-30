@@ -27,7 +27,7 @@ export const promoteAdminsInGroupAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${group}/admin/promote`,
+      `/v1/groups/${encodeURIComponent(group)}/admin/promote`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);

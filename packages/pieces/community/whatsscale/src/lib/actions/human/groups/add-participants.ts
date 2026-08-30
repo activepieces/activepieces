@@ -27,7 +27,7 @@ export const addParticipantsToGroupAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${group}/participants/add`,
+      `/v1/groups/${encodeURIComponent(group)}/participants/add`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);

@@ -27,7 +27,7 @@ export const leaveGroupAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${groupId}/leave`,
+      `/v1/groups/${encodeURIComponent(groupId)}/leave`,
       { session },
     );
     return response.body;

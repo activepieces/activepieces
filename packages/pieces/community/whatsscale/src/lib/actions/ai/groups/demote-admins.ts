@@ -35,7 +35,7 @@ export const demoteGroupAdminsAction = createAction({
     const response = await whatsscaleClient(
       auth,
       HttpMethod.POST,
-      `/v1/groups/${groupId}/admin/demote`,
+      `/v1/groups/${encodeURIComponent(groupId)}/admin/demote`,
       { session, participants: toParticipantJids(participants) },
     );
     return flattenParticipantResults(response.body as ConductorParticipantResult[]);
