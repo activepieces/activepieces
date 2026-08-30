@@ -78,7 +78,7 @@ export const flowsApi = {
   },
   delete(flowId: string) {
     return api.delete<void>(`/v1/flows/${flowId}`).then(() => {
-      projectCollectionUtils.refetchProjects();
+      return projectCollectionUtils.refetchProjects();
     });
   },
   count(query: CountFlowsRequest) {
