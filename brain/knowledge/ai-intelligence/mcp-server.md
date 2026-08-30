@@ -28,6 +28,18 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 
 ### Gotchas
 
+- **`mcp_oauth_token.clientKey` is decided once, at sign-in.** `exchangeCode` derives it from the registration's
+  redirect URIs via `mcpOAuthClientIdentity`, so the grants list can filter and group in SQL instead of loading
+  every `mcp_oauth_client` row on the platform to re-derive keys in memory. Two consequences: sharpening the
+  heuristic later does **not** relabel existing grants (they age out in 30 days, and an active client relabels on
+  its next refresh, which backfills a NULL key), and `NULL` is not a third state — it means "signed in before the
+  column existed" and reads as `unknown` everywhere, including the `?clientKeys=unknown` filter.
+- **Claude Code and Codex re-run Dynamic Client Registration on *every* sign-in**, registering the exact
+  ephemeral loopback port they are about to bind (`http://localhost:<port>/callback`,
+  `http://127.0.0.1:<port>/callback/<callback_id>`). So the exact-string `validateRedirectUri` works and
+  RFC 8252 port-agnostic matching is not needed — but a fresh `mcp_oauth_client` row and `clientId` is
+  minted per sign-in, so `clientId` is **not** a stable identity for "a connected client", and those rows
+  accumulate unbounded. Measured 2026-08-23 (Claude Code 2.1.235, Codex 0.149.0).
 - Flow attribution: `ap_create_flow`/`ap_build_flow`/`ap_duplicate_flow` stamp `ownerId` (OAuth user) and `createdBy: { type: 'MCP', id }`.
 - `MCP_SERVER_CONNECTED` is deduped to at most one/user/server/day (`telemetryDedupe.onceToday`) — a daily-active signal, not request volume. Per-call usage is `MCP_TOOL_CALLED`.
 - OAuth discovery URLs are built via `domainHelper.getPublicUrlFromRequest` so subpath-hosted instances advertise the right prefix. `401`s carry an RFC 9728 `WWW-Authenticate: Bearer resource_metadata="…"` header. Host-root `.well-known/oauth-*` must still be forwarded to AP by the operator.
