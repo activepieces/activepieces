@@ -44,7 +44,10 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const configuredPieceTools = (data.tools ?? []).filter(isPieceTool)
+        const configuredTools = agentToolPolicy.withValidNames(data.tools ?? [])
+        const configuredPieceTools = configuredTools.filter(isPieceTool)
+        const configuredKnowledgeBaseTools = configuredTools.filter(isKnowledgeBaseTool)
+        const reportedTools = [...configuredPieceTools, ...configuredKnowledgeBaseTools]
 
         const sendEventWithRetry = ({ event }: { event: AgentEvent }) =>
             retryWithBackoff({
@@ -82,7 +85,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         }
         const reportFinal = (output: AgentResult) => pushProgress(output)
         const reportProgress = (uiParts: PersistedAgentPart[]) =>
-            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: configuredPieceTools, stillRunning: true }))
+            pushProgress(stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, stillRunning: true }))
 
         try {
             const config = await ctx.apiClient.getAgentConfig({
@@ -130,8 +133,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             mcpClient = connection.mcpClient
             const mcpToolSet = connection.mcpToolSet
 
-            const configuredMcpTools = (data.tools ?? []).filter(isMcpTool)
-            const configuredKnowledgeBaseTools = (data.tools ?? []).filter(isKnowledgeBaseTool)
+            const configuredMcpTools = configuredTools.filter(isMcpTool)
 
             // Absolute backstop: guarantees the turn tears down even if every finer-grained
             // signal misses. Routes through the same abortController as user-cancel and the
@@ -196,7 +198,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
-                configuredFlowTools: data.flowTools ?? [],
+                configuredFlowTools: agentToolPolicy.withValidNames(data.flowTools ?? []),
                 configuredKnowledgeBaseTools,
                 structuredOutput: data.structuredOutput ?? [],
                 captureStructured: (output) => {
@@ -294,7 +296,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         log.error({ error: retryError, conversation: { id: conversationId } }, 'Cancel save retry also failed')
                     }
                 }
-                const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' })
+                const stoppedResult = stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: 'The agent run was stopped before it finished' })
                 reportFinal(stoppedResult)
                 await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: stoppedResult, source, log })
                 await sendEventWithRetry({
@@ -335,7 +337,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
-            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
+            answer = stepResultFrom({ prompt: userMessage, uiParts, timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: incompleteReason({ truncatedAfterRetries, budgetExceeded }) })
 
             if (autoTitle) {
                 await sendEventWithRetry({
@@ -370,7 +372,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 : isCreditError || isNil(runProvider)
                     ? errorMessage
                     : `${runProvider}${isNil(runModelId) ? '' : ` (${runModelId})`}: ${errorMessage}`
-            const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: configuredPieceTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
+            const failedResult = { ...(answer ?? stepResultFrom({ prompt: userMessage, uiParts: [], timestamp: new Date().toISOString(), tools: reportedTools, structuredOutput: structured.output, failure: clientMessage })), failure: clientMessage }
             reportFinal(failedResult)
             const { error: releaseError } = await tryCatch(() => releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: failedResult, source, log }))
             // Empty arrays here mean "mark this turn ERROR" — they do NOT wipe history. The

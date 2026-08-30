@@ -1,7 +1,17 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, mcpToolNameUtils } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
+
+function withValidNames<T extends { toolName: string }>(tools: T[]): T[] {
+    const taken = new Set<string>()
+    return tools.map((tool) => {
+        const valid = mcpToolNameUtils.toValidToolName(tool.toolName)
+        const name = taken.has(valid) ? mcpToolNameUtils.toValidToolName(`${valid}_${taken.size}`) : valid
+        taken.add(name)
+        return name === tool.toolName ? tool : { ...tool, toolName: name }
+    })
+}
 
 // Listed, never subtracted: a group missing from a branch is unreachable, so a group added
 // elsewhere cannot leak into a surface that should not have it.
@@ -54,7 +64,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
     }
 }
 
-export const agentToolPolicy = { selectToolsForSource }
+export const agentToolPolicy = { selectToolsForSource, withValidNames }
 export { UNATTENDED_WEB_TOOLS }
 
 export type AgentToolGroups = {

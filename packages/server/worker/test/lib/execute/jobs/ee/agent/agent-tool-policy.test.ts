@@ -1,4 +1,4 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, mcpToolNameUtils } from '@activepieces/shared'
 import { Tool, ToolSet } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentToolPolicy, AgentToolGroups } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
@@ -182,3 +182,48 @@ describe('the shape of the policy itself', () => {
         }
     })
 })
+
+describe('withValidNames', () => {
+    const names = (tools: { toolName: string }[]): string[] =>
+        agentToolPolicy.withValidNames(tools).map((tool) => tool.toolName)
+
+    it('rewrites a name the providers would reject and keeps the rest of the tool', () => {
+        const [rewritten] = agentToolPolicy.withValidNames([{ toolName: 'Company Docs', sourceId: 'kb-1' }])
+
+        expect(rewritten.toolName).toMatch(PROVIDER_PATTERN)
+        expect(rewritten.sourceId).toBe('kb-1')
+    })
+
+    it('leaves an already generated name alone, because createToolName is not idempotent', () => {
+        const generated = mcpToolNameUtils.createToolName('Company Docs')
+
+        expect(names([{ toolName: generated }])).toEqual([generated])
+    })
+
+    it('rewrites a dotted name, which only Anthropic accepts', () => {
+        expect(names([{ toolName: 'handbook.pdf' }])).not.toEqual(['handbook.pdf'])
+    })
+
+    it('keeps two tools that would otherwise collapse onto one toolset key', () => {
+        const collided = names([{ toolName: 'Company Docs' }, { toolName: 'Company docs' }])
+
+        expect(new Set(collided).size).toBe(2)
+        for (const name of collided) {
+            expect(name).toMatch(PROVIDER_PATTERN)
+        }
+    })
+
+    it('keeps tools whose names share no characters a provider accepts', () => {
+        const collided = names([{ toolName: '\u6587\u6863' }, { toolName: '\u691c\u7d22' }, { toolName: '!!!' }])
+
+        expect(new Set(collided).size).toBe(3)
+    })
+
+    it('trims a name past the 64 character limit', () => {
+        const [name] = names([{ toolName: 'a'.repeat(200) }])
+
+        expect(name.length).toBeLessThanOrEqual(64)
+    })
+})
+
+const PROVIDER_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/
