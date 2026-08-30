@@ -71,6 +71,11 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
+    app.delete('/platforms', DeletePlatformsByEmailRequest, async (req, res) => {
+        const results = await adminPlatformService(req.log).deletePlatformsByEmail(req.body)
+        return res.status(StatusCodes.OK).send(results)
+    })
+
     app.post('/platforms/worker-group', UpdateWorkerGroupRequest, async (req, res) => {
         const { platformId, workerGroupId } = req.body
         await workerGroupService(req.log).moveJobsToTargetQueue({ platformId, workerGroupId })
@@ -112,6 +117,7 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
 
         return res.status(StatusCodes.OK).send({ synced, failed, total: totalCount })
     })
+    
 }
 
 
@@ -160,6 +166,17 @@ const ApplyLicenseKeyByEmailRequest = {
 const IncreaseAICreditsForPlatformRequest = {
     schema: {
         body: IncreaseAICreditsForPlatformRequestBody,
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const DeletePlatformsByEmailRequest = {
+    schema: {
+        body: z.object({
+            emails: z.array(z.string()),
+        }),
     },
     config: {
         security: securityAccess.public(),
