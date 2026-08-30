@@ -110,6 +110,7 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
       label: t('Service account JSON'),
       placeholder: '{"type":"service_account", ...}',
       secret: true,
+      type: 'textarea',
       description: t(
         'The complete JSON key file for a service account with the Vertex AI User role.',
       ),
@@ -171,5 +172,5 @@ export type CredentialField = {
   optional?: boolean;
   description?: string;
   options?: { value: string; label: string }[];
-  type?: 'dictionary';
+  type?: 'dictionary' | 'textarea';
 };
