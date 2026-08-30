@@ -42,9 +42,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             const getStepView = createMemoizedStepViewGetter({ executionState, censor: false })
-            const censoredStepView = createMemoizedStepViewGetter({ executionState, censor: true })
             const rawScriptSession = scriptEvaluator.initSession()
-            const censoredScriptSession = scriptEvaluator.initSession()
+            const sessionsToDispose: SharedScriptSession[] = [rawScriptSession]
             try {
                 const resolveOptions = {
                     engineToken,
@@ -63,6 +62,15 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                         censoredInput: false,
                         contextVersion,
                     }))
+                if (!needsCensoredPass({ unresolvedInput, executionState })) {
+                    return {
+                        resolvedInput,
+                        censoredInput: resolvedInput,
+                    }
+                }
+                const censoredStepView = createMemoizedStepViewGetter({ executionState, censor: true })
+                const censoredScriptSession = scriptEvaluator.initSession()
+                sessionsToDispose.push(censoredScriptSession)
                 const censoredInput = await applyFunctionToValues<T>(
                     unresolvedInput,
                     (token) => resolveInputAsync({
@@ -79,7 +87,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                const disposals = await Promise.allSettled([rawScriptSession.dispose(), censoredScriptSession.dispose()])
+                const disposals = await Promise.allSettled(sessionsToDispose.map((session) => session.dispose()))
                 disposals
                     .filter((disposal) => disposal.status === 'rejected')
                     .forEach((disposal) => console.error('[propsResolver] Failed to dispose script session', disposal.reason))
@@ -87,6 +95,29 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
         },
     }
 }
+
+function needsCensoredPass({ unresolvedInput, executionState }: ResolveInputParams): boolean {
+    const sensitivePaths = buildSensitiveStepPaths(executionState)
+    if (Object.keys(sensitivePaths).length > 0) {
+        return true
+    }
+    return inputHasCensorableTokens(unresolvedInput)
+}
+
+function inputHasCensorableTokens(input: unknown): boolean {
+    if (isString(input)) {
+        return CENSORABLE_TOKEN_PATTERN.test(input)
+    }
+    if (Array.isArray(input)) {
+        return input.some(inputHasCensorableTokens)
+    }
+    if (typeof input === 'object' && input !== null) {
+        return Object.values(input).some(inputHasCensorableTokens)
+    }
+    return false
+}
+
+const CENSORABLE_TOKEN_PATTERN = /\{\{\s*(?:variables|connections)[.[]/
 
 /**
  * input: `Hello {{firstName}} {{lastName}}`

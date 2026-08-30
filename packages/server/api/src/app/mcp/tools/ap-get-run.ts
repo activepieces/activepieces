@@ -24,6 +24,7 @@ export const apGetRunTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger
                 const run = await flowRunService(log).getOnePopulatedOrThrow({
                     id: flowRunId,
                     projectId: mcp.projectId,
+                    redact: false,
                 })
 
                 const stepEntries = !isNil(run.steps) && typeof run.steps === 'object'
