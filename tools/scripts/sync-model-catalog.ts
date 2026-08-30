@@ -64,11 +64,25 @@ async function fetchPublishedCatalog(): Promise<PublishedCatalog | undefined> {
     if (!response.ok) {
         throw new Error(`refusing to publish: ${PUBLISHED_CATALOG_URL} returned ${response.status} ${response.statusText}, so the current catalog is unknown`)
     }
-    const { data: published, error: parseError } = await tryCatch<PublishedCatalog>(() => response.json())
+    const { data: body, error: parseError } = await tryCatch<unknown>(() => response.json())
     if (parseError !== null) {
         throw new Error(`refusing to publish: ${PUBLISHED_CATALOG_URL} is not valid JSON, so the current catalog is unknown`)
     }
-    return published
+    if (!isPublishedCatalog(body)) {
+        throw new Error(`refusing to publish: ${PUBLISHED_CATALOG_URL} is not a catalog document — "providers" is missing or malformed, so the current catalog is unknown`)
+    }
+    return body
+}
+
+function isPublishedCatalog(body: unknown): body is PublishedCatalog {
+    if (!isPlainObject(body) || !('providers' in body) || !isPlainObject(body.providers)) {
+        return false
+    }
+    return Object.values(body.providers).every(isPlainObject)
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 async function fetchUpstream(): Promise<ModelsDevApi> {
