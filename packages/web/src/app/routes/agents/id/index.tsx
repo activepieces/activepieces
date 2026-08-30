@@ -76,6 +76,7 @@ import {
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
+import { agentEditState, HeaderStatus } from '../lib/agent-edit-state';
 import { agentTestGate } from '../lib/agent-test-gate';
 
 const ConfigureAgentSchema = z.object({
@@ -125,6 +126,12 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+
+const HEADER_STATUS_COPY: Record<HeaderStatus, () => string> = {
+  'needs-model': () => t('Needs a model to run'),
+  live: () => t('Live'),
+  pending: () => t('Changes not live yet'),
+};
 
 type AgentRequirement = {
   label: string;
@@ -464,17 +471,21 @@ const AgentEditScreen = ({
     : t('Write instructions before testing');
   const live = liveValuesOf(agent);
   const hasChanges =
-    isNil(live) || JSON.stringify(values) !== JSON.stringify(live);
-  const unsavedTyping = JSON.stringify(values) !== JSON.stringify(syncedDraft);
+    isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
+  const unsavedTyping = !agentEditState.sameConfig({
+    left: values,
+    right: syncedDraft,
+  });
   const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
   const [exitRequested, setExitRequested] = useState(false);
   const testRequested = useRef(false);
   const writeSeq = useRef(0);
-  const writeInFlight = useRef(false);
+  const writeLock = useRef(agentEditState.createWriteLock());
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
-    if (JSON.stringify(fromServer) === JSON.stringify(syncedDraft)) return;
+    if (agentEditState.sameConfig({ left: fromServer, right: syncedDraft }))
+      return;
     if (unsavedTyping) return;
     form.reset(fromServer);
     setSyncedDraft(fromServer);
@@ -486,14 +497,8 @@ const AgentEditScreen = ({
       message: api.extractServerErrorMessage(error, fallback),
     });
 
-  const releaseWrite = () => {
-    writeInFlight.current = false;
-  };
-  const claimWrite = () => {
-    if (writeInFlight.current) return false;
-    writeInFlight.current = true;
-    return true;
-  };
+  const releaseWrite = () => writeLock.current.release();
+  const claimWrite = () => writeLock.current.claim();
 
   const openTestWithLatestEdits = form.handleSubmit((values) => {
     const seq = ++writeSeq.current;
@@ -517,7 +522,12 @@ const AgentEditScreen = ({
 
   const changeMode = (next: string) => {
     testRequested.current = next === 'test';
-    if (next !== 'test' || !unsavedTyping || !isNil(blockedFromTesting)) {
+    const intent = agentEditState.modeIntent({
+      next,
+      unsavedTyping,
+      blockedReason: blockedFromTesting,
+    });
+    if (intent === 'switch') {
       setMode(next);
       return;
     }
@@ -587,11 +597,14 @@ const AgentEditScreen = ({
               {agent.displayName}
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {formNeedsModel && !justLaunched
-                ? t('Needs a model to run')
-                : justLaunched || (!isNil(live) && !hasChanges)
-                ? t('Live')
-                : t('Changes not live yet')}
+              {HEADER_STATUS_COPY[
+                agentEditState.headerStatus({
+                  needsModel: formNeedsModel,
+                  justLaunched,
+                  live,
+                  hasChanges,
+                })
+              ]()}
             </span>
           </div>
           <Button

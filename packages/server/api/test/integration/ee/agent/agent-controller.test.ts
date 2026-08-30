@@ -149,6 +149,54 @@ describe('agent publish', () => {
         expect(after.published).toStrictEqual(live)
     })
 
+    it.each([['explicitly true', true], ['absent', undefined]])(
+        'publishes when goLive is %s, so every existing caller keeps working',
+        async (_label, goLive) => {
+            const ctx = await context()
+            const agent = await createAgent(ctx)
+
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Should be live.' }, ...(goLive === undefined ? {} : { goLive }) })
+
+            expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Should be live.')
+        })
+
+    it('keeps published pinned to the same copy across repeated staging', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live copy.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        for (const attempt of ['first', 'second', 'third']) {
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: `Staged ${attempt}.` }, goLive: false })
+        }
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Staged third.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it('stages against an agent nobody published yet without inventing a published copy', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        expect(agent.published).toBeNull()
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only a draft.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only a draft.')
+        expect(after.published).toBeNull()
+    })
+
+    it('publishes the staged draft when the explicit publish route is used afterwards', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged for review.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Staged for review.')
+    })
+
     it('goes live on the next save, so staging is not a trap', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
