@@ -255,20 +255,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flow
     },
 
-    async getPublishedVersionOrThrow({ id, projectId }: GetOneParams): Promise<FlowVersion> {
-        const flow = await this.getOneOrThrow({ id, projectId })
-        if (isNil(flow.publishedVersionId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: id, entityType: 'FlowVersion' },
-            })
-        }
-        return flowVersionService(log).getFlowVersionOrThrow({
-            flowId: id,
-            versionId: flow.publishedVersionId,
-        })
-    },
-
     async getOnePopulated({
         id,
         projectId,
@@ -549,12 +535,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async lockFlowVersionIfNotLocked(params: Omit<LockFlowVersionIfNotLockedParams, 'log'>): Promise<FlowVersion> {
-        return lockFlowVersionIfNotLocked({ ...params, log })
-    },
-
-    async applyStatusChangeForPublishedFlow(params: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
-        await applyStatusChange(params, log)
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {

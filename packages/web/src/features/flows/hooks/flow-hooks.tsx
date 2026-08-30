@@ -71,6 +71,7 @@ export const flowHooks = {
   useChangeFlowStatus: ({
     flowId,
     change,
+    requiresApproval,
     onSuccess,
     setIsPublishing,
   }: UseChangeFlowStatusParams) => {
@@ -109,10 +110,12 @@ export const flowHooks = {
             queryKey: ['flow-approval-requests'],
           });
           setIsPublishing?.(false);
-          capture({
-            name: TelemetryEventName.FLOW_PUBLISHED,
-            payload: { flowId: flow.id },
-          });
+          if (!requiresApproval) {
+            capture({
+              name: TelemetryEventName.FLOW_PUBLISHED,
+              payload: { flowId: flow.id },
+            });
+          }
         }
         onSuccess?.(flow);
       },
@@ -568,6 +571,7 @@ export const flowHooks = {
 type UseChangeFlowStatusParams = {
   flowId: string;
   change: 'publish' | FlowStatus;
+  requiresApproval?: boolean;
   onSuccess: (flow: PopulatedFlow) => void;
   setIsPublishing?: (isPublishing: boolean) => void;
 };

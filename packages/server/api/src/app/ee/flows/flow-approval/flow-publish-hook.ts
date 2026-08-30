@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/shared'
+import { Permission, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PublishHooks, RoutePublishParams, SubmitForApprovalParams } from '../../../flows/flow/flow-publish-hooks'
 import { platformService } from '../../../platform/platform.service'
@@ -28,11 +28,6 @@ export const eeFlowPublishHook = (log: FastifyBaseLogger): PublishHooks => ({
 })
 
 const userHasPublishSensitivePermission = async ({ userId, projectId, log }: { userId: string, projectId: string, log: FastifyBaseLogger }): Promise<boolean> => {
-    try {
-        const role = await getPrincipalRoleOrThrow(userId, projectId, log)
-        return role.permissions?.includes(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS) ?? false
-    }
-    catch {
-        return false
-    }
+    const { data: role } = await tryCatch(() => getPrincipalRoleOrThrow(userId, projectId, log))
+    return role?.permissions?.includes(Permission.PUBLISH_SENSITIVE_FLOW_ACCESS) ?? false
 }

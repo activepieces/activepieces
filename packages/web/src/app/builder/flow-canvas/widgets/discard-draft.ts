@@ -2,12 +2,10 @@ import { GetFlowQueryParamsRequest, PopulatedFlow } from '@activepieces/shared';
 
 export type RunDiscardDeps = {
   flow: { id: string; publishedVersionId?: string | null };
-  requiresApproval: boolean;
   overWriteDraftWithVersion: (params: {
     flowId: string;
     versionId: string;
   }) => Promise<unknown>;
-  publish: () => Promise<unknown>;
   fetchFlow: (
     flowId: string,
     request: GetFlowQueryParamsRequest,

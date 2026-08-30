@@ -173,33 +173,32 @@ export const GeneralSettings = ({ form }: GeneralSettingsProps) => {
             )}
           />
         )}
-        {platform.plan.environmentsEnabled &&
-          platformRole === PlatformRole.ADMIN && (
-            <FormField
-              name="sensitive"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="sensitive" className="text-sm font-medium">
-                      {t('Sensitive Project')}
-                    </Label>
-                    <FormDescription className="text-xs text-muted-foreground">
-                      {t(
-                        'When enabled, publishing flows in this project requires approval.',
-                      )}
-                    </FormDescription>
-                  </div>
-                  <Switch
-                    id="sensitive"
-                    checked={!!field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={form.formState.disabled}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+        {platform.plan.environmentsEnabled && (
+          <FormField
+            name="sensitive"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <div className="space-y-1">
+                  <Label htmlFor="sensitive" className="text-sm font-medium">
+                    {t('Sensitive Project')}
+                  </Label>
+                  <FormDescription className="text-xs text-muted-foreground">
+                    {t(
+                      'When enabled, publishing flows in this project requires approval.',
+                    )}
+                  </FormDescription>
+                </div>
+                <Switch
+                  id="sensitive"
+                  checked={!!field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={form.formState.disabled}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         {!platform.plan.workerGroupsEnabled &&
           platformRole === PlatformRole.ADMIN && (
             <FormField

@@ -72,9 +72,7 @@ const PublishFlowReminderWidget = () => {
       mutationFn: () =>
         runDiscard({
           flow,
-          requiresApproval,
           overWriteDraftWithVersion,
-          publish,
           fetchFlow: flowsApi.get,
           setFlow,
           setVersion,
@@ -84,6 +82,7 @@ const PublishFlowReminderWidget = () => {
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
     change: 'publish',
+    requiresApproval,
     onSuccess: (updatedFlow: PopulatedFlow) => {
       setFlow(updatedFlow);
       setVersion(updatedFlow.version);

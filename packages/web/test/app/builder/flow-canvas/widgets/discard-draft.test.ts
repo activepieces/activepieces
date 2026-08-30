@@ -15,9 +15,7 @@ const makePublishedFlow = () =>
 
 const makeDeps = (overrides: Partial<RunDiscardDeps> = {}): RunDiscardDeps => ({
   flow: { id: 'flow-1', publishedVersionId: 'v3' },
-  requiresApproval: true,
   overWriteDraftWithVersion: vi.fn(async () => undefined),
-  publish: vi.fn(async () => undefined),
   fetchFlow: vi.fn(async () => makePublishedFlow()),
   setFlow: vi.fn(),
   setVersion: vi.fn(),
@@ -33,7 +31,6 @@ describe('runDiscard', () => {
     await runDiscard(deps);
 
     expect(deps.overWriteDraftWithVersion).not.toHaveBeenCalled();
-    expect(deps.publish).not.toHaveBeenCalled();
     expect(deps.fetchFlow).not.toHaveBeenCalled();
     expect(deps.setFlow).not.toHaveBeenCalled();
     expect(deps.setVersion).not.toHaveBeenCalled();
@@ -50,18 +47,9 @@ describe('runDiscard', () => {
     });
   });
 
-  it('does not call publish in approval mode (avoids creating a new approval request)', async () => {
-    const deps = makeDeps({ requiresApproval: true });
-
-    await runDiscard(deps);
-
-    expect(deps.publish).not.toHaveBeenCalled();
-  });
-
-  it('navigates the user to the published locked version after discard in approval mode', async () => {
+  it('navigates the user to the published locked version after discard', async () => {
     const published = makePublishedFlow();
     const deps = makeDeps({
-      requiresApproval: true,
       fetchFlow: vi.fn(async () => published),
     });
 
