@@ -11,6 +11,7 @@ import { withAuthParams, rethrowTrelloError } from './ai-common';
 export const deleteComment = createAction({
   auth: trelloAuth,
   name: 'delete_comment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Comment (Agent)',
   description: 'Delete a comment from a Trello card.',
   audience: 'ai',

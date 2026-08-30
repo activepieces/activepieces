@@ -32,11 +32,11 @@ import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
 import {
   agentsMutations,
   agentsQueries,
+  useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { projectCollectionUtils } from '@/features/projects';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -62,10 +62,10 @@ const SORT_COMPARATORS: Record<
 };
 
 const AgentsPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const agentsAvailable = useAgentsAvailable();
   return (
     <LockedFeatureGuard
-      locked={!platform.plan.agentsEnabled}
+      locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
       featureKey="AGENTS"
@@ -84,9 +84,9 @@ const AgentsPageContent = () => {
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
-  const { platform } = platformHooks.useCurrentPlatform();
+  const agentsAvailable = useAgentsAvailable();
   const { data, isLoading } = agentsQueries.useAgents({
-    enabled: platform.plan.agentsEnabled,
+    enabled: agentsAvailable,
   });
 
   const agents = useMemo(() => {

@@ -11,6 +11,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordAddRoleToMember = createAction({
   auth: discordAuth,
   name: 'add_role_to_member',
+  classification: 'WRITE',
   description: 'Add Guild Member Role',
   audience: 'human',
   aiMetadata: { description: 'Assigns a role to a guild member, identified by guild ID, user ID, and role ID. Use to grant permissions or tag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since re-adding an already-assigned role leaves the member unchanged.', idempotent: true },

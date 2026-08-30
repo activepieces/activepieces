@@ -4,8 +4,8 @@ icon: 'water'
 description: "Move large files through a flow without buffering them in memory"
 ---
 
-Large file streaming lets a piece process a big file by passing it through as a stream —
-transferring the bytes a chunk at a time — instead of loading the whole file into memory
+Large file streaming lets a piece process a big file by passing it through as a stream,
+transferring the bytes a chunk at a time, instead of loading the whole file into memory
 first. It is useful when a file is too large to hold in RAM at either the source or the
 destination. Because the file is never fully buffered, a flow can move files far larger
 than the worker's memory budget.
@@ -13,19 +13,19 @@ than the worker's memory budget.
 ## Why it matters
 
 A worker runs your piece code inside a sandbox with a bounded memory budget (about 1&nbsp;GB,
-minus overhead — see [Limits](/install/reference/limits)). Reading a large file into a
+minus overhead, see [Limits](/install/reference/limits)). Reading a large file into a
 `Buffer` holds the entire file in that budget at once, so a big enough file exhausts the
 memory and the worker is OOM-killed.
 
 Streaming avoids this: the bytes flow through as a Node `Readable`, roughly 5&nbsp;MB at a
-time, so no process ever holds the whole file. The transfer is transparent — there are no
+time, so no process ever holds the whole file. The transfer is transparent: there are no
 extra "chunk" steps in your flow; a streaming action looks and behaves like any other.
 
 <Warning>
 **Requires S3 file storage.** Full streaming only works when file storage is set to S3
 (`AP_FILE_STORAGE_LOCATION=S3`). With the default database (`DB`) storage a stream **can't**
 be written into a column incrementally, so the server buffers the whole file in memory
-before saving it — which defeats the memory savings and means very large files can still
+before saving it, which defeats the memory savings and means very large files can still
 fail. Self-hosted installs default to `DB`; set S3 to get the benefit. See
 [Set up S3](/install/configure-operate/setup-s3).
 </Warning>
@@ -35,9 +35,9 @@ fail. Self-hosted installs default to `DB`; set S3 to get the benefit. See
 <Note>
 **Which approach should you use?**
 
-- **Buffer** (a `Buffer`, the default) — small files of known size where holding the whole
+- **Buffer** (a `Buffer`, the default): small files of known size where holding the whole
   file in memory is cheap and simple.
-- **Stream** (a `Readable`) — large files, files of unknown size, or app-to-app transfers
+- **Stream** (a `Readable`): large files, files of unknown size, or app-to-app transfers
   (e.g. downloading a large object from one service and uploading it to another) where
   buffering would risk exhausting memory.
 </Note>
@@ -57,11 +57,11 @@ Streaming is enabled per action. "In" means the action reads its **input** file 
 | Dropbox | Upload file | Download File |
 | Google Drive | Upload file | Read File Content, List files, Set public access, New File (trigger) |
 | Microsoft OneDrive | Upload file | Get File |
-| Microsoft SharePoint | Upload File | — |
+| Microsoft SharePoint | Upload File | N/A |
 | FTP/SFTP | Upload File | Read File Content |
-| Subflows | Stream CSV to Subflows | — |
+| Subflows | Stream CSV to Subflows | N/A |
 
-More pieces are being enabled over time. Actions not listed here still work — they buffer
+More pieces are being enabled over time. Actions not listed here still work: they buffer
 the file in memory, which is fine within the [size limit](/install/reference/limits).
 
 <Note>
@@ -83,7 +83,7 @@ what a single request can carry, the action switches to a chunked upload session
 These are pre-existing API limits rather than streaming limits, and each action now handles its own.
 One difference matters if your source doesn't report a size: Dropbox's session is offset-based, so it
 just streams the chunks as they arrive, while Graph wants the file's total length in every fragment's
-`Content-Range` header — so the two Microsoft actions buffer once to learn the length before they can
+`Content-Range` header, so the two Microsoft actions buffer once to learn the length before they can
 chunk. Give those a source that reports `Content-Length` when you can.
 
 ## Building streaming actions
@@ -93,8 +93,8 @@ input file as a stream, and write an output file as a stream.
 
 ### Writing a file as a stream
 
-`ctx.files.write` accepts a `Buffer` **or** a `Readable`. Pass a `Readable` — such as an S3
-object body or a streaming HTTP response — and it streams straight to storage instead of
+`ctx.files.write` accepts a `Buffer` **or** a `Readable`. Pass a `Readable`, such as an S3
+object body or a streaming HTTP response, and it streams straight to storage instead of
 being buffered. It returns a file reference string you return from the action, exactly like
 the buffered form (see [Files](./files)).
 
@@ -104,7 +104,7 @@ async run(context) {
 
   const { Body } = await s3.getObject({ Bucket: bucket, Key: key });
 
-  // Body is a Readable — hand it straight to files.write, no Buffer in between
+  // Body is a Readable: hand it straight to files.write, no Buffer in between
   return context.files.write({
     fileName: key,
     data: Body,
@@ -114,8 +114,9 @@ async run(context) {
 
 ### Reading a file as a stream
 
-Add `streaming: true` to a `Property.File`. The property then resolves to an
-`ApStreamingFile` instead of an `ApFile`:
+Add `streaming: true` to a `Property.File`. On platforms 0.87.0 and later the property
+resolves to an `ApStreamingFile`; older engines still deliver a buffered `ApFile`, so the
+value is typed as `ApStreamingFile | ApFile`:
 
 ```ts
 type ApStreamingFile = {
@@ -126,8 +127,19 @@ type ApStreamingFile = {
 };
 ```
 
+Never read `.body` or `.size` off the property directly — normalize it first with
+`streamUtils.toStreamingBody` from `@activepieces/pieces-common`. It passes an
+`ApStreamingFile` through untouched and wraps an `ApFile`'s buffer into a `Readable` with an
+exact `size`:
+
+```ts
+import { streamUtils } from '@activepieces/pieces-common';
+
+const { body, size } = streamUtils.toStreamingBody(context.propsValue.file);
+```
+
 Consume `body` directly. How you hand it to the destination depends on what that destination's
-client accepts — in order of preference:
+client accepts, in order of preference:
 
 **1. A chunking uploader (best).** Accepts a stream of unknown length and buffers each part
 before sending it, so no content length is needed and parts are individually replayable. For S3
@@ -143,7 +155,7 @@ props: {
   }),
 },
 async run(context) {
-  const { file } = context.propsValue;
+  const { body } = streamUtils.toStreamingBody(context.propsValue.file);
   const s3 = await resolveS3Client({ authProps, server: context.server });
 
   await new Upload({
@@ -151,40 +163,41 @@ async run(context) {
     params: {
       Bucket: bucket,
       Key: finalFileName,
-      Body: file.body,
+      Body: body,
     },
   }).done();
 }
 ```
 
-**2. An SDK that takes a stream directly.** Some clients accept a `Readable` as-is — Google
-Drive's `media.body`, SFTP's `client.put`. Just pass `file.body`.
+**2. An SDK that takes a stream directly.** Some clients accept a `Readable` as-is: Google
+Drive's `media.body`, SFTP's `client.put`. Just pass `body`.
 
 **3. A single-request HTTP upload.** If the destination is a plain `PUT`/`POST` that needs an
-explicit `Content-Length`, you have to use `file.size` — and `size` is best-effort, so this
+explicit `Content-Length`, you have to use `size`, and `size` is best-effort, so this
 path needs a buffered fallback for when it is missing. Dropbox, SharePoint and OneDrive all
 look like this:
 
 ```ts
 import { buffer as readableToBuffer } from 'node:stream/consumers';
 
+const { body: streamedBody, size } = streamUtils.toStreamingBody(context.propsValue.file);
 const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
 let body;
-if (file.size != null) {
-  headers['Content-Length'] = String(file.size);
-  body = file.body;
+if (size != null) {
+  headers['Content-Length'] = String(size);
+  body = streamedBody;
 } else {
-  body = await readableToBuffer(file.body);
+  body = await readableToBuffer(streamedBody);
 }
 ```
 
-`size` is informational and best-effort — it is `undefined` when the source reports no
+`size` is informational and best-effort: it is `undefined` when the source reports no
 `Content-Length`, and it is also dropped when the response is compressed
 (`Content-Encoding: gzip`/`br`/`deflate`), because the decompressed body no longer matches the
 advertised length. Don't require it: prefer pattern 1 or 2, which never need it.
 
 <Tip>
-`Property.File()` without `streaming` is unchanged — it still resolves to an `ApFile` with a
+`Property.File()` without `streaming` is unchanged: it still resolves to an `ApFile` with a
 `data` buffer, so existing actions keep working.
 </Tip>
 
@@ -195,9 +208,9 @@ advertised length. Don't require it: prefer pattern 1 or 2, which never need it.
   flow; exceeding it aborts the transfer and fails the step. See
   [Limits](/install/reference/limits).
 - **Reading a streamed input is not capped.** A `streaming: true` file input has no
-  `AP_MAX_FILE_SIZE_MB` ceiling — that is deliberate, since the point of the feature is to move
+  `AP_MAX_FILE_SIZE_MB` ceiling; that is deliberate, since the point of the feature is to move
   files larger than the cap out to an external service.
-- **Storage backend.** Streaming end-to-end requires S3 file storage — see the callout at
+- **Storage backend.** Streaming end-to-end requires S3 file storage; see the callout at
   the top of this page.
 
 <Warning>
@@ -207,7 +220,7 @@ advertised length. Don't require it: prefer pattern 1 or 2, which never need it.
   streamed `ctx.files.write` gets no S3-error fallback to database storage, and a step that
   fails after its stream is drained cannot simply be re-run against the same stream.
 - **`httpClient` does not retry a stream body at all.** The retry loop in `pieces-common`
-  reuses the body it serialized before the first attempt, and a stream is one-shot — retrying
+  reuses the body it serialized before the first attempt, and a stream is one-shot, so retrying
   would replay a drained stream and send a truncated body. So a request whose body is a
   `Readable` (or a `form-data` payload, which is streamed too) runs its `retries` setting as
   `0`. This applies to **any** piece sending a stream through `httpClient`, not just file

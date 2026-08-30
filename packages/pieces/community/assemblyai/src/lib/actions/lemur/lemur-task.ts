@@ -5,6 +5,7 @@ import { props } from '../../generated/lemur-task/props';
 
 export const lemurTask = createAction({
   name: 'lemurTask',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Run a Task using LeMUR',

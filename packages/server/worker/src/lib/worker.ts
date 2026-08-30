@@ -3,7 +3,7 @@ import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -138,7 +138,7 @@ export const worker = {
             apiClient,
             getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
             log: logger,
-        }))
+        }), logger)
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
@@ -200,11 +200,15 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     })
 
     // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
-        log: logger, 
-        apiClient,
-        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-    })
+    // Opt-in via AP_PREWARM_CACHE_ON_STARTUP: the warm-up resolves and compiles every enabled flow,
+    // so its startup memory/CPU spike grows with flow count and can OOM small workers on large instances.
+    if (system.getBoolean(WorkerSystemProp.PREWARM_CACHE_ON_STARTUP) ?? false) {
+        void runtime.prewarm({
+            log: logger,
+            apiClient,
+            publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+        })
+    }
 
     logger.info({ concurrency }, 'Starting poll loops')
 
@@ -416,9 +420,11 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
-                const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
-                if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                if (response.EDITION === ApEdition.CLOUD) {
+                    const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+                    if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
+                        throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    }
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {

@@ -8,6 +8,7 @@ import { TodoTask } from '@microsoft/microsoft-graph-types';
 export const listTasksAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'list_tasks',
+	classification: 'SEARCH',
 	displayName: 'List Tasks',
 	description: 'Returns a list of all tasks in a specific list.',
 	audience: 'both',

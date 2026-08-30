@@ -8,6 +8,7 @@ import { listCommitsOutputSchema } from '../../output-schemas';
 export const githubListCommitsAction = createAction({
   auth: githubAuth,
   name: 'list_commits',
+  classification: 'SEARCH',
   displayName: 'List Commits (Agent)',
   description: 'Lists commits in a repository with optional filters.',
   audience: 'ai',

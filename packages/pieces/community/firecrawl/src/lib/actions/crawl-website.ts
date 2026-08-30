@@ -7,6 +7,7 @@ import { crawlWebsiteActionOutputSchema } from '../output-schemas';
 export const crawlWebsite = createAction({
   auth: firecrawlAuth,
   name: 'crawl_website',
+  classification: 'SEARCH',
   displayName: 'Crawl Website',
   description: 'Crawl a website starting from a base URL and return the content of many pages.',
   audience: 'ai',

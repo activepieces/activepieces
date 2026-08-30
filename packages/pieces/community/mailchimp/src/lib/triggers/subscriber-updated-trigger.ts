@@ -45,6 +45,7 @@ const getSubscriberSummary = (request: any): any => {
 export const mailChimpSubscriberUpdatedTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'subscriber_updated',
+  classification: 'READ',
   displayName: 'Subscriber Updated',
   description: 'Fires when a subscriber profile is updated, including changes to merge fields, interests, or contact information. This trigger captures profile updates, new subscriptions, and subscriber modifications.',
   aiMetadata: {

@@ -6,6 +6,7 @@ import { CreateAccountRequest } from '../../common/types';
 export const updateAccountAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_update_account',
+	classification: 'WRITE',
 	displayName: 'Update Account',
 	description: 'Updates an account.',
 	audience: 'both',

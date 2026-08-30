@@ -75,6 +75,9 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const OpenAiCompatibleVendorConfig = z.object({})
+export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
+
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
     AzureProviderAuthConfig,
@@ -101,6 +104,7 @@ export const AIProviderConfig = z.union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    OpenAiCompatibleVendorConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -120,8 +124,20 @@ export const AIProviderWithoutSensitiveData = z.object({
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
+export const ProjectAIProvider = z.object({
+    provider: z.enum(AIProviderName),
+    name: z.string(),
+    enabledForChat: z.boolean(),
+    keys: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+    })),
+})
+export type ProjectAIProvider = z.infer<typeof ProjectAIProvider>
+
 export const GetProviderConfigResponse = z.object({
     provider: z.enum(AIProviderName),
+    configId: z.string(),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
     platformId: z.string(),
@@ -285,7 +301,22 @@ const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMod
 const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
     AIProviderName.ANTHROPIC,
     AIProviderName.MISTRAL,
+    AIProviderName.XAI,
+    AIProviderName.DEEPSEEK,
+    AIProviderName.ZAI,
+    AIProviderName.QWEN,
+    AIProviderName.MINIMAX,
+    AIProviderName.MOONSHOT,
 ])
+
+export const OPENAI_COMPATIBLE_VENDOR_BASE_URLS: Record<OpenAiCompatibleVendor, string> = {
+    [AIProviderName.XAI]: 'https://api.x.ai/v1',
+    [AIProviderName.DEEPSEEK]: 'https://api.deepseek.com/v1',
+    [AIProviderName.ZAI]: 'https://api.z.ai/api/paas/v4',
+    [AIProviderName.QWEN]: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+    [AIProviderName.MINIMAX]: 'https://api.minimax.io/v1',
+    [AIProviderName.MOONSHOT]: 'https://api.moonshot.ai/v1',
+}
 
 function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabilities {
     return {
@@ -319,6 +350,12 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
+    [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),
+    [AIProviderName.DEEPSEEK]: buildProviderCapabilities(AIProviderName.DEEPSEEK),
+    [AIProviderName.ZAI]: buildProviderCapabilities(AIProviderName.ZAI),
+    [AIProviderName.QWEN]: buildProviderCapabilities(AIProviderName.QWEN),
+    [AIProviderName.MINIMAX]: buildProviderCapabilities(AIProviderName.MINIMAX),
+    [AIProviderName.MOONSHOT]: buildProviderCapabilities(AIProviderName.MOONSHOT),
 }
 
 export const aiProviderUtils = {
@@ -327,7 +364,20 @@ export const aiProviderUtils = {
     isCuratedChatModelId,
 }
 
+export const AI_PROVIDER_ENTITY_TYPES = {
+    provider: 'AIProvider',
+    chatProvider: 'ChatAiProvider',
+} as const
+
 export type AIWebSearchMode = 'native' | 'plugin'
+
+export type OpenAiCompatibleVendor =
+    | AIProviderName.XAI
+    | AIProviderName.DEEPSEEK
+    | AIProviderName.ZAI
+    | AIProviderName.QWEN
+    | AIProviderName.MINIMAX
+    | AIProviderName.MOONSHOT
 
 export type AIProviderCapabilities = {
     chatModels?: readonly string[] | undefined

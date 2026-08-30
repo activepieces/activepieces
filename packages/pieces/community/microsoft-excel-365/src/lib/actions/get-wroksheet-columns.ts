@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from "../common/helpers";
 export const getWorksheetColumnsAction = createAction({
     displayName: 'Get Worksheet Columns',
     name: 'get-worksheet-columns',
+    classification: 'READ',
     description: 'List columns of a worksheet.',
     audience: 'both',
     aiMetadata: { description: 'List the header/column values from the first row of a worksheet (read from the used range across A1:ZZ1). Pick this to inspect loose-cell sheet headers before appending or mapping rows. Use Get Table Columns instead when the data is a formal Excel table. Read-only and idempotent.', idempotent: true },

@@ -7,6 +7,7 @@ import { notionUpdateDatabaseSchemaActionOutputSchema } from '../output-schemas'
 export const notionUpdateDatabaseSchema = createAction({
   auth: notionAuth,
   name: 'notion_update_database_schema',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Database Schema',
   description:
     "Updates a Notion database's title and/or column schema (add, rename, retype, or remove properties) by id.",

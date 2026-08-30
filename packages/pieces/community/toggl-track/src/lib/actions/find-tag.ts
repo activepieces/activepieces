@@ -10,6 +10,7 @@ import { togglCommon } from '../common';
 export const findTag = createAction({
   auth: togglTrackAuth,
   name: 'find_tag',
+  classification: 'SEARCH',
   displayName: 'Find Tag',
   description: 'Find a tag by name in a workspace.',
   audience: 'both',

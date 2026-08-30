@@ -7,6 +7,7 @@ import { searchFolderActionOutputSchema } from '../output-schemas';
 export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
   name: 'search-folder',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search a Google Drive folder for files/sub-folders',
   audience: 'human',

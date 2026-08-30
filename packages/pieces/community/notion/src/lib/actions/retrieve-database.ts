@@ -12,6 +12,7 @@ import { retrieveDatabaseActionOutputSchema } from '../output-schemas';
 export const retrieveDatabase = createAction({
   auth: notionAuth,
   name: 'retrieve_database',
+  classification: 'READ',
   displayName: 'Retrieve Database Structure',
   description:
     'Get detailed information about a Notion database including all its properties, field types, and configuration. Perfect for building dynamic forms, validation rules, or understanding database schemas.',

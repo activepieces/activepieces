@@ -88,7 +88,7 @@ RUN node -e "\
   process.stdout.write(JSON.stringify(names));\
 " > packages/server/api/dist/src/migration-manifest.json
 
-# Remove workspaces not needed at runtime: pieces except the 4 the api imports,
+# Remove workspaces not needed at runtime: pieces except the 5 the api imports,
 # plus web/cli/tests-e2e/embed-sdk whose deps (react & friends) would otherwise land
 # in the runtime node_modules. dist/packages/web is already built and kept.
 # Then drop the removed entries from the root workspaces list and regenerate bun.lock.
@@ -99,6 +99,7 @@ RUN rm -rf packages/pieces/core packages/pieces/custom \
       ! -name square \
       ! -name facebook-leads \
       ! -name intercom \
+      ! -name microsoft-teams-bot \
       -exec rm -rf {} + && \
     node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.workspaces=p.workspaces.filter(w=>fs.existsSync(w.replace('/*','')));fs.writeFileSync('package.json',JSON.stringify(p,null,2))" && \
     rm -f bun.lock && bun install

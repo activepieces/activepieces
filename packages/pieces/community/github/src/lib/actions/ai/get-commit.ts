@@ -8,6 +8,7 @@ import { commitBodyOutputSchema } from '../../output-schemas';
 export const githubGetCommitAction = createAction({
   auth: githubAuth,
   name: 'get_commit',
+  classification: 'READ',
   displayName: 'Get Commit (Agent)',
   description: 'Fetches a single commit including its file changes.',
   audience: 'ai',

@@ -7,6 +7,7 @@ import { createCommentActionOutputSchema } from '../output-schemas';
 export const githubCreateCommentOnAIssue = createAction({
   auth: githubAuth,
   name: 'createCommentOnAIssue',
+  classification: 'WRITE',
   displayName: 'Create comment on a issue',
   description:
     'Adds a comment to the specified issue (also works with pull requests)',

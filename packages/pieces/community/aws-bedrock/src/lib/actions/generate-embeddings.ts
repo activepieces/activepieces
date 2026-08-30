@@ -12,6 +12,7 @@ export const generateEmbeddings = createAction({
   audience: 'human',
   auth: awsBedrockCombinedAuth,
   name: 'generate_embeddings',
+  classification: 'READ',
   displayName: 'Generate Embeddings',
   description:
     'Generate vector embeddings from text using Amazon Titan Embed, Cohere Embed, or Amazon Nova Multimodal Embeddings models.',
