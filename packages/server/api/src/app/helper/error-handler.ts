@@ -44,7 +44,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
         if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
             wideErrorFields.stack = error.stack
         }
-        wideEvent.set({ error: wideErrorFields })
+        wideEvent.set({ status: statusCode, error: wideErrorFields })
         return
     }
     const parsed = parseError(error)
@@ -65,7 +65,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
     if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR.valueOf() && error instanceof Error) {
         wideErrorFields.stack = error.stack
     }
-    wideEvent.set({ error: wideErrorFields })
+    wideEvent.set({ status: statusCode, error: wideErrorFields })
 }
 
 function hasStatusCode(error: unknown): error is { statusCode: number } {

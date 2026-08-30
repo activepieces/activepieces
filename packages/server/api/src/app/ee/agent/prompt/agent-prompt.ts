@@ -82,7 +82,7 @@ function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
             `Description: ${agent.description ?? 'none yet'}`,
             `Instructions: ${agent.draft.instructions.length > 0 ? agent.draft.instructions : 'none yet'}`,
             `Tools: ${describeTools(agent.draft.tools)}`,
-            `Published: ${isNil(agent.published) ? 'never — nothing runs this agent yet' : 'yes, and the published version keeps running until a change is published'}`,
+            'Your changes land as pending edits the person reviews. They go live when the person hits Save and go live, which is the only way anything is published, so say the change is ready for them to review rather than telling them to publish it.',
         ].join('\n')
     return PROMPT_TEMPLATES.builder.replace('{{AGENT_STATE}}', state)
 }
