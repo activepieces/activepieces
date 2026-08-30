@@ -429,7 +429,6 @@ import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migratio
 import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
 import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
 import { AddFlowApprovalWorkflow1837000000000 } from './migration/postgres/1837000000000-AddFlowApprovalWorkflow'
-import { CollapseFlowApprovalRequestPendingPerFlow1838000000000 } from './migration/postgres/1838000000000-CollapseFlowApprovalRequestPendingPerFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -874,7 +873,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         WidenMcpOAuthState1835000000000,
         DropTeamsBotInstallation1836000000000,
         AddFlowApprovalWorkflow1837000000000,
-        CollapseFlowApprovalRequestPendingPerFlow1838000000000,
     ]
     return migrations
 }

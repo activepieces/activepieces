@@ -41,8 +41,14 @@ export class AddFlowApprovalWorkflow1837000000000 implements Migration {
         `)
 
         await queryRunner.query(`
-            CREATE UNIQUE INDEX IF NOT EXISTS "idx_flow_approval_request_flow_version_id"
+            CREATE INDEX IF NOT EXISTS "idx_flow_approval_request_flow_version_id"
             ON "flow_approval_request" ("flowVersionId")
+        `)
+
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX IF NOT EXISTS "idx_flow_approval_request_flow_id_pending"
+            ON "flow_approval_request" ("flowId")
+            WHERE "state" = 'PENDING'
         `)
 
         await queryRunner.query(`
