@@ -3,7 +3,7 @@ import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 import { QueueName } from '../workers/job'
 
-export const evaluationDeduplicationId = (barrierId: string): string => `evaluate-${barrierId}`
+export const evaluationDedupKey = (barrierId: string): string => `evaluate-${barrierId}`
 
 export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFactoryParams) => {
     let queueInstance: Queue<BarrierJobData> | undefined = undefined
@@ -17,7 +17,7 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
 
     return {
         async init(config: BarrierQueueConfig): Promise<void> {
-            queueInstance = new Queue<BarrierJobData>(QueueName.BARRIER_JOBS, {
+            queueInstance = new Queue<BarrierJobData>(QueueName.BARRIER_EVALUATION, {
                 connection: await createRedisConnection(),
                 defaultJobOptions: {
                     attempts: 5,
@@ -35,14 +35,14 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
             await queueInstance.waitUntilReady()
         },
 
-        async addEvaluation(params: BarrierJobData): Promise<void> {
+        async enqueueEvaluation(params: BarrierJobData): Promise<void> {
             await requireQueue().add(BarrierJobName.EVALUATE, params, {
-                deduplication: { id: evaluationDeduplicationId(params.barrierId) },
+                deduplication: { id: evaluationDedupKey(params.barrierId) },
             })
         },
 
-        async clearEvaluationDeduplication(barrierId: string): Promise<void> {
-            await requireQueue().removeDeduplicationKey(evaluationDeduplicationId(barrierId))
+        async clearEvaluationDedupKey(barrierId: string): Promise<void> {
+            await requireQueue().removeDeduplicationKey(evaluationDedupKey(barrierId))
         },
 
         get(): Queue<BarrierJobData> {
