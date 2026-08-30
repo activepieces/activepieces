@@ -969,4 +969,4 @@ const AgentEditorPage = () => {
   );
 };
 
-export { AgentEditorPage };
+export { AgentEditorPage, AgentEditScreen, LeaveWithoutSavingDialog, TestPane };
