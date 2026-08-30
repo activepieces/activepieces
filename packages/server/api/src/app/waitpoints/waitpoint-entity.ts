@@ -1,6 +1,6 @@
 import { PauseType, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { Waitpoint, WaitpointStatus, WaitpointVersionEnum } from './waitpoint-types'
 
 type WaitpointSchema = Waitpoint & {
