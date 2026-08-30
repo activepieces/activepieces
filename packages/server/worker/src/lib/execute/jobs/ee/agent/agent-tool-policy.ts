@@ -1,19 +1,27 @@
-import { AgentRunSource, mcpToolNameUtils } from '@activepieces/shared'
+import { AgentRunSource, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
+const BUILT_IN_TOOL_PREFIX = 'ap_'
 
 function withValidNames<T extends { toolName: string }>({ tools, reserved = [] }: { tools: T[], reserved?: string[] }): T[] {
     const taken = new Set<string>(reserved)
     return tools.map((tool) => {
-        const valid = mcpToolNameUtils.toValidToolName(tool.toolName)
-        let name = valid
+        const claimable = toClaimableName(tool.toolName)
+        let name = claimable
         for (let attempt = 1; taken.has(name); attempt++) {
-            name = mcpToolNameUtils.toValidToolName(`${valid}_${attempt}`)
+            name = toClaimableName(`${claimable}_${attempt}`)
         }
         taken.add(name)
         return name === tool.toolName ? tool : { ...tool, toolName: name }
     })
+}
+
+function toClaimableName(name: string): string {
+    const valid = mcpToolNameUtils.toValidToolName(name)
+    return valid.startsWith(BUILT_IN_TOOL_PREFIX) || valid === TASK_COMPLETION_TOOL_NAME
+        ? mcpToolNameUtils.createToolName(`tool_${valid}`)
+        : valid
 }
 
 // Listed, never subtracted: a group missing from a branch is unreachable, so a group added

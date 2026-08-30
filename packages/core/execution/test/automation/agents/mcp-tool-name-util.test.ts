@@ -79,7 +79,6 @@ describe('toValidToolName', () => {
         expect(toValidToolName('文档')).toBe(createToolName('文档'))
     })
 
-    // Only Anthropic accepts a dot, and only Gemini rejects a leading digit; the guard is the intersection.
     it('rewrites names that one provider accepts and another rejects', () => {
         expect(toValidToolName('handbook.pdf')).not.toBe('handbook.pdf')
         expect(toValidToolName('2024_reports')).toMatch(/^[a-zA-Z_]/)

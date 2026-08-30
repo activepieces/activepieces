@@ -229,6 +229,16 @@ describe('withValidNames', () => {
         expect(names([{ toolName: 'company_docs' }], ['company_docs'])).not.toEqual(['company_docs'])
     })
 
+    it('never lets a configured tool hold a built-in name, which the policy spreads last', () => {
+        for (const builtIn of ['ap_fetch_url', 'ap_show_questions', 'updateTaskStatus']) {
+            const [name] = names([{ toolName: builtIn }])
+
+            expect(name).not.toBe(builtIn)
+            expect(name.startsWith('ap_')).toBe(false)
+            expect(name).toMatch(PROVIDER_PATTERN)
+        }
+    })
+
     it('trims a name past the 64 character limit', () => {
         const [name] = names([{ toolName: 'a'.repeat(200) }])
 
