@@ -2,11 +2,12 @@ import { isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { ApplicationEventName, Flow, FlowAction, FlowActionType, FlowPiecesUpgradedEvent, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { redisConnections } from '../../database/redis-connections'
 import { AuditEventEntity } from '../../ee/audit-logs/audit-event-entity'
 import { applicationEvents } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowRepo } from '../flow/flow.repo'
-import { flowVersionRepo } from './flow-version.service'
+import { FlowVersionEntity } from './flow-version-entity'
 import { pieceUpgradeRegister } from './piece-upgrade-register'
 
 export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
@@ -16,9 +17,33 @@ export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
     async revertFlows({ flowIds }: RevertFlowsParams): Promise<FlowPieceUpgradeResult[]> {
         return Promise.all(unique(flowIds).map((flowId) => revertFlow({ flowId, log })))
     },
+    async migrateFlowVersion({ flowVersion, projectId, platformId }: MigrateFlowVersionParams): Promise<FlowVersionMigrationResult> {
+        if (isNil(projectId) || isNil(platformId)) {
+            return { migrated: false, flowVersion }
+        }
+        if (!await isPlatformMigrationEnabled(platformId)) {
+            return { migrated: false, flowVersion }
+        }
+        const { newFlowVersion, decisions } = await resolveFlowVersionUpgrades({ flowVersion, log })
+        if (decisions.length > 0) {
+            await sendUpgradeAuditEvent({ platformId, projectId, flowId: flowVersion.flowId, flowVersionId: flowVersion.id, decisions, log })
+        }
+        return { migrated: true, flowVersion: newFlowVersion }
+    },
 })
 
 const auditEventRepo = repoFactory(AuditEventEntity)
+const flowVersionRepo = repoFactory(FlowVersionEntity)
+const PIECE_UPGRADE_ENABLED_PLATFORMS_KEY = 'piece_upgrade_enabled_platforms'
+
+async function isPlatformMigrationEnabled(platformId: string): Promise<boolean> {
+    const redis = await redisConnections.useExisting()
+    const gateExists = await redis.exists(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY)
+    if (gateExists === 0) {
+        return true
+    }
+    return await redis.sismember(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY, platformId) === 1
+}
 
 async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceUpgradeResult> {
     const flow = await flowRepo().findOneBy({ id: flowId })
@@ -125,6 +150,7 @@ async function upgradeFlow({ flowId, projectId, log }: UpgradeFlowParams): Promi
     if (isNil(flow)) {
         return { flowId, found: false, upgradedSteps: [] }
     }
+    const platformId = await projectService(log).getPlatformId(flow.projectId)
     const latestVersion = await flowVersionRepo().findOne({ where: { flowId }, order: { created: 'DESC' } })
     const versions = [latestVersion]
     if (!isNil(flow.publishedVersionId) && flow.publishedVersionId !== latestVersion?.id) {
@@ -135,12 +161,37 @@ async function upgradeFlow({ flowId, projectId, log }: UpgradeFlowParams): Promi
         if (isNil(version)) {
             continue
         }
-        upgradedSteps.push(...await upgradeFlowVersion({ flow, flowVersion: version, log }))
+        upgradedSteps.push(...await upgradeFlowVersion({ flow, platformId, flowVersion: version, log }))
     }
     return { flowId, found: true, upgradedSteps }
 }
 
-async function upgradeFlowVersion({ flow, flowVersion, log }: UpgradeFlowVersionParams): Promise<UpgradedStep[]> {
+async function upgradeFlowVersion({ flow, platformId, flowVersion, log }: UpgradeFlowVersionParams): Promise<UpgradedStep[]> {
+    const { newFlowVersion, decisions, upgraded } = await resolveFlowVersionUpgrades({ flowVersion, log })
+    if (decisions.length === 0) {
+        return []
+    }
+
+    if (upgraded.length > 0) {
+        const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
+        if (!updated) {
+            log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping upgrade')
+            return []
+        }
+    }
+
+    await sendUpgradeAuditEvent({ platformId, projectId: flow.projectId, flowId: flow.id, flowVersionId: flowVersion.id, decisions, log })
+
+    return upgraded.map((decision) => ({
+        flowVersionId: flowVersion.id,
+        stepName: decision.stepName,
+        pieceName: decision.pieceName,
+        fromVersion: decision.prevVersion,
+        toVersion: decision.newVersion,
+    }))
+}
+
+async function resolveFlowVersionUpgrades({ flowVersion, log }: ResolveFlowVersionUpgradesParams): Promise<FlowVersionUpgrades> {
     const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
 
     const decisions: StepUpgradeDecision[] = []
@@ -150,50 +201,38 @@ async function upgradeFlowVersion({ flow, flowVersion, log }: UpgradeFlowVersion
             decisions.push(decision)
         }
     }
-    if (decisions.length === 0) {
-        return []
-    }
 
     const upgraded = decisions.filter((decision): decision is UpgradedStepDecision => decision.decision === 'UPGRADED')
-    if (upgraded.length > 0) {
-        const stepNameToNewVersion = Object.fromEntries(upgraded.map((decision) => [decision.stepName, decision.newVersion]))
-        const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            const newVersion = stepNameToNewVersion[step.name]
-            if (isNil(newVersion)) {
-                return step
-            }
-            return {
-                ...step,
-                settings: {
-                    ...step.settings,
-                    pieceVersion: newVersion,
-                },
-            }
-        })
-        const updated = await updateTriggerIfUnchanged({ flowVersion, newTrigger: newFlowVersion.trigger })
-        if (!updated) {
-            log.warn({ flowVersion: { id: flowVersion.id } }, '[pieceUpgradeService] flow version changed concurrently, skipping upgrade')
-            return []
-        }
+    if (upgraded.length === 0) {
+        return { newFlowVersion: flowVersion, decisions, upgraded }
     }
 
-    const platformId = await projectService(log).getPlatformId(flow.projectId)
-    applicationEvents(log).sendUserEvent({ platformId, projectId: flow.projectId }, {
+    const stepNameToNewVersion = Object.fromEntries(upgraded.map((decision) => [decision.stepName, decision.newVersion]))
+    const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const newVersion = stepNameToNewVersion[step.name]
+        if (isNil(newVersion)) {
+            return step
+        }
+        return {
+            ...step,
+            settings: {
+                ...step.settings,
+                pieceVersion: newVersion,
+            },
+        }
+    })
+    return { newFlowVersion, decisions, upgraded }
+}
+
+async function sendUpgradeAuditEvent({ platformId, projectId, flowId, flowVersionId, decisions, log }: SendUpgradeAuditEventParams): Promise<void> {
+    applicationEvents(log).sendUserEvent({ platformId, projectId }, {
         action: ApplicationEventName.FLOW_PIECES_UPGRADED,
         data: {
-            flowId: flow.id,
-            flowVersionId: flowVersion.id,
+            flowId,
+            flowVersionId,
             steps: decisions.map(toLogStep),
         },
     })
-
-    return upgraded.map((decision) => ({
-        flowVersionId: flowVersion.id,
-        stepName: decision.stepName,
-        pieceName: decision.pieceName,
-        fromVersion: decision.prevVersion,
-        toVersion: decision.newVersion,
-    }))
 }
 
 function toLogStep(decision: StepUpgradeDecision): PieceUpgradeAuditStep {
@@ -324,6 +363,37 @@ type StepRevert = {
     newVersion: string
 }
 
+type MigrateFlowVersionParams = {
+    flowVersion: FlowVersion
+    projectId?: string
+    platformId?: string
+}
+
+type FlowVersionMigrationResult = {
+    migrated: boolean
+    flowVersion: FlowVersion
+}
+
+type ResolveFlowVersionUpgradesParams = {
+    flowVersion: FlowVersion
+    log: FastifyBaseLogger
+}
+
+type FlowVersionUpgrades = {
+    newFlowVersion: FlowVersion
+    decisions: StepUpgradeDecision[]
+    upgraded: UpgradedStepDecision[]
+}
+
+type SendUpgradeAuditEventParams = {
+    platformId: string
+    projectId: string
+    flowId: string
+    flowVersionId: string
+    decisions: StepUpgradeDecision[]
+    log: FastifyBaseLogger
+}
+
 type UpdateTriggerIfUnchangedParams = {
     flowVersion: FlowVersion
     newTrigger: FlowVersion['trigger']
@@ -345,6 +415,7 @@ type UpgradeFlowParams = {
 
 type UpgradeFlowVersionParams = {
     flow: Flow
+    platformId: string
     flowVersion: FlowVersion
     log: FastifyBaseLogger
 }

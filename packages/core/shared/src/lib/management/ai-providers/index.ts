@@ -415,6 +415,7 @@ export function splitCloudflareGatewayModelId(modelId: string): {
 }
 
 export {
+    AI_PROVIDER_ENTITY_TYPES,
     ALLOWED_CHAT_MODELS_BY_PROVIDER,
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,

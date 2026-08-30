@@ -90,7 +90,7 @@ describe('which accounts a conversation may be offered', () => {
         expect(secondRead).toEqual(body)
     })
 
-    it('narrows the account the agent actually runs on, which is the published one', async () => {
+    it('narrows the account the agent actually runs on, which is the draft one', async () => {
         const ctx = await context()
         const published = await saveConnection({ ctx, externalId: apId() })
         const draftOnly = await saveConnection({ ctx, externalId: apId() })
@@ -104,7 +104,7 @@ describe('which accounts a conversation may be offered', () => {
 
         const body = await pickerConnections({ ctx, conversationId: conversation.json().id })
 
-        expect(body.connections.map((connection: { externalId: string }) => connection.externalId)).toEqual([published.externalId])
+        expect(body.connections.map((connection: { externalId: string }) => connection.externalId)).toEqual([draftOnly.externalId])
     })
 
     it('falls back to the full picker where the agent pinned no account, because there is nothing to repair', async () => {
