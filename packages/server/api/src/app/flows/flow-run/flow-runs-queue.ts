@@ -118,12 +118,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {
-                                const idleCompletedWaitpoint = await waitpointService(log).findCompletedWaitpointIfRunIsIdle({ flowRunId: savedFlowRun.id })
-                                if (!isNil(idleCompletedWaitpoint)) {
+                                const undeliveredWaitpoint = await waitpointService(log).findUndeliveredCompletedWaitpoint({ flowRunId: savedFlowRun.id, projectId: savedFlowRun.projectId })
+                                if (!isNil(undeliveredWaitpoint)) {
                                     await resumeService(log).resumeTrustedWithoutLock({
                                         flowRunId: savedFlowRun.id,
-                                        waitpointId: idleCompletedWaitpoint.id,
-                                        resumePayload: idleCompletedWaitpoint.resumePayload,
+                                        waitpointId: undeliveredWaitpoint.id,
+                                        resumePayload: undeliveredWaitpoint.resumePayload,
                                     })
                                 }
                             }

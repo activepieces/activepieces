@@ -149,9 +149,9 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
     },
 
-    async findCompletedWaitpointIfRunIsIdle({ flowRunId }: FindCompletedWaitpointIfRunIsIdleParams): Promise<Waitpoint | null> {
-        const stillOpen = await waitpointRepo().existsBy({ flowRunId, status: WaitpointStatus.PENDING })
-        if (stillOpen) {
+    async findUndeliveredCompletedWaitpoint({ flowRunId, projectId }: FindUndeliveredCompletedWaitpointParams): Promise<Waitpoint | null> {
+        const barrierPending = await this.hasPendingBarrier({ flowRunId, projectId })
+        if (barrierPending) {
             return null
         }
         return waitpointRepo().findOne({
@@ -194,8 +194,9 @@ type HasPendingBarrierParams = {
     projectId: string
 }
 
-type FindCompletedWaitpointIfRunIsIdleParams = {
+type FindUndeliveredCompletedWaitpointParams = {
     flowRunId: string
+    projectId: string
 }
 
 type FindSubflowWaitpointParams = {
