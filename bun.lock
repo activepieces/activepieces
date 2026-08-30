@@ -96,7 +96,7 @@
     },
     "packages/core/ai-providers": {
       "name": "@activepieces/ai-providers",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -116,7 +116,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.17.0",
+      "version": "0.18.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -161,7 +161,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.148.0",
+      "version": "0.149.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -186,7 +186,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "deepmerge-ts": "7.1.0",
         "ipaddr.js": "2.3.0",

@@ -8,10 +8,12 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, spreadIfDefined } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
+
+const AUTHORIZATION_HEADER = 'authorization'
 
 async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
@@ -154,7 +156,12 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
                 [apiKeyHeader]: apiKey,
             }
             if (apiStyle === 'responses') {
-                return createOpenAI({ baseURL: baseUrl, apiKey, headers }).responses(modelId)
+                return createOpenAI({
+                    baseURL: baseUrl,
+                    apiKey,
+                    headers,
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization(apiKeyHeader)),
+                }).responses(modelId)
             }
             return createOpenAICompatible({
                 name: 'openai-compatible',
@@ -189,6 +196,17 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
+    }
+}
+
+function stripDefaultAuthorization(apiKeyHeader: string): typeof globalThis.fetch | undefined {
+    if (apiKeyHeader.trim().toLowerCase() === AUTHORIZATION_HEADER) {
+        return undefined
+    }
+    return (input, init) => {
+        const headers = new Headers(init?.headers)
+        headers.delete(AUTHORIZATION_HEADER)
+        return fetch(input, { ...init, headers })
     }
 }
 

@@ -4,9 +4,35 @@ import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-lang
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
+type CustomModelIdentity = { config: { headers: () => Record<string, string>, fetch?: typeof globalThis.fetch } }
+
 function identify(model: unknown): ModelIdentity {
     return model as ModelIdentity
 }
+
+function identifyCustom(model: unknown): CustomModelIdentity {
+    return model as CustomModelIdentity
+}
+
+async function captureHeaders({ patchedFetch, headers }: {
+    patchedFetch?: typeof globalThis.fetch
+    headers: Record<string, string>
+}): Promise<Headers> {
+    const original = globalThis.fetch
+    let seen = new Headers()
+    globalThis.fetch = (_input, init) => {
+        seen = new Headers(init?.headers)
+        return Promise.resolve(new Response('{}'))
+    }
+    try {
+        await patchedFetch?.('https://example.test/v1/responses', { headers })
+    }
+    finally {
+        globalThis.fetch = original
+    }
+    return seen
+}
+
 
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
@@ -58,6 +84,38 @@ describe('createLanguageModel', () => {
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
         expect(identify(model).provider).toBe('openai.responses')
         expect(identify(model).modelId).toBe('openai.gpt-oss-120b')
+    })
+
+    it('drops the SDK default Authorization when the custom provider authenticates with another header', async () => {
+        const model = createLanguageModel({
+            provider: AIProviderName.CUSTOM,
+            auth: { apiKey: 'secret-key' },
+            config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [], apiStyle: 'responses' },
+            modelId: 'some-model-id',
+        })
+        const { headers, fetch: patchedFetch } = identifyCustom(model).config
+        const sent = headers()
+
+        expect(sent['x-api-key']).toBe('secret-key')
+        expect(sent['authorization']).toBe('Bearer secret-key')
+        expect(patchedFetch).toBeDefined()
+
+        const seen = await captureHeaders({ patchedFetch, headers: sent })
+        expect(seen.get('x-api-key')).toBe('secret-key')
+        expect(seen.get('authorization')).toBeNull()
+    })
+
+    it('keeps the Authorization header when that is the custom provider\'s own api key header', () => {
+        const model = createLanguageModel({
+            provider: AIProviderName.CUSTOM,
+            auth: { apiKey: 'Bearer bedrock-key' },
+            config: { apiKeyHeader: 'Authorization', baseUrl: 'https://bedrock-mantle.us-east-1.api.aws/v1', models: [], apiStyle: 'responses' },
+            modelId: 'openai.gpt-oss-120b',
+        })
+        const { headers, fetch: patchedFetch } = identifyCustom(model).config
+
+        expect(headers()['authorization']).toBe('Bearer bedrock-key')
+        expect(patchedFetch).toBeUndefined()
     })
 
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
