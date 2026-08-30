@@ -51,6 +51,22 @@ export class CollapseFlowApprovalRequestPendingPerFlow1838000000000 implements M
         `)
 
         await queryRunner.query(`
+            DELETE FROM "flow_approval_request" far_outer
+            WHERE EXISTS (
+                SELECT 1
+                FROM "flow_approval_request" far_inner
+                WHERE far_inner."flowVersionId" = far_outer."flowVersionId"
+                  AND (
+                    far_inner."submittedAt" > far_outer."submittedAt"
+                    OR (
+                        far_inner."submittedAt" = far_outer."submittedAt"
+                        AND far_inner."id" > far_outer."id"
+                    )
+                  )
+            )
+        `)
+
+        await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_flow_approval_request_flow_version_id"
             ON "flow_approval_request" ("flowVersionId")
         `)
