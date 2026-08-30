@@ -9,6 +9,7 @@ import { getEmailStatusOutputSchema } from '../output-schemas';
 
 export const getEmailStatus = createAction({
   name: 'get_email_status',
+  classification: 'READ',
   auth: resendAuth,
   displayName: 'Get Email Status',
   outputSchema: getEmailStatusOutputSchema,

@@ -11,6 +11,7 @@ import { withAuthParams, rethrowTrelloError } from './ai-common';
 export const deleteChecklistItem = createAction({
   auth: trelloAuth,
   name: 'delete_checklist_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Checklist Item (Agent)',
   description: 'Remove one item from a checklist.',
   audience: 'ai',

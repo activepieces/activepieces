@@ -11,6 +11,7 @@ import { phoneNumberDropdown } from '../common/props';
 export const outgoingCallCompleted = createTrigger({
   auth: openPhoneAuth,
   name: 'outgoing_call_completed',
+  classification: 'READ',
   displayName: 'Outgoing Call Completed',
   description: 'Fires when an outbound call ends. Useful for call logging.',
   aiMetadata: {

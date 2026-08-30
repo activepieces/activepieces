@@ -32,7 +32,7 @@ export const pieceAuth = {
         return {
             called: true,
             property: selected.property,
-            result: await pieceRunner.call({ piece, path, args: [{ auth: argument.argument, server }] }),
+            result: (await pieceRunner.call({ piece, path, args: [{ auth: argument.argument, server }] })).result,
         }
     },
 }

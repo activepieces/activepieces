@@ -6,6 +6,7 @@ import { sheetsGetValuesActionOutputSchema } from '../output-schemas';
 export const sheetsGetValues = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_get_values',
+	classification: 'READ',
 	displayName: 'Read Cell Range',
 	description: 'Read cell values from a worksheet using A1 notation.',
 	audience: 'ai',

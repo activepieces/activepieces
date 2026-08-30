@@ -12,6 +12,7 @@ import { GristAPIClient } from '../common/helpers';
 export const gristUploadAttachmentsToDocumnetAction = createAction({
   auth: gristAuth,
   name: 'grist-upload-attachments-to-document',
+  classification: 'WRITE',
   displayName: 'Upload Attachment to Document',
   description: 'Uploads attachments to specific document.',
   audience: 'both',

@@ -55,6 +55,7 @@ export {
   // ai providers
   AIProviderModel,
   AIProviderWithoutSensitiveData,
+  ProjectAIProvider,
   AzureProviderConfig,
   BaseAIProviderAuthConfig,
   BedrockProviderAuthConfig,
@@ -62,6 +63,8 @@ export {
   CloudflareGatewayProviderConfig,
   GetProviderConfigResponse,
   OpenAICompatibleProviderConfig,
+  OpenAiCompatibleVendorConfig,
+  OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
   AI_PROVIDER_CAPABILITIES,

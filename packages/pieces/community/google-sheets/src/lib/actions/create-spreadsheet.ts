@@ -19,6 +19,7 @@ import { createSpreadsheetActionOutputSchema } from '../output-schemas';
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-spreadsheet',
+	classification: 'WRITE',
 	displayName: 'Create Spreadsheet',
 	description: 'Creates a blank spreadsheet.',
 	audience: 'human',

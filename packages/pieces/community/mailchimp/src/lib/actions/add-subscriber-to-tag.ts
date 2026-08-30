@@ -8,6 +8,7 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 export const addSubscriberToTag = createAction({
   auth: mailchimpAuth,
   name: 'add_subscriber_to_tag',
+  classification: 'WRITE',
   displayName: 'Add Subscriber to Tag',
   description: 'Add a subscriber to a specific tag in your Mailchimp audience.',
   audience: 'both',

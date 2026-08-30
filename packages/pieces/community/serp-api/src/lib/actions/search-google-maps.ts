@@ -7,6 +7,7 @@ import { searchGoogleMapsOutputSchema } from '../output-schemas';
 export const searchGoogleMaps = createAction({
   auth: serpApiAuth,
   name: 'search_google_maps',
+  classification: 'SEARCH',
   displayName: 'Search Google Maps',
   description: 'Find local businesses and places on Google Maps for a query.',
   audience: 'ai',

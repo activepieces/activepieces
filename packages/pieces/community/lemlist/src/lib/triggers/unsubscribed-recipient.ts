@@ -7,6 +7,7 @@ const CACHE_KEY = 'lemlist_unsubscribed_recipient_trigger_key';
 export const unsubscribedRecipient = createTrigger({
   auth: lemlistAuth,
   name: 'unsubscribedRecipient',
+  classification: 'READ',
   displayName: 'Unsubscribed Recipient',
   description: 'Triggers when a recipient unsubscribes.',
   aiMetadata: {

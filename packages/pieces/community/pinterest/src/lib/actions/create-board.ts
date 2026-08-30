@@ -12,6 +12,7 @@ import { createBoardActionOutputSchema } from '../output-schemas';
 export const createBoard = createAction({
   auth: pinterestAuth,
   name: 'createBoard',
+  classification: 'WRITE',
   outputSchema: createBoardActionOutputSchema,
   displayName: 'Create Board',
   description: 'Create a new Pinterest board for organizing Pins.',

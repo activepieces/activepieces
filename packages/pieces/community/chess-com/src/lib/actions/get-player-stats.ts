@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const getPlayerStats = createAction({
   name: 'get_player_stats',
+  classification: 'READ',
   displayName: 'Get Player Stats',
   description:
     'Retrieve a Chess.com player\'s ratings and W/D/L for rapid, blitz, bullet, and chess960.',

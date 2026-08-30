@@ -45,12 +45,15 @@ export const userService = (log: FastifyBaseLogger) => ({
                 platformRole: PlatformRole.MEMBER,
             })
 
-            await projectService(log).create({
-                displayName: identity.firstName + '\'s Project',
-                ownerId: newUser.id,
-                platformId,
-                type: ProjectType.PERSONAL,
-            })
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            if (platform.autoCreatePersonalProjects) {
+                await projectService(log).create({
+                    displayName: identity.firstName + '\'s Project',
+                    ownerId: newUser.id,
+                    platformId,
+                    type: ProjectType.PERSONAL,
+                })
+            }
             return newUser
         }
         return user

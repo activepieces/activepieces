@@ -6,6 +6,7 @@ import { lemlistApiService } from '../common/requests';
 export const markLeadFromAllCampaignsAsNotInterested = createAction({
   auth: lemlistAuth,
   name: 'markLeadFromAllCampaignsAsNotInterested',
+  classification: 'WRITE',
   displayName: 'Mark Lead From All Campaigns as Not Interested',
   description: 'Mark a lead as “not interested” across all campaigns.',
   audience: 'both',

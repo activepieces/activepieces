@@ -18,7 +18,7 @@ export const apSetupGuideTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLo
         title: 'ap_setup_guide',
         description: 'Get setup instructions for connections or AI providers. Returns steps for the user to follow in the UI.',
         inputSchema: setupGuideInput.shape,
-        annotations: { readOnlyHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { topic, pieceName } = setupGuideInput.parse(args)
@@ -190,7 +190,7 @@ function formatAuthSteps({ auth, displayName }: { auth: Record<string, unknown>,
 
 async function aiProviderGuide(mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): Promise<{ content: [{ type: 'text', text: string }] }> {
     const project = await projectService(log).getOneOrThrow(mcp.projectId)
-    const providers = await aiProviderService(log).listProviders(project.platformId)
+    const providers = await aiProviderService(log).listForProject({ platformId: project.platformId, projectId: mcp.projectId })
 
     const lines: string[] = []
 

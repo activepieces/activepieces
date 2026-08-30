@@ -1,12 +1,13 @@
-import { AIProviderName } from '@activepieces/pieces-framework';
+import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
-import { aiProps } from '../../common/props';
+import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const summarizeText = createAction({
   audience: 'both',
   name: 'summarizeText',
+  classification: 'READ',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',
   aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation runs at temperature 1, so identical text returns differently worded summaries.', idempotent: false },
@@ -30,11 +31,12 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

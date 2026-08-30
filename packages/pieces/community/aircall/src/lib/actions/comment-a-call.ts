@@ -7,6 +7,7 @@ import { callIdDropdown } from '../common/props';
 export const commentACall = createAction({
   auth: aircallAuth,
   name: 'commentACall',
+  classification: 'WRITE',
   displayName: 'Comment a Call',
   description: 'Adds a comment (note) to a specific call.',
   audience: 'both',

@@ -33,6 +33,7 @@ export const woocommerceRegisterTrigger = ({
   createTrigger({
     auth: wooAuth,
     name: `$woocommerce_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

@@ -21,7 +21,7 @@ export const apDeleteStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             stepName: z.string().describe('The name of the step to delete. Use ap_flow_structure to get valid values.'),
             displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete Send Email step"). Must include what the action does and the target name.'),
         },
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, stepName } = deleteStepInput.parse(args)
 

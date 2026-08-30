@@ -7,6 +7,7 @@ import { tagIdDropdown } from '../common/props';
 export const findCalls = createAction({
   auth: aircallAuth,
   name: 'findCalls',
+  classification: 'SEARCH',
   displayName: 'Find Call',
   description: 'Finds specific call based on provided filter.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { makeClient, TeableCommon } from '../common';
 export const uploadAttachmentAction = createAction({
   auth: TeableAuth,
   name: 'teable_upload_attachment',
+  classification: 'WRITE',
   displayName: 'Upload Attachment',
   description: 'Uploads a file as an attachment to a field in a Teable record.',
   audience: 'both',

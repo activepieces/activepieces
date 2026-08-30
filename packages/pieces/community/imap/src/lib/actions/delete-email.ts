@@ -26,6 +26,7 @@ const props = {
 export const deleteEmail = createAction({
   auth: imapAuth,
   name: 'delete_email',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Email',
   description: 'Permanently delete an email',
   audience: 'both',

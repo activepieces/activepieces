@@ -21,6 +21,7 @@ import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeUpdatedSubscription = createTrigger({
   auth: stripeAuth,
   name: 'updated_subscription',
+  classification: 'READ',
   displayName: 'Updated Subscription',
   description: 'Fires when an existing subscription is changed.',
   aiMetadata: {
