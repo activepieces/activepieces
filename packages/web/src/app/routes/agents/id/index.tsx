@@ -469,6 +469,7 @@ const AgentEditScreen = ({
   const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
   const [exitRequested, setExitRequested] = useState(false);
   const testRequested = useRef(false);
+  const writeSeq = useRef(0);
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
@@ -484,11 +485,13 @@ const AgentEditScreen = ({
       message: api.extractServerErrorMessage(error, fallback),
     });
 
-  const openTestWithLatestEdits = form.handleSubmit((values) =>
-    stageDraft.mutate(
+  const openTestWithLatestEdits = form.handleSubmit((values) => {
+    const seq = ++writeSeq.current;
+    return stageDraft.mutate(
       { ...toUpdateRequest(values), goLive: false },
       {
         onSuccess: () => {
+          if (seq !== writeSeq.current) return;
           setSyncedDraft(values);
           if (testRequested.current) setMode('test');
         },
@@ -498,8 +501,8 @@ const AgentEditScreen = ({
             t("Your changes couldn't be staged for testing. Try again."),
           ),
       },
-    ),
-  );
+    );
+  });
 
   const changeMode = (next: string) => {
     testRequested.current = next === 'test';
@@ -512,8 +515,10 @@ const AgentEditScreen = ({
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
+    const seq = ++writeSeq.current;
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
+        if (seq !== writeSeq.current) return;
         setSyncedDraft(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
@@ -570,7 +575,7 @@ const AgentEditScreen = ({
           <Button
             type="submit"
             loading={updateAgent.isPending}
-            disabled={!hasChanges}
+            disabled={!hasChanges || stageDraft.isPending}
             className="h-[38px] shrink-0 gap-2 overflow-hidden rounded-lg px-[18px]"
           >
             <motion.span
@@ -616,7 +621,7 @@ const AgentEditScreen = ({
                     value="test"
                     variant="outline"
                     className="h-full items-center gap-2"
-                    disabled={stageDraft.isPending}
+                    disabled={stageDraft.isPending || updateAgent.isPending}
                   >
                     {stageDraft.isPending ? (
                       <Loader2 size={14} className="animate-spin" />
