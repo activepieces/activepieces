@@ -35,6 +35,8 @@ const NOT_FOUND = 404
 
 const MIN_RETAINED_RATIO = 0.8
 
+const MAX_TOLERATED_MODEL_LOSS = 2
+
 async function main(): Promise<void> {
     const published = await fetchPublishedCatalog()
     const upstream = await fetchUpstream()
@@ -129,15 +131,28 @@ function assertNotTruncated({ previous, catalog }: { previous: ModelCatalogFile 
     if (!previous) {
         return
     }
-    const missingProviders = Object.keys(previous).filter((provider) => !(provider in catalog))
-    if (missingProviders.length > 0) {
-        throw new Error(`refusing to write: provider(s) disappeared upstream — ${missingProviders.join(', ')}`)
+
+    const shrunk = Object.entries(previous)
+        .map(([provider, models]) => ({
+            provider,
+            before: Object.keys(models).length,
+            after: Object.keys(catalog[provider] ?? {}).length,
+        }))
+        .filter(({ before, after }) => hasShrunk({ before, after }))
+    if (shrunk.length > 0) {
+        const detail = shrunk.map(({ provider, before, after }) => `${provider} ${before} -> ${after}`).join(', ')
+        throw new Error(`refusing to write: provider(s) lost models upstream — ${detail}`)
     }
+
     const before = countModels(previous)
     const after = countModels(catalog)
-    if (after < before * MIN_RETAINED_RATIO) {
+    if (hasShrunk({ before, after })) {
         throw new Error(`refusing to write: model count fell from ${before} to ${after}, upstream payload looks partial`)
     }
+}
+
+function hasShrunk({ before, after }: { before: number, after: number }): boolean {
+    return before - after > MAX_TOLERATED_MODEL_LOSS && after < before * MIN_RETAINED_RATIO
 }
 
 function printCoverage(catalog: ModelCatalogFile): void {
