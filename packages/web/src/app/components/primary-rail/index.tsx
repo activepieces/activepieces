@@ -25,6 +25,7 @@ import {
   SquarePen,
   UserCogIcon,
 } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ComponentType, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -66,10 +67,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import AccountSettingsDialog from '../account-settings';
-import {
-  getAccessHistory,
-  recordAccess,
-} from '../global-search/access-history';
+import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
 
@@ -104,51 +102,58 @@ export function PrimaryRail() {
 
         <div
           className={cn(
-            'mt-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto scrollbar-none',
+            'mt-2 flex min-h-0 flex-1 flex-col',
             collapsed ? 'items-center px-2' : 'px-2',
           )}
         >
-          {platform.plan.chatEnabled && (
+          <div
+            className={cn(
+              'flex shrink-0 flex-col gap-1',
+              collapsed && 'items-center',
+            )}
+          >
+            {platform.plan.chatEnabled && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/chat"
+                icon={SquarePen}
+                label={t('Chat')}
+                isActive={({ pathname }) => pathname.startsWith('/chat')}
+                onClick={() =>
+                  window.dispatchEvent(new Event(chatUtils.newChatEvent))
+                }
+              />
+            )}
+            {showAgents && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/agents"
+                icon={Bot}
+                label={t('Agents')}
+                isActive={({ pathname }) => pathname.startsWith('/agents')}
+              />
+            )}
             <RailNavButton
               collapsed={collapsed}
-              to="/chat"
-              icon={SquarePen}
-              label={t('Chat')}
-              isActive={({ pathname }) => pathname.startsWith('/chat')}
+              to="/templates"
+              icon={Compass}
+              label={t('Explore')}
+              isActive={({ pathname }) => pathname.startsWith('/templates')}
               onClick={() =>
-                window.dispatchEvent(new Event(chatUtils.newChatEvent))
+                templatesTelemetryApi.sendEvent({
+                  eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+                  userId: currentUser?.id,
+                })
               }
             />
-          )}
-          {showAgents && (
             <RailNavButton
               collapsed={collapsed}
-              to="/agents"
-              icon={Bot}
-              label={t('Agents')}
-              isActive={({ pathname }) => pathname.startsWith('/agents')}
+              to="/impact"
+              icon={ChartLine}
+              label={t('Impact')}
+              isActive={({ pathname }) => pathname.startsWith('/impact')}
             />
-          )}
-          <RailNavButton
-            collapsed={collapsed}
-            to="/templates"
-            icon={Compass}
-            label={t('Explore')}
-            isActive={({ pathname }) => pathname.startsWith('/templates')}
-            onClick={() =>
-              templatesTelemetryApi.sendEvent({
-                eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
-                userId: currentUser?.id,
-              })
-            }
-          />
-          <RailNavButton
-            collapsed={collapsed}
-            to="/impact"
-            icon={ChartLine}
-            label={t('Impact')}
-            isActive={({ pathname }) => pathname.startsWith('/impact')}
-          />
+          </div>
           <RailPinnedProjects collapsed={collapsed} />
         </div>
 
@@ -303,7 +308,13 @@ function RailPlatformAdminButton({ collapsed }: { collapsed: boolean }) {
   }
 
   return (
-    <div className={cn('px-2 pb-1', collapsed && 'flex justify-center')}>
+    <div className={cn('flex flex-col px-2 pb-1', collapsed && 'items-center')}>
+      <div
+        className={cn(
+          'mb-1 h-px shrink-0 bg-sidebar-border',
+          collapsed ? 'w-6' : 'mx-3',
+        )}
+      />
       <RailNavButton
         collapsed={collapsed}
         to="/platform/projects"
@@ -342,7 +353,7 @@ function RailNavButton({
         onClick?.();
       }}
       className={cn(
-        'flex items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
@@ -388,7 +399,6 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
 
   const ordered = orderProjects({
     projects,
-    lastUsed: lastUsedByProject(),
     sort,
   });
 
@@ -413,16 +423,19 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div
-      className={cn('mt-2 flex flex-col gap-0.5', collapsed && 'items-center')}
+      className={cn(
+        'mt-2 flex min-h-0 flex-1 flex-col',
+        collapsed && 'items-center',
+      )}
     >
       <div
         className={cn(
-          'mb-1 h-px bg-sidebar-border',
+          'mb-1 h-px shrink-0 bg-sidebar-border',
           collapsed ? 'w-6' : 'mx-3',
         )}
       />
       {!collapsed && (
-        <div className="flex items-center gap-1 py-0.5 pl-3 pr-1">
+        <div className="flex shrink-0 items-center gap-1 py-0.5 pl-3 pr-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
             {t('Projects')}
           </span>
@@ -441,15 +454,22 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
           </div>
         </div>
       )}
-      {ordered.map((project) => (
-        <ProjectRow
-          key={project.id}
-          project={project}
-          collapsed={collapsed}
-          active={location.pathname.includes(`/projects/${project.id}`)}
-          onOpen={openProject}
-        />
-      ))}
+      <div
+        className={cn(
+          'flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto',
+          collapsed && 'items-center',
+        )}
+      >
+        {ordered.map((project) => (
+          <ProjectRow
+            key={project.id}
+            project={project}
+            collapsed={collapsed}
+            active={location.pathname.includes(`/projects/${project.id}`)}
+            onOpen={openProject}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -465,6 +485,7 @@ function ProjectRow({
   active: boolean;
   onOpen: (params: { projectId: string; name: string }) => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const name = getProjectName(project);
   const isTeam = project.type === ProjectType.TEAM;
   const palette =
@@ -488,7 +509,9 @@ function ProjectRow({
   );
 
   const row = (
-    <button
+    <motion.button
+      layout={!prefersReducedMotion}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       type="button"
       onClick={(e) => {
         e.stopPropagation();
@@ -496,7 +519,7 @@ function ProjectRow({
       }}
       aria-label={name}
       className={cn(
-        'flex items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
@@ -505,7 +528,7 @@ function ProjectRow({
       {!collapsed && (
         <span className="min-w-0 flex-1 truncate text-left">{name}</span>
       )}
-    </button>
+    </motion.button>
   );
 
   if (!collapsed) {
@@ -580,27 +603,15 @@ function readStoredSort(stored: string | null): PinnedSort {
   return PINNED_SORTS.find((sort) => sort === stored) ?? 'added';
 }
 
-function lastUsedByProject(): Record<string, number> {
-  return getAccessHistory().reduce<Record<string, number>>((acc, item) => {
-    const projectId = /^\/projects\/([^/]+)/.exec(item.href)?.[1];
-    if (isNil(projectId)) {
-      return acc;
-    }
-    const seen = acc[projectId];
-    if (!isNil(seen) && seen >= item.accessedAt) {
-      return acc;
-    }
-    return { ...acc, [projectId]: item.accessedAt };
-  }, {});
+function lastFlowUpdatedAt(project: ProjectWithLimits): number {
+  const lastFlowUpdated = project.analytics.lastFlowUpdated;
+  if (isNil(lastFlowUpdated)) {
+    return 0;
+  }
+  return new Date(lastFlowUpdated).getTime();
 }
 
-function compareProjects({
-  sort,
-  lastUsed,
-}: {
-  sort: PinnedSort;
-  lastUsed: Record<string, number>;
-}) {
+function compareProjects({ sort }: { sort: PinnedSort }) {
   return (a: ProjectWithLimits, b: ProjectWithLimits): number => {
     if (sort === 'alphabetical') {
       return getProjectName(a).localeCompare(getProjectName(b));
@@ -608,10 +619,10 @@ function compareProjects({
     if (sort === 'added') {
       return new Date(b.created).getTime() - new Date(a.created).getTime();
     }
-    const usedA = lastUsed[a.id] ?? 0;
-    const usedB = lastUsed[b.id] ?? 0;
-    if (usedA !== usedB) {
-      return usedB - usedA;
+    const flowA = lastFlowUpdatedAt(a);
+    const flowB = lastFlowUpdatedAt(b);
+    if (flowA !== flowB) {
+      return flowB - flowA;
     }
     return new Date(b.updated).getTime() - new Date(a.updated).getTime();
   };
@@ -619,14 +630,12 @@ function compareProjects({
 
 function orderProjects({
   projects,
-  lastUsed,
   sort,
 }: {
   projects: ProjectWithLimits[];
-  lastUsed: Record<string, number>;
   sort: PinnedSort;
 }): ProjectWithLimits[] {
-  const compare = compareProjects({ sort, lastUsed });
+  const compare = compareProjects({ sort });
   const personal = projects.filter(
     (project) => project.type !== ProjectType.TEAM,
   );

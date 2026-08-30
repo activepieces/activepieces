@@ -15,6 +15,7 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { payloadOffloader } from '../../workers/payload-offloader'
 import { flowService } from '../flow/flow.service'
@@ -23,7 +24,6 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
-import { waitpointService } from './waitpoint/waitpoint-service'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
@@ -187,6 +187,15 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
+function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
+    return async (signal) => {
+        const { error } = await tryCatch(() => aiProviderService(log).recordKeyObservation({ platformId, providerId, signal }))
+        if (!isNil(error)) {
+            log.warn({ error, aiProvider: { id: providerId } }, '[agentHelpers#reportKeyOutcome] Could not record key status')
+        }
+    }
+}
+
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
@@ -196,6 +205,7 @@ async function resolveTierModel({ platformId, tierId, provider, providerConfigId
             auth: providerConfig.auth,
             config: providerConfig.config,
             modelId,
+            onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
         }),
         modelId,
         provider: providerConfig.provider,
@@ -216,6 +226,7 @@ async function resolveEmbeddingModel({ platformId, provider, providerConfigId, s
         provider: providerConfig.provider,
         auth: providerConfig.auth,
         config: providerConfig.config,
+        onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
     })
 }
 
