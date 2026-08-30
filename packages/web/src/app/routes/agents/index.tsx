@@ -6,17 +6,24 @@ import {
 import { t } from 'i18next';
 import {
   ArrowUp,
-  Settings2,
   ChevronsUpDown,
   LayoutGrid,
   List,
-  Plus,
   Search,
+  SearchX,
+  Settings2,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,7 +35,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { AgentCard } from '@/features/agents/agent-card';
-import { CreateAgentDialog } from '@/features/agents/create-agent-dialog';
 import {
   agentsMutations,
   agentsQueries,
@@ -37,16 +43,16 @@ import {
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { projectCollectionUtils } from '@/features/projects';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-import { agentsListState } from './lib/agents-list-state';
+import { showsFirstRun } from './lib/agents-list-state';
 
 const SUGGESTIONS = [
   'Triage support tickets',
   'Research a company',
   'Enrich a lead',
-  'Summarize my week',
 ];
 
 const SORT_LABELS = {
@@ -83,12 +89,12 @@ const AgentsPageContent = () => {
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [sort, setSort] = useState<AgentSort>('updated');
   const [prompt, setPrompt] = useState('');
-  const [creating, setCreating] = useState(false);
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
   const agentsAvailable = useAgentsAvailable();
-  const { data, isLoading } = agentsQueries.useAgents({
+  const isPlatformAdmin = useIsPlatformAdmin();
+  const { data, isLoading, isSuccess } = agentsQueries.useAgents({
     enabled: agentsAvailable,
   });
 
@@ -107,6 +113,7 @@ const AgentsPageContent = () => {
   const createAgent = agentsMutations.useCreateAgent({
     onSuccess: (agent) =>
       navigate(`/projects/${agent.projectId}/agents/${agent.id}`),
+    onError: () => undefined,
   });
   const {
     data: chatProvider,
@@ -143,45 +150,52 @@ const AgentsPageContent = () => {
     [allProjects],
   );
 
-  const firstRun = agentsListState.showsFirstRun({
-    isLoading,
-    agentCount: agents.length,
+  const firstRun = showsFirstRun({
+    listLoaded: isSuccess,
+    hasAnyAgents: (data?.data.length ?? 0) > 0,
     search,
   });
 
   return (
-    <div className="flex w-full flex-col">
+    <div className="flex min-h-full w-full flex-col">
       <section
         className={cn(
           'flex flex-col items-center gap-2 px-12 pt-8',
-          firstRun && 'pt-20',
+          firstRun && 'flex-1 justify-center pb-16 pt-8',
         )}
       >
         <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
           {isBuilding
             ? t('Building your agent')
+            : needsProvider
+            ? t('Agents need an AI provider')
             : firstRun
             ? t('Create your first agent')
             : t('What should your agent do?')}
         </h1>
         <p className="text-[15px] leading-[18px] text-muted-foreground">
           {needsProvider
-            ? t('Connect an AI provider and I can start building agents.')
+            ? t('Add a provider once, then I can build agents from a sentence.')
             : isBuilding
             ? t('Picking the tools and writing its instructions')
             : t(
-                "Describe what you need. I'll pick the tools and set up the steps.",
+                "An agent is an assistant with instructions and tools. Describe the job and I'll write both.",
               )}
         </p>
-        {needsProvider && (
-          <Button
-            className="mt-4 gap-2"
-            onClick={() => navigate('/platform/setup/ai')}
-          >
-            <Settings2 size={16} />
-            {t('Connect an AI provider')}
-          </Button>
-        )}
+        {needsProvider &&
+          (isPlatformAdmin ? (
+            <Button
+              className="mt-4 gap-2"
+              onClick={() => navigate('/platform/setup/ai')}
+            >
+              <Settings2 size={16} />
+              {t('Connect an AI provider')}
+            </Button>
+          ) : (
+            <p className="mt-4 text-[13px] leading-4 text-muted-foreground">
+              {t('Ask your platform admin to connect an AI provider.')}
+            </p>
+          ))}
         <div
           className={cn(
             'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
@@ -224,33 +238,27 @@ const AgentsPageContent = () => {
             )}
           </p>
         )}
-        <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">
-          <span className="text-[13px] leading-4 text-muted-foreground">
-            {t('Try:')}
-          </span>
-          {SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => buildAgent(t(suggestion))}
-              className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent"
-            >
-              {t(suggestion)}
-            </button>
-          ))}
-        </div>
-        {firstRun && !needsProvider && (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="mt-6 text-[13px] leading-4 text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground"
-          >
-            {t('or build it yourself')}
-          </button>
+        {!needsProvider && (
+          <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">
+            <span className="text-[13px] leading-4 text-muted-foreground">
+              {t('Try:')}
+            </span>
+            {SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                disabled={isBuilding}
+                onClick={() => buildAgent(t(suggestion))}
+                className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
+              >
+                {t(suggestion)}
+              </button>
+            ))}
+          </div>
         )}
       </section>
 
-      {!firstRun && (
+      {isSuccess && !firstRun && (
         <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
@@ -332,18 +340,6 @@ const AgentsPageContent = () => {
                   />
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setCreating(true)}
-                className="flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-accent"
-              >
-                <Plus
-                  size={16}
-                  strokeWidth={2.2}
-                  className="text-neutral-600"
-                />
-                {t('New agent')}
-              </button>
             </div>
           </div>
 
@@ -354,7 +350,7 @@ const AgentsPageContent = () => {
               ))}
             </div>
           ) : agents.length === 0 ? (
-            <AgentsEmptyState hasSearch={search.trim().length > 0} />
+            <AgentsEmptyState />
           ) : (
             <div
               className={cn(
@@ -383,23 +379,22 @@ const AgentsPageContent = () => {
           )}
         </section>
       )}
-
-      <CreateAgentDialog open={creating} onOpenChange={setCreating} />
     </div>
   );
 };
 
-const AgentsEmptyState = ({ hasSearch }: { hasSearch: boolean }) => (
-  <div className="flex flex-col items-start gap-1 rounded-lg border border-dashed border-border px-6 py-10">
-    <p className="text-sm font-medium">
-      {hasSearch ? t('No agents match that search') : t('No agents yet')}
-    </p>
-    <p className="text-sm text-muted-foreground">
-      {hasSearch
-        ? t('Try another name, or clear the search.')
-        : t('Describe one above, or pick a template.')}
-    </p>
-  </div>
+const AgentsEmptyState = () => (
+  <Empty className="min-h-[240px]">
+    <EmptyHeader className="max-w-xl">
+      <EmptyMedia variant="icon">
+        <SearchX />
+      </EmptyMedia>
+      <EmptyTitle>{t('No agents match that search')}</EmptyTitle>
+      <EmptyDescription>
+        {t('Try another name, or clear the search.')}
+      </EmptyDescription>
+    </EmptyHeader>
+  </Empty>
 );
 
 type AgentSort = keyof typeof SORT_LABELS;
