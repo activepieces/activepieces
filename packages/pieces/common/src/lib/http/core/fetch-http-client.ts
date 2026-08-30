@@ -45,7 +45,6 @@ export class FetchHttpClient extends BaseHttpClient {
       ? serializeBody(request.body, headers)
       : { body: undefined, extraHeaders: {}, isStream: false };
     const finalHeaders = normalizeHeaders({ ...headers, ...extraHeaders });
-    stripUnusableMultipartContentType(finalHeaders, body);
 
     const response = await sendWithRetries(async () => {
       const controller = new AbortController();
@@ -182,20 +181,6 @@ async function sendWithRetries(fn: () => Promise<Response>, retries: number): Pr
 function backoff(attempt: number): Promise<void> {
   const delayMs = Math.min(1000 * 2 ** attempt, 30000);
   return new Promise((resolve) => setTimeout(resolve, delayMs));
-}
-
-// The boundary is chosen by fetch while it encodes the body, so any
-// Content-Type set before that point - including the JSON default
-// BaseHttpClient applies to every body - names something the receiver cannot
-// split on. A form-data package instance is already encoded by the time it
-// reaches here and keeps its own boundary from extraHeaders.
-function stripUnusableMultipartContentType(
-  headers: Record<string, string>,
-  body: BodyInit | undefined
-): void {
-  if (typeof FormData !== 'undefined' && body instanceof FormData) {
-    delete headers['content-type'];
-  }
 }
 
 function normalizeHeaders(headers: HttpHeaders): Record<string, string> {

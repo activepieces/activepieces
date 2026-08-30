@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest, makeMultipartRequest } from '../common/client';
-import {
-  attachmentsProperty,
-  buildMultipartBody,
-  toApFiles,
-} from '../common/attachments';
+import { makeMultipartRequest, makeRequest } from '../common/client';
+import { frontAttachments } from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   channelIdDropdown,
@@ -54,7 +50,7 @@ export const createDraftReply = createAction({
       description: 'List of BCC recipient handles.',
       required: false,
     }),
-    attachments: attachmentsProperty,
+    attachments: frontAttachments.property,
     mode: Property.StaticDropdown({
       displayName: 'Mode',
       description: 'Mode of the draft reply',
@@ -109,16 +105,14 @@ export const createDraftReply = createAction({
     if (should_add_default_signature !== undefined)
       requestBody['should_add_default_signature'] =
         should_add_default_signature;
-
-    // Front drops attachments from a JSON request without complaining.
-    const files = toApFiles(attachments);
+    const files = frontAttachments.resolve(attachments);
     if (files.length > 0) {
-      return await makeMultipartRequest(
+      return await makeMultipartRequest({
         auth,
-        HttpMethod.POST,
-        path,
-        buildMultipartBody(requestBody, attachments)
-      );
+        method: HttpMethod.POST,
+        path: path,
+        form: frontAttachments.buildBody({ fields: requestBody, files }),
+      });
     }
 
     return await makeRequest(auth, HttpMethod.POST, path, requestBody);

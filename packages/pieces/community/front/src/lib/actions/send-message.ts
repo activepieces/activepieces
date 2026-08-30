@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest, makeMultipartRequest } from '../common/client';
-import {
-  attachmentsProperty,
-  buildMultipartBody,
-  toApFiles,
-} from '../common/attachments';
+import { makeMultipartRequest, makeRequest } from '../common/client';
+import { frontAttachments } from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { channelIdDropdown, tagIdsDropdown } from '../common/dropdown';
 
@@ -48,7 +44,7 @@ export const sendMessage = createAction({
       description: 'The body of the message.',
       required: true,
     }),
-    attachments: attachmentsProperty,
+    attachments: frontAttachments.property,
     tag_ids: tagIdsDropdown,
   },
   async run({ auth, propsValue }) {
@@ -64,17 +60,21 @@ export const sendMessage = createAction({
     if (subject) requestBody['subject'] = subject;
     if (tag_ids) requestBody['tag_ids'] = tag_ids;
 
-    // Front drops attachments from a JSON request without complaining.
-    const files = toApFiles(attachments);
+    const files = frontAttachments.resolve(attachments);
     if (files.length > 0) {
-      return await makeMultipartRequest(
+      return await makeMultipartRequest({
         auth,
-        HttpMethod.POST,
-        `/channels/${channel_id}/messages`,
-        buildMultipartBody(requestBody, attachments)
-      );
+        method: HttpMethod.POST,
+        path: `/channels/${channel_id}/messages`,
+        form: frontAttachments.buildBody({ fields: requestBody, files }),
+      });
     }
 
-    return await makeRequest(auth, HttpMethod.POST, `/channels/${channel_id}/messages`, requestBody);
+    return await makeRequest(
+      auth,
+      HttpMethod.POST,
+      `/channels/${channel_id}/messages`,
+      requestBody
+    );
   },
 });

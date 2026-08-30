@@ -1,11 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest, makeMultipartRequest } from '../common/client';
-import {
-  attachmentsProperty,
-  buildMultipartBody,
-  toApFiles,
-} from '../common/attachments';
+import { makeMultipartRequest, makeRequest } from '../common/client';
+import { frontAttachments } from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { channelIdDropdown } from '../common/dropdown';
 
@@ -47,7 +43,7 @@ export const createDraft = createAction({
       description: 'The body of the draft message.',
       required: true,
     }),
-    attachments: attachmentsProperty,
+    attachments: frontAttachments.property,
     mode: Property.StaticDropdown({
       displayName: 'Mode',
       description: 'Mode of the draft reply',
@@ -101,15 +97,14 @@ export const createDraft = createAction({
       requestBody['should_add_default_signature'] =
         should_add_default_signature;
 
-    // Front drops attachments from a JSON request without complaining.
-    const files = toApFiles(attachments);
+    const files = frontAttachments.resolve(attachments);
     if (files.length > 0) {
-      return await makeMultipartRequest(
+      return await makeMultipartRequest({
         auth,
-        HttpMethod.POST,
-        `/channels/${channel_id}/drafts`,
-        buildMultipartBody(requestBody, attachments)
-      );
+        method: HttpMethod.POST,
+        path: `/channels/${channel_id}/drafts`,
+        form: frontAttachments.buildBody({ fields: requestBody, files }),
+      });
     }
 
     return await makeRequest(
