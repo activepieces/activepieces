@@ -7,7 +7,10 @@ function withValidNames<T extends { toolName: string }>(tools: T[]): T[] {
     const taken = new Set<string>()
     return tools.map((tool) => {
         const valid = mcpToolNameUtils.toValidToolName(tool.toolName)
-        const name = taken.has(valid) ? mcpToolNameUtils.toValidToolName(`${valid}_${taken.size}`) : valid
+        let name = valid
+        for (let attempt = 1; taken.has(name); attempt++) {
+            name = mcpToolNameUtils.toValidToolName(`${valid}_${attempt}`)
+        }
         taken.add(name)
         return name === tool.toolName ? tool : { ...tool, toolName: name }
     })

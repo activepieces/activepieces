@@ -219,6 +219,12 @@ describe('withValidNames', () => {
         expect(new Set(collided).size).toBe(3)
     })
 
+    it('does not hand a collision the name of a tool that already claimed it', () => {
+        const collided = names([{ toolName: 'x_2' }, { toolName: 'x' }, { toolName: 'x' }])
+
+        expect(new Set(collided).size).toBe(3)
+    })
+
     it('trims a name past the 64 character limit', () => {
         const [name] = names([{ toolName: 'a'.repeat(200) }])
 
