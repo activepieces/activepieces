@@ -27,7 +27,7 @@ export enum JobStatus {
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
     RUNS_METADATA = 'runsMetadata',
-    BARRIER_JOBS = 'barrierJobs',
+    BARRIER_EVALUATION = 'barrierEvaluation',
 }
 
 export const getPlatformGroupQueueName = (workerGroupId: string): string => {
