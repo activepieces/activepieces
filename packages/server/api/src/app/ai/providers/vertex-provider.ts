@@ -48,7 +48,9 @@ function parseServiceAccount(serviceAccountJson: string): ServiceAccountCredenti
         throw new Error('Service account JSON must have type "service_account" with project_id, client_email and private_key')
     }
     return {
-        ...parsed,
+        type: parsed.type,
+        project_id: parsed.project_id,
+        client_email: parsed.client_email,
         private_key: parsed.private_key.replace(/\\n/g, '\n'),
     }
 }
