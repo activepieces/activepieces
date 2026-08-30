@@ -470,6 +470,7 @@ const AgentEditScreen = ({
   const [exitRequested, setExitRequested] = useState(false);
   const testRequested = useRef(false);
   const writeSeq = useRef(0);
+  const writeInFlight = useRef(false);
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
@@ -484,6 +485,15 @@ const AgentEditScreen = ({
       type: 'manual',
       message: api.extractServerErrorMessage(error, fallback),
     });
+
+  const releaseWrite = () => {
+    writeInFlight.current = false;
+  };
+  const claimWrite = () => {
+    if (writeInFlight.current) return false;
+    writeInFlight.current = true;
+    return true;
+  };
 
   const openTestWithLatestEdits = form.handleSubmit((values) => {
     const seq = ++writeSeq.current;
@@ -500,9 +510,10 @@ const AgentEditScreen = ({
             error,
             t("Your changes couldn't be staged for testing. Try again."),
           ),
+        onSettled: releaseWrite,
       },
     );
-  });
+  }, releaseWrite);
 
   const changeMode = (next: string) => {
     testRequested.current = next === 'test';
@@ -510,6 +521,7 @@ const AgentEditScreen = ({
       setMode(next);
       return;
     }
+    if (!claimWrite()) return;
     void openTestWithLatestEdits();
   };
 
@@ -526,7 +538,17 @@ const AgentEditScreen = ({
       },
       onError: (error) =>
         setServerError(error, t("Your changes weren't saved. Try again.")),
+      onSettled: releaseWrite,
     });
+  };
+
+  const saveAndGoLive = form.handleSubmit(handleSubmit, releaseWrite);
+  const submitIfIdle = (event: React.FormEvent<HTMLFormElement>) => {
+    if (!claimWrite()) {
+      event.preventDefault();
+      return;
+    }
+    void saveAndGoLive(event);
   };
 
   return (
@@ -547,7 +569,7 @@ const AgentEditScreen = ({
         }}
       />
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={submitIfIdle}
         className="flex h-full w-full min-h-0 flex-col"
       >
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
