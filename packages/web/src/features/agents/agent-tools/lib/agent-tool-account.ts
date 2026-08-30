@@ -1,43 +1,51 @@
-import { isNil } from '@activepieces/core-utils';
+import { connectionTemplate, isNil } from '@activepieces/core-utils';
 import { AgentPieceTool } from '@activepieces/shared';
 import { t } from 'i18next';
 
-const CONNECTION_TEMPLATE = /^\{\{connections\['([^']+)'\]\}\}$/;
-
 function pinnedExternalId(tool: AgentPieceTool): string | null {
-  const auth = tool.pieceMetadata.predefinedInput?.auth;
-  if (typeof auth !== 'string' || auth.length === 0) {
-    return null;
-  }
-  return auth.match(CONNECTION_TEMPLATE)?.[1] ?? auth;
+  return connectionTemplate.unwrapExternalId(
+    tool.pieceMetadata.predefinedInput?.auth,
+  );
+}
+
+function requiresAccount({
+  pieceHasAuth,
+  actionRequireAuth,
+}: {
+  pieceHasAuth: boolean;
+  actionRequireAuth: boolean | undefined;
+}): boolean {
+  // The framework defaults an action to requiring auth, so an action we cannot find is assumed to
+  // need one rather than quietly labelled as fine.
+  return pieceHasAuth && actionRequireAuth !== false;
 }
 
 function label({
   tools,
   connections,
-  needsAccount,
+  connectionsLoaded,
 }: {
   tools: AgentPieceTool[];
   connections: { externalId: string; displayName: string }[];
-  needsAccount: boolean;
+  connectionsLoaded: boolean;
 }): string | null {
-  if (!needsAccount) {
+  if (tools.length === 0) {
     return null;
   }
-  const pinned = tools.map(pinnedExternalId);
-  if (pinned.some(isNil)) {
-    return t('No account');
+  const externalIds = [...new Set(tools.map(pinnedExternalId))];
+  if (externalIds.some(isNil)) {
+    return t('Connect an account');
   }
-  const names = pinned.map(
-    (externalId) =>
-      connections.find((connection) => connection.externalId === externalId)
-        ?.displayName ?? null,
+  if (externalIds.length > 1) {
+    return t('Different account per action');
+  }
+  if (!connectionsLoaded) {
+    return null;
+  }
+  return (
+    connections.find((connection) => connection.externalId === externalIds[0])
+      ?.displayName ?? t('Account was deleted')
   );
-  const distinct = [...new Set(names)];
-  if (distinct.length > 1) {
-    return t('Several accounts');
-  }
-  return distinct[0] ?? t('Account not found');
 }
 
-export const agentToolAccount = { label, pinnedExternalId };
+export const agentToolAccount = { label, requiresAccount };

@@ -99,18 +99,18 @@ describe('adding a tool that needs an account', () => {
         expect(await pinnedAuthOn(agentId)).toStrictEqual([connection.externalId, connection.externalId])
     })
 
-    it('refuses to add an unpinnable tool when the project has no account, instead of asking forever', async () => {
+    it('points at the connection card when the project has no account, instead of asking forever', async () => {
         const ctx = await context()
         const conversationId = await startConversation(ctx)
         const agentId = await newAgent(ctx, conversationId)
 
         const result = await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: AUTH_PIECE, actionNames: ['send_mail'] })
 
-        expect(result).toEqual({ error: expect.stringContaining('no connection in this project') })
+        expect(result).toEqual({ error: expect.stringContaining('No Test Mailer account is connected') })
         expect(await pinnedAuthOn(agentId)).toStrictEqual([])
     })
 
-    it('asks which account when the project has several, rather than guessing', async () => {
+    it('points at the picker and keeps the ids out of the sentence when there are several', async () => {
         const ctx = await context()
         const conversationId = await startConversation(ctx)
         const agentId = await newAgent(ctx, conversationId)
@@ -119,9 +119,11 @@ describe('adding a tool that needs an account', () => {
 
         const result = await runTool(ctx, conversationId, 'ap_add_agent_tool', { agentId, pieceName: AUTH_PIECE, actionNames: ['send_mail'] })
 
-        expect(result).toEqual({ error: expect.stringContaining('more than one') })
-        expect(JSON.stringify(result)).toContain(first.externalId)
-        expect(JSON.stringify(result)).toContain(second.externalId)
+        expect(result).toEqual(expect.objectContaining({ error: expect.stringContaining('2 Test Mailer accounts') }))
+        // The ids belong in a field, not in the sentence the model reads out.
+        expect((result as { error: string }).error).not.toContain(first.externalId)
+        expect(JSON.stringify((result as { accounts: unknown }).accounts)).toContain(first.externalId)
+        expect(JSON.stringify((result as { accounts: unknown }).accounts)).toContain(second.externalId)
         expect(await pinnedAuthOn(agentId)).toStrictEqual([])
     })
 

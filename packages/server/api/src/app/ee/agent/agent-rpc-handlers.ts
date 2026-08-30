@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { embed, ModelMessage } from 'ai'
@@ -14,7 +14,9 @@ import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { runFlowAsTool } from '../../mcp/mcp-server-builder'
+import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { resumeService } from '../../waitpoints/resume-service'
@@ -834,10 +836,40 @@ async function pinConnectionToAgent({ conversationId, pieceName, externalId, pla
     log: FastifyBaseLogger
 }): Promise<void> {
     const conversation = await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
-    if (conversation.source !== AgentRunSource.AGENT || isNil(conversation.agentId)) {
+    // Both surfaces that configure a saved agent get the picker, and the builder is where it fires
+    // most, so pinning has to cover both. Everything else keeps the account for its own run.
+    const configuresAnAgent = conversation.source === AgentRunSource.AGENT || conversation.source === AgentRunSource.AGENT_BUILDER
+    if (!configuresAnAgent || isNil(conversation.agentId)) {
         return
     }
     const agent = await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
+    const refuse = (reason: string): void => log.warn({
+        conversation: { id: conversationId },
+        connection: { id: externalId },
+        piece: { name: pieceName },
+        agent: { id: agent.id },
+    }, `[agentRpc#pinConnectionToAgent] ${reason}`)
+
+    // getOneOrThrowByPlatform resolves through READ_AGENT, which is enough to talk to a shared
+    // agent and not enough to change what it runs on. Pinning is a write to the saved agent, so it
+    // asks for the same permission ap_add_agent_tool does.
+    const checker = await resolvePermissionChecker({ userId, projectId: agent.projectId, log })
+    if (!isNil(checker.check(Permission.WRITE_AGENT, '__store_selected_connection'))) {
+        refuse('Caller cannot write this agent, so the account was used for this run only')
+        return
+    }
+    // externalId arrives from the approval payload, and it is neither validated nor unique across
+    // projects. Writing it unchecked would let a run bind an agent to another project's connection,
+    // or hand one app's credential to a different app's action.
+    const connection = await appConnectionService(log).getOneWithoutValue({ projectId: agent.projectId, platformId, externalId })
+    if (isNil(connection)) {
+        refuse('No such connection in the agent project, so nothing was pinned')
+        return
+    }
+    if (mcpUtils.normalizePieceName(connection.pieceName) !== mcpUtils.normalizePieceName(pieceName)) {
+        refuse(`Connection is for ${connection.pieceName}, not ${pieceName}, so nothing was pinned`)
+        return
+    }
     const pinned = await agentService(log).editDraftTools({
         id: agent.id,
         projectId: agent.projectId,
@@ -848,7 +880,8 @@ async function pinConnectionToAgent({ conversationId, pieceName, externalId, pla
         conversation: { id: conversationId },
         connection: { id: externalId },
         piece: { name: pieceName },
-    }, isNil(pinned) ? '[agentRpc#pinConnectionToAgent] No agent tool to pin' : '[agentRpc#pinConnectionToAgent] Pinned the account to the agent')
+        agent: { id: agent.id },
+    }, isNil(pinned) ? '[agentRpc#pinConnectionToAgent] No agent tool to pin' : '[agentRpc#pinConnectionToAgent] Pinned the account to the agent draft')
 }
 
 function byteLengthOf(value: unknown): number {

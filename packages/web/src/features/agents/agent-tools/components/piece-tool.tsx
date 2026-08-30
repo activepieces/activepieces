@@ -53,15 +53,15 @@ export const AgentPieceToolComponent = ({
     (p) => p.pieceName === tools[0].pieceMetadata.pieceName,
   );
 
-  const { data: connections } = appConnectionsQueries.useAppConnections({
-    request: {
-      pieceName: tools[0].pieceMetadata.pieceName,
-      projectId: authenticationSession.getProjectId()!,
-      limit: 1000,
-    },
-    extraKeys: [tools[0].pieceMetadata.pieceName],
-    enabled: !isNil(pieceMetadata?.auth),
-  });
+  // One project-wide query keyed only on the project, so every tool row on the screen shares a
+  // single cache entry with the rest of the app instead of each fetching the same list again.
+  const projectId = authenticationSession.getProjectId()!;
+  const { data: connections, isSuccess: connectionsLoaded } =
+    appConnectionsQueries.useAppConnections({
+      request: { projectId, limit: 1000 },
+      extraKeys: [projectId],
+      enabled: !isNil(pieceMetadata?.auth),
+    });
 
   if (!pieceMetadata) {
     return (
@@ -76,10 +76,18 @@ export const AgentPieceToolComponent = ({
     );
   }
 
+  const toolsNeedingAccount = tools.filter((tool) =>
+    agentToolAccount.requiresAccount({
+      pieceHasAuth: !isNil(pieceMetadata.auth),
+      actionRequireAuth: pieceMetadata.suggestedActions?.find(
+        (action) => action.name === tool.pieceMetadata.actionName,
+      )?.requireAuth,
+    }),
+  );
   const accountLabel = agentToolAccount.label({
-    tools,
+    tools: toolsNeedingAccount,
     connections: connections?.data ?? [],
-    needsAccount: !isNil(pieceMetadata.auth),
+    connectionsLoaded,
   });
 
   const handleEditTool = (tool: AgentPieceTool) => {
@@ -110,9 +118,11 @@ export const AgentPieceToolComponent = ({
               {pieceMetadata.displayName}
             </span>
           </div>
-          <span className="mr-2 truncate text-xs text-muted-foreground">
-            {accountLabel}
-          </span>
+          {!isNil(accountLabel) && (
+            <span className="ml-3 min-w-0 shrink truncate text-xs text-muted-foreground">
+              {accountLabel}
+            </span>
+          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 py-2">
