@@ -167,6 +167,13 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### Agent starter templates and their endpoint are gone
+
+`GET /v1/agents/templates` returned eight fixed starter agents, and the Agents page offered them as a gallery inside a create dialog. Both are gone. An agent is now created by describing the job in a sentence on the Agents page, which drafts its instructions, model and tools for you, and the endpoint answers 404.
+
+#### What you need to do
+
+Nothing, unless you called `GET /v1/agents/templates` yourself. Nothing in the product calls it any more, and `POST /v1/agents` is unchanged, so a script that creates agents directly keeps working.
 
 ## 0.87.0
 
