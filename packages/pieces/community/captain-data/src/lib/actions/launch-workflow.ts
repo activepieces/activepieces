@@ -7,6 +7,7 @@ import { workflowProp } from '../common';
 export const launchWorkflow = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'launchWorkflow',
+  classification: 'WRITE',
   displayName: 'Launch a workflow',
   description: '',
   audience: 'both',

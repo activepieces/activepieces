@@ -13,17 +13,24 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Check,
+  ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
-  Circle,
+  Rocket,
   Settings2,
+  Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams, useSearchParams } from 'react-router-dom';
+import {
+  unstable_useBlocker,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -32,6 +39,14 @@ import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -45,14 +60,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import {
+  AIModelSelector,
+  AgentStructuredOutput,
+  useAgentsAvailable,
+} from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -128,58 +146,6 @@ const requirementsFor = (agent: Agent): AgentRequirement[] => {
     },
   ];
 };
-
-const AgentNotReady = ({
-  requirements,
-  onConfigure,
-}: {
-  requirements: AgentRequirement[];
-  onConfigure: () => void;
-}) => (
-  <div className="flex h-full flex-col items-center justify-center gap-5 px-6">
-    <div className="flex flex-col items-center gap-2 text-center">
-      <p className="text-xl leading-7 font-semibold tracking-[-0.02em]">
-        {t('Almost ready')}
-      </p>
-      <p className="max-w-[420px] text-sm leading-[150%] text-muted-foreground">
-        {t('Fill these in and you can start talking to this agent.')}
-      </p>
-    </div>
-
-    <ul className="flex w-full max-w-[420px] flex-col gap-2">
-      {requirements.map((requirement) => (
-        <li
-          key={requirement.label}
-          className="flex items-start gap-3 rounded-[10px] border border-border p-3"
-        >
-          {requirement.met ? (
-            <Check size={16} className="mt-[3px] shrink-0 text-success-700" />
-          ) : (
-            <Circle size={16} className="mt-[3px] shrink-0 text-neutral-400" />
-          )}
-          <span className="flex min-w-0 flex-col gap-[2px]">
-            <span
-              className={cn(
-                'text-sm font-semibold',
-                requirement.met && 'text-muted-foreground line-through',
-              )}
-            >
-              {requirement.label}
-            </span>
-            <span className="text-[13px] leading-4 text-muted-foreground">
-              {requirement.hint}
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
-
-    <Button className="gap-2" onClick={onConfigure}>
-      <Settings2 size={16} />
-      {t('Finish setting up')}
-    </Button>
-  </div>
-);
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
@@ -336,11 +302,15 @@ const ConfigureFields = ({
       <AIModelSelector
         defaultProvider={form.watch('draft.provider') ?? undefined}
         defaultModel={form.watch('draft.modelName') ?? undefined}
-        onChange={({ provider, model }) => {
+        defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
+        onChange={({ provider, model, configId }) => {
           form.setValue('draft.provider', parseProvider(provider), {
             shouldDirty: true,
           });
           form.setValue('draft.modelName', model ?? null, {
+            shouldDirty: true,
+          });
+          form.setValue('draft.providerConfigId', configId ?? null, {
             shouldDirty: true,
           });
         }}
@@ -385,41 +355,117 @@ const ConfigureFields = ({
   </>
 );
 
-const ConfigurePanel = ({
-  agentId,
-  icon,
-  color,
-  displayName,
-  defaults,
-  onCollapse,
+const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
+  const blocker = unstable_useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasChanges && currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  useEffect(() => {
+    if (!hasChanges) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasChanges]);
+
+  return blocker;
+};
+
+const LeaveWithoutSavingDialog = ({
+  blocker,
 }: {
-  agentId: string;
-  icon: AgentIcon;
-  color: ColorName;
-  displayName: string;
-  defaults: ConfigureAgentInput;
-  onCollapse: () => void;
+  blocker: ReturnType<typeof unstable_useBlocker>;
+}) => (
+  <Dialog
+    open={blocker.state === 'blocked'}
+    onOpenChange={(open) => {
+      if (!open) blocker.reset?.();
+    }}
+  >
+    <DialogContent className="max-w-[420px]">
+      <DialogHeader>
+        <DialogTitle>{t('Leave without saving?')}</DialogTitle>
+        <DialogDescription>
+          {t(
+            'These edits have not gone live yet. Leave now and they are discarded.',
+          )}
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => blocker.reset?.()}>
+          {t('Keep editing')}
+        </Button>
+        <Button variant="destructive" onClick={() => blocker.proceed?.()}>
+          {t('Discard changes')}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+
+const formValuesOf = (agent: Agent): ConfigureAgentInput => ({
+  displayName: agent.displayName,
+  description: agent.description ?? '',
+  icon: agent.icon,
+  color: agent.color,
+  draft: agent.draft,
+});
+
+const liveValuesOf = (agent: Agent): ConfigureAgentInput | null =>
+  isNil(agent.published)
+    ? null
+    : { ...formValuesOf(agent), draft: agent.published };
+
+const AgentEditScreen = ({
+  agent,
+  onExit,
+  onEdited,
+}: {
+  agent: Agent;
+  onExit: () => void;
+  onEdited: () => void;
 }) => {
   const [tab, setTab] = useState('configure');
+  const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
+    formValuesOf(agent),
+  );
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: defaults,
+    defaultValues: syncedDraft,
     mode: 'onChange',
   });
-  const updateAgent = agentsMutations.useUpdateAgent({ id: agentId });
+  const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
+  const [justLaunched, setJustLaunched] = useState(false);
 
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
-  // The model selector fills itself in on mount, which react-hook-form counts as the user editing.
-  const hasChanges = JSON.stringify(values) !== JSON.stringify(defaults);
+  const live = liveValuesOf(agent);
+  const hasChanges =
+    isNil(live) || JSON.stringify(values) !== JSON.stringify(live);
+  const unsavedTyping = JSON.stringify(values) !== JSON.stringify(syncedDraft);
+  const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
+
+  useEffect(() => {
+    const fromServer = formValuesOf(agent);
+    if (JSON.stringify(fromServer) === JSON.stringify(syncedDraft)) return;
+    if (unsavedTyping) return;
+    form.reset(fromServer);
+    setSyncedDraft(fromServer);
+  }, [agent, syncedDraft, unsavedTyping, form]);
 
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         form.reset(values);
-        toast(t('Agent saved'));
+        setSyncedDraft(values);
+        setJustLaunched(true);
+        window.setTimeout(() => setJustLaunched(false), 1600);
+        toast(t('Live — every flow using this agent just got the update'));
       },
       onError: (error) =>
         form.setError('root.serverError', {
@@ -434,84 +480,171 @@ const ConfigurePanel = ({
 
   return (
     <Form {...form}>
+      <LeaveWithoutSavingDialog blocker={leaveBlocker} />
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="flex h-full min-h-0 flex-col"
+        className="flex h-full w-full min-h-0 flex-col"
       >
-        <div className="flex shrink-0 flex-col border-b border-border">
-          <div className="flex items-center gap-[14px] px-[18px] py-3">
-            <AgentMark icon={icon} color={color} size="sm" />
-            <div className="flex min-w-0 grow basis-0 flex-col">
-              <span className="truncate text-sm font-semibold">
-                {displayName}
-              </span>
-              <span className="text-[13px] leading-4 text-muted-foreground">
-                {t('Agent configuration')}
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={t('Collapse configuration')}
-              onClick={onCollapse}
-            >
-              <ChevronsRight size={16} />
-            </Button>
+        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+          <button
+            type="button"
+            aria-label={t('Back to the agent')}
+            onClick={onExit}
+            className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <AgentMark icon={agent.icon} color={agent.color} />
+          <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
+            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
+              {agent.displayName}
+            </span>
+            <span className="truncate text-[13px] leading-4 text-muted-foreground">
+              {justLaunched
+                ? t('Live')
+                : formNeedsModel
+                ? t('Needs a model before it can run')
+                : isNil(live)
+                ? t('Not live yet')
+                : hasChanges
+                ? t('Changes not live yet')
+                : t('Live — flows using this agent run these settings')}
+            </span>
           </div>
-          <Tabs value={tab} onValueChange={setTab} className="px-[18px]">
-            <TabsList variant="outline" className="gap-[22px]">
-              <TabsTrigger
-                value="configure"
-                variant="outline"
-                className="gap-2"
-              >
-                {t('Configure')}
-                {formNeedsModel && (
-                  <span className="size-[7px] rounded-full bg-destructive" />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settings" variant="outline">
-                {t('Settings')}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        <ScrollArea className="min-h-0 grow">
-          <div className="flex flex-col gap-5 p-[18px]">
-            {tab === 'configure' ? (
-              <ConfigureFields form={form} needsModel={formNeedsModel} />
-            ) : (
-              <SettingsFields form={form} />
-            )}
-            {form.formState.errors.root?.serverError && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.root.serverError.message}
-              </p>
-            )}
-          </div>
-        </ScrollArea>
-
-        <div className="flex shrink-0 items-center justify-end gap-[10px] border-t border-border px-[18px] py-[14px]">
           <Button
             type="submit"
             loading={updateAgent.isPending}
             disabled={!hasChanges}
-            className="h-[38px] rounded-lg px-[18px]"
+            className="h-[38px] shrink-0 gap-2 overflow-hidden rounded-lg px-[18px]"
           >
-            {t('Save changes')}
+            <motion.span
+              className="flex items-center"
+              animate={
+                justLaunched
+                  ? { x: 26, y: -26, rotate: 12, opacity: 0 }
+                  : { x: 0, y: 0, rotate: 0, opacity: 1 }
+              }
+              transition={
+                justLaunched
+                  ? { duration: 0.5, ease: 'easeOut' }
+                  : { duration: 0.2, delay: 0.35 }
+              }
+            >
+              <Rocket size={15} />
+            </motion.span>
+            {justLaunched ? t('Live') : t('Save and go live')}
           </Button>
+        </div>
+
+        <div className="flex min-h-0 grow">
+          <div className="flex min-w-0 grow basis-0 flex-col border-r border-border">
+            <EditWithAIPane agent={agent} onEdited={onEdited} />
+          </div>
+
+          <div className="flex w-[452px] shrink-0 flex-col">
+            <div className="flex h-[52px] shrink-0 items-stretch border-b border-border px-[18px]">
+              <Tabs
+                value={tab}
+                onValueChange={setTab}
+                className="flex h-full items-stretch"
+              >
+                <TabsList
+                  variant="outline"
+                  className="h-full items-stretch gap-[22px]"
+                >
+                  <TabsTrigger
+                    value="configure"
+                    variant="outline"
+                    className="h-full items-center gap-2"
+                  >
+                    {t('Configure')}
+                    {formNeedsModel && (
+                      <span className="size-[7px] rounded-full bg-destructive" />
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="settings"
+                    variant="outline"
+                    className="h-full items-center"
+                  >
+                    {t('Settings')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            <ScrollArea className="min-h-0 grow">
+              <div className="flex flex-col gap-5 p-[18px]">
+                {hasChanges && (
+                  <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 text-muted-foreground">
+                    {t(
+                      'These changes are not live. Save and go live to hand them to this agent and every flow using it.',
+                    )}
+                  </p>
+                )}
+                {tab === 'configure' ? (
+                  <ConfigureFields form={form} needsModel={formNeedsModel} />
+                ) : (
+                  <SettingsFields form={form} />
+                )}
+                {form.formState.errors.root?.serverError && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.root.serverError.message}
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </div>
       </form>
     </Form>
   );
 };
 
+const AgentBuilderWelcome = () => (
+  <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+    <Sparkles size={22} className="text-primary" />
+    <span className="text-base font-semibold">{t('Describe a change')}</span>
+    <span className="max-w-[340px] text-sm text-muted-foreground">
+      {t(
+        'Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.',
+      )}
+    </span>
+  </div>
+);
+
+const EditWithAIPane = ({
+  agent,
+  onEdited,
+}: {
+  agent: Agent;
+  onEdited: () => void;
+}) => (
+  <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-[52px] shrink-0 items-center gap-2 border-b border-border px-[18px]">
+      <Sparkles size={15} className="shrink-0 text-primary" />
+      <span className="text-sm font-semibold">{t('Edit with AI')}</span>
+      <span className="grow basis-0 truncate text-[13px] text-muted-foreground">
+        {t('Activepieces AI')}
+      </span>
+    </div>
+    <div className="flex min-h-0 grow flex-col">
+      <AIChatBox
+        incognito={false}
+        agentId={agent.id}
+        builder
+        onTurnEnd={onEdited}
+        placeholder={t('Message the builder...')}
+        emptyState={<AgentBuilderWelcome />}
+      />
+    </div>
+  </div>
+);
+
 const AgentEditorContent = () => {
   const { agentId } = useParams<{ agentId: string }>();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const [configureOpen, setConfigureOpen] = useState<boolean>();
+  const queryClient = useQueryClient();
+  const agentsAvailable = useAgentsAvailable();
+  const [editing, setEditing] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
@@ -540,7 +673,7 @@ const AgentEditorContent = () => {
   };
   const { data: agent, isLoading } = agentsQueries.useAgent({
     id: agentId ?? '',
-    enabled: agentId !== undefined && platform.plan.agentsEnabled,
+    enabled: agentId !== undefined && agentsAvailable,
   });
 
   if (isLoading || agent === undefined) {
@@ -549,7 +682,20 @@ const AgentEditorContent = () => {
 
   const requirements = requirementsFor(agent);
   const needsModel = requirements.some((requirement) => !requirement.met);
-  const isConfigureOpen = configureOpen ?? needsModel;
+  const isEditing = editing ?? needsModel;
+  const refetchAgent = () =>
+    queryClient.invalidateQueries({ queryKey: ['agents', 'one', agent.id] });
+
+  if (isEditing) {
+    return (
+      <AgentEditScreen
+        key={agent.id}
+        agent={agent}
+        onExit={() => setEditing(false)}
+        onEdited={refetchAgent}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full w-full">
@@ -596,7 +742,7 @@ const AgentEditorContent = () => {
             </span>
           </div>
           <div className="flex min-w-0 shrink items-center gap-2">
-            {agent.draft.modelName && !isConfigureOpen && (
+            {agent.draft.modelName && (
               <span className="flex h-[34px] max-w-[220px] items-center gap-[7px] overflow-hidden rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
                 <span
                   className="size-[11px] shrink-0 rounded-[3px]"
@@ -607,83 +753,47 @@ const AgentEditorContent = () => {
                 <span className="truncate">{agent.draft.modelName}</span>
               </span>
             )}
-            {!isConfigureOpen && (
-              <button
-                type="button"
-                aria-label={t('Expand configuration')}
-                onClick={() => setConfigureOpen(true)}
-                className="relative flex size-[34px] items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <ChevronsLeft size={16} />
-                {needsModel && (
-                  <span className="absolute top-[6px] right-[6px] size-[7px] rounded-full bg-destructive" />
-                )}
-              </button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+              onClick={() => setEditing(true)}
+            >
+              <Settings2 size={15} />
+              {t('Configure')}
+            </Button>
           </div>
         </div>
 
         <div className="flex min-h-0 grow flex-col">
-          {needsModel ? (
-            <AgentNotReady
-              requirements={requirements}
-              onConfigure={() => setConfigureOpen(true)}
-            />
-          ) : (
-            <AIChatBox
-              key={openedConversationId ?? `new-${freshConversations}`}
-              incognito={false}
-              agentId={agent.id}
-              conversationId={openedConversationId ?? null}
-              onConversationCreated={writeConversationParam}
-              placeholder={t('Ask {name}...', { name: agent.displayName })}
-              footerNote={buildCapabilityNote(agent)}
-              emptyState={
-                <AgentChatWelcome
-                  displayName={agent.displayName}
-                  description={agent.description ?? null}
-                  icon={agent.icon}
-                  color={agent.color}
-                />
-              }
-            />
-          )}
-        </div>
-      </div>
-
-      <aside
-        className={cn(
-          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
-          isConfigureOpen ? 'w-[452px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[452px] flex-col">
-          <ConfigurePanel
-            key={agent.updated}
+          <AIChatBox
+            key={openedConversationId ?? `new-${freshConversations}`}
+            incognito={false}
             agentId={agent.id}
-            icon={agent.icon}
-            color={agent.color}
-            displayName={agent.displayName}
-            defaults={{
-              displayName: agent.displayName,
-              description: agent.description ?? '',
-              icon: agent.icon,
-              color: agent.color,
-              draft: agent.draft,
-            }}
-            onCollapse={() => setConfigureOpen(false)}
+            conversationId={openedConversationId ?? null}
+            onConversationCreated={writeConversationParam}
+            placeholder={t('Ask {name}...', { name: agent.displayName })}
+            footerNote={buildCapabilityNote(agent)}
+            emptyState={
+              <AgentChatWelcome
+                displayName={agent.displayName}
+                description={agent.description ?? null}
+                icon={agent.icon}
+                color={agent.color}
+              />
+            }
           />
         </div>
-      </aside>
+      </div>
     </div>
   );
 };
 
 const AgentEditorPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const agentsAvailable = useAgentsAvailable();
   return (
     <LockedFeatureGuard
-      locked={!platform.plan.agentsEnabled}
+      locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
       featureKey="AGENTS"

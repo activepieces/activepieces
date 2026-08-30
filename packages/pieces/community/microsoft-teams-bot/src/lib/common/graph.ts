@@ -1,7 +1,7 @@
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tryCatch } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from './microsoft-cloud';
+import { microsoftCloud } from './microsoft-cloud';
 
 // Single-tenant app-only token. Same app registration mints a Graph token
 // (list teams/channels) and a Bot Connector token (send) via different scopes.
@@ -39,7 +39,7 @@ export const createGraphClient = (accessToken: string, cloud?: string | null): C
 		authProvider: {
 			getAccessToken: () => Promise.resolve(accessToken),
 		},
-		baseUrl: getGraphBaseUrl(cloud),
+		baseUrl: microsoftCloud.getGraphBaseUrl(cloud),
 	});
 };
 

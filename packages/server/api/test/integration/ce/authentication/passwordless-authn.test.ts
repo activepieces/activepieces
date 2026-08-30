@@ -1,4 +1,5 @@
 import { apId } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
 import { OtpState, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -35,6 +36,18 @@ async function verifyCode({ email, code }: { email: string, code: string }) {
         url: '/api/v1/authentication/otp/verify',
         body: { email, code },
     })
+}
+
+async function withZerobounceVerdict<T>({ status, subStatus, run }: WithZerobounceVerdictParams<T>): Promise<T> {
+    const answer = vi.spyOn(safeHttp.axios, 'get').mockResolvedValue({ data: { status, sub_status: subStatus } })
+    process.env.AP_ZEROBOUNCE_API_KEY = 'test-api-key'
+    try {
+        return await run()
+    }
+    finally {
+        delete process.env.AP_ZEROBOUNCE_API_KEY
+        answer.mockRestore()
+    }
 }
 
 function wrongCodeFor(code: string): string {
@@ -108,21 +121,34 @@ describe('Passwordless Authentication API', () => {
             expect(identity?.lastName).toBe('')
         })
 
-        it('refuses a throwaway address and creates nothing', async () => {
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/otp/request',
-                body: { email: 'someone@mailinator.com' },
+        it('answers a refused address exactly like a served one, but sends and creates nothing', async () => {
+            const response = await withZerobounceVerdict({
+                status: 'do_not_mail',
+                subStatus: 'disposable',
+                run: async () => app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/otp/request',
+                    body: { email: 'someone@mailinator.com' },
+                }),
             })
 
-            expect(response?.statusCode).not.toBe(StatusCodes.NO_CONTENT)
-            expect(response?.json()?.code).toBe('DOMAIN_NOT_ALLOWED')
-            const identity = await databaseConnection().getRepository('user_identity')
-                .findOneBy({ email: 'someone@mailinator.com' })
-            expect(identity).toBeNull()
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response?.body).toBe('')
+            expect(await storedIdentity('someone@mailinator.com')).toBeNull()
+            expect(await storedOtpRow('someone@mailinator.com')).toBeNull()
         })
 
-        it('lets an invited member through even on a throwaway domain', async () => {
+        it('issues a code without asking zerobounce when no api key is set', async () => {
+            const answer = vi.spyOn(safeHttp.axios, 'get')
+
+            const statusCode = await requestCode('someone@mailinator.com')
+
+            expect(statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(answer).not.toHaveBeenCalled()
+            answer.mockRestore()
+        })
+
+        it('lets an invited member through even on a refused domain', async () => {
             const invited = 'guest@mailinator.com'
             await databaseConnection().getRepository('user_invitation').save({
                 id: apId(),
@@ -133,13 +159,19 @@ describe('Passwordless Authentication API', () => {
                 platformRole: PlatformRole.MEMBER,
             })
 
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/otp/request',
-                body: { email: invited },
+            const response = await withZerobounceVerdict({
+                status: 'do_not_mail',
+                subStatus: 'disposable',
+                run: async () => app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/otp/request',
+                    body: { email: invited },
+                }),
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await storedIdentity(invited)).not.toBeNull()
+            expect(await storedOtpRow(invited)).not.toBeNull()
         })
 
         it('issues a code with no captcha token when no challenge is configured', async () => {
@@ -229,7 +261,30 @@ describe('Passwordless Authentication API', () => {
             expect(await databaseConnection().getRepository('platform').count()).toBe(0)
         })
 
-        it('creates the platform from the name once the name step completes', async () => {
+        it('skips the name step for a member whose name we already have', async () => {
+            await userIdentityService(app!.log).create({
+                email: EMAIL,
+                password: 'password-that-verifies',
+                firstName: 'Ahmad',
+                lastName: 'Tash',
+                trackEvents: false,
+                newsLetter: false,
+                provider: UserIdentityProvider.EMAIL,
+                verified: true,
+            })
+            await requestCode(EMAIL)
+            const otp = await storedOtp(EMAIL)
+
+            const response = await verifyCode({ email: EMAIL, code: otp!.value })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body?.platformId).not.toBeNull()
+            expect(body?.projectId).not.toBeNull()
+            expect(await databaseConnection().getRepository('platform').count()).toBe(1)
+        })
+
+        it('names the platform after the company on a work address', async () => {
             await requestCode(EMAIL)
             const otp = await storedOtp(EMAIL)
             const onboarding = await verifyCode({ email: EMAIL, code: otp!.value })
@@ -248,6 +303,28 @@ describe('Passwordless Authentication API', () => {
             const identity = await databaseConnection().getRepository('user_identity').findOneBy({ email: EMAIL })
             expect(identity?.firstName).toBe('Ahmad')
             expect(identity?.lastName).toBe('Bin Tash')
+            const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
+            expect(platform?.name).toBe('Example')
+            const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
+            expect(project?.displayName).toBe("Example's Project")
+        })
+
+        it('falls back to the person when the address is a consumer provider', async () => {
+            const consumerEmail = 'ahmad.tash@gmail.com'
+            await requestCode(consumerEmail)
+            const otp = await storedOtp(consumerEmail)
+            const onboarding = await verifyCode({ email: consumerEmail, code: otp!.value })
+            const onboardingToken = onboarding?.json()?.token
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/complete-sign-up',
+                headers: { authorization: `Bearer ${onboardingToken}` },
+                body: { fullName: 'Ahmad Bin Tash' },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
             expect(platform?.name).toBe("Ahmad's Platform")
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
@@ -399,3 +476,9 @@ describe('Passwordless Authentication API', () => {
         })
     })
 })
+
+type WithZerobounceVerdictParams<T> = {
+    status: string
+    subStatus: string
+    run: () => Promise<T>
+}

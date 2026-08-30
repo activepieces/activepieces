@@ -6,6 +6,7 @@ import { FacebookTriggerPayloadBody, FacebookPageDropdown } from '../common/type
 export const newLead = createTrigger({
 	auth: facebookLeadsAuth,
 	name: 'new_lead',
+	classification: 'READ',
 	displayName: 'New Lead',
 	description: 'Triggers when a new lead is created.',
 	aiMetadata: {

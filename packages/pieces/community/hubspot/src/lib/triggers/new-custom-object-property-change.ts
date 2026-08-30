@@ -17,6 +17,7 @@ import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
 import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 type Props = {
 	customObjectType?: string;
@@ -132,6 +133,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-custom-object-property-change',
+	classification: 'READ',
 	displayName: 'New Custom Object Property Change',
 	description: 'Triggers when a specified property is updated on a custom object.',
 	aiMetadata: {
@@ -142,6 +144,7 @@ export const newCustomObjectPropertyChangeTrigger = createTrigger({
 		customObjectType: customObjectDropdown,
 		propertyName: customObjectPropertiesDropdown('Property Name', true, true),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

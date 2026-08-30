@@ -5,6 +5,7 @@ import { biginApiService } from '../common/request';
 export const searchUser = createAction({
   auth: biginAuth,
   name: 'searchUser',
+  classification: 'SEARCH',
   displayName: 'Search User',
   description: 'Locate users by email.',
   audience: 'both',

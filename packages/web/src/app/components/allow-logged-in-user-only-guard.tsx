@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/providers/socket-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
+import { AutomaticTrialActivation } from '@/features/billing';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -29,5 +30,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
-  return <SocketProvider>{children}</SocketProvider>;
+  return (
+    <SocketProvider>
+      <AutomaticTrialActivation />
+      {children}
+    </SocketProvider>
+  );
 };

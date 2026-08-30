@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { createEmbeddingActionOutputSchema } from '../output-schemas';
 
 export const createEmbedding = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'create_embedding',
+  classification: 'READ',
   displayName: 'Create Embedding',
   description:
     'Generate a vector embedding for the supplied text. Useful for semantic search, clustering and RAG pipelines.',
@@ -42,6 +44,7 @@ export const createEmbedding = createAction({
       required: false,
     }),
   },
+  outputSchema: createEmbeddingActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, input, dimensions, user } = context.propsValue;

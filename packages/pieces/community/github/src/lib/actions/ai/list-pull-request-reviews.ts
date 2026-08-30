@@ -8,6 +8,7 @@ import { listPullRequestReviewsOutputSchema } from '../../output-schemas';
 export const githubListPullRequestReviewsAction = createAction({
   auth: githubAuth,
   name: 'list_pull_request_reviews',
+  classification: 'SEARCH',
   displayName: 'List Pull Request Reviews (Agent)',
   description: 'Lists the reviews submitted on a pull request.',
   audience: 'ai',

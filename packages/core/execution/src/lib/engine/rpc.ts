@@ -1,5 +1,8 @@
+import { ActivepiecesError, isObject, spreadIfNotUndefined } from '@activepieces/core-utils'
+
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
+const AP_ERROR_PROP = 'apError'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Contract = Record<string, (input: any) => any>
 
@@ -22,7 +25,10 @@ export function createRpcClient<T extends Contract>(
                 try {
                     const result = await socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
                     if (isRpcErrorEnvelope(result)) {
-                        throw new Error(`RPC [${method}] handler threw: ${result.__rpcError}`)
+                        throw Object.assign(
+                            new Error(`RPC [${method}] handler threw: ${result.__rpcError}`),
+                            spreadIfNotUndefined(AP_ERROR_PROP, result.__rpcApError),
+                        )
                     }
                     return result
                 }
@@ -51,7 +57,10 @@ export function createRpcServer<T extends Contract>(
         }
         catch (error) {
             log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
-            ack({ __rpcError: error instanceof Error ? error.message : String(error) })
+            ack({
+                __rpcError: error instanceof Error ? error.message : String(error),
+                ...spreadIfNotUndefined('__rpcApError', apErrorOf(error)),
+            })
         }
     })
 }
@@ -71,15 +80,34 @@ export function createNotifyClient<T extends Contract>(
 export function createNotifyServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
-    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown }) => {
-        const handler = handlers[msg.method as keyof T]
-        handler(msg.payload)
+    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown } | null | undefined) => {
+        const handler = handlers[msg?.method as keyof T]
+        if (typeof handler !== 'function') {
+            log?.error({ rpc: { method: String(msg?.method) } }, 'Notify received for unknown method, ignoring')
+            return
+        }
+        handler(msg?.payload)
     })
 }
 
-function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
-    return typeof value === 'object' && value !== null && '__rpcError' in value
+export function apErrorOf(error: unknown): RpcApError | undefined {
+    const source = error instanceof ActivepiecesError ? error.error : isObject(error) ? error[AP_ERROR_PROP] : undefined
+    if (!isObject(source) || typeof source['code'] !== 'string') {
+        return undefined
+    }
+    const entityType = (isObject(source['params']) ? source['params'] : source)['entityType']
+    return { code: source['code'], ...spreadIfNotUndefined('entityType', typeof entityType === 'string' ? entityType : undefined) }
+}
+
+function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rpcApError?: unknown } {
+    return isObject(value) && '__rpcError' in value
+}
+
+export type RpcApError = {
+    code: string
+    entityType?: string
 }
 
 type RpcLog = {

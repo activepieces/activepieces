@@ -139,7 +139,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
         const toolName = mcpToolNameUtils.createToolName(baseName)
 
         const flowPermissionError = permissionChecker.check(Permission.WRITE_RUN, toolName)
-        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema }, async (args: Record<string, unknown>) => {
+        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema, annotations: FLOW_TOOL_ANNOTATIONS }, async (args: Record<string, unknown>) => {
             if (flowPermissionError) {
                 return flowPermissionError
             }
@@ -211,11 +211,13 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
 }
 
 function registerPlaceholderTools(server: McpServer): void {
+    const lockedToolSet = new Set<string>(LOCKED_TOOL_NAMES)
     const allToolNames = [...LOCKED_TOOL_NAMES, ...ALL_CONTROLLABLE_TOOL_NAMES]
     allToolNames.forEach((toolName) => {
         server.registerTool(toolName, {
             title: toolName,
             description: `${toolName} — requires a project to be selected first.`,
+            annotations: lockedToolSet.has(toolName) ? LOCKED_PLACEHOLDER_ANNOTATIONS : CONTROLLABLE_PLACEHOLDER_ANNOTATIONS,
         }, async () => ({
             content: [{ type: 'text' as const, text: `No project selected. Please select a project from the dropdown in the chat input area before using ${toolName}.` }],
         }))
@@ -264,6 +266,10 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
         annotations: tool.annotations,
     }
 }
+
+const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
+const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 type RegisterToolsParams = {
     server: McpServer

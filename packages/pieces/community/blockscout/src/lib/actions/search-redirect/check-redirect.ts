@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const checkRedirect = createAction({
   name: 'check_redirect',
+  classification: 'READ',
   displayName: 'Check Search Redirect',
   description: 'Check if a search query should redirect to a specific resource',
   audience: 'both',

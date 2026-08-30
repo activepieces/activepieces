@@ -16,6 +16,7 @@ import { sendAudioActionOutputSchema } from '../output-schemas';
 export const telegramSendAudioAction = createAction({
   auth: telegramBotAuth,
   name: 'send_audio',
+  classification: 'WRITE',
   displayName: 'Send Audio',
   description: 'Send an audio file to a Telegram chat (.MP3/.M4A — shown in the music player)',
   audience: 'human',

@@ -236,6 +236,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(connection)
     },
 
+    async listConnectedPieces({ projectId, platformId, limit }: { projectId: ProjectId, platformId: PlatformId, limit: number }): Promise<{ pieceName: string, externalId: string }[]> {
+        return appConnectionsRepo().createQueryBuilder('connection')
+            .select('connection.pieceName', 'pieceName')
+            .addSelect('connection.externalId', 'externalId')
+            .distinctOn(['connection.pieceName'])
+            .where('connection.platformId = :platformId', { platformId })
+            .andWhere(':projectId = ANY(connection.projectIds)', { projectId })
+            .andWhere('connection.status = :status', { status: AppConnectionStatus.ACTIVE })
+            .orderBy('connection.pieceName', 'ASC')
+            .addOrderBy('connection.created', 'ASC')
+            .limit(limit)
+            .getRawMany()
+    },
+
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
         const connections = await appConnectionsRepo().find({
             where: {

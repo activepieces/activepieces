@@ -71,12 +71,12 @@ async function readSummary(barrierId: string): Promise<BarrierSummary> {
     return BarrierSummary.parse(barrier.resumePayload?.body)
 }
 
-async function receive({ signalId, status, result }: { signalId: string, status: BarrierSignalStatus, result?: Record<string, unknown> }) {
-    return barrierService(app.log).receive({ signalId, projectId: ctx.project.id, status, result })
+async function receiveSignal({ signalId, status, result }: { signalId: string, status: BarrierSignalStatus, result?: Record<string, unknown> }) {
+    return barrierService(app.log).receiveSignal({ signalId, projectId: ctx.project.id, status, result })
 }
 
-async function evaluate(barrierId: string) {
-    return barrierService(app.log).evaluate({ barrierId, projectId: ctx.project.id })
+async function releaseIfReady(barrierId: string) {
+    return barrierService(app.log).releaseIfReady({ barrierId, projectId: ctx.project.id })
 }
 
 async function waitFor(condition: () => Promise<boolean>): Promise<void> {
@@ -101,12 +101,12 @@ describe('barrier release predicate', () => {
         const signals = await listSignals(barrier.id)
         expect(signals).toHaveLength(2)
 
-        await receive({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
+        await releaseIfReady(barrier.id)
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.PENDING)
 
-        await receive({ signalId: signals[1].id, status: BarrierSignalStatus.SUCCEEDED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[1].id, status: BarrierSignalStatus.SUCCEEDED })
+        await releaseIfReady(barrier.id)
 
         const summary = await readSummary(barrier.id)
         expect(summary).toMatchObject({ total: 2, succeeded: 2, failed: 0, stillRunning: 0, timedOut: false })
@@ -122,12 +122,12 @@ describe('barrier release predicate', () => {
         })
         const signals = await listSignals(barrier.id)
 
-        await receive({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
+        await releaseIfReady(barrier.id)
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.PENDING)
 
-        await receive({ signalId: signals[1].id, status: BarrierSignalStatus.SUCCEEDED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[1].id, status: BarrierSignalStatus.SUCCEEDED })
+        await releaseIfReady(barrier.id)
 
         const summary = await readSummary(barrier.id)
         expect(summary).toMatchObject({ total: 3, succeeded: 2, stillRunning: 1 })
@@ -142,8 +142,8 @@ describe('barrier release predicate', () => {
         })
         const signals = await listSignals(barrier.id)
 
-        await receive({ signalId: signals[0].id, status: BarrierSignalStatus.REJECTED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[0].id, status: BarrierSignalStatus.REJECTED })
+        await releaseIfReady(barrier.id)
 
         const summary = await readSummary(barrier.id)
         expect(summary).toMatchObject({ total: 3, rejected: 1, stillRunning: 2 })
@@ -154,9 +154,9 @@ describe('barrier release predicate', () => {
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
         const signals = await listSignals(barrier.id)
 
-        await receive({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
-        await receive({ signalId: signals[1].id, status: BarrierSignalStatus.FAILED, result: { reason: 'nope' } })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signals[0].id, status: BarrierSignalStatus.SUCCEEDED })
+        await receiveSignal({ signalId: signals[1].id, status: BarrierSignalStatus.FAILED, result: { reason: 'nope' } })
+        await releaseIfReady(barrier.id)
 
         const summary = await readSummary(barrier.id)
         expect(summary.failed).toBe(1)
@@ -197,8 +197,8 @@ describe('signal identity', () => {
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
         const [signal] = await listSignals(barrier.id)
 
-        await receive({ signalId: signal.id, status: BarrierSignalStatus.FAILED })
-        await receive({ signalId: signal.id, status: BarrierSignalStatus.SUCCEEDED })
+        await receiveSignal({ signalId: signal.id, status: BarrierSignalStatus.FAILED })
+        await receiveSignal({ signalId: signal.id, status: BarrierSignalStatus.SUCCEEDED })
 
         const reread = (await listSignals(barrier.id)).find((row) => row.id === signal.id)
         expect(reread.status).toBe(BarrierSignalStatus.SUCCEEDED)
@@ -213,12 +213,12 @@ describe('evaluation coalescing', () => {
         await queue.pause()
         try {
             await queue.drain(true)
-            await barrierQueue(app.log).addEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
-            await barrierQueue(app.log).addEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
+            await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
+            await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
             const beforeHandling = await queue.getJobCountByTypes('waiting', 'delayed', 'prioritized', 'paused')
 
-            await barrierQueue(app.log).clearEvaluationDeduplication(barrier.id)
-            await barrierQueue(app.log).addEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
+            await barrierQueue(app.log).clearEvaluationDedupKey(barrier.id)
+            await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
             const afterHandling = await queue.getJobCountByTypes('waiting', 'delayed', 'prioritized', 'paused')
 
             expect(beforeHandling).toBe(1)
@@ -275,8 +275,8 @@ describe('resume guards', () => {
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
         const [signal] = await listSignals(barrier.id)
 
-        await receive({ signalId: signal.id, status: BarrierSignalStatus.SUCCEEDED })
-        await evaluate(barrier.id)
+        await receiveSignal({ signalId: signal.id, status: BarrierSignalStatus.SUCCEEDED })
+        await releaseIfReady(barrier.id)
 
         expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
     })

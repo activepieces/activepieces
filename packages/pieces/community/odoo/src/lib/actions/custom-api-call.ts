@@ -7,6 +7,7 @@ import Odoo from '../../commom/index';
 
 export const customOdooApiCall = createAction({
   name: 'custom_odoo_api_call',
+  classification: 'WRITE',
   displayName: 'Custom API Call',
   description: 'Make a custom XML-RPC API call to Odoo',
   audience: 'both',

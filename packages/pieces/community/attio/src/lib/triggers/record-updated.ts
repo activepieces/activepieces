@@ -3,13 +3,14 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { attioApiCall, verifyWebhookSignature } from '../common/client';
 import { attioAuth } from '../auth';
 import { objectAttributeDropdown, objectTypeIdDropdown } from '../common/props';
-import { ObjectWebhookPayload, WebhookResponse } from '../common/types';
+import { AttributeResponse, ObjectWebhookPayload, WebhookResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 
 const TRIGGER_KEY = 'updated-record-trigger';
 
 export const recordUpdatedTrigger = createTrigger({
 	name: 'record_updated',
+	classification: 'READ',
 	displayName: 'Record Updated',
 	description:
 		'Triggers when an existing record is updated (people, companies, deals, etc.).',
@@ -37,6 +38,21 @@ export const recordUpdatedTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	sampleData: {},
 	async onEnable(context) {
+		const { objectTypeId, filter_attribute } = context.propsValue;
+
+		const attributeId = filter_attribute
+			? await fetchAttributeId({
+					accessToken: context.auth.secret_text,
+					objectTypeId,
+					attributeSlug: filter_attribute,
+			  })
+			: undefined;
+
+		const filterConditions = [
+			{ field: 'id.object_id', operator: 'equals', value: objectTypeId },
+			...(attributeId ? [{ field: 'id.attribute_id', operator: 'equals', value: attributeId }] : []),
+		];
+
 		const response = await attioApiCall<{ data: WebhookResponse }>({
 			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
@@ -47,30 +63,21 @@ export const recordUpdatedTrigger = createTrigger({
 					subscriptions: [
 						{
 							event_type: 'record.updated',
-							filter: {
-								$and: [
-									{
-										field: 'id.object_id',
-										operator: 'equals',
-										value: context.propsValue.objectTypeId,
-									},
-								],
-							},
+							filter: { $and: filterConditions },
 						},
 					],
 				},
 			},
 		});
 
-		await context.store.put<{ webhookId: string; WebhookSecret: string }>(TRIGGER_KEY, {
+		await context.store.put<TriggerData>(TRIGGER_KEY, {
 			webhookId: response.data.id.webhook_id,
 			WebhookSecret: response.data.secret,
+			attributeId,
 		});
 	},
 	async onDisable(context) {
-		const webhookData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
-			TRIGGER_KEY,
-		);
+		const webhookData = await context.store.get<TriggerData>(TRIGGER_KEY);
 		if (!isNil(webhookData) && webhookData.webhookId) {
 			await attioApiCall({
 				accessToken: context.auth.secret_text,
@@ -97,9 +104,7 @@ export const recordUpdatedTrigger = createTrigger({
 		return filtered.slice(0, 5);
 	},
 	async run(context) {
-		const triggerData = await context.store.get<{ webhookId: string; WebhookSecret: string }>(
-			TRIGGER_KEY,
-		);
+		const triggerData = await context.store.get<TriggerData>(TRIGGER_KEY);
 
 		const webhookSecret = triggerData?.WebhookSecret;
 		const webhookSignatureHeader = context.payload.headers['attio-signature'];
@@ -110,28 +115,59 @@ export const recordUpdatedTrigger = createTrigger({
 		}
 
 		const payload = context.payload.body as ObjectWebhookPayload;
-		const event = payload.events?.[0];
+		const recordIds = collectMatchingRecordIds(payload.events ?? [], triggerData?.attributeId);
 
-		if (!event) return [];
+		if (recordIds.length === 0) return [];
 
-		const recordId = event.id.record_id;
+		const { objectTypeId, filter_attribute, filter_value } = context.propsValue;
 
-		const response = await attioApiCall<{ data: Record<string, unknown> }>({
-			accessToken: context.auth.secret_text,
-			method: HttpMethod.GET,
-			resourceUri: `/objects/${context.propsValue.objectTypeId}/records/${recordId}`,
-		});
+		const results = await Promise.allSettled(
+			recordIds.map((recordId) =>
+				attioApiCall<{ data: Record<string, unknown> }>({
+					accessToken: context.auth.secret_text,
+					method: HttpMethod.GET,
+					resourceUri: `/objects/${objectTypeId}/records/${recordId}`,
+					retries: 2,
+				}).then((response) => response.data),
+			),
+		);
 
-		const record = response.data;
-		const { filter_attribute, filter_value } = context.propsValue;
+		const records = results
+			.filter((result) => result.status === 'fulfilled')
+			.map((result) => result.value);
 
-		if (!recordMatchesFilter(record, filter_attribute, filter_value)) {
-			return [];
-		}
-
-		return [record];
+		return records.filter((record) => recordMatchesFilter(record, filter_attribute, filter_value));
 	},
 });
+
+function collectMatchingRecordIds(
+	events: ObjectWebhookPayload['events'],
+	filterAttributeId: string | undefined,
+): string[] {
+	const relevantEvents = filterAttributeId
+		? events.filter((event) => event.id.attribute_id === filterAttributeId)
+		: events;
+
+	return [...new Set(relevantEvents.map((event) => event.id.record_id))];
+}
+
+async function fetchAttributeId({
+	accessToken,
+	objectTypeId,
+	attributeSlug,
+}: {
+	accessToken: string;
+	objectTypeId: string | undefined;
+	attributeSlug: string;
+}): Promise<string> {
+	const response = await attioApiCall<{ data: AttributeResponse }>({
+		accessToken,
+		method: HttpMethod.GET,
+		resourceUri: `/objects/${objectTypeId}/attributes/${attributeSlug}`,
+	});
+
+	return response.data.id.attribute_id;
+}
 
 function recordMatchesFilter(
 	record: Record<string, unknown>,
@@ -178,3 +214,9 @@ function extractAttributeDisplayValue(valueObj: Record<string, unknown>): string
 		(valueObj['value'] !== undefined ? String(valueObj['value']) : null)
 	);
 }
+
+type TriggerData = {
+	webhookId: string;
+	WebhookSecret: string;
+	attributeId?: string;
+};

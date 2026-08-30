@@ -7,6 +7,7 @@ import { deleteMessageActionOutputSchema } from '../output-schemas';
 export const telegramDeleteMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'delete_message',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Message',
   description: 'Delete a message sent in a chat. Bots can delete their own messages and messages in groups where they are admins.',
   audience: 'human',

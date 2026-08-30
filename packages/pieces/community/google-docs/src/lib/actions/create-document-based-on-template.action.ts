@@ -18,6 +18,7 @@ const PLACEHOLDER_FORMATS: Record<string, string> = {
 export const createDocumentBasedOnTemplate = createAction({
   auth: googleDocsAuth,
   name: 'create_document_based_on_template',
+  classification: 'WRITE',
   description:
     'Edit a template file and replace the values with the ones provided',
   audience: 'both',
