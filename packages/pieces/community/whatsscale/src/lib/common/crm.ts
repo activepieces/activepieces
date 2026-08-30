@@ -19,7 +19,8 @@ export async function addTagsToCrmContact({
   tags,
 }: AddTagsToCrmContactParams): Promise<ConductorCrmContact> {
   const normalized = tags
-    .map((value) => String(value).trim())
+    .flatMap((value) => String(value).split(`,`))
+    .map((value) => value.trim())
     .filter((value) => value.length > 0);
 
   if (normalized.length === 0) {

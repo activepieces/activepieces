@@ -3,7 +3,7 @@ import { sendMessageResultOutputSchema } from '../../../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../../../auth';
 import { whatsscaleClient } from '../../../common/client';
-import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../common/messaging';
+import { resolveSendResult } from '../../../common/messaging';
 import { whatsscaleProps } from '../../../common/props';
 import { buildRecipientBody, RecipientType } from '../../../common/recipients';
 import { ChatType } from '../../../common/types';
@@ -67,6 +67,6 @@ export const sendTextManualAction = createAction({
       { ...body, text },
     );
 
-    return flattenSendMessageResult(response.body as ConductorSendMessageResult);
+    return await resolveSendResult({ apiKey: auth, body: response.body });
   },
 });

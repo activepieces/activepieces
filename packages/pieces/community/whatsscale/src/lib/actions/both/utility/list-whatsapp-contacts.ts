@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { listWhatsappContactsOutputSchema } from '../../../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../../../auth';
@@ -16,12 +16,22 @@ export const listWhatsappContactsAction = createAction({
   outputSchema: listWhatsappContactsOutputSchema,
   props: {
     session: whatsscaleProps.session,
+    limit: Property.Number({
+      displayName: 'Limit',
+      description:
+        'Maximum number of contacts to return. Leave empty for the whole address book, which can run to thousands of entries.',
+      required: false,
+    }),
   },
   async run(context) {
     const auth = context.auth.secret_text;
-    const { session } = context.propsValue;
+    const { session, limit } = context.propsValue;
 
     const response = await whatsscaleClient(auth, HttpMethod.GET, `/api/${session}/contacts`);
-    return response.body;
+    const contacts = response.body;
+    if (typeof limit === 'number' && limit > 0 && Array.isArray(contacts)) {
+      return contacts.slice(0, limit);
+    }
+    return contacts;
   },
 });

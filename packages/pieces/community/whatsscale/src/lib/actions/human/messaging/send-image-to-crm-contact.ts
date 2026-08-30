@@ -3,7 +3,7 @@ import { sendMessageResultOutputSchema } from '../../../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { whatsscaleAuth } from '../../../auth';
 import { whatsscaleClient } from '../../../common/client';
-import { ConductorSendMessageResult, flattenSendMessageResult } from '../../../common/messaging';
+import { resolveSendResult } from '../../../common/messaging';
 import { whatsscaleProps } from '../../../common/props';
 import { prepareMediaFile } from '../../../common/prepare-file';
 
@@ -48,6 +48,6 @@ export const sendImageToCrmContactAction = createAction({
       caption: caption ?? '',
     });
 
-    return flattenSendMessageResult(response.body as ConductorSendMessageResult);
+    return await resolveSendResult({ apiKey: apiKey, body: response.body });
   },
 });

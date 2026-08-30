@@ -12,7 +12,7 @@ export const deleteCrmContactAction = createAction({
   displayName: 'Delete a CRM Contact',
   description: 'Permanently delete a contact from your WhatsScale CRM',
   audience: 'human',
-  aiMetadata: { description: 'Permanently remove a WhatsScale CRM contact by its contact ID. Destructive and irreversible, but idempotent: re-running converges on the contact being absent. Confirm the ID (via the list or lookup actions) before deleting. Sources the contact from a builder dropdown. Its twin Delete a CRM Contact (By ID) makes the identical call with the ID passed as free text, which is the better fit when an ID is already in hand.', idempotent: true },
+  aiMetadata: { description: 'Permanently remove a WhatsScale CRM contact by its contact ID. Destructive and irreversible. Not idempotent: deleting an already-deleted contact fails the step with a 404, so a retry after a successful delete will fail. Confirm the ID (via the list or lookup actions) before deleting. Sources the contact from a builder dropdown. Its twin Delete a CRM Contact (By ID) makes the identical call with the ID passed as free text, which is the better fit when an ID is already in hand.', idempotent: false },
   outputSchema: deleteCrmContactOutputSchema,
   props: {
     contactId: whatsscaleProps.crmContact,

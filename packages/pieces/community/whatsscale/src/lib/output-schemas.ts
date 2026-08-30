@@ -109,7 +109,7 @@ export const listGroupParticipantsOutputSchema: OutputSchema = {
   itemLabel: '{pn} ({role})',
   fields: [
     { key: 'id', label: 'ID' },
-    { key: 'pn', label: 'Phone Number' },
+    { key: 'pn', label: 'Chat ID' },
     { key: 'role', label: 'Role' },
   ],
 };

@@ -19,12 +19,12 @@ export const updateCrmContactAction = createAction({
     contactId: whatsscaleProps.crmContact,
     name: Property.ShortText({
       displayName: 'Name',
-      description: 'Leave empty to keep the current name unchanged. Set to a blank value to clear it.',
+      description: 'Leave empty to keep the current name unchanged. Clearing the name is not supported.',
       required: false,
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'Replaces all existing tags (e.g. vip, lead). Leave untouched to keep current tags unchanged.',
+      description: 'Replaces all existing tags (e.g. vip, lead). Leave untouched to keep current tags unchanged. Clearing every tag is not supported.',
       required: false,
     }),
   },

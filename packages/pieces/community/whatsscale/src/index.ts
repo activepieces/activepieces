@@ -51,9 +51,9 @@ import { removeGroupParticipantsAction } from './lib/actions/ai/groups/remove-pa
 import { promoteGroupAdminsAction } from './lib/actions/ai/groups/promote-admins';
 import { demoteGroupAdminsAction } from './lib/actions/ai/groups/demote-admins';
 import { leaveGroupAction } from './lib/actions/ai/groups/leave';
+import { listGroupParticipantsAction } from './lib/actions/ai/groups/list-participants';
 
 // Both — status and utility actions
-import { listGroupParticipantsAction } from './lib/actions/ai/groups/list-participants';
 import { postTextStatusAction } from './lib/actions/both/status/post-text';
 import { postImageStatusAction } from './lib/actions/both/status/post-image';
 import { postVideoStatusAction } from './lib/actions/both/status/post-video';
@@ -142,8 +142,8 @@ export const whatsscale = createPiece({
     promoteGroupAdminsAction,
     demoteGroupAdminsAction,
     leaveGroupAction,
-    // Both — status and utility
     listGroupParticipantsAction,
+    // Both — status and utility
     postTextStatusAction,
     postImageStatusAction,
     postVideoStatusAction,
