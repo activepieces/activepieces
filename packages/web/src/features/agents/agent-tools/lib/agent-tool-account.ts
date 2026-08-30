@@ -23,11 +23,11 @@ function requiresAccount({
 function label({
   tools,
   connections,
-  connectionsLoaded,
+  connectionsComplete,
 }: {
   tools: AgentPieceTool[];
   connections: { externalId: string; displayName: string }[];
-  connectionsLoaded: boolean;
+  connectionsComplete: boolean;
 }): string | null {
   if (tools.length === 0) {
     return null;
@@ -39,13 +39,15 @@ function label({
   if (externalIds.length > 1) {
     return t('Different account per action');
   }
-  if (!connectionsLoaded) {
-    return null;
-  }
-  return (
-    connections.find((connection) => connection.externalId === externalIds[0])
-      ?.displayName ?? t('Account was deleted')
+  const pinned = connections.find(
+    (connection) => connection.externalId === externalIds[0],
   );
+  if (!isNil(pinned)) {
+    return pinned.displayName;
+  }
+  // Absent from a list we know is partial proves nothing, and a wrong "deleted" is worse than
+  // saying nothing at all.
+  return connectionsComplete ? t('Account was deleted') : null;
 }
 
 export const agentToolAccount = { label, requiresAccount };

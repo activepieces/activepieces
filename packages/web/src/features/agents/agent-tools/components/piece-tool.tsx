@@ -24,6 +24,8 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { agentToolAccount } from '../lib/agent-tool-account';
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
 
+const CONNECTION_PAGE_SIZE = 1000;
+
 type AgentPieceToolProps = {
   disabled?: boolean;
   tools: AgentPieceTool[];
@@ -56,12 +58,16 @@ export const AgentPieceToolComponent = ({
   // One project-wide query keyed only on the project, so every tool row on the screen shares a
   // single cache entry with the rest of the app instead of each fetching the same list again.
   const projectId = authenticationSession.getProjectId()!;
-  const { data: connections, isSuccess: connectionsLoaded } =
+  const { data: connections, isSuccess } =
     appConnectionsQueries.useAppConnections({
-      request: { projectId, limit: 1000 },
+      request: { projectId, limit: CONNECTION_PAGE_SIZE },
       extraKeys: [projectId],
       enabled: !isNil(pieceMetadata?.auth),
     });
+  // A full page means there may be more we cannot see, so a pin missing from it is not evidence
+  // the account is gone.
+  const connectionsComplete =
+    isSuccess && (connections?.data.length ?? 0) < CONNECTION_PAGE_SIZE;
 
   if (!pieceMetadata) {
     return (
@@ -87,7 +93,7 @@ export const AgentPieceToolComponent = ({
   const accountLabel = agentToolAccount.label({
     tools: toolsNeedingAccount,
     connections: connections?.data ?? [],
-    connectionsLoaded,
+    connectionsComplete,
   });
 
   const handleEditTool = (tool: AgentPieceTool) => {

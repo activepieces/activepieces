@@ -17,7 +17,7 @@ const tool = (auth?: string, actionName = 'send') =>
   }) as never;
 
 const connections = [{ externalId: 'conn_1', displayName: 'Work mail' }];
-const loaded = { connections, connectionsLoaded: true };
+const loaded = { connections, connectionsComplete: true };
 
 describe('agentToolAccount.requiresAccount', () => {
   it('needs one when the piece has auth and the action does not opt out', () => {
@@ -88,9 +88,29 @@ describe('agentToolAccount.label', () => {
       agentToolAccount.label({
         tools: [tool('conn_1')],
         connections: [],
-        connectionsLoaded: false,
+        connectionsComplete: false,
       }),
     ).toBeNull();
+  });
+
+  it('stays silent when the list was truncated, since absence proves nothing there', () => {
+    expect(
+      agentToolAccount.label({
+        tools: [tool('conn_outside_page')],
+        connections,
+        connectionsComplete: false,
+      }),
+    ).toBeNull();
+  });
+
+  it('still names an account found inside a truncated list', () => {
+    expect(
+      agentToolAccount.label({
+        tools: [tool('conn_1')],
+        connections,
+        connectionsComplete: false,
+      }),
+    ).toBe('Work mail');
   });
 
   it('says the account was deleted once we know it is really gone', () => {
@@ -116,7 +136,7 @@ describe('agentToolAccount.label', () => {
           ...connections,
           { externalId: 'conn_2', displayName: 'Personal mail' },
         ],
-        connectionsLoaded: true,
+        connectionsComplete: true,
       }),
     ).toBe('Different account per action');
   });
@@ -138,7 +158,7 @@ describe('agentToolAccount.label', () => {
           { externalId: 'conn_1', displayName: 'Mail' },
           { externalId: 'conn_2', displayName: 'Mail' },
         ],
-        connectionsLoaded: true,
+        connectionsComplete: true,
       }),
     ).toBe('Different account per action');
   });
