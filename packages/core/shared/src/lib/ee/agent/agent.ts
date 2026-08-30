@@ -103,7 +103,6 @@ const DraftAgentResponse = AgentDraftFields.extend({
     modelName: Nullable(z.string().max(MAX_AGENT_NAME_LENGTH)),
 })
 
-const AgentTemplate = AgentDraftFields.extend({ id: z.string() })
 
 const DraftAgentRequest = z.object({
     projectId: ApId,
@@ -127,7 +126,6 @@ export {
     AgentConfig,
     AgentIcon,
     AgentVisibility,
-    AgentTemplate,
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
     DraftAgentRequest,
@@ -151,7 +149,6 @@ export {
 export type Agent = z.infer<typeof Agent>
 export type AgentSummary = z.infer<typeof AgentSummary>
 export type AgentConfig = z.infer<typeof AgentConfig>
-export type AgentTemplate = z.infer<typeof AgentTemplate>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
