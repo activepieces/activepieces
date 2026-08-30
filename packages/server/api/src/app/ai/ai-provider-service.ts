@@ -86,7 +86,9 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             modelIds: [],
             projectScope: 'all',
             projectIds: [],
-            ...provedHealthy({ previousVersion: 0 }),
+            status: 'active',
+            statusReason: null,
+            statusUpdated: new Date().toISOString(),
         })
         return toConfigResponse(saved)
     },
@@ -133,7 +135,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('modelIds', request.modelIds),
             ...spreadIfDefined('projectScope', request.projectScope),
             ...spreadIfDefined('projectIds', request.projectIds),
-            ...(revalidated ? provedHealthy({ previousVersion: aiProvider.statusVersion }) : {}),
+            ...(revalidated ? provedHealthy() : {}),
             displayName: request.displayName,
         }
 
@@ -281,8 +283,8 @@ function rankRows(rows: AIProviderSchema[]): AIProviderSchema[] {
     })
 }
 
-function provedHealthy({ previousVersion }: { previousVersion: number }): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: string, statusVersion: number } {
-    return { status: 'active', statusReason: null, statusUpdated: new Date().toISOString(), statusVersion: previousVersion + 1 }
+function provedHealthy(): { status: AiProviderKeyStatus, statusReason: null, statusUpdated: () => string, statusVersion: () => string } {
+    return { status: 'active', statusReason: null, statusUpdated: () => 'now()', statusVersion: () => '"statusVersion" + 1' }
 }
 
 function toConfigResponse(row: AIProviderSchema): AIProviderWithoutSensitiveData {

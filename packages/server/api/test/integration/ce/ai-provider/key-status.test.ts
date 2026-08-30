@@ -117,6 +117,40 @@ describe('AI provider key status', () => {
         expect((await statusOf(key.id)).status).toBe('active')
     })
 
+    it('does not let a status write during validation hand the old version back to a confirmation', async () => {
+        const key = await azureKey('replaced-mid-check')
+        const health = aiProviderHealth(app!.log)
+        const before = await statusOf(key.id)
+
+        // The race: a status write lands while the replacement is still validating, so the version
+        // the replacement read is already out of date by the time it writes.
+        mockSendRequest.mockImplementationOnce(async () => {
+            await health.record({ platformId: ctx.platform.id, providerId: key.id, signal: { statusCode: 200 }, throttled: false })
+            return { body: { data: [] } }
+        })
+        mockSendRequest.mockResolvedValue({ body: { data: [] } })
+
+        const response = await ctx.post(`/v1/ai-providers/${key.id}`, {
+            displayName: 'replaced-mid-check',
+            auth: { apiKey: 'fresh' },
+        })
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+
+        const interimVersion = before.statusVersion + 1
+        expect((await statusOf(key.id)).statusVersion).toBe(interimVersion + 1)
+
+        const staleConfirmation = await health.record({
+            platformId: ctx.platform.id,
+            providerId: key.id,
+            signal: { statusCode: 401, body: 'invalid api key' },
+            throttled: false,
+            expectVersion: interimVersion,
+        })
+
+        expect(staleConfirmation).toBeNull()
+        expect((await statusOf(key.id)).status).toBe('active')
+    })
+
     it('records a replacement key that works', async () => {
         const key = await azureKey('accepted')
         await db.update('ai_provider', key.id, { status: 'rejected', statusReason: 'HTTP 401' })
