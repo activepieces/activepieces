@@ -184,11 +184,11 @@ describe('the shape of the policy itself', () => {
 })
 
 describe('withValidNames', () => {
-    const names = (tools: { toolName: string }[]): string[] =>
-        agentToolPolicy.withValidNames(tools).map((tool) => tool.toolName)
+    const names = (tools: { toolName: string }[], reserved?: string[]): string[] =>
+        agentToolPolicy.withValidNames({ tools, ...(reserved === undefined ? {} : { reserved }) }).map((tool) => tool.toolName)
 
     it('rewrites a name the providers would reject and keeps the rest of the tool', () => {
-        const [rewritten] = agentToolPolicy.withValidNames([{ toolName: 'Company Docs', sourceId: 'kb-1' }])
+        const [rewritten] = agentToolPolicy.withValidNames({ tools: [{ toolName: 'Company Docs', sourceId: 'kb-1' }] })
 
         expect(rewritten.toolName).toMatch(PROVIDER_PATTERN)
         expect(rewritten.sourceId).toBe('kb-1')
@@ -223,6 +223,10 @@ describe('withValidNames', () => {
         const collided = names([{ toolName: 'x_2' }, { toolName: 'x' }, { toolName: 'x' }])
 
         expect(new Set(collided).size).toBe(3)
+    })
+
+    it('does not reuse a name another tool group already claimed', () => {
+        expect(names([{ toolName: 'company_docs' }], ['company_docs'])).not.toEqual(['company_docs'])
     })
 
     it('trims a name past the 64 character limit', () => {

@@ -44,7 +44,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
         const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
-        const configuredTools = agentToolPolicy.withValidNames(data.tools ?? [])
+        const configuredTools = agentToolPolicy.withValidNames({ tools: data.tools ?? [] })
+        const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
         const configuredPieceTools = configuredTools.filter(isPieceTool)
         const configuredKnowledgeBaseTools = configuredTools.filter(isKnowledgeBaseTool)
         const reportedTools = [...configuredPieceTools, ...configuredKnowledgeBaseTools]
@@ -198,7 +199,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 abortSignal: abortController.signal,
                 source,
                 configuredPieceTools,
-                configuredFlowTools: agentToolPolicy.withValidNames(data.flowTools ?? []),
+                configuredFlowTools,
                 configuredKnowledgeBaseTools,
                 structuredOutput: data.structuredOutput ?? [],
                 captureStructured: (output) => {

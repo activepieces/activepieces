@@ -3,8 +3,8 @@ import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
 
-function withValidNames<T extends { toolName: string }>(tools: T[]): T[] {
-    const taken = new Set<string>()
+function withValidNames<T extends { toolName: string }>({ tools, reserved = [] }: { tools: T[], reserved?: string[] }): T[] {
+    const taken = new Set<string>(reserved)
     return tools.map((tool) => {
         const valid = mcpToolNameUtils.toValidToolName(tool.toolName)
         let name = valid
