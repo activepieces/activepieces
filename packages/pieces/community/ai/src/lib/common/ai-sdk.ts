@@ -160,7 +160,7 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
                     baseURL: baseUrl,
                     apiKey,
                     headers,
-                    ...spreadIfDefined('fetch', stripDefaultAuthorization(apiKeyHeader)),
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization(headers)),
                 }).responses(modelId)
             }
             return createOpenAICompatible({
@@ -199,14 +199,15 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
     }
 }
 
-function stripDefaultAuthorization(apiKeyHeader: string): typeof globalThis.fetch | undefined {
-    if (apiKeyHeader.trim().toLowerCase() === AUTHORIZATION_HEADER) {
+function stripDefaultAuthorization(headers: Record<string, string>): typeof globalThis.fetch | undefined {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
         return undefined
     }
     return (input, init) => {
-        const headers = new Headers(init?.headers)
-        headers.delete(AUTHORIZATION_HEADER)
-        return fetch(input, { ...init, headers })
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return fetch(input, { ...init, headers: sent })
     }
 }
 

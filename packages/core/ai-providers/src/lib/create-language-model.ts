@@ -49,7 +49,7 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
                     headers,
                     ...observed,
                     ...spreadIfDefined('fetch', stripDefaultAuthorization({
-                        apiKeyHeader,
+                        headers,
                         delegate: observedProviderFetch(options.onOutcome),
                     })),
                 }).responses(modelId)
@@ -96,17 +96,18 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
     }
 }
 
-function stripDefaultAuthorization({ apiKeyHeader, delegate }: {
-    apiKeyHeader: string
+function stripDefaultAuthorization({ headers, delegate }: {
+    headers: Record<string, string>
     delegate?: typeof globalThis.fetch
 }): typeof globalThis.fetch | undefined {
-    if (apiKeyHeader.trim().toLowerCase() === AUTHORIZATION_HEADER) {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
         return undefined
     }
     return (input, init) => {
-        const headers = new Headers(init?.headers)
-        headers.delete(AUTHORIZATION_HEADER)
-        return (delegate ?? globalThis.fetch)(input, { ...init, headers })
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return (delegate ?? globalThis.fetch)(input, { ...init, headers: sent })
     }
 }
 

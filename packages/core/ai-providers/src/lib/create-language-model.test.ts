@@ -118,6 +118,25 @@ describe('createLanguageModel', () => {
         expect(patchedFetch).toBeUndefined()
     })
 
+    it('keeps an Authorization the admin supplied through custom headers', async () => {
+        const model = createLanguageModel({
+            provider: AIProviderName.CUSTOM,
+            auth: { apiKey: 'secret-key' },
+            config: {
+                apiKeyHeader: 'x-api-key',
+                baseUrl: 'https://gateway.test/v1',
+                models: [],
+                apiStyle: 'responses',
+                defaultHeaders: { Authorization: 'Bearer gateway-token' },
+            },
+            modelId: 'some-model-id',
+        })
+        const { headers, fetch: patchedFetch } = identifyCustom(model).config
+
+        expect(headers()['authorization']).toBe('Bearer gateway-token')
+        expect(patchedFetch).toBeUndefined()
+    })
+
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
         expect(identify(buildFor(AIProviderName.MISTRAL)).provider).toBe('mistral.chat')
         expect(identify(buildFor(AIProviderName.MISTRAL, { mistralViaOpenRouter: true })).provider).toBe('openrouter')
