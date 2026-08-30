@@ -35,6 +35,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { AgentCard } from '@/features/agents/agent-card';
+import { AgentTrioMark } from '@/features/agents/agent-mark';
 import {
   agentsMutations,
   agentsQueries,
@@ -53,6 +54,29 @@ const SUGGESTIONS = [
   'Triage support tickets',
   'Research a company',
   'Enrich a lead',
+];
+
+const TEMPLATE_STARTERS: TemplateStarter[] = [
+  {
+    label: 'Research analyst',
+    dot: '#0D9488',
+    prompt: 'Research a company and send me a cited brief on it',
+  },
+  {
+    label: 'Support triage',
+    dot: '#D97706',
+    prompt: 'Read a support ticket, tag its severity, and route it to a team',
+  },
+  {
+    label: 'Lead enrichment',
+    dot: '#2563EB',
+    prompt: 'Enrich a new lead with company details and write the first email',
+  },
+  {
+    label: 'SEO writer',
+    dot: '#E11D48',
+    prompt: 'Research keywords for a topic and draft a post that targets them',
+  },
 ];
 
 const SORT_LABELS = {
@@ -161,10 +185,30 @@ const AgentsPageContent = () => {
       <section
         className={cn(
           'flex flex-col items-center gap-2 px-12 pt-8',
-          firstRun && 'flex-1 justify-center pb-16 pt-8',
+          firstRun &&
+            'relative flex-1 justify-center gap-3 overflow-hidden py-16',
         )}
       >
-        <h1 className="text-2xl leading-[30px] tracking-[-0.01em]">
+        {firstRun && (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
+              style={{
+                backgroundImage:
+                  'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
+              }}
+            />
+            <AgentTrioMark className="mb-[22px]" />
+          </>
+        )}
+        <h1
+          className={cn(
+            'text-2xl leading-[30px] tracking-[-0.01em]',
+            firstRun &&
+              'text-[32px] font-bold leading-[38px] tracking-[-0.02em]',
+          )}
+        >
           {isBuilding
             ? t('Building your agent')
             : needsProvider
@@ -173,11 +217,20 @@ const AgentsPageContent = () => {
             ? t('Create your first agent')
             : t('What should your agent do?')}
         </h1>
-        <p className="text-[15px] leading-[18px] text-muted-foreground">
+        <p
+          className={cn(
+            'text-[15px] leading-[18px] text-muted-foreground',
+            firstRun && 'max-w-[468px] text-center text-base leading-6',
+          )}
+        >
           {needsProvider
             ? t('Add a provider once, then I can build agents from a sentence.')
             : isBuilding
             ? t('Picking the tools and writing its instructions')
+            : firstRun
+            ? t(
+                'Your most reliable teammate for getting work done, powered by your tools and guided by your words.',
+              )
             : t(
                 "An agent is an assistant with instructions and tools. Describe the job and I'll write both.",
               )}
@@ -201,6 +254,8 @@ const AgentsPageContent = () => {
             'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
             isBuilding ? 'border-primary/40' : 'border-border',
             needsProvider && 'hidden',
+            firstRun &&
+              'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-background px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
           )}
         >
           <Textarea
@@ -216,19 +271,31 @@ const AgentsPageContent = () => {
                 buildAgent();
               }
             }}
-            placeholder={t(
-              'Draft weekly launch posts and file them in Notion…',
+            placeholder={
+              firstRun
+                ? t(
+                    'Describe a task for your agent… e.g. research our competitors and send me a weekly brief',
+                  )
+                : t('Draft weekly launch posts and file them in Notion…')
+            }
+            className={cn(
+              'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400',
+              firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
             )}
-            className="min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400"
           />
-          <Button
-            size="icon"
-            loading={isBuilding}
-            onClick={() => buildAgent()}
-            className="size-10 shrink-0 rounded-full"
-          >
-            <ArrowUp size={16} strokeWidth={2.2} />
-          </Button>
+          <div className={cn(firstRun && 'flex justify-end')}>
+            <Button
+              size="icon"
+              loading={isBuilding}
+              onClick={() => buildAgent()}
+              className={cn(
+                'size-10 shrink-0 rounded-full',
+                firstRun && 'size-9',
+              )}
+            >
+              <ArrowUp size={16} strokeWidth={2.2} />
+            </Button>
+          </div>
         </div>
         {buildError !== null && (
           <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
@@ -239,21 +306,50 @@ const AgentsPageContent = () => {
           </p>
         )}
         {!needsProvider && (
-          <div className="mt-[14px] flex flex-wrap items-center justify-center gap-2">
-            <span className="text-[13px] leading-4 text-muted-foreground">
-              {t('Try:')}
+          <div
+            className={cn(
+              'mt-[14px] flex flex-wrap items-center justify-center gap-2',
+              firstRun && 'mt-[22px] flex-col gap-[14px]',
+            )}
+          >
+            <span
+              className={cn(
+                'text-[13px] leading-4 text-muted-foreground',
+                firstRun && 'font-medium',
+              )}
+            >
+              {firstRun ? t('Popular starting points') : t('Try:')}
             </span>
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                disabled={isBuilding}
-                onClick={() => buildAgent(t(suggestion))}
-                className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
-              >
-                {t(suggestion)}
-              </button>
-            ))}
+            <div className="flex flex-wrap items-center justify-center gap-[10px]">
+              {firstRun
+                ? TEMPLATE_STARTERS.map((starter) => (
+                    <button
+                      key={starter.label}
+                      type="button"
+                      disabled={isBuilding}
+                      onClick={() => buildAgent(t(starter.prompt))}
+                      className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent disabled:opacity-50"
+                    >
+                      <span
+                        aria-hidden
+                        className="size-[11px] shrink-0 rounded-sm"
+                        style={{ backgroundColor: starter.dot }}
+                      />
+                      {t(starter.label)}
+                    </button>
+                  ))
+                : SUGGESTIONS.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      disabled={isBuilding}
+                      onClick={() => buildAgent(t(suggestion))}
+                      className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
+                    >
+                      {t(suggestion)}
+                    </button>
+                  ))}
+            </div>
           </div>
         )}
       </section>
@@ -398,5 +494,11 @@ const AgentsEmptyState = () => (
 );
 
 type AgentSort = keyof typeof SORT_LABELS;
+
+type TemplateStarter = {
+  label: string;
+  dot: string;
+  prompt: string;
+};
 
 export { AgentsPage };
