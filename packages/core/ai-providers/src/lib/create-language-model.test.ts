@@ -69,6 +69,18 @@ describe('createLanguageModel', () => {
         expect(baseUrl).toBe('https://europe-west4-aiplatform.googleapis.com/v1beta1/projects/gcp-project/locations/europe-west4/publishers/google')
     })
 
+    it('sends Model Garden Claude ids to the Vertex Anthropic client, not the Gemini one', () => {
+        const anthropicOnVertex = createLanguageModel({
+            provider: AIProviderName.VERTEX,
+            auth: authFor[AIProviderName.VERTEX],
+            config: configFor[AIProviderName.VERTEX],
+            modelId: 'claude-sonnet-4-6',
+        })
+
+        expect(identify(buildFor(AIProviderName.VERTEX)).provider).toBe('google.vertex.chat')
+        expect(identify(anthropicOnVertex).provider).toBe('googleVertex.anthropic.messages')
+    })
+
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
         expect(identify(buildFor(AIProviderName.MISTRAL)).provider).toBe('mistral.chat')
         expect(identify(buildFor(AIProviderName.MISTRAL, { mistralViaOpenRouter: true })).provider).toBe('openrouter')

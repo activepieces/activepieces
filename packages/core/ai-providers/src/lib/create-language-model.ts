@@ -2,6 +2,7 @@ import { AIProviderName, observedProviderFetch, ProviderOutcomeReporter, spreadI
 import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createVertex } from '@ai-sdk/google-vertex'
+import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -41,7 +42,10 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
         case AIProviderName.VERTEX: {
             const { serviceAccountJson } = auth as VertexProviderAuthConfig
             const { project, region } = config as VertexProviderConfig
-            return createVertex({ project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) }, ...observed })(modelId)
+            const vertexSettings = { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) }, ...observed }
+            return isVertexAnthropicModel(modelId)
+                ? createVertexAnthropic(vertexSettings)(modelId)
+                : createVertex(vertexSettings)(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -86,6 +90,10 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             throw new Error(`Unsupported provider: ${exhaustiveCheck}`)
         }
     }
+}
+
+function isVertexAnthropicModel(modelId: string): boolean {
+    return modelId.toLowerCase().includes('claude')
 }
 
 function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {

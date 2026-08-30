@@ -3,6 +3,7 @@ import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createVertex } from '@ai-sdk/google-vertex'
+import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
@@ -149,7 +150,10 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         case AIProviderName.VERTEX: {
             const { serviceAccountJson } = auth as VertexProviderAuthConfig
             const { project, region } = config as VertexProviderConfig
-            return createVertex({ project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } })(modelId)
+            const vertexSettings = { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } }
+            return isVertexAnthropicModel(modelId)
+                ? createVertexAnthropic(vertexSettings)(modelId)
+                : createVertex(vertexSettings)(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -192,6 +196,10 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         default:
             throw new Error(`Provider ${provider} is not supported`)
     }
+}
+
+function isVertexAnthropicModel(modelId: string): boolean {
+    return modelId.toLowerCase().includes('claude')
 }
 
 function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {
