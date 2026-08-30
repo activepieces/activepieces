@@ -161,7 +161,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.147.0",
+      "version": "0.148.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -10839,7 +10839,7 @@
     },
     "packages/server/utils": {
       "name": "@activepieces/server-utils",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/ai-providers": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -10865,6 +10865,7 @@
         "request-filtering-agent": "3.2.0",
         "systeminformation": "5.31.7",
         "tslib": "2.6.2",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "@types/node": "24.11.0",
