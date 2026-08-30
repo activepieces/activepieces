@@ -54,7 +54,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 const addressedWaitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
                 if (!isNil(addressedWaitpoint) && addressedWaitpoint.status === WaitpointStatus.COMPLETED) {
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeTrustedWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
-                    await waitpointService(log).delete({ id: addressedWaitpoint.id, projectId: addressedWaitpoint.projectId })
+                    await waitpointService(log).consume({ waitpoint: addressedWaitpoint })
                     await enqueueResume({
                         flowRun: currentFlowRun,
                         waitpoint: addressedWaitpoint,
@@ -74,7 +74,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         if (flowRun.status !== FlowRunStatus.PAUSED) {
             return { flowRun, stale: true }
         }
-        if (await waitpointService(log).hasPendingBarrier({ flowRunId, projectId: flowRun.projectId })) {
+        if (await waitpointService(log).hasBarrier({ flowRunId, projectId: flowRun.projectId })) {
             log.warn({ flowRun: { id: flowRunId } }, '[resumeService#legacyResume] Refused an external resume of a barrier; only the barrier predicate and its deadline may release it')
             return { flowRun, stale: true }
         }
@@ -129,7 +129,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                 headers: {},
             }
         }
-        if (await waitpointService(log).hasPendingBarrier({ flowRunId: runId, projectId: flowRun.projectId })) {
+        if (await waitpointService(log).hasBarrier({ flowRunId: runId, projectId: flowRun.projectId })) {
             log.warn({ flowRun: { id: runId } }, '[resumeService#legacySyncResume] Refused an external resume of a barrier; only the barrier predicate and its deadline may release it')
             return {
                 status: StatusCodes.GONE,
@@ -150,7 +150,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 async function wouldResumeABarrier({ flowRunId, waitpointId, projectId, log }: WouldResumeABarrierParams): Promise<boolean> {
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
     if (isNil(waitpoint)) {
-        return waitpointService(log).hasPendingBarrier({ flowRunId, projectId })
+        return waitpointService(log).hasBarrier({ flowRunId, projectId })
     }
     return waitpoint.type === PauseType.BARRIER
 }
