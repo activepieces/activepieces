@@ -8,6 +8,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
+import { McpActivityContext, recordFlowToolCall, withActivityRecording } from './activity/mcp-activity-recorder'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
@@ -67,8 +68,9 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        registerFlowTools({ server, mcp, projectId, permissionChecker, log })
-        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
+        const activityContext = buildProjectActivityContext({ mcp, projectId, userId })
+        registerFlowTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
+        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
         registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
@@ -98,39 +100,52 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
+    const activityContext = async (): Promise<McpActivityContext> => ({
+        platformId,
+        projectId: await mcpProjectSelection.get(selectionScope),
+        userId,
+    })
+
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => tool.execute(args))
+            const platformExecute = withActivityRecording({ execute: tool.execute, tool, context: activityContext, log })
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => platformExecute(args))
             return
         }
 
-        server.registerTool(tool.title, buildToolConfig(tool), async (args: Record<string, unknown>) => {
-            const selectedProjectId = await mcpProjectSelection.get(selectionScope)
-            if (isNil(selectedProjectId)) {
-                return {
-                    content: [{
-                        type: 'text' as const,
-                        text: 'No project selected. Use ap_set_project_context to select a project first.',
-                    }],
+        const recorded = withActivityRecording({
+            execute: async (args: Record<string, unknown>) => {
+                const selectedProjectId = await mcpProjectSelection.get(selectionScope)
+                if (isNil(selectedProjectId)) {
+                    return {
+                        content: [{
+                            type: 'text' as const,
+                            text: 'No project selected. Use ap_set_project_context to select a project first.',
+                        }],
+                    }
                 }
-            }
-            const projectMcp = await resolveProjectMcp(selectedProjectId)
-            const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId }
-            const permissionChecker = await resolvePermissionChecker({ userId, projectId: selectedProjectId, log })
-            const realTools = activepiecesTools(projectScopedMcp, userId, log)
-            const realTool = realTools.find(t => t.title === tool.title)
-            if (isNil(realTool)) {
-                return {
-                    content: [{ type: 'text' as const, text: `Tool "${tool.title}" is not available for this project.` }],
+                const projectMcp = await resolveProjectMcp(selectedProjectId)
+                const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId }
+                const permissionChecker = await resolvePermissionChecker({ userId, projectId: selectedProjectId, log })
+                const realTools = activepiecesTools(projectScopedMcp, userId, log)
+                const realTool = realTools.find(t => t.title === tool.title)
+                if (isNil(realTool)) {
+                    return {
+                        content: [{ type: 'text' as const, text: `Tool "${tool.title}" is not available for this project.` }],
+                    }
                 }
-            }
-            const execute = permissionChecker.wrapExecute({ execute: realTool.execute, permission: realTool.permission, toolTitle: realTool.title })
-            return execute(args)
+                const execute = permissionChecker.wrapExecute({ execute: realTool.execute, permission: realTool.permission, toolTitle: realTool.title })
+                return execute(args)
+            },
+            tool,
+            context: activityContext,
+            log,
         })
+        server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => recorded(args))
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, permissionChecker, activityContext, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -145,12 +160,35 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 return flowPermissionError
             }
 
-            const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: args, returnsResponse, log })
+            const startedAt = Date.now()
+            let flowRunId: string | null = null
+            const result = await runFlowAsTool({
+                flowId: flow.id,
+                flowDisplayName: flow.version.displayName,
+                payload: args,
+                returnsResponse,
+                onRunCreated: (runId) => {
+                    flowRunId = runId
+                },
+                log,
+            })
 
             rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.MCP_TOOL_CALLED,
                 payload: { mcpId: projectId, toolName },
             }), log)
+
+            recordFlowToolCall({
+                context: activityContext,
+                toolName,
+                flowDisplayName: flow.version.displayName,
+                flowId: flow.id,
+                flowRunId,
+                durationMs: Date.now() - startedAt,
+                input: args,
+                result,
+                log,
+            })
 
             return result
         })
@@ -167,14 +205,16 @@ export function extractMcpTriggerInput(flow: PopulatedFlow): { toolName?: string
     }
 }
 
-export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsResponse, log }: {
+export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsResponse, onRunCreated, log }: {
     flowId: string
     flowDisplayName: string
     payload: Record<string, unknown>
     returnsResponse: boolean
+    onRunCreated?: (runId: string) => void
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
     const response = await webhookService.handleWebhook({
+        onRunCreated: (run) => onRunCreated?.(run.id),
         data: () => Promise.resolve({
             body: {},
             method: 'POST',
@@ -200,15 +240,27 @@ export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsR
     return { content: [{ type: 'text', text }], ...(isOkay ? {} : { isError: true }) }
 }
 
-function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
+function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log }: RegisterToolsParams): void {
     const allTools = activepiecesTools({ ...mcp, projectId }, userId, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
-        server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => execute(args))
+        const recorded = withActivityRecording({ execute, tool, context: () => Promise.resolve(activityContext), log })
+        server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => recorded(args))
     })
+}
+
+function buildProjectActivityContext({ mcp, projectId, userId }: {
+    mcp: PopulatedMcpServer
+    projectId: string
+    userId?: string
+}): McpActivityContext | null {
+    if (isNil(mcp.platformId) || isNil(userId)) {
+        return null
+    }
+    return { platformId: mcp.platformId, projectId, userId }
 }
 
 function registerPlaceholderTools(server: McpServer): void {
@@ -278,5 +330,6 @@ type RegisterToolsParams = {
     projectId: string
     userId?: string
     permissionChecker: PermissionChecker
+    activityContext: McpActivityContext | null
     log: FastifyBaseLogger
 }
