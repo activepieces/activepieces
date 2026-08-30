@@ -76,6 +76,11 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
         if (approval.state === FlowApprovalRequestState.APPROVED) {
+            await flowService(log).applyStatusChangeForPublishedFlow({
+                id: approval.flowId,
+                projectId: approval.projectId,
+                newStatus: approval.requestedStatus,
+            })
             return approval
         }
         assertStateIsPending(approval.state)
