@@ -1,0 +1,41 @@
+---
+title: "Flow Approvals"
+icon: 'shield-check'
+description: "Require a review step before flows in sensitive projects go live"
+---
+
+Flow Approvals adds a publish-time review gate for flows in projects marked as **sensitive**. When the flag is on, publishing a flow creates an approval request and the flow stays offline until an approver reviews it. It's designed for teams that need governance over automations touching production — financial systems, customer data pipelines, prod credentials — without slowing down the rest of their projects.
+
+<Info>Flow Approvals is an Enterprise / Cloud feature and requires the Environments plan.</Info>
+
+## When approval is required
+
+Approval is required only when the project is marked **Sensitive** and the person publishing isn't an admin. Admins publish directly — the gate is skipped for them.
+
+## Turning on sensitive mode
+
+Sensitive is a per-project switch, off by default, and only platform admins can toggle it.
+
+- **From inside the project** — Project Settings → General → toggle **Sensitive Project**.
+- **From the platform admin console** — Projects → Edit Project → toggle **Sensitive**.
+
+## Requesting approval
+
+Once sensitive mode is on, the **Publish** button becomes **Request approval** for non-admin editors.
+
+1. Make changes on the draft.
+2. Click **Request approval**. A banner appears saying **Approval pending**.
+3. The previously published version keeps running while the request is being reviewed.
+
+The submitter can **Withdraw** the request from the banner at any point while it's still pending — the changes go back to being a draft and can be edited again.
+
+## Reviewing approvals
+
+Approvers see a **Pending approvals** entry in the project sidebar with a badge showing the count (capped at "10+"). Clicking it opens a list of every request awaiting review. Each row links to the flow so the approver can see exactly what's changing.
+
+From the flow's banner an approver can:
+
+- **Approve** — the change goes live.
+- **Reject** — the request is marked rejected, with an optional reason. The submitter can pick up from where they left off using **Use as Draft** on the rejected version and try again.
+
+Every step of the request lifecycle is recorded in the [audit log](/admin-guide/security/audit-logs/overview).
