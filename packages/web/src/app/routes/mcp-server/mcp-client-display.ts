@@ -1,16 +1,7 @@
 import { McpOAuthClientKey } from '@activepieces/shared';
 import { t } from 'i18next';
 
-import claudeCodeIcon from '@/assets/img/custom/claude-code.svg';
-import claudeIcon from '@/assets/img/custom/claude.svg';
-import codexIcon from '@/assets/img/custom/codex.svg';
-import cursorIcon from '@/assets/img/custom/cursor.svg';
-import geminiIcon from '@/assets/img/custom/gemini.svg';
-import mcpIcon from '@/assets/img/custom/mcp-with-background.svg';
-import openaiIcon from '@/assets/img/custom/openai.svg';
-import opencodeIcon from '@/assets/img/custom/opencode.svg';
-import vscodeIcon from '@/assets/img/custom/vscode.svg';
-import windsurfIcon from '@/assets/img/custom/windsurf.svg';
+const CDN_ICONS_URL = 'https://cdn.activepieces.com/icons';
 
 function icon(key: McpOAuthClientKey): string {
   return MCP_CLIENT_BRANDING[key].icon;
@@ -28,16 +19,22 @@ export const MCP_CLIENT_BRANDING: Record<
   McpOAuthClientKey,
   { icon: string; name: string }
 > = {
-  claude: { icon: claudeIcon, name: 'Claude' },
-  'claude-code': { icon: claudeCodeIcon, name: 'Claude Code' },
-  chatgpt: { icon: openaiIcon, name: 'ChatGPT' },
-  codex: { icon: codexIcon, name: 'Codex' },
-  'gemini-cli': { icon: geminiIcon, name: 'Gemini CLI' },
-  opencode: { icon: opencodeIcon, name: 'OpenCode' },
-  cursor: { icon: cursorIcon, name: 'Cursor' },
-  vscode: { icon: vscodeIcon, name: 'VS Code' },
-  windsurf: { icon: windsurfIcon, name: 'Windsurf' },
-  unknown: { icon: mcpIcon, name: 'MCP client' },
+  claude: { icon: `${CDN_ICONS_URL}/claude.svg`, name: 'Claude' },
+  'claude-code': {
+    icon: `${CDN_ICONS_URL}/claude-code.svg`,
+    name: 'Claude Code',
+  },
+  chatgpt: { icon: `${CDN_ICONS_URL}/openai.svg`, name: 'ChatGPT' },
+  codex: { icon: `${CDN_ICONS_URL}/codex.svg`, name: 'Codex' },
+  'gemini-cli': { icon: `${CDN_ICONS_URL}/gemini.svg`, name: 'Gemini CLI' },
+  opencode: { icon: `${CDN_ICONS_URL}/opencode.svg`, name: 'OpenCode' },
+  cursor: { icon: `${CDN_ICONS_URL}/cursor.svg`, name: 'Cursor' },
+  vscode: { icon: `${CDN_ICONS_URL}/vscode.svg`, name: 'VS Code' },
+  windsurf: { icon: `${CDN_ICONS_URL}/windsurf.svg`, name: 'Windsurf' },
+  unknown: {
+    icon: `${CDN_ICONS_URL}/mcp-with-background.svg`,
+    name: 'MCP client',
+  },
 };
 
 type LabelParams = {

@@ -19,7 +19,7 @@ export function ClientCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 rounded-[11px] border px-3.5 py-3 text-left transition-colors',
+        'flex items-center gap-3 rounded-md border px-3.5 py-3 text-left transition-colors',
         highlighted
           ? 'border-primary bg-primary/5'
           : 'hover:border-ring hover:bg-accent/40',
@@ -28,11 +28,11 @@ export function ClientCard({
       <ClientIcon icon={client.icon} />
       <div className="flex min-w-0 flex-1 flex-col gap-px">
         <span className="truncate text-sm font-semibold">{client.name}</span>
-        <span className="truncate text-[12.5px] text-muted-foreground">
+        <span className="truncate text-xs text-muted-foreground">
           {client.setupHint}
         </span>
       </div>
-      <ChevronRight className="size-[17px] shrink-0 text-muted-foreground" />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </button>
   );
 }

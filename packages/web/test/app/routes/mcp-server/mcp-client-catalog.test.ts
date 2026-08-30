@@ -23,10 +23,10 @@ function clientNamed(key: string, isCloud: boolean) {
 
 describe('mcpClientCatalog cloud overrides', () => {
   it('sends Claude to the directory listing on cloud only', () => {
-    expect(clientNamed('claude', true)?.steps[0].action?.href).toBe(
+    expect(clientNamed('claude', true)?.instructions[0].action?.href).toBe(
       'https://claude.ai/directory/cloud-activepieces-com',
     );
-    expect(clientNamed('claude', false)?.steps[0].action?.href).toContain(
+    expect(clientNamed('claude', false)?.instructions[0].action?.href).toContain(
       'add-custom-connector',
     );
   });
@@ -40,19 +40,23 @@ describe('mcpClientCatalog cloud overrides', () => {
     expect(cloudCursor?.docsUrl).toBe(
       'https://cursor.directory/plugins/activepieces-mcp-connector-for-cursor',
     );
-    expect(cloudCursor?.steps[0]).toEqual(clientNamed('cursor', false)?.steps[0]);
+    expect(cloudCursor?.instructions[0]).toEqual(
+      clientNamed('cursor', false)?.instructions[0],
+    );
   });
 });
 
 describe('mcpClientCatalog generated commands', () => {
   it('encodes the server url into the Cursor deep link', () => {
-    const href = clientNamed('cursor', false)?.steps[0].action?.href ?? '';
+    const href =
+      clientNamed('cursor', false)?.instructions[0].action?.href ?? '';
     const config = new URL(href).searchParams.get('config') ?? '';
     expect(JSON.parse(atob(config))).toEqual({ url: SERVER_URL });
   });
 
   it('encodes the server url into the VS Code deep link', () => {
-    const href = clientNamed('vscode', false)?.steps[0].action?.href ?? '';
+    const href =
+      clientNamed('vscode', false)?.instructions[0].action?.href ?? '';
     expect(JSON.parse(decodeURIComponent(href.split('?')[1]))).toEqual({
       name: 'activepieces',
       type: 'http',
@@ -61,7 +65,7 @@ describe('mcpClientCatalog generated commands', () => {
   });
 
   it('builds the Claude Code add command', () => {
-    expect(clientNamed('claude-code', false)?.steps[0].command).toBe(
+    expect(clientNamed('claude-code', false)?.instructions[0].command).toBe(
       `claude mcp add --transport http activepieces ${SERVER_URL}`,
     );
   });

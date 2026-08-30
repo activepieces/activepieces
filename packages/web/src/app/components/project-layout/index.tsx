@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Unplug } from 'lucide-react';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -85,12 +86,18 @@ export function ProjectDashboardLayout({
       icon: BotIcon,
       hasPermission: true,
     },
+    {
+      to: '/mcp-server',
+      label: t('MCP'),
+      show: !isEmbedded,
+      icon: Unplug,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =
     hasNoProject ||
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
-    location.pathname.includes('/mcp-server') ||
     isPlatformPage;
 
   const inner = (

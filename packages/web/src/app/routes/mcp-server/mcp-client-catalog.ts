@@ -1,17 +1,10 @@
+import { slugify } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
 import { MCP_CLIENT_BRANDING } from './mcp-client-display';
 
 const GENERIC_ICON = MCP_CLIENT_BRANDING.unknown.icon;
-
-function slugify(websiteName: string): string {
-  return (
-    websiteName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'activepieces'
-  );
-}
+const FALLBACK_SLUG = 'activepieces';
 
 function claudeDeepLink({
   serverUrl,
@@ -93,7 +86,7 @@ function catalogEntries({
       group: 'terminal',
       setupHint: t('One command'),
       docsUrl: 'https://docs.claude.com/en/docs/claude-code/mcp',
-      addStep: {
+      install: {
         body: t('From the folder you want the tools available in.'),
         command: `claude mcp add --transport http ${slug} ${url}`,
       },
@@ -109,7 +102,7 @@ function catalogEntries({
       group: 'terminal',
       setupHint: t('One command'),
       docsUrl: 'https://developers.openai.com/codex/mcp',
-      addStep: {
+      install: {
         body: t('From the folder you want the tools available in.'),
         command: `codex mcp add ${slug} --url ${url}`,
       },
@@ -125,7 +118,7 @@ function catalogEntries({
       setupHint: t('One command'),
       docsUrl:
         'https://google-gemini.github.io/gemini-cli/docs/tools/mcp-server.html',
-      addStep: {
+      install: {
         body: t('Pass --scope project to keep it to one repository.'),
         command: `gemini mcp add --transport http ${slug} ${url}`,
       },
@@ -153,7 +146,7 @@ function catalogEntries({
       group: 'editors',
       setupHint: t('Config file'),
       docsUrl: 'https://docs.windsurf.com/windsurf/cascade/mcp',
-      addStep: {
+      install: {
         body: t(
           'Open Cascade, click the plugins icon, then Manage plugins → View raw config.',
         ),
@@ -170,7 +163,7 @@ function catalogEntries({
       group: 'editors',
       setupHint: t('One click install'),
       docsUrl: 'https://docs.cursor.com/context/mcp',
-      addStep: {
+      install: {
         body: t('Opens Cursor and writes the server into ~/.cursor/mcp.json.'),
         action: {
           label: t('Add to Cursor'),
@@ -189,7 +182,7 @@ function catalogEntries({
       group: 'editors',
       setupHint: t('One click install'),
       docsUrl: 'https://code.visualstudio.com/docs/copilot/chat/mcp-servers',
-      addStep: {
+      install: {
         body: t(
           'Opens VS Code and writes the server into .vscode/mcp.json for this workspace.',
         ),
@@ -211,7 +204,7 @@ function catalogEntries({
       selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.claude,
       docsUrl:
         'https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp',
-      addStep: {
+      install: {
         body: t(
           'Paste the server URL as a custom connector. This client dials your server from the internet, so localhost will not reach it.',
         ),
@@ -223,7 +216,7 @@ function catalogEntries({
       },
       cloud: {
         docsUrl: CLOUD_LISTINGS.claude,
-        addStep: {
+        install: {
           body: t(
             'This server is already listed in Claude’s directory — add it there in one click.',
           ),
@@ -241,7 +234,7 @@ function catalogEntries({
       setupHint: t('Add a connector'),
       selfHostedVideoUrl: SELF_HOSTED_SETUP_VIDEOS.chatgpt,
       docsUrl: 'https://platform.openai.com/docs/mcp',
-      addStep: {
+      install: {
         body: t(
           'Paste the server URL as a connector. ChatGPT dials your server from the internet, so localhost will not reach it.',
         ),
@@ -257,7 +250,7 @@ function catalogEntries({
         'Streamable HTTP or SSE. Point it at the link and it works.',
       ),
       docsUrl: 'https://modelcontextprotocol.io/clients',
-      addStep: {
+      install: {
         body: t('Check your client’s docs for where the server URL goes.'),
         command: url,
       },
@@ -266,7 +259,7 @@ function catalogEntries({
   ];
 }
 
-function localAuthStepBody(client: string): string {
+function localAuthBody(client: string): string {
   return t(
     '{client} opens your browser on the first tool call. Approve the project.',
     { client },
@@ -279,21 +272,21 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
   terminal: {
     label: () => t('Terminal'),
     tagline: () => t('one command, nothing to edit'),
-    addStepTitle: () => t('Run this in your terminal'),
+    installTitle: () => t('Run this in your terminal'),
     subtitle: () => t('Terminal · runs locally'),
-    authBody: ({ client }) => localAuthStepBody(client),
+    authBody: ({ client }) => localAuthBody(client),
   },
   editors: {
     label: () => t('Editors'),
     tagline: () => t('we write the config for you'),
-    addStepTitle: () => t('Add the server'),
+    installTitle: () => t('Add the server'),
     subtitle: () => t('Editor · runs locally'),
-    authBody: ({ client }) => localAuthStepBody(client),
+    authBody: ({ client }) => localAuthBody(client),
   },
   chat: {
     label: () => t('Chat apps'),
     tagline: () => t('desktop and web, needs a public HTTPS URL'),
-    addStepTitle: () => t('Add the connector'),
+    installTitle: () => t('Add the connector'),
     subtitle: () => t('Desktop and web · needs a public HTTPS address'),
     authBody: ({ client, brand }) =>
       t(
@@ -303,7 +296,7 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
   },
   other: {
     label: () => t('Anything else'),
-    addStepTitle: () => t('Paste the server URL'),
+    installTitle: () => t('Paste the server URL'),
     subtitle: () => t('Streamable HTTP · OAuth'),
     authBody: () =>
       t(
@@ -312,9 +305,9 @@ const GROUP_COPY: Record<ClientGroupKey, GroupCopy> = {
   },
 };
 
-function addStepBody(entry: CatalogEntry): string {
+function installBody(entry: CatalogEntry): string {
   return (
-    entry.addStep?.body ??
+    entry.install?.body ??
     t(
       'Add a Streamable HTTP MCP server pointing at this URL — the {client} docs say where its server list lives.',
       { client: entry.name },
@@ -360,12 +353,12 @@ function toCatalogClient({
       label: configLabel(entry.config),
       snippet: entry.config.snippet,
     },
-    steps: [
+    instructions: [
       {
-        title: groupCopy.addStepTitle(),
-        body: addStepBody(entry),
-        command: entry.addStep ? entry.addStep.command : url,
-        action: entry.addStep?.action,
+        title: groupCopy.installTitle(),
+        body: installBody(entry),
+        command: entry.install ? entry.install.command : url,
+        action: entry.install?.action,
       },
       {
         title: t('Authenticate'),
@@ -394,7 +387,7 @@ export const mcpClientCatalog = {
   }): CatalogClient[] =>
     catalogEntries({
       url: serverUrl,
-      brand: { name: websiteName, slug: slugify(websiteName) },
+      brand: { name: websiteName, slug: slugify(websiteName) || FALLBACK_SLUG },
     })
       .map((entry) =>
         isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
@@ -426,12 +419,12 @@ export type ClientGroup = {
   tagline?: string;
 };
 
-export type ConnectStep = {
+export type SetupInstruction = {
   title: string;
   body: string;
   command?: string;
   prompts?: string[];
-  action?: ConnectAction;
+  action?: SetupLink;
 };
 
 export type CatalogClient = {
@@ -447,7 +440,7 @@ export type CatalogClient = {
     label: string;
     snippet: string;
   };
-  steps: ConnectStep[];
+  instructions: SetupInstruction[];
 };
 
 type Brand = {
@@ -455,7 +448,7 @@ type Brand = {
   slug: string;
 };
 
-type ConnectAction = {
+type SetupLink = {
   label: string;
   href: string;
   requiresInternetReachableUrl?: boolean;
@@ -464,7 +457,7 @@ type ConnectAction = {
 type GroupCopy = {
   label: () => string;
   tagline?: () => string;
-  addStepTitle: () => string;
+  installTitle: () => string;
   subtitle: () => string;
   authBody: (params: { client: string; brand: string }) => string;
 };
@@ -481,13 +474,13 @@ type CatalogEntry = {
   group: ClientGroupKey;
   setupHint: string;
   docsUrl: string;
-  addStep?: {
+  install?: {
     body: string;
     command?: string;
-    action?: ConnectAction;
+    action?: SetupLink;
   };
   auth?: string;
   selfHostedVideoUrl?: string;
   config?: ConfigSnippet;
-  cloud?: Pick<CatalogEntry, 'addStep'> & { docsUrl?: string };
+  cloud?: Pick<CatalogEntry, 'install'> & { docsUrl?: string };
 };

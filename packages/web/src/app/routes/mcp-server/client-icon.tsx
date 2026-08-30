@@ -10,7 +10,7 @@ export function ClientIcon({
   return (
     <span
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-[9px] border bg-background',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-md border bg-background',
         className,
       )}
     >

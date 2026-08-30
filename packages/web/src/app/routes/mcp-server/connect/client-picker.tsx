@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { ChevronRight, Search } from 'lucide-react';
 import { useState } from 'react';
 
+import { BackLink } from '@/components/custom/back-link';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,6 @@ import {
 import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 
-import { BackLink } from './back-link';
 import { ClientCard } from './client-card';
 
 export function ClientPicker({
@@ -39,7 +39,7 @@ export function ClientPicker({
           <BackLink label={t('Back')} onClick={nav.showLanding} />
           <div className="flex flex-wrap items-end gap-6">
             <div className="flex flex-1 flex-col gap-1.5">
-              <h1 className="text-[26px] font-bold leading-8 tracking-[-0.025em]">
+              <h1 className="text-2xl font-bold leading-8 tracking-tight">
                 {t('Where do you want to use it?')}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -48,7 +48,7 @@ export function ClientPicker({
                 )}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2.5 rounded-[9px] border bg-muted/40 py-2 pl-3.5 pr-2">
+            <div className="flex shrink-0 items-center gap-2.5 rounded-md border bg-muted/40 py-2 pl-3.5 pr-2">
               <span className="font-mono text-xs text-muted-foreground">
                 {abbreviateServerUrl(serverUrl)}
               </span>
@@ -70,7 +70,7 @@ export function ClientPicker({
             />
             <Button
               variant="link"
-              className="absolute right-3.5 h-auto text-[12.5px] font-semibold"
+              className="absolute right-3.5 h-auto text-xs font-semibold"
               onClick={() => nav.showClient('unknown')}
             >
               {t('Client not listed?')}
@@ -118,7 +118,7 @@ function ClientGroupSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-[0.04em]">
+        <span className="text-xs font-bold uppercase tracking-wide">
           {group.label}
         </span>
         {!isCatchAll && (
@@ -126,7 +126,7 @@ function ClientGroupSection({
             <span className="text-xs font-semibold text-muted-foreground">
               {clients.length}
             </span>
-            <span className="text-[12.5px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               · {group.tagline}
             </span>
           </>
@@ -138,16 +138,16 @@ function ClientGroupSection({
             key={client.key}
             type="button"
             onClick={() => nav.showClient(client.key)}
-            className="flex items-center gap-3.5 rounded-[11px] border border-dashed bg-muted/40 px-4.5 py-4 text-left transition-colors hover:border-ring"
+            className="flex items-center gap-3.5 rounded-md border border-dashed bg-muted/40 px-4.5 py-4 text-left transition-colors hover:border-ring"
           >
-            <ClientIcon icon={client.icon} className="size-[34px]" />
+            <ClientIcon icon={client.icon} className="size-8.5" />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="text-[13.5px] font-semibold">{client.name}</span>
-              <span className="truncate text-[12.5px] text-muted-foreground">
+              <span className="text-sm font-semibold">{client.name}</span>
+              <span className="truncate text-xs text-muted-foreground">
                 {client.setupHint}
               </span>
             </div>
-            <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-background px-3.5 py-2 text-[13px] font-semibold sm:flex">
+            <span className="hidden shrink-0 items-center gap-1.5 rounded-md border bg-background px-3.5 py-2 text-sm font-semibold sm:flex">
               {t('See the raw config')}
               <ChevronRight className="size-3.5" />
             </span>
