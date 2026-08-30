@@ -20,6 +20,26 @@ function requiresAccount({
   return pieceHasAuth && actionRequireAuth !== false;
 }
 
+function listIsComplete({
+  isSuccess,
+  isFetching,
+  count,
+  pageSize,
+}: {
+  isSuccess: boolean;
+  isFetching: boolean;
+  count: number;
+  pageSize: number;
+}): boolean {
+  // Cached data counts as success while a refetch is still running, and that page can predate a
+  // connection made a moment ago, so a fetch in flight means we do not yet know the full list.
+  if (!isSuccess || isFetching) {
+    return false;
+  }
+  // A full page means there may be more we cannot see.
+  return count < pageSize;
+}
+
 function label({
   tools,
   connections,
@@ -50,4 +70,4 @@ function label({
   return connectionsComplete ? t('Account was deleted') : null;
 }
 
-export const agentToolAccount = { label, requiresAccount };
+export const agentToolAccount = { label, listIsComplete, requiresAccount };

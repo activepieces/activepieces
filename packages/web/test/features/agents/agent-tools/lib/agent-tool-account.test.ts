@@ -163,3 +163,33 @@ describe('agentToolAccount.label', () => {
     ).toBe('Different account per action');
   });
 });
+
+describe('agentToolAccount.listIsComplete', () => {
+  const full = { isSuccess: true, isFetching: false, count: 5, pageSize: 1000 };
+
+  it('is complete for a settled partial page, which is the normal case', () => {
+    expect(agentToolAccount.listIsComplete(full)).toBe(true);
+  });
+
+  it('is not complete while a refetch is in flight, even though cached data already succeeded', () => {
+    expect(
+      agentToolAccount.listIsComplete({ ...full, isFetching: true }),
+    ).toBe(false);
+  });
+
+  it('is not complete before the first success', () => {
+    expect(
+      agentToolAccount.listIsComplete({ ...full, isSuccess: false }),
+    ).toBe(false);
+  });
+
+  it('is not complete when the page came back full, since more may exist unseen', () => {
+    expect(
+      agentToolAccount.listIsComplete({ ...full, count: 1000 }),
+    ).toBe(false);
+  });
+
+  it('is complete for an empty settled list, so a project with no connections is knowable', () => {
+    expect(agentToolAccount.listIsComplete({ ...full, count: 0 })).toBe(true);
+  });
+});

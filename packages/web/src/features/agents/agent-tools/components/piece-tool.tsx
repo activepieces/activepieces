@@ -58,16 +58,21 @@ export const AgentPieceToolComponent = ({
   // One project-wide query keyed only on the project, so every tool row on the screen shares a
   // single cache entry with the rest of the app instead of each fetching the same list again.
   const projectId = authenticationSession.getProjectId()!;
-  const { data: connections, isSuccess } =
-    appConnectionsQueries.useAppConnections({
-      request: { projectId, limit: CONNECTION_PAGE_SIZE },
-      extraKeys: [projectId],
-      enabled: !isNil(pieceMetadata?.auth),
-    });
-  // A full page means there may be more we cannot see, so a pin missing from it is not evidence
-  // the account is gone.
-  const connectionsComplete =
-    isSuccess && (connections?.data.length ?? 0) < CONNECTION_PAGE_SIZE;
+  const {
+    data: connections,
+    isSuccess,
+    isFetching,
+  } = appConnectionsQueries.useAppConnections({
+    request: { projectId, limit: CONNECTION_PAGE_SIZE },
+    extraKeys: [projectId],
+    enabled: !isNil(pieceMetadata?.auth),
+  });
+  const connectionsComplete = agentToolAccount.listIsComplete({
+    isSuccess,
+    isFetching,
+    count: connections?.data.length ?? 0,
+    pageSize: CONNECTION_PAGE_SIZE,
+  });
 
   if (!pieceMetadata) {
     return (
