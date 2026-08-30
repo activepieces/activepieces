@@ -75,12 +75,19 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
 
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
+        // Retry recovery: if a prior approve committed the state transition but
+        // applyStatusChangeForPublishedFlow threw (e.g. trigger registration failed),
+        // re-driving it here brings the flow into sync. Skip when the flow has moved on
+        // to a different published version — the approval is stale and must not touch it.
         if (approval.state === FlowApprovalRequestState.APPROVED) {
-            await flowService(log).applyStatusChangeForPublishedFlow({
-                id: approval.flowId,
-                projectId: approval.projectId,
-                newStatus: approval.requestedStatus,
-            })
+            const currentFlow = await flowService(log).getOneOrThrow({ id: approval.flowId, projectId: approval.projectId })
+            if (currentFlow.publishedVersionId === approval.flowVersionId) {
+                await flowService(log).applyStatusChangeForPublishedFlow({
+                    id: approval.flowId,
+                    projectId: approval.projectId,
+                    newStatus: approval.requestedStatus,
+                })
+            }
             return approval
         }
         assertStateIsPending(approval.state)
