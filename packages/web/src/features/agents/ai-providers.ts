@@ -28,7 +28,8 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
     provider: AIProviderName.VERTEX,
     name: 'Google Vertex AI',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-vertexai.png',
-    markdown: t(`Connect a Google Cloud service account to call Vertex AI models inside your own GCP project.
+    markdown:
+      t(`Connect a Google Cloud service account to call Vertex AI models inside your own GCP project.
 
 1. Open the [Google Cloud Console](https://console.cloud.google.com) and select the project you want to bill.
 2. Enable the **Vertex AI API** under *APIs & Services > Enabled APIs*.
