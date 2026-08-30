@@ -47,7 +47,12 @@ the currently published copy — is the only thing between a partial models.dev 
 install. Because it is the only check, it **fails closed**: only a `404` (nothing published yet) is
 allowed to skip it and bootstrap the first upload. A network error, a 5xx, or a non-JSON body all abort
 the run, because "cannot read the current catalog" is not the same as "there is no current catalog" —
-treating them alike lets a transient CDN blip disable the guard at exactly the moment it matters. The
+treating them alike lets a transient CDN blip disable the guard at exactly the moment it matters.
+That rule has two layers and both were needed: rejecting a body that is not JSON is not enough, because
+valid JSON of the wrong shape (`{"foo": 1}`) leaves `providers` undefined and reads as "no prior
+catalog" all the same. The document is validated structurally before it is trusted. `{"providers": {}}`
+is deliberately allowed through — an empty catalog is a recoverable state, not an unknown one, and
+blocking it would strand the next publish after a bad one. The
 published object carries `generatedAt` so staleness is diagnosable with a `curl`.
 
 **The object must exist before the code ships.** Until the first `workflow_dispatch` run lands it,
