@@ -47,6 +47,19 @@ describe('createLanguageModel', () => {
         expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
     })
 
+    it('keeps the custom provider on chat completions unless apiStyle asks for responses', () => {
+        const responsesConfig = { ...(configFor[AIProviderName.CUSTOM] as Record<string, unknown>), apiStyle: 'responses' }
+        const model = createLanguageModel({
+            provider: AIProviderName.CUSTOM,
+            auth: { apiKey: 'test-key' },
+            config: responsesConfig,
+            modelId: 'openai.gpt-oss-120b',
+        })
+        expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
+        expect(identify(model).provider).toBe('openai.responses')
+        expect(identify(model).modelId).toBe('openai.gpt-oss-120b')
+    })
+
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
         expect(identify(buildFor(AIProviderName.MISTRAL)).provider).toBe('mistral.chat')
         expect(identify(buildFor(AIProviderName.MISTRAL, { mistralViaOpenRouter: true })).provider).toBe('openrouter')

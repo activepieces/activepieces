@@ -38,11 +38,15 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders, apiStyle } = config as OpenAICompatibleProviderConfig
+            const headers = buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders })
+            if (apiStyle === 'responses') {
+                return createOpenAI({ baseURL: baseUrl, apiKey, headers }).responses(modelId)
+            }
             return createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
-                headers: buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders }),
+                headers,
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL: {
