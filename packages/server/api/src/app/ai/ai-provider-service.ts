@@ -1,4 +1,5 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
+import { modelCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -434,10 +435,12 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             await aiProviderService(log).recordKeyObservation({ platformId, providerId: aiProvider.id, signal: toProviderOutcomeSignal(error) })
             throw error
         }
+        const catalog = await modelCatalog.load()
         modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
+            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
         })))
     }
     return modelsCache.get(cacheKey)!
