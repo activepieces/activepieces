@@ -14,6 +14,7 @@ export default defineConfig({
     pool: 'forks',
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
+    maxWorkers: 4
   },
   resolve: {
     alias: {
