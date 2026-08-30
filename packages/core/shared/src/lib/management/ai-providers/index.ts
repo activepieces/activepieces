@@ -11,7 +11,12 @@ export const BaseAIProviderAuthConfig = z.object({
 })
 export type BaseAIProviderAuthConfig = z.infer<typeof BaseAIProviderAuthConfig>
 
-export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
+export export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().min(1),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
+
+const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
 export type AnthropicProviderAuthConfig = z.infer<typeof AnthropicProviderAuthConfig>
 
 export const ActivePiecesProviderAuthConfig = BaseAIProviderAuthConfig.extend({
@@ -100,6 +105,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().min(1),
+    region: z.string().min(1),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
@@ -116,6 +128,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -125,6 +138,7 @@ export const AIProviderConfig = z.union([
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
     BedrockProviderConfig,
+    VertexProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
@@ -189,6 +203,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
         auth: BedrockProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.VERTEX),
+        config: VertexProviderConfig,
+        auth: VertexProviderAuthConfig,
     }),
     z.object({
         displayName: z.string().min(1),

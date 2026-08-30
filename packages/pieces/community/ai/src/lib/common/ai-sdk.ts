@@ -2,13 +2,14 @@ import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
+import { createVertex } from '@ai-sdk/google-vertex'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
@@ -145,6 +146,11 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
             const { region } = config as BedrockProviderConfig
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
         }
+        case AIProviderName.VERTEX: {
+            const { serviceAccountJson } = auth as VertexProviderAuthConfig
+            const { project, region } = config as VertexProviderConfig
+            return createVertex({ project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } })(modelId)
+        }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
@@ -185,6 +191,17 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
+    }
+}
+
+function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {
+    const parsed: unknown = JSON.parse(serviceAccountJson)
+    const fields: Record<string, unknown> = typeof parsed === 'object' && parsed !== null ? { ...parsed } : {}
+    const clientEmail = fields['client_email']
+    const privateKey = fields['private_key']
+    return {
+        client_email: typeof clientEmail === 'string' ? clientEmail : undefined,
+        private_key: typeof privateKey === 'string' ? privateKey.replace(/\\n/g, '\n') : undefined,
     }
 }
 

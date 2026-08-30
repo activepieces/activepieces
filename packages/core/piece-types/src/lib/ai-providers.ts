@@ -24,6 +24,11 @@ const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().check(z.minLength(1)),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
+
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
@@ -75,6 +80,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().check(z.minLength(1)),
+    region: z.string().check(z.minLength(1)),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -88,6 +100,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -98,6 +111,7 @@ export const AIProviderConfig = z.union([
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
     BedrockProviderConfig,
+    VertexProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
@@ -272,6 +286,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.VERTEX]: 1_048_576,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
@@ -299,6 +314,7 @@ const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMod
 }
 
 const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
+    AIProviderName.VERTEX,
     AIProviderName.ANTHROPIC,
     AIProviderName.MISTRAL,
     AIProviderName.XAI,
@@ -348,6 +364,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
     [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.VERTEX]: buildProviderCapabilities(AIProviderName.VERTEX),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
     [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),

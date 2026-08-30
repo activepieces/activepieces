@@ -1,6 +1,7 @@
 import { AIProviderName, spreadIfDefined } from '@activepieces/core-utils'
-import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig } from '@activepieces/core-piece-types'
+import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
+import { createVertex } from '@ai-sdk/google-vertex'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -35,6 +36,11 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
             const { region } = config as BedrockProviderConfig
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
+        }
+        case AIProviderName.VERTEX: {
+            const { serviceAccountJson } = auth as VertexProviderAuthConfig
+            const { project, region } = config as VertexProviderConfig
+            return createVertex({ project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } })(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -76,6 +82,17 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             const exhaustiveCheck: never = provider
             throw new Error(`Unsupported provider: ${exhaustiveCheck}`)
         }
+    }
+}
+
+function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {
+    const parsed: unknown = JSON.parse(serviceAccountJson)
+    const fields: Record<string, unknown> = typeof parsed === 'object' && parsed !== null ? { ...parsed } : {}
+    const clientEmail = fields['client_email']
+    const privateKey = fields['private_key']
+    return {
+        client_email: typeof clientEmail === 'string' ? clientEmail : undefined,
+        private_key: typeof privateKey === 'string' ? privateKey.replace(/\\n/g, '\n') : undefined,
     }
 }
 

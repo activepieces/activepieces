@@ -11,6 +11,7 @@ import { openAICompatibleProvider } from './openai-compatible-gateway-provider'
 import { openAiCompatibleVendor } from './openai-compatible-vendor'
 import { openaiProvider } from './openai-provider'
 import { openRouterProvider } from './openrouter-provider'
+import { vertexProvider } from './vertex-provider'
 
 export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAuthConfig, AIProviderConfig>> = {
     [AIProviderName.OPENAI]: openaiProvider,
@@ -21,6 +22,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderAu
     [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,
     [AIProviderName.CUSTOM]: openAICompatibleProvider,
     [AIProviderName.BEDROCK]: bedrockProvider,
+    [AIProviderName.VERTEX]: vertexProvider,
     [AIProviderName.MISTRAL]: mistralProvider,
     [AIProviderName.XAI]: openAiCompatibleVendor({ name: 'xAI', provider: AIProviderName.XAI }),
     [AIProviderName.DEEPSEEK]: openAiCompatibleVendor({ name: 'DeepSeek', provider: AIProviderName.DEEPSEEK }),

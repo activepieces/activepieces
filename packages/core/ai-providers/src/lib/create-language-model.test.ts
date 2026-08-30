@@ -4,18 +4,31 @@ import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-lang
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
+type VertexModelIdentity = { config: { baseURL: string | (() => string) } }
+
 function identify(model: unknown): ModelIdentity {
     return model as ModelIdentity
 }
 
+function identifyVertex(model: unknown): VertexModelIdentity {
+    return model as VertexModelIdentity
+}
+
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
+    [AIProviderName.VERTEX]: { serviceAccountJson: JSON.stringify({
+        type: 'service_account',
+        project_id: 'gcp-project',
+        client_email: 'sa@gcp-project.iam.gserviceaccount.com',
+        private_key: '-----BEGIN PRIVATE KEY-----\\nnot-a-real-key\\n-----END PRIVATE KEY-----\\n',
+    }) },
 }
 
 const configFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.AZURE]: { resourceName: 'res', apiVersion: '2024-01-01' },
     [AIProviderName.BEDROCK]: { region: 'us-east-1' },
     [AIProviderName.CUSTOM]: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [] },
+    [AIProviderName.VERTEX]: { project: 'gcp-project', region: 'europe-west4', models: [] },
 }
 
 const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) => createLanguageModel({
@@ -45,6 +58,15 @@ describe('createLanguageModel', () => {
     it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
         expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
         expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
+    })
+
+    it('routes Vertex straight at the configured GCP project and region', () => {
+        const model = buildFor(AIProviderName.VERTEX)
+        const { config } = identifyVertex(model)
+        const baseUrl = typeof config.baseURL === 'function' ? config.baseURL() : config.baseURL
+
+        expect(identify(model).provider).toBe('google.vertex.chat')
+        expect(baseUrl).toBe('https://europe-west4-aiplatform.googleapis.com/v1beta1/projects/gcp-project/locations/europe-west4/publishers/google')
     })
 
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
