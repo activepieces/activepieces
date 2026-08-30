@@ -9,14 +9,22 @@ import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
-import { disposableEmail } from './lib/disposable-email'
+import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         if (params.provider === UserIdentityProvider.EMAIL) {
-            await disposableEmail.assertMaySignUp({ email: params.email, log })
+            const maySignUp = await zerobounce.maySignUp({ email: params.email, log })
+            if (!maySignUp) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                    params: {
+                        email: params.email.toLowerCase().trim(),
+                    },
+                })
+            }
         }
         const platformId = params.platformId
 

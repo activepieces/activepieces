@@ -1,4 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { modelCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -377,10 +378,12 @@ async function fetchModels({ aiProvider, platformId }: { aiProvider: AIProviderS
     const cacheKey = getModelsCacheKey({ provider, auth, config })
     if (!modelsCache.has(cacheKey) || 'models' in config) {
         const data = await aiProviders[provider].listModels(auth, config)
+        const catalog = await modelCatalog.load()
         modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
+            ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
         })))
     }
     return modelsCache.get(cacheKey)!
