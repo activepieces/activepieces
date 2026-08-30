@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -23,6 +24,7 @@ import {
   Shield,
   SlidersHorizontal,
   SquarePen,
+  Unplug,
   UserCogIcon,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -59,7 +61,10 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -81,6 +86,7 @@ export function PrimaryRail() {
     toggle: toggleCollapsed,
   } = useRailCollapsed();
   const showAgents = useAgentsNavVisible();
+  const { checkAccess } = useAuthorization();
 
   if (embedState.isEmbedded || embedState.hideSideNav) {
     return null;
@@ -153,6 +159,15 @@ export function PrimaryRail() {
               label={t('Impact')}
               isActive={({ pathname }) => pathname.startsWith('/impact')}
             />
+            {checkAccess(Permission.READ_MCP) && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/mcp-server"
+                icon={Unplug}
+                label={t('MCP')}
+                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
+              />
+            )}
           </div>
           <RailPinnedProjects collapsed={collapsed} />
         </div>

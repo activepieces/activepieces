@@ -21,13 +21,14 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 
 ### How it works
 
-- Main protocol endpoint: `POST /v1/mcp/:projectId/http` (StreamableHTTP). Config: `GET/POST /v1/mcp/:projectId`, rotate token via `.../rotate`.
-- Auth: `Authorization: Bearer {token}` or `?token=`. OAuth 2.0 PKCE also supported for clients that need it.
+- Main protocol endpoint: `POST /mcp` at the domain root, plus `POST /mcp/platform` (StreamableHTTP), both registered in `server.ts`. Config lives under the project API (`GET/POST` on the project MCP server route).
+- Auth is **OAuth-only**: `resolveIdentity` accepts an `Authorization: Bearer` value only if `mcpOAuthTokenService.verifyAccessToken` verifies it as a signed JWT with audience `JwtAudience.MCP_OAUTH_ACCESS`. There is no static-token authenticator and no `?token=` query path.
 - AI pieces consume MCP tools over three transports: `SIMPLE_HTTP`, `STREAMABLE_HTTP`, `SSE`.
 - Embed SDK adds `authorizeMcp()` (in-embed OAuth consent), `mcpSettings()`, and `generateMcpToken()` (mints `{ mcpServerUrl, mcpToken }` with no OAuth flow, backed by `POST /v1/projects/:projectId/mcp-server/token` — a short-lived 15-min project-scoped token).
 
 ### Gotchas
 
+- **`mcp_server.token` is dead — nothing reads it.** It is written by the `getOrCreate` defaults and by both `/rotate` routes (`mcpServerService.rotateToken` / `rotatePlatformToken`), and consulted by **no authenticator**, so "rotating" it rotates a secret that grants nothing. It is still on the public `McpServer` zod schema, so the API keeps shipping a secret-shaped 72-char string that authenticates nothing — do not reach for it as a credential, and do not tell a self-hoster to. The settings panel is consistent with reality already (`mcp-credentials.tsx` renders the URL and *"Authentication is handled via OAuth"*, never a token). Deleting the column, the two routes, and the schema field is a breaking API-response change and has not been done.
 - **`mcp_oauth_token.clientKey` is decided once, at sign-in.** `exchangeCode` derives it from the registration's
   redirect URIs via `mcpOAuthClientIdentity`, so the grants list can filter and group in SQL instead of loading
   every `mcp_oauth_client` row on the platform to re-derive keys in memory. Two consequences: sharpening the
@@ -40,8 +41,15 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
   RFC 8252 port-agnostic matching is not needed — but a fresh `mcp_oauth_client` row and `clientId` is
   minted per sign-in, so `clientId` is **not** a stable identity for "a connected client", and those rows
   accumulate unbounded. Measured 2026-08-23 (Claude Code 2.1.235, Codex 0.149.0).
+- **Never advertise `client_id_metadata_document_supported`** in the authorization-server metadata while
+  `client_id` is validated against `^[A-Za-z0-9_-]{1,64}$`. Claude Code prefers a Client ID Metadata
+  Document, whose `client_id` is a URL; it only falls back to DCR because we stay silent about CIMD.
+  Advertising it without widening the `client_id` shape breaks Claude Code sign-in outright.
+- **A static `Authorization` header is worse than none for MCP clients.** In Codex, setting `bearer_token_env_var` or an `Authorization` header short-circuits to bearer auth and skips OAuth discovery entirely; in Claude Code a rejected `Authorization` header surfaces as a failed connection rather than falling back to OAuth. So a partially-built static-token path silently disables the OAuth path that does work. Related: headless/CI (`claude -p`, the SDK) has no `/mcp` panel and therefore no supported way to connect today.
+
 - Flow attribution: `ap_create_flow`/`ap_build_flow`/`ap_duplicate_flow` stamp `ownerId` (OAuth user) and `createdBy: { type: 'MCP', id }`.
 - `MCP_SERVER_CONNECTED` is deduped to at most one/user/server/day (`telemetryDedupe.onceToday`) — a daily-active signal, not request volume. Per-call usage is `MCP_TOOL_CALLED`.
+- **The MCP URL must be reachable without a redirect.** A cross-origin `301/302/307/308` strips the `Authorization` header in every spec-conforming client, and "cross-origin" includes the scheme — so a plain `http`→`https` canonicalisation at the proxy is as fatal as apex→www. It fails *loudly-looking-fine*: discovery is request-derived (`networkUtils.getRequestBaseUrl` reads `x-forwarded-proto`/host), so OAuth sign-in completes against the canonical origin while the client keeps POSTing the URL it was given, yielding permanent `401`s or a re-auth loop rather than a clean error. Activepieces never redirects there itself — the only prefixes are `/mcp` and `/mcp/platform`, and Fastify runs `ignoreTrailingSlash: true` so `/mcp/` matches the same route with no `301` — so it is always operator proxy config, and undetectable server-side (the proxy answers the pre-redirect request; AP never sees it).
 - OAuth discovery URLs are built via `domainHelper.getPublicUrlFromRequest` so subpath-hosted instances advertise the right prefix. `401`s carry an RFC 9728 `WWW-Authenticate: Bearer resource_metadata="…"` header. Host-root `.well-known/oauth-*` must still be forwarded to AP by the operator.
 - **DCR must issue a client secret when `token_endpoint_auth_method` is omitted.** RFC 7591 §2 says an omitted value defaults to `client_secret_basic`, *not* `none`, and [Microsoft Copilot Studio](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/plugin-authentication-dynamic-client-registration) refuses DCR outright without one ("DCR without a client secret isn't supported yet"). Defaulting an omitted method to `none` looks like it fixes the "public client handed a secret" contradiction, but it resolves it the wrong way: it breaks Copilot and makes `client_secret_basic` support unreachable for every client that omits the field. Resolve it the other way — default to `client_secret_basic` and keep issuing the secret.
 - `x-ap-conversation-id` header (EE chat) rebinds the server to a conversation's project, but only when scoping matches the token — it can never widen the grant.
