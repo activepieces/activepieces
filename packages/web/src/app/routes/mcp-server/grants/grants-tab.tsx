@@ -59,7 +59,7 @@ export function GrantsTab() {
     request.memberIds !== undefined ||
     request.clientKeys !== undefined;
 
-  const { data, isLoading } = mcpGrantsQueries.useGrants({
+  const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
     request,
     showErrorDialog: true,
   });
@@ -72,7 +72,12 @@ export function GrantsTab() {
     },
   });
 
-  if (!isLoading && !hasActiveFilters && (data?.data.length ?? 0) === 0) {
+  if (
+    !isLoading &&
+    !isError &&
+    !hasActiveFilters &&
+    (data?.data.length ?? 0) === 0
+  ) {
     return (
       <PageBand className="py-8">
         <Empty className="border border-dashed py-20">
@@ -115,7 +120,8 @@ export function GrantsTab() {
               <ConfirmationDeleteDialog
                 title={t('Revoke access')}
                 message={t(
-                  'Access ends within 15 minutes. The client will ask to sign in again.',
+                  'Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.',
+                  { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
                 entityName={t('revokedGrants', { count: rows.length })}
                 buttonText={t('Revoke')}

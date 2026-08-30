@@ -133,31 +133,35 @@ export function buildGrantsColumns({
       accessorKey: 'actions',
       size: 100,
       header: () => <span className="sr-only">{t('Revoke')}</span>,
-      cell: ({ row }) => (
-        <div className="flex justify-end">
-          <ConfirmationDeleteDialog
-            title={t('Revoke access')}
-            message={t(
-              'Access ends within 15 minutes. The client will ask to sign in again.',
-            )}
-            entityName={mcpClientDisplay.label({
-              key: row.original.clientKey,
-              clientName: row.original.clientName,
-            })}
-            buttonText={t('Revoke')}
-            isDanger
-            showToast={false}
-            mutationFn={() => onRevoke([row.original.id])}
-          >
-            <Button
-              variant="link"
-              className="h-auto p-0 text-destructive hover:text-destructive"
+      cell: ({ row }) => {
+        const clientLabel = mcpClientDisplay.label({
+          key: row.original.clientKey,
+          clientName: row.original.clientName,
+        });
+        return (
+          <div className="flex justify-end">
+            <ConfirmationDeleteDialog
+              title={t('Revoke access')}
+              message={t(
+                'Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.',
+                { entityName: clientLabel },
+              )}
+              entityName={clientLabel}
+              buttonText={t('Revoke')}
+              isDanger
+              showToast={false}
+              mutationFn={() => onRevoke([row.original.id])}
             >
-              {t('Revoke')}
-            </Button>
-          </ConfirmationDeleteDialog>
-        </div>
-      ),
+              <Button
+                variant="link"
+                className="h-auto p-0 text-destructive hover:text-destructive"
+              >
+                {t('Revoke')}
+              </Button>
+            </ConfirmationDeleteDialog>
+          </div>
+        );
+      },
     },
   ];
 }

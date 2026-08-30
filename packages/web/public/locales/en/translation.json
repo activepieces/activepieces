@@ -2560,7 +2560,7 @@
   "{client} docs": "{client} docs",
   "Or edit {path}": "Or edit {path}",
   "{client} opens your browser on the first tool call. Approve the project.": "{client} opens your browser on the first tool call. Approve the project.",
-  "Access ends within 15 minutes. The client will ask to sign in again.": "Access ends within 15 minutes. The client will ask to sign in again.",
+  "Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.": "Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.",
   "Active today": "Active today",
   "Clear a filter to see more.": "Clear a filter to see more.",
   "How connecting works": "How connecting works",
