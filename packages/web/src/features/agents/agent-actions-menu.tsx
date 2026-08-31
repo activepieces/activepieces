@@ -15,6 +15,7 @@ import {
 import { agentsMutations } from '@/features/agents/hooks/agents-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type AgentActionsMenuProps = {
   agent: AgentSummary;
@@ -32,7 +33,9 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
       ),
   });
 
-  if (!checkAccess(Permission.WRITE_AGENT)) {
+  const inActiveProject =
+    agent.projectId === authenticationSession.getProjectId();
+  if (inActiveProject && !checkAccess(Permission.WRITE_AGENT)) {
     return null;
   }
 

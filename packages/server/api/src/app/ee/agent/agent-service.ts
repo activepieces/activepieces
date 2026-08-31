@@ -3,7 +3,7 @@ import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
 import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Brackets, In, SelectQueryBuilder } from 'typeorm'
+import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
@@ -169,20 +169,27 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const publishedFlows = await publishedFlowsRunning({ projectId, externalId: agent.externalId })
-        if (publishedFlows.length > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: describeFlowsInUse(publishedFlows) },
-            })
-        }
-        await agentRepo().delete({ id, projectId })
-        return agent
+        return transaction(async (entityManager) => {
+            await entityManager.getRepository(AgentEntity)
+                .createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id AND agent."projectId" = :projectId', { id, projectId })
+                .getOne()
+            const publishedFlows = await publishedFlowsRunning({ projectId, externalId: agent.externalId, entityManager })
+            if (publishedFlows.length > 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: describeFlowsInUse(publishedFlows) },
+                })
+            }
+            await entityManager.getRepository(AgentEntity).delete({ id, projectId })
+            return agent
+        })
     },
 })
 
-async function publishedFlowsRunning({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
-    const flows = await flowVersionRepo()
+async function publishedFlowsRunning({ projectId, externalId, entityManager }: { projectId: ProjectId, externalId: string, entityManager: EntityManager }): Promise<string[]> {
+    const flows = await flowVersionRepo(entityManager)
         .createQueryBuilder('flow_version')
         .select('flow_version."displayName"', 'displayName')
         .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
