@@ -75,6 +75,11 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
 
     async approve({ requestId, projectId, approverPrincipal, request }: DecideParams): Promise<FlowApprovalRequest> {
         const approval = await this.getOneOrThrow({ requestId, projectId })
+        // Idempotent-only, no retry-drive. flow.status doesn't distinguish
+        // "activation failed after commit" from "operator disabled after
+        // successful approve", so re-driving here could revert an intentional
+        // disable. Any flow stuck DISABLED (approval-related or not) recovers
+        // via the standard flow enable path (status toggle).
         if (approval.state === FlowApprovalRequestState.APPROVED) {
             return approval
         }
