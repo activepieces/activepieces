@@ -613,6 +613,7 @@ describe('Platform API', () => {
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
+            expect(responseBody.autoCreatePersonalProjects).toBe(mockPlatform.autoCreatePersonalProjects)
         })
 
 

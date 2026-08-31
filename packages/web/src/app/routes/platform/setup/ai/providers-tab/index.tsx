@@ -2,26 +2,13 @@ import { AIProviderName } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Bot,
-  MessageSquare,
-  MoreHorizontal,
-  Plus,
-  Settings2,
-  Trash2,
-} from 'lucide-react';
+import { Bot, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -48,6 +35,7 @@ import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
+import { KeyStatusBadge } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -80,6 +68,10 @@ export function ProvidersTab() {
     });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
+      onSuccess: () => refetch(),
+    });
+  const { mutate: recheckProvider, isPending: isRechecking } =
+    aiProviderMutations.useRecheckAiProvider({
       onSuccess: () => refetch(),
     });
   const { mutate: updateProvider, isPending: isSaving } =
@@ -163,6 +155,8 @@ export function ProvidersTab() {
             closeConfig();
           }}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+          isRechecking={isRechecking}
+          onRecheck={() => recheckProvider(activeConfig.id)}
           onBack={closeConfig}
         />
         <ConnectProviderDialog
@@ -289,7 +283,12 @@ function ProviderGroup({
   }
 
   return (
-    <section className="rounded-xl border border-border/60 bg-card">
+    <section
+      className={cn(
+        'overflow-hidden rounded-xl border border-border/60 bg-card',
+        CARD_SHADOW,
+      )}
+    >
       <div className="flex items-center gap-3 px-5 py-4">
         <ProviderLogo info={info} />
         <div className="min-w-0 flex-1">
@@ -310,7 +309,7 @@ function ProviderGroup({
           {t('Keys')}
         </p>
       </div>
-      <div className="pb-1">
+      <div>
         {configs.map((config) => (
           <ConfigRow
             key={config.id}
@@ -370,8 +369,9 @@ function ConfigRow({
         }
       }}
       className={cn(
-        'flex items-center gap-4 rounded-lg px-5 py-3 transition-colors',
-        allowWrite && 'cursor-pointer hover:bg-muted/40',
+        'group flex items-center gap-4 px-5 py-3 transition-colors',
+        allowWrite &&
+          'cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -384,6 +384,7 @@ function ConfigRow({
               {t('Chat')}
             </span>
           )}
+          <KeyStatusBadge status={config.status} />
         </div>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -412,27 +413,25 @@ function ConfigRow({
       )}
 
       {allowWrite && (
-        <div onClick={(event) => event.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="px-2">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onOpen}>
-                <Settings2 className="size-4" />
-                {t('Edit')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
+        <div
+          className="flex shrink-0 items-center gap-1"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-2 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
                 onClick={() => setDeleteOpen(true)}
-                className="text-destructive"
               >
                 <Trash2 className="size-4" />
-                {t('Delete')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <span className="sr-only">{t('Delete')}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('Delete')}</TooltipContent>
+          </Tooltip>
+          <ChevronRight className="size-4 text-muted-foreground" />
           <ConfirmationDeleteDialog
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
@@ -501,7 +500,12 @@ function ChatProviderRow({
   onChange: (configId: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3">
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+        CARD_SHADOW,
+      )}
+    >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
         <MessageSquare className="size-4 text-muted-foreground" />
       </div>
@@ -615,7 +619,12 @@ function AvailableProviderCard({
   onConnect: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border">
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4 transition-colors hover:border-border',
+        CARD_SHADOW,
+      )}
+    >
       <ProviderLogo info={info} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm font-medium leading-none">{info.name}</p>
@@ -635,6 +644,9 @@ function AvailableProviderCard({
     </div>
   );
 }
+
+const CARD_SHADOW =
+  'shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)]';
 
 function providerInfoOf({
   provider,

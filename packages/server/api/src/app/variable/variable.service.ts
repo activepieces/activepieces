@@ -1,11 +1,12 @@
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
-import { AppConnectionOwners, User, UserIdentity, UserWithMetaInformation, Variable, VariableWithoutSensitiveData } from '@activepieces/shared'
+import { AppConnectionOwners, Variable, VariableWithoutSensitiveData } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, ILike, QueryFailedError } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { mapToUserWithMetaInformation } from '../user/user-service'
 import { VariableEntity, VariableSchema } from './variable.entity'
 
 export const variableRepo = repoFactory(VariableEntity)
@@ -187,28 +188,6 @@ function stripSensitiveData(row: VariableSchema): VariableWithoutSensitiveData {
 }
 
 const MAX_VARIABLE_OWNERS = 200
-
-function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
-    if (isNil(owner)) {
-        return null
-    }
-    const identity = owner.identity
-    if (isNil(identity)) {
-        return null
-    }
-    return {
-        id: owner.id,
-        email: identity.email,
-        firstName: identity.firstName,
-        lastName: identity.lastName,
-        platformId: owner.platformId,
-        platformRole: owner.platformRole,
-        status: owner.status,
-        externalId: owner.externalId,
-        created: owner.created,
-        updated: owner.updated,
-    }
-}
 
 type CreateParams = {
     projectId: string

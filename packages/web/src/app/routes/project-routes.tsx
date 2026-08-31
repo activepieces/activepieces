@@ -26,6 +26,7 @@ const FlowBuilderPage = lazyWithRetry(
   'flow-builder',
 );
 const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
+const McpServerPage = lazyWithRetry(() => import('./mcp-server'), 'mcp-server');
 const ProjectReleasesPage = lazyWithRetry(
   () =>
     import('./project-release').then((m) => ({
@@ -261,6 +262,20 @@ export const projectRoutes = [
             <AnalyticsPage />
           </SuspenseWrapper>
         </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/mcp-server',
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_MCP]}>
+          <PageTitle title="MCP Server">
+            <SuspenseWrapper>
+              <McpServerPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
       </ProjectDashboardLayout>
     ),
   },

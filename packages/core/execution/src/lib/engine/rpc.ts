@@ -1,4 +1,4 @@
-import { ActivepiecesError, isObject, spreadIfNotUndefined } from '@activepieces/core-utils'
+import { ActivepiecesError, isObject, spreadIfNotUndefined, toError } from '@activepieces/core-utils'
 
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
@@ -17,11 +17,12 @@ type NotifySocket = Pick<RpcSocket, 'emit'>
 
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
-    timeoutMs: number,
+    timeout: RpcTimeout,
 ): T {
     return new Proxy({} as T, {
         get(_target, method: string) {
             return async (payload: unknown) => {
+                const timeoutMs = typeof timeout === 'function' ? timeout(method) : timeout
                 try {
                     const result = await socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
                     if (isRpcErrorEnvelope(result)) {
@@ -36,8 +37,7 @@ export function createRpcClient<T extends Contract>(
                     if (error instanceof Error && error.message.startsWith('RPC [')) {
                         throw error
                     }
-                    const message = error instanceof Error ? error.message : String(error)
-                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${message}`)
+                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${toError(error).message}`)
                 }
             }
         },
@@ -58,7 +58,7 @@ export function createRpcServer<T extends Contract>(
         catch (error) {
             log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
             ack({
-                __rpcError: error instanceof Error ? error.message : String(error),
+                __rpcError: toError(error).message,
                 ...spreadIfNotUndefined('__rpcApError', apErrorOf(error)),
             })
         }
@@ -104,6 +104,8 @@ export function apErrorOf(error: unknown): RpcApError | undefined {
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rpcApError?: unknown } {
     return isObject(value) && '__rpcError' in value
 }
+
+export type RpcTimeout = number | ((method: string) => number)
 
 export type RpcApError = {
     code: string
