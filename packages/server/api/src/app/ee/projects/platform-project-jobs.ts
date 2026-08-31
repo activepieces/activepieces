@@ -12,7 +12,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { ProjectEntity } from '../../project/project-entity'
-import { cleanProjectDescendants } from '../platform/platform-teardown-jobs'
+import { deleteProjectLinkedEntities } from '../platform/platform-teardown-jobs'
 
 const projectRepo = repoFactory(ProjectEntity)
 
@@ -49,7 +49,7 @@ export const platformProjectBackgroundJobs = (log: FastifyBaseLogger) => ({
             await flowRepo().delete({ id: flowId })
         }
 
-        await cleanProjectDescendants({ projectId })
+        await deleteProjectLinkedEntities({ projectId })
 
         await transaction(async (entityManager) => {
             await appConnectionsRepo(entityManager).delete({

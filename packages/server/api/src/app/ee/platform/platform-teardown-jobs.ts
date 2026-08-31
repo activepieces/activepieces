@@ -61,7 +61,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         const projectIds = await listProjectIdsByPlatform(platformId)
         for (const projectId of projectIds) {
-            await cleanProjectDescendants({ projectId })
+            await deleteProjectLinkedEntities({ projectId })
             await projectRepo().delete({ id: projectId, platformId })
         }
 
@@ -76,7 +76,15 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await concurrencyPoolRepo().delete({ platformId })
         await toolSearchIndexRepo().delete({ platformId })
 
-        await batchDeleteBy(auditLogRepo(), 'audit_event', '"platformId" = :platformId', { platformId })
+        let deletedAuditEvents: number
+        do {
+            const result = await auditLogRepo()
+                .createQueryBuilder()
+                .delete()
+                .where(`id IN (SELECT id FROM "audit_event" WHERE "platformId" = :platformId LIMIT ${BATCH_DELETE_CHUNK_SIZE})`, { platformId })
+                .execute()
+            deletedAuditEvents = result.affected ?? 0
+        } while (deletedAuditEvents > 0)
         await platformRepo().delete({ id: platformId })
 
         const identityIds = await deletePlatformUsers(platformId)
@@ -185,28 +193,24 @@ async function deleteUnreferencedIdentities(identityIds: string[]): Promise<void
     }
 }
 
-export async function cleanProjectDescendants({ projectId }: { projectId: string }): Promise<void> {
-    await batchDeleteBy(cellRepo(), 'cell', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(recordRepo(), 'record', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(fieldRepo(), 'field', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(tableRepo(), 'table', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(flowRunRepo(), 'flow_run', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(triggerEventRepo(), 'trigger_event', '"projectId" = :projectId', { projectId })
-    await batchDeleteBy(fileRepo(), 'file', '"projectId" = :projectId', { projectId })
+export async function deleteProjectLinkedEntities({ projectId }: { projectId: string }): Promise<void> {
+    await batchDeleteByProjectId({ repo: cellRepo(), projectId })
+    await batchDeleteByProjectId({ repo: recordRepo(), projectId })
+    await batchDeleteByProjectId({ repo: fieldRepo(), projectId })
+    await batchDeleteByProjectId({ repo: tableRepo(), projectId })
+    await batchDeleteByProjectId({ repo: flowRunRepo(), projectId })
+    await batchDeleteByProjectId({ repo: triggerEventRepo(), projectId })
+    await batchDeleteByProjectId({ repo: fileRepo(), projectId })
 }
 
-async function batchDeleteBy(
-    repo: Repository<ObjectLiteral>,
-    tableName: string,
-    whereClause: string,
-    params: Record<string, unknown>,
-): Promise<void> {
+async function batchDeleteByProjectId({ repo, projectId }: BatchDeleteByProjectIdParams): Promise<void> {
+    const tableName = repo.metadata.tableName
     let deleted: number
     do {
         const result = await repo
             .createQueryBuilder()
             .delete()
-            .where(`id IN (SELECT id FROM "${tableName}" WHERE ${whereClause} LIMIT ${BATCH_DELETE_CHUNK_SIZE})`, params)
+            .where(`id IN (SELECT id FROM "${tableName}" WHERE "projectId" = :projectId LIMIT ${BATCH_DELETE_CHUNK_SIZE})`, { projectId })
             .execute()
         deleted = result.affected ?? 0
     } while (deleted > 0)
@@ -222,4 +226,9 @@ type DrainFlowsParams = {
 type BeginPlatformTeardownParams = {
     platformId: string
     log: FastifyBaseLogger
+}
+
+type BatchDeleteByProjectIdParams = {
+    repo: Repository<ObjectLiteral>
+    projectId: string
 }
