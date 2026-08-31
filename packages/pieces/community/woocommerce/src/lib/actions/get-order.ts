@@ -1,41 +1,41 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
   AuthenticationType,
+  HttpMethod,
+  HttpRequest,
+  httpClient,
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
-import { findCustomerOutputSchema } from '../output-schemas';
+import { getOrderOutputSchema } from '../output-schemas';
 
-export const wooFindCustomer = createAction({
-  name: 'Find Customer',
+export const wooGetOrder = createAction({
+  name: 'Get Order',
   classification: 'READ',
-  displayName: 'Find Customer',
-  description: 'Find a Customer',
+  displayName: 'Get Order',
+  description: 'Retrieve a single order by its ID',
   audience: 'both',
   aiMetadata: {
     description:
-      'Looks up customers in a WooCommerce store by exact email address. Use when an agent needs to resolve a shopper to their customer record or ID before referencing them. Read-only and idempotent. Requires the email; returns matching customers (empty if none match).',
+      'Retrieves one order from a WooCommerce store by its numeric order ID, including line items, billing and shipping addresses, totals, and status. Use when an agent already has an order ID and needs the full order record. Read-only and idempotent.',
     idempotent: true,
   },
   auth: wooAuth,
-  outputSchema: findCustomerOutputSchema,
+  outputSchema: getOrderOutputSchema,
   props: {
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: 'Enter the email',
+    id: Property.ShortText({
+      displayName: 'Order ID',
+      description: 'Enter the order ID',
       required: true,
     }),
   },
   async run(configValue) {
     const trimmedBaseUrl = configValue.auth.props.baseUrl.replace(/\/$/, '');
-    const email = configValue.propsValue['email'];
+    const orderId = configValue.propsValue['id'];
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers?email=${email}`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/orders/${orderId}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: configValue.auth.props.consumerKey,

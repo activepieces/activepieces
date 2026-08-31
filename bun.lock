@@ -5356,7 +5356,7 @@
     },
     "packages/pieces/community/mailer-lite": {
       "name": "@activepieces/piece-mailer-lite",
-      "version": "0.6.8",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9784,7 +9784,7 @@
     },
     "packages/pieces/community/woocommerce": {
       "name": "@activepieces/piece-woocommerce",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9974,7 +9974,7 @@
     },
     "packages/pieces/community/youtube": {
       "name": "@activepieces/piece-youtube",
-      "version": "0.4.14",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
