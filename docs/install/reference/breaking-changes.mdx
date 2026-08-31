@@ -155,6 +155,23 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### Front's Attachments field takes files instead of URLs
+
+The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+
+A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+
+#### What you need to do
+
+Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+
+#### A file URL that fails to download is no longer treated as a file
+
+Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
+
+#### What you need to do
+
+Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
 
 ## 0.87.0
 
