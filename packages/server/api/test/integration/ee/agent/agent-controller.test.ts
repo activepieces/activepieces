@@ -6,7 +6,6 @@ import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
-import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -521,89 +520,10 @@ describe('agent permissions', () => {
     })
 })
 
-describe('agent templates', () => {
-    it('serves starter agents with no ai provider and no connections configured', async () => {
-        const ctx = await context()
-
-        const response = await ctx.get('/v1/agents/templates')
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        const templates = response.json().data
-        expect(templates.length).toBe(AGENT_TEMPLATES.length)
-        expect(new Set(templates.map((t: { id: string }) => t.id)).size).toBe(templates.length)
-        for (const template of templates) {
-            expect(template.instructions.length).toBeGreaterThan(0)
-        }
-    })
-
-    it.each(AGENT_TEMPLATES.map((template) => [template.id, template]))(
-        'creates and publishes the %s starter, with only what the template carries',
-        async (_id, template) => {
-            const ctx = await context()
-
-            const created = await ctx.post('/v1/agents', {
-                projectId: ctx.project.id,
-                displayName: template.displayName,
-                description: template.description,
-                icon: template.icon,
-                color: template.color,
-                draft: { instructions: template.instructions },
-            })
-
-            expect(created.statusCode).toBe(StatusCodes.CREATED)
-            expect(created.json().description).toBe(template.description)
-            expect(created.json().draft.maxSteps).toBe(DEFAULT_AGENT_MAX_STEPS)
-            expect((await ctx.post(`/v1/agents/${created.json().id}/publish`)).statusCode).toBe(StatusCodes.OK)
-        })
-
-    it('tells the caller to connect a provider, rather than naming an internal entity', async () => {
-        const ctx = await context()
-
-        const drafted = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'watch competitor pricing' })
-
-        expect(drafted.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(drafted.body).toContain('Connect an AI provider')
-        expect(drafted.body).not.toContain('ChatAiProvider')
-    })
-
-    it('rate limits one caller without blocking another on the same platform', async () => {
-        const owner = await context()
-        const colleague = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const draft = (ctx: TestContext) => ctx.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'watch competitor pricing' })
-
-        const responses = []
-        for (let attempt = 0; attempt <= DRAFTS_PER_MINUTE; attempt++) {
-            responses.push(await draft(owner))
-        }
-
-        expect(responses[responses.length - 1].body).toContain(`above the limit of ${DRAFTS_PER_MINUTE}`)
-        expect((await draft(colleague)).body).not.toContain('above the limit')
-    })
-
-    it('refuses a draft prompt longer than the endpoint is meant to take', async () => {
-        const ctx = await context()
-
-        const response = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'a'.repeat(MAX_DRAFT_PROMPT_LENGTH + 1) })
-
-        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
-    })
-
-    it('refuses to draft for a project the caller cannot write', async () => {
-        const owner = await context()
-        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
-
-        const response = await viewer.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'anything' })
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-
-})
-
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })
@@ -627,7 +547,6 @@ describe('agent feature gate', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })

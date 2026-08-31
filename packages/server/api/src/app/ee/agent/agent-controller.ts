@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentSummary, AgentTemplate, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentSummary, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -7,14 +7,12 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { securityHelper } from '../../helper/security-helper'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { agentDraftAi } from './agent-draft-ai'
 import { AgentEntity } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 import { agentAudit, agentRedaction, agentService } from './agent-service'
-import { AGENT_TEMPLATES } from './agent-templates'
 
 export const DRAFTS_PER_MINUTE = 20
 
@@ -42,10 +40,6 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             cursor: request.query.cursor,
             limit: request.query.limit,
         })
-    })
-
-    app.get('/templates', ListTemplatesRoute, async (): Promise<SeekPage<AgentTemplate>> => {
-        return paginationHelper.createPage([...AGENT_TEMPLATES], null)
     })
 
     app.post('/draft', DraftAgentRoute, async (request): Promise<DraftAgentResponse> => {
@@ -164,20 +158,6 @@ const ListAgentsRoute = {
         querystring: ListAgentsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(AgentSummary),
-        },
-    },
-}
-
-const ListTemplatesRoute = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        tags: ['agents'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List the starter agents, none of which need a connection',
-        response: {
-            [StatusCodes.OK]: SeekPage(AgentTemplate),
         },
     },
 }
