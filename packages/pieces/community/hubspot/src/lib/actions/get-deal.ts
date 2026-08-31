@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { crmObjectOutputSchema } from '../output-schemas';
@@ -43,7 +43,7 @@ export const getDealAction = createAction({
 
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const dealDetails = await client.crm.deals.basicApi.getById(dealId, [
 			...defaultDealProperties,
