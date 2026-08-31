@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import { showsFirstRun } from '@/app/routes/agents/lib/agents-list-state';
@@ -27,4 +28,39 @@ describe('showsFirstRun', () => {
       expect(showsFirstRun({ ...loaded, search })).toBe(true);
     },
   );
+});
+
+describe('the status the page reads as listLoaded', () => {
+  const listKey = ['agents', 'all'];
+
+  const clientWhoseRefetchFails = () => {
+    let calls = 0;
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const queryFn = () => {
+      calls += 1;
+      return calls === 1
+        ? Promise.resolve({ data: [], next: null })
+        : Promise.reject(new Error('network down'));
+    };
+    return { client, queryFn };
+  };
+
+  it('leaves the query in error, not success, when a refetch fails over cached empty data', async () => {
+    const { client, queryFn } = clientWhoseRefetchFails();
+    await client.fetchQuery({ queryKey: listKey, queryFn });
+    await client.refetchQueries({ queryKey: listKey }).catch(() => undefined);
+
+    const state = client.getQueryState(listKey);
+    expect(state?.status).toBe('error');
+    expect(state?.data).toEqual({ data: [], next: null });
+    expect(
+      showsFirstRun({
+        listLoaded: state?.status === 'success',
+        hasAnyAgents: false,
+        search: '',
+      }),
+    ).toBe(false);
+  });
 });
