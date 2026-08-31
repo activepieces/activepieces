@@ -135,6 +135,20 @@ describe('agent crud', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
     })
 
+    it('names three flows and stops counting, so the refusal cannot grow without bound', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const externalId = await externalIdOf(agent.id)
+        for (const name of ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E']) {
+            await publishFlowRunningAgent({ projectId: ctx.project.id, externalId, displayName: name })
+        }
+
+        const message = JSON.stringify((await ctx.delete(`/v1/agents/${agent.id}`)).json())
+
+        expect(message).toContain('Flow A, Flow B, Flow C, and more')
+        expect(message).not.toContain('Flow D')
+    })
+
     it('deletes an agent whose only reference is an unpublished draft version', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

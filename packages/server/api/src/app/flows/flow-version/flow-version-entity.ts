@@ -75,6 +75,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             columns: ['connectionIds'],
             synchronize: false,
         },
+        {
+            name: 'idx_flow_version_agent_ids_gin',
+            columns: ['agentIds'],
+            synchronize: false,
+        },
     ],
     relations: {
         updatedByUser: {

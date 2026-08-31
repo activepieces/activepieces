@@ -431,6 +431,7 @@ import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000
 import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
 import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
+import { AddAgentIdsGinIndexToFlowVersion1839000000000 } from './migration/postgres/1839000000000-AddAgentIdsGinIndexToFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -877,6 +878,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         DropTeamsBotInstallation1836000000000,
         AddAiProviderStatus1837000000000,
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
+        AddAgentIdsGinIndexToFlowVersion1839000000000,
     ]
     return migrations
 }

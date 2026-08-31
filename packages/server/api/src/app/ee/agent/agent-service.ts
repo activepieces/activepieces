@@ -190,14 +190,14 @@ async function publishedFlowsRunning({ projectId, externalId }: { projectId: Pro
         .andWhere('flow_version.id = flow."publishedVersionId"')
         .andWhere('flow_version."agentIds" && :externalIds', { externalIds: [externalId] })
         .orderBy('flow_version."displayName"', 'ASC')
+        .limit(MAX_NAMED_FLOWS_IN_USE + 1)
         .getRawMany<{ displayName: string }>()
     return flows.map((flow) => flow.displayName)
 }
 
 function describeFlowsInUse(flowNames: string[]): string {
     const named = flowNames.slice(0, MAX_NAMED_FLOWS_IN_USE).join(', ')
-    const remaining = flowNames.length - MAX_NAMED_FLOWS_IN_USE
-    const tail = remaining > 0 ? `, and ${remaining} more` : ''
+    const tail = flowNames.length > MAX_NAMED_FLOWS_IN_USE ? ', and more' : ''
     return `This agent is running in published flows (${named}${tail}). Remove it from them first.`
 }
 
