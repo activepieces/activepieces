@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Metadata } from '@activepieces/core-utils'
+import { formErrors, Metadata, SAFE_EXTERNAL_ID_PATTERN } from '@activepieces/core-utils'
 
 export const CreateFlowRequest = z.object({
     displayName: z.string(),
@@ -9,10 +9,7 @@ export const CreateFlowRequest = z.object({
     projectId: z.string(),
     templateId: z.string().optional(),
     metadata: z.optional(Metadata),
-    /**Optional stable identifier for the flow. When omitted the server generates one.
-     * Lets callers (e.g. git-sync / external deploy tooling) create a flow with a known
-     * externalId so redeploys can find and update it in place instead of duplicating. */
-    externalId: z.string().optional(),
+    externalId: z.string().regex(SAFE_EXTERNAL_ID_PATTERN, formErrors.invalidExternalId).optional(),
 })
 
 export type CreateFlowRequest = z.infer<typeof CreateFlowRequest>
