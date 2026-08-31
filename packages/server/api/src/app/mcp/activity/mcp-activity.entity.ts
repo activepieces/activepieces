@@ -23,11 +23,6 @@ export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
             length: 128,
             nullable: false,
         },
-        kind: {
-            type: String,
-            length: 32,
-            nullable: false,
-        },
         status: {
             type: String,
             length: 32,
@@ -43,12 +38,9 @@ export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
             length: 256,
             nullable: true,
         },
-        flowId: {
-            ...ApIdSchema,
-            nullable: true,
-        },
-        flowRunId: {
-            ...ApIdSchema,
+        connectionExternalId: {
+            type: String,
+            length: 256,
             nullable: true,
         },
         errorMessage: {
@@ -78,6 +70,10 @@ export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
         {
             name: 'idx_mcp_activity_project_id_created_id',
             columns: ['projectId', 'created', 'id'],
+        },
+        {
+            name: 'idx_mcp_activity_payload_file_id',
+            columns: ['payloadFileId'],
         },
     ],
     relations: {

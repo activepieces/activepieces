@@ -2,10 +2,6 @@ import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/cor
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
 
-export const McpActivityKind = z.enum(['ACTION', 'FLOW', 'PLATFORM_TOOL'])
-
-export type McpActivityKind = z.infer<typeof McpActivityKind>
-
 export const McpActivityStatus = z.enum(['SUCCEEDED', 'FAILED'])
 
 export type McpActivityStatus = z.infer<typeof McpActivityStatus>
@@ -16,12 +12,10 @@ export const McpActivity = z.object({
     projectId: z.string().nullable(),
     userId: z.string(),
     toolName: z.string(),
-    kind: McpActivityKind,
     status: McpActivityStatus,
     pieceName: z.string().nullable(),
     actionName: z.string().nullable(),
-    flowId: z.string().nullable(),
-    flowRunId: z.string().nullable(),
+    connectionExternalId: z.string().nullable(),
     errorMessage: z.string().nullable(),
     durationMs: z.number(),
     payloadFileId: z.string().nullable(),
@@ -33,7 +27,6 @@ export type McpActivity = z.infer<typeof McpActivity>
 export const McpActivityEntry = z.object({
     id: z.string(),
     created: z.string(),
-    kind: McpActivityKind,
     status: McpActivityStatus,
     toolName: z.string(),
     member: UserWithMetaInformation.nullable(),
@@ -41,8 +34,8 @@ export const McpActivityEntry = z.object({
     projectName: z.string().nullable(),
     pieceName: z.string().nullable(),
     actionName: z.string().nullable(),
-    flowId: z.string().nullable(),
-    flowRunId: z.string().nullable(),
+    connectionExternalId: z.string().nullable(),
+    connectionDisplayName: z.string().nullable(),
     errorMessage: z.string().nullable(),
     durationMs: z.number(),
     hasPayload: z.boolean(),

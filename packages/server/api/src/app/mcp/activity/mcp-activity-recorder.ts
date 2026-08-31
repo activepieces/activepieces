@@ -1,10 +1,9 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId, isNil, isObject, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
 import {
     FileCompression,
     FileType,
     MCP_ACTIVITY_PAYLOAD_MAX_BYTES,
     McpActivity,
-    McpActivityKind,
     McpToolDefinition,
     McpToolResult,
 } from '@activepieces/shared'
@@ -19,9 +18,10 @@ const repo = repoFactory(McpActivityEntity)
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action'
 const ERROR_MESSAGE_MAX_LENGTH = 2000
+const NAME_MAX_LENGTH = 256
 
-export function shouldRecord(tool: Pick<McpToolDefinition, 'title' | 'annotations'>): boolean {
-    return tool.title === RUN_ACTION_TOOL_NAME || tool.annotations?.destructiveHint === true
+export function shouldRecord(tool: Pick<McpToolDefinition, 'title'>): boolean {
+    return tool.title === RUN_ACTION_TOOL_NAME
 }
 
 export function withActivityRecording({ execute, tool, context, log }: WithActivityRecordingParams): McpToolDefinition['execute'] {
@@ -34,8 +34,7 @@ export function withActivityRecording({ execute, tool, context, log }: WithActiv
         rejectedPromiseHandler(record({
             context,
             toolName: tool.title,
-            kind: tool.title === RUN_ACTION_TOOL_NAME ? 'ACTION' : 'PLATFORM_TOOL',
-            ...pieceFieldsFrom(tool.title, args),
+            ...runActionFieldsFrom(args),
             durationMs: Date.now() - startedAt,
             input: args,
             result,
@@ -43,21 +42,6 @@ export function withActivityRecording({ execute, tool, context, log }: WithActiv
         }), log)
         return result
     }
-}
-
-export function recordFlowToolCall({ context, toolName, flowDisplayName, flowId, flowRunId, durationMs, input, result, log }: RecordFlowToolCallParams): void {
-    rejectedPromiseHandler(record({
-        context: () => Promise.resolve(context),
-        toolName,
-        kind: 'FLOW',
-        actionName: flowDisplayName,
-        flowId,
-        flowRunId,
-        durationMs,
-        input,
-        result,
-        log,
-    }), log)
 }
 
 // Every branch is bounded by MCP_ACTIVITY_PAYLOAD_MAX_BYTES: a single oversized input
@@ -74,7 +58,19 @@ export function capPayload({ input, output }: { input: Record<string, unknown>, 
     return { body: Buffer.from(JSON.stringify({ input: null, output: null }), 'utf-8'), truncated: true }
 }
 
-async function record({ context, toolName, kind, pieceName, actionName, flowId, flowRunId, durationMs, input, result, log }: RecordParams): Promise<void> {
+export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?: string, actionName?: string, connectionExternalId?: string } {
+    const inlineAuth = isObject(args.input) ? args.input.auth : undefined
+    const connectionExternalId = typeof args.connectionExternalId === 'string'
+        ? args.connectionExternalId
+        : (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+    return {
+        ...(typeof args.pieceName === 'string' ? { pieceName: args.pieceName.slice(0, NAME_MAX_LENGTH) } : {}),
+        ...(typeof args.actionName === 'string' ? { actionName: args.actionName.slice(0, NAME_MAX_LENGTH) } : {}),
+        ...(isNil(connectionExternalId) ? {} : { connectionExternalId: connectionExternalId.slice(0, NAME_MAX_LENGTH) }),
+    }
+}
+
+async function record({ context, toolName, pieceName, actionName, connectionExternalId, durationMs, input, result, log }: RecordParams): Promise<void> {
     const resolved = await context()
     if (isNil(resolved)) {
         return
@@ -88,18 +84,16 @@ async function record({ context, toolName, kind, pieceName, actionName, flowId, 
         projectId: resolved.projectId,
         userId: resolved.userId,
         toolName,
-        kind,
         status: result.isError === true ? 'FAILED' : 'SUCCEEDED',
         pieceName: pieceName ?? null,
         actionName: actionName ?? null,
-        flowId: flowId ?? null,
-        flowRunId: flowRunId ?? null,
+        connectionExternalId: connectionExternalId ?? null,
         errorMessage: errorMessageFrom(result),
         durationMs,
         payloadFileId: payloadFile?.id ?? null,
         payloadTruncated: payloadFile?.truncated ?? false,
     }
-    await repo().insert(activity)
+    await repo().insert(sanitizeObjectForPostgresql(activity))
 }
 
 async function savePayload({ context, input, result, log }: SavePayloadParams): Promise<{ id: string, truncated: boolean } | null> {
@@ -121,16 +115,6 @@ async function savePayload({ context, input, result, log }: SavePayloadParams): 
     }
 }
 
-function pieceFieldsFrom(toolName: string, args: Record<string, unknown>): { pieceName?: string, actionName?: string } {
-    if (toolName !== RUN_ACTION_TOOL_NAME) {
-        return {}
-    }
-    return {
-        ...(typeof args.pieceName === 'string' ? { pieceName: args.pieceName } : {}),
-        ...(typeof args.actionName === 'string' ? { actionName: args.actionName } : {}),
-    }
-}
-
 function errorMessageFrom(result: McpToolResult): string | null {
     if (result.isError !== true) {
         return null
@@ -147,31 +131,17 @@ export type McpActivityContext = {
 
 type WithActivityRecordingParams = {
     execute: McpToolDefinition['execute']
-    tool: Pick<McpToolDefinition, 'title' | 'annotations'>
+    tool: Pick<McpToolDefinition, 'title'>
     context: () => Promise<McpActivityContext | null>
-    log: FastifyBaseLogger
-}
-
-type RecordFlowToolCallParams = {
-    context: McpActivityContext | null
-    toolName: string
-    flowDisplayName: string
-    flowId: string
-    flowRunId: string | null
-    durationMs: number
-    input: Record<string, unknown>
-    result: McpToolResult
     log: FastifyBaseLogger
 }
 
 type RecordParams = {
     context: () => Promise<McpActivityContext | null>
     toolName: string
-    kind: McpActivityKind
     pieceName?: string
     actionName?: string
-    flowId?: string
-    flowRunId?: string | null
+    connectionExternalId?: string
     durationMs: number
     input: Record<string, unknown>
     result: McpToolResult

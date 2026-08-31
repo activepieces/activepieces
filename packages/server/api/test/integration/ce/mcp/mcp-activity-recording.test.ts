@@ -1,0 +1,168 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
+import { McpActivity } from '@activepieces/shared'
+import { createMockConnection } from '../../../helpers/mocks'
+import { FastifyInstance } from 'fastify'
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { mcpServerService } from '../../../../src/app/mcp/mcp-service'
+import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { setupTestEnvironment } from '../../../helpers/test-setup'
+
+let app: FastifyInstance | null = null
+let ctx: TestContext
+
+const RECORD_SETTLE_MS = 1500
+
+async function callProjectTool(name: string, args: Record<string, unknown>): Promise<void> {
+    const mcp = await mcpServerService(app!.log).getPopulatedByProjectId(ctx.project.id)
+    const server = await mcpServerService(app!.log).buildServer({
+        mcp,
+        userId: ctx.user.id,
+        platformId: ctx.platform.id,
+    })
+
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 'activity-test', version: '1.0.0' })
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)])
+    await client.callTool({ name, arguments: args })
+    await new Promise((resolve) => setTimeout(resolve, RECORD_SETTLE_MS))
+    await client.close()
+}
+
+async function callRunAction({ pieceName, connectionExternalId }: { pieceName?: string, connectionExternalId?: string }): Promise<void> {
+    await callProjectTool('ap_run_action', {
+        pieceName: pieceName ?? 'doesnotexist',
+        actionName: 'do_nothing',
+        ...(connectionExternalId === undefined ? {} : { connectionExternalId }),
+    })
+}
+
+async function activityRows(): Promise<McpActivity[]> {
+    return databaseConnection()
+        .getRepository('mcp_activity')
+        .find({ where: { platformId: ctx.platform.id } }) as Promise<McpActivity[]>
+}
+
+describe('MCP activity recording', () => {
+    beforeAll(async () => {
+        app = await setupTestEnvironment()
+    })
+
+    beforeEach(async () => {
+        ctx = await createTestContext(app!)
+    })
+
+    // The project MCP server is the main path and it recorded nothing, because
+    // mcp_server.platformId is NULL on every PROJECT row. Drive a real tool call
+    // rather than inserting a row, or this comes back.
+    it('records a tool call made against a project MCP server', async () => {
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+
+        const rows = await activityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0]).toMatchObject({
+            platformId: ctx.platform.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            toolName: 'ap_run_action',
+            pieceName: 'doesnotexist',
+            actionName: 'do_nothing',
+            connectionExternalId: 'conn-external-1',
+        })
+        expect(rows[0].payloadFileId).not.toBeNull()
+    })
+
+    // The SDK validates tools/call against inputSchema before execute runs, so a
+    // schema-invalid call never reaches the recorder and writes no row.
+    it('writes no row when the arguments fail schema validation', async () => {
+        await callProjectTool('ap_run_action', { pieceName: 42, actionName: 'do_nothing' })
+
+        expect(await activityRows()).toHaveLength(0)
+    })
+
+    it('serves the recorded payload back', async () => {
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+        const [activity] = await activityRows()
+
+        const response = await ctx.get(`/v1/mcp-activity/${activity.id}/payload`)
+
+        expect(response.statusCode).toBe(200)
+        const payload = response.json()
+        expect(payload.input).toMatchObject({ pieceName: 'doesnotexist', connectionExternalId: 'conn-external-1' })
+        expect(payload.truncated).toBe(false)
+    })
+
+    it('names the connection on the listed entry', async () => {
+        const connection = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            displayName: 'Production Slack',
+            externalId: 'conn-external-1',
+        }, ctx.user.id)
+        await databaseConnection().getRepository('app_connection').save(connection)
+
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+
+        const { data } = (await ctx.get('/v1/mcp-activity')).json()
+        expect(data).toHaveLength(1)
+        expect(data[0].connectionExternalId).toBe('conn-external-1')
+        expect(data[0].connectionDisplayName).toBe('Production Slack')
+        expect(data[0].hasPayload).toBe(true)
+    })
+
+    it('leaves the connection name null when nothing resolves', async () => {
+        await callRunAction({ connectionExternalId: 'hallucinated-connection' })
+
+        const { data } = (await ctx.get('/v1/mcp-activity')).json()
+        expect(data[0].connectionExternalId).toBe('hallucinated-connection')
+        expect(data[0].connectionDisplayName).toBeNull()
+    })
+
+    it('records no connection when the call carried none', async () => {
+        await callRunAction({})
+
+        const rows = await activityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0].connectionExternalId).toBeNull()
+    })
+
+    // The names are model-written and land in varchar(256); a NUL byte or an
+    // over-long name would abort the insert and lose the row silently.
+    it('still writes the row when the arguments are hostile', async () => {
+        await callRunAction({ pieceName: `does\u0000notexist${'x'.repeat(400)}`, connectionExternalId: 'c'.repeat(400) })
+
+        const rows = await activityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0].pieceName).not.toContain('\u0000')
+        expect(rows[0].pieceName?.length).toBeLessThanOrEqual(256)
+        expect(rows[0].connectionExternalId?.length).toBeLessThanOrEqual(256)
+    })
+
+    it('does not record a read-only tool', async () => {
+        await callProjectTool('ap_list_flows', {})
+
+        expect(await activityRows()).toHaveLength(0)
+    })
+
+    // Recording used to follow annotations.readOnlyHint === false, which covered 26 tools.
+    // Only ap_run_action reaches a third-party system, so only it earns a row.
+    it('does not record the mutating tools it used to', async () => {
+        await callProjectTool('ap_delete_flow', { flowId: 'doesnotexist000000000' })
+        await callProjectTool('ap_create_flow', { flowName: 'built by mcp' })
+
+        expect(await activityRows()).toHaveLength(0)
+    })
+
+    // Postgres runs the ON DELETE SET NULL action per deleted file row, so without
+    // this index the hourly file cleanup pays a sequential scan of mcp_activity for
+    // every file it deletes — measured at 671x on a 200k-row table.
+    it('indexes payloadFileId so file cleanup does not scan', async () => {
+        const indexes = await databaseConnection().query(
+            'SELECT indexname FROM pg_indexes WHERE tablename = \'mcp_activity\'',
+        )
+
+        expect(indexes.map((index: { indexname: string }) => index.indexname))
+            .toContain('idx_mcp_activity_payload_file_id')
+    })
+})

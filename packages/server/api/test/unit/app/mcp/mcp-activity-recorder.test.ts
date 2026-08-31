@@ -2,10 +2,12 @@ import { apId } from '@activepieces/core-utils'
 import { MCP_ACTIVITY_PAYLOAD_MAX_BYTES, McpServerType, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { describe, expect, it } from 'vitest'
-import { capPayload, shouldRecord } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
+import { capPayload, runActionFieldsFrom, shouldRecord } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
 import { activepiecesTools } from '../../../../src/app/mcp/tools'
 
-const noopLog = {
+const noopLog: FastifyBaseLogger = {
+    level: 'silent',
+    silent: () => undefined,
     info: () => undefined,
     warn: () => undefined,
     error: () => undefined,
@@ -13,7 +15,7 @@ const noopLog = {
     trace: () => undefined,
     fatal: () => undefined,
     child: () => noopLog,
-} as unknown as FastifyBaseLogger
+}
 
 const mcp: ProjectScopedMcpServer = {
     id: apId(),
@@ -28,8 +30,6 @@ const mcp: ProjectScopedMcpServer = {
 }
 
 describe('MCP activity recording predicate', () => {
-    // shouldRecord() reads annotations.destructiveHint, which McpToolDefinition marks optional.
-    // A tool that forgets its hints would be silently unrecorded, so pin that every tool declares them.
     it('every registered tool declares all three safety hints', () => {
         const missing = activepiecesTools(mcp, apId(), noopLog)
             .filter((tool) => [tool.annotations?.readOnlyHint, tool.annotations?.destructiveHint, tool.annotations?.openWorldHint].some((hint) => hint === undefined))
@@ -38,15 +38,60 @@ describe('MCP activity recording predicate', () => {
         expect(missing).toEqual([])
     })
 
-    it('records ap_run_action and every destructive tool, and nothing that only reads', () => {
+    it('records ap_run_action and nothing else', () => {
         const tools = activepiecesTools(mcp, apId(), noopLog)
         const recorded = tools.filter(shouldRecord).map((tool) => tool.title)
 
-        expect(recorded).toContain('ap_run_action')
-        expect(recorded).not.toContain('ap_list_flows')
-        expect(recorded).not.toContain('ap_get_piece_props')
-        expect(recorded).not.toContain('ap_flow_structure')
-        expect(tools.filter((tool) => tool.annotations?.destructiveHint === true).every((tool) => recorded.includes(tool.title))).toBe(true)
+        expect(recorded).toEqual(['ap_run_action'])
+    })
+
+    it('does not record the mutating tools it used to', () => {
+        const tools = activepiecesTools(mcp, apId(), noopLog)
+        const recorded = tools.filter(shouldRecord).map((tool) => tool.title)
+
+        expect(recorded).not.toContain('ap_create_flow')
+        expect(recorded).not.toContain('ap_delete_flow')
+        expect(recorded).not.toContain('ap_insert_records')
+        expect(recorded).not.toContain('ap_lock_and_publish')
+    })
+})
+
+describe('MCP activity run-action fields', () => {
+    it('takes the connection from connectionExternalId', () => {
+        expect(runActionFieldsFrom({ pieceName: 'slack', actionName: 'send_channel_message', connectionExternalId: 'conn-1' }))
+            .toEqual({ pieceName: 'slack', actionName: 'send_channel_message', connectionExternalId: 'conn-1' })
+    })
+
+    it('falls back to the legacy string input.auth', () => {
+        expect(runActionFieldsFrom({ pieceName: 'slack', input: { auth: 'conn-legacy' } }))
+            .toEqual({ pieceName: 'slack', connectionExternalId: 'conn-legacy' })
+    })
+
+    it('prefers connectionExternalId over input.auth', () => {
+        expect(runActionFieldsFrom({ connectionExternalId: 'conn-1', input: { auth: 'conn-legacy' } }))
+            .toEqual({ connectionExternalId: 'conn-1' })
+    })
+
+    it('records no connection when the call carried none', () => {
+        expect(runActionFieldsFrom({ pieceName: 'slack', actionName: 'send_channel_message' }))
+            .toEqual({ pieceName: 'slack', actionName: 'send_channel_message' })
+    })
+
+    it('ignores a non-string input.auth', () => {
+        expect(runActionFieldsFrom({ input: { auth: { externalId: 'conn-1' } } })).toEqual({})
+        expect(runActionFieldsFrom({ input: 'not-an-object' })).toEqual({})
+    })
+
+    it('truncates the names to their column width', () => {
+        const fields = runActionFieldsFrom({
+            pieceName: 'p'.repeat(400),
+            actionName: 'a'.repeat(400),
+            connectionExternalId: 'c'.repeat(400),
+        })
+
+        expect(fields.pieceName).toHaveLength(256)
+        expect(fields.actionName).toHaveLength(256)
+        expect(fields.connectionExternalId).toHaveLength(256)
     })
 })
 

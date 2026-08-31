@@ -8,7 +8,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
-import { McpActivityContext, recordFlowToolCall, withActivityRecording } from './activity/mcp-activity-recorder'
+import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
@@ -34,9 +34,10 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, selectionScope, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, selectionScope, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
+    platformId?: string
     selectionScope: ProjectSelectionScope | null
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
@@ -68,7 +69,7 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        const activityContext = buildProjectActivityContext({ mcp, projectId, userId })
+        const activityContext = buildProjectActivityContext({ platformId, projectId, userId })
         registerFlowTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
     }
@@ -108,8 +109,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            const platformExecute = withActivityRecording({ execute: tool.execute, tool, context: activityContext, log })
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => platformExecute(args))
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => tool.execute(args))
             return
         }
 
@@ -122,6 +122,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
                             type: 'text' as const,
                             text: 'No project selected. Use ap_set_project_context to select a project first.',
                         }],
+                        isError: true,
                     }
                 }
                 const projectMcp = await resolveProjectMcp(selectedProjectId)
@@ -132,6 +133,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
                 if (isNil(realTool)) {
                     return {
                         content: [{ type: 'text' as const, text: `Tool "${tool.title}" is not available for this project.` }],
+                        isError: true,
                     }
                 }
                 const execute = permissionChecker.wrapExecute({ execute: realTool.execute, permission: realTool.permission, toolTitle: realTool.title })
@@ -145,7 +147,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, activityContext, log }: RegisterToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -160,16 +162,11 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, activity
                 return flowPermissionError
             }
 
-            const startedAt = Date.now()
-            let flowRunId: string | null = null
             const result = await runFlowAsTool({
                 flowId: flow.id,
                 flowDisplayName: flow.version.displayName,
                 payload: args,
                 returnsResponse,
-                onRunCreated: (runId) => {
-                    flowRunId = runId
-                },
                 log,
             })
 
@@ -177,18 +174,6 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, activity
                 name: TelemetryEventName.MCP_TOOL_CALLED,
                 payload: { mcpId: projectId, toolName },
             }), log)
-
-            recordFlowToolCall({
-                context: activityContext,
-                toolName,
-                flowDisplayName: flow.version.displayName,
-                flowId: flow.id,
-                flowRunId,
-                durationMs: Date.now() - startedAt,
-                input: args,
-                result,
-                log,
-            })
 
             return result
         })
@@ -252,15 +237,15 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
     })
 }
 
-function buildProjectActivityContext({ mcp, projectId, userId }: {
-    mcp: PopulatedMcpServer
+function buildProjectActivityContext({ platformId, projectId, userId }: {
+    platformId?: string
     projectId: string
     userId?: string
 }): McpActivityContext | null {
-    if (isNil(mcp.platformId) || isNil(userId)) {
+    if (isNil(platformId) || isNil(userId)) {
         return null
     }
-    return { platformId: mcp.platformId, projectId, userId }
+    return { platformId, projectId, userId }
 }
 
 function registerPlaceholderTools(server: McpServer): void {

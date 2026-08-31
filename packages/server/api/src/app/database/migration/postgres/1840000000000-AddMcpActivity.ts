@@ -16,12 +16,10 @@ export class AddMcpActivity1840000000000 implements Migration {
                 "projectId" character varying(21),
                 "userId" character varying(21) NOT NULL,
                 "toolName" character varying(128) NOT NULL,
-                "kind" character varying(32) NOT NULL,
                 "status" character varying(32) NOT NULL,
                 "pieceName" character varying(256),
                 "actionName" character varying(256),
-                "flowId" character varying(21),
-                "flowRunId" character varying(21),
+                "connectionExternalId" character varying(256),
                 "errorMessage" character varying(2000),
                 "durationMs" integer NOT NULL,
                 "payloadFileId" character varying(21),
@@ -36,6 +34,10 @@ export class AddMcpActivity1840000000000 implements Migration {
         await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "idx_mcp_activity_project_id_created_id"
             ON "mcp_activity" ("projectId", "created", "id")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_mcp_activity_payload_file_id"
+            ON "mcp_activity" ("payloadFileId")
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp_activity"

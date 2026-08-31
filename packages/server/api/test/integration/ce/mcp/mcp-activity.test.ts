@@ -12,11 +12,10 @@ let ctx: TestContext
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-async function recordActivity({ userId, projectId, platformId, kind = 'ACTION', status = 'SUCCEEDED', created = new Date().toISOString() }: {
+async function recordActivity({ userId, projectId, platformId, status = 'SUCCEEDED', created = new Date().toISOString() }: {
     userId: string
     projectId: string | null
     platformId?: string
-    kind?: string
     status?: string
     created?: string
 }): Promise<string> {
@@ -26,13 +25,11 @@ async function recordActivity({ userId, projectId, platformId, kind = 'ACTION', 
         platformId: platformId ?? ctx.platform.id,
         projectId,
         userId,
-        toolName: kind === 'ACTION' ? 'ap_run_action' : 'ap_create_flow',
-        kind,
+        toolName: 'ap_run_action',
         status,
-        pieceName: kind === 'ACTION' ? '@activepieces/piece-slack' : null,
-        actionName: kind === 'ACTION' ? 'send_channel_message' : null,
-        flowId: null,
-        flowRunId: null,
+        pieceName: '@activepieces/piece-slack',
+        actionName: 'send_channel_message',
+        connectionExternalId: 'conn-external-1',
         errorMessage: status === 'FAILED' ? 'Something broke' : null,
         durationMs: 42,
         payloadFileId: null,

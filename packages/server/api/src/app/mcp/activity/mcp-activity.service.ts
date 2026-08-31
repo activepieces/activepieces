@@ -11,6 +11,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { z } from 'zod'
+import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -57,12 +59,13 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
-        const [members, projectNames] = await Promise.all([
+        const [members, projectNames, connectionNames] = await Promise.all([
             findMembers(data.map((activity) => activity.userId)),
             findProjectNames(data.map((activity) => activity.projectId)),
+            findConnectionNames({ platformId, activities: data }),
         ])
 
-        const rows = data.map((activity) => toEntry({ activity, members, projectNames }))
+        const rows = data.map((activity) => toEntry({ activity, members, projectNames, connectionNames }))
         return paginationHelper.createPage<McpActivityEntry>(rows, nextCursor)
     },
 
@@ -83,21 +86,20 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
             type: FileType.MCP_CALL_PAYLOAD,
             ...(isNil(activity.projectId) ? {} : { projectId: activity.projectId }),
         })
-        const parsed: unknown = JSON.parse(file.data.toString('utf-8'))
-        const { input, output } = parsed as { input: unknown, output: unknown }
+        const { input, output } = storedPayload.parse(JSON.parse(file.data.toString('utf-8')))
         return { input, output, truncated: activity.payloadTruncated }
     },
 })
 
-function toEntry({ activity, members, projectNames }: {
+function toEntry({ activity, members, projectNames, connectionNames }: {
     activity: McpActivity
     members: Map<string, UserWithMetaInformation>
     projectNames: Map<string, string>
+    connectionNames: Map<string, string>
 }): McpActivityEntry {
     return {
         id: activity.id,
         created: activity.created,
-        kind: activity.kind,
         status: activity.status,
         toolName: activity.toolName,
         member: members.get(activity.userId) ?? null,
@@ -105,12 +107,16 @@ function toEntry({ activity, members, projectNames }: {
         projectName: isNil(activity.projectId) ? null : projectNames.get(activity.projectId) ?? null,
         pieceName: activity.pieceName,
         actionName: activity.actionName,
-        flowId: activity.flowId,
-        flowRunId: activity.flowRunId,
+        connectionExternalId: activity.connectionExternalId,
+        connectionDisplayName: connectionNames.get(connectionKey(activity)) ?? null,
         errorMessage: activity.errorMessage,
         durationMs: activity.durationMs,
         hasPayload: !isNil(activity.payloadFileId),
     }
+}
+
+function connectionKey({ projectId, connectionExternalId }: Pick<McpActivity, 'projectId' | 'connectionExternalId'>): string {
+    return `${projectId}:${connectionExternalId}`
 }
 
 function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined): void {
@@ -136,6 +142,23 @@ async function findProjectNames(projectIds: (string | null)[]): Promise<Map<stri
     }
     const projects = await projectRepo().findBy({ id: In(distinct) })
     return new Map(projects.map((project) => [project.id, project.displayName]))
+}
+
+async function findConnectionNames({ platformId, activities }: { platformId: string, activities: McpActivity[] }): Promise<Map<string, string>> {
+    const externalIds = unique(activities
+        .filter((activity) => !isNil(activity.projectId))
+        .map((activity) => activity.connectionExternalId)
+        .filter((externalId): externalId is string => !isNil(externalId)))
+    if (externalIds.length === 0) {
+        return new Map()
+    }
+    const connections = await appConnectionsRepo().find({
+        where: { platformId, externalId: In(externalIds) },
+        select: ['externalId', 'displayName', 'projectIds'],
+    })
+    return new Map(connections.flatMap((connection) => connection.projectIds.map((projectId) =>
+        [connectionKey({ projectId, connectionExternalId: connection.externalId }), connection.displayName] as const,
+    )))
 }
 
 async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaInformation>> {
@@ -167,6 +190,11 @@ async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaI
         return [[user.id, member] as const]
     }))
 }
+
+const storedPayload = z.object({
+    input: z.unknown(),
+    output: z.unknown(),
+})
 
 type ListParams = {
     platformId: string

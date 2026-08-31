@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { userService } from '../../user/user-service'
 import { mcpActivityService } from './mcp-activity.service'
@@ -48,6 +49,9 @@ const ListActivityRequest = {
     schema: {
         tags: ['mcp-activity'],
         querystring: ListMcpActivityRequestQuery,
+        response: {
+            [StatusCodes.OK]: ListMcpActivityResponse,
+        },
     },
 }
 
@@ -58,5 +62,8 @@ const GetPayloadRequest = {
     schema: {
         tags: ['mcp-activity'],
         params: GetMcpActivityPayloadParams,
+        response: {
+            [StatusCodes.OK]: McpActivityPayload,
+        },
     },
 }
