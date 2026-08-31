@@ -144,8 +144,11 @@ const AgentsPageContent = () => {
     isLoading: isLoadingProvider,
     isError: providerLookupFailed,
   } = aiProviderQueries.useChatProvider();
+  const { data: projectProviders } = aiProviderQueries.useProjectAiProviders();
   const needsProvider =
     !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
+  const chatIsOffOnEveryProvider =
+    needsProvider && (projectProviders?.length ?? 0) > 0;
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
@@ -211,6 +214,8 @@ const AgentsPageContent = () => {
         >
           {isBuilding
             ? t('Building your agent')
+            : chatIsOffOnEveryProvider
+            ? t('No provider is turned on for chat')
             : needsProvider
             ? t('Agents need an AI provider')
             : firstRun
@@ -223,7 +228,11 @@ const AgentsPageContent = () => {
             firstRun && 'max-w-[468px] text-center text-base leading-6',
           )}
         >
-          {needsProvider
+          {chatIsOffOnEveryProvider
+            ? t(
+                'Your project has a provider, but writing an agent for you needs one turned on for chat.',
+              )
+            : needsProvider
             ? t('Add a provider once, then I can build agents from a sentence.')
             : isBuilding
             ? t('Picking the tools and writing its instructions')
@@ -242,11 +251,15 @@ const AgentsPageContent = () => {
               onClick={() => navigate('/platform/setup/ai')}
             >
               <Settings2 size={16} />
-              {t('Connect an AI provider')}
+              {chatIsOffOnEveryProvider
+                ? t('Turn on a provider for chat')
+                : t('Connect an AI provider')}
             </Button>
           ) : (
             <p className="mt-4 text-[13px] leading-4 text-muted-foreground">
-              {t('Ask your platform admin to connect an AI provider.')}
+              {chatIsOffOnEveryProvider
+                ? t('Ask your platform admin to turn on a provider for chat.')
+                : t('Ask your platform admin to connect an AI provider.')}
             </p>
           ))}
         <div
