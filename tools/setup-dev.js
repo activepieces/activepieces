@@ -42,6 +42,78 @@ try {
   }
 }
 
+// The engine spawns AP_DENO_PATH directly with a minimal env, so it must be the
+// real deno binary — an npm .bin shim (#!/usr/bin/env node) dies with
+// "env: node: No such file or directory" (exit 127). The global npm `deno`
+// package downloads the real binary into <npm root -g>/deno on install.
+const isNodeShimScript = (candidatePath) => {
+  try {
+    const header = Buffer.alloc(32);
+    const fd = fs.openSync(candidatePath, 'r');
+    fs.readSync(fd, header, 0, header.length, 0);
+    fs.closeSync(fd);
+    return header.toString('utf-8').startsWith('#!/usr/bin/env node');
+  } catch {
+    return true;
+  }
+};
+
+const denoBinaryName = os === 'win32' ? 'deno.exe' : 'deno';
+
+const resolveDenoPath = () => {
+  const found = execSync(os === 'win32' ? 'where deno' : 'command -v deno').toString().trim().split('\n')[0];
+  if (!isNodeShimScript(found)) {
+    return found;
+  }
+  const globalNpmBinary = path.join(execSync('npm root -g').toString().trim(), 'deno', denoBinaryName);
+  if (fs.existsSync(globalNpmBinary) && !isNodeShimScript(globalNpmBinary)) {
+    return globalNpmBinary;
+  }
+  throw new Error(`deno on PATH (${found}) is an npm shim script and no real global binary was found`);
+};
+
+let denoPath;
+try {
+  denoPath = resolveDenoPath();
+  console.log(`✅ Deno is already installed at ${denoPath}.`);
+} catch {
+  console.log("⚙️ Deno not found. Installing globally...");
+  try {
+    execSync("npm install -g deno", { stdio: "inherit" });
+    denoPath = resolveDenoPath();
+    console.log(`✅ Deno installed successfully at ${denoPath}.`);
+  } catch (err) {
+    console.error("❌ Failed to install Deno:", err.message);
+    process.exit(1);
+  }
+}
+
+const envDevPath = path.resolve('.env.dev');
+let envDev = fs.existsSync(envDevPath) ? fs.readFileSync(envDevPath, 'utf-8') : '';
+const originalEnvDev = envDev;
+
+const existingDenoLine = envDev.match(/^AP_DENO_PATH=(.*)$/m);
+const existingDenoPath = existingDenoLine ? existingDenoLine[1].trim() : null;
+const isRepoLocalPath = existingDenoPath !== null && existingDenoPath.startsWith(path.resolve('.'));
+if (!existingDenoLine) {
+  envDev += `${envDev.endsWith('\n') || envDev === '' ? '' : '\n'}AP_DENO_PATH=${denoPath}\n`;
+} else if (isNodeShimScript(existingDenoPath) || isRepoLocalPath) {
+  envDev = envDev.replace(existingDenoLine[0], `AP_DENO_PATH=${denoPath}`);
+  console.log(`⚙️ Updated AP_DENO_PATH to the global deno binary at ${denoPath}.`);
+}
+
+const propagatedLine = envDev.match(/^AP_SANDBOX_PROPAGATED_ENV_VARS=(.*)$/m);
+if (!propagatedLine) {
+  envDev += 'AP_SANDBOX_PROPAGATED_ENV_VARS=AP_DENO_PATH\n';
+} else if (!propagatedLine[1].split(',').map(v => v.trim()).includes('AP_DENO_PATH')) {
+  envDev = envDev.replace(propagatedLine[0], `${propagatedLine[0]},AP_DENO_PATH`);
+}
+
+if (envDev !== originalEnvDev) {
+  fs.writeFileSync(envDevPath, envDev);
+  console.log('✅ Updated .env.dev with AP_DENO_PATH and AP_SANDBOX_PROPAGATED_ENV_VARS.');
+}
+
 execSync('bun install', { stdio: 'inherit' });
 
 const IGNORED_DIRS = new Set(['node_modules', 'dist', 'framework', 'common']);
