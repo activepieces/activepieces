@@ -117,6 +117,27 @@ describe('agent crud', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 
+    it('tells you which published flows use an agent before you try to delete it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
+
+        const withUsage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json()
+        const withoutUsage = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+
+        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'] })
+        expect(withoutUsage.publishedFlowsUsingAgent).toBeUndefined()
+    })
+
+    it('reports no usage for an agent no published flow runs', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const response = await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })
+
+        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [] })
+    })
+
     it('refuses an editor who did not create the agent, because deleting takes other people\'s conversations with it', async () => {
         const owner = await context()
         const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
@@ -170,7 +191,7 @@ describe('agent crud', () => {
 
         const message = JSON.stringify((await ctx.delete(`/v1/agents/${agent.id}`)).json())
 
-        expect(message).toContain('Flow A, Flow B, Flow C, and more')
+        expect(message).toContain('5 published flows (Flow A, Flow B, Flow C, and 2 more)')
         expect(message).not.toContain('Flow D')
     })
 
@@ -191,7 +212,7 @@ describe('agent crud', () => {
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).not.toContain('Payroll run')
-        expect(JSON.stringify(response.json())).toContain('1 published flows')
+        expect(JSON.stringify(response.json())).toContain('running in 1 published flow.')
     })
 
     it('deletes an agent whose only reference is an unpublished draft version', async () => {

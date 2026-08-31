@@ -1,4 +1,4 @@
-import { isNil, unique } from '@activepieces/core-utils';
+import { isNil, Permission, unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
@@ -24,12 +24,14 @@ import {
   Rocket,
   Settings2,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   unstable_useBlocker,
+  useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
@@ -69,10 +71,12 @@ import {
 } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
+import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -170,12 +174,64 @@ const AgentEditorSkeleton = () => (
   </div>
 );
 
-const SettingsFields = ({
-  form,
+const AgentDangerZone = ({
+  agent,
+  onDeleted,
 }: {
+  agent: Agent;
+  onDeleted: () => void;
+}) => {
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
+  const { checkAccess } = useAuthorization(agent.projectId);
+
+  if (!checkAccess(Permission.WRITE_AGENT)) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-col gap-3 rounded-lg border border-destructive/30 p-4">
+      <div className="flex flex-col gap-1">
+        <span className="text-sm font-semibold">{t('Delete this agent')}</span>
+        <span className="text-[13px] leading-4 text-muted-foreground">
+          {t(
+            'Its instructions, its tools, and every conversation held with it go with it.',
+          )}
+        </span>
+      </div>
+      <DeleteAgentDialog
+        agent={agent}
+        open={deleting}
+        onOpenChange={setDeleting}
+        onDeleted={() => {
+          onDeleted();
+          navigate('/agents');
+        }}
+      >
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-fit gap-2"
+          onClick={() => setDeleting(true)}
+        >
+          <Trash2 size={15} />
+          {t('Delete')}
+        </Button>
+      </DeleteAgentDialog>
+    </div>
+  );
+};
+
+const SettingsFields = ({
+  agent,
+  form,
+  onDeleted,
+}: {
+  agent: Agent;
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
+  onDeleted: () => void;
 }) => (
   <>
     <FormField
@@ -265,6 +321,7 @@ const SettingsFields = ({
         </FormItem>
       )}
     />
+    <AgentDangerZone agent={agent} onDeleted={onDeleted} />
   </>
 );
 
@@ -366,15 +423,24 @@ const ConfigureFields = ({
   </>
 );
 
-const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
+const useWarnBeforeLosingChanges = ({
+  hasChanges,
+  standDown,
+}: {
+  hasChanges: boolean;
+  standDown: React.RefObject<boolean>;
+}) => {
   const blocker = unstable_useBlocker(
     ({ currentLocation, nextLocation }) =>
-      hasChanges && currentLocation.pathname !== nextLocation.pathname,
+      hasChanges &&
+      standDown.current !== true &&
+      currentLocation.pathname !== nextLocation.pathname,
   );
 
   useEffect(() => {
     if (!hasChanges) return;
     const warn = (event: BeforeUnloadEvent) => {
+      if (standDown.current === true) return;
       event.preventDefault();
       event.returnValue = '';
     };
@@ -476,7 +542,11 @@ const AgentEditScreen = ({
     left: values,
     right: syncedDraft,
   });
-  const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
+  const deletedRef = useRef(false);
+  const leaveBlocker = useWarnBeforeLosingChanges({
+    hasChanges: unsavedTyping,
+    standDown: deletedRef,
+  });
   const [exitRequested, setExitRequested] = useState(false);
   const leaveDecision = agentEditState.leaveGuard({
     blockerState: leaveBlocker.state,
@@ -721,7 +791,13 @@ const AgentEditScreen = ({
                 {tab === 'configure' ? (
                   <ConfigureFields form={form} needsModel={formNeedsModel} />
                 ) : (
-                  <SettingsFields form={form} />
+                  <SettingsFields
+                    agent={agent}
+                    form={form}
+                    onDeleted={() => {
+                      deletedRef.current = true;
+                    }}
+                  />
                 )}
                 {form.formState.errors.root?.serverError && (
                   <p className="text-sm text-destructive">
