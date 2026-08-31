@@ -167,6 +167,25 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### Managed AI models are priced from what they actually cost
+
+Activepieces Cloud charges AI credits per call on the managed **Activepieces** AI provider. Those prices had drifted far below what the models cost us, in two ways.
+
+Any model missing from the price list was charged **2 credits per call** — lower than the cheapest model actually on the list, which was 6. Every `x-ai/*` model and every model OpenRouter shipped after the list was written fell into that gap. The models on the list were also too cheap: `claude-fable-5` cost 45 credits per call against an output price of $50 per million tokens.
+
+Three things change. The three tiers go from **2 / 10 / 20** to **10 / 40 / 80** credits per call — Fast, Expert and Heavy respectively. A model that is not on the price list now costs **100** credits per call instead of 2, so a model nobody has priced is expensive rather than nearly free. The price list itself grows from 74 to 174 models and now tracks real output cost: `openai/o1-pro` goes from 500 to 5487, `openai/gpt-5.5-pro` from 200 to 895, `anthropic/claude-opus-4` from 45 to 325, `anthropic/claude-fable-5` from 45 to 193, while cheap models such as `deepseek/deepseek-v3.2`, `google/gemini-2.5-flash-lite` and `openai/gpt-4o-mini` drop to 1.
+
+The tier prices are shared by flow AI steps, chat turns and agent drafts, so this is not a flows-only change: a managed chat turn costs 4 to 5 times more credits than before.
+
+Bring-your-own-key is unaffected. Any provider other than the managed one still costs 1 credit per call regardless of model.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable. If you self-host with your own AI provider keys, nothing changes for you at all — this only affects the managed Activepieces provider, which needs `AP_OPENROUTER_PROVISION_KEY`.
+
+If you use the managed provider, expect your AI credits to be consumed faster and check that your balance and any auto-top-up threshold still suit your usage. Flows that pick an expensive model directly — which is possible on steps saved before version 0.5.0 of the AI piece, where the model is stored as a raw model id — are the ones that change most. Open those steps and re-pick the model to move them onto a tier.
+
+
 ## 0.87.0
 
 ### What has changed?

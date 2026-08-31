@@ -95,8 +95,8 @@ function resolveProviderModel({ output, stepConfig }: ResolveProviderModelParams
     const fromLog = extractProviderModel(asRecord(output.input))
     const fromSettings = extractProviderModel(stepConfig.input)
     return {
-        provider: fromLog.provider ?? fromSettings.provider ?? UNKNOWN,
-        model: fromLog.model ?? fromSettings.model ?? UNKNOWN,
+        provider: fromLog.provider ?? fromSettings.provider ?? UNRESOLVED_VALUE,
+        model: fromLog.model ?? fromSettings.model ?? UNRESOLVED_VALUE,
     }
 }
 
@@ -144,11 +144,11 @@ function cleanString(value: unknown): string | undefined {
 }
 
 const RUN_AGENT_ACTION_NAME = 'run_agent'
-const UNKNOWN = 'unknown'
+const UNRESOLVED_VALUE = 'unknown'
 const REDACTED_MARKER = '**REDACTED**'
 const SLEEP_EVERY_N_STEPS = 500
 
-export const flowRunAiUsageExtractor = { extractAiUsage, flowVersionHasAiStep }
+export const flowRunAiUsageExtractor = { extractAiUsage, flowVersionHasAiStep, UNRESOLVED_VALUE }
 
 export type SliceFetcher = (ref: LogSliceRef) => Promise<unknown>
 
