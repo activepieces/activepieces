@@ -65,6 +65,7 @@ import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { VariableEntity } from '../variable/variable.entity'
 import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
+import { WaitpointSignalEntity } from '../waitpoints/waitpoint-signal-entity'
 import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
@@ -114,6 +115,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
+        WaitpointSignalEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,
