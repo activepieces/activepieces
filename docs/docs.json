@@ -375,7 +375,11 @@
                      "admin-guide/guides/event-streaming",
                      "admin-guide/guides/project-releases",
                      "admin-guide/guides/project-replace-cli",
-                     "admin-guide/guides/manage-concurrency"
+                    "admin-guide/guides/manage-concurrency",
+                    {
+                      "group": "General",
+                      "pages": []
+                    }
                   ]
                },
                {
