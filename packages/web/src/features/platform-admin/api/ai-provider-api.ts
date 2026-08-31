@@ -1,4 +1,5 @@
 import {
+  AiProviderKeyStatus,
   AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
@@ -36,6 +37,12 @@ export const aiProviderApi = {
     return api.post<AIProviderWithoutSensitiveData>(
       '/v1/ai-providers',
       request,
+    );
+  },
+  recheck(providerId: string) {
+    return api.post<{ status: AiProviderKeyStatus }>(
+      `/v1/ai-providers/${providerId}/recheck`,
+      {},
     );
   },
   update(providerId: string, request: UpdateAIProviderRequest): Promise<void> {

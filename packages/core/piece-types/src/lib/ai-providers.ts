@@ -220,8 +220,8 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
-const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -246,6 +246,7 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
     'claude-haiku-4-5': 'Claude Haiku 4.5',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-3.7-flash': 'Gemini 3.7 Flash',
     'gemini-3.1-pro-preview': 'Gemini 3.1 Pro Preview',
     'gemini-3-flash-preview': 'Gemini 3 Flash Preview',
 }
@@ -363,6 +364,11 @@ export const aiProviderUtils = {
     getCuratedChatModels,
     isCuratedChatModelId,
 }
+
+export const AI_PROVIDER_ENTITY_TYPES = {
+    provider: 'AIProvider',
+    chatProvider: 'ChatAiProvider',
+} as const
 
 export type AIWebSearchMode = 'native' | 'plugin'
 

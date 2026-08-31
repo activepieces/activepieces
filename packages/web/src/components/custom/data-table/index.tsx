@@ -92,6 +92,7 @@ interface DataTableProps<
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
+  bordered?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -128,6 +129,7 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   clientFiltering = false,
+  bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -340,7 +342,7 @@ export function DataTable<
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar>
+        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {filters &&
@@ -369,10 +371,15 @@ export function DataTable<
 
       <div
         ref={scrollContainerRef}
-        className={cn('mt-0', {
-          'overflow-hidden': !virtualizeRows,
-          'flex-1 min-h-0 overflow-auto': virtualizeRows,
-        })}
+        className={cn(
+          'mt-0',
+          {
+            'overflow-hidden': !virtualizeRows,
+            'flex-1 min-h-0 overflow-auto': virtualizeRows,
+          },
+          bordered &&
+            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+        )}
       >
         <Table className="table-fixed">
           <TableHeader

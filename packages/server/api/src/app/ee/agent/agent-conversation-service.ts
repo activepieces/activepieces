@@ -20,12 +20,6 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
-        const existingBuilder = builder && !isNil(agent)
-            ? await agentHelpers.conversationRepo().findOneBy({ agentId: agent.id, userId, platformId, source: AgentRunSource.AGENT_BUILDER })
-            : null
-        if (!isNil(existingBuilder)) {
-            return existingBuilder
-        }
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
