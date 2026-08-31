@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectDynamicProperties, standardObjectPropertiesDropdown} from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
@@ -43,7 +43,7 @@ export const createCompanyAction = createAction({
 			companyProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdCompany = await client.crm.companies.basicApi.create({
 			properties: companyProperties,

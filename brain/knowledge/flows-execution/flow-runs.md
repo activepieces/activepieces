@@ -9,7 +9,8 @@ A Flow Run records one execution of a specific flow version, from trigger to ter
 ### Entities & services
 - **FlowRun** — id, projectId, flowId, flowVersionId, environment (PRODUCTION/TESTING), status, logsFileId, parentRunId (subflows), failedStep (JSONB `{name, displayName, message?}`), timeline (JSONB), archivedAt (soft delete).
 - **12 statuses**: 3 non-terminal (QUEUED, RUNNING, PAUSED) + 9 terminal (SUCCEEDED, FAILED, TIMEOUT, CANCELED, QUOTA_EXCEEDED, MEMORY_LIMIT_EXCEEDED, INTERNAL_ERROR, LOG_SIZE_EXCEEDED).
-- **Waitpoint** — row per paused step: `type` (DELAY|WEBHOOK), `version` (V0|V1), `status` (PENDING|COMPLETED), unique on `(flow_run_id, step_name)`.
+- **Waitpoint** — row per paused step: `type` (DELAY|WEBHOOK|BARRIER), `version` (V0|V1), `status` (PENDING|COMPLETED), unique on `(flow_run_id, step_name)`. A BARRIER adds `sealed` (bool) and a nullable `policy` jsonb. A partial index on `resumeDateTime` (`WHERE status = 'PENDING' AND "resumeDateTime" IS NOT NULL`) serves the deadline sweep — every other read path leads with `flowRunId` or the primary key.
+- **WaitpointSignal** — one row per thing a BARRIER awaits, created up front: `status` (PENDING|SUCCEEDED|FAILED|REJECTED|CANCELED|NOT_DISPATCHED), `refId` (the child run or link it stands for), nullable `sequence` (the producer's ordinal, partial-unique per barrier), nullable `label`, small `result` jsonb. Release is the pure `shouldReleaseBarrier({ policy, sealed, counts })` in `core-execution` — see decision [000015](../decisions/000015-fan-in-is-an-event-driven-waitpoint-barrier.md).
 - **LogsFile** — zstd-compressed File (type FLOW_RUN_LOG) holding the full executor context.
 
 ### How it works
