@@ -1,5 +1,7 @@
 import {
+  AgentIcon,
   AgentSummary,
+  ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
@@ -9,6 +11,7 @@ import {
   ChevronsUpDown,
   LayoutGrid,
   List,
+  Pencil,
   Search,
   SearchX,
   Settings2,
@@ -172,6 +175,24 @@ const AgentsPageContent = () => {
     );
   };
 
+  const createBlankAgent = () => {
+    if (createAgent.isPending) {
+      return;
+    }
+    createAgent.mutate(
+      createAgentUtils.buildCreateRequest({
+        draft: {
+          displayName: t('New agent'),
+          description: '',
+          icon: AgentIcon.BOT,
+          color: ColorName.PURPLE,
+          instructions: '',
+        },
+        projectId: project.id,
+      }),
+    );
+  };
+
   const projectById = useMemo(
     () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
     [allProjects],
@@ -262,6 +283,17 @@ const AgentsPageContent = () => {
                 : t('Ask your platform admin to connect an AI provider.')}
             </p>
           ))}
+        {chatIsOffOnEveryProvider && (
+          <Button
+            variant="outline"
+            className="mt-4 gap-2"
+            loading={createAgent.isPending}
+            onClick={createBlankAgent}
+          >
+            <Pencil size={16} />
+            {t('Write one by hand instead')}
+          </Button>
+        )}
         <div
           className={cn(
             'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
