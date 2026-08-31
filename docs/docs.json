@@ -346,7 +346,11 @@
                {
                   "group": "Guides",
                   "pages": [
-                     "admin-guide/guides/structure-projects",
+                    "admin-guide/guides/structure-projects",
+                    {
+                      "group": "General",
+                      "pages": []
+                    },
                      "admin-guide/guides/manage-pieces",
                      "admin-guide/guides/sso",
                      {
@@ -375,11 +379,7 @@
                      "admin-guide/guides/event-streaming",
                      "admin-guide/guides/project-releases",
                      "admin-guide/guides/project-replace-cli",
-                    "admin-guide/guides/manage-concurrency",
-                    {
-                      "group": "General",
-                      "pages": []
-                    }
+                    "admin-guide/guides/manage-concurrency"
                   ]
                },
                {
