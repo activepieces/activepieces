@@ -72,6 +72,7 @@ async function handleAuthorizationCode({ authorizationHeader, body, reply }: Han
     }
 
     const tokens = await mcpOAuthTokenService.exchangeCode({
+        redirectUris: client.redirectUris,
         codeVerifier: code_verifier,
         codeChallenge: authCode.codeChallenge,
         codeChallengeMethod: authCode.codeChallengeMethod,
@@ -96,6 +97,7 @@ async function handleRefreshToken({ authorizationHeader, body, reply }: HandlerP
     if (isNil(client)) return
 
     const tokens = await mcpOAuthTokenService.refreshAccessToken({
+        redirectUris: client.redirectUris,
         refreshToken: refresh_token,
         clientId: client.clientId,
     })

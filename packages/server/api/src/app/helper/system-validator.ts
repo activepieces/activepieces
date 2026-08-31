@@ -50,7 +50,6 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
-    [AppSystemProp.ALLOW_DISPOSABLE_EMAILS]: booleanValidator,
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
@@ -155,6 +154,7 @@ const systemPropValidators: {
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.ZEROBOUNCE_API_KEY]: stringValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
     [AppSystemProp.APOLLO_API_KEY]: stringValidator,
