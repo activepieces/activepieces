@@ -19,12 +19,14 @@ import {
   ChevronLeft,
   ChevronsLeft,
   ChevronsRight,
+  FlaskConical,
+  Loader2,
   Rocket,
   Settings2,
   Sparkles,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   unstable_useBlocker,
@@ -74,6 +76,9 @@ import {
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
+import { agentEditState, HeaderStatus } from '../lib/agent-edit-state';
+import { agentTestGate } from '../lib/agent-test-gate';
+
 const ConfigureAgentSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
   description: z.string(),
@@ -121,6 +126,12 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+
+const HEADER_STATUS_COPY: Record<HeaderStatus, () => string> = {
+  'needs-model': () => t('Needs a model to run'),
+  live: () => t('Live'),
+  pending: () => t('Changes not live yet'),
+};
 
 type AgentRequirement = {
   label: string;
@@ -375,14 +386,18 @@ const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
 };
 
 const LeaveWithoutSavingDialog = ({
-  blocker,
+  open,
+  onKeepEditing,
+  onDiscard,
 }: {
-  blocker: ReturnType<typeof unstable_useBlocker>;
+  open: boolean;
+  onKeepEditing: () => void;
+  onDiscard: () => void;
 }) => (
   <Dialog
-    open={blocker.state === 'blocked'}
-    onOpenChange={(open) => {
-      if (!open) blocker.reset?.();
+    open={open}
+    onOpenChange={(next) => {
+      if (!next) onKeepEditing();
     }}
   >
     <DialogContent className="max-w-[420px]">
@@ -395,10 +410,10 @@ const LeaveWithoutSavingDialog = ({
         </DialogDescription>
       </DialogHeader>
       <DialogFooter>
-        <Button variant="outline" onClick={() => blocker.reset?.()}>
+        <Button variant="outline" onClick={onKeepEditing}>
           {t('Keep editing')}
         </Button>
-        <Button variant="destructive" onClick={() => blocker.proceed?.()}>
+        <Button variant="destructive" onClick={onDiscard}>
           {t('Discard changes')}
         </Button>
       </DialogFooter>
@@ -429,6 +444,7 @@ const AgentEditScreen = ({
   onEdited: () => void;
 }) => {
   const [tab, setTab] = useState('configure');
+  const [mode, setMode] = useState('edit');
   const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
     formValuesOf(agent),
   );
@@ -438,58 +454,143 @@ const AgentEditScreen = ({
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
+  const stageDraft = agentsMutations.useUpdateAgent({ id: agent.id });
   const [justLaunched, setJustLaunched] = useState(false);
+  const [testConversationId, setTestConversationId] = useState<string | null>(
+    null,
+  );
 
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
+  const testGate = agentTestGate.blockedReason({ draft: values.draft });
+  const blockedFromTesting = isNil(testGate)
+    ? null
+    : testGate === 'model'
+    ? t('Pick a model before testing')
+    : t('Write instructions before testing');
   const live = liveValuesOf(agent);
   const hasChanges =
-    isNil(live) || JSON.stringify(values) !== JSON.stringify(live);
-  const unsavedTyping = JSON.stringify(values) !== JSON.stringify(syncedDraft);
+    isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
+  const unsavedTyping = !agentEditState.sameConfig({
+    left: values,
+    right: syncedDraft,
+  });
   const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
+  const [exitRequested, setExitRequested] = useState(false);
+  const leaveDecision = agentEditState.leaveGuard({
+    blockerState: leaveBlocker.state,
+    exitRequested,
+  });
+  const testRequested = useRef(false);
+  const writeSeq = useRef(0);
+  const writeLock = useRef(agentEditState.createWriteLock());
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
-    if (JSON.stringify(fromServer) === JSON.stringify(syncedDraft)) return;
+    if (agentEditState.sameConfig({ left: fromServer, right: syncedDraft }))
+      return;
     if (unsavedTyping) return;
     form.reset(fromServer);
     setSyncedDraft(fromServer);
   }, [agent, syncedDraft, unsavedTyping, form]);
 
+  const setServerError = (error: Error, fallback: string) =>
+    form.setError('root.serverError', {
+      type: 'manual',
+      message: api.extractServerErrorMessage(error, fallback),
+    });
+
+  const releaseWrite = () => writeLock.current.release();
+  const claimWrite = () => writeLock.current.claim();
+
+  const openTestWithLatestEdits = form.handleSubmit((values) => {
+    const seq = ++writeSeq.current;
+    return stageDraft.mutate(
+      { ...toUpdateRequest(values), goLive: false },
+      {
+        onSuccess: () => {
+          if (seq !== writeSeq.current) return;
+          setSyncedDraft(values);
+          if (testRequested.current) setMode('test');
+        },
+        onError: (error) =>
+          setServerError(
+            error,
+            t("Your changes couldn't be staged for testing. Try again."),
+          ),
+        onSettled: releaseWrite,
+      },
+    );
+  }, releaseWrite);
+
+  const changeMode = (next: string) => {
+    testRequested.current = next === 'test';
+    const intent = agentEditState.modeIntent({
+      next,
+      unsavedTyping,
+      blockedReason: blockedFromTesting,
+    });
+    if (intent === 'switch') {
+      setMode(next);
+      return;
+    }
+    if (!claimWrite()) return;
+    void openTestWithLatestEdits();
+  };
+
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
+    const seq = ++writeSeq.current;
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
-        form.reset(values);
+        if (seq !== writeSeq.current) return;
         setSyncedDraft(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
       },
       onError: (error) =>
-        form.setError('root.serverError', {
-          type: 'manual',
-          message: api.extractServerErrorMessage(
-            error,
-            t("Your changes weren't saved. Try again."),
-          ),
-        }),
+        setServerError(error, t("Your changes weren't saved. Try again.")),
+      onSettled: releaseWrite,
     });
+  };
+
+  const saveAndGoLive = form.handleSubmit(handleSubmit, releaseWrite);
+  const submitIfIdle = (event: React.FormEvent<HTMLFormElement>) => {
+    if (!claimWrite()) {
+      event.preventDefault();
+      return;
+    }
+    void saveAndGoLive(event);
   };
 
   return (
     <Form {...form}>
-      <LeaveWithoutSavingDialog blocker={leaveBlocker} />
+      <LeaveWithoutSavingDialog
+        open={leaveDecision.open}
+        onKeepEditing={() => {
+          setExitRequested(false);
+          leaveBlocker.reset?.();
+        }}
+        onDiscard={() => {
+          setExitRequested(false);
+          if (leaveDecision.discardAction === 'proceed') {
+            leaveBlocker.proceed?.();
+            return;
+          }
+          onExit();
+        }}
+      />
       <form
-        onSubmit={form.handleSubmit(handleSubmit)}
+        onSubmit={submitIfIdle}
         className="flex h-full w-full min-h-0 flex-col"
       >
         <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
           <button
             type="button"
             aria-label={t('Back to the agent')}
-            onClick={onExit}
+            onClick={() => (unsavedTyping ? setExitRequested(true) : onExit())}
             className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ChevronLeft size={16} />
@@ -500,21 +601,20 @@ const AgentEditScreen = ({
               {agent.displayName}
             </span>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {justLaunched
-                ? t('Live')
-                : formNeedsModel
-                ? t('Needs a model before it can run')
-                : isNil(live)
-                ? t('Not live yet')
-                : hasChanges
-                ? t('Changes not live yet')
-                : t('Live — flows using this agent run these settings')}
+              {HEADER_STATUS_COPY[
+                agentEditState.headerStatus({
+                  needsModel: formNeedsModel,
+                  justLaunched,
+                  live,
+                  hasChanges,
+                })
+              ]()}
             </span>
           </div>
           <Button
             type="submit"
             loading={updateAgent.isPending}
-            disabled={!hasChanges}
+            disabled={!hasChanges || stageDraft.isPending}
             className="h-[38px] shrink-0 gap-2 overflow-hidden rounded-lg px-[18px]"
           >
             <motion.span
@@ -538,7 +638,51 @@ const AgentEditScreen = ({
 
         <div className="flex min-h-0 grow">
           <div className="flex min-w-0 grow basis-0 flex-col border-r border-border">
-            <EditWithAIPane agent={agent} onEdited={onEdited} />
+            <div className="flex h-[52px] shrink-0 items-stretch gap-4 border-b border-border px-[18px]">
+              <Tabs
+                value={mode}
+                onValueChange={changeMode}
+                className="flex h-full shrink-0 items-stretch"
+              >
+                <TabsList
+                  variant="outline"
+                  className="h-full items-stretch gap-[22px]"
+                >
+                  <TabsTrigger
+                    value="edit"
+                    variant="outline"
+                    className="h-full items-center gap-2"
+                  >
+                    <Sparkles size={14} />
+                    {t('Edit with AI')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="test"
+                    variant="outline"
+                    className="h-full items-center gap-2"
+                    disabled={stageDraft.isPending || updateAgent.isPending}
+                  >
+                    {stageDraft.isPending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <FlaskConical size={14} />
+                    )}
+                    {t('Test')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            {mode === 'test' ? (
+              <TestPane
+                agent={agent}
+                blockedReason={blockedFromTesting}
+                conversationId={testConversationId}
+                onConversationCreated={setTestConversationId}
+                onEdited={onEdited}
+              />
+            ) : (
+              <EditWithAIPane agent={agent} onEdited={onEdited} />
+            )}
           </div>
 
           <div className="flex w-[452px] shrink-0 flex-col">
@@ -574,13 +718,6 @@ const AgentEditScreen = ({
             </div>
             <ScrollArea className="min-h-0 grow">
               <div className="flex flex-col gap-5 p-[18px]">
-                {hasChanges && (
-                  <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[13px] leading-5 text-muted-foreground">
-                    {t(
-                      'These changes are not live. Save and go live to hand them to this agent and every flow using it.',
-                    )}
-                  </p>
-                )}
                 {tab === 'configure' ? (
                   <ConfigureFields form={form} needsModel={formNeedsModel} />
                 ) : (
@@ -604,10 +741,52 @@ const AgentBuilderWelcome = () => (
   <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
     <Sparkles size={22} className="text-primary" />
     <span className="text-base font-semibold">{t('Describe a change')}</span>
-    <span className="max-w-[340px] text-sm text-muted-foreground">
-      {t(
-        'Adjust the instructions, add or remove tools, or change the model. For example: “Only reply to paying customers” or “Add Slack and Notion”.',
-      )}
+    <span className="max-w-[320px] text-sm text-muted-foreground">
+      {t('Try “Only reply to paying customers” or “Add Slack and Notion”.')}
+    </span>
+  </div>
+);
+
+const TestPane = ({
+  agent,
+  blockedReason,
+  conversationId,
+  onConversationCreated,
+  onEdited,
+}: {
+  agent: Agent;
+  blockedReason: string | null;
+  conversationId: string | null;
+  onConversationCreated: (id: string) => void;
+  onEdited: () => void;
+}) =>
+  !isNil(blockedReason) ? (
+    <div className="flex min-h-0 grow flex-col items-center justify-center px-6 text-center">
+      <span className="text-sm font-semibold">{blockedReason}</span>
+    </div>
+  ) : (
+    <div className="flex min-h-0 grow flex-col">
+      <AIChatBox
+        incognito={false}
+        agentId={agent.id}
+        conversationId={conversationId}
+        onConversationCreated={onConversationCreated}
+        onTurnEnd={onEdited}
+        placeholder={t('Try {name}...', { name: agent.displayName })}
+        footerNote={buildCapabilityNote(agent)}
+        emptyState={<AgentTestWelcome />}
+      />
+    </div>
+  );
+
+const AgentTestWelcome = () => (
+  <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+    <FlaskConical size={22} className="text-primary" />
+    <span className="text-base font-semibold">
+      {t('Try it before it goes live')}
+    </span>
+    <span className="max-w-[320px] text-sm text-muted-foreground">
+      {t('Give it a real task. It runs on the settings beside you.')}
     </span>
   </div>
 );
@@ -619,24 +798,15 @@ const EditWithAIPane = ({
   agent: Agent;
   onEdited: () => void;
 }) => (
-  <div className="flex h-full min-h-0 flex-col">
-    <div className="flex h-[52px] shrink-0 items-center gap-2 border-b border-border px-[18px]">
-      <Sparkles size={15} className="shrink-0 text-primary" />
-      <span className="text-sm font-semibold">{t('Edit with AI')}</span>
-      <span className="grow basis-0 truncate text-[13px] text-muted-foreground">
-        {t('Activepieces AI')}
-      </span>
-    </div>
-    <div className="flex min-h-0 grow flex-col">
-      <AIChatBox
-        incognito={false}
-        agentId={agent.id}
-        builder
-        onTurnEnd={onEdited}
-        placeholder={t('Message the builder...')}
-        emptyState={<AgentBuilderWelcome />}
-      />
-    </div>
+  <div className="flex min-h-0 grow flex-col">
+    <AIChatBox
+      incognito={false}
+      agentId={agent.id}
+      builder
+      onTurnEnd={onEdited}
+      placeholder={t('Message the builder...')}
+      emptyState={<AgentBuilderWelcome />}
+    />
   </div>
 );
 
@@ -803,4 +973,4 @@ const AgentEditorPage = () => {
   );
 };
 
-export { AgentEditorPage };
+export { AgentEditorPage, AgentEditScreen, LeaveWithoutSavingDialog, TestPane };

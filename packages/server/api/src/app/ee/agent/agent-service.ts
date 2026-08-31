@@ -102,7 +102,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
+        await agentRepo().save({ ...omit(agent, ['published']), ...omit(request, ['goLive']), draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 

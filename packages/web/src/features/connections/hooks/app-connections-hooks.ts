@@ -82,6 +82,7 @@ export const appConnectionsMutations = {
     form,
     setOpen,
   }: UseUpsertAppConnectionProps) => {
+    const queryClient = useQueryClient();
     return useMutation({
       mutationFn: async () => {
         setErrorMessage('');
@@ -116,6 +117,10 @@ export const appConnectionsMutations = {
         return appConnectionsApi.upsert(formValues);
       },
       onSuccess: (connection) => {
+        // Every cached connection list is now out of date, whichever key it was fetched under.
+        // Refreshing only the caller's own query left other readers stale enough to describe a
+        // brand-new account as deleted.
+        void queryClient.invalidateQueries({ queryKey: ['app-connections'] });
         setOpen(false, connection);
         setErrorMessage('');
       },

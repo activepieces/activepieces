@@ -15,6 +15,7 @@ const STREAM_RETRY_BASE_DELAY_MS = 1_000
 const QUOTA_MARKER = /insufficient_quota/i
 const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i, QUOTA_MARKER]
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
+const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set(['AIProvider', 'ChatAiProvider'])
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
@@ -338,6 +339,9 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
         return apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
             ? 'user'
             : 'internal'
+    }
+    if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
+        return 'user'
     }
     return USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0)
         && (apiError.statusCode === 404 || provider !== AIProviderName.ACTIVEPIECES)
