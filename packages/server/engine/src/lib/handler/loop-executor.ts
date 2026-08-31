@@ -93,7 +93,7 @@ function collectItemSensitivePaths(censoredInput: unknown): string[] {
     }
     const censoredItems = censoredInput.items
     if (!Array.isArray(censoredItems)) {
-        return []
+        return censoredItems === SENSITIVE_VALUE_REDACTED ? ['item'] : []
     }
     const paths = new Set<string>()
     for (const item of censoredItems) {

@@ -157,10 +157,10 @@ describe('flow with looping — sensitive items', () => {
         expect(loopOut.sensitiveOutputPaths).toEqual(['item'])
     })
 
-    it('marks item sensitive when individual array elements are redacted upstream', async () => {
+    it('marks only the redacted field on item when individual array elements are redacted upstream', async () => {
         const loopOut = await runLoopOver(['keys.0.token', 'keys.1.token'])
 
-        expect(loopOut.sensitiveOutputPaths).toEqual(['item'])
+        expect(loopOut.sensitiveOutputPaths).toEqual(['item.token'])
     })
 
     it('leaves item unmarked when nothing upstream is sensitive', async () => {
