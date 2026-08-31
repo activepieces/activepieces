@@ -42,13 +42,10 @@ export const AgentCard = ({
 }: AgentCardProps) => {
   return (
     <div className="group relative h-full">
-      <div className="absolute end-3 top-3 z-10 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 has-[[data-state=open]]:opacity-100">
-        <AgentActionsMenu agent={agent} />
-      </div>
       <button
         type="button"
         onClick={onClick}
-        className="flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow group-hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
+        className="relative flex h-full w-full flex-col justify-between gap-4 overflow-clip rounded-[19px] border border-border bg-background p-5 text-left shadow-[0_1px_2px_#0A0A0A0A,0_4px_12px_-2px_#0A0A0A14] transition-shadow hover:shadow-[0_2px_4px_#0A0A0A0F,0_12px_24px_-4px_#0A0A0A1F]"
       >
         <div
           aria-hidden
@@ -90,6 +87,9 @@ export const AgentCard = ({
           </div>
         </div>
       </button>
+      <div className="absolute end-3 top-3 z-10">
+        <AgentActionsMenu agent={agent} />
+      </div>
     </div>
   );
 };

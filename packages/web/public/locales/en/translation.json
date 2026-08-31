@@ -12,7 +12,7 @@
   "Different account per action": "Different account per action",
   "Account was deleted": "Account was deleted",
   "Enrich a new lead with company details and write the first email": "Enrich a new lead with company details and write the first email",
-  "Every conversation anyone had with this agent is deleted with it, and any flow step still pointing at it stops working.": "Every conversation anyone had with this agent is deleted with it, and any flow step still pointing at it stops working.",
+  "Its instructions, its tools, and every conversation held with it are deleted for good. Any draft flow step using it will break.": "Its instructions, its tools, and every conversation held with it are deleted for good. Any draft flow step using it will break.",
   "Lead enrichment": "Lead enrichment",
   "New agent": "New agent",
   "No provider is turned on for chat": "No provider is turned on for chat",
