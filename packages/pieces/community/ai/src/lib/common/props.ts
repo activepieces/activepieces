@@ -1,13 +1,11 @@
-import { ACTIVEPIECES_CHAT_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
 
-function managedModelLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
-}
+
 
 async function listProviders(ctx: {
   server: { apiUrl: string; token: string };
@@ -120,9 +118,9 @@ export const aiProps = <T extends AIModelType>({
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel(model.id) !== undefined)
+          .filter(model => provider !== AIProviderName.ACTIVEPIECES || model.tierLabel !== undefined)
           .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel(model.id) ?? model.name) : model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (model.tierLabel ?? model.name) : model.name,
             value: model.id,
           })),
       };

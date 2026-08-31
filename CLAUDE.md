@@ -2,6 +2,33 @@
 
 Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pieces. MCP support.
 
+## Writing and Explaining (Simple English)
+
+The developers reading your output are strong programmers but are **not native English
+speakers**. Write every explanation, plan, PR description, commit message and code comment in
+simple English.
+
+- **Short, plain words.** Say "use it exactly as it is", not "reuse it verbatim".
+- **Short sentences.** One idea per sentence. Break long sentences into two.
+- **Technical terms are fine.** `TypeORM`, `race condition`, `idempotency key`, `cache TTL` are
+  all fine. The rule is about English vocabulary, not programming vocabulary.
+- **No corporate or business words.** Do not write: blast radius, leverage, circle back, align
+  on, surface (as a verb), internalise, spot-check, bandwidth, low-hanging fruit, deep dive.
+- **No idioms or figures of speech.** Say what actually happens instead.
+- **Use numbers, not vague words.** Not "check a few models" but "check about 15 models".
+  Not "this takes a while" but "this takes about 20 minutes".
+- **Name the thing directly.** Not "the aforementioned service" but "`ai-provider-service.ts`".
+
+| Do not write | Write instead |
+| --- | --- |
+| Reuse `model-catalog.ts` verbatim. | Use `model-catalog.ts` exactly as it is. Do not change it. |
+| The blast radius is customer-visible. | This change can directly affect customers. |
+| Spot-check the weights for internal consistency. | Check about 15 models and make sure the numbers make sense. |
+| The fallback degrades gracefully. | If it fails, it uses the old value and keeps working. |
+| This is a two-repo ship. | You must change two repos. |
+| Metering is orthogonal to gating. | Metering and gating are two separate things. |
+| We should internalise this constraint. | Remember this limit. |
+
 ## Architecture (Non-Obvious Rules)
 
 - **Multi-tenant**: Platform → Projects → Users. ALL queries MUST filter by `projectId` or `platformId`.

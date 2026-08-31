@@ -112,6 +112,7 @@ export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),
     type: z.enum(AIProviderModelType),
+    tierLabel: z.optional(z.string()),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 
