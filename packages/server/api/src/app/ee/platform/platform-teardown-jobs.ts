@@ -1,7 +1,7 @@
 import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { Flow, FlowOperationType, FlowStatus, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull } from 'typeorm'
+import { EntityManager, IsNull } from 'typeorm'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { userIdentityRepository } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -38,6 +38,8 @@ const variableRepo = repoFactory(VariableEntity)
 const concurrencyPoolRepo = repoFactory(ConcurrencyPoolEntity)
 const toolSearchIndexRepo = repoFactory(ToolSearchIndexEntity)
 
+const PLATFORM_TEARDOWN_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000
+
 export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
     hardDeletePlatformHandler: async (data: SystemJobData<SystemJobName.HARD_DELETE_PLATFORM>) => {
         const { platformId } = data
@@ -52,7 +54,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
 
         const projectIds = await listProjectIdsByPlatform(platformId)
         for (const projectId of projectIds) {
-            await projectRepo().delete({ id: projectId, platformId })
+            await deleteWithExtendedTimeout((entityManager) => entityManager.delete(ProjectEntity, { id: projectId, platformId }))
         }
 
         await signingKeyRepo().delete({ platformId })
@@ -66,7 +68,7 @@ export const platformTeardownJobs = (log: FastifyBaseLogger) => ({
         await concurrencyPoolRepo().delete({ platformId })
         await toolSearchIndexRepo().delete({ platformId })
 
-        await platformRepo().delete({ id: platformId })
+        await deleteWithExtendedTimeout((entityManager) => entityManager.delete(PlatformEntity, { id: platformId }))
 
         const identityIds = await deletePlatformUsers(platformId)
         await deleteUnreferencedIdentities(identityIds)
@@ -138,6 +140,13 @@ async function drainFlows({ flows, log }: DrainFlowsParams): Promise<void> {
         await batchDeleteByFlowId(flow.id)
         await flowRepo().delete({ id: flow.id })
     }
+}
+
+async function deleteWithExtendedTimeout(deleteFn: (entityManager: EntityManager) => Promise<unknown>): Promise<void> {
+    await platformRepo().manager.transaction(async (entityManager: EntityManager) => {
+        await entityManager.query(`SET LOCAL statement_timeout = ${PLATFORM_TEARDOWN_STATEMENT_TIMEOUT_MS}`)
+        await deleteFn(entityManager)
+    })
 }
 
 async function listFlowsByPlatform(platformId: string): Promise<Flow[]> {
