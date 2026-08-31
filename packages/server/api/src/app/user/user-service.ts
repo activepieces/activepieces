@@ -261,6 +261,29 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function mapToUserWithMetaInformation(user: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
+    if (isNil(user)) {
+        return null
+    }
+    const identity = user.identity
+    if (isNil(identity)) {
+        return null
+    }
+    return {
+        id: user.id,
+        email: identity.email,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        platformId: user.platformId,
+        platformRole: user.platformRole,
+        status: user.status,
+        externalId: user.externalId,
+        created: user.created,
+        updated: user.updated,
+        lastActiveDate: user.lastActiveDate,
+        imageUrl: identity.imageUrl,
+    }
+}
 
 async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
     const platform = await platformService(log).getOneOrThrow(platformId)
