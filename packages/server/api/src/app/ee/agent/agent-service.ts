@@ -6,6 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -15,6 +16,7 @@ import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
 const DEFAULT_PAGE_SIZE = 20
+const MAX_NAMED_FLOWS_IN_USE = 3
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentAudit = { describePublished }
@@ -167,10 +169,37 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
+        const publishedFlows = await publishedFlowsRunning({ projectId, externalId: agent.externalId })
+        if (publishedFlows.length > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: describeFlowsInUse(publishedFlows) },
+            })
+        }
         await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+async function publishedFlowsRunning({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<string[]> {
+    const flows = await flowVersionRepo()
+        .createQueryBuilder('flow_version')
+        .select('flow_version."displayName"', 'displayName')
+        .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
+        .where('flow."projectId" = :projectId', { projectId })
+        .andWhere('flow_version.id = flow."publishedVersionId"')
+        .andWhere('flow_version."agentIds" && :externalIds', { externalIds: [externalId] })
+        .orderBy('flow_version."displayName"', 'ASC')
+        .getRawMany<{ displayName: string }>()
+    return flows.map((flow) => flow.displayName)
+}
+
+function describeFlowsInUse(flowNames: string[]): string {
+    const named = flowNames.slice(0, MAX_NAMED_FLOWS_IN_USE).join(', ')
+    const remaining = flowNames.length - MAX_NAMED_FLOWS_IN_USE
+    const tail = remaining > 0 ? `, and ${remaining} more` : ''
+    return `This agent is running in published flows (${named}${tail}). Remove it from them first.`
+}
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()

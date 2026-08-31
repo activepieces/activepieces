@@ -1,9 +1,9 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
+import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, FlowStatus, FlowVersionState, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
-import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -34,6 +34,27 @@ async function createAgent(ctx: TestContext, overrides: Record<string, unknown> 
     const response = await ctx.post('/v1/agents', agentBody(ctx.project.id, overrides))
     expect(response.statusCode).toBe(StatusCodes.CREATED)
     return response.json()
+}
+
+async function externalIdOf(agentId: string): Promise<string> {
+    const stored = await db.findOneBy<{ externalId: string }>('agent', { id: agentId })
+    expect(stored?.externalId).toBeDefined()
+    return stored!.externalId
+}
+
+async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<void> {
+    const flow = createMockFlow({ projectId, status: FlowStatus.ENABLED })
+    await db.save('flow', flow)
+    const version = createMockFlowVersion({
+        flowId: flow.id,
+        displayName,
+        state: FlowVersionState.LOCKED,
+        agentIds: [externalId],
+    })
+    await db.save('flow_version', version)
+    if (publish) {
+        await db.update('flow', flow.id, { publishedVersionId: version.id })
+    }
 }
 
 beforeAll(async () => {
@@ -100,6 +121,35 @@ describe('agent crud', () => {
 
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('refuses to delete an agent a published flow still runs, and names the flow', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: await externalIdOf(agent.id), displayName: 'Nightly digest' })
+
+        const response = await ctx.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('Nightly digest')
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('deletes an agent whose only reference is an unpublished draft version', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: await externalIdOf(agent.id), displayName: 'Draft only', publish: false })
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
+
+    it('ignores a published flow in another project, which cannot be running this agent', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const other = await context()
+        await publishFlowRunningAgent({ projectId: other.project.id, externalId: await externalIdOf(agent.id), displayName: 'Someone elses flow' })
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
     })
 })
 

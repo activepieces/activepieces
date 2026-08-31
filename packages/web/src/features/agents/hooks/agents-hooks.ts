@@ -87,6 +87,16 @@ export const agentsMutations = {
       onError: internalErrorToast,
     });
   },
+  useDeleteAgent: ({ onError }: { onError: (error: Error) => void }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (id: string) => agentsApi.delete(id),
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+      },
+      onError,
+    });
+  },
   useDraftAgent: () =>
     useMutation({
       mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),

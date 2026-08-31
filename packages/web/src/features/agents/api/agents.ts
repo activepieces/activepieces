@@ -52,4 +52,7 @@ export const agentsApi = {
   draft(request: DraftAgentRequest): Promise<DraftAgentResponse> {
     return api.post<DraftAgentResponse>('/v1/agents/draft', request);
   },
+  delete(id: string): Promise<void> {
+    return api.delete<void>(`/v1/agents/${id}`);
+  },
 };
