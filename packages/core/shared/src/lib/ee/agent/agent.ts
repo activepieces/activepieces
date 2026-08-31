@@ -85,7 +85,9 @@ const CreateAgentRequest = z.object({
     draft: AgentConfig,
 })
 
-const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial()
+const UpdateAgentRequest = CreateAgentRequest.omit({ projectId: true }).partial().extend({
+    goLive: z.boolean().optional(),
+})
 
 const AgentDraftFields = z.object({
     displayName: z.string().min(1, formErrors.required).max(MAX_AGENT_NAME_LENGTH),

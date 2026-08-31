@@ -1,6 +1,7 @@
 export * from './lib/utils'
 export * from './lib/object-utils'
 export * from './lib/assertions'
+export * from './lib/connection-template'
 export * from './lib/try-catch'
 export * from './lib/id-generator'
 export * from './lib/base-model'

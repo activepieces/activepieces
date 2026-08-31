@@ -1,7 +1,7 @@
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { FilterOperatorEnum } from '../common/types';
 import { MAX_SEARCH_PAGE_SIZE } from '../common/constants';
@@ -91,7 +91,7 @@ export const findCustomObjectAction = createAction({
 			});
 		}
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
 			limit: MAX_SEARCH_PAGE_SIZE,

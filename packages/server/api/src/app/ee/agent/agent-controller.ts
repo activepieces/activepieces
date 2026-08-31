@@ -79,7 +79,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             userId: await resolveUserId(request),
             request: request.body,
-            goLive: true,
+            goLive: request.body.goLive ?? true,
         })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.AGENT_UPDATED,
