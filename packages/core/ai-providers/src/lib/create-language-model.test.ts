@@ -81,6 +81,20 @@ describe('createLanguageModel', () => {
         expect(identify(anthropicOnVertex).provider).toBe('googleVertex.anthropic.messages')
     })
 
+    it('sends Model Garden MaaS ids to the Vertex MaaS client', () => {
+        const build = (modelId: string) => identify(createLanguageModel({
+            provider: AIProviderName.VERTEX,
+            auth: authFor[AIProviderName.VERTEX],
+            config: configFor[AIProviderName.VERTEX],
+            modelId,
+        })).provider
+
+        expect(build('meta/llama-4-scout-17b-16e-instruct-maas')).toBe('vertex.maas.chat')
+        expect(build('mistral-large-2411-maas')).toBe('vertex.maas.chat')
+        expect(build('gemini-2.5-pro')).toBe('google.vertex.chat')
+        expect(build('claude-3-5-sonnet@20241022')).toBe('googleVertex.anthropic.messages')
+    })
+
     it('sends Mistral to its own API by default and via OpenRouter when requested', () => {
         expect(identify(buildFor(AIProviderName.MISTRAL)).provider).toBe('mistral.chat')
         expect(identify(buildFor(AIProviderName.MISTRAL, { mistralViaOpenRouter: true })).provider).toBe('openrouter')

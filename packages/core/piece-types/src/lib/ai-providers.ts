@@ -315,7 +315,6 @@ const WEB_SEARCH_MODE_BY_PROVIDER: Partial<Record<AIProviderName, AIWebSearchMod
 }
 
 const NO_IMAGE_GENERATION_PROVIDERS = new Set<AIProviderName>([
-    AIProviderName.VERTEX,
     AIProviderName.ANTHROPIC,
     AIProviderName.MISTRAL,
     AIProviderName.XAI,

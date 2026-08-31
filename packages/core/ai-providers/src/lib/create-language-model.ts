@@ -3,6 +3,7 @@ import { AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfi
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createVertex } from '@ai-sdk/google-vertex'
 import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
+import { createVertexMaas } from '@ai-sdk/google-vertex/maas'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -11,6 +12,8 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { LanguageModel } from 'ai'
 
+const VERTEX_MAAS_SUFFIX = '-maas'
+const VERTEX_ANTHROPIC_PREFIX = 'claude'
 const MISTRAL_BASE_URL = 'https://api.mistral.ai/v1'
 
 export function createLanguageModel({ provider, auth, config, modelId, options = {} }: CreateLanguageModelParams): LanguageModel {
@@ -43,9 +46,7 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             const { serviceAccountJson } = auth as VertexProviderAuthConfig
             const { project, region } = config as VertexProviderConfig
             const vertexSettings = { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) }, ...observed }
-            return isVertexAnthropicModel(modelId)
-                ? createVertexAnthropic(vertexSettings)(modelId)
-                : createVertex(vertexSettings)(modelId)
+            return vertexClientFor({ modelId })(vertexSettings)(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -92,8 +93,14 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
     }
 }
 
-function isVertexAnthropicModel(modelId: string): boolean {
-    return modelId.toLowerCase().includes('claude')
+function vertexClientFor({ modelId }: { modelId: string }): typeof createVertex | typeof createVertexAnthropic | typeof createVertexMaas {
+    if (modelId.includes('/') || modelId.endsWith(VERTEX_MAAS_SUFFIX)) {
+        return createVertexMaas
+    }
+    if (modelId.toLowerCase().startsWith(VERTEX_ANTHROPIC_PREFIX)) {
+        return createVertexAnthropic
+    }
+    return createVertex
 }
 
 function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {

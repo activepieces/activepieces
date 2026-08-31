@@ -4,6 +4,7 @@ import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createVertex } from '@ai-sdk/google-vertex'
 import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
+import { createVertexMaas } from '@ai-sdk/google-vertex/maas'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
@@ -14,6 +15,9 @@ import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIPr
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
+
+const VERTEX_MAAS_SUFFIX = '-maas'
+const VERTEX_ANTHROPIC_PREFIX = 'claude'
 
 async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
@@ -148,12 +152,7 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
         }
         case AIProviderName.VERTEX: {
-            const { serviceAccountJson } = auth as VertexProviderAuthConfig
-            const { project, region } = config as VertexProviderConfig
-            const vertexSettings = { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } }
-            return isVertexAnthropicModel(modelId)
-                ? createVertexAnthropic(vertexSettings)(modelId)
-                : createVertex(vertexSettings)(modelId)
+            return vertexClientFor({ modelId })(buildVertexSettings({ auth, config }))(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -198,8 +197,20 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
     }
 }
 
-function isVertexAnthropicModel(modelId: string): boolean {
-    return modelId.toLowerCase().includes('claude')
+function vertexClientFor({ modelId }: { modelId: string }): typeof createVertex | typeof createVertexAnthropic | typeof createVertexMaas {
+    if (modelId.includes('/') || modelId.endsWith(VERTEX_MAAS_SUFFIX)) {
+        return createVertexMaas
+    }
+    if (modelId.toLowerCase().startsWith(VERTEX_ANTHROPIC_PREFIX)) {
+        return createVertexAnthropic
+    }
+    return createVertex
+}
+
+function buildVertexSettings({ auth, config }: { auth: unknown, config: unknown }): { project: string, location: string, googleAuthOptions: { credentials: { client_email?: string, private_key?: string } } } {
+    const { serviceAccountJson } = auth as VertexProviderAuthConfig
+    const { project, region } = config as VertexProviderConfig
+    return { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } }
 }
 
 function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {
@@ -248,6 +259,9 @@ function buildNativeImageModel({ provider, auth, config, modelId, metadataHeader
             const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
             const { region } = config as BedrockProviderConfig
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey }).imageModel(modelId)
+        }
+        case AIProviderName.VERTEX: {
+            return createVertex(buildVertexSettings({ auth, config })).imageModel(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
