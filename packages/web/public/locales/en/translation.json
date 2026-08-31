@@ -1843,6 +1843,7 @@
   "User has been deactivated": "User has been deactivated",
   "Email domain is disallowed": "Email domain is disallowed",
   "Email authentication has been disabled": "Email authentication has been disabled",
+  "Your account is not set up on this platform, please contact your administrator": "Your account is not set up on this platform, please contact your administrator",
   "Forgot your password?": "Forgot your password?",
   "Sign up is restricted. You need an invitation to join. Please contact the administrator.": "Sign up is restricted. You need an invitation to join. Please contact the administrator.",
   "Email is already used": "Email is already used",
