@@ -1,6 +1,10 @@
 import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
+export const McpOAuthClientKey = z.enum(['claude', 'claude-code', 'chatgpt', 'cursor', 'vscode', 'codex', 'gemini-cli', 'opencode', 'windsurf', 'unknown'])
+
+export type McpOAuthClientKey = z.infer<typeof McpOAuthClientKey>
+
 export const McpOAuthClient = z.object({
     ...BaseModelSchema,
     clientId: z.string(),
@@ -19,12 +23,14 @@ export const McpOAuthToken = z.object({
     ...BaseModelSchema,
     refreshToken: z.string(),
     clientId: z.string(),
+    clientKey: McpOAuthClientKey.nullable(),
     userId: z.string(),
     projectId: z.string().nullable(),
     platformId: z.string(),
     scopes: z.array(z.string()).nullable(),
     expiresAt: z.string(),
     revoked: z.boolean(),
+    lastUsedAt: z.string().nullable(),
 })
 
 export type McpOAuthToken = z.infer<typeof McpOAuthToken>
