@@ -346,10 +346,11 @@
                {
                   "group": "Guides",
                   "pages": [
-                    "admin-guide/guides/structure-projects",
                     {
                       "group": "General",
-                      "pages": []
+                      "pages": [
+                        "admin-guide/guides/structure-projects"
+                      ]
                     },
                      "admin-guide/guides/manage-pieces",
                      "admin-guide/guides/sso",
