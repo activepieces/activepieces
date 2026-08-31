@@ -20,7 +20,7 @@ export const vertexProvider: AIProviderStrategy<VertexProviderAuthConfig, Vertex
         }).getAccessToken())
 
         if (error) {
-            throw new Error(`Failed to authenticate the Vertex AI service account: ${error instanceof Error ? error.message : String(error)}`)
+            throw error
         }
         if (!token) {
             throw new Error('Vertex AI service account returned no access token')

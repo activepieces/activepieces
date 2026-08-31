@@ -1,5 +1,6 @@
 import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { formErrors } from '../../form-errors'
 
 export enum AIProviderModelType {
     IMAGE = 'image',
@@ -106,8 +107,8 @@ export const BedrockProviderConfig = z.object({
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
 export const VertexProviderConfig = z.object({
-    project: z.string().min(1),
-    region: z.string().min(1),
+    project: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
+    region: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
     models: z.array(ProviderModelConfig),
 })
 export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
@@ -137,8 +138,8 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
-    BedrockProviderConfig,
     VertexProviderConfig,
+    BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,

@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
 import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
 
@@ -40,6 +41,28 @@ const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) =
 })
 
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
+
+describe('AIProviderConfig union', () => {
+    it('keeps every Vertex field instead of losing them to a looser member', () => {
+        const config = {
+            project: 'gcp-project',
+            region: 'europe-west4',
+            models: [{ modelId: 'gemini-2.5-pro', modelName: 'Gemini 2.5 Pro', modelType: AIProviderModelType.TEXT }],
+        }
+
+        expect(AIProviderConfig.parse(config)).toEqual(config)
+    })
+
+    it('rejects a region that would escape the Vertex hostname', () => {
+        const withRegion = (region: string) => VertexProviderConfig.safeParse({ project: 'gcp-project', region, models: [] }).success
+
+        expect(withRegion('europe-west4')).toBe(true)
+        expect(withRegion('global')).toBe(true)
+        expect(withRegion('evil.test/')).toBe(false)
+        expect(withRegion('foo.attacker.test')).toBe(false)
+        expect(withRegion('a/../../b')).toBe(false)
+    })
+})
 
 describe('createLanguageModel', () => {
     it.each(supportedProviders)('passes the model id straight through for %s', (provider) => {

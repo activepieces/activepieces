@@ -81,8 +81,8 @@ export const BedrockProviderConfig = z.object({
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
 export const VertexProviderConfig = z.object({
-    project: z.string().check(z.minLength(1)),
-    region: z.string().check(z.minLength(1)),
+    project: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    region: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
     models: z.array(ProviderModelConfig),
 })
 export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
@@ -110,8 +110,8 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
-    BedrockProviderConfig,
     VertexProviderConfig,
+    BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
