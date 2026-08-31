@@ -1,5 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
 import { newCompanyTrigger } from './lib/triggers/new-company';
@@ -69,12 +69,12 @@ import { createBlogPostAction } from './lib/actions/create-blog-post';
 import {  createPageAction } from './lib/actions/create-page';
 import { getPageAction } from './lib/actions/get-page';
 import { deletePageAction } from './lib/actions/delete-page';
-import { hubspotAuth } from './lib/auth';
+import { getHubspotAccessToken, hubspotAuth } from './lib/auth';
 
 export const hubspot = createPiece({
 	displayName: 'HubSpot',
 	description: 'Powerful CRM that offers tools for sales, customer service, and marketing automation.',
-	minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.86.4',
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
 	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
 	categories: [PieceCategory.SALES_AND_CRM],
@@ -128,7 +128,7 @@ export const hubspot = createPiece({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
 			authMapping: async (auth) => ({
-				Authorization: `Bearer ${(auth).access_token}`,
+				Authorization: `Bearer ${getHubspotAccessToken(auth)}`,
 			}),
 		}),
 	],
