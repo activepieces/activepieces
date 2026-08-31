@@ -167,6 +167,33 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### WhatsScale media actions take a file input, capping media at the instance file-size limit
+
+The 17 WhatsScale actions that send media — image, video, document and audio sends across the contact, group, channel and CRM-contact variants, plus the image and video Status posts — used to take a plain text URL and hand it straight to WhatsScale, which fetched it itself. Those fields are now file inputs: the engine resolves whatever you pass (a URL, or a file from a previous step) into a file, stores it on your instance, and gives WhatsScale that copy to fetch.
+
+The field keys are unchanged (`imageUrl`, `videoUrl`, `documentUrl`, `audioUrl`), so existing flows keep their configured value and a stored URL still works. Two behaviour changes come with the new path:
+
+- **Media is now capped by `AP_MAX_FILE_SIZE_MB` — 10 MB on Cloud, 25 MB by default self-hosted.** The file travels through your instance instead of going vendor-to-vendor, so a URL pointing at something larger than that limit now fails where it previously sent. This mostly affects video and document sends. Streaming does not lift the ceiling: writing into storage is counted against the cap either way, and producing a URL for WhatsScale to fetch requires writing into storage. See [Limits](/install/reference/limits).
+- **The URL WhatsScale fetches is now one your instance serves.** It is a signed, expiring link on your public API URL. An instance that is not reachable from the internet cannot hand WhatsScale a URL it can fetch, so media sends need a publicly resolvable `AP_FRONTEND_URL` on self-hosted installs.
+
+#### What you need to do
+
+Nothing if your media is comfortably under the cap and your instance is reachable from the internet. On Cloud that cap is 10 MB, so check any flow that forwards video or large documents.
+
+If you send files larger than the cap on a self-hosted install, raise `AP_MAX_FILE_SIZE_MB` to cover the largest media you send and redeploy. On Cloud the 10 MB cap is not configurable. If your instance is not publicly reachable, keep media sends on a host that is, or leave these actions unused; there is no way for WhatsScale to fetch a file from a private address.
+
+#### WhatsScale "Add a Tag to a CRM Contact" now takes a list of tags
+
+The two add-tag actions ("Add Tags to a CRM Contact" and its By-ID twin) accepted a single tag in a text field named `tag`. They now accept a list, in a field named `tags`, and send one request per tag so existing tags are kept.
+
+Because the field was renamed, **a step configured before this release loses its tag value** and shows "Tags" as an empty required field. The field could not keep its old name: a stored single string does not validate as a list.
+
+Adding several tags is **not atomic** — each tag is its own request, so a failure part-way through leaves the earlier tags applied. Re-running is safe: adding a tag a contact already has converges on the same set.
+
+#### What you need to do
+
+Re-enter the tag on any flow that uses either add-tag action, as a list entry rather than free text. The removal actions are unchanged and still take one tag at a time.
+
 
 ## 0.87.0
 

@@ -1,0 +1,50 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { sendMessageResultOutputSchema } from '../../../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { whatsscaleAuth } from '../../../auth';
+import { whatsscaleClient } from '../../../common/client';
+import { resolveSendResult } from '../../../common/messaging';
+import { whatsscaleProps } from '../../../common/props';
+import { buildRecipientBody, RecipientType } from '../../../common/recipients';
+
+export const sendTextToCrmContactAction = createAction({
+  auth: whatsscaleAuth,
+  name: 'whatsscale_send_text_to_crm_contact',
+  classification: 'WRITE',
+  displayName: 'Send a Message to a CRM Contact',
+  description: 'Send a text message to a contact from your WhatsScale CRM',
+  audience: 'human',
+  aiMetadata: { description: 'Sends a text message to a contact stored in the WhatsScale CRM, identified by CRM contact ID chosen from the dropdown. Pick this when the recipient is a managed CRM record; use the plain contact, group, manual-entry, or channel text variants for non-CRM recipients. Not idempotent: each call sends another message.', idempotent: false },
+  outputSchema: sendMessageResultOutputSchema,
+  props: {
+    session: whatsscaleProps.session,
+    crmContact: whatsscaleProps.crmContact,
+    text: Property.LongText({
+      displayName: 'Message',
+      required: true,
+      description: 'The text message to send',
+    }),
+  },
+  propertyGroups: [
+    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'crmContact'] },
+    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+  ],
+  async run(context) {
+    const { session, crmContact, text } = context.propsValue;
+    const auth = context.auth.secret_text;
+
+    const body = buildRecipientBody(
+      RecipientType.CRM_CONTACT,
+      session,
+      crmContact,
+    );
+    const response = await whatsscaleClient(
+      auth,
+      HttpMethod.POST,
+      '/api/sendText',
+      { ...body, text },
+    );
+
+    return await resolveSendResult({ apiKey: auth, body: response.body });
+  },
+});
