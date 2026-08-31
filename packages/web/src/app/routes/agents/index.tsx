@@ -51,7 +51,11 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-import { showsFirstRun } from './lib/agents-list-state';
+import {
+  showsAgentList,
+  showsFirstRun,
+  showsNoMatchNotice,
+} from './lib/agents-list-state';
 
 const SUGGESTIONS = [
   'Triage support tickets',
@@ -399,7 +403,11 @@ const AgentsPageContent = () => {
         )}
       </section>
 
-      {isSuccess && !firstRun && (
+      {showsAgentList({
+        listLoading: isLoading,
+        hasList: data !== undefined,
+        firstRun,
+      }) && (
         <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
@@ -491,7 +499,9 @@ const AgentsPageContent = () => {
               ))}
             </div>
           ) : agents.length === 0 ? (
-            <AgentsEmptyState />
+            showsNoMatchNotice({ matchCount: agents.length, search }) ? (
+              <AgentsEmptyState />
+            ) : null
           ) : (
             <div
               className={cn(

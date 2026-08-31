@@ -1,7 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
-import { showsFirstRun } from '@/app/routes/agents/lib/agents-list-state';
+import {
+  showsAgentList,
+  showsFirstRun,
+  showsNoMatchNotice,
+} from '@/app/routes/agents/lib/agents-list-state';
 
 const loaded = { listLoaded: true, hasAnyAgents: false, search: '' };
 
@@ -28,6 +32,52 @@ describe('showsFirstRun', () => {
       expect(showsFirstRun({ ...loaded, search })).toBe(true);
     },
   );
+});
+
+describe('showsAgentList', () => {
+  const settled = { listLoading: false, hasList: true, firstRun: false };
+
+  it('keeps the list on screen when a refetch fails over agents already loaded', () => {
+    expect(showsAgentList(settled)).toBe(true);
+  });
+
+  it('shows the section while the very first load is still running', () => {
+    expect(
+      showsAgentList({ listLoading: true, hasList: false, firstRun: false }),
+    ).toBe(true);
+  });
+
+  it('gives the page to the first run instead', () => {
+    expect(showsAgentList({ ...settled, firstRun: true })).toBe(false);
+  });
+
+  it('renders nothing before any list has arrived', () => {
+    expect(
+      showsAgentList({ listLoading: false, hasList: false, firstRun: false }),
+    ).toBe(false);
+  });
+});
+
+describe('showsNoMatchNotice', () => {
+  it('says nothing matched only when someone typed a search', () => {
+    expect(showsNoMatchNotice({ matchCount: 0, search: 'invoices' })).toBe(
+      true,
+    );
+  });
+
+  it('stays quiet when an empty list is not the result of a search', () => {
+    expect(showsNoMatchNotice({ matchCount: 0, search: '' })).toBe(false);
+  });
+
+  it('stays quiet while the search has matches', () => {
+    expect(showsNoMatchNotice({ matchCount: 2, search: 'invoices' })).toBe(
+      false,
+    );
+  });
+
+  it('treats a blank search as no search', () => {
+    expect(showsNoMatchNotice({ matchCount: 0, search: '   ' })).toBe(false);
+  });
 });
 
 describe('the status the page reads as listLoaded', () => {

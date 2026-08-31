@@ -9,3 +9,25 @@ export function showsFirstRun({
 }): boolean {
   return listLoaded && !hasAnyAgents && search.trim().length === 0;
 }
+
+export function showsAgentList({
+  listLoading,
+  hasList,
+  firstRun,
+}: {
+  listLoading: boolean;
+  hasList: boolean;
+  firstRun: boolean;
+}): boolean {
+  return listLoading || (hasList && !firstRun);
+}
+
+export function showsNoMatchNotice({
+  matchCount,
+  search,
+}: {
+  matchCount: number;
+  search: string;
+}): boolean {
+  return matchCount === 0 && search.trim().length > 0;
+}
