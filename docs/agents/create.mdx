@@ -1,0 +1,55 @@
+---
+title: "Create an agent"
+sidebarTitle: "Create an agent"
+description: "The three routes in, and what each setting is for"
+icon: "pen"
+---
+
+## Pick a starting point
+
+<CardGroup cols={3}>
+  <Card title="Describe it" icon="wand-magic-sparkles" color="#8143E3">
+    Say what you need in a sentence.
+  </Card>
+  <Card title="Use a template" icon="copy" color="#F59E0B">
+    Start from one already written.
+  </Card>
+  <Card title="Start blank" icon="file" color="#0EA5E9">
+    Write the instructions yourself.
+  </Card>
+</CardGroup>
+
+The prompt box sits at the top of the Agents page. Templates and blank are behind **New agent**. All three land in the same editor, and all three need an [AI provider connected](/admin-guide/guides/setup-ai-providers).
+
+## Set it up
+
+The **Configure** tab holds everything that changes what the agent does.
+
+<CardGroup cols={1}>
+  <Card title="Instructions" icon="pen-line" color="#8143E3" horizontal>
+    Write down the job, how to decide, and when to stop.
+  </Card>
+  <Card title="Agent Tools" icon="wrench" color="#0EA5E9" href="/agents/tools" horizontal>
+    Give it the app actions, flows, and MCP servers it needs to reach.
+  </Card>
+  <Card title="Knowledge Base" icon="book" color="#EAB308" href="/agents/knowledge" horizontal>
+    Attach the documents and tables it should look things up in.
+  </Card>
+  <Card title="Model" icon="microchip" color="#EC4899" horizontal>
+    Pick the model that answers and the key that pays for it.
+  </Card>
+  <Card title="Output fields" icon="brackets-curly" color="#16A34A" href="/agents/in-flows" horizontal>
+    Name the fields you want back, so a flow can use the result.
+  </Card>
+  <Card title="Max steps" icon="gauge" color="#F59E0B" horizontal>
+    Cap how many actions it can take in one run, so a stuck agent stops.
+  </Card>
+</CardGroup>
+
+## Try it
+
+The editor has a conversation panel beside the configuration. Talk to the agent there, watch which tools it reaches for, and adjust the instructions until it behaves. Changes take effect as soon as you save.
+
+<Tip>
+Brief it like a capable new colleague. Say the goal and the edges, not every keystroke. The two people forget most: what "done" looks like, and which calls it should hand back to a human.
+</Tip>

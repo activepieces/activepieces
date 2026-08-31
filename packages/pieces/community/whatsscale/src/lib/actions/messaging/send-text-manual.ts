@@ -9,6 +9,7 @@ import { ChatType } from '../../common/types';
 export const sendTextManualAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_manual',
+  classification: 'WRITE',
   displayName: 'Send a Message (Manual Entry)',
   description:
     'Send a text message by entering a phone number or group ID manually',

@@ -5,6 +5,7 @@ import { youtubeAuth } from '../common/auth';
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
   name: 'list_playlist_items',
+  classification: 'SEARCH',
   displayName: 'List Playlist Items',
   description:
     'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',

@@ -6,6 +6,7 @@ import { driveListSharedDrivesOutputSchema } from '../output-schemas';
 export const driveListSharedDrives = createAction({
   auth: googleDriveAuth,
   name: 'drive_list_shared_drives',
+  classification: 'SEARCH',
   displayName: 'List Shared Drives',
   description: 'List the shared drives the account can access.',
   audience: 'ai',

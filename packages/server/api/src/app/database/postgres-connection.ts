@@ -407,6 +407,7 @@ import { AddSampleDataFlowIdIndexToFile1815000000000 } from './migration/postgre
 import { AddTeamsBotInstallation1816000000000 } from './migration/postgres/1816000000000-AddTeamsBotInstallation'
 import { AddUserChatMemory1817000000000 } from './migration/postgres/1817000000000-AddUserChatMemory'
 import { AddAutumnBillingColumnsToPlatformPlan1818000000000 } from './migration/postgres/1818000000000-AddAutumnBillingColumnsToPlatformPlan'
+import { AddCellCascadeIndices1818000000000 } from './migration/postgres/1818000000000-AddCellCascadeIndices'
 import { AddFieldPosition1818000000000 } from './migration/postgres/1818000000000-AddFieldPosition'
 import { AddAgentConversationSource1819000000000 } from './migration/postgres/1819000000000-AddAgentConversationSource'
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
@@ -417,6 +418,18 @@ import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgre
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
 import { AddAgentTable1825000000000 } from './migration/postgres/1825000000000-AddAgentTable'
 import { AddAgentIdToAgentConversation1826000000000 } from './migration/postgres/1826000000000-AddAgentIdToAgentConversation'
+import { AddVersionToOtp1827000000000 } from './migration/postgres/1827000000000-AddVersionToOtp'
+import { DropChatbot1828000000000 } from './migration/postgres/1828000000000-DropChatbot'
+import { AddFilePlatformIdIndex1829000000000 } from './migration/postgres/1829000000000-AddFilePlatformIdIndex'
+import { AddAiProviderScopes1830000000000 } from './migration/postgres/1830000000000-AddAiProviderScopes'
+import { AddChatPersonalization1831000000000 } from './migration/postgres/1831000000000-AddChatPersonalization'
+import { BackfillChatPersonalizationForExistingUsers1832000000000 } from './migration/postgres/1832000000000-BackfillChatPersonalizationForExistingUsers'
+import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/postgres/1833000000000-ClearRoleFromCompanyPersonalization'
+import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
+import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
+import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
+import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
+import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -838,6 +851,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddSampleDataFlowIdIndexToFile1815000000000,
         AddTeamsBotInstallation1816000000000,
         AddUserChatMemory1817000000000,
+        AddCellCascadeIndices1818000000000,
         AddAutumnBillingColumnsToPlatformPlan1818000000000,
         AddFieldPosition1818000000000,
         DropPieceTags1819000000000,
@@ -849,6 +863,18 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAttemptsToOtp1824000000000,
         AddAgentTable1825000000000,
         AddAgentIdToAgentConversation1826000000000,
+        AddVersionToOtp1827000000000,
+        DropChatbot1828000000000,
+        AddFilePlatformIdIndex1829000000000,
+        AddAiProviderScopes1830000000000,
+        AddChatPersonalization1831000000000,
+        BackfillChatPersonalizationForExistingUsers1832000000000,
+        ClearRoleFromCompanyPersonalization1833000000000,
+        AddAutoCreatePersonalProjectsToPlatform1834000000000,
+        WidenMcpOAuthState1835000000000,
+        DropTeamsBotInstallation1836000000000,
+        AddAiProviderStatus1837000000000,
+        AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
     ]
     return migrations
 }

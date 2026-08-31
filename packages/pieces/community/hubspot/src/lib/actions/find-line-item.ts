@@ -5,14 +5,17 @@ import { hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
+import { lineItemSearchOutputSchema } from '../output-schemas';
 
 export const findLineItemAction = createAction({
     auth: hubspotAuth,
     name: 'find-line-item',
+    classification: 'SEARCH',
     displayName: 'Find Line Item',
     description: 'Finds a line item by searching.',
     audience: 'both',
     aiMetadata: { description: 'Search HubSpot line items by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Use this to locate an existing line item before updating it.', idempotent: true },
+    outputSchema: lineItemSearchOutputSchema,
     props: {
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {

@@ -7,6 +7,7 @@ import { linkedRecordDropdown, objectTypeIdDropdown } from '../common/props';
 export const createTaskAction = createAction({
 	auth: attioAuth,
 	name: 'create_task',
+	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Create a new task in Attio, optionally linked to a record and assigned to a member.',
 	audience: 'both',

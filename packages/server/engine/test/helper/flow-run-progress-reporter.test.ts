@@ -170,7 +170,7 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
             logsFileId: 'logs-1',
         })
 
-        const outputContext = flowRunProgressReporter.createOutputContext({ engineConstants })
+        const outputContext = flowRunProgressReporter.createOutputContext(engineConstants)
 
         const big = { big: 'x'.repeat(40_000) }
         await outputContext.update({ data: big })
@@ -195,7 +195,7 @@ describe('flow-run-progress-reporter slicing in single-step test mode', () => {
         })
         updateStepProgressMock.mockRejectedValueOnce(new Error('Failed to POST step-progress: 400 Bad Request'))
 
-        const outputContext = flowRunProgressReporter.createOutputContext({ engineConstants })
+        const outputContext = flowRunProgressReporter.createOutputContext(engineConstants)
 
         // Must resolve, not reject — a streaming failure must not fail the run.
         await expect(outputContext.update({ data: { partial: true } })).resolves.toBeUndefined()

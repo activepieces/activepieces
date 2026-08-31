@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
-import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -79,6 +79,9 @@ const SERVER_PING_TIMEOUT_MS = 5_000
 const MACHINE_INFO_TIMEOUT_MS = 15_000
 const POLL_LIVENESS_TIMEOUT_MS = 180_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
+const RPC_TIMEOUT_MS = 60_000
+const LONG_RUNNING_RPC_MARGIN_MS = 120_000
+const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
@@ -98,7 +101,7 @@ export const worker = {
             reconnection: true,
         })
 
-        const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
+        const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
@@ -138,7 +141,7 @@ export const worker = {
             apiClient,
             getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
             log: logger,
-        }))
+        }), logger)
 
         if (withHealthServer) {
             healthServerInstance = startHealthServer()
@@ -200,11 +203,15 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     })
 
     // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
-        log: logger, 
-        apiClient,
-        publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-    })
+    // Opt-in via AP_PREWARM_CACHE_ON_STARTUP: the warm-up resolves and compiles every enabled flow,
+    // so its startup memory/CPU spike grows with flow count and can OOM small workers on large instances.
+    if (system.getBoolean(WorkerSystemProp.PREWARM_CACHE_ON_STARTUP) ?? false) {
+        void runtime.prewarm({
+            log: logger,
+            apiClient,
+            publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+        })
+    }
 
     logger.info({ concurrency }, 'Starting poll loops')
 
@@ -329,6 +336,22 @@ function abortInFlightRuntime(): void {
     })
 }
 
+function flowTimeoutMs(): number {
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
+}
+
+function rpcTimeoutMsFor(method: string): number {
+    if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
+        return RPC_TIMEOUT_MS
+    }
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    if (isNil(settings)) {
+        logger.warn({ rpc: { method } }, 'Worker settings have not arrived, timing a long-running RPC by the default flow timeout')
+    }
+    return flowTimeoutMs() + LONG_RUNNING_RPC_MARGIN_MS
+}
+
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
     const rawData = job.jobData
     const jobData = JobData.parse(rawData)
@@ -416,9 +439,11 @@ async function fetchAndStoreSettings(sock: Socket): Promise<void> {
             }
             const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
             if (!isNil(workerGroupId)) {
-                const processSandboxedModes = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
-                if (!processSandboxedModes.includes(response.EXECUTION_MODE as ExecutionMode)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                if (response.EDITION === ApEdition.CLOUD) {
+                    const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+                    if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
+                        throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+                    }
                 }
                 const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
                 if (isNil(reuseSandbox)) {
@@ -613,7 +638,11 @@ function stopCacheSweeper(): void {
 }
 
 async function sweepActionRunCache(): Promise<void> {
-    const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
+    const { error } = await tryCatch(() => actionRunCache.sweep({
+        basePath: sandboxConfig.getCacheBasePath(),
+        log: logger,
+        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
+    }))
     if (error) {
         logger.warn({ error }, 'Action-run code cache sweep failed')
     }

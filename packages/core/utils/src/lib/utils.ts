@@ -87,6 +87,13 @@ export function kebabCase(str: string): string {
         .replace(/^-+|-+$/g, '')            // Remove leading and trailing hyphens
 }
 
+export function slugify(value: string): string {
+    return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+}
+
 
 export function isEmpty<T>(value: T | null | undefined): boolean {
     if (value == null) {

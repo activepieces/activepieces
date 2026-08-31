@@ -16,6 +16,8 @@ import { pieceMetadataService } from '../../../src/app/pieces/metadata/piece-met
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
+const HASHED_OTP_VERSION = 1
+
 export const createMockUserIdentity = (userIdentity?: Partial<UserIdentity>): UserIdentity => {
     return {
         id: userIdentity?.id ?? apId(),
@@ -205,6 +207,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
+        autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
         pinnedPieces: platform?.pinnedPieces ?? [],
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
@@ -368,7 +371,14 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
             otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
         state: otp?.state ?? faker.helpers.enumValue(OtpState),
         attempts: otp?.attempts ?? 0,
+        version: otp?.version ?? 0,
     }
+}
+
+export const createMockOtpWithCode = async (otp?: Partial<OtpModel>): Promise<MockOtpWithCode> => {
+    const code = otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString()
+    const value = await encryptUtils.hmacString(code)
+    return { otp: createMockOtp({ ...otp, value, version: HASHED_OTP_VERSION }), code }
 }
 
 export const createMockFlowRun = (flowRun?: Partial<FlowRun>): FlowRun => {
@@ -679,7 +689,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
-export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     return {
         id: aiProvider?.id ?? apId(),
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
@@ -691,16 +701,27 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider> & { 
             apiKey: process.env.OPENAI_API_KEY || faker.string.uuid(),
         }),
         config: aiProvider?.config ?? {},
-        enabledForChat: aiProvider?.enabledForChat ?? aiProvider?.provider === AIProviderName.ACTIVEPIECES,
+        enabledForChat: aiProvider?.enabledForChat ?? (aiProvider?.provider === AIProviderName.ACTIVEPIECES),
+        modelScope: aiProvider?.modelScope ?? 'all',
+        modelIds: aiProvider?.modelIds ?? [],
+        projectScope: aiProvider?.projectScope ?? 'all',
+        projectIds: aiProvider?.projectIds ?? [],
     }
 
 }
 
-export const mockAndSaveAIProvider = async (params?: Partial<AIProvider> & { enabledForChat?: boolean }): Promise<Omit<AIProviderSchema, 'platform'>> => {
+export const mockAndSaveAIProvider = async (params?: MockAIProviderParams): Promise<Omit<AIProviderSchema, 'platform'>> => {
     const mockAIProvider = await createMockAIProvider(params)
-    await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
+    await databaseConnection().getRepository('ai_provider').save(mockAIProvider)
     return mockAIProvider
 }
+
+type MockOtpWithCode = {
+    otp: OtpModel
+    code: string
+}
+
+type MockAIProviderParams = Partial<AIProvider> & Partial<Pick<AIProviderSchema, 'enabledForChat' | 'modelScope' | 'modelIds' | 'projectScope' | 'projectIds'>>
 
 export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<PieceMetadata> => {
     const { mockPlatform } = await mockAndSaveBasicSetup()
@@ -719,7 +740,7 @@ export const createMockFolder = (folder?: Partial<Folder>): Folder => {
         created: folder?.created ?? faker.date.recent().toISOString(),
         updated: folder?.updated ?? faker.date.recent().toISOString(),
         projectId: folder?.projectId ?? apId(),
-        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayName: folder?.displayName ?? `${faker.lorem.word()}-${apId()}`,
         displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
     }
 }

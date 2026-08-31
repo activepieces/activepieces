@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../common/props';
 export const watchIncomingMessagesTrigger = createTrigger({
   auth: whatsscaleAuth,
   name: 'watch_incoming_messages',
+  classification: 'READ',
   displayName: 'Watch Incoming Messages',
   description: 'Triggers when a new 1-on-1 WhatsApp message is received.',
   aiMetadata: {

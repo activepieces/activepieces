@@ -12,6 +12,7 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
 import { AgentEntity } from '../ee/agent/agent-entity'
 import { ChatRolloutUserEntity } from '../ee/agent/chat-rollout-user-entity'
+import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-personalization-entity'
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
@@ -36,7 +37,6 @@ import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
-import { WaitpointEntity } from '../flows/flow-run/waitpoint/waitpoint-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
@@ -56,7 +56,6 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
-import { TeamsBotInstallationEntity } from '../teams-bot/teams-bot-installation.entity'
 import { TemplateEntity } from '../template/template.entity'
 import { ToolSearchIndexEntity } from '../tool-search/tool-search-index.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -65,6 +64,7 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { VariableEntity } from '../variable/variable.entity'
+import { WaitpointEntity } from '../waitpoints/waitpoint-entity'
 import { DatabaseType } from './database-type'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
@@ -109,11 +109,11 @@ function getEntities(): EntitySchema<unknown>[] {
         ToolSearchIndexEntity,
         AgentEntity,
         AgentConversationEntity,
+        ChatPersonalizationEntity,
         ChatRolloutUserEntity,
         UserMemoryEntity,
         TriggerSourceEntity,
         WaitpointEntity,
-        TeamsBotInstallationEntity,
         // Enterprise
         PieceSetEntity,
         ConcurrencyPoolEntity,

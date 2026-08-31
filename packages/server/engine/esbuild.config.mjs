@@ -6,10 +6,11 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outdir = path.resolve(__dirname, '../../../dist/packages/engine');
 const proxyOutfile = path.join(outdir, 'main.js');
+const pieceChildOutfile = path.join(outdir, 'piece-child.js');
 
 const watch = process.argv.includes('--watch');
 
-fs.rmSync(outdir, { recursive: true, force: true });
+fs.mkdirSync(outdir, { recursive: true });
 
 const zodLocaleTrim = {
   // Drop zod's 46 unused locale packs (~184KB). The app surfaces validation
@@ -38,6 +39,7 @@ function rebuildLogger(outfile) {
       });
       build.onEnd((result) => {
         if (result.metafile) {
+          fs.mkdirSync(path.dirname(outfile), { recursive: true });
           fs.writeFileSync(
             outfile + '.meta.json',
             JSON.stringify(result.metafile)
@@ -54,9 +56,9 @@ function rebuildLogger(outfile) {
   };
 }
 
-function buildOptions({ outfile }) {
+function buildOptions({ outfile, entry = 'src/main.ts' }) {
   return {
-    entryPoints: [path.resolve(__dirname, 'src/main.ts')],
+    entryPoints: [path.resolve(__dirname, entry)],
     bundle: true,
     platform: 'node',
     target: 'node20',
@@ -80,14 +82,17 @@ function buildOptions({ outfile }) {
   };
 }
 
+const targets = [
+  buildOptions({ outfile: proxyOutfile }),
+  buildOptions({ outfile: pieceChildOutfile, entry: 'src/piece-child.ts' }),
+];
+
 if (watch) {
-  const ctx = await esbuild.context(
-    buildOptions({ outfile: proxyOutfile })
-  );
-  await ctx.rebuild();
-  await ctx.watch();
+  for (const target of targets) {
+    const ctx = await esbuild.context(target);
+    await ctx.rebuild();
+    await ctx.watch();
+  }
 } else {
-  await esbuild.build(
-    buildOptions({ outfile: proxyOutfile })
-  );
+  await Promise.all(targets.map((target) => esbuild.build(target)));
 }

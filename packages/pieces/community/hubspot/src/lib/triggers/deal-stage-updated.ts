@@ -30,6 +30,7 @@ type Props = {
 };
 
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -97,6 +98,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const dealStageUpdatedTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'deal-stage-updated',
+	classification: 'READ',
 	displayName: 'Updated Deal Stage',
 	description: 'Triggers when a deal enters a specified stage.',
 	aiMetadata: {
@@ -128,6 +130,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

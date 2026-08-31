@@ -5,6 +5,7 @@ import { getActorRunActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActorRun = createAction({
   name: 'apify_get_actor_run',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Actor Run',
   description: 'Retrieves the status and details of an Actor run by run ID.',

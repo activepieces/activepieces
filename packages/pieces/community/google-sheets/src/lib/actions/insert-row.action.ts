@@ -23,6 +23,7 @@ import { insertRowActionOutputSchema } from '../output-schemas';
 export const insertRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert_row',
+	classification: 'WRITE',
 	description: 'Add a new row of data to a specific spreadsheet.',
 	audience: 'human',
 	aiMetadata: {

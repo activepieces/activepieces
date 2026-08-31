@@ -8,6 +8,7 @@ import * as z from 'zod/mini'
 
 export const createReply = createAction({
   name: 'create-reply',
+  classification: 'WRITE',
   displayName: 'Create or Update Reply',
   description: 'Create or update a reply to a review if it already exists',
   audience: 'both',
@@ -33,7 +34,7 @@ export const createReply = createAction({
     });
 
     const response = await httpClient.sendRequest({
-      url: ` https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
+      url: `https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
       method: HttpMethod.PUT,
       headers: {
         Authorization: `Bearer ${ctx.auth.access_token}`,

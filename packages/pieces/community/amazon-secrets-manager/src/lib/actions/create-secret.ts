@@ -8,6 +8,7 @@ import { resolveSecretsManagerClient } from '../common/client';
 export const createSecret = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'createSecret',
+  classification: 'WRITE',
   displayName: 'Create Secret',
   description: 'Creates a new secret.',
   audience: 'both',

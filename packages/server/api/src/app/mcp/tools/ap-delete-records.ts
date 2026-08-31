@@ -6,6 +6,7 @@ import { recordService } from '../../tables/record/record.service'
 import { mcpUtils } from './mcp-utils'
 
 const deleteRecordsInput = z.object({
+    tableId: z.string().describe('ID of the table the records belong to. Use ap_find_records to find it.'),
     recordIds: z.array(z.string()).describe('Array of record IDs to delete. Use ap_find_records to find them.'),
     displayName: z.string().optional().describe('Short approval prompt shown to the user (e.g. "Delete 3 records from Emails table"). Must include what the action does and the target name.'),
 })
@@ -16,24 +17,25 @@ export const apDeleteRecordsTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
         permission: Permission.WRITE_TABLE,
         description: 'Permanently delete one or more records by their IDs.',
         inputSchema: deleteRecordsInput.shape,
-        annotations: { destructiveHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
-                const { recordIds } = deleteRecordsInput.parse(args)
+                const { tableId, recordIds } = deleteRecordsInput.parse(args)
 
                 if (recordIds.length === 0) {
                     return { content: [{ type: 'text', text: '❌ No record IDs provided.' }] }
                 }
 
-                const deleted = await recordService.delete({
+                const { deletedCount } = await recordService.delete({
                     ids: recordIds,
                     projectId: mcp.projectId,
+                    tableId,
                 })
 
                 return {
                     content: [{
                         type: 'text',
-                        text: `✅ Deleted ${deleted.length} record(s).`,
+                        text: `✅ Deleted ${deletedCount} record(s).`,
                     }],
                 }
             }

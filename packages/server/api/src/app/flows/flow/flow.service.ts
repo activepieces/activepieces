@@ -202,7 +202,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId, platformId)
             return {
                 ...flow,
                 version: migratedVersion,
@@ -686,6 +686,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
             .getRawMany()
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+    },
+
+    async getLastFlowUpdatedByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, string>> {
+        if (projectIds.length === 0) return new Map()
+
+        const result = await flowRepo()
+            .createQueryBuilder('flow')
+            .select('flow.projectId', 'projectId')
+            .addSelect('MAX(flow.updated)', 'lastUpdated')
+            .where('flow.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
+            .groupBy('flow.projectId')
+            .getRawMany()
+
+        return new Map(result.map(r => [r.projectId, new Date(r.lastUpdated).toISOString()]))
     },
 })
 

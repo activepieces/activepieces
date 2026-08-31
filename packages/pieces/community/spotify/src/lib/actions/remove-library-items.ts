@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'remove_library_items',
+  classification: 'WRITE',
   auth: spotifyCommon.authentication,
   displayName: 'Remove items from your library',
   description: 'Remove tracks, episodes, albums, shows, audiobooks, users or playlists from your library',
