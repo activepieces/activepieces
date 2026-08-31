@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 import {
 	AuthenticationType,
 	DedupeStrategy,
@@ -10,12 +10,12 @@ import {
 } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	TriggerStrategy,
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
 import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	formId: string;
@@ -42,11 +42,10 @@ type FormField = {
 	fieldType: string;
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const authValue = auth as HubspotAuthValue;
 		const formId = propsValue.formId;
 
 		const submissions = [];
@@ -62,7 +61,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 				queryParams: qs,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getHubspotAccessToken(authValue),
 				},
 			});
 			after = response.body.paging?.next?.after;
@@ -74,7 +73,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 			url: `https://api.hubapi.com/forms/v2/fields/${formId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: authValue.access_token,
+				token: getHubspotAccessToken(authValue),
 			},
 		});
 
