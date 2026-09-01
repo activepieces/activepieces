@@ -376,7 +376,38 @@
                     },
                     "admin-guide/guides/project-releases",
                      "admin-guide/guides/project-replace-cli",
-                    "admin-guide/guides/manage-concurrency"
+                    "admin-guide/guides/manage-concurrency",
+                    {
+                      "group": "Observability",
+                      "pages": [
+                        {
+                          "group": "Audit Logs",
+                          "icon": "book",
+                          "pages": [
+                            "admin-guide/security/audit-logs/overview",
+                            "admin-guide/security/audit-logs/flow-created",
+                            "admin-guide/security/audit-logs/flow-updated",
+                            "admin-guide/security/audit-logs/flow-deleted",
+                            "admin-guide/security/audit-logs/flow-published",
+                            "admin-guide/security/audit-logs/flow-activated",
+                            "admin-guide/security/audit-logs/flow-deactivated",
+                            "admin-guide/security/audit-logs/connection-upserted",
+                            "admin-guide/security/audit-logs/connection-deleted",
+                            "admin-guide/security/audit-logs/flow-run-started",
+                            "admin-guide/security/audit-logs/flow-run-finished",
+                            "admin-guide/security/audit-logs/folder-created",
+                            "admin-guide/security/audit-logs/folder-updated",
+                            "admin-guide/security/audit-logs/folder-deleted",
+                            "admin-guide/security/audit-logs/user-signed-in",
+                            "admin-guide/security/audit-logs/user-signed-up",
+                            "admin-guide/security/audit-logs/user-email-verified",
+                            "admin-guide/security/audit-logs/user-password-reset",
+                            "admin-guide/security/audit-logs/signing-key-created"
+                          ]
+                        },
+                        "admin-guide/guides/event-streaming"
+                      ]
+                    }
                   ]
               },
               {
@@ -395,32 +426,6 @@
                       ]
                     },
                      "admin-guide/security/practices",
-                     {
-                        "group": "Audit Logs",
-                        "icon": "book",
-                        "pages": [
-                           "admin-guide/security/audit-logs/overview",
-                           "admin-guide/security/audit-logs/flow-created",
-                           "admin-guide/security/audit-logs/flow-updated",
-                           "admin-guide/security/audit-logs/flow-deleted",
-                           "admin-guide/security/audit-logs/flow-published",
-                           "admin-guide/security/audit-logs/flow-activated",
-                           "admin-guide/security/audit-logs/flow-deactivated",
-                           "admin-guide/security/audit-logs/connection-upserted",
-                           "admin-guide/security/audit-logs/connection-deleted",
-                           "admin-guide/security/audit-logs/flow-run-started",
-                           "admin-guide/security/audit-logs/flow-run-finished",
-                           "admin-guide/security/audit-logs/folder-created",
-                           "admin-guide/security/audit-logs/folder-updated",
-                           "admin-guide/security/audit-logs/folder-deleted",
-                           "admin-guide/security/audit-logs/user-signed-in",
-                           "admin-guide/security/audit-logs/user-signed-up",
-                           "admin-guide/security/audit-logs/user-email-verified",
-                           "admin-guide/security/audit-logs/user-password-reset",
-                           "admin-guide/security/audit-logs/signing-key-created"
-                        ]
-                    },
-                    "admin-guide/guides/event-streaming",
                     "admin-guide/guides/manage-oauth2"
                   ]
                }
