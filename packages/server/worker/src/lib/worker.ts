@@ -59,6 +59,8 @@ const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
+let shouldStartHealthServer = false
+
 let runtime: Runtime | null = null
 
 // Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
@@ -137,9 +139,7 @@ export const worker = {
             log: logger,
         }))
 
-        if (withHealthServer) {
-            healthServerInstance = startHealthServer()
-        }
+        shouldStartHealthServer = withHealthServer
         startSandboxInfoSampling()
         startPollWatchdog()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
@@ -188,25 +188,33 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
     abortInFlightRuntime()
 
-    runtime = createSandboxRuntime({
+    const createdRuntime = createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
+    runtime = createdRuntime
 
-    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
-    void runtime.prewarm({
-        log: logger, 
+    // Warm the piece cache before polling starts; the health server only comes up once the cache is
+    // warm so orchestrators don't route/keep traffic on a cold worker.
+    const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
+        log: logger,
         apiClient,
         publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-    })
+    }))
+    if (prewarmError) {
+        logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
+    }
+
+    if (shouldStartHealthServer && isNil(healthServerInstance)) {
+        healthServerInstance = startHealthServer()
+    }
 
     logger.info({ concurrency }, 'Starting poll loops')
 
     resetPollLoopLiveness({ loopCount: concurrency })
-    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
-        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+        pollAndExecute(apiClient, createdRuntime, workerIndex, generation),
     ))
 }
 
