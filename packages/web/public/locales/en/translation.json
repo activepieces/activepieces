@@ -31,6 +31,8 @@
   "Needs a model": "Needs a model",
   "New agent": "New agent",
   "New agents go to": "New agents go to",
+  "Load more": "Load more",
+  "Showing {count} so far": "Showing {count} so far",
   "No provider is turned on for chat": "No provider is turned on for chat",
   "Popular starting points": "Popular starting points",
   "Read a support ticket, tag its severity, and route it to a team": "Read a support ticket, tag its severity, and route it to a team",

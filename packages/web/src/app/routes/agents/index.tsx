@@ -1,5 +1,6 @@
 import {
   AgentIcon,
+  AgentListSort,
   AgentSummary,
   ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import {
@@ -88,22 +90,13 @@ const TEMPLATE_STARTERS: TemplateStarter[] = [
   },
 ];
 
-const SORT_LABELS = {
-  updated: 'Recently updated',
-  created: 'Recently created',
-  name: 'Name',
-} as const;
+const SORT_LABELS: Record<AgentListSort, string> = {
+  [AgentListSort.UPDATED]: 'Recently updated',
+  [AgentListSort.CREATED]: 'Recently created',
+  [AgentListSort.NAME]: 'Name',
+};
 
 const ALL_PROJECTS = 'all';
-
-const SORT_COMPARATORS: Record<
-  AgentSort,
-  (left: AgentSummary, right: AgentSummary) => number
-> = {
-  updated: (left, right) => right.updated.localeCompare(left.updated),
-  created: (left, right) => right.created.localeCompare(left.created),
-  name: (left, right) => left.displayName.localeCompare(right.displayName),
-};
 
 const AgentsPage = () => {
   const agentsAvailable = useAgentsAvailable();
@@ -122,7 +115,7 @@ const AgentsPage = () => {
 const AgentsPageContent = () => {
   const [search, setSearch] = useState('');
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
-  const [sort, setSort] = useState<AgentSort>('updated');
+  const [sort, setSort] = useState<AgentListSort>(AgentListSort.UPDATED);
   const [prompt, setPrompt] = useState('');
   const [viewProjectId, setViewProjectId] = useState<string>(ALL_PROJECTS);
   const [pickedProjectId, setPickedProjectId] = useState<string | null>(null);
@@ -134,21 +127,25 @@ const AgentsPageContent = () => {
   const projectFiltered = viewProjectId !== ALL_PROJECTS;
   const createInProjectId =
     pickedProjectId ?? (projectFiltered ? viewProjectId : project.id);
-  const { data, isLoading, isSuccess } = agentsQueries.useAgents({
+  const [debouncedSearch] = useDebounce(search.trim(), 300);
+  const {
+    data,
+    isLoading,
+    isSuccess,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = agentsQueries.useAgents({
     ...(projectFiltered ? { projectId: viewProjectId } : {}),
+    ...(debouncedSearch.length > 0 ? { search: debouncedSearch } : {}),
+    sort,
     enabled: agentsAvailable,
   });
 
-  const agents = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const matching = (data?.data ?? []).filter(
-      (agent) =>
-        needle.length === 0 ||
-        agent.displayName.toLowerCase().includes(needle) ||
-        (agent.description ?? '').toLowerCase().includes(needle),
-    );
-    return [...matching].sort(SORT_COMPARATORS[sort]);
-  }, [data, search, sort]);
+  const agents = useMemo(
+    () => (data?.pages ?? []).flatMap((page) => page.data),
+    [data],
+  );
 
   const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
@@ -231,7 +228,7 @@ const AgentsPageContent = () => {
 
   const firstRun = showsFirstRun({
     listLoaded: isSuccess,
-    hasAnyAgents: (data?.data.length ?? 0) > 0,
+    hasAnyAgents: agents.length > 0,
     search,
     projectFiltered,
   });
@@ -458,11 +455,9 @@ const AgentsPageContent = () => {
               <span className="text-[15px] leading-[18px] text-muted-foreground">
                 {agents.length}
               </span>
-              {data?.next && (
+              {hasNextPage && (
                 <span className="text-[13px] leading-4 text-muted-foreground">
-                  {t('Showing the first {count}', {
-                    count: data?.data.length ?? agents.length,
-                  })}
+                  {t('Showing {count} so far', { count: agents.length })}
                 </span>
               )}
             </div>
@@ -504,7 +499,7 @@ const AgentsPageContent = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuRadioGroup
                     value={sort}
-                    onValueChange={(value) => setSort(value as AgentSort)}
+                    onValueChange={(value) => setSort(value as AgentListSort)}
                   >
                     {Object.entries(SORT_LABELS).map(([value, label]) => (
                       <DropdownMenuRadioItem key={value} value={value}>
@@ -589,6 +584,17 @@ const AgentsPageContent = () => {
               ))}
             </div>
           )}
+          {hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                loading={isFetchingNextPage}
+                onClick={() => void fetchNextPage()}
+              >
+                {t('Load more')}
+              </Button>
+            </div>
+          )}
         </section>
       )}
     </div>
@@ -618,8 +624,6 @@ const AgentsEmptyState = ({
     </EmptyHeader>
   </Empty>
 );
-
-type AgentSort = keyof typeof SORT_LABELS;
 
 type TemplateStarter = {
   label: string;

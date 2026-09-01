@@ -1,12 +1,18 @@
 import {
   Agent,
+  AgentListSort,
   ApFlagId,
   CreateAgentRequest,
   DraftAgentRequest,
   Permission,
   UpdateAgentRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -36,17 +42,37 @@ export const useAgentsNavVisible = (): boolean => {
   return available && checkAccess(Permission.READ_AGENT);
 };
 
+const AGENTS_PAGE_SIZE = 100;
+
 export const agentsQueries = {
   useAgents: ({
     projectId,
+    search,
+    sort,
     enabled = true,
   }: {
     projectId?: string;
+    search?: string;
+    sort?: AgentListSort;
     enabled?: boolean;
   }) =>
-    useQuery({
-      queryKey: [AGENTS_KEY, projectId ?? 'all'],
-      queryFn: () => agentsApi.listAll({ ...(projectId ? { projectId } : {}) }),
+    useInfiniteQuery({
+      queryKey: [
+        AGENTS_KEY,
+        projectId ?? 'all',
+        search ?? '',
+        sort ?? 'default',
+      ],
+      queryFn: ({ pageParam }) =>
+        agentsApi.list({
+          limit: AGENTS_PAGE_SIZE,
+          ...(projectId ? { projectId } : {}),
+          ...(search ? { search } : {}),
+          ...(sort ? { sort } : {}),
+          ...(pageParam ? { cursor: pageParam } : {}),
+        }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),

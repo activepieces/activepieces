@@ -11,6 +11,7 @@ const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
 const MAX_AGENT_SHARED_MEMBERS = 200
 const MAX_AGENT_PAGE_SIZE = 100
+const MAX_AGENT_SEARCH_LENGTH = 200
 const MAX_AGENT_NAME_LENGTH = 200
 const MAX_AGENT_DESCRIPTION_LENGTH = 2_000
 const MAX_AGENT_CONFIG_BYTES = 128_000
@@ -122,8 +123,16 @@ const GetAgentRequest = z.object({
     includeUsage: z.coerce.boolean().optional(),
 })
 
+enum AgentListSort {
+    UPDATED = 'updated',
+    CREATED = 'created',
+    NAME = 'name',
+}
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
+    search: z.optional(z.string().max(MAX_AGENT_SEARCH_LENGTH)),
+    sort: z.optional(z.enum(AgentListSort)),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
@@ -133,6 +142,8 @@ const agentUtils = {
 }
 
 export {
+    AgentListSort,
+    MAX_AGENT_SEARCH_LENGTH,
     Agent,
     AgentUsage,
     AgentWithUsage,
