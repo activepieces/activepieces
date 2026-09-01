@@ -7,6 +7,7 @@ import { newSavedMessageTriggerOutputSchema } from '../output-schemas';
 export const newSavedMessageTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-saved-message',
+	classification: 'READ',
 	displayName: 'New Saved Message',
 	description: 'Triggers when you save a message.',
 	aiMetadata: {

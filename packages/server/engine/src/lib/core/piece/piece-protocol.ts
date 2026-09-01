@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { isNil, isObject } from '@activepieces/core-utils'
 import { ContextVersion, PieceMetadata } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, ExecutionType, PropertySettings, ResumePayload, ScheduleOptions } from '@activepieces/shared'
@@ -24,19 +25,18 @@ export const pieceProtocol = {
         if (!(error instanceof Error)) {
             return { message: String(error) }
         }
-        const details: Record<string, unknown> = {}
-        for (const key of [...Object.keys(error), ...ERROR_DETAIL_KEYS]) {
-            const { data } = readJsonSafe(() => Reflect.get(error, key))
-            if (data !== undefined) {
-                details[key] = data
-            }
-        }
+        const details = Object.fromEntries(
+            [...Object.keys(error), ...ERROR_DETAIL_KEYS]
+                .map((key) => [key, readJsonSafe(() => Reflect.get(error, key)).data] as const)
+                .filter(([, data]) => data !== undefined),
+        )
         return {
             ...details,
             message: error.message,
             name: error.name === 'Error' ? error.constructor.name : error.name,
             stack: error.stack,
             type: error instanceof ExecutionError ? error.type : undefined,
+            cause: isNil(error.cause) ? undefined : inspect(error.cause),
         }
     },
 

@@ -12,6 +12,7 @@ import { inboxIdDropdown } from '../common/props';
 export const documentParsedTrigger = createTrigger({
   auth: airparserAuth,
   name: 'document_parsed',
+  classification: 'READ',
   displayName: 'Document Parsed',
   description: 'Triggers when a new document is parsed in a specific inbox.',
   aiMetadata: {

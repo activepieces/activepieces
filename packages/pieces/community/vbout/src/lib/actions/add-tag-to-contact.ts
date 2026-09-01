@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const addTagToContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_tag',
+  classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Adds the tag to the contact.',
   audience: 'both',

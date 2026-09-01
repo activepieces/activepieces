@@ -5,6 +5,7 @@ import { createAudienceOutputSchema } from '../output-schemas';
 
 export const createAudience = createAction({
   name: 'create_audience',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Create Audience',
   outputSchema: createAudienceOutputSchema,

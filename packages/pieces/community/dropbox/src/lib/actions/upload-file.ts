@@ -7,6 +7,7 @@ import {
   streamUtils,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { uploadedFileOutputSchema } from '../output-schemas';
 
 const CONTENT_API_URL = 'https://content.dropboxapi.com/2';
 const SINGLE_REQUEST_LIMIT = 150 * 1024 * 1024;
@@ -15,10 +16,12 @@ const CHUNK_SIZE = 8 * 1024 * 1024;
 export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
   name: 'upload_dropbox_file',
+  classification: 'WRITE',
   description: 'Upload a file',
   audience: 'both',
   aiMetadata: { description: 'Uploads a file (provided as a URL or base64 file object) to the given Dropbox path in add mode. Files over 150 MB are uploaded in chunks automatically. Use to store binary or arbitrary file content; prefer the create-text-file action when the source is plain text. Not idempotent: each call uploads, so repeating it can create autorenamed duplicates rather than overwriting.', idempotent: false },
   displayName: 'Upload file',
+  outputSchema: uploadedFileOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',
@@ -53,7 +56,7 @@ export const dropboxUploadFile = createAction({
     }),
   },
   async run(context) {
-    const fileData = context.propsValue.file;
+    const { body, size } = streamUtils.toStreamingBody(context.propsValue.file);
     const token = context.auth.access_token;
     const commit = {
       autorename: context.propsValue.autorename,
@@ -66,17 +69,17 @@ export const dropboxUploadFile = createAction({
     // A known size within the single-request cap lets us stream the body straight
     // through with an explicit Content-Length. Larger files, and sources that don't
     // report a size, go through an upload session so nothing is buffered whole.
-    if (fileData.size != null && fileData.size <= SINGLE_REQUEST_LIMIT) {
+    if (size != null && size <= SINGLE_REQUEST_LIMIT) {
       return await sendToDropbox({
         endpoint: 'files/upload',
         apiArg: commit,
-        body: fileData.body,
-        contentLength: fileData.size,
+        body,
+        contentLength: size,
         token,
       });
     }
 
-    return await uploadInSession({ body: fileData.body, commit, token });
+    return await uploadInSession({ body, commit, token });
   },
 });
 

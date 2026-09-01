@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'create_playlist',
+  classification: 'WRITE',
   displayName: 'Create Playlist',
   description: 'Creates a new playlist for the current user',
   audience: 'both',

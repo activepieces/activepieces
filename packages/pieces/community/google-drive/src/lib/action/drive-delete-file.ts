@@ -5,6 +5,7 @@ import { drive as googleDrive } from '@googleapis/drive';
 export const driveDeleteFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_delete_file',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete File Permanently',
   description: 'Permanently delete a Drive file by ID, bypassing the trash.',
   audience: 'ai',

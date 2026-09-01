@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 
 export const meetingRescheduled = createTrigger({
   name: 'meeting_rescheduled',
+  classification: 'READ',
   displayName: 'Meeting Rescheduled',
   description: 'Triggers when a scheduled meeting is rescheduled',
   aiMetadata: {

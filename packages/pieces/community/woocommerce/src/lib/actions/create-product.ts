@@ -7,9 +7,11 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { createProductOutputSchema } from '../output-schemas';
 
 export const wooCreateProduct = createAction({
   name: 'Create Product',
+  classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Create a Product',
   audience: 'both',
@@ -19,6 +21,7 @@ export const wooCreateProduct = createAction({
     idempotent: false,
   },
   auth: wooAuth,
+  outputSchema: createProductOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -82,17 +85,19 @@ export const wooCreateProduct = createAction({
 
     const name = configValue.propsValue['name'];
     const type = configValue.propsValue['type'];
-    const regular_price = configValue.propsValue['regular_price'];
+    const regular_price = String(configValue.propsValue['regular_price']);
     const description = configValue.propsValue['description'];
     const short_description = configValue.propsValue['short_description'];
-    const categories =
-      configValue.propsValue['categories'].split(',').map((id) => ({
-        id,
-      })) || [];
-    const images =
-      configValue.propsValue['images'].split(',').map((url) => ({
-        src: url,
-      })) || [];
+    const categories = configValue.propsValue['categories']
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0)
+      .map((id) => ({ id }));
+    const images = configValue.propsValue['images']
+      .split(',')
+      .map((url) => url.trim())
+      .filter((url) => url.length > 0)
+      .map((src) => ({ src }));
 
     const body = {
       name,

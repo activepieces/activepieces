@@ -4,6 +4,7 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 export const manualTrigger = createTrigger({
 name: 'manual_trigger',
+classification: 'READ',
 displayName: 'Manual Trigger',
 description: 'Manually start your own flow without any extra configurations',
 aiMetadata: {

@@ -12,6 +12,7 @@ import { clientId, listId } from '../common/props';
 export const subscriberUnsubscribedTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'subscriber_unsubscribed',
+  classification: 'READ',
   displayName: 'Subscriber Unsubscribed',
   description: 'Triggered when a subscriber unsubscribes from a list',
   aiMetadata: {

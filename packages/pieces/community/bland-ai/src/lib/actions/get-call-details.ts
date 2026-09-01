@@ -6,6 +6,7 @@ import { blandApiCall } from '../common/client';
 export const getCallDetails = createAction({
   auth: blandAiAuth,
   name: 'get_call_details',
+  classification: 'READ',
   displayName: 'Get Call Details',
   description: 'Retrieve details for a specific Bland AI call.',
   audience: 'both',
