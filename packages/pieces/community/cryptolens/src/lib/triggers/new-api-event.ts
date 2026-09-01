@@ -14,15 +14,18 @@ import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-interface ObjectLog {
-  Id: number;
-  Created: number;
-  ResourceType: number;
-  ResourceAction: number;
-  AffectedObjectId: number;
-  ObjectOwnerUserId: number;
-  PerformedByUserId: string;
-  Data?: string;
+interface WebAPILog {
+  id: number;
+  productId: number;
+  key: string;
+  ip: string;
+  time: number;
+  state: number;
+  machineCode: string | null;
+  friendlyName: string;
+  floatingExpires: number;
+  doIntValue: number;
+  doId: number;
 }
 
 const props = {
@@ -100,15 +103,15 @@ const polling: Polling<
     const responseBody: {
       result: number;
       message?: string;
-      Events: ObjectLog[];
+      logs: WebAPILog[];
     } = response;
 
-    if (responseBody.result !== 0 || !responseBody.Events) {
+    if (responseBody.result !== 0 || !responseBody.logs) {
       return [];
     }
 
-    return responseBody.Events.map((log) => ({
-      epochMilliSeconds: log.Created * 1000,
+    return responseBody.logs.map((log) => ({
+      epochMilliSeconds: log.time * 1000,
       data: log,
     }));
   },
@@ -125,14 +128,17 @@ export const newApiEvent = createTrigger({
   },
   props,
   sampleData: {
-    Id: 1,
-    Created: 1426545812,
-    ResourceType: 3,
-    ResourceAction: 1,
-    AffectedObjectId: 12345,
-    ObjectOwnerUserId: 999,
-    PerformedByUserId: 'user123',
-    Data: '{"key": "value"}',
+    id: 2280434406,
+    productId: 12345,
+    key: 'AAAAA-BBBBB-CCCCC-DDDDD',
+    ip: '203.0.113.10',
+    time: 1788259071,
+    state: 3010,
+    machineCode: null,
+    friendlyName: '',
+    floatingExpires: 0,
+    doIntValue: 0,
+    doId: 0,
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
