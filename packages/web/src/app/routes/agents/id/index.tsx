@@ -484,7 +484,7 @@ const ConfigureFields = ({
           defaultProvider={form.watch('draft.provider') ?? undefined}
           defaultModel={form.watch('draft.modelName') ?? undefined}
           defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-          onChange={({ provider, model, configId }) => {
+          onChange={({ provider, model, configId, picked: pickedBy }) => {
             const picked = {
               provider: parseProvider(provider) ?? null,
               modelName: model ?? null,
@@ -498,14 +498,11 @@ const ConfigureFields = ({
             ) {
               return;
             }
-            form.setValue('draft.provider', picked.provider, {
-              shouldDirty: true,
-            });
-            form.setValue('draft.modelName', picked.modelName, {
-              shouldDirty: true,
-            });
+            const shouldDirty = pickedBy !== 'default';
+            form.setValue('draft.provider', picked.provider, { shouldDirty });
+            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
             form.setValue('draft.providerConfigId', picked.providerConfigId, {
-              shouldDirty: true,
+              shouldDirty,
             });
           }}
         />
@@ -740,6 +737,15 @@ const AgentEditScreen = ({
       message: api.extractServerErrorMessage(error, fallback),
     });
 
+  const markSavedUnlessEditedSince = (written: ConfigureAgentInput) => {
+    if (
+      !agentEditState.sameConfig({ left: form.getValues(), right: written })
+    ) {
+      return;
+    }
+    form.reset(written);
+  };
+
   const releaseWrite = () => writeLock.current.release();
   const claimWrite = () => writeLock.current.claim();
 
@@ -750,7 +756,7 @@ const AgentEditScreen = ({
       {
         onSuccess: () => {
           if (seq !== writeSeq.current) return;
-          form.reset(values);
+          markSavedUnlessEditedSince(values);
           if (testRequested.current) setMode('test');
         },
         onError: (error) =>
@@ -784,7 +790,7 @@ const AgentEditScreen = ({
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         if (seq !== writeSeq.current) return;
-        form.reset(values);
+        markSavedUnlessEditedSince(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));

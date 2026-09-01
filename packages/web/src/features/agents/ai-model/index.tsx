@@ -42,6 +42,7 @@ type AIModelSelectorProps = {
     provider?: string;
     model?: string;
     configId?: string;
+    picked?: 'user' | 'default';
   }) => void;
 };
 
@@ -131,6 +132,7 @@ export function AIModelSelector({
         provider: selectedProvider,
         model: firstModel,
         configId: selectedConfigId,
+        picked: 'default',
       });
     }
   }, [
@@ -155,6 +157,7 @@ export function AIModelSelector({
         provider: selectedProvider,
         model: fallback,
         configId: selectedConfigId,
+        picked: 'default',
       });
     }
   }, [
@@ -170,7 +173,7 @@ export function AIModelSelector({
     setSelectedProvider(provider);
     setSelectedConfigId(configId);
     setSelectedModel(undefined);
-    onChange({ provider, model: undefined, configId });
+    onChange({ provider, model: undefined, configId, picked: 'user' });
     setProviderOpen(false);
   };
 
@@ -180,6 +183,7 @@ export function AIModelSelector({
       provider: selectedProvider,
       model: modelId,
       configId: selectedConfigId,
+      picked: 'user',
     });
     setModelOpen(false);
   };
