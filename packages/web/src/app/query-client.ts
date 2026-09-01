@@ -7,8 +7,7 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { useManagePlanDialogStore } from '@/features/billing';
 import { api } from '@/lib/api';
 
-const ERROR_TOAST_COOLDOWN_MS = 30000;
-const lastErrorToastAt = new Map<string, number>();
+const toastedQueryHashes = new Set<string>();
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -17,17 +16,18 @@ export const queryClient = new QueryClient({
         return;
       }
       console.error('query failed', query.queryHash, error);
-      const now = Date.now();
-      const lastShownAt = lastErrorToastAt.get(query.queryHash) ?? 0;
-      if (now - lastShownAt < ERROR_TOAST_COOLDOWN_MS) {
+      if (toastedQueryHashes.has(query.queryHash)) {
         return;
       }
-      lastErrorToastAt.set(query.queryHash, now);
+      toastedQueryHashes.add(query.queryHash);
       toast.error(t('Failed to load data'), {
         id: query.queryHash,
         description: t('Please refresh the page to try again.'),
         duration: 5000,
       });
+    },
+    onSuccess: (_data, query) => {
+      toastedQueryHashes.delete(query.queryHash);
     },
   }),
   mutationCache: new MutationCache({
