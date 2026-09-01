@@ -357,7 +357,8 @@
                     {
                       "group": "Setup",
                       "pages": [
-                        "untitled-page-2"
+                        "untitled-page-2",
+                        "admin-guide/guides/setup-ai-providers"
                       ]
                     },
                     "admin-guide/guides/manage-pieces",
@@ -372,8 +373,7 @@
                         ]
                      },
                      "admin-guide/guides/manage-oauth2",
-                     "admin-guide/guides/setup-ai-providers",
-                     {
+                    {
                         "group": "Secret Managers",
                         "icon": "key",
                         "pages": [
