@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentSummary, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, GetAgentRequest, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -37,6 +37,8 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             userId: await resolveUserId(request),
             projectId: request.query.projectId,
+            search: request.query.search,
+            sort: request.query.sort,
             cursor: request.query.cursor,
             limit: request.query.limit,
         })
@@ -59,12 +61,19 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         return agentDraftAi(request.log).draft({ platformId, projectId: request.projectId, prompt: request.body.prompt })
     })
 
-    app.get('/:id', GetAgentRoute, async (request): Promise<Agent> => {
-        return agentRedaction.withoutToolSecrets(await agentService(request.log).getOneOrThrow({
+    app.get('/:id', GetAgentRoute, async (request): Promise<AgentWithUsage> => {
+        const userId = await resolveUserId(request)
+        const agent = await agentService(request.log).getOneOrThrow({
             id: request.params.id,
             projectId: request.projectId,
-            userId: await resolveUserId(request),
-        }))
+            userId,
+        })
+        const redacted = agentRedaction.withoutToolSecrets(agent)
+        if (request.query.includeUsage !== true) {
+            return redacted
+        }
+        const publishedFlowsUsingAgent = await agentService(request.log).publishedFlowsUsing({ agent, projectId: request.projectId, userId })
+        return { ...redacted, publishedFlowsUsingAgent }
     })
 
     app.post('/:id', UpdateAgentRoute, async (request): Promise<Agent> => {
@@ -194,8 +203,9 @@ const GetAgentRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get an agent',
         params: z.object({ id: ApId }),
+        querystring: GetAgentRequest,
         response: {
-            [StatusCodes.OK]: Agent,
+            [StatusCodes.OK]: AgentWithUsage,
         },
     },
 }

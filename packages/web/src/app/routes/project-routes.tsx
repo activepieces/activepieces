@@ -266,7 +266,7 @@ export const projectRoutes = [
     ),
   },
   {
-    path: '/mcp-server',
+    path: '/mcp-server/:tab?',
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard requiredPermissions={[Permission.READ_MCP]}>

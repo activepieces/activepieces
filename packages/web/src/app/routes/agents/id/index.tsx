@@ -1,8 +1,10 @@
-import { isNil, unique } from '@activepieces/core-utils';
+import { isNil, Permission, unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
+  ApFlagId,
   AgentIcon,
+  AgentKnowledgeBaseTool,
   agentUtils,
   AgentToolType,
   ColorName,
@@ -17,19 +19,24 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronLeft,
+  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   FlaskConical,
   Loader2,
+  Pencil,
   Rocket,
+  SearchX,
   Settings2,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   unstable_useBlocker,
+  useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
@@ -40,6 +47,13 @@ import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-too
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -58,21 +72,30 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  KnowledgeBaseSection,
   AIModelSelector,
   AgentStructuredOutput,
   useAgentsAvailable,
 } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
+import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
 import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -170,211 +193,429 @@ const AgentEditorSkeleton = () => (
   </div>
 );
 
-const SettingsFields = ({
+const AgentDangerZone = ({
+  agent,
+  onDeleted,
+}: {
+  agent: Agent;
+  onDeleted: () => void;
+}) => {
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
+  const { checkAccess } = useAuthorization(agent.projectId);
+
+  if (!checkAccess(Permission.WRITE_AGENT)) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 flex flex-col gap-3 rounded-lg border border-destructive/30 p-4">
+      <div className="flex flex-col gap-1">
+        <span className="text-[13px] font-semibold leading-4">
+          {t('Delete this agent')}
+        </span>
+        <span className="text-[13px] leading-4 text-muted-foreground">
+          {t(
+            'Its instructions, its tools, and every conversation held with it go with it.',
+          )}
+        </span>
+      </div>
+      <DeleteAgentDialog
+        agent={agent}
+        open={deleting}
+        onOpenChange={setDeleting}
+        onDeleted={() => {
+          onDeleted();
+          navigate('/agents');
+        }}
+      >
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-fit gap-2"
+          onClick={() => setDeleting(true)}
+        >
+          <Trash2 size={15} />
+          {t('Delete')}
+        </Button>
+      </DeleteAgentDialog>
+    </div>
+  );
+};
+
+const AgentIdentityPopover = ({
   form,
+  focus,
+  children,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
+  focus?: 'description';
+  children: React.ReactNode;
 }) => (
-  <>
-    <FormField
-      control={form.control}
-      name="displayName"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-          <FormControl>
-            <Input {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="description"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Description')}</FormLabel>
-          <FormControl>
-            <Textarea {...field} minRows={2} maxRows={4} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="icon"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Shape')}</FormLabel>
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(AgentIcon).map((iconName) => (
-              <button
-                key={iconName}
-                type="button"
-                aria-label={iconName}
-                onClick={() => field.onChange(iconName)}
-                className={cn(
-                  'flex items-center justify-center rounded-[10px] p-[3px]',
-                  field.value === iconName && 'ring-2 ring-foreground',
-                )}
-              >
-                <AgentMark
-                  icon={iconName}
-                  color={form.watch('color')}
-                  size="sm"
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="color"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Color')}</FormLabel>
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(ColorName).map((colorName) => (
-              <button
-                key={colorName}
-                type="button"
-                aria-label={colorName}
-                onClick={() => field.onChange(colorName)}
-                className={cn(
-                  'flex items-center justify-center rounded-full p-[3px]',
-                  field.value === colorName && 'ring-2 ring-foreground',
-                )}
-              >
-                <span
-                  className="size-6 rounded-full"
-                  style={{
-                    backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  </>
+  <Popover>
+    <PopoverTrigger asChild>{children}</PopoverTrigger>
+    <PopoverContent
+      align="start"
+      className="w-[340px]"
+      onOpenAutoFocus={(event) => {
+        if (focus !== 'description') {
+          return;
+        }
+        event.preventDefault();
+        const field = event.currentTarget as HTMLElement | null;
+        field
+          ?.querySelector<HTMLTextAreaElement>('[name="description"]')
+          ?.focus();
+      }}
+    >
+      <div className="flex flex-col gap-4">
+        <FormField
+          control={form.control}
+          name="displayName"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Description')}</FormLabel>
+              <FormControl>
+                <Textarea {...field} minRows={2} maxRows={4} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Shape')}</FormLabel>
+              <div className="grid grid-cols-6 gap-2">
+                {Object.values(AgentIcon).map((iconName) => (
+                  <button
+                    key={iconName}
+                    type="button"
+                    aria-label={iconName}
+                    onClick={() => field.onChange(iconName)}
+                    className={cn(
+                      'flex items-center justify-center rounded-[10px] p-[3px]',
+                      field.value === iconName && 'ring-2 ring-foreground',
+                    )}
+                  >
+                    <AgentMark
+                      icon={iconName}
+                      color={form.watch('color')}
+                      size="sm"
+                    />
+                  </button>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Color')}</FormLabel>
+              <div className="grid grid-cols-6 gap-2">
+                {Object.values(ColorName).map((colorName) => (
+                  <button
+                    key={colorName}
+                    type="button"
+                    aria-label={colorName}
+                    onClick={() => field.onChange(colorName)}
+                    className={cn(
+                      'flex items-center justify-center rounded-full p-[3px]',
+                      field.value === colorName && 'ring-2 ring-foreground',
+                    )}
+                  >
+                    <span
+                      className="size-6 rounded-full"
+                      style={{
+                        backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </PopoverContent>
+  </Popover>
 );
 
 const ConfigureFields = ({
+  agent,
   form,
   needsModel,
+  onDeleted,
 }: {
+  agent: Agent;
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
   needsModel: boolean;
-}) => (
-  <>
-    <FormField
-      control={form.control}
-      name="draft.instructions"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel showRequiredIndicator>{t('Instructions')}</FormLabel>
-          <FormControl>
-            <Textarea {...field} minRows={4} maxRows={12} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="draft.tools"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <AgentTools
-            toolsField={field}
-            selectedProvider={form.watch('draft.provider') ?? undefined}
-          />
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormItem className="flex flex-col gap-[9px]">
-      {needsModel && (
-        <p className="text-[13px] leading-4 text-destructive">
-          {t('Pick a model so this agent can answer.')}
-        </p>
-      )}
-      <AIModelSelector
-        defaultProvider={form.watch('draft.provider') ?? undefined}
-        defaultModel={form.watch('draft.modelName') ?? undefined}
-        defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-        onChange={({ provider, model, configId }) => {
-          form.setValue('draft.provider', parseProvider(provider), {
-            shouldDirty: true,
-          });
-          form.setValue('draft.modelName', model ?? null, {
-            shouldDirty: true,
-          });
-          form.setValue('draft.providerConfigId', configId ?? null, {
-            shouldDirty: true,
-          });
-        }}
+  onDeleted: () => void;
+}) => {
+  const tools = form.watch('draft.tools') ?? [];
+  const knowledgeCount = tools.filter(
+    (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
+  ).length;
+  const { data: knowledgeAvailable } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PGVECTOR_AVAILABLE,
+  );
+  const toolCount = unique(
+    tools
+      .filter((tool) => tool.type !== AgentToolType.KNOWLEDGE_BASE)
+      .map((tool) =>
+        tool.type === AgentToolType.PIECE
+          ? tool.pieceMetadata?.pieceName ?? tool.toolName
+          : tool.type,
+      ),
+  ).length;
+
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="draft.instructions"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <PanelSectionLabel label={t('Instructions')} required />
+            <FormControl>
+              <Textarea
+                {...field}
+                minRows={4}
+                maxRows={12}
+                placeholder={t(
+                  'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
+                )}
+                className="rounded-[10px] px-[13px] py-3 text-[13px] leading-[155%]"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
       />
-    </FormItem>
-    <FormField
-      control={form.control}
-      name="draft.structuredOutput"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <AgentStructuredOutput
-            disabled={false}
-            structuredOutputField={field}
-          />
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="draft.maxSteps"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Max steps')}</FormLabel>
-          <FormControl>
-            <Input
-              type="number"
-              min={1}
-              max={MAX_AGENT_STEP_BUDGET}
-              value={field.value}
-              onChange={(event) =>
-                field.onChange(
-                  Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
-                )
+      <FormField
+        control={form.control}
+        name="draft.tools"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <PanelSectionLabel
+              label={t('Tools')}
+              meta={
+                toolCount > 0
+                  ? t('toolsAddedCount', { count: toolCount })
+                  : undefined
               }
             />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
+            <AgentTools
+              layout="rows"
+              toolsField={field}
+              selectedProvider={form.watch('draft.provider') ?? undefined}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {knowledgeAvailable !== false && (
+        <FormField
+          control={form.control}
+          name="draft.tools"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <PanelSectionLabel
+                label={t('Knowledge')}
+                meta={
+                  knowledgeCount > 0
+                    ? t('knowledgeSourcesCount', { count: knowledgeCount })
+                    : undefined
+                }
+              />
+              <KnowledgeBaseSection
+                layout="rows"
+                tools={tools.filter(
+                  (tool): tool is AgentKnowledgeBaseTool =>
+                    tool.type === AgentToolType.KNOWLEDGE_BASE,
+                )}
+                allTools={tools}
+                removeTool={(toolName: string) =>
+                  field.onChange(
+                    tools.filter((tool) => tool.toolName !== toolName),
+                  )
+                }
+                onToolsUpdate={field.onChange}
+                selectedProvider={form.watch('draft.provider') ?? undefined}
+              />
+            </FormItem>
+          )}
+        />
       )}
-    />
-  </>
+      <FormItem className="flex flex-col gap-[9px]">
+        <PanelSectionLabel label={t('Model')} />
+        {needsModel && (
+          <p className="text-[13px] leading-4 text-destructive">
+            {t('Pick a model so this agent can answer.')}
+          </p>
+        )}
+        <AIModelSelector
+          hideLabel
+          showEmbeddingNote={knowledgeCount > 0}
+          defaultProvider={form.watch('draft.provider') ?? undefined}
+          defaultModel={form.watch('draft.modelName') ?? undefined}
+          defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
+          onChange={({ provider, model, configId, picked: pickedBy }) => {
+            const picked = {
+              provider: parseProvider(provider) ?? null,
+              modelName: model ?? null,
+              providerConfigId: configId ?? null,
+            };
+            if (
+              !agentEditState.modelPickChanged({
+                picked,
+                current: form.getValues('draft'),
+              })
+            ) {
+              return;
+            }
+            const shouldDirty = pickedBy !== 'default';
+            form.setValue('draft.provider', picked.provider, { shouldDirty });
+            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
+            form.setValue('draft.providerConfigId', picked.providerConfigId, {
+              shouldDirty,
+            });
+          }}
+        />
+      </FormItem>
+      <AdvancedSection>
+        <FormField
+          control={form.control}
+          name="draft.structuredOutput"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <AgentStructuredOutput
+                disabled={false}
+                structuredOutputField={field}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="draft.maxSteps"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <PanelSectionLabel label={t('Max steps')} />
+              <FormControl>
+                <Input
+                  type="number"
+                  min={1}
+                  max={MAX_AGENT_STEP_BUDGET}
+                  value={field.value}
+                  onChange={(event) =>
+                    field.onChange(
+                      Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
+                    )
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <AgentDangerZone agent={agent} onDeleted={onDeleted} />
+      </AdvancedSection>
+    </>
+  );
+};
+
+const describeAgent = (description?: string | null): string =>
+  isNil(description) || description.trim().length === 0
+    ? t('Add a description')
+    : description;
+
+const PanelSectionLabel = ({
+  label,
+  meta,
+  required,
+}: {
+  label: string;
+  meta?: string;
+  required?: boolean;
+}) => (
+  <div className="flex items-baseline gap-2">
+    <FormLabel
+      showRequiredIndicator={required}
+      className="grow text-[13px] font-semibold"
+    >
+      {label}
+    </FormLabel>
+    {meta !== undefined && (
+      <span className="text-xs leading-4 text-muted-foreground">{meta}</span>
+    )}
+  </div>
 );
 
-const useWarnBeforeLosingChanges = (hasChanges: boolean) => {
+const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-fit items-center gap-1.5 text-[13px] font-semibold leading-4 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronRight
+          size={14}
+          className={cn('transition-transform', open && 'rotate-90')}
+        />
+        {t('Advanced')}
+      </button>
+      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
+    </div>
+  );
+};
+
+const useWarnBeforeLosingChanges = ({
+  hasChanges,
+  standDown,
+}: {
+  hasChanges: boolean;
+  standDown: React.RefObject<boolean>;
+}) => {
   const blocker = unstable_useBlocker(
     ({ currentLocation, nextLocation }) =>
-      hasChanges && currentLocation.pathname !== nextLocation.pathname,
+      hasChanges &&
+      standDown.current !== true &&
+      currentLocation.pathname !== nextLocation.pathname,
   );
 
   useEffect(() => {
     if (!hasChanges) return;
     const warn = (event: BeforeUnloadEvent) => {
+      if (standDown.current === true) return;
       event.preventDefault();
       event.returnValue = '';
     };
@@ -443,14 +684,10 @@ const AgentEditScreen = ({
   onExit: () => void;
   onEdited: () => void;
 }) => {
-  const [tab, setTab] = useState('configure');
   const [mode, setMode] = useState('edit');
-  const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
-    formValuesOf(agent),
-  );
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: syncedDraft,
+    defaultValues: formValuesOf(agent),
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
@@ -472,11 +709,12 @@ const AgentEditScreen = ({
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
-  const unsavedTyping = !agentEditState.sameConfig({
-    left: values,
-    right: syncedDraft,
+  const unsavedTyping = form.formState.isDirty;
+  const deletedRef = useRef(false);
+  const leaveBlocker = useWarnBeforeLosingChanges({
+    hasChanges: unsavedTyping,
+    standDown: deletedRef,
   });
-  const leaveBlocker = useWarnBeforeLosingChanges(unsavedTyping);
   const [exitRequested, setExitRequested] = useState(false);
   const leaveDecision = agentEditState.leaveGuard({
     blockerState: leaveBlocker.state,
@@ -486,20 +724,37 @@ const AgentEditScreen = ({
   const writeSeq = useRef(0);
   const writeLock = useRef(agentEditState.createWriteLock());
 
+  const lastFromServer = useRef(formValuesOf(agent));
+
   useEffect(() => {
     const fromServer = formValuesOf(agent);
-    if (agentEditState.sameConfig({ left: fromServer, right: syncedDraft }))
+    if (
+      agentEditState.sameConfig({
+        left: fromServer,
+        right: lastFromServer.current,
+      })
+    ) {
       return;
+    }
     if (unsavedTyping) return;
+    lastFromServer.current = fromServer;
     form.reset(fromServer);
-    setSyncedDraft(fromServer);
-  }, [agent, syncedDraft, unsavedTyping, form]);
+  }, [agent, unsavedTyping, form]);
 
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {
       type: 'manual',
       message: api.extractServerErrorMessage(error, fallback),
     });
+
+  const markSavedUnlessEditedSince = (written: ConfigureAgentInput) => {
+    if (
+      !agentEditState.sameConfig({ left: form.getValues(), right: written })
+    ) {
+      return;
+    }
+    form.reset(written);
+  };
 
   const releaseWrite = () => writeLock.current.release();
   const claimWrite = () => writeLock.current.claim();
@@ -511,7 +766,7 @@ const AgentEditScreen = ({
       {
         onSuccess: () => {
           if (seq !== writeSeq.current) return;
-          setSyncedDraft(values);
+          markSavedUnlessEditedSince(values);
           if (testRequested.current) setMode('test');
         },
         onError: (error) =>
@@ -545,7 +800,7 @@ const AgentEditScreen = ({
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         if (seq !== writeSeq.current) return;
-        setSyncedDraft(values);
+        markSavedUnlessEditedSince(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
@@ -595,20 +850,54 @@ const AgentEditScreen = ({
           >
             <ChevronLeft size={16} />
           </button>
-          <AgentMark icon={agent.icon} color={agent.color} />
+          <AgentIdentityPopover form={form}>
+            <button
+              type="button"
+              aria-label={t('Edit name and appearance')}
+              className="group relative shrink-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <AgentMark
+                icon={form.watch('icon')}
+                color={form.watch('color')}
+              />
+              <span className="absolute -bottom-[3px] -end-[3px] flex size-[19px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/30 group-hover:bg-accent group-hover:text-foreground">
+                <Pencil size={11} strokeWidth={2.2} />
+              </span>
+            </button>
+          </AgentIdentityPopover>
           <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
-            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
-              {agent.displayName}
-            </span>
-            <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {HEADER_STATUS_COPY[
-                agentEditState.headerStatus({
-                  needsModel: formNeedsModel,
-                  justLaunched,
-                  live,
-                  hasChanges,
-                })
-              ]()}
+            <AgentIdentityPopover form={form}>
+              <button
+                type="button"
+                aria-label={t('Edit name and appearance')}
+                className="min-w-0 truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {form.watch('displayName')}
+              </button>
+            </AgentIdentityPopover>
+            <span className="flex min-w-0 items-center gap-2 text-[13px] leading-4 text-muted-foreground">
+              <span className="truncate">
+                {HEADER_STATUS_COPY[
+                  agentEditState.headerStatus({
+                    needsModel: formNeedsModel,
+                    justLaunched,
+                    live,
+                    hasChanges,
+                  })
+                ]()}
+              </span>
+              <span aria-hidden className="shrink-0 text-border">
+                &middot;
+              </span>
+              <AgentIdentityPopover form={form} focus="description">
+                <button
+                  type="button"
+                  aria-label={t('Edit the description')}
+                  className="min-w-0 truncate rounded text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {describeAgent(form.watch('description'))}
+                </button>
+              </AgentIdentityPopover>
             </span>
           </div>
           <Button
@@ -651,7 +940,7 @@ const AgentEditScreen = ({
                   <TabsTrigger
                     value="edit"
                     variant="outline"
-                    className="h-full items-center gap-2"
+                    className="h-full items-center gap-2 text-[13px]"
                   >
                     <Sparkles size={14} />
                     {t('Edit with AI')}
@@ -659,7 +948,7 @@ const AgentEditScreen = ({
                   <TabsTrigger
                     value="test"
                     variant="outline"
-                    className="h-full items-center gap-2"
+                    className="h-full items-center gap-2 text-[13px]"
                     disabled={stageDraft.isPending || updateAgent.isPending}
                   >
                     {stageDraft.isPending ? (
@@ -686,45 +975,29 @@ const AgentEditScreen = ({
           </div>
 
           <div className="flex w-[452px] shrink-0 flex-col">
-            <div className="flex h-[52px] shrink-0 items-stretch border-b border-border px-[18px]">
-              <Tabs
-                value={tab}
-                onValueChange={setTab}
-                className="flex h-full items-stretch"
-              >
-                <TabsList
-                  variant="outline"
-                  className="h-full items-stretch gap-[22px]"
-                >
-                  <TabsTrigger
-                    value="configure"
-                    variant="outline"
-                    className="h-full items-center gap-2"
-                  >
-                    {t('Configure')}
-                    {formNeedsModel && (
-                      <span className="size-[7px] rounded-full bg-destructive" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="settings"
-                    variant="outline"
-                    className="h-full items-center"
-                  >
-                    {t('Settings')}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-border px-[18px]">
+              <span className="text-[13px] font-semibold leading-4">
+                {t('Configure')}
+              </span>
+              {formNeedsModel && (
+                <span className="flex items-center gap-1.5 text-xs leading-4 text-destructive">
+                  <span className="size-[6px] rounded-full bg-destructive" />
+                  {t('Needs a model')}
+                </span>
+              )}
             </div>
             <ScrollArea className="min-h-0 grow">
               <div className="flex flex-col gap-5 p-[18px]">
-                {tab === 'configure' ? (
-                  <ConfigureFields form={form} needsModel={formNeedsModel} />
-                ) : (
-                  <SettingsFields form={form} />
-                )}
+                <ConfigureFields
+                  agent={agent}
+                  form={form}
+                  needsModel={formNeedsModel}
+                  onDeleted={() => {
+                    deletedRef.current = true;
+                  }}
+                />
                 {form.formState.errors.root?.serverError && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-[13px] leading-4 text-destructive">
                     {form.formState.errors.root.serverError.message}
                   </p>
                 )}
@@ -741,7 +1014,7 @@ const AgentBuilderWelcome = () => (
   <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
     <Sparkles size={22} className="text-primary" />
     <span className="text-base font-semibold">{t('Describe a change')}</span>
-    <span className="max-w-[320px] text-sm text-muted-foreground">
+    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
       {t('Try “Only reply to paying customers” or “Add Slack and Notion”.')}
     </span>
   </div>
@@ -762,7 +1035,9 @@ const TestPane = ({
 }) =>
   !isNil(blockedReason) ? (
     <div className="flex min-h-0 grow flex-col items-center justify-center px-6 text-center">
-      <span className="text-sm font-semibold">{blockedReason}</span>
+      <span className="text-[13px] font-semibold leading-4">
+        {blockedReason}
+      </span>
     </div>
   ) : (
     <div className="flex min-h-0 grow flex-col">
@@ -785,7 +1060,7 @@ const AgentTestWelcome = () => (
     <span className="text-base font-semibold">
       {t('Try it before it goes live')}
     </span>
-    <span className="max-w-[320px] text-sm text-muted-foreground">
+    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
       {t('Give it a real task. It runs on the settings beside you.')}
     </span>
   </div>
@@ -811,6 +1086,7 @@ const EditWithAIPane = ({
 );
 
 const AgentEditorContent = () => {
+  const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
   const queryClient = useQueryClient();
   const agentsAvailable = useAgentsAvailable();
@@ -841,13 +1117,42 @@ const AgentEditorContent = () => {
     setFreshConversations((count) => count + 1);
     writeConversationParam(null);
   };
-  const { data: agent, isLoading } = agentsQueries.useAgent({
+  const {
+    data: agent,
+    isLoading,
+    isError,
+  } = agentsQueries.useAgent({
     id: agentId ?? '',
     enabled: agentId !== undefined && agentsAvailable,
   });
 
-  if (isLoading || agent === undefined) {
+  if (isLoading) {
     return <AgentEditorSkeleton />;
+  }
+
+  if (agent === undefined) {
+    return (
+      <Empty className="h-full">
+        <EmptyHeader className="max-w-md">
+          <EmptyMedia variant="icon">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyTitle>
+            {isError
+              ? t('That agent could not be loaded')
+              : t('That agent is gone')}
+          </EmptyTitle>
+          <EmptyDescription>
+            {isError
+              ? t('It may have been deleted, or the connection dropped.')
+              : t('It may have been deleted by someone else on the project.')}
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button variant="outline" onClick={() => navigate('/agents')}>
+          {t('Back to agents')}
+        </Button>
+      </Empty>
+    );
   }
 
   const requirements = requirementsFor(agent);

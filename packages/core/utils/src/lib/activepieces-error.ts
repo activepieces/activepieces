@@ -51,6 +51,7 @@ export type ApErrorParams =
     | ValidationErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
@@ -210,6 +211,13 @@ ErrorCode.EMAIL_IS_NOT_VERIFIED,
 
 export type UserIsInActiveErrorParams = BaseErrorParams<
 ErrorCode.USER_IS_INACTIVE,
+{
+    email: string
+}
+>
+
+export type UserNotFoundOnPlatformErrorParams = BaseErrorParams<
+ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
 {
     email: string
 }
@@ -557,6 +565,7 @@ export enum ErrorCode {
     TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
+    USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',

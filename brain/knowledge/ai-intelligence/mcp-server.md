@@ -6,6 +6,12 @@ icon: 🔌
 
 Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, Cursor, Windsurf) can read and manipulate flows, connections, tables, and runs through a typed tool interface. One `McpServer` record per project (UNIQUE `projectId`), authenticated by a bearer token. Available in CE, EE, and Cloud.
 
+### Vocabulary
+
+**Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants`.
+**Client** — one `mcp_oauth_client` registration row. Not a stable identity: Claude Code and Codex re-run DCR per sign-in, so one client-as-a-product yields many rows, and one user re-authenticating yields many grants. _Avoid_: using "client" for the thing being revoked.
+**Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the tab label "Connections" and the `/mcp-server/connections` URL are deliberate copy, not the domain term — the code under `app/routes/mcp-server/grants/` says grant.
+
 ### Entities & services
 
 - **McpServer** — per-project record: `id`, `projectId` (unique), `token` (72-char), `disabledTools[]` (JSONB, nullable; `null`/`[]` means all controllable tools enabled).

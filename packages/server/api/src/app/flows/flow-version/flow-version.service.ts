@@ -16,6 +16,24 @@ import { flowVersionValidationUtil } from './flow-version-validator-util'
 
 export const flowVersionRepo = repoFactory(FlowVersionEntity)
 
+export const publishedFlowsUsingAgent = async ({ projectId, agentExternalId, nameLimit }: { projectId: ProjectId, agentExternalId: string, nameLimit: number }): Promise<PublishedFlowsUsingAgent> => {
+    const referencing = () => flowVersionRepo()
+        .createQueryBuilder('flow_version')
+        .innerJoin('flow', 'flow', 'flow.id = flow_version."flowId"')
+        .where('flow."projectId" = :projectId', { projectId })
+        .andWhere('flow_version.id = flow."publishedVersionId"')
+        .andWhere('flow_version."agentIds" && :agentExternalIds', { agentExternalIds: [agentExternalId] })
+    const [total, named] = await Promise.all([
+        referencing().getCount(),
+        referencing()
+            .select('flow_version."displayName"', 'displayName')
+            .orderBy('flow_version."displayName"', 'ASC')
+            .limit(nameLimit)
+            .getRawMany<{ displayName: string }>(),
+    ])
+    return { total, names: named.map((row) => row.displayName) }
+}
+
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async applyOperation({
         flowVersion,
@@ -410,3 +428,7 @@ type ApplyOperationParams = {
     entityManager?: EntityManager
 }
 
+export type PublishedFlowsUsingAgent = {
+    total: number
+    names: string[]
+}
