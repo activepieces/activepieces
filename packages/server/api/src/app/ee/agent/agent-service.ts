@@ -362,6 +362,26 @@ async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log
     })
 }
 
+export async function assertAgentsResolveInProject({ projectId, agentExternalIds, entityManager }: { projectId: ProjectId, agentExternalIds: string[], entityManager: EntityManager }): Promise<void> {
+    if (agentExternalIds.length === 0) {
+        return
+    }
+    const resolved = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .select(['agent.externalId'])
+        .setLock('pessimistic_read')
+        .where('agent."projectId" = :projectId', { projectId })
+        .andWhere('agent."externalId" IN (:...agentExternalIds)', { agentExternalIds })
+        .getMany()
+    const missing = agentExternalIds.filter((externalId) => !resolved.some((agent) => agent.externalId === externalId))
+    if (missing.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `This flow runs an agent that is not in this project any more. Point the step at an agent here, then publish.` },
+        })
+    }
+}
+
 async function readableProjectOrThrow({ platformId, userId, targetProjectId, log }: { platformId: PlatformId, userId: UserId, targetProjectId: ProjectId, log: FastifyBaseLogger }): Promise<Project> {
     const [target] = await resolveReadableProjects({ platformId, userId, projectId: targetProjectId, log })
     if (isNil(target)) {

@@ -800,6 +800,26 @@ describe('moving an agent to another project', () => {
         expect(conversation.projectId).toBe(target.id)
     })
 
+    it('refuses to publish a flow that points at an agent from another project', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.DISABLED })
+        await db.save('flow', flow)
+        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, state: FlowVersionState.DRAFT })
+        await db.save('flow_version', { ...version, agentIds: [agent.externalId] })
+        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })).statusCode).toBe(StatusCodes.OK)
+
+        const published = await ctx.post(`/v1/flows/${flow.id}`, {
+            type: 'LOCK_AND_PUBLISH',
+            request: {},
+        })
+
+        expect(published.statusCode).toBe(StatusCodes.CONFLICT)
+        const row = await db.findOneByOrFail('flow', { id: flow.id }) as { publishedVersionId: string | null }
+        expect(row.publishedVersionId).toBeNull()
+    })
+
     it('names every kind of tool that would stop working, not only connections', async () => {
         const ctx = await context()
         const target = await secondProjectOf(ctx)
