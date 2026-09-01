@@ -277,6 +277,9 @@
       "@activepieces/piece-claude": [
         "packages/pieces/community/claude/src/index.ts"
       ],
+      "@activepieces/piece-clay": [
+        "packages/pieces/community/clay/src/index.ts"
+      ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
