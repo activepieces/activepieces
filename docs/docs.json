@@ -350,6 +350,7 @@
                       "group": "General",
                       "pages": [
                         "admin-guide/guides/structure-projects",
+                        "admin-guide/guides/project-releases",
                         "admin-guide/guides/permissions",
                         {
                           "group": "SCIM",
@@ -374,8 +375,7 @@
                         "untitled-page-5"
                       ]
                     },
-                    "admin-guide/guides/project-releases",
-                     "admin-guide/guides/project-replace-cli",
+                    "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency",
                     {
                       "group": "Observability",
