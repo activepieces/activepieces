@@ -1,11 +1,8 @@
-import { assertNotNullOrUndefined } from '@activepieces/core-utils'
 import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication.service'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { platformService } from '../../platform/platform.service'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
 
@@ -46,17 +43,6 @@ const seedDevUser = async (): Promise<void> => {
         platformId: null,
         newsLetter: false,
         provider: UserIdentityProvider.EMAIL,
-    })
-
-    const identity = await userIdentityService(log).getIdentityByEmail(DEV_EMAIL)
-    assertNotNullOrUndefined(identity, 'Dev user identity not found after sign up')
-
-    await platformService(log).createPlatformWithProject({
-        identityId: identity.id,
-        name: 'dev\'s Platform',
-        invalidatePreviousTokens: true,
-        isFirstPlatform: true,
-        callerTokenVersion: undefined,
     })
 
     log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user and platform created')
