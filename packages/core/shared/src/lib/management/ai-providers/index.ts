@@ -1,4 +1,4 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum AIProviderModelType {
@@ -64,6 +64,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.record(z.string(), z.string()).optional(),
+    apiStyle: z.enum(['chat', 'responses']).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -258,6 +259,9 @@ export const AIProviderWithoutSensitiveData = z.object({
     modelIds: z.array(z.string()),
     projectScope: AiProviderProjectScope,
     projectIds: z.array(z.string()),
+    status: AiProviderKeyStatus,
+    statusReason: z.string().nullable(),
+    statusUpdated: z.string().nullable(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 
@@ -275,10 +279,23 @@ export const ProjectAIProvider = z.object({
 })
 export type ProjectAIProvider = z.infer<typeof ProjectAIProvider>
 
+export const AIProviderModelMetadata = z.object({
+    contextTokens: z.number().optional(),
+    maxOutputTokens: z.number().optional(),
+    releaseDate: z.string().optional(),
+    inputCostPerMillionTokens: z.number().optional(),
+    outputCostPerMillionTokens: z.number().optional(),
+    supportsToolCalling: z.boolean().optional(),
+    supportsReasoning: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+})
+export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
+
 export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),
     type: z.nativeEnum(AIProviderModelType),
+    metadata: AIProviderModelMetadata.optional(),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 
@@ -412,6 +429,7 @@ export function splitCloudflareGatewayModelId(modelId: string): {
 }
 
 export {
+    AI_PROVIDER_ENTITY_TYPES,
     ALLOWED_CHAT_MODELS_BY_PROVIDER,
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,

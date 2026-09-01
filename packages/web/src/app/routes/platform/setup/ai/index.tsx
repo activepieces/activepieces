@@ -1,9 +1,10 @@
-import { PlatformRole } from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Bot, WandSparkles } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
@@ -31,9 +32,15 @@ export default function AIProvidersPage() {
 
 function AICenter() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const capabilitiesEnabled = edition !== ApEdition.COMMUNITY;
 
   const rawTab = searchParams.get('tab');
-  const activeTab = isTabValue(rawTab) ? rawTab : 'providers';
+  const requestedTab = isTabValue(rawTab) ? rawTab : 'providers';
+  const activeTab =
+    requestedTab === 'capabilities' && !capabilitiesEnabled
+      ? 'providers'
+      : requestedTab;
 
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
@@ -47,7 +54,15 @@ function AICenter() {
 
   const navItems: { value: TabValue; label: string; icon: typeof Bot }[] = [
     { value: 'providers', label: t('Providers'), icon: Bot },
-    { value: 'capabilities', label: t('Capabilities'), icon: WandSparkles },
+    ...(capabilitiesEnabled
+      ? [
+          {
+            value: 'capabilities' as const,
+            label: t('Capabilities'),
+            icon: WandSparkles,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -93,9 +108,11 @@ function AICenter() {
           <TabsContent value="providers" className="mt-0">
             <ProvidersTab />
           </TabsContent>
-          <TabsContent value="capabilities" className="mt-0">
-            <CapabilitiesTab />
-          </TabsContent>
+          {capabilitiesEnabled && (
+            <TabsContent value="capabilities" className="mt-0">
+              <CapabilitiesTab />
+            </TabsContent>
+          )}
         </div>
       </div>
     </Tabs>

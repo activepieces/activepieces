@@ -72,6 +72,7 @@ const projectAnalytics = z.object({
     activeUsers: z.number(),
     totalFlows: z.number(),
     activeFlows: z.number(),
+    lastFlowUpdated: Nullable(DateOrString),
 })
 export type Project = z.infer<typeof Project>
 

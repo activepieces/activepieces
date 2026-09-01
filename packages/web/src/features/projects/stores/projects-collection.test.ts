@@ -72,6 +72,7 @@ function makeProject(
       activeUsers: 0,
       totalFlows: 0,
       activeFlows: 0,
+      lastFlowUpdated: null,
     },
   };
 }

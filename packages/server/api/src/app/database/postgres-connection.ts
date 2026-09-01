@@ -413,6 +413,7 @@ import { AddAgentConversationSource1819000000000 } from './migration/postgres/18
 import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-DropPieceTags'
 import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
 import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
+import { AddWaitpointSignals1821000000000 } from './migration/postgres/1821000000000-AddWaitpointSignals'
 import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
 import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
@@ -428,7 +429,10 @@ import { ClearRoleFromCompanyPersonalization1833000000000 } from './migration/po
 import { AddAutoCreatePersonalProjectsToPlatform1834000000000 } from './migration/postgres/1834000000000-AddAutoCreatePersonalProjectsToPlatform'
 import { WidenMcpOAuthState1835000000000 } from './migration/postgres/1835000000000-WidenMcpOAuthState'
 import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836000000000-DropTeamsBotInstallation'
-import { AddFlowApprovalWorkflow1837000000000 } from './migration/postgres/1837000000000-AddFlowApprovalWorkflow'
+import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
+import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
+import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -857,6 +861,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationSource1819000000000,
         AddAuditEventPlatformIdCreatedIdIndex1820000000000,
         AddAgentConversationFlowStepRetentionIndex1821000000000,
+        AddWaitpointSignals1821000000000,
         RenameChatTablesToAgent1822000000000,
         AddRenamedChatTableCompatViews1823000000000,
         AddAttemptsToOtp1824000000000,
@@ -872,7 +877,10 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAutoCreatePersonalProjectsToPlatform1834000000000,
         WidenMcpOAuthState1835000000000,
         DropTeamsBotInstallation1836000000000,
-        AddFlowApprovalWorkflow1837000000000,
+        AddAiProviderStatus1837000000000,
+        AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
+        AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
     ]
     return migrations
 }

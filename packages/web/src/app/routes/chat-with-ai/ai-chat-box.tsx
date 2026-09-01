@@ -3,6 +3,7 @@ import {
   AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
+  PlatformRole,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -30,6 +31,7 @@ import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -51,6 +53,8 @@ import { getTextFromParts } from './lib/message-parsers';
 export function AIChatBox({
   incognito,
   agentId,
+  builder,
+  onTurnEnd,
   emptyState,
   footerNote,
   placeholder,
@@ -70,6 +74,8 @@ export function AIChatBox({
       <ChatBoxContent
         incognito={incognito}
         agentId={agentId}
+        builder={builder}
+        onTurnEnd={onTurnEnd}
         emptyState={emptyState}
         footerNote={footerNote}
         placeholder={placeholder}
@@ -84,6 +90,8 @@ export function AIChatBox({
 function ChatBoxContent({
   incognito,
   agentId,
+  builder,
+  onTurnEnd,
   emptyState,
   footerNote,
   placeholder,
@@ -110,11 +118,16 @@ function ChatBoxContent({
     setModelName,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
+    ...(builder === undefined ? {} : { builder }),
     onTitleUpdate,
     onConversationCreated,
+    onTurnEnd,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
+  const setStoreConversationId = useChatStoreContext(
+    (s) => s.setConversationId,
+  );
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
   const offerRecurringAutomation = useChatStoreContext(
     (s) => s.offerRecurringAutomation,
@@ -125,6 +138,10 @@ function ChatBoxContent({
       void setConversationId(initialConversationId);
     }
   }, [initialConversationId, setConversationId]);
+
+  useEffect(() => {
+    setStoreConversationId(conversationId ?? null);
+  }, [conversationId, setStoreConversationId]);
 
   useEffect(() => {
     if (!isStreaming) return;
@@ -188,6 +205,7 @@ function ChatBoxContent({
   const [hasInput, setHasInput] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
@@ -202,7 +220,8 @@ function ChatBoxContent({
   const isFirstRun =
     personalization.personalStatus === ChatPersonalizationStatus.UNSET;
   const companyLocked =
-    isFirstRun && (personalization.companyInput ?? '').trim().length > 0;
+    (personalization.companyInput ?? '').trim().length > 0 &&
+    currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
     isEmpty && !incognito && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
@@ -483,6 +502,8 @@ function computeClaimedBuildIds(
 type AIChatBoxProps = {
   incognito: boolean;
   agentId?: string;
+  builder?: boolean;
+  onTurnEnd?: () => void;
   emptyState?: React.ReactNode;
   footerNote?: string;
   placeholder?: string;

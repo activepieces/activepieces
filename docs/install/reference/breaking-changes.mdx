@@ -8,6 +8,57 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
+
+Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
+
+The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
+
+The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
+
+`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
+
+The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
+
+#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
+
+An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
+
+Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
+
+The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
+
+#### A Run Agent step whose turn dies now fails its flow run
+
+A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
+
+Two cases are deliberately unaffected, because the agent did produce usable output:
+
+- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
+- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
+
+If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
+
+#### Workers no longer pre-warm the flow cache on startup by default
+
+Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
+
+#### What you need to do
+
+Nothing, unless you want to keep the pre-v0.88 warm-up behaviour. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
+
 #### A new workspace is named after the company in the sign-up email
 
 Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
@@ -116,6 +167,23 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
+#### Front's Attachments field takes files instead of URLs
+
+The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+
+A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+
+#### What you need to do
+
+Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+
+#### A file URL that fails to download is no longer treated as a file
+
+Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
+
+#### What you need to do
+
+Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
 
 ## 0.87.0
 
@@ -335,6 +403,7 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 ### Do you need to take action?
 - If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
+- If you are below 0.73.0 and plan to switch `AP_EDITION` from `ce` to `ee`, upgrade to 0.73.0 on your current edition first, then switch. Edition-gated migrations are recorded as run without executing, so switching earlier leaves the schema incomplete.
 
 
 ## 0.71.0

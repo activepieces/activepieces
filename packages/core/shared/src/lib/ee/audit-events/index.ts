@@ -22,6 +22,8 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_PIECES_UPGRADED = 'flow.pieces.upgraded',
+    FLOW_PIECES_REVERTED = 'flow.pieces.reverted',
     FLOW_PUBLISHED = 'flow.published',
     FLOW_ACTIVATED = 'flow.activated',
     FLOW_DEACTIVATED = 'flow.deactivated',
@@ -323,6 +325,41 @@ export const FlowUpdatedEvent = z.object({
 
 export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
 
+export const FlowPiecesUpgradedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_UPGRADED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            decision: z.enum(['UPGRADED', 'KEPT']),
+            prevVersion: z.string(),
+            newVersion: Nullable(z.string()),
+        })),
+    }),
+})
+
+export type FlowPiecesUpgradedEvent = z.infer<typeof FlowPiecesUpgradedEvent>
+
+export const FlowPiecesRevertedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_REVERTED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            prevVersion: z.string(),
+            newVersion: z.string(),
+        })),
+    }),
+})
+
+export type FlowPiecesRevertedEvent = z.infer<typeof FlowPiecesRevertedEvent>
+
 const FlowLifecycleEventData = z.object({
     flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
     flowVersion: FlowVersion.pick({
@@ -533,6 +570,8 @@ export const ApplicationEvent = z.union([
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
+    FlowPiecesUpgradedEvent,
+    FlowPiecesRevertedEvent,
     FlowPublishedEvent,
     FlowActivatedEvent,
     FlowDeactivatedEvent,
@@ -567,6 +606,13 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`
+        case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+            const upgradedCount = event.data.steps.filter((step) => step.decision === 'UPGRADED').length
+            const keptCount = event.data.steps.length - upgradedCount
+            return `Flow ${event.data.flowId} piece versions upgraded (${upgradedCount} upgraded, ${keptCount} kept)`
+        }
+        case ApplicationEventName.FLOW_PIECES_REVERTED:
+            return `Flow ${event.data.flowId} piece versions reverted (${event.data.steps.length} steps)`
         case ApplicationEventName.FLOW_DELETED:
             return `Flow ${event.data.flow.id} (${event.data.flowVersion.displayName}) is deleted`
         case ApplicationEventName.FLOW_PUBLISHED:

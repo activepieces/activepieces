@@ -32,6 +32,8 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
 };
 
 type AIModelSelectorProps = {
+  hideLabel?: boolean;
+  showEmbeddingNote?: boolean;
   defaultProvider?: AIProviderName;
   defaultModel?: string;
   defaultConfigId?: string;
@@ -40,6 +42,7 @@ type AIModelSelectorProps = {
     provider?: string;
     model?: string;
     configId?: string;
+    picked?: 'user' | 'default';
   }) => void;
 };
 
@@ -53,6 +56,8 @@ const ACTIVEPIECES_PROVIDER_CONFIG = {
 const ALL_PROVIDERS = [...SUPPORTED_AI_PROVIDERS, ACTIVEPIECES_PROVIDER_CONFIG];
 
 export function AIModelSelector({
+  hideLabel,
+  showEmbeddingNote = true,
   defaultProvider,
   defaultModel,
   defaultConfigId,
@@ -127,6 +132,7 @@ export function AIModelSelector({
         provider: selectedProvider,
         model: firstModel,
         configId: selectedConfigId,
+        picked: 'default',
       });
     }
   }, [
@@ -151,6 +157,7 @@ export function AIModelSelector({
         provider: selectedProvider,
         model: fallback,
         configId: selectedConfigId,
+        picked: 'default',
       });
     }
   }, [
@@ -166,7 +173,7 @@ export function AIModelSelector({
     setSelectedProvider(provider);
     setSelectedConfigId(configId);
     setSelectedModel(undefined);
-    onChange({ provider, model: undefined, configId });
+    onChange({ provider, model: undefined, configId, picked: 'user' });
     setProviderOpen(false);
   };
 
@@ -176,13 +183,16 @@ export function AIModelSelector({
       provider: selectedProvider,
       model: modelId,
       configId: selectedConfigId,
+      picked: 'user',
     });
     setModelOpen(false);
   };
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      {hideLabel !== true && (
+        <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      )}
 
       <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>
@@ -334,7 +344,7 @@ export function AIModelSelector({
         </Popover>
       </div>
 
-      {selectedProvider && (
+      {selectedProvider && showEmbeddingNote && (
         <p className="text-xs text-muted-foreground">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {

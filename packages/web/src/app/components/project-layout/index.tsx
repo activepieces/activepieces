@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Unplug } from 'lucide-react';
 import React, { ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
@@ -84,6 +85,13 @@ export function ProjectDashboardLayout({
       label: t('Agents'),
       show: !isEmbedded,
       icon: BotIcon,
+      hasPermission: true,
+    },
+    {
+      to: '/mcp-server',
+      label: t('MCP'),
+      show: !isEmbedded,
+      icon: Unplug,
       hasPermission: true,
     },
   ];
