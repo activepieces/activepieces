@@ -32,7 +32,7 @@ const BatchFailureModeField = React.memo(
                 disabled={readonly}
                 value={field.value === true ? CONTINUE : STOP}
                 onValueChange={(value) => field.onChange(value === CONTINUE)}
-                className="flex gap-0.75 rounded-lg border bg-muted p-0.75"
+                className="flex gap-0.75 rounded-lg border bg-gray-3 p-0.75"
               >
                 <RadioGroupPrimitive.Item value={STOP} className={segmentClass}>
                   {t('Stop the step')}
@@ -66,8 +66,8 @@ const CONTINUE = 'continue';
 
 const segmentClass = [
   'flex h-8 grow items-center justify-center rounded-md border border-transparent',
-  'text-[13px] font-medium text-muted-foreground outline-none transition-colors',
-  'hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50',
+  'text-[13px] font-medium text-gray-11 outline-none transition-colors',
+  'hover:text-gray-12 focus-visible:ring-[3px] focus-visible:ring-ring/50',
   'data-[state=checked]:border-border data-[state=checked]:bg-background data-[state=checked]:font-semibold data-[state=checked]:text-foreground data-[state=checked]:shadow-xs',
   'disabled:pointer-events-none disabled:opacity-50',
 ].join(' ');

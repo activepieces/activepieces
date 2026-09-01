@@ -84,7 +84,7 @@ const ProcessInBatchesSettings = React.memo(
                 <span>{t('Items per Batch')}</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <CircleHelp className="size-3.5 text-muted-foreground" />
+                    <CircleHelp className="size-3.5 text-gray-11" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-64">
                     {t(
@@ -121,7 +121,7 @@ const ProcessInBatchesSettings = React.memo(
           )}
         />
         <BatchPlanSummary />
-        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+        <div className="flex items-start gap-2 text-xs text-gray-11">
           <Activity className="size-3.5 shrink-0 mt-0.5" />
           <span>
             {t(
@@ -130,7 +130,7 @@ const ProcessInBatchesSettings = React.memo(
           </span>
         </div>
         <Collapsible className="flex flex-col gap-4">
-          <CollapsibleTrigger className="group flex items-center justify-between text-sm font-medium text-muted-foreground hover:text-foreground">
+          <CollapsibleTrigger className="group flex items-center justify-between text-sm font-medium text-gray-11 hover:text-gray-12">
             <span>{t('Advanced')}</span>
             <ChevronRight className="size-4 transition-transform group-data-[state=open]:rotate-90" />
           </CollapsibleTrigger>
@@ -185,26 +185,26 @@ const BatchPlanSummary = () => {
     <div className="rounded-lg border overflow-hidden">
       <div className="flex items-center py-3">
         <PlanStat value={itemsCount} label={t('items')} />
-        <div className="w-px h-7 bg-border shrink-0" />
+        <div className="w-px h-7 bg-gray-6 shrink-0" />
         <PlanStat value={batchSize ?? null} label={t('per batch')} />
-        <div className="w-px h-7 bg-border shrink-0" />
+        <div className="w-px h-7 bg-gray-6 shrink-0" />
         <PlanStat
           value={batchesCount}
           label={t('batches')}
-          className="text-primary"
+          className="text-accent-11"
         />
       </div>
       {!isNil(concurrencyLimit) && (
         <div className="flex items-center justify-between gap-2 border-t px-4 py-2.5 text-xs">
           <span className="font-medium">{t('Running at the same time')}</span>
-          <span className="text-muted-foreground">
+          <span className="text-gray-11">
             {t("up to {limit} · your project's limit", {
               limit: concurrencyLimit,
             })}
           </span>
         </div>
       )}
-      <div className="flex items-center gap-2 border-t px-4 py-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 border-t px-4 py-2 text-xs text-gray-11">
         <FlaskConical className="size-3 shrink-0" />
         <span>
           {t('Based on your last test run — updates when you test again')}
@@ -227,7 +227,7 @@ const PlanStat = ({
     <span className={cn('text-xl font-bold leading-none', className)}>
       {value === null ? '—' : value.toLocaleString()}
     </span>
-    <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="text-xs text-gray-11">{label}</span>
   </div>
 );
 
@@ -266,7 +266,7 @@ const TimeoutField = ({ readonly }: ProcessInBatchesSettingsProps) => {
                 }
               />
             </FormControl>
-            <span className="text-sm text-muted-foreground">{t('hours')}</span>
+            <span className="text-sm text-gray-11">{t('hours')}</span>
           </div>
           <FormDescription>
             {isNil(maxPausedDays)

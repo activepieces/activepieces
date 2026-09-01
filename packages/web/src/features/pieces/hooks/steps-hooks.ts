@@ -134,7 +134,7 @@ function passSearch(
 }
 
 const CORE_ACTION_SEARCH_ALIASES: Partial<
-  Record<(typeof CORE_ACTIONS_METADATA)[number]['type'], string[]>
+  Record<PrimitiveStepMetadata['type'], string[]>
 > = {
   [FlowActionType.PROCESS_IN_BATCHES]: [
     'loop',
