@@ -342,7 +342,11 @@
                   "pages": [
                      "admin-guide/overview"
                   ]
-               },
+              },
+              {
+                "group": "Observability",
+                "pages": []
+              },
                {
                   "group": "Guides",
                   "pages": [
