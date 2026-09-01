@@ -351,6 +351,15 @@
                       "pages": [
                         "admin-guide/guides/structure-projects",
                         "admin-guide/guides/permissions",
+                        {
+                          "group": "SCIM",
+                          "icon": "users",
+                          "pages": [
+                            "admin-guide/guides/scim/overview",
+                            "admin-guide/guides/scim/providers/okta",
+                            "admin-guide/guides/scim/providers/microsoft-entra-id"
+                          ]
+                        },
                         "untitled-page"
                       ]
                     },
@@ -364,16 +373,7 @@
                     },
                     "admin-guide/guides/manage-pieces",
                      "admin-guide/guides/sso",
-                     {
-                        "group": "SCIM",
-                        "icon": "users",
-                        "pages": [
-                           "admin-guide/guides/scim/overview",
-                           "admin-guide/guides/scim/providers/okta",
-                           "admin-guide/guides/scim/providers/microsoft-entra-id"
-                        ]
-                     },
-                     "admin-guide/guides/manage-oauth2",
+                    "admin-guide/guides/manage-oauth2",
                     {
                         "group": "Secret Managers",
                         "icon": "key",
