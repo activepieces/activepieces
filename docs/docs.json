@@ -393,9 +393,7 @@
               },
               {
                 "group": "Observability",
-                "pages": [
-                  "admin-guide/guides/event-streaming"
-                ]
+                "pages": []
               },
                {
                   "group": "Security",
