@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
+import { agentService } from '../../../../src/app/ee/agent/agent-service'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -761,6 +762,57 @@ describe('moving an agent to another project', () => {
         expect(preview.json().blockedByPublishedFlows.total).toBe(1)
         expect(preview.json().blockedByPublishedFlows.names).toStrictEqual(['Nightly sweep'])
         expect(preview.json().toolsLosingConnection).toStrictEqual([])
+    })
+
+    it('keeps the agent and its conversations together when two moves race', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const [left, right] = await Promise.all([secondProjectOf(ctx), secondProjectOf(ctx)])
+        const conversationId = apId()
+        await db.save('agent_conversation', {
+            id: conversationId,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            agentId: agent.id,
+            source: AgentRunSource.AGENT,
+            messages: [],
+            status: 'IDLE',
+        })
+
+        const [toLeft, toRight] = await Promise.all([
+            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: left.id }),
+            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: right.id }),
+        ])
+
+        // Both may succeed, since the row lock turns a race into two sequential moves.
+        // What must never happen is the agent and its conversations ending up apart.
+        expect([toLeft, toRight].some((response) => response.statusCode === StatusCodes.OK)).toBe(true)
+        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
+        const conversation = await db.findOneByOrFail('agent_conversation', { id: conversationId }) as { projectId: string }
+        expect(conversation.projectId).toBe(row.projectId)
+        expect([left.id, right.id]).toContain(row.projectId)
+    })
+
+    it('refuses a move once the agent is no longer in the project it was asked from', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const [left, right] = await Promise.all([secondProjectOf(ctx), secondProjectOf(ctx)])
+        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: left.id })).statusCode).toBe(StatusCodes.OK)
+
+        const stale = agentService(app.log).move({
+            id: agent.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            targetProjectId: right.id,
+            platformId: ctx.platform.id,
+        })
+
+        await expect(stale).rejects.toThrow()
+        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
+        expect(row.projectId).toBe(left.id)
     })
 
     it('is not something a member can do to someone else\'s agent', async () => {

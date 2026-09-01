@@ -248,11 +248,22 @@ export const agentService = (log: FastifyBaseLogger) => ({
         }
         const membersOfTarget = await listUsersWithProjectAccess({ projectId: target.id, log })
         await transaction(async (entityManager) => {
-            await entityManager.getRepository(AgentEntity).update(
+            const repo = entityManager.getRepository(AgentEntity)
+            const locked = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id', { id })
+                .getOne()
+            if (isNil(locked) || locked.projectId !== projectId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'That agent has just been moved somewhere else. Reload the page and try again.' },
+                })
+            }
+            await repo.update(
                 { id, projectId },
                 {
                     projectId: target.id,
-                    sharedWithUserIds: agent.sharedWithUserIds.filter((sharedWith) => membersOfTarget.includes(sharedWith)),
+                    sharedWithUserIds: locked.sharedWithUserIds.filter((sharedWith) => membersOfTarget.includes(sharedWith)),
                 },
             )
             await entityManager.getRepository(AgentConversationEntity).update(
