@@ -356,6 +356,11 @@ export const selectGenericFormComponentForProperty = ({
                 'placeholder' in property ? property.placeholder : undefined
               }
               enableMarkdown={enableMarkdownForInputWithMention}
+              minHeightClassName={
+                property.type === PropertyType.LONG_TEXT
+                  ? 'min-h-20'
+                  : undefined
+              }
             ></TextInputWithMentions>
           ) : (
             <SecretInput
