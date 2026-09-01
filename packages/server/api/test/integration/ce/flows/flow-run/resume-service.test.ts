@@ -2,9 +2,12 @@ import { apId, spreadIfDefined } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowTriggerType, FlowVersionState, PauseType, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { Job } from 'bullmq'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
+import { redisMetadataKey } from '../../../../../src/app/workers/job'
 import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -91,6 +94,15 @@ async function createFlowRunAndWaitpoint(params: {
     })
 
     return { flow, flowVersion, flowRun, waitpointId }
+}
+
+async function queueTerminalStatus({ flowRunId, projectId }: { flowRunId: string, projectId: string }) {
+    await distributedStore.merge(redisMetadataKey(flowRunId), {
+        id: flowRunId,
+        projectId,
+        status: FlowRunStatus.CANCELED,
+        requestId: apId(),
+    })
 }
 
 describe('resumeService resumeTrustedWithoutLock', () => {
@@ -206,7 +218,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-manual-trigger', triggerName: 'manual_trigger' }),
         })
 
-        await resumeService(app.log).releaseBarrierWithoutLock({
+        await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -223,7 +235,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
         })
 
-        await resumeService(app.log).releaseBarrierWithoutLock({
+        await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -240,7 +252,7 @@ describe('resumeService streamStepProgress inheritance', () => {
             trigger: pieceTrigger({ pieceName: '@activepieces/piece-webhook', triggerName: 'catch_webhook' }),
         })
 
-        await resumeService(app.log).releaseBarrierWithoutLock({
+        await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -248,5 +260,73 @@ describe('resumeService streamStepProgress inheritance', () => {
 
         const [job] = await findQueuedJobsForRun(flowRun.id)
         expect(job.data).toMatchObject({ streamStepProgress: StreamStepProgress.WEBSOCKET })
+    })
+})
+
+describe('resume guards against a cancellation in flight', () => {
+    it('refuses a by-run resume once a terminal status is queued but not yet persisted', async () => {
+        const { flowRun } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            flowRunStatus: FlowRunStatus.PAUSED,
+        })
+        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await queueTerminalStatus({ flowRunId: flowRun.id, projectId: ctx.project.id })
+
+        const { stale } = await resumeService(app.log).legacyResume({
+            flowRunId: flowRun.id,
+            resumePayload: { body: { forged: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(true)
+    })
+
+    it('refuses a by-run sync resume in the same window', async () => {
+        const { flowRun } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            flowRunStatus: FlowRunStatus.PAUSED,
+        })
+        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await queueTerminalStatus({ flowRunId: flowRun.id, projectId: ctx.project.id })
+
+        const response = await resumeService(app.log).legacySyncResume({
+            runId: flowRun.id,
+            payload: { body: { forged: true }, headers: {}, queryParams: {} },
+            correlationId: apId(),
+        })
+
+        expect(response.status).toBe(StatusCodes.GONE)
+    })
+
+    it('refuses an addressed resume of a live waitpoint in the same window, leaving the row intact', async () => {
+        const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            flowRunStatus: FlowRunStatus.PAUSED,
+            waitpointStatus: WaitpointStatus.PENDING,
+        })
+        await queueTerminalStatus({ flowRunId: flowRun.id, projectId: ctx.project.id })
+
+        const { stale } = await resumeService(app.log).resumeFromWaitpoint({
+            flowRunId: flowRun.id,
+            waitpointId,
+            resumePayload: { body: { forged: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(true)
+        expect(await db.findOneBy('waitpoint', { id: waitpointId })).not.toBeNull()
+    })
+
+    it('still resumes a paused run with nothing queued against it', async () => {
+        const { flowRun } = await createFlowRunAndWaitpoint({
+            projectId: ctx.project.id,
+            flowRunStatus: FlowRunStatus.PAUSED,
+        })
+        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+
+        const { stale } = await resumeService(app.log).legacyResume({
+            flowRunId: flowRun.id,
+            resumePayload: { body: { approved: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(false)
     })
 })
