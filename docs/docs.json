@@ -350,7 +350,8 @@
                       "group": "General",
                       "pages": [
                         "admin-guide/guides/structure-projects",
-                        "admin-guide/guides/permissions"
+                        "admin-guide/guides/permissions",
+                        "untitled-page"
                       ]
                     },
                     "admin-guide/guides/manage-pieces",
