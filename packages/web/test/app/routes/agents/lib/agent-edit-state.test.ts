@@ -270,47 +270,47 @@ describe('leaveGuard', () => {
   );
 });
 
-describe('agentEditState.adoptsPickedModel', () => {
-  const withModel = (modelName: string | null) => ({
-    draft: { provider: 'openai', modelName, providerConfigId: 'cfg' },
+describe('agentEditState.modelPickChanged', () => {
+  const pick = {
+    provider: 'openrouter',
+    modelName: 'anthropic/claude-sonnet-4.6',
+    providerConfigId: null,
+  };
+
+  it('is false when the selector reports the model the form already holds', () => {
+    expect(
+      agentEditState.modelPickChanged({ picked: pick, current: pick }),
+    ).toBe(false);
   });
 
-  it('adopts the model the selector picked for an agent that had none', () => {
+  it('is true when the model differs', () => {
     expect(
-      agentEditState.adoptsPickedModel({
-        values: withModel('gpt-5'),
-        syncedDraft: {
-          draft: { provider: null, modelName: null, providerConfigId: null },
-        },
+      agentEditState.modelPickChanged({
+        picked: { ...pick, modelName: 'openai/gpt-5' },
+        current: pick,
       }),
     ).toBe(true);
   });
 
-  it('leaves a model the person chose themselves alone, so Save still warns on exit', () => {
+  it('treats a missing field and an explicit null as the same pick', () => {
     expect(
-      agentEditState.adoptsPickedModel({
-        values: withModel('gpt-5'),
-        syncedDraft: withModel('claude-sonnet-4-5'),
+      agentEditState.modelPickChanged({
+        picked: { provider: 'openrouter', modelName: 'x' },
+        current: {
+          provider: 'openrouter',
+          modelName: 'x',
+          providerConfigId: null,
+        },
       }),
     ).toBe(false);
   });
 
-  it("refuses when anything else changed too, since that edit is the person's", () => {
+  it('is true when only the provider config differs', () => {
     expect(
-      agentEditState.adoptsPickedModel({
-        values: {
-          ...withModel('gpt-5'),
-          draft: { ...withModel('gpt-5').draft, instructions: 'new' },
-        },
-        syncedDraft: {
-          draft: {
-            provider: null,
-            modelName: null,
-            providerConfigId: null,
-            instructions: 'old',
-          },
-        },
+      agentEditState.modelPickChanged({
+        picked: { ...pick, providerConfigId: 'cfg_1' },
+        current: pick,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });
