@@ -32,7 +32,7 @@ export const updateMessage = createAction({
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The updated text of the message. When Block Kit blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+        'The updated text of the message. Optional — leave it empty to send a blocks-only update. When provided alongside Block Kit blocks it renders as a section above them (consistent with Send/Post Message), and is also used as the notification fallback text.',
       required: false,
     }),
     mentionOriginFlow,
@@ -48,10 +48,10 @@ export const updateMessage = createAction({
 
     const blockList: (KnownBlock | Block)[] = [];
 
-    // Only render `text` as a section when it's actually provided. When the caller
-    // supplies `blocks`, `text` is used solely as the notification fallback (standard
-    // Slack semantics) instead of being duplicated as a section on top of the blocks —
-    // matching the Send/Post Message action.
+    // Build a section from `text` only when it's provided, so a blocks-only update is
+    // possible (previously `text` was required and always rendered). `text` is also
+    // passed as the notification fallback below. Consistent with the Send/Post Message
+    // action, which likewise render `text` as a section when present.
     if (propsValue.text) {
       blockList.push(...textToSectionBlocks(propsValue.text));
     }
@@ -60,12 +60,14 @@ export const updateMessage = createAction({
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
     }
 
-    if (propsValue.mentionOriginFlow) {
-      blockList.push(buildFlowOriginContextBlock(context));
-    }
-
+    // Require actual user content (text or blocks) — checked BEFORE the optional
+    // origin-flow footer so that footer alone can't satisfy the requirement.
     if (blockList.length === 0) {
       throw new Error('Provide a Message and/or Block Kit blocks to update.');
+    }
+
+    if (propsValue.mentionOriginFlow) {
+      blockList.push(buildFlowOriginContextBlock(context));
     }
 
     return await client.chat.update({

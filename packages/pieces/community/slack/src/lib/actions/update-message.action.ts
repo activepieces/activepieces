@@ -34,7 +34,7 @@ export const slackUpdateMessageAiAction = createAction({
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The new text of the message. When blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+        'The new text of the message. Optional — leave it empty to send a blocks-only update. When provided alongside blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
       required: false,
     }),
     blocks: Property.Json({
@@ -54,9 +54,9 @@ export const slackUpdateMessageAiAction = createAction({
 
     const blockList: (KnownBlock | Block)[] = [];
 
-    // Render `text` as a section only when provided; when blocks are supplied, `text`
-    // is the notification fallback (not a duplicated section) — consistent with the
-    // Send/Post Message action.
+    // Build a section from `text` only when provided, so a blocks-only update is
+    // possible. `text` is also passed as the notification fallback. Consistent with
+    // the Post/Send Message action.
     if (propsValue.text) {
       blockList.push(...textToSectionBlocks(propsValue.text));
     }

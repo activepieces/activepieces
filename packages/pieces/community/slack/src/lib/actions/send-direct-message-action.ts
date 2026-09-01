@@ -31,7 +31,7 @@ export const slackSendDirectMessageAction = createAction({
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The text of the message. When Block Kit blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+        'The text of the message. Optional — leave it empty to send a blocks-only DM. When provided alongside Block Kit blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
       required: false,
     }),
     username,
@@ -57,8 +57,8 @@ export const slackSendDirectMessageAction = createAction({
     }
 
     const blockList: (KnownBlock | Block)[] = [];
-    // Render `text` as a section only when provided; with blocks it's the
-    // notification fallback (no duplicate section) — matching Post/Send Message.
+    // Build a section from `text` only when provided, so a blocks-only DM is possible.
+    // `text` is also passed as the notification fallback. Consistent with Post Message.
     if (text) {
       blockList.push(...textToSectionBlocks(text));
     }
