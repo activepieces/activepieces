@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Activity } from 'lucide-react';
+import { Activity, Server } from 'lucide-react';
 import { Control } from 'react-hook-form';
 
 import {
@@ -45,6 +45,35 @@ export const TelemetrySection = ({
           <FormField
             control={control}
             name="isProductTelemetryEnabled"
+            render={({ field }) => (
+              <FormItem>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ItemActions>
+      </Item>
+      <Item variant="outline">
+        <ItemMedia variant="icon">
+          <Server />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>{t('Deployment setup')}</ItemTitle>
+          <ItemDescription className="line-clamp-none">
+            {t(
+              'Sends a snapshot of your Workers and Health pages, without IPs or hostnames, so we can answer your support questions faster.',
+            )}
+          </ItemDescription>
+        </ItemContent>
+        <ItemActions>
+          <FormField
+            control={control}
+            name="isInfraSetupTelemetryEnabled"
             render={({ field }) => (
               <FormItem>
                 <Switch

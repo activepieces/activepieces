@@ -3,6 +3,7 @@ import {
   ApEdition,
   ApFlagId,
   PlatformConfiguration,
+  UpdatePlatformConfigurationRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -124,11 +125,11 @@ const toFormValues = (
   configuration: PlatformConfiguration,
 ): ConfigurationsFormValues => ({
   isProductTelemetryEnabled: configuration.isProductTelemetryEnabled,
+  isInfraSetupTelemetryEnabled: configuration.isInfraSetupTelemetryEnabled,
 });
 
-export const ConfigurationsFormValues = PlatformConfiguration.pick({
-  isProductTelemetryEnabled: true,
-});
+export const ConfigurationsFormValues =
+  UpdatePlatformConfigurationRequestBody.required();
 
 export type ConfigurationsFormValues = z.infer<typeof ConfigurationsFormValues>;
 
