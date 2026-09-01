@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentSummary, AgentTemplate, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, GetAgentRequest, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -7,14 +7,12 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../helper/application-events'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { securityHelper } from '../../helper/security-helper'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { agentDraftAi } from './agent-draft-ai'
 import { AgentEntity } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 import { agentAudit, agentRedaction, agentService } from './agent-service'
-import { AGENT_TEMPLATES } from './agent-templates'
 
 export const DRAFTS_PER_MINUTE = 20
 
@@ -39,13 +37,11 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             userId: await resolveUserId(request),
             projectId: request.query.projectId,
+            search: request.query.search,
+            sort: request.query.sort,
             cursor: request.query.cursor,
             limit: request.query.limit,
         })
-    })
-
-    app.get('/templates', ListTemplatesRoute, async (): Promise<SeekPage<AgentTemplate>> => {
-        return paginationHelper.createPage([...AGENT_TEMPLATES], null)
     })
 
     app.post('/draft', DraftAgentRoute, async (request): Promise<DraftAgentResponse> => {
@@ -65,12 +61,19 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         return agentDraftAi(request.log).draft({ platformId, projectId: request.projectId, prompt: request.body.prompt })
     })
 
-    app.get('/:id', GetAgentRoute, async (request): Promise<Agent> => {
-        return agentRedaction.withoutToolSecrets(await agentService(request.log).getOneOrThrow({
+    app.get('/:id', GetAgentRoute, async (request): Promise<AgentWithUsage> => {
+        const userId = await resolveUserId(request)
+        const agent = await agentService(request.log).getOneOrThrow({
             id: request.params.id,
             projectId: request.projectId,
-            userId: await resolveUserId(request),
-        }))
+            userId,
+        })
+        const redacted = agentRedaction.withoutToolSecrets(agent)
+        if (request.query.includeUsage !== true) {
+            return redacted
+        }
+        const publishedFlowsUsingAgent = await agentService(request.log).publishedFlowsUsing({ agent, projectId: request.projectId, userId })
+        return { ...redacted, publishedFlowsUsingAgent }
     })
 
     app.post('/:id', UpdateAgentRoute, async (request): Promise<Agent> => {
@@ -79,7 +82,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             userId: await resolveUserId(request),
             request: request.body,
-            goLive: true,
+            goLive: request.body.goLive ?? true,
         })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.AGENT_UPDATED,
@@ -168,20 +171,6 @@ const ListAgentsRoute = {
     },
 }
 
-const ListTemplatesRoute = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        tags: ['agents'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List the starter agents, none of which need a connection',
-        response: {
-            [StatusCodes.OK]: SeekPage(AgentTemplate),
-        },
-    },
-}
-
 const DraftAgentRoute = {
     config: {
         security: securityAccess.project(
@@ -214,8 +203,9 @@ const GetAgentRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Get an agent',
         params: z.object({ id: ApId }),
+        querystring: GetAgentRequest,
         response: {
-            [StatusCodes.OK]: Agent,
+            [StatusCodes.OK]: AgentWithUsage,
         },
     },
 }

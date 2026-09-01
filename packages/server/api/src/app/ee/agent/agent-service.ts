@@ -1,13 +1,16 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentListSort, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order, OrderByConfig } from '../../helper/pagination/paginator'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -15,6 +18,7 @@ import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
 const DEFAULT_PAGE_SIZE = 20
+const MAX_NAMED_FLOWS_IN_USE = 3
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentAudit = { describePublished }
@@ -41,7 +45,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
         const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
@@ -54,15 +58,22 @@ export const agentService = (log: FastifyBaseLogger) => ({
             entity: AgentEntity,
             query: {
                 limit: limit ?? DEFAULT_PAGE_SIZE,
-                order: 'DESC',
+                orderBy: orderByForSort(sort),
                 afterCursor: nextCursor,
                 beforeCursor: previousCursor,
             },
         })
 
-        const { data, cursor: newCursor } = await paginator.paginate(
-            visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) }),
-        )
+        const query = visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) })
+        const needle = search?.trim().toLowerCase()
+        if (!isNil(needle) && needle.length > 0) {
+            query.andWhere(new Brackets((qb) => {
+                qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
+                    .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
+            }))
+        }
+
+        const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage(data.map((agent) => toSummary(agent, projectById.get(agent.projectId))), newCursor)
     },
 
@@ -102,7 +113,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
+        await agentRepo().save({ ...omit(agent, ['published']), ...omit(request, ['goLive']), draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -165,12 +176,49 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+        const checker = await resolvePermissionChecker({ userId, projectId, log })
+        const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
+        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
+        return { total: usage.total, names: usage.names }
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
+        await assertMayDestroy({ agent, projectId, userId, log })
+        const flowsInUse = await this.publishedFlowsUsing({ agent, projectId, userId })
+        if (flowsInUse.total > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: describeFlowsInUse(flowsInUse) },
+            })
+        }
         await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+    const counted = total === 1 ? '1 published flow' : `${total} published flows`
+    if (names.length === 0) {
+        return `This agent is running in ${counted}. Remove it from them first.`
+    }
+    const listed = names.join(', ')
+    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
+}
+
+function orderByForSort(sort?: AgentListSort): OrderByConfig[] {
+    switch (sort) {
+        case AgentListSort.NAME:
+            return [{ field: 'displayName', order: Order.ASC }]
+        case AgentListSort.CREATED:
+            return [{ field: 'created', order: Order.DESC }]
+        case AgentListSort.UPDATED:
+        default:
+            return [{ field: 'updated', order: Order.DESC }]
+    }
+}
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
@@ -243,6 +291,16 @@ async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log
     throw new ActivepiecesError({
         code: ErrorCode.AUTHORIZATION,
         params: { message: 'Only the person who created an agent, or a project admin, can change who sees it' },
+    })
+}
+
+async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
+    if (agent.ownerId === userId || await isProjectAdministrator({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Only the person who created an agent, or a project admin, can delete it and the conversations held with it' },
     })
 }
 
@@ -321,6 +379,8 @@ type ListParams = {
     platformId: PlatformId
     userId: UserId
     projectId?: ProjectId
+    search?: string
+    sort?: AgentListSort
     cursor?: Cursor
     limit?: number
 }
@@ -365,6 +425,13 @@ type VisibilityParams = {
     userId: UserId
     prefix: 'agent.' | ''
     isProjectAdmin: boolean
+}
+
+type AssertDestroyParams = {
+    agent: Agent
+    projectId: ProjectId
+    userId: UserId
+    log: FastifyBaseLogger
 }
 
 type AssertShareParams = {

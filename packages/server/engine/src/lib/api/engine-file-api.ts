@@ -1,4 +1,3 @@
-import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
 import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
@@ -14,24 +13,12 @@ export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
         const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
 
-        if (data instanceof Readable) {
-            // No Content-Length → the server streams straight to storage instead of a
-            // presigned redirect (which needs a length). A stream can't be replayed, so no retry.
-            const response = await global.fetch(putUrl, {
-                method: 'PUT',
-                // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit it
-                body: Readable.toWeb(data),
-                headers: buildPutHeaders({ type, fileName, compression }),
-                duplex: 'half',
-            })
-            return resolveUploadReadUrl(fileId, response)
-        }
-
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
+        const body = toRequestBody(data)
 
         const initial = await retryFetch(putUrl, {
             method: 'PUT',
-            body: data,
+            body,
             headers,
             redirect: 'manual',
         })
@@ -43,7 +30,7 @@ export const engineFileApi = {
             }
             const s3Response = await retryFetch(location, {
                 method: 'PUT',
-                body: data,
+                body,
                 headers: stripApHeaders(headers),
                 redirect: 'follow',
             })
@@ -112,6 +99,10 @@ async function resolveUploadReadUrl(fileId: string, response: Response): Promise
     return { fileId, readUrl: body.readUrl }
 }
 
+function toRequestBody(data: Uint8Array): BodyInit {
+    return data.buffer instanceof ArrayBuffer ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data)
+}
+
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/octet-stream',
@@ -146,7 +137,7 @@ type UploadParams = {
     type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
     fileName?: string
     compression?: FileCompression
-    data: Uint8Array | Buffer | Readable
+    data: Uint8Array | Buffer
 }
 
 type UploadResult = {

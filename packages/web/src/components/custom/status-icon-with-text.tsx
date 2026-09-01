@@ -7,6 +7,7 @@ const variantBadgeMap: Record<
   React.ComponentProps<typeof Badge>['variant']
 > = {
   success: 'success',
+  warning: 'warning',
   error: 'destructive',
   default: 'accent',
   secondary: 'secondary',
@@ -26,7 +27,7 @@ const StatusIconWithText = React.memo(
 StatusIconWithText.displayName = 'StatusIconWithText';
 export { StatusIconWithText };
 
-type StatusVariant = 'success' | 'error' | 'default' | 'secondary';
+type StatusVariant = 'success' | 'warning' | 'error' | 'default' | 'secondary';
 
 interface StatusIconWithTextProps {
   icon: React.ElementType;

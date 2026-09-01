@@ -118,6 +118,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
+    "@testing-library/react": "16.3.3",
+    "jsdom": "26.1.0",
     "@tailwindcss/vite": "4.1.17",
     "@types/canvas-confetti": "^1.9.0",
     "@types/deep-equal": "1.0.1",

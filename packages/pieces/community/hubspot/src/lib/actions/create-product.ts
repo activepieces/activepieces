@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -51,7 +51,7 @@ export const createProductAction = createAction({
             productProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const createdProduct = await client.crm.products.basicApi.create({
             properties: productProperties,
