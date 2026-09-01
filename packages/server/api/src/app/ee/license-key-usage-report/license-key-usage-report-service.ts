@@ -7,7 +7,7 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
-import { BILLING_EVENTS_FLUSH_BATCH_SIZE, BillingEvents, captureBillingEvent, flushBillingEvents, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { captureLicenseKeyEvent, flushLicenseKeyPostHogEvents, LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
@@ -17,7 +17,7 @@ dayjs.extend(utc)
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 const EXECUTIONS_CHUNK_DELAY_MS = 1000
 
-export const billingUsageReportService = (log: FastifyBaseLogger) => ({
+export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
     /**
      * Reports per-platform usage to PostHog (for billing/metering) from a single daily bulk pass — this
      * is NOT product telemetry, so it is intentionally not gated on AP_TELEMETRY_ENABLED. PostHog is the
@@ -51,14 +51,14 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
             })
             const reportedAt = new Date().toISOString()
 
-            for (const platformBatch of chunk([...licenseKeysByPlatform], BILLING_EVENTS_FLUSH_BATCH_SIZE)) {
+            for (const platformBatch of chunk([...licenseKeysByPlatform], LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE)) {
                 for (const [platformId, licenseKey] of platformBatch) {
                     const activeFlows = activeFlowsByPlatform.get(platformId) ?? 0
                     const users = usersByPlatform.get(platformId) ?? 0
                     const teamProjects = teamProjectsByPlatform.get(platformId) ?? 0
-                    captureBillingEvent({
+                    captureLicenseKeyEvent({
                         licenseKey,
-                        event: BillingEvents.TOTAL_RUNS_PER_DAY,
+                        event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY,
                         properties: buildSnapshotBody({
                             platformId,
                             activeFlows,
@@ -70,9 +70,9 @@ export const billingUsageReportService = (log: FastifyBaseLogger) => ({
                     })
                 }
 
-                const flushResult = await tryCatch(() => flushBillingEvents())
+                const flushResult = await tryCatch(() => flushLicenseKeyPostHogEvents())
                 if (flushResult.error !== null) {
-                    log.warn({ error: flushResult.error }, '[billingUsageReport#reportAllPlatforms] Failed to flush billing events batch')
+                    log.warn({ error: flushResult.error }, '[licenseKeyUsageReport#reportAllPlatforms] Failed to flush license-key events batch')
                 }
             }
         }
