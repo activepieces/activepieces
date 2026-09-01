@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 
 export const newMeetingScheduled = createTrigger({
   name: 'new_meeting_scheduled',
+  classification: 'READ',
   displayName: 'New Meeting Scheduled',
   description: 'Triggers when a meeting is booked via one of your Avoma scheduling pages',
   aiMetadata: {

@@ -1,11 +1,11 @@
-import { apId } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
-import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -45,6 +45,33 @@ afterAll(async () => {
 })
 
 describe('agent crud', () => {
+    it('fills in the platform model when the request names none', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBe('anthropic/claude-sonnet-4.6')
+        expect(agent.draft.provider).toBe(AIProviderName.OPENROUTER)
+    })
+
+    it('keeps a model the request did name, even where a default was available', async () => {
+        const ctx = await context()
+        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER, enabledForChat: true })
+
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, provider: AIProviderName.OPENROUTER, modelName: 'anthropic/claude-haiku-4.5' } })
+
+        expect(agent.draft.modelName).toBe('anthropic/claude-haiku-4.5')
+    })
+
+    it('leaves the model empty where the platform has no chat provider', async () => {
+        const ctx = await context()
+
+        const agent = await createAgent(ctx)
+
+        expect(agent.draft.modelName).toBeNull()
+    })
+
     it('creates an agent owned by the caller, in draft, unpublished', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
@@ -87,16 +114,106 @@ describe('agent publish', () => {
         expect(response.json().published).toStrictEqual(response.json().draft)
     })
 
-    it('leaves the published copy alone when the draft moves on', async () => {
+    it('carries the published copy along when the draft is saved', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
-        await ctx.post(`/v1/agents/${agent.id}/publish`)
 
         await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Rewritten.' } })
 
         const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
         expect(after.draft.instructions).toBe('Rewritten.')
-        expect(after.published.instructions).toBe('Draft launch posts.')
+        expect(after.published.instructions).toBe('Rewritten.')
+    })
+
+    it('publishes on the first save, so a flow can run an agent nobody published by hand', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        expect(agent.published).toBeNull()
+
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Now with a description.' })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).not.toBeNull()
+    })
+
+    it('stages the draft without going live, so a change can be tested first', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live now.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only for the test run.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only for the test run.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it.each([['explicitly true', true], ['absent', undefined]])(
+        'publishes when goLive is %s, so every existing caller keeps working',
+        async (_label, goLive) => {
+            const ctx = await context()
+            const agent = await createAgent(ctx)
+
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Should be live.' }, ...(goLive === undefined ? {} : { goLive }) })
+
+            expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Should be live.')
+        })
+
+    it('keeps published pinned to the same copy across repeated staging', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live copy.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        for (const attempt of ['first', 'second', 'third']) {
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: `Staged ${attempt}.` }, goLive: false })
+        }
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Staged third.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it('stages against an agent nobody published yet without inventing a published copy', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        expect(agent.published).toBeNull()
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only a draft.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only a draft.')
+        expect(after.published).toBeNull()
+    })
+
+    it('publishes the staged draft when the explicit publish route is used afterwards', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged for review.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Staged for review.')
+    })
+
+    it('goes live on the next save, so staging is not a trap', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Ready' })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.published.instructions).toBe('Staged.')
+    })
+
+    it('publishes nothing while the instructions are empty, because there is nothing runnable to pin', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { draft: { ...agentBody(ctx.project.id).draft, instructions: '' } })
+
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Still empty.' })
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).toBeNull()
     })
 
     it.each([['spaces', '   '], ['tabs', '\t\t'], ['newlines', '\n\n'], ['empty', '']])(
@@ -403,89 +520,10 @@ describe('agent permissions', () => {
     })
 })
 
-describe('agent templates', () => {
-    it('serves starter agents with no ai provider and no connections configured', async () => {
-        const ctx = await context()
-
-        const response = await ctx.get('/v1/agents/templates')
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        const templates = response.json().data
-        expect(templates.length).toBe(AGENT_TEMPLATES.length)
-        expect(new Set(templates.map((t: { id: string }) => t.id)).size).toBe(templates.length)
-        for (const template of templates) {
-            expect(template.instructions.length).toBeGreaterThan(0)
-        }
-    })
-
-    it.each(AGENT_TEMPLATES.map((template) => [template.id, template]))(
-        'creates and publishes the %s starter, with only what the template carries',
-        async (_id, template) => {
-            const ctx = await context()
-
-            const created = await ctx.post('/v1/agents', {
-                projectId: ctx.project.id,
-                displayName: template.displayName,
-                description: template.description,
-                icon: template.icon,
-                color: template.color,
-                draft: { instructions: template.instructions },
-            })
-
-            expect(created.statusCode).toBe(StatusCodes.CREATED)
-            expect(created.json().description).toBe(template.description)
-            expect(created.json().draft.maxSteps).toBe(DEFAULT_AGENT_MAX_STEPS)
-            expect((await ctx.post(`/v1/agents/${created.json().id}/publish`)).statusCode).toBe(StatusCodes.OK)
-        })
-
-    it('tells the caller to connect a provider, rather than naming an internal entity', async () => {
-        const ctx = await context()
-
-        const drafted = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'watch competitor pricing' })
-
-        expect(drafted.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(drafted.body).toContain('Connect an AI provider')
-        expect(drafted.body).not.toContain('ChatAiProvider')
-    })
-
-    it('rate limits one caller without blocking another on the same platform', async () => {
-        const owner = await context()
-        const colleague = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const draft = (ctx: TestContext) => ctx.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'watch competitor pricing' })
-
-        const responses = []
-        for (let attempt = 0; attempt <= DRAFTS_PER_MINUTE; attempt++) {
-            responses.push(await draft(owner))
-        }
-
-        expect(responses[responses.length - 1].body).toContain(`above the limit of ${DRAFTS_PER_MINUTE}`)
-        expect((await draft(colleague)).body).not.toContain('above the limit')
-    })
-
-    it('refuses a draft prompt longer than the endpoint is meant to take', async () => {
-        const ctx = await context()
-
-        const response = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'a'.repeat(MAX_DRAFT_PROMPT_LENGTH + 1) })
-
-        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
-    })
-
-    it('refuses to draft for a project the caller cannot write', async () => {
-        const owner = await context()
-        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
-
-        const response = await viewer.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'anything' })
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-
-})
-
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })
@@ -509,7 +547,6 @@ describe('agent feature gate', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })

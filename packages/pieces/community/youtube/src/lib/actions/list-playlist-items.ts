@@ -1,10 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { youtubeAuth } from '../common/auth';
+import { listPlaylistItemsOutputSchema } from '../output-schemas';
 
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: listPlaylistItemsOutputSchema,
   name: 'list_playlist_items',
+  classification: 'SEARCH',
   displayName: 'List Playlist Items',
   description:
     'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',
@@ -63,7 +67,7 @@ export const youtubeListPlaylistItemsAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 0 || maxResultsNumber > 50) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 0 || maxResultsNumber > 50) {
         throw new Error('Max Results must be between 0 and 50.');
       }
     }

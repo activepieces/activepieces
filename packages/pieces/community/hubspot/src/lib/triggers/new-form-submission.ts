@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 import {
 	AuthenticationType,
 	DedupeStrategy,
@@ -10,11 +10,12 @@ import {
 } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
 	TriggerStrategy,
 	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
+import { newFormSubmissionTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	formId: string;
@@ -41,11 +42,10 @@ type FormField = {
 	fieldType: string;
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const authValue = auth as HubspotAuthValue;
 		const formId = propsValue.formId;
 
 		const submissions = [];
@@ -61,7 +61,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 				queryParams: qs,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: authValue.access_token,
+					token: getHubspotAccessToken(authValue),
 				},
 			});
 			after = response.body.paging?.next?.after;
@@ -73,7 +73,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 			url: `https://api.hubapi.com/forms/v2/fields/${formId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: authValue.access_token,
+				token: getHubspotAccessToken(authValue),
 			},
 		});
 
@@ -124,12 +124,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newFormSubmissionTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-form-submission',
+	classification: 'READ',
 	displayName: 'New Form Submission',
 	description: 'Triggers when a form is submitted.',
 	aiMetadata: {
 		description:
 			'Fires when the selected HubSpot form receives a submission. Each event represents one submission, with field values mapped to their human-readable form labels plus metadata such as submission timestamp, conversion ID, and page URL. Polls the form-integrations submissions API.',
 	},
+	outputSchema: newFormSubmissionTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		formId: formDropdown,

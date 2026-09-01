@@ -12,6 +12,7 @@ import {
   DEFAULT_CHAT_TIER_ID,
   PersistedAgentMessage,
   ToolProgressEvent,
+  AgentMessageSource,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -249,14 +250,18 @@ type SendStatus =
 
 export function useAgentChat({
   agentId,
+  builder,
   onTitleUpdate,
   onConversationCreated,
   onCreditsExhausted,
+  onTurnEnd,
 }: {
   agentId?: string;
+  builder?: boolean;
   onTitleUpdate?: (title: string) => void;
   onConversationCreated?: (conversationId: string) => void;
   onCreditsExhausted?: () => void;
+  onTurnEnd?: () => void;
 } = {}) {
   const store = useChatStoreApi();
 
@@ -521,6 +526,16 @@ export function useAgentChat({
   }, [streamingQuickReplies, store]);
 
   const isStreamActive = streamPhase !== 'idle';
+  const onTurnEndRef = useRef(onTurnEnd);
+  onTurnEndRef.current = onTurnEnd;
+  const wasStreamActiveRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamActiveRef.current && !isStreamActive) {
+      onTurnEndRef.current?.();
+    }
+    wasStreamActiveRef.current = isStreamActive;
+  }, [isStreamActive]);
+
   const isStreaming =
     isStreamActive ||
     sendStatusRef.current.type === 'submitting' ||
@@ -603,16 +618,21 @@ export function useAgentChat({
         title: title ?? null,
         modelName: modelName ?? null,
         ...(agentId === undefined ? {} : { agentId }),
+        ...(builder === undefined ? {} : { builder }),
       });
       conversationIdRef.current = conv.id;
       setConversationIdState(conv.id);
       return conv;
     },
-    [agentId],
+    [agentId, builder],
   );
 
   const sendMessage = useCallback(
-    async (content: string, files?: File[]) => {
+    async (
+      content: string,
+      files?: File[],
+      options?: { messageSource?: AgentMessageSource },
+    ) => {
       updateSendStatus({ type: 'submitting' });
 
       const fileNames = files?.map((f) => f.name) ?? [];
@@ -713,6 +733,9 @@ export function useAgentChat({
           content,
           runId,
           files: pendingFilesRef.current,
+          ...(options?.messageSource
+            ? { messageSource: options.messageSource }
+            : {}),
         }),
       );
       if (sendError) {
@@ -750,6 +773,13 @@ export function useAgentChat({
 
   const setConversationId = useCallback(
     async (id: string) => {
+      if (
+        chatUtils.reopensSameConversation({
+          current: conversationIdRef.current,
+          next: id,
+        })
+      )
+        return;
       stopStream();
       setIsPollingForAgentReply(false);
       updateSendStatus({ type: 'idle' });

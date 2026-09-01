@@ -9,6 +9,7 @@ import {
 
 export const createRowAction = createAction({
   name: 'baserow_create_row',
+  classification: 'WRITE',
   displayName: 'Create Row',
   description: 'Creates a new row in a table.',
   audience: 'both',

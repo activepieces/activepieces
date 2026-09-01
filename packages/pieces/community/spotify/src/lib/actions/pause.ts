@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'pause',
+  classification: 'WRITE',
   displayName: 'Pause',
   description: 'Pauses the playback',
   audience: 'both',

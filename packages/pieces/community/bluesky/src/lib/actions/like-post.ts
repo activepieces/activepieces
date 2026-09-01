@@ -8,6 +8,7 @@ import { parseBlueskyUrl } from '../common/props';
 export const likePost = createAction({
   auth: blueskyAuth,
   name: 'likePost',
+  classification: 'WRITE',
   displayName: 'Like Post',
   description: 'Like a post on Bluesky',
   audience: 'both',

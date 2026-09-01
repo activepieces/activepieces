@@ -13,6 +13,7 @@ import { listBoardLabelsActionOutputSchema } from '../../output-schemas';
 export const listBoardLabels = createAction({
   auth: trelloAuth,
   name: 'list_board_labels',
+  classification: 'SEARCH',
   displayName: 'List Board Labels (Agent)',
   description: "List a board's labels.",
   audience: 'ai',

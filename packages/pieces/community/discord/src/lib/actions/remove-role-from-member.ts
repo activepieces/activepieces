@@ -11,6 +11,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordRemoveRoleFromMember = createAction({
   auth: discordAuth,
   name: 'remove_role_from_member',
+  classification: 'WRITE',
   description: 'Remove Guild Member Role',
   audience: 'human',
   aiMetadata: { description: 'Removes a role from a guild member, identified by guild ID, user ID, and role ID. Use to revoke permissions or untag a user. Requires the bot to have Manage Roles and a higher role than the target; idempotent, since removing a role the member does not have leaves them unchanged.', idempotent: true },

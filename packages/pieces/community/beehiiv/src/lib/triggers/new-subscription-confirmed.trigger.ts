@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-subscription-confirmed-trigger';
 export const newSubscriptionConfirmedTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_new_subscription_confirmed',
+	classification: 'READ',
 	displayName: 'New Subscription Confirmation',
 	description: 'Triggers when a new subscriber confirms their subscription.',
 	aiMetadata: {

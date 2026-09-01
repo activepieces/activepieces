@@ -2,17 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateTicketAction = createAction({
     auth: hubspotAuth,
     name: 'update-ticket',
+    classification: 'WRITE',
     displayName: 'Update Ticket',
     description: 'Updates a ticket in HubSpot.',
     audience: 'both',
     aiMetadata: { description: 'Updates properties on an existing support ticket identified by its ticket ID, such as subject, pipeline, stage, or custom fields, then returns the refreshed ticket. Use to modify a known ticket. Idempotent: applying the same property values converges to the same ticket state.', idempotent: true },
+    outputSchema: crmObjectOutputSchema,
     props: {
         ticketId: Property.ShortText({
             displayName: 'Ticket ID',
@@ -88,7 +91,7 @@ export const updateTicketAction = createAction({
             ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const updatedTicket = await client.crm.tickets.basicApi.update(ticketId,{
             properties: ticketProperties,

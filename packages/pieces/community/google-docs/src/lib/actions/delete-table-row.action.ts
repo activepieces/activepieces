@@ -7,6 +7,7 @@ import { deleteTableRowActionOutputSchema } from '../output-schemas';
 export const deleteTableRow = createAction({
   auth: googleDocsAuth,
   name: 'delete_table_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Table Row',
   description: 'Delete a row from a table in a Google Docs document',
   audience: 'ai',

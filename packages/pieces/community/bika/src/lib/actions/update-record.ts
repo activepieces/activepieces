@@ -10,6 +10,7 @@ import { BikaAuth } from '../auth';
 export const updateRecordAction = createAction({
 	auth: BikaAuth,
 	name: 'bika_update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in database.',
 	audience: 'both',
