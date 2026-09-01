@@ -13,6 +13,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
+import { mcpUtils } from '../tools/mcp-utils'
 import { McpActivityEntity } from './mcp-activity-entity'
 
 const repo = repoFactory(McpActivityEntity)
@@ -64,8 +65,9 @@ export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?
     const connectionExternalId = typeof args.connectionExternalId === 'string'
         ? args.connectionExternalId
         : (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+    const pieceName = typeof args.pieceName === 'string' ? mcpUtils.normalizePieceName(args.pieceName) : undefined
     return {
-        ...(typeof args.pieceName === 'string' ? { pieceName: args.pieceName.slice(0, NAME_MAX_LENGTH) } : {}),
+        ...(isNil(pieceName) ? {} : { pieceName: pieceName.slice(0, NAME_MAX_LENGTH) }),
         ...(typeof args.actionName === 'string' ? { actionName: args.actionName.slice(0, NAME_MAX_LENGTH) } : {}),
         ...(isNil(connectionExternalId) ? {} : { connectionExternalId: connectionExternalId.slice(0, NAME_MAX_LENGTH) }),
     }
