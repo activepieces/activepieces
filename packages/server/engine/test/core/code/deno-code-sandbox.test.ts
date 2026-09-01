@@ -111,6 +111,11 @@ describe('denoCodeSandbox permission boundary', () => {
             expect(result).toBe(7)
         })
 
+        it('evaluates an object literal as an expression, not a block', async () => {
+            const result = await denoCodeSandbox.runScript({ script: '{"where": "a"}', scriptContext: {}, functions: {} })
+            expect(result).toEqual({ where: 'a' })
+        })
+
         it('runs without any permissions (network blocked)', async () => {
             await expect(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }))
                 .rejects.toThrow(PERMISSION_DENIED)

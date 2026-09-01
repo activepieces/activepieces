@@ -54,7 +54,7 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
         }
         const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.js`)
-        const codeSandbox = await initCodeSandbox()
+        const codeSandbox = await initCodeSandbox({ useDeno: action.settings.useDeno === true })
 
         const output = await codeSandbox.runCodeModule({
             codeFilePath: artifactPath,

@@ -102,16 +102,9 @@ if (!existingDenoLine) {
   console.log(`⚙️ Updated AP_DENO_PATH to the global deno binary at ${denoPath}.`);
 }
 
-const propagatedLine = envDev.match(/^AP_SANDBOX_PROPAGATED_ENV_VARS=(.*)$/m);
-if (!propagatedLine) {
-  envDev += 'AP_SANDBOX_PROPAGATED_ENV_VARS=AP_DENO_PATH\n';
-} else if (!propagatedLine[1].split(',').map(v => v.trim()).includes('AP_DENO_PATH')) {
-  envDev = envDev.replace(propagatedLine[0], `${propagatedLine[0]},AP_DENO_PATH`);
-}
-
 if (envDev !== originalEnvDev) {
   fs.writeFileSync(envDevPath, envDev);
-  console.log('✅ Updated .env.dev with AP_DENO_PATH and AP_SANDBOX_PROPAGATED_ENV_VARS.');
+  console.log('✅ Updated .env.dev with AP_DENO_PATH.');
 }
 
 execSync('bun install', { stdio: 'inherit' });
