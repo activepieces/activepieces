@@ -4,7 +4,6 @@ import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import {
   profilePicture,
-  text,
   userId,
   username,
   blocks,
@@ -27,7 +26,14 @@ export const slackSendDirectMessageAction = createAction({
   outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
-    text,
+    // Inline (optional) instead of the shared `text` prop, which is required:true
+    // and reused by the approval/action actions — keep those unchanged.
+    text: Property.LongText({
+      displayName: 'Message',
+      description:
+        'The text of the message. When Block Kit blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+      required: false,
+    }),
     username,
     profilePicture,
     iconEmoji,
@@ -45,10 +51,17 @@ export const slackSendDirectMessageAction = createAction({
     const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)]
+    const blockList: (KnownBlock | Block)[] = [];
+    // Render `text` as a section only when provided; with blocks it's the
+    // notification fallback (no duplicate section) — matching Post/Send Message.
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
 
     if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
@@ -60,7 +73,7 @@ export const slackSendDirectMessageAction = createAction({
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
       iconEmoji: context.propsValue.iconEmoji,

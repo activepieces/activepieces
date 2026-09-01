@@ -28,8 +28,9 @@ export const slackSendDirectMessageAiAction = createAction({
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of the direct message.',
-      required: true,
+      description:
+        'The text of the direct message. When blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+      required: false,
     }),
     unfurlLinks: Property.Checkbox({
       displayName: 'Unfurl Links',
@@ -49,17 +50,24 @@ export const slackSendDirectMessageAiAction = createAction({
     const { text, userId, blocks, unfurlLinks } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)];
+    const blockList: (KnownBlock | Block)[] = [];
+    // Render `text` as a section only when provided; with blocks it's the
+    // notification fallback (no duplicate section) — matching Post/Send Message.
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
     if (blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]));
     }
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       conversationId: userId,
       blocks: blockList,
       unfurlLinks,
