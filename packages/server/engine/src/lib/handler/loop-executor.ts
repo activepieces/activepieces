@@ -1,13 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { FlowRunStatus, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
+import { escapeSensitivePathSegment, FlowRunStatus, LoopOnItemsAction, LoopStepOutput, SENSITIVE_VALUE_REDACTED } from '@activepieces/shared'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
 import { flowExecutor } from './flow-executor'
-
-type LoopOnActionResolvedSettings = {
-    items: readonly unknown[]
-}
 
 export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
     async handle({
@@ -50,6 +46,11 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             })
         }
 
+        const itemSensitivePaths = collectItemSensitivePaths(censoredInput)
+        if (itemSensitivePaths.length > 0) {
+            stepOutput = new LoopStepOutput({ ...stepOutput, sensitiveOutputPaths: itemSensitivePaths })
+        }
+
         const firstLoopAction = action.firstLoopAction
 
 
@@ -84,4 +85,39 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setDuration(performance.now() - stepStartTime))
     },
+}
+
+function collectItemSensitivePaths(censoredInput: unknown): string[] {
+    if (isNil(censoredInput) || typeof censoredInput !== 'object' || !('items' in censoredInput)) {
+        return []
+    }
+    const censoredItems = censoredInput.items
+    if (!Array.isArray(censoredItems)) {
+        return censoredItems === SENSITIVE_VALUE_REDACTED ? ['item'] : []
+    }
+    const paths = new Set<string>()
+    for (const item of censoredItems) {
+        collectSentinelPaths({ value: item, prefix: 'item', paths })
+    }
+    return Array.from(paths)
+}
+
+function collectSentinelPaths({ value, prefix, paths }: { value: unknown, prefix: string, paths: Set<string> }): void {
+    if (value === SENSITIVE_VALUE_REDACTED) {
+        paths.add(prefix)
+        return
+    }
+    if (Array.isArray(value)) {
+        value.forEach((entry, index) => collectSentinelPaths({ value: entry, prefix: `${prefix}.${index}`, paths }))
+        return
+    }
+    if (!isNil(value) && typeof value === 'object') {
+        for (const [key, entry] of Object.entries(value)) {
+            collectSentinelPaths({ value: entry, prefix: `${prefix}.${escapeSensitivePathSegment(key)}`, paths })
+        }
+    }
+}
+
+type LoopOnActionResolvedSettings = {
+    items: readonly unknown[]
 }

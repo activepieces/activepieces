@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, redactSensitiveStepOutputs, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -116,6 +116,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const oldFlowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: flowRunId,
             projectId,
+            redact: false,
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
@@ -475,14 +476,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const results = await query.getRawMany()
         return results.map((r: { status: FlowRunStatus, count: string }) => ({ status: r.status, count: parseInt(r.count, 10) }))
     },
-    async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
+    async getOnePopulatedOrThrow(params: GetOneParams & { redact?: boolean }): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
-        let steps = {}
+        let steps: Record<string, StepOutput> = {}
         let internalError: RunInternalError | undefined = undefined
         if (!isNil(flowRun.logsFileId)) {
             const stateFile = await readLogsFile(log, flowRun.logsFileId, flowRun.projectId)
             if (!isNil(stateFile)) {
-                steps = stateFile.executionState.steps
+                const shouldRedact = params.redact ?? true
+                steps = shouldRedact ? redactSensitiveStepOutputs(stateFile.executionState.steps) : stateFile.executionState.steps
                 internalError = stateFile.internalError
             }
         }

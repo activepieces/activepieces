@@ -567,7 +567,7 @@
     },
     "packages/pieces/community/amazon-secrets-manager": {
       "name": "@activepieces/piece-amazon-secrets-manager",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10634,7 +10634,7 @@
     },
     "packages/pieces/framework": {
       "name": "@activepieces/pieces-framework",
-      "version": "0.38.0",
+      "version": "0.39.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

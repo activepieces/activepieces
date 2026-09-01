@@ -18,6 +18,7 @@ export const SaveSampleDataRequest = z.object({
     stepName: z.string(),
     payload: z.unknown(),
     type: z.enum(SampleDataFileType),
+    sensitiveOutputPaths: z.array(z.string()).optional(),
 })
 export type SaveSampleDataRequest = z.infer<typeof SaveSampleDataRequest>
 
@@ -43,6 +44,7 @@ export const StepRunResponse = z.object({
     success: z.boolean(),
     input: z.unknown(),
     output: z.unknown(),
+    sensitiveOutputPaths: z.array(z.string()).optional(),
     sampleDataFileId: z.string().optional(),
     sampleDataInputFileId: z.string().optional(),
     standardError: z.string(),
@@ -58,6 +60,8 @@ export const SampleDataSetting = z.object(
         sampleDataFileId: z.string().optional(),
         sampleDataInputFileId: z.string().optional(),
         lastTestDate: z.string().optional(),
+        sensitiveOutputPaths: z.array(z.string()).optional(),
+        sensitiveOutputPathsPieceVersion: z.string().optional(),
     },
 )
 

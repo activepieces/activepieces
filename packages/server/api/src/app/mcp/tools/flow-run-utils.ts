@@ -500,13 +500,13 @@ function formatPieceActionRunResult({ outcome, runId, displayName, actionName }:
 export async function pollForRunCompletion(log: FastifyBaseLogger, runId: string, projectId: string): Promise<FlowRun> {
     const start = Date.now()
     while (Date.now() - start < MAX_WAIT_MS) {
-        const run = await flowRunService(log).getOnePopulatedOrThrow({ id: runId, projectId })
+        const run = await flowRunService(log).getOnePopulatedOrThrow({ id: runId, projectId, redact: false })
         if (isFlowRunStateTerminal({ status: run.status, ignoreInternalError: false })) {
             return run
         }
         await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
     }
-    return flowRunService(log).getOnePopulatedOrThrow({ id: runId, projectId })
+    return flowRunService(log).getOnePopulatedOrThrow({ id: runId, projectId, redact: false })
 }
 
 export function formatRunResult(run: FlowRun): string {

@@ -48,7 +48,7 @@ async function buildActionContext({ piece, request, hooks, pending }: ActionPara
         }),
         output: runtime.actionRunMode
             ? { update: async (): Promise<void> => Promise.resolve() }
-            : flowRunProgressReporter.createOutputContext(runtime),
+            : flowRunProgressReporter.createOutputContext({ ...runtime, outputSchema: action.outputSchema }),
         flows: createFlowsContext({
             engineToken: runtime.engineToken,
             internalApiUrl: runtime.internalApiUrl,

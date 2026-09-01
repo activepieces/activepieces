@@ -11,3 +11,7 @@ export const DEFAULT_MCP_DATA = {
 export const ERROR_MESSAGES_TO_REDACT = [
     'HttpClient#sendRequest',
 ]
+
+export const SENSITIVE_VALUE_REDACTED = '**REDACTED**'
+
+export const SENSITIVE_WHOLE_OUTPUT_PATH = '\\'

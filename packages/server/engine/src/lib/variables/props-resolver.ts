@@ -1,7 +1,7 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
-import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil, isString } from '@activepieces/core-utils'
+import { applyFunctionToValues, cloneResolvedValue, extractMustacheTokens, isNil, isString, unique } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { FormulaEvaluationError } from '@activepieces/shared'
+import { applySensitivePaths, FlowActionType, FormulaEvaluationError, StepOutput } from '@activepieces/shared'
 
 import { SharedScriptSession } from '../core/code/shared-script-session'
 import { FlowExecutorContext, StepView } from '../handler/context/flow-execution-context'
@@ -41,15 +41,14 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const getStepView = createMemoizedStepViewGetter(executionState)
-            const scriptSession = scriptEvaluator.initSession()
+            const getStepView = createMemoizedStepViewGetter({ executionState, censor: false })
+            const rawScriptSession = scriptEvaluator.initSession()
+            const sessionsToDispose: SharedScriptSession[] = [rawScriptSession]
             try {
                 const resolveOptions = {
                     engineToken,
                     projectId,
                     apiUrl,
-                    getStepView,
-                    scriptSession,
                     stepNames,
                     pieceName,
                 }
@@ -57,14 +56,27 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     unresolvedInput,
                     (token) => resolveInputAsync({
                         ...resolveOptions,
+                        getStepView,
+                        scriptSession: rawScriptSession,
                         input: token,
                         censoredInput: false,
                         contextVersion,
                     }))
+                if (!needsCensoredPass({ unresolvedInput, executionState })) {
+                    return {
+                        resolvedInput,
+                        censoredInput: resolvedInput,
+                    }
+                }
+                const censoredStepView = createMemoizedStepViewGetter({ executionState, censor: true })
+                const censoredScriptSession = scriptEvaluator.initSession()
+                sessionsToDispose.push(censoredScriptSession)
                 const censoredInput = await applyFunctionToValues<T>(
                     unresolvedInput,
                     (token) => resolveInputAsync({
                         ...resolveOptions,
+                        getStepView: censoredStepView,
+                        scriptSession: censoredScriptSession,
                         input: token,
                         censoredInput: true,
                         contextVersion,
@@ -75,11 +87,37 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                 }
             }
             finally {
-                await scriptSession.dispose()
+                const disposals = await Promise.allSettled(sessionsToDispose.map((session) => session.dispose()))
+                disposals
+                    .filter((disposal) => disposal.status === 'rejected')
+                    .forEach((disposal) => console.error('[propsResolver] Failed to dispose script session', disposal.reason))
             }
         },
     }
 }
+
+function needsCensoredPass({ unresolvedInput, executionState }: ResolveInputParams): boolean {
+    const sensitivePaths = buildSensitiveStepPaths(executionState)
+    if (Object.keys(sensitivePaths).length > 0) {
+        return true
+    }
+    return inputHasCensorableTokens(unresolvedInput)
+}
+
+function inputHasCensorableTokens(input: unknown): boolean {
+    if (isString(input)) {
+        return CENSORABLE_TOKEN_PATTERN.test(input)
+    }
+    if (Array.isArray(input)) {
+        return input.some(inputHasCensorableTokens)
+    }
+    if (typeof input === 'object' && input !== null) {
+        return Object.values(input).some(inputHasCensorableTokens)
+    }
+    return false
+}
+
+const CENSORABLE_TOKEN_PATTERN = /\{\{\s*(?:variables|connections)[.[]/
 
 /**
  * input: `Hello {{firstName}} {{lastName}}`
@@ -212,6 +250,35 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
 
+function buildSensitiveStepPaths(executionState: FlowExecutorContext): Record<string, string[]> {
+    const layers: Array<Record<string, StepOutput>> = [executionState.steps]
+    let target: Record<string, StepOutput> = executionState.steps
+    for (const [stepName, iteration] of executionState.currentPath.path) {
+        const step = target[stepName]
+        if (isNil(step) || step.type !== FlowActionType.LOOP_ON_ITEMS || isNil(step.output)) {
+            break
+        }
+        const iterationOutput = step.output.iterations[iteration]
+        if (isNil(iterationOutput)) {
+            break
+        }
+        target = iterationOutput
+        layers.push(target)
+    }
+    const result: Record<string, string[]> = {}
+    for (const layer of layers) {
+        for (const [name, step] of Object.entries(layer)) {
+            const paths = step.sensitiveOutputPaths
+            if (isNil(paths) || paths.length === 0) {
+                continue
+            }
+            const existing = result[name]
+            result[name] = isNil(existing) ? [...paths] : unique([...existing, ...paths])
+        }
+    }
+    return result
+}
+
 function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<string> {
     const referencedSteps = new Set<string>()
     const stack: unknown[] = [input]
@@ -234,12 +301,18 @@ function extractReferencedStepNames(input: unknown, stepNames: string[]): Set<st
     return referencedSteps
 }
 
-function createMemoizedStepViewGetter(executionState: FlowExecutorContext): GetStepView {
+function createMemoizedStepViewGetter({ executionState, censor }: CreateMemoizedStepViewGetterParams): GetStepView {
     const stepViewCache = new Map<string, Promise<StepView | undefined>>()
+    const sensitiveStepPaths = censor ? buildSensitiveStepPaths(executionState) : undefined
     return (stepName: string) => {
         let view = stepViewCache.get(stepName)
         if (isNil(view)) {
-            view = executionState.getStepView(stepName)
+            view = executionState.getStepView(stepName).then((resolved) => {
+                const paths = sensitiveStepPaths?.[stepName]
+                return (isNil(resolved) || isNil(paths) || paths.length === 0)
+                    ? resolved
+                    : { ...resolved, output: applySensitivePaths(resolved.output, paths) }
+            })
             stepViewCache.set(stepName, view)
         }
         return view
@@ -310,6 +383,11 @@ type ResolveInputInternalParams = {
     scriptSession: SharedScriptSession
     stepNames: string[]
     pieceName?: string
+}
+
+type CreateMemoizedStepViewGetterParams = {
+    executionState: FlowExecutorContext
+    censor: boolean
 }
 
 type ResolveInputParams = {

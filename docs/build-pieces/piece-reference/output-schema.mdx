@@ -46,8 +46,65 @@ export const getEmail = createAction({
 ```
 
 A field supports an optional `label`, a `value` path override, a `format` (`email`, `url`, `date`,
-`datetime`, `number`, `boolean`, `image`, `html`, `currency`, `filesize`, `duration`), and
-`children` / `listItems` for nested objects and arrays of records.
+`datetime`, `number`, `boolean`, `image`, `html`, `currency`, `filesize`, `duration`), a `sensitive`
+flag (see below), and `children` / `listItems` for nested objects and arrays of records.
+
+## Sensitive Fields
+
+Mark output fields that contain secrets — API tokens, passwords, private keys — with
+`sensitive: true`. The value is replaced with `**REDACTED**` everywhere it would render to a user:
+the run-details panel, the data selector's sample-data preview, and any downstream step's Input
+tab that references the value. Downstream steps' `run()` calls, resume points, and outbound HTTP
+requests still receive the **real value** — only the display is scrubbed.
+
+```typescript
+outputSchema: {
+  fields: [
+    { key: 'SecretString', sensitive: true },
+    { key: 'SecretBinary', sensitive: true },
+    { key: 'ARN', label: 'ARN' },
+  ],
+},
+```
+
+Works at any depth via `children` and `listItems`:
+
+```typescript
+outputSchema: {
+  fields: [
+    {
+      key: 'credentials',
+      children: [
+        { key: 'apiKey', sensitive: true },
+        { key: 'issuer' },
+      ],
+    },
+    {
+      key: 'accounts',
+      listItems: [
+        { key: 'id' },
+        { key: 'accessToken', sensitive: true },
+      ],
+    },
+  ],
+},
+```
+
+<Warning>
+`sensitive` cannot be combined with a `value` path override, and does not apply to an action whose
+output is a top-level array. In both cases the collector cannot resolve a reliable path, so it
+fails closed: the **entire step output** is replaced with `**REDACTED**` and an error is logged.
+Restructure the schema so every sensitive leaf is addressed by its `key` (nested through
+`children` / `listItems`) rather than by a `value` path.
+</Warning>
+
+<Warning>
+The guarantee is **UI visibility only**, not encryption at rest. The raw value still lives on
+`flow_run.steps.<name>.output` in the database, in run exports, and in the flow-version's stored
+sample data. For customers whose threat model reaches beyond casual over-the-shoulder viewing,
+route the secret through a Secret Managers reference so the value is fetched just-in-time and
+never enters step I/O.
+</Warning>
 
 ## Friendly Labels for Opaque Keys
 

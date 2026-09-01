@@ -1,6 +1,6 @@
 import { formulaEvaluator } from '@activepieces/core-formula'
 import { ApFile, LATEST_CONTEXT_VERSION, PieceAuth, Property } from '@activepieces/pieces-framework'
-import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, StepOutputStatus } from '@activepieces/shared'
+import { FlowActionType, FlowTriggerType, GenericStepOutput, PropertyExecutionType, PropertySettings, SENSITIVE_VALUE_REDACTED, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { propsProcessor } from '../../src/lib/variables/props-processor'
@@ -860,6 +860,54 @@ describe('Props resolver', () => {
             { id: 2, name: 'Item 2' },
         ])
         expect(errors).toEqual({})
+    })
+
+    test('cross-step: root-level reference to a sensitive upstream output redacts the reference in censoredInput but resolvedInput keeps the real value', async () => {
+        const state = await FlowExecutorContext.empty().upsertStep('step_1', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { SecretString: 'sk-real', Name: 'my-secret' },
+            sensitiveOutputPaths: ['SecretString'],
+        }))
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Bearer {{step_1.output.SecretString}} for {{step_1.output.Name}}',
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual('Bearer sk-real for my-secret')
+        expect(censoredInput).toEqual(`Bearer ${SENSITIVE_VALUE_REDACTED} for my-secret`)
+    })
+
+    test('cross-step: sibling step inside the same loop iteration produces a sensitive output — a later sibling gets **REDACTED** in censoredInput', async () => {
+        const state = (await FlowExecutorContext.empty().upsertStep('step_3', GenericStepOutput.create({
+            type: FlowActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        step_4: GenericStepOutput.create({
+                            type: FlowActionType.PIECE,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: { SecretString: 'sk-loop-secret' },
+                            sensitiveOutputPaths: ['SecretString'],
+                        }),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        }))).setCurrentPath(StepExecutionPath.empty().loopIteration({
+            loopName: 'step_3',
+            iteration: 0,
+        }))
+        const { resolvedInput, censoredInput } = await propsResolverService.resolve({
+            unresolvedInput: 'Bearer {{step_4.output.SecretString}}',
+            executionState: state,
+        })
+        expect(resolvedInput).toEqual('Bearer sk-loop-secret')
+        expect(censoredInput).toEqual(`Bearer ${SENSITIVE_VALUE_REDACTED}`)
     })
 
 })

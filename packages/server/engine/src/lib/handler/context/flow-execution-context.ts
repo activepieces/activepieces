@@ -1,5 +1,5 @@
 import { apId, assertEqual, createByteLruCache, isNil } from '@activepieces/core-utils'
-import { BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
+import { applySensitivePaths, BaseStepOutput, EngineGenericError, executionJournal, FailedStep, FileType, FlowActionType, FlowRunStatus, GenericStepOutput, LogSliceRef, LoopStepOutput, LoopStepResult, RespondResponse, StepOutput, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { engineFileApi } from '../../api/engine-file-api'
 import { loggingUtils } from '../../helper/logging-utils'
 import { sizeofUtils } from '../../helper/sizeof'
@@ -119,7 +119,7 @@ export class FlowExecutorContext {
         }
         else {
             const sliced = this.slicingEnabled
-                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi })
+                ? await maybeSliceOutput({ value: truncated.output, engineApi: this.engineApi, sensitiveOutputPaths: truncated.sensitiveOutputPaths })
                 : undefined
             finalized = new GenericStepOutput({
                 type: truncated.type,
@@ -129,6 +129,7 @@ export class FlowExecutorContext {
                 outputType: sliced ? StepOutputType.SLICE : undefined,
                 duration: truncated.duration,
                 errorMessage: truncated.errorMessage,
+                sensitiveOutputPaths: truncated.sensitiveOutputPaths,
             })
         }
         const previousStep = executionJournal.getStep({ stepName, path: this.currentPath.path, steps: this.steps })
@@ -201,7 +202,7 @@ export class FlowExecutorContext {
     }
 }
 
-async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
+async function maybeSliceOutput({ value, engineApi, sensitiveOutputPaths }: MaybeSliceOutputParams): Promise<{ ref: LogSliceRef } | undefined> {
     if (isNil(value) || isNil(engineApi)) {
         return undefined
     }
@@ -213,15 +214,22 @@ async function maybeSliceOutput({ value, engineApi }: MaybeSliceOutputParams): P
     if (size <= SLICE_THRESHOLD_BYTES) {
         return undefined
     }
-    const data = new TextEncoder().encode(serialized)
-    const { fileId, readUrl } = await engineFileApi.upload({
+    const uploadSlice = async (payload: string): Promise<{ fileId: string, readUrl: string }> => engineFileApi.upload({
         apiUrl: engineApi.internalApiUrl,
         engineToken: engineApi.engineToken,
         fileId: apId(),
         type: FileType.FLOW_RUN_LOG_SLICE,
-        data,
+        data: new TextEncoder().encode(payload),
     })
-    return { ref: { fileId, size, url: readUrl } }
+    if (isNil(sensitiveOutputPaths) || sensitiveOutputPaths.length === 0) {
+        const rawUpload = await uploadSlice(serialized)
+        return { ref: { fileId: rawUpload.fileId, size, url: rawUpload.readUrl } }
+    }
+    const [rawUpload, redactedUpload] = await Promise.all([
+        uploadSlice(serialized),
+        uploadSlice(JSON.stringify(applySensitivePaths(value, sensitiveOutputPaths)) ?? ''),
+    ])
+    return { ref: { fileId: rawUpload.fileId, size, url: redactedUpload.readUrl } }
 }
 
 async function resolveStepOutput(step: StepOutput, engineApi: EngineApiConfig | undefined, cache: SliceCache): Promise<unknown> {
@@ -284,6 +292,7 @@ export type StepView = {
 type MaybeSliceOutputParams = {
     value: unknown
     engineApi?: EngineApiConfig
+    sensitiveOutputPaths?: string[]
 }
 
 type SliceCache = {

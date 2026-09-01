@@ -59,6 +59,11 @@ export const getARandomPassword = createAction({
       required: false,
     }),
   },
+  outputSchema: {
+    fields: [
+      { key: 'RandomPassword', sensitive: true },
+    ],
+  },
   async run({ auth, propsValue, server }) {
     const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 

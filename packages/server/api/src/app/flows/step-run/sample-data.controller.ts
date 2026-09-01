@@ -1,10 +1,11 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { applySensitivePaths, CreateStepRunRequestBody, flowStructureUtil, GetSampleDataRequest, PrincipalType, SampleDataFileType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../flow/flow.service'
 import { flowRunService } from '../flow-run/flow-run-service'
 import { sampleDataService } from './sample-data.service'
+import { sensitiveOutputPathsResolver } from './sensitive-output-paths-resolver'
 
 export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
 
@@ -23,13 +24,22 @@ export const sampleDataController: FastifyPluginAsyncZod = async (fastify) => {
             projectId: request.projectId,
             versionId: request.query.flowVersionId,
         })
+        const step = flowStructureUtil.getStepOrThrow(request.query.stepName, flow.version.trigger)
         const sampleData = await sampleDataService(request.log).getOrReturnEmpty({
             projectId: request.projectId,
             flowVersion: flow.version,
-            stepName: request.query.stepName,
+            step,
             type: request.query.type,
         })
-        return sampleData
+        if (request.query.type !== SampleDataFileType.OUTPUT) {
+            return sampleData
+        }
+        const sensitiveOutputPaths = await sensitiveOutputPathsResolver(request.log).resolveForStep({
+            projectId: request.projectId,
+            step,
+            sampleData,
+        })
+        return applySensitivePaths(sampleData, sensitiveOutputPaths)
     })
 }
 

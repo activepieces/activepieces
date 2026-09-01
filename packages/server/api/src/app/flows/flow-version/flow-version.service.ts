@@ -83,6 +83,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     stepName: userOperation.request.stepName,
                     payload: userOperation.request.payload,
                     type: userOperation.request.type,
+                    sensitiveOutputPaths: userOperation.request.sensitiveOutputPaths,
                 })
                 operations = [{
                     type: FlowOperationType.UPDATE_SAMPLE_DATA_INFO,

@@ -1,4 +1,4 @@
-import { FlowAction, FlowRunStatus, LoopStepOutput } from '@activepieces/shared'
+import { FlowAction, FlowActionType, FlowRunStatus, GenericStepOutput, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import {  FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
@@ -131,4 +131,47 @@ describe('flow with looping', () => {
         expect(() => JSON.stringify(result.steps)).not.toThrow()
     })
 
+})
+
+describe('flow with looping — sensitive items', () => {
+
+    async function runLoopOver(sensitiveOutputPaths: string[] | undefined): Promise<LoopStepOutput> {
+        const executionState = await FlowExecutorContext.empty().upsertStep('list_keys', GenericStepOutput.create({
+            type: FlowActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: { keys: [{ token: 'sk-real-1' }, { token: 'sk-real-2' }] },
+            sensitiveOutputPaths,
+        }))
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ list_keys.output.keys }}' }),
+            executionState,
+            constants: generateMockEngineConstants({ stepNames: ['loop', 'list_keys'] }),
+        })
+        return result.steps.loop as LoopStepOutput
+    }
+
+    it('marks item sensitive when the whole items array is redacted upstream', async () => {
+        const loopOut = await runLoopOver(['keys'])
+
+        expect(loopOut.sensitiveOutputPaths).toEqual(['item'])
+    })
+
+    it('marks only the redacted field on item when individual array elements are redacted upstream', async () => {
+        const loopOut = await runLoopOver(['keys.0.token', 'keys.1.token'])
+
+        expect(loopOut.sensitiveOutputPaths).toEqual(['item.token'])
+    })
+
+    it('leaves item unmarked when nothing upstream is sensitive', async () => {
+        const loopOut = await runLoopOver(undefined)
+
+        expect(loopOut.sensitiveOutputPaths).toBeUndefined()
+    })
+
+    it('keeps the raw item in execution state so inner steps still receive it', async () => {
+        const loopOut = await runLoopOver(['keys'])
+
+        expect(loopOut.output?.item).toEqual({ token: 'sk-real-2' })
+    })
 })

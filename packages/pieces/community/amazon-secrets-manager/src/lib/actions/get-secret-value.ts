@@ -31,6 +31,12 @@ export const getSecretValue = createAction({
       required: false,
     }),
   },
+  outputSchema: {
+    fields: [
+      { key: 'SecretString', sensitive: true },
+      { key: 'SecretBinary', sensitive: true },
+    ],
+  },
   async run({ auth, propsValue, server }) {
     const client = await resolveSecretsManagerClient({ auth: auth.props, server });
 

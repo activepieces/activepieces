@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { PiecePropertyMap, StaticPropsValue } from '@activepieces/pieces-framework'
-import { EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { collectSensitiveOutputPaths, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import { engineRunApi } from '../api/engine-run-api'
 import { PieceRuntime } from '../core/piece/piece-protocol'
 import { pieceRunner } from '../core/piece/piece-runner'
@@ -40,7 +40,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         const piece = { pieceName, pieceVersion, devPieces: constants.devPieces }
         const description = await pieceRunner.describe(piece)
-        if (isNil(description.metadata.actions[actionName])) {
+        const actionDescription = description.metadata.actions[actionName]
+        if (isNil(actionDescription)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -85,6 +86,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             },
         })
 
+        const sensitiveOutputPaths = collectSensitiveOutputPaths(actionDescription.outputSchema, output)
         const hookResponse: HookResponse = hooks?.hookResponse ?? { type: 'none', tags: [] }
         const newExecutionContext = executionState.addTags(hookResponse.tags)
 
@@ -107,24 +109,22 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
 
         const stepEndTime = performance.now()
+        const finished = stepOutput.setOutput(output).setDuration(stepEndTime - stepStartTime).setSensitiveOutputPaths(sensitiveOutputPaths)
         if (hookResponse.type === 'stopped') {
             if (isNil(hookResponse.response)) {
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
-            const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
-            return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({
+            return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.SUCCEEDED))).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: hookResponse.response.response,
             })
         }
         if (hookResponse.type === 'paused') {
-            const paused = stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)
-            return (await newExecutionContext.upsertStep(action.name, paused))
+            return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.PAUSED)))
                 .incrementStepsExecuted()
                 .setVerdict({ status: FlowRunStatus.PAUSED })
         }
-        const succeeded = stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)
-        return (await newExecutionContext.upsertStep(action.name, succeeded)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        return (await newExecutionContext.upsertStep(action.name, finished.setStatus(StepOutputStatus.SUCCEEDED))).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 

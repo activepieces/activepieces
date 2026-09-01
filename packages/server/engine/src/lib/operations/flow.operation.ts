@@ -1,6 +1,7 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
+import { collectSensitiveOutputPaths, EngineGenericError, EngineResponse, EngineResponseStatus, ExecuteFlowOperation, ExecuteTriggerResponse, ExecutionError, ExecutionErrorType, ExecutionState, ExecutionType, FlowActionType, FlowRunStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, GenericStepOutput, LoopStepOutput, ResumePayload, ResumeReason, StepOutput, StepOutputStatus, TriggerHookType, TriggerPayload } from '@activepieces/shared'
 import { engineFileApi } from '../api/engine-file-api'
+import { pieceRunner } from '../core/piece/piece-runner'
 import { triggerRunner } from '../core/piece/trigger-runner'
 import { EngineConstants, ResolvedBeginExecuteFlowOperation, ResolvedExecuteFlowOperation } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -74,7 +75,7 @@ async function reportFailedRun({ input, constants, error }: ReportFailedRunParam
             internalApiUrl: constants.internalApiUrl,
         },
     })
-    const output = (await buildFailedTriggerContext({ input, baseContext, error })).finishExecution()
+    const output = (await buildFailedTriggerContext({ input, baseContext, error, constants })).finishExecution()
     await flowRunProgressReporter.sendUpdate({
         engineConstants: constants,
         flowExecutorContext: output,
@@ -132,20 +133,41 @@ async function resolveStateOrThrowOnNonUserError({ input, constants, baseContext
         return executionState
     }
     if (error instanceof ExecutionError && error.type === ExecutionErrorType.USER) {
-        return buildFailedTriggerContext({ input, baseContext, error })
+        return buildFailedTriggerContext({ input, baseContext, error, constants })
     }
     throw error
 }
 
-async function buildFailedTriggerContext({ input, baseContext, error }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
+async function collectTriggerSensitivePaths({ trigger, payload, devPieces }: CollectTriggerSensitivePathsParams): Promise<string[] | undefined> {
+    if (trigger.type !== FlowTriggerType.PIECE || isNil(trigger.settings.triggerName)) {
+        return undefined
+    }
+    const { data: description, error } = await tryCatch(() => pieceRunner.describe({
+        pieceName: trigger.settings.pieceName,
+        pieceVersion: trigger.settings.pieceVersion,
+        devPieces,
+    }))
+    if (!isNil(error)) {
+        console.error('[collectTriggerSensitivePaths] Failed to describe piece for sensitive-path collection; shipping trigger payload unredacted', error)
+        return undefined
+    }
+    const pieceTrigger = description.metadata.triggers[trigger.settings.triggerName]
+    if (isNil(pieceTrigger)) {
+        return undefined
+    }
+    return collectSensitiveOutputPaths(pieceTrigger.outputSchema, payload)
+}
+
+async function buildFailedTriggerContext({ input, baseContext, error, constants }: BuildFailedTriggerContextParams): Promise<FlowExecutorContext> {
     const trigger = input.flowVersion.trigger
     const message = error instanceof ExecutionError ? utils.formatExecutionError(error) : utils.formatError(error)
     const triggerPayload = input.executionType === ExecutionType.BEGIN ? input.triggerPayload : undefined
+    const sensitiveOutputPaths = await collectTriggerSensitivePaths({ trigger, payload: triggerPayload, devPieces: constants.devPieces })
     const failedTriggerOutput = GenericStepOutput.create({
         type: trigger.type,
         status: StepOutputStatus.FAILED,
         input: {},
-    }).setOutput(triggerPayload ?? {}).setErrorMessage(message)
+    }).setOutput(triggerPayload ?? {}).setErrorMessage(message).setSensitiveOutputPaths(sensitiveOutputPaths)
     return (await baseContext.upsertStep(trigger.name, failedTriggerOutput)).setVerdict({
         status: FlowRunStatus.FAILED,
         failedStep: {
@@ -159,12 +181,19 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
 async function getFlowExecutionState(input: ResolvedExecuteFlowOperation, constants: EngineConstants, flowContext: FlowExecutorContext): Promise<FlowExecutorContext> {
     if (input.executionType === ExecutionType.BEGIN) {
         const newPayload = await runOrReturnPayload(input, constants)
+        const sensitiveOutputPaths = await collectTriggerSensitivePaths({
+            trigger: input.flowVersion.trigger,
+            payload: newPayload,
+            devPieces: constants.devPieces,
+        })
         return flowContext.upsertStep(input.flowVersion.trigger.name,
             GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
-            }).setOutput(newPayload))
+                output: newPayload,
+                sensitiveOutputPaths,
+            }))
     }
     flowContext = flowContext.addTags(input.executionState.tags)
     const isWaitpointResume = input.resumeReason === ResumeReason.WAITPOINT
@@ -276,6 +305,13 @@ type BuildFailedTriggerContextParams = {
     input: ResolvedExecuteFlowOperation
     baseContext: FlowExecutorContext
     error: Error
+    constants: EngineConstants
+}
+
+type CollectTriggerSensitivePathsParams = {
+    trigger: FlowTrigger
+    payload: unknown
+    devPieces: string[]
 }
 
 type ReportFailedTriggerRunParams = {

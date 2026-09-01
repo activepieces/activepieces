@@ -16,7 +16,7 @@ The metadata catalog of automation integrations ("pieces") — each a named inte
 ### Types
 - **PieceType** — `OFFICIAL` (bundled) or `CUSTOM` (platform-installed).
 - **PackageType** — `REGISTRY` (NPM) or `ARCHIVE` (uploaded tarball; `archiveId` FKs to `file`).
-- **OutputSchema** — optional per-action/trigger structured render hint (`fields`, `itemLabel`); set by the piece author, consumed by the builder's Smart Output Viewer and data selector. Opt-in and non-breaking.
+- **OutputSchema** — optional per-action/trigger structured render hint (`fields`, `itemLabel`); set by the piece author, consumed by the builder's Smart Output Viewer and data selector. Opt-in and non-breaking. Field-level `sensitive: true` marks a leaf as a secret — the engine collects concrete `sensitiveOutputPaths` after `run()` and the run-details/sample-data serve boundaries swap those paths to `**REDACTED**`; downstream `run()` calls still read the raw value. See decision [`000017`](../../decisions/000017-sensitive-piece-io-is-piece-declared-and-scrubbed-on-serve.md).
 
 ### Gotchas
 - Available all editions; base listing + install is Community-level.

@@ -18,6 +18,7 @@ type BaseStepOutputParams<T extends FlowActionType | FlowTriggerType, OUTPUT> = 
     outputType?: StepOutputType
     duration?: number
     errorMessage?: string
+    sensitiveOutputPaths?: string[]
 }
 
 export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPUT> {
@@ -28,6 +29,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
     outputType?: StepOutputType
     duration?: number
     errorMessage?: string
+    sensitiveOutputPaths?: string[]
 
     constructor(step: BaseStepOutputParams<T, OUTPUT>) {
         this.type = step.type
@@ -37,6 +39,7 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         this.outputType = step.outputType
         this.duration = step.duration
         this.errorMessage = step.errorMessage
+        this.sensitiveOutputPaths = step.sensitiveOutputPaths
     }
 
     setOutput(output: OUTPUT): GenericStepOutput<T, OUTPUT> {
@@ -67,22 +70,32 @@ export class GenericStepOutput<T extends FlowActionType | FlowTriggerType, OUTPU
         })
     }
 
+    setSensitiveOutputPaths(sensitiveOutputPaths: string[] | undefined): GenericStepOutput<T, OUTPUT> {
+        return new GenericStepOutput<T, OUTPUT>({
+            ...this,
+            sensitiveOutputPaths,
+        })
+    }
+
     static create<T extends FlowActionType | FlowTriggerType, OUTPUT>({
         input,
         type,
         status,
         output,
+        sensitiveOutputPaths,
     }: {
         input: unknown
         type: T
         status: StepOutputStatus
         output?: OUTPUT
+        sensitiveOutputPaths?: string[]
     }): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             input,
             type,
             status,
             output,
+            sensitiveOutputPaths,
         })
     }
 }
@@ -91,11 +104,6 @@ export enum StepOutputType {
     SLICE = 'slice',
 }
 
-/**
- * Payload stored in `StepOutput.output` when the host step has `outputType: StepOutputType.SLICE`.
- * Distinguished structurally by the step's `outputType` field, so the ref itself
- * carries no marker.
- */
 export type LogSliceRef = {
     fileId: string
     size: number

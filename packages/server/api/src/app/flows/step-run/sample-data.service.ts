@@ -4,20 +4,33 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { fileRepo, fileService } from '../../file/file.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { getPieceComponentInfoForStep } from './piece-component-info'
+import { resolveSensitivitySetting } from './sample-data-sensitivity'
 export const sampleDataService = (log: FastifyBaseLogger) => ({
     async saveSampleDataFileIdsInStep(params: SaveSampleDataParams): Promise<SampleDataSettings> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(params.flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(params.stepName, flowVersion.trigger)
         const sampleDataFile = await saveSampleData(params, log)
         const clonedStep: Step = JSON.parse(JSON.stringify(step))
+        const existingPaths = clonedStep.settings.sampleData?.sensitiveOutputPaths
+        const existingPieceVersion = clonedStep.settings.sampleData?.sensitiveOutputPathsPieceVersion
+        const currentPieceVersion = getPieceComponentInfoForStep(clonedStep)?.pieceVersion
+        const sensitivity = resolveSensitivitySetting({
+            type: params.type,
+            requestedPaths: params.sensitiveOutputPaths,
+            existingPaths,
+            existingPieceVersion,
+            currentPieceVersion,
+        })
         return {
             sampleDataFileId: params.type === SampleDataFileType.OUTPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataFileId,
             sampleDataInputFileId: params.type === SampleDataFileType.INPUT ? sampleDataFile.id : clonedStep.settings.sampleData?.sampleDataInputFileId,
             lastTestDate: dayjs().toISOString(),
+            ...sensitivity,
         }
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
-        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
+        const step = 'step' in params ? params.step : flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
         const fileType = params.type === SampleDataFileType.INPUT ? FileType.SAMPLE_DATA_INPUT : FileType.SAMPLE_DATA
         const fileId = params.type === SampleDataFileType.OUTPUT ? step.settings.sampleData?.sampleDataFileId : step.settings.sampleData?.sampleDataInputFileId
         if (isNil(fileId)) {
@@ -61,7 +74,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             const data = await this.getOrReturnEmpty({
                 projectId,
                 flowVersion,
-                stepName: step.name,
+                step,
                 type,
             })
             return { [step.name]: data }
@@ -135,9 +148,8 @@ type DeleteSampleDataParams = {
 type GetSampleDataParams = {
     projectId: ProjectId
     type: SampleDataFileType
-    stepName: string
     flowVersion: FlowVersion
-}
+} & ({ step: FlowAction | FlowTrigger } | { stepName: string })
 
 type SaveSampleDataParams = {
     projectId: ProjectId
@@ -145,4 +157,5 @@ type SaveSampleDataParams = {
     stepName: string
     payload: unknown
     type: SampleDataFileType
+    sensitiveOutputPaths?: string[]
 }
