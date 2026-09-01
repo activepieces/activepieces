@@ -115,7 +115,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        await agentRepo().save({ ...omit(agent, ['published']), ...omit(request, ['goLive']), draft, published, visibility, sharedWithUserIds })
+        await agentRepo().save(agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }))
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -405,6 +405,21 @@ async function assertMayWriteAgentsIn({ projectId, userId, log }: { projectId: P
         code: ErrorCode.AUTHORIZATION,
         params: { message: 'Your role in that project cannot create or change agents there' },
     })
+}
+
+// Only the fields an update owns, keyed by id. Saving the whole row put a stale projectId back on
+// the wire, so an update overlapping a move could drag the agent back to the project it had left
+// while its conversations stayed in the new one. Nothing here may carry projectId, ownerId or
+// externalId: those move or belong to creation, never to an edit.
+export function agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }: {
+    id: string
+    request: UpdateAgentRequest
+    draft: Agent['draft']
+    published: Agent['published']
+    visibility: AgentVisibility
+    sharedWithUserIds: UserId[]
+}): Partial<Agent> & { id: string } {
+    return { id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds }
 }
 
 async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {

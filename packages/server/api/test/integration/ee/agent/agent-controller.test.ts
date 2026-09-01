@@ -4,7 +4,6 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
 import { agentService } from '../../../../src/app/ee/agent/agent-service'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
@@ -816,6 +815,24 @@ describe('moving an agent to another project', () => {
         const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
         const conversation = await db.findOneByOrFail('agent_conversation', { agentId: agent.id }) as { projectId: string }
         expect(conversation.projectId).toBe(row.projectId)
+    })
+
+    it('leaves the project alone when the agent is edited after moving', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })).statusCode).toBe(StatusCodes.OK)
+        const before = await db.findOneByOrFail('agent', { id: agent.id }) as { updated: string }
+
+        const renamed = await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Renamed after the move' })
+
+        expect(renamed.statusCode).toBe(StatusCodes.OK)
+        expect(renamed.json().displayName).toBe('Renamed after the move')
+        expect(renamed.json().projectId).toBe(target.id)
+        const after = await db.findOneByOrFail('agent', { id: agent.id }) as { updated: string, projectId: string }
+        expect(after.projectId).toBe(target.id)
+        // The sort on the list page reads this, so an update has to keep moving it.
+        expect(new Date(after.updated).getTime()).toBeGreaterThanOrEqual(new Date(before.updated).getTime())
     })
 
     it('refuses a move once the agent is no longer in the project it was asked from', async () => {
