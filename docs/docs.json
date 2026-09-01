@@ -354,6 +354,10 @@
                         "untitled-page"
                       ]
                     },
+                    {
+                      "group": "Setup",
+                      "pages": []
+                    },
                     "admin-guide/guides/manage-pieces",
                      "admin-guide/guides/sso",
                      {
