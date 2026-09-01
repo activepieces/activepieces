@@ -21,7 +21,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             icon,
             releasesEnabled: false,
             notifyFlowOwnerOnFailure: false,
-            sensitive: false,
+            sensitive: params.sensitive ?? false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -322,6 +322,7 @@ type CreateParams = {
     externalId?: string
     metadata?: Metadata
     maxConcurrentJobs?: number
+    sensitive?: boolean
     callPostCreateHooks?: boolean
     postCreateContext?: ProjectPostCreateContext
     entityManager?: EntityManager

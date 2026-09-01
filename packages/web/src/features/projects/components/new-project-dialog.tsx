@@ -1,6 +1,7 @@
 import {
   AppConnectionWithoutSensitiveData,
   CreatePlatformProjectRequest,
+  PlatformRole,
   ProjectWithLimits,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,14 +23,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { Switch } from '@/components/ui/switch';
 import { globalConnectionsQueries } from '@/features/connections';
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -88,6 +97,10 @@ const NewProjectForm = ({
   globalConnectionsEnabled: boolean;
 }) => {
   const queryClient = useQueryClient();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const canToggleSensitive =
+    platform.plan.environmentsEnabled && platformRole === PlatformRole.ADMIN;
   const preselectedConnectionExternalIds = globalConnections
     .filter((connection) => connection.preSelectForNewProjects)
     .map((connection) => connection.externalId);
@@ -106,6 +119,7 @@ const NewProjectForm = ({
     defaultValues: {
       globalConnectionExternalIds: preselectedConnectionExternalIds,
       alertReceiverEmail: '',
+      sensitive: false,
     },
   });
 
@@ -180,6 +194,29 @@ const NewProjectForm = ({
               </FormItem>
             )}
           />
+          {canToggleSensitive && (
+            <FormField
+              name="sensitive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
+                    <FormDescription>
+                      {t(
+                        'When enabled, publishing flows in this project requires approval.',
+                      )}
+                    </FormDescription>
+                  </div>
+                  <Switch
+                    id="sensitive"
+                    checked={!!field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           {globalConnectionsEnabled && (
             <FormField
               name="globalConnectionExternalIds"

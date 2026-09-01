@@ -30,6 +30,7 @@ export const CreatePlatformProjectRequest = z.object({
     maxConcurrentJobs: Nullable(z.number()),
     globalConnectionExternalIds: z.array(z.string()).optional(),
     alertReceiverEmail: z.email().nullable().optional(),
+    sensitive: z.boolean().optional(),
 })
 
 export type CreatePlatformProjectRequest = z.infer<typeof CreatePlatformProjectRequest>
