@@ -15,10 +15,8 @@ export default defineConfig({
     // catch a hang, and two minutes still catches one.
     hookTimeout: 120000,
     pool: 'forks',
-    maxWorkers: 4,
     setupFiles: [path.resolve(__dirname, 'vitest.setup.ts')],
     include: [path.resolve(__dirname, 'test/**/*.test.ts')],
-    maxWorkers: 4
   },
   resolve: {
     alias: {
