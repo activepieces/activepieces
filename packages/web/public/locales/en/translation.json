@@ -2661,5 +2661,9 @@
   "Keep editing": "Keep editing",
   "Not live yet": "Not live yet",
   "Changes not live yet": "Changes not live yet",
-  "These changes are not live. Save and go live to hand them to this agent and every flow using it.": "These changes are not live. Save and go live to hand them to this agent and every flow using it."
+  "These changes are not live. Save and go live to hand them to this agent and every flow using it.": "These changes are not live. Save and go live to hand them to this agent and every flow using it.",
+  "API style": "API style",
+  "Chat completions": "Chat completions",
+  "Responses": "Responses",
+  "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.": "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock."
 }
