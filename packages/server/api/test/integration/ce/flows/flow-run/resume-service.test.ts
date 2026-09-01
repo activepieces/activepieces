@@ -62,7 +62,7 @@ async function createFlowRunAndWaitpoint(params: {
     return { flow, flowVersion, flowRun, waitpointId }
 }
 
-describe('resumeService releaseBarrierWithoutLock', () => {
+describe('resumeService resumeTrustedWithoutLock', () => {
     it('consumes a PENDING waitpoint and enqueues resume when flow is PAUSED (worker-before-callback ordering)', async () => {
         const { flowRun, waitpointId } = await createFlowRunAndWaitpoint({
             projectId: ctx.project.id,
@@ -70,7 +70,7 @@ describe('resumeService releaseBarrierWithoutLock', () => {
             waitpointStatus: WaitpointStatus.PENDING,
         })
 
-        const result = await resumeService(app.log).releaseBarrierWithoutLock({
+        const result = await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'approved' } },
@@ -98,7 +98,7 @@ describe('resumeService releaseBarrierWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        const result = await resumeService(app.log).releaseBarrierWithoutLock({
+        const result = await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'early' } },
@@ -126,7 +126,7 @@ describe('resumeService releaseBarrierWithoutLock', () => {
 
         await db.update('flow_run', flowRun.id, { status: FlowRunStatus.PAUSED })
 
-        await resumeService(app.log).releaseBarrierWithoutLock({
+        await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId,
             resumePayload: { body: { status: 'quick' } },
@@ -154,7 +154,7 @@ describe('resumeService releaseBarrierWithoutLock', () => {
         })
 
         const bogusWaitpointId = apId()
-        const result = await resumeService(app.log).releaseBarrierWithoutLock({
+        const result = await resumeService(app.log).resumeTrustedWithoutLock({
             flowRunId: flowRun.id,
             waitpointId: bogusWaitpointId,
             resumePayload: { body: { status: 'stale' } },

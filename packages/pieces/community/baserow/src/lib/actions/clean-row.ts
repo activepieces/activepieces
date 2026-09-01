@@ -4,6 +4,7 @@ import { baserowCommon, formatFieldValues, makeClient } from '../common';
 
 export const cleanRowAction = createAction({
   name: 'baserow_clean_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clean Row',
   description:
     'Sets all fields in a row to empty/null. To update only specific fields, use Update Row instead.',

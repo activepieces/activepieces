@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const refreshTable = createAction({
   auth: clicdataAuth,
   name: 'refresh_table',
+  classification: 'WRITE',
   displayName: 'Refresh Table',
   description: 'Refresh the selected table depending on the refresh mode',
   audience: 'both',

@@ -7,6 +7,7 @@ import { searchMessagesActionOutputSchema } from '../output-schemas';
 export const slackSearchMessagesAiAction = createAction({
   auth: slackAuth,
   name: 'slack_search_messages',
+  classification: 'SEARCH',
   displayName: 'Search Messages',
   description: 'Search the workspace for messages matching a query.',
   audience: 'ai',

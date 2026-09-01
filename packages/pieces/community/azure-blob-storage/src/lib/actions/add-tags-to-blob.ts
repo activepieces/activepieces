@@ -6,6 +6,7 @@ import { containerProp } from '../common';
 export const addTagsToBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'addTagsToBlob',
+  classification: 'WRITE',
   displayName: 'Add Tags to Blob',
   description: 'Adds Tags to the Blob at the specified location',
   audience: 'both',

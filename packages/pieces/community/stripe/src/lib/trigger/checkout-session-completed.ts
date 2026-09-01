@@ -20,6 +20,7 @@ import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeCheckoutSessionCompleted = createTrigger({
   auth: stripeAuth,
   name: 'checkout_session_completed',
+  classification: 'READ',
   displayName: 'Checkout Session Completed',
   description:
     'Fires when a Stripe Checkout Session is successfully completed.',

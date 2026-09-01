@@ -8,6 +8,7 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_crm_contact',
+  classification: 'WRITE',
   displayName: 'Send a Message to a CRM Contact',
   description: 'Send a text message to a contact from your WhatsScale CRM',
   audience: 'both',

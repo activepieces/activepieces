@@ -118,6 +118,7 @@ const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
     'google/gemini-3.1-pro-preview-customtools': 6,
     'google/gemini-3.5-flash': 6,
     'google/gemini-3.6-flash': 6,
+    'google/gemini-3.7-flash': 6,
     'mistralai/mistral-medium-3-5': 6,
     'moonshotai/kimi-k3': 10,
     'openai/gpt-4': 45,

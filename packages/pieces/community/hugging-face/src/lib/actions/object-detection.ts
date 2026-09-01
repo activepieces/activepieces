@@ -10,6 +10,7 @@ import { huggingFaceAuth } from '../auth';
 export const objectDetection = createAction({
   audience: 'both',
   name: 'object_detection',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Object Detection',
   description:

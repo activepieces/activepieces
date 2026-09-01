@@ -5,6 +5,7 @@ import { mailerooAuth } from '../auth';
 export const verifyEmail = createAction({
   auth: mailerooAuth,
   name: 'verifyEmail',
+  classification: 'READ',
   displayName: 'Verify Email',
   description: 'Verifies an email address.',
   audience: 'both',

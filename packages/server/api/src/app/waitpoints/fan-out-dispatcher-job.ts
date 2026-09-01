@@ -21,13 +21,13 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
     if (isNil(source)) {
         const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
         log.warn({ fanIn: { barrierId: data.barrierId, notDispatchedCount } }, '[fanOutDispatcher] The stored source is gone, marking the unclaimed signals undispatched so the barrier can settle')
-        await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+        await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
         return
     }
 
     const signals = await barrierService(log).listUnclaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
     if (signals.length === 0) {
-        await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+        await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
         return
     }
 
@@ -73,7 +73,7 @@ export async function handleFanOutDispatch({ data, log }: HandleFanOutDispatchPa
     if (cancelled) {
         return
     }
-    await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+    await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
 }
 
 export function fanOutDispatchGaveUp({ attemptsMade, attempts, error }: FanOutDispatchGaveUpParams): GiveUpReason | null {
@@ -90,7 +90,7 @@ export async function handleFanOutDispatchGaveUp({ data, error, reason, log }: H
     const notDispatchedCount = await barrierService(log).markUnclaimedNotDispatched({ barrierId: data.barrierId, projectId: data.projectId })
     const claimedCount = await barrierService(log).countClaimedSignals({ barrierId: data.barrierId, projectId: data.projectId })
     log.error({ error, fanIn: { barrierId: data.barrierId, giveUpReason: reason, notDispatchedCount, claimedCount } }, '[fanOutDispatcher] Dispatch gave up, marking the unclaimed signals undispatched; signals already claimed keep their live children and release the barrier once those report')
-    await barrierQueue(log).addEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
+    await barrierQueue(log).enqueueEvaluation({ barrierId: data.barrierId, projectId: data.projectId })
 }
 
 function batchStepOutput(items: unknown[]): unknown {

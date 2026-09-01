@@ -1,9 +1,8 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
 	DynamicPropsValue,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -14,17 +13,18 @@ import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 import dayjs from 'dayjs';
+import { crmObjectOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	customObjectType?: string;
 	additionalPropertiesToRetrieve?: DynamicPropsValue;
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const customObjectType = propsValue.customObjectType as string;
 		const additionalPropertiesToRetrieve = propsValue.additionalPropertiesToRetrieve?.['values'];
@@ -90,6 +90,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newCustomObjectTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-custom-object',
+	classification: 'READ',
 	displayName: 'New Custom Object',
 	description: 'Triggers when new custom object is available.',
 	aiMetadata: {
@@ -111,6 +112,7 @@ export const newCustomObjectTrigger = createTrigger({
 			false,
 		),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

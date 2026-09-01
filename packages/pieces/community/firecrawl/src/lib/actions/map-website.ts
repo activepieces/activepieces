@@ -7,6 +7,7 @@ import { mapWebsiteActionOutputSchema } from '../output-schemas';
 export const mapWebsite = createAction({
   auth: firecrawlAuth,
   name: 'map_website',
+  classification: 'SEARCH',
   displayName: 'Map Website',
   description: 'Discover and return the list of URLs reachable from a website.',
   audience: 'ai',

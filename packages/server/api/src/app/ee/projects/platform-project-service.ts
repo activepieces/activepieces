@@ -275,11 +275,12 @@ async function enrichProjects(
     
     const projectIds = projects.map(p => p.id)
     
-    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, plansMap] = await Promise.all([
+    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, lastFlowUpdatedMap, plansMap] = await Promise.all([
         projectMemberService(log).countTotalUsersByProjects(projectIds),
         projectMemberService(log).countActiveUsersByProjects(projectIds),
         flowService(log).countFlowsByProjects(projectIds),
         flowService(log).countActiveFlowsByProjects(projectIds),
+        flowService(log).getLastFlowUpdatedByProjects(projectIds),
         projectLimitsService(log).getOrCreateDefaultPlansForProjects(projectIds),
     ])
 
@@ -292,6 +293,7 @@ async function enrichProjects(
                 totalFlows: totalFlowsMap.get(project.id) ?? 0,
                 totalUsers: totalUsersMap.get(project.id) ?? 0,
                 activeUsers: activeUsersMap.get(project.id) ?? 0,
+                lastFlowUpdated: lastFlowUpdatedMap.get(project.id) ?? null,
             },
         }
     })

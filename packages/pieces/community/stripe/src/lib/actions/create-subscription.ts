@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCreateSubscription = createAction({
   name: 'create_subscription',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Subscription',
   description:

@@ -41,7 +41,6 @@ export {
   pieceSelectorUtils,
 } from './utils/piece-selector-utils';
 export {
-  CORE_ACTIONS_METADATA,
   extractPieceNamesAndCoreMetadata,
   stepUtils,
 } from './utils/step-utils';

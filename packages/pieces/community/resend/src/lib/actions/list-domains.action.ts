@@ -14,6 +14,7 @@ interface DomainRecord {
 
 export const listDomains = createAction({
   name: 'list_domains',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Domains',
   outputSchema: listDomainsOutputSchema,

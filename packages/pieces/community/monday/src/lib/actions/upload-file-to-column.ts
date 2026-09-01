@@ -8,6 +8,7 @@ import { mondayAuth } from '../auth';
 export const uploadFileToColumnAction = createAction({
   auth: mondayAuth,
   name: 'monday_upload_file_to_column',
+  classification: 'WRITE',
   displayName: 'Upload File to Column',
   description: 'Upload a file to a column in Monday.',
   audience: 'both',

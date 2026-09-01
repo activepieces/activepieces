@@ -6,6 +6,7 @@ import { twilioAuth } from '../..';
 export const twilioSendSms = createAction({
   auth: twilioAuth,
   name: 'send_sms',
+  classification: 'WRITE',
   description: 'Send a new SMS message',
   audience: 'both',
   aiMetadata: { description: 'Sends an SMS text message from a Twilio phone number to a recipient. Use to notify or message a person by text. Requires the destination number, message body, and a Twilio-owned sender number; sending costs money and delivers a separate message on every call, so it is not idempotent.', idempotent: false },

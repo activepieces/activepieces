@@ -6,6 +6,7 @@ import { resolveS3Client } from '../common';
 export const readFile = createAction({
   auth: amazonS3CombinedAuth,
   name: 'read-file',
+  classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from S3 to use it in other steps',
   audience: 'both',

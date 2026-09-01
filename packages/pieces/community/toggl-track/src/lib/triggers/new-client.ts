@@ -14,6 +14,7 @@ import {
 export const newClient = createTrigger({
   auth: togglTrackAuth,
   name: 'new_client',
+  classification: 'READ',
   displayName: 'New Client',
   description: 'Fires when a new client is created in a workspace.',
   aiMetadata: {

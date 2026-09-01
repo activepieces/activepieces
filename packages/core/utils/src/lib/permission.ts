@@ -56,4 +56,10 @@ export enum AIProviderName {
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
     MISTRAL = 'mistral',
+    XAI = 'xai',
+    DEEPSEEK = 'deepseek',
+    ZAI = 'zai',
+    QWEN = 'qwen',
+    MINIMAX = 'minimax',
+    MOONSHOT = 'moonshot',
 }
