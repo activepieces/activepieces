@@ -85,22 +85,41 @@ describe('automations name sort', () => {
     ).toEqual(['Zebra', 'Mango', 'apple']);
   });
 
-  it('orders embedded numbers naturally', () => {
+  it('orders embedded numbers lexically, matching the server', () => {
     const folders = [
-      folder({
-        id: 'ten',
-        displayName: 'Table 10',
-        updated: '2020-01-01T00:00:00.000Z',
-      }),
       folder({
         id: 'two',
         displayName: 'Table 2',
         updated: '2020-01-01T00:00:00.000Z',
       }),
+      folder({
+        id: 'ten',
+        displayName: 'Table 10',
+        updated: '2020-01-01T00:00:00.000Z',
+      }),
     ];
     expect(sortedNames({ folders, sort: 'name-asc' })).toEqual([
-      'Table 2',
       'Table 10',
+      'Table 2',
+    ]);
+  });
+
+  it('distinguishes accents, matching LOWER() on the server', () => {
+    const folders = [
+      folder({
+        id: 'accented',
+        displayName: 'éclair',
+        updated: '2020-01-01T00:00:00.000Z',
+      }),
+      folder({
+        id: 'plain',
+        displayName: 'Eclair',
+        updated: '2020-01-01T00:00:00.000Z',
+      }),
+    ];
+    expect(sortedNames({ folders, sort: 'name-asc' })).toEqual([
+      'Eclair',
+      'éclair',
     ]);
   });
 

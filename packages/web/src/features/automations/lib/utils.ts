@@ -441,10 +441,7 @@ function treeItemComparator(
   const direction = sort === 'name-asc' ? 1 : -1;
   return (a, b) =>
     direction *
-    a.name.localeCompare(b.name, undefined, {
-      sensitivity: 'base',
-      numeric: true,
-    });
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'accent' });
 }
 
 export type TreeRow = { item: TreeItem; children: TreeItem[] };
