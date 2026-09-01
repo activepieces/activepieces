@@ -14,7 +14,7 @@ import {
     SandboxSettings,
 } from './types'
 
-const PREWARM_RESOLVE_CONCURRENCY = 10
+const PREWARM_RESOLVE_CONCURRENCY = 5
 
 // One box per worker at the destination (concurrency 1), or N independent boxes in the transitional
 // compatibility mode that honors AP_WORKER_CONCURRENCY. Each box is its own manager, holding one
