@@ -1,8 +1,8 @@
 import { apId } from '@activepieces/core-utils'
-import { MCP_ACTIVITY_PAYLOAD_MAX_BYTES, McpServerType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { MCP_ACTIVITY_PAYLOAD_MAX_BYTES, McpServerType, McpToolResult, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { describe, expect, it } from 'vitest'
-import { capPayload, runActionFieldsFrom, shouldRecord } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
+import { capPayload, runActionFieldsFrom, shouldRecord, withActivityRecording } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
 import { activepiecesTools } from '../../../../src/app/mcp/tools'
 
 const noopLog: FastifyBaseLogger = {
@@ -53,6 +53,54 @@ describe('MCP activity recording predicate', () => {
         expect(recorded).not.toContain('ap_delete_flow')
         expect(recorded).not.toContain('ap_insert_records')
         expect(recorded).not.toContain('ap_lock_and_publish')
+    })
+})
+
+describe('MCP activity recording around the tool call', () => {
+    const runActionTool = { title: 'ap_run_action' }
+    const nothingToRecord = () => Promise.resolve(null)
+
+    it('rethrows what the tool threw and still schedules a record', async () => {
+        const thrown = new Error('project selection is unavailable')
+        let scheduled: () => void = () => undefined
+        const recordScheduled = new Promise<void>((resolve) => {
+            scheduled = resolve
+        })
+        const recordedExecute = withActivityRecording({
+            execute: () => Promise.reject(thrown),
+            tool: runActionTool,
+            resolveContext: () => {
+                scheduled()
+                return Promise.resolve(null)
+            },
+            log: noopLog,
+        })
+
+        await expect(recordedExecute({ pieceName: 'slack' })).rejects.toBe(thrown)
+        await recordScheduled
+    })
+
+    it('hands back the tool result untouched when nothing threw', async () => {
+        const result: McpToolResult = { content: [{ type: 'text', text: 'done' }] }
+        const recordedExecute = withActivityRecording({
+            execute: () => Promise.resolve(result),
+            tool: runActionTool,
+            resolveContext: nothingToRecord,
+            log: noopLog,
+        })
+
+        await expect(recordedExecute({ pieceName: 'slack' })).resolves.toBe(result)
+    })
+
+    it('leaves an unrecorded tool unwrapped', () => {
+        const execute = () => Promise.resolve({ content: [] })
+
+        expect(withActivityRecording({
+            execute,
+            tool: { title: 'ap_list_flows' },
+            resolveContext: nothingToRecord,
+            log: noopLog,
+        })).toBe(execute)
     })
 })
 

@@ -1,4 +1,4 @@
-import { apId, isNil, isObject, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { apId, isNil, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import {
     FileCompression,
     FileType,
@@ -32,7 +32,8 @@ export function withActivityRecording({ execute, tool, resolveContext, log }: Wi
     }
     return async (args) => {
         const startedAt = Date.now()
-        const result = await execute(args)
+        const { data: toolResult, error } = await tryCatch(() => execute(args))
+        const result = toolResult ?? mcpUtils.mcpToolError('Failed to run action', error)
         rejectedPromiseHandler(record({
             resolveContext,
             toolName: tool.title,
@@ -42,6 +43,9 @@ export function withActivityRecording({ execute, tool, resolveContext, log }: Wi
             result,
             log,
         }), log)
+        if (!isNil(error)) {
+            throw error
+        }
         return result
     }
 }
