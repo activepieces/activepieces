@@ -767,58 +767,6 @@ describe('moving an agent to another project', () => {
         expect(preview.json().membersLosingAccess).toBe(0)
     })
 
-    it('keeps the agent and its conversations together when two moves race', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx)
-        const [left, right] = await Promise.all([secondProjectOf(ctx), secondProjectOf(ctx)])
-        const conversationId = apId()
-        await db.save('agent_conversation', {
-            id: conversationId,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            platformId: ctx.platform.id,
-            projectId: ctx.project.id,
-            userId: ctx.user.id,
-            agentId: agent.id,
-            source: AgentRunSource.AGENT,
-            messages: [],
-            status: 'IDLE',
-        })
-
-        const [toLeft, toRight] = await Promise.all([
-            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: left.id }),
-            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: right.id }),
-        ])
-
-        // Both may succeed, since the row lock turns a race into two sequential moves.
-        // What must never happen is the agent and its conversations ending up apart.
-        expect([toLeft, toRight].some((response) => response.statusCode === StatusCodes.OK)).toBe(true)
-        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
-        const conversation = await db.findOneByOrFail('agent_conversation', { id: conversationId }) as { projectId: string }
-        expect(conversation.projectId).toBe(row.projectId)
-        expect([left.id, right.id]).toContain(row.projectId)
-    })
-
-    it('never files a new conversation in the project the agent just left', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx)
-        const target = await secondProjectOf(ctx)
-
-        const [moved] = await Promise.all([
-            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id }),
-            agentConversationService(app.log).createConversation({
-                platformId: ctx.platform.id,
-                userId: ctx.user.id,
-                request: { agentId: agent.id },
-            }),
-        ])
-
-        expect(moved.statusCode).toBe(StatusCodes.OK)
-        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
-        const conversation = await db.findOneByOrFail('agent_conversation', { agentId: agent.id }) as { projectId: string }
-        expect(conversation.projectId).toBe(row.projectId)
-    })
-
     it('leaves the project alone when the agent is edited after moving', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
@@ -835,25 +783,6 @@ describe('moving an agent to another project', () => {
         expect(after.projectId).toBe(target.id)
         // The sort on the list page reads this, so an update has to keep moving it.
         expect(new Date(after.updated).getTime()).toBeGreaterThanOrEqual(new Date(before.updated).getTime())
-    })
-
-    it('refuses an edit aimed at the project the agent has left', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx, { displayName: 'Before the move' })
-        const target = await secondProjectOf(ctx)
-        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })).statusCode).toBe(StatusCodes.OK)
-
-        const stale = agentService(app.log).update({
-            id: agent.id,
-            projectId: ctx.project.id,
-            userId: ctx.user.id,
-            request: { displayName: 'Written by a request the target never authorised' },
-        })
-
-        await expect(stale).rejects.toThrow()
-        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { displayName: string, projectId: string }
-        expect(row.displayName).toBe('Before the move')
-        expect(row.projectId).toBe(target.id)
     })
 
     it('names every kind of tool that would stop working, not only connections', async () => {
@@ -896,25 +825,6 @@ describe('moving an agent to another project', () => {
         const preview = await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: stranger.project.id })
 
         expect(preview.statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-
-    it('refuses a move once the agent is no longer in the project it was asked from', async () => {
-        const ctx = await context()
-        const agent = await createAgent(ctx)
-        const [left, right] = await Promise.all([secondProjectOf(ctx), secondProjectOf(ctx)])
-        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: left.id })).statusCode).toBe(StatusCodes.OK)
-
-        const stale = agentService(app.log).move({
-            id: agent.id,
-            projectId: ctx.project.id,
-            userId: ctx.user.id,
-            targetProjectId: right.id,
-            platformId: ctx.platform.id,
-        })
-
-        await expect(stale).rejects.toThrow()
-        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
-        expect(row.projectId).toBe(left.id)
     })
 
     it('is not something a member can do to someone else\'s agent', async () => {

@@ -293,43 +293,35 @@ const UnpublishAgentRoute = {
     },
 }
 
+const moveSecurity = {
+    security: securityAccess.project(
+        [PrincipalType.USER, PrincipalType.SERVICE],
+        Permission.WRITE_AGENT,
+        { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+    ),
+}
+
 const MovePreviewRoute = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_AGENT,
-            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
-        ),
-    },
+    config: moveSecurity,
     schema: {
         tags: ['agents'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Report what moving an agent into another project would cost',
         params: z.object({ id: ApId }),
         querystring: MoveAgentRequest,
-        response: {
-            [StatusCodes.OK]: AgentMovePreview,
-        },
+        response: { [StatusCodes.OK]: AgentMovePreview },
     },
 }
 
 const MoveAgentRoute = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
-            Permission.WRITE_AGENT,
-            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
-        ),
-    },
+    config: moveSecurity,
     schema: {
         tags: ['agents'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Move an agent to another project',
         params: z.object({ id: ApId }),
         body: MoveAgentRequest,
-        response: {
-            [StatusCodes.OK]: Agent,
-        },
+        response: { [StatusCodes.OK]: Agent },
     },
 }
 

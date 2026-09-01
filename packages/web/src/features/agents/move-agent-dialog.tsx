@@ -1,8 +1,4 @@
-import {
-  AgentMoveLoss,
-  AgentMoveLossKind,
-  AgentMovePreview,
-} from '@activepieces/shared';
+import { AgentMoveLossKind, AgentMovePreview } from '@activepieces/shared';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -29,6 +25,11 @@ import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { api } from '@/lib/api';
 
 const MAX_NAMED_LOSSES = 2;
+const LOSS_KEYS: Record<AgentMoveLossKind, string> = {
+  [AgentMoveLossKind.CONNECTION]: 'agentMoveLosesConnections',
+  [AgentMoveLossKind.FLOW]: 'agentMoveLosesFlows',
+  [AgentMoveLossKind.KNOWLEDGE]: 'agentMoveLosesKnowledge',
+};
 
 export const MoveAgentDialog = ({
   agent,
@@ -41,9 +42,8 @@ export const MoveAgentDialog = ({
   const elsewhere = (allProjects ?? []).filter(
     (project) => project.id !== agent.projectId,
   );
-  const targetProject = elsewhere.find(
-    (project) => project.id === targetProjectId,
-  );
+  const target = elsewhere.find((project) => project.id === targetProjectId);
+  const projectName = target === undefined ? '' : getProjectName(target);
 
   const {
     data: preview,
@@ -60,10 +60,7 @@ export const MoveAgentDialog = ({
       toast.success(
         t('Moved {name} to {project}', {
           name: moved.displayName,
-          project:
-            targetProject === undefined
-              ? t('another project')
-              : getProjectName(targetProject),
+          project: projectName,
         }),
       );
       onOpenChange(false);
@@ -72,9 +69,7 @@ export const MoveAgentDialog = ({
   });
 
   const blockedByFlows = (preview?.blockedByPublishedFlows.total ?? 0) > 0;
-  const somethingIsLost =
-    (preview?.toolsThatStopWorking.length ?? 0) > 0 ||
-    (preview?.membersLosingAccess ?? 0) > 0;
+  const losses = useLossLines({ preview, projectName });
   const ready =
     preview !== undefined &&
     !checking &&
@@ -98,12 +93,9 @@ export const MoveAgentDialog = ({
           </DialogDescription>
         </DialogHeader>
         {blockedByFlows && (
-          <Alert variant="destructive">
-            <TriangleAlert />
-            <AlertDescription>
-              {describeUsage(preview?.blockedByPublishedFlows)}
-            </AlertDescription>
-          </Alert>
+          <MoveAlert variant="destructive">
+            {describeUsage(preview?.blockedByPublishedFlows)}
+          </MoveAlert>
         )}
         <SearchableSelect
           value={targetProjectId ?? undefined}
@@ -115,14 +107,38 @@ export const MoveAgentDialog = ({
           }))}
           placeholder={t('Search projects')}
         />
-        {targetProject !== undefined && (
-          <MoveConsequences
-            preview={preview}
-            checking={checking}
-            checkFailed={checkFailed}
-            projectName={getProjectName(targetProject)}
-          />
+        {target !== undefined && checkFailed && (
+          <MoveAlert variant="destructive">
+            {t("Couldn't check what this move affects. Try again.")}
+          </MoveAlert>
         )}
+        {target !== undefined && !checkFailed && preview === undefined && (
+          <p className="text-[13px] leading-4 text-muted-foreground">
+            {t('Checking what this move affects…')}
+          </p>
+        )}
+        {target !== undefined && preview?.mayCreateAgentsThere === false && (
+          <MoveAlert variant="destructive">
+            {t('Your role in {project} cannot create agents there.', {
+              project: projectName,
+            })}
+          </MoveAlert>
+        )}
+        {preview?.mayCreateAgentsThere === true &&
+          (losses.length === 0 ? (
+            <p className="text-[13px] leading-4 text-muted-foreground">
+              {t('agentMoveNothingBreaks', { project: projectName })}
+            </p>
+          ) : (
+            <MoveAlert variant="warning">
+              {[
+                ...losses,
+                t('agentMoveUsesTargetAccounts', { project: projectName }),
+              ].map((line, index) => (
+                <span key={index}>{line}</span>
+              ))}
+            </MoveAlert>
+          ))}
         {moveAgent.error !== null && (
           <p className="text-[13px] leading-4 text-destructive">
             {api.extractServerErrorMessage(
@@ -147,7 +163,7 @@ export const MoveAgentDialog = ({
               moveAgent.mutate({ projectId: targetProjectId });
             }}
           >
-            {somethingIsLost ? t('Move anyway') : t('Move')}
+            {losses.length > 0 ? t('Move anyway') : t('Move')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -155,137 +171,72 @@ export const MoveAgentDialog = ({
   );
 };
 
-const MoveConsequences = ({
+const MoveAlert = ({
+  variant,
+  children,
+}: {
+  variant: 'destructive' | 'warning';
+  children: React.ReactNode;
+}) => (
+  <Alert variant={variant}>
+    <TriangleAlert />
+    <AlertDescription className="flex flex-col gap-1.5">
+      {children}
+    </AlertDescription>
+  </Alert>
+);
+
+const useLossLines = ({
   preview,
-  checking,
-  checkFailed,
   projectName,
 }: {
   preview?: AgentMovePreview;
-  checking: boolean;
-  checkFailed: boolean;
   projectName: string;
-}) => {
+}): string[] => {
+  const losses = preview?.toolsThatStopWorking ?? [];
   const { summaries } = piecesHooks.usePieceSummariesByNames({
-    names: (preview?.toolsThatStopWorking ?? [])
+    names: losses
       .filter((loss) => loss.kind === AgentMoveLossKind.CONNECTION)
       .map((loss) => loss.label),
   });
 
-  if (checkFailed) {
-    return (
-      <Alert variant="destructive">
-        <TriangleAlert />
-        <AlertDescription>
-          {t("Couldn't check what this move affects. Try again.")}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-  if (checking || preview === undefined) {
-    return (
-      <p className="text-[13px] leading-4 text-muted-foreground">
-        {t('Checking what this move affects…')}
-      </p>
-    );
-  }
-  if (!preview.mayCreateAgentsThere) {
-    return (
-      <Alert variant="destructive">
-        <TriangleAlert />
-        <AlertDescription>
-          {t('Your role in {project} cannot create agents there.', {
-            project: projectName,
-          })}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const lines = Object.values(AgentMoveLossKind).flatMap((kind) => {
+    const named = losses
+      .filter((loss) => loss.kind === kind)
+      .map(
+        (loss) =>
+          summaries.find((summary) => summary.name === loss.label)
+            ?.displayName ?? loss.label,
+      );
+    if (named.length === 0) {
+      return [];
+    }
+    const shown = named.slice(0, MAX_NAMED_LOSSES);
+    return [
+      t(LOSS_KEYS[kind], {
+        count: named.length,
+        project: projectName,
+        names:
+          named.length > shown.length
+            ? t('agentMoveAndMore', {
+                names: shown.join(', '),
+                count: named.length - shown.length,
+              })
+            : shown.join(', '),
+      }),
+    ];
+  });
 
-  const lines = [
-    ...lossLine({
-      losses: preview.toolsThatStopWorking,
-      kind: AgentMoveLossKind.CONNECTION,
-      messageKey: 'agentMoveLosesConnections',
-      project: projectName,
-      rename: (label) =>
-        summaries.find((summary) => summary.name === label)?.displayName ??
-        label,
-    }),
-    ...lossLine({
-      losses: preview.toolsThatStopWorking,
-      kind: AgentMoveLossKind.FLOW,
-      messageKey: 'agentMoveLosesFlows',
-      project: projectName,
-    }),
-    ...lossLine({
-      losses: preview.toolsThatStopWorking,
-      kind: AgentMoveLossKind.KNOWLEDGE,
-      messageKey: 'agentMoveLosesKnowledge',
-      project: projectName,
-    }),
-    ...(preview.membersLosingAccess > 0
-      ? [
-          t('agentMoveLosesMembers', {
-            count: preview.membersLosingAccess,
-            project: projectName,
-          }),
-        ]
-      : []),
-  ];
-
-  if (lines.length === 0) {
-    return (
-      <p className="text-[13px] leading-4 text-muted-foreground">
-        {t('agentMoveNothingBreaks', { project: projectName })}
-      </p>
-    );
-  }
-
-  return (
-    <Alert variant="warning">
-      <TriangleAlert />
-      <AlertDescription className="flex flex-col gap-1.5">
-        {lines.map((line, index) => (
-          <span key={index}>{line}</span>
-        ))}
-        <span>
-          {t('agentMoveUsesTargetAccounts', { project: projectName })}
-        </span>
-      </AlertDescription>
-    </Alert>
-  );
+  return (preview?.membersLosingAccess ?? 0) > 0
+    ? [
+        ...lines,
+        t('agentMoveLosesMembers', {
+          count: preview?.membersLosingAccess,
+          project: projectName,
+        }),
+      ]
+    : lines;
 };
-
-function lossLine({
-  losses,
-  kind,
-  messageKey,
-  project,
-  rename = (label) => label,
-}: {
-  losses: AgentMoveLoss[];
-  kind: AgentMoveLossKind;
-  messageKey: string;
-  project: string;
-  rename?: (label: string) => string;
-}): string[] {
-  const named = losses
-    .filter((loss) => loss.kind === kind)
-    .map((loss) => rename(loss.label));
-  if (named.length === 0) {
-    return [];
-  }
-  const shown = named.slice(0, MAX_NAMED_LOSSES);
-  const listed =
-    named.length > shown.length
-      ? t('agentMoveAndMore', {
-          names: shown.join(', '),
-          count: named.length - shown.length,
-        })
-      : shown.join(', ');
-  return [t(messageKey, { count: named.length, names: listed, project })];
-}
 
 type MoveAgentDialogProps = {
   agent: { id: string; displayName: string; projectId: string };

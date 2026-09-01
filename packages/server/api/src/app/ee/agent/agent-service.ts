@@ -124,7 +124,9 @@ export const agentService = (log: FastifyBaseLogger) => ({
         // permissions were never checked, and the lock serialises it against the move itself.
         await transaction(async (entityManager) => {
             await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
-            await entityManager.getRepository(AgentEntity).save(agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }))
+            // Only what an edit owns: projectId, ownerId and externalId belong to creation or to a
+            // move, and saving the whole row put a stale project back on the wire.
+            await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
         })
         return this.getOneOrThrow({ id, projectId, userId })
     },
@@ -375,23 +377,6 @@ async function assertMayWriteAgentsIn({ projectId, userId, log }: { projectId: P
     })
 }
 
-// Only the fields an update owns, keyed by id. Saving the whole row put a stale projectId back on
-// the wire, so an update overlapping a move could drag the agent back to the project it had left
-// while its conversations stayed in the new one. Nothing here may carry projectId, ownerId or
-// externalId: those move or belong to creation, never to an edit.
-export function agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }: {
-    id: string
-    request: UpdateAgentRequest
-    draft: Agent['draft']
-    published: Agent['published']
-    visibility: AgentVisibility
-    sharedWithUserIds: UserId[]
-}): Partial<Agent> & { id: string } {
-    return { id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds }
-}
-
-// Taking an agent out of a project — deleting it or moving it elsewhere — is the same permission
-// and the same refusal, so both paths ask here.
 async function assertMayRemoveFromProject({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
     await assertMayDestroy({ agent, projectId, userId, log })
     const flowsInUse = await agentService(log).publishedFlowsUsing({ agent, projectId, userId })
