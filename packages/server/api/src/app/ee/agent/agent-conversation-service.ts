@@ -14,16 +14,20 @@ import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from 
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
 
-async function projectHoldingAgent({ agentId, entityManager }: { agentId: string, entityManager: EntityManager }): Promise<string> {
+// The conversation is stamped with the project the caller was authorised against, or nothing is
+// stamped at all. Following the agent into a project the caller was never checked for would hand a
+// non-member that project's connections through the conversation's own projectId.
+async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityManager }: { agentId: string, authorisedProjectId: string, entityManager: EntityManager }): Promise<string> {
     const locked = await entityManager.getRepository(AgentEntity)
         .createQueryBuilder('agent')
+        .select(['agent.projectId'])
         .setLock('pessimistic_write')
         .where('agent.id = :agentId', { agentId })
         .getOne()
-    if (isNil(locked)) {
+    if (isNil(locked) || locked.projectId !== authorisedProjectId) {
         throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityType: 'agent', entityId: agentId },
+            code: ErrorCode.VALIDATION,
+            params: { message: 'That agent has just moved to another project. Open it again to start a new chat.' },
         })
     }
     return locked.projectId
@@ -43,7 +47,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             platformId,
             projectId: isNil(agent)
                 ? builderProjectId
-                : await projectHoldingAgent({ agentId: agent.id, entityManager }),
+                : await projectStillHoldingAgent({ agentId: agent.id, authorisedProjectId: agent.projectId, entityManager }),
             userId,
             agentId: agent?.id ?? null,
             source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,

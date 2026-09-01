@@ -785,6 +785,21 @@ describe('moving an agent to another project', () => {
         expect(new Date(after.updated).getTime()).toBeGreaterThanOrEqual(new Date(before.updated).getTime())
     })
 
+    it('still opens a chat with the agent once it has moved', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })).statusCode).toBe(StatusCodes.OK)
+
+        const conversation = await agentConversationService(app.log).createConversation({
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            request: { agentId: agent.id },
+        })
+
+        expect(conversation.projectId).toBe(target.id)
+    })
+
     it('names every kind of tool that would stop working, not only connections', async () => {
         const ctx = await context()
         const target = await secondProjectOf(ctx)
