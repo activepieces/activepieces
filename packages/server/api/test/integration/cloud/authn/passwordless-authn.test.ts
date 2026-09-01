@@ -183,7 +183,7 @@ describe('Passwordless Authentication API', () => {
             expect(await storedOtpRow(invited)).not.toBeNull()
         })
 
-        it('issues a stored six-digit code once the challenge is solved', async () => {
+        it('stores the issued code as six digits', async () => {
             const statusCode = await requestCode(EMAIL)
 
             expect(statusCode).toBe(StatusCodes.NO_CONTENT)
