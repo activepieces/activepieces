@@ -29,6 +29,18 @@ export function showsAgentList({
   return listLoading || (hasList && !firstRun);
 }
 
+export function acceptsDraftPrompt({
+  prompt,
+  isBuilding,
+  readinessUnknown,
+}: {
+  prompt: string;
+  isBuilding: boolean;
+  readinessUnknown: boolean;
+}): boolean {
+  return prompt.trim().length > 0 && !isBuilding && !readinessUnknown;
+}
+
 export function showsNoMatchNotice({
   matchCount,
   search,

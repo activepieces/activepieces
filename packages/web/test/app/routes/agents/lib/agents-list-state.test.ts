@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import {
+  acceptsDraftPrompt,
   showsAgentList,
   showsFirstRun,
   showsNoMatchNotice,
@@ -168,5 +169,25 @@ describe('showsFirstRun with a project filter', () => {
         projectFiltered: false,
       }),
     ).toBe(true);
+  });
+});
+
+describe('acceptsDraftPrompt', () => {
+  const ready = { prompt: 'summarise my inbox', isBuilding: false, readinessUnknown: false };
+
+  it('accepts a prompt once the destination is known to be ready', () => {
+    expect(acceptsDraftPrompt(ready)).toBe(true);
+  });
+
+  it('refuses while the destination project has not answered about its provider', () => {
+    expect(acceptsDraftPrompt({ ...ready, readinessUnknown: true })).toBe(false);
+  });
+
+  it('refuses a second submit while one is already building', () => {
+    expect(acceptsDraftPrompt({ ...ready, isBuilding: true })).toBe(false);
+  });
+
+  it('refuses whitespace', () => {
+    expect(acceptsDraftPrompt({ ...ready, prompt: '   ' })).toBe(false);
   });
 });

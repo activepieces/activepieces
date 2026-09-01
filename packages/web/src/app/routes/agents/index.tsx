@@ -53,6 +53,7 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import {
+  acceptsDraftPrompt,
   showsAgentList,
   showsFirstRun,
   showsNoMatchNotice,
@@ -167,6 +168,7 @@ const AgentsPageContent = () => {
   const chatIsOffOnEveryProvider =
     needsProvider && (projectProviders?.length ?? 0) > 0;
   const isBuilding = draftAgent.isPending || createAgent.isPending;
+  const destinationReadinessUnknown = isLoadingProvider;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
   const projectOptions = useMemo(
@@ -180,7 +182,13 @@ const AgentsPageContent = () => {
 
   const buildAgent = (text?: string) => {
     const trimmed = (text ?? prompt).trim();
-    if (trimmed.length === 0 || isBuilding) {
+    if (
+      !acceptsDraftPrompt({
+        prompt: trimmed,
+        isBuilding,
+        readinessUnknown: destinationReadinessUnknown,
+      })
+    ) {
       return;
     }
     setPrompt(trimmed);
@@ -355,7 +363,7 @@ const AgentsPageContent = () => {
           <div className={cn(firstRun && 'flex justify-end')}>
             <Button
               size="icon"
-              loading={isBuilding}
+              loading={isBuilding || destinationReadinessUnknown}
               onClick={() => buildAgent()}
               className={cn(
                 'size-10 shrink-0 rounded-full',
@@ -408,7 +416,7 @@ const AgentsPageContent = () => {
                     <button
                       key={starter.label}
                       type="button"
-                      disabled={isBuilding}
+                      disabled={isBuilding || destinationReadinessUnknown}
                       onClick={() => buildAgent(t(starter.prompt))}
                       className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent disabled:opacity-50"
                     >
@@ -424,7 +432,7 @@ const AgentsPageContent = () => {
                     <button
                       key={suggestion}
                       type="button"
-                      disabled={isBuilding}
+                      disabled={isBuilding || destinationReadinessUnknown}
                       onClick={() => buildAgent(t(suggestion))}
                       className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
                     >
@@ -452,7 +460,9 @@ const AgentsPageContent = () => {
               </span>
               {data?.next && (
                 <span className="text-[13px] leading-4 text-muted-foreground">
-                  {t('Showing the first {count}', { count: agents.length })}
+                  {t('Showing the first {count}', {
+                    count: data?.data.length ?? agents.length,
+                  })}
                 </span>
               )}
             </div>
