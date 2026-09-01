@@ -5,6 +5,7 @@ import { createAuthClient } from '../../';
 export const addSite = createAction({
   auth: googleSearchConsoleAuth,
   name: 'add_site',
+  classification: 'WRITE',
   displayName: 'Add a Site',
   description: "Adds a site to the set of the user's sites in Search Console.",
   audience: 'both',

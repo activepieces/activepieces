@@ -44,7 +44,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
         if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
             wideErrorFields.stack = error.stack
         }
-        wideEvent.set({ error: wideErrorFields })
+        wideEvent.set({ status: statusCode, error: wideErrorFields })
         return
     }
     const parsed = parseError(error)
@@ -65,7 +65,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
     if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR.valueOf() && error instanceof Error) {
         wideErrorFields.stack = error.stack
     }
-    wideEvent.set({ error: wideErrorFields })
+    wideEvent.set({ status: statusCode, error: wideErrorFields })
 }
 
 function hasStatusCode(error: unknown): error is { statusCode: number } {
@@ -91,6 +91,7 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
     [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
     [ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
+    [ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
     [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
     [ErrorCode.SESSION_EXPIRED]: StatusCodes.FORBIDDEN,
     [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,

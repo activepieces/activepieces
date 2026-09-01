@@ -6,6 +6,7 @@ import { deleteRowOutputSchema } from '../output-schemas';
 export const deleteRow = createAction({
   auth: postgresAuth,
   name: 'delete-row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description: 'Deletes one or more rows from a table',
   audience: 'both',

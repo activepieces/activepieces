@@ -7,6 +7,7 @@ import { deleteHeaderActionOutputSchema } from '../output-schemas';
 export const deleteHeader = createAction({
   auth: googleDocsAuth,
   name: 'delete_header',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Header',
   description: 'Delete a header from a Google Docs document',
   audience: 'ai',

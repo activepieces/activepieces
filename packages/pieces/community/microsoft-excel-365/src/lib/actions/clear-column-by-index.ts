@@ -7,6 +7,7 @@ import { excelCommon } from '../common/common';
 export const clearColumnAction = createAction({
   auth: excelAuth,
   name: 'clear_column',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clear Column by Index',
   description: 'Clear contents/formatting of a column by its index.',
   audience: 'both',

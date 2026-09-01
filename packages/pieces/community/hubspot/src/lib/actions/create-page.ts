@@ -1,15 +1,18 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pageType } from '../common/props';
+import { pageOutputSchema } from '../output-schemas';
 
 export const createPageAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-page',
+	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a new landing/site page.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot CMS landing page or site page (choose via Page Type) from a template, then optionally publish it when State is set to publish rather than leaving it as a draft. Each call creates a distinct page, so it is not idempotent.', idempotent: false },
+	outputSchema: pageOutputSchema,
 	props: {
 		pageType: pageType,
 		pageTitle: Property.ShortText({
@@ -87,7 +90,7 @@ export const createPageAction = createAction({
 			url,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: getHubspotAccessToken(context.auth),
 			},
 			body: {
 				htmlTitle: pageTitle,
@@ -107,7 +110,7 @@ export const createPageAction = createAction({
 				url: `https://api.hubapi.com/content/api/v2/pages/${createdPage.body.id}/publish-action`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.access_token,
+					token: getHubspotAccessToken(context.auth),
 				},
 				body: { action: 'schedule-publish' },
 			});
@@ -116,7 +119,7 @@ export const createPageAction = createAction({
 		const pageDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `${url}/${createdPage.body.id}`,
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 		});
 
 		return pageDetails.body;

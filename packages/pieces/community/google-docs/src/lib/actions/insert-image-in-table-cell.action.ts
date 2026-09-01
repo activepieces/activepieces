@@ -7,6 +7,7 @@ import { insertImageInTableCellActionOutputSchema } from '../output-schemas';
 export const insertImageInTableCell = createAction({
   auth: googleDocsAuth,
   name: 'insert_image_in_table_cell',
+  classification: 'WRITE',
   displayName: 'Insert Image in Table Cell',
   description: 'Insert an inline image into a specific table cell in a Google Docs document',
   audience: 'ai',

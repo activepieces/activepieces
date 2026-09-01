@@ -15,6 +15,7 @@ const markdown = `
 
 export const newMessage = createTrigger({
   name: 'new-message',
+  classification: 'READ',
   displayName: 'New Message',
   auth: PieceAuth.None(),
   description: 'Triggers when a new message is received',

@@ -7,6 +7,7 @@ import { listOutputSchema } from '../../output-schemas';
 export const clickupCreateFolderlessList = createAction({
   auth: clickupAuth,
   name: 'clickup_create_folderless_list',
+  classification: 'WRITE',
   description: 'Create a new list directly under a ClickUp space',
   audience: 'ai',
   aiMetadata: {

@@ -12,6 +12,7 @@ import FormData from 'form-data';
 
 export const uploadFile = createAction({
 	name: 'upload_file',
+	classification: 'WRITE',
 	displayName: 'Upload File',
 	description: 'Uploads a file and attaches it to a record.',
 	audience: 'both',

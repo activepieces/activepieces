@@ -8,6 +8,7 @@ const CACHE_KEY = 'bigin_new_company_created_trigger';
 export const newCompanyCreated = createTrigger({
   auth: biginAuth,
   name: 'newCompanyCreated',
+  classification: 'READ',
   displayName: 'New Company Created',
   description: 'Triggers when a new company record is created',
   aiMetadata: {

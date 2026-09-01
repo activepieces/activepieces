@@ -12,6 +12,7 @@ import { routesThatRequireProjectId } from '@/lib/route-utils';
 import { BuilderLayout } from '../components/builder-layout';
 import { ProjectDashboardLayout } from '../components/project-layout';
 import { AfterImportFlowRedirect } from '../guards/after-import-flow-redirect';
+import { AgentsFlagGuard } from '../guards/agents-flag-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
@@ -25,6 +26,7 @@ const FlowBuilderPage = lazyWithRetry(
   'flow-builder',
 );
 const AnalyticsPage = lazyWithRetry(() => import('./impact'), 'analytics');
+const McpServerPage = lazyWithRetry(() => import('./mcp-server'), 'mcp-server');
 const ProjectReleasesPage = lazyWithRetry(
   () =>
     import('./project-release').then((m) => ({
@@ -90,15 +92,17 @@ export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
     element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-          <PageTitle title="Agent">
-            <SuspenseWrapper>
-              <AgentEditorPage />
-            </SuspenseWrapper>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
+      <AgentsFlagGuard>
+        <ProjectDashboardLayout>
+          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+            <PageTitle title="Agent">
+              <SuspenseWrapper>
+                <AgentEditorPage />
+              </SuspenseWrapper>
+            </PageTitle>
+          </RoutePermissionGuard>
+        </ProjectDashboardLayout>
+      </AgentsFlagGuard>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -258,6 +262,20 @@ export const projectRoutes = [
             <AnalyticsPage />
           </SuspenseWrapper>
         </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/mcp-server',
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={[Permission.READ_MCP]}>
+          <PageTitle title="MCP Server">
+            <SuspenseWrapper>
+              <McpServerPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
       </ProjectDashboardLayout>
     ),
   },

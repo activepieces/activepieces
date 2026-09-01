@@ -12,6 +12,7 @@ import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
 export const listTemplatesAction = createAction({
   auth: carboneAuth,
   name: 'carbone_list_templates',
+  classification: 'SEARCH',
   displayName: 'List Templates',
   description:
     'Retrieve a list of deployed Carbone templates with filtering and pagination.',

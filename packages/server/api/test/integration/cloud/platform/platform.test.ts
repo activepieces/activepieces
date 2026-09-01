@@ -575,7 +575,33 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(24)
+            expect(Object.keys(responseBody).sort()).toStrictEqual([
+                'allowedAuthDomains',
+                'allowedEmbedOrigins',
+                'autoCreatePersonalProjects',
+                'billingEnforced',
+                'cloudAuthEnabled',
+                'created',
+                'emailAuthEnabled',
+                'enforceAllowedAuthDomains',
+                'favIconUrl',
+                'federatedAuthProviders',
+                'fullLogoUrl',
+                'googleAuthEnabled',
+                'id',
+                'logoIconUrl',
+                'name',
+                'ownerId',
+                'pieceSelectorConfig',
+                'pinnedPieces',
+                'plan',
+                'primaryColor',
+                'ssoDomain',
+                'ssoDomainVerification',
+                'themeColors',
+                'updated',
+                'usage',
+            ])
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -587,6 +613,7 @@ describe('Platform API', () => {
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
+            expect(responseBody.autoCreatePersonalProjects).toBe(mockPlatform.autoCreatePersonalProjects)
         })
 
 

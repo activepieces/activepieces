@@ -71,6 +71,7 @@ function matchesFilters(
 export const newEvent = createTrigger({
   auth: googleCalendarAuth,
   name: 'new_event',
+  classification: 'READ',
   displayName: 'New Event',
   description: 'Fires when a new event is created in a calendar.',
   aiMetadata: {

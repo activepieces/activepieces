@@ -4,6 +4,7 @@ import { getSlide } from "../commons/common";
 
 export const getPresentation = createAction({
     name: 'get_presentation',
+    classification: 'READ',
     displayName: 'Get Presentation',
     description: 'Get all slides from a presentation',
     audience: 'both',

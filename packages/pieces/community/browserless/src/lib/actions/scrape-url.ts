@@ -5,6 +5,7 @@ import { browserlessCommon } from '../common/client';
 
 export const scrapeUrl = createAction({
     name: 'scrape_url',
+    classification: 'READ',
     displayName: 'Scrape URL',
     description: 'Extract content from a web page',
     audience: 'both',

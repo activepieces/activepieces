@@ -24,6 +24,7 @@ import {
   isConnectionHealthy,
   normalizePieceName,
   pickDefaultConnectionExternalId,
+  resolveConnectionCardState,
 } from '../lib/message-parsers';
 import { useConversationId } from '../lib/use-conversation-id';
 
@@ -166,23 +167,33 @@ export function ConnectionPickerCard({
   const pieceName = normalizePieceName(picker.piece);
   const shouldFetch =
     !picker.connections?.length && !!conversationId && isInteractive;
-  const { data: fetchedConnections, isLoading: isFetchingConnections } =
-    useQuery({
-      queryKey: ['chat-picker-connections', conversationId, pieceName],
-      queryFn: async () => {
-        const conns = await chatApi.getPickerConnections({
+  const {
+    data: fetchedConnections,
+    isLoading: isFetchingConnections,
+    isError: connectionsFailed,
+  } = useQuery({
+    queryKey: ['chat-picker-connections', conversationId, pieceName],
+    queryFn: async () => {
+      const { connections, reconnectOnly } = await chatApi.getPickerConnections(
+        {
           conversationId: conversationId!,
           pieceName,
-        });
-        return conns.map((c) => ({
+        },
+      );
+      return {
+        reconnectOnly,
+        connections: connections.map((c) => ({
           ...c,
           status: c.status as AppConnectionStatus,
-        }));
-      },
-      enabled: shouldFetch,
-    });
+        })),
+      };
+    },
+    enabled: shouldFetch,
+  });
 
-  const resolvedConnections = picker.connections ?? fetchedConnections ?? [];
+  const resolvedConnections =
+    picker.connections ?? fetchedConnections?.connections ?? [];
+  const reconnectOnly = fetchedConnections?.reconnectOnly ?? false;
   const filteredPicker = useMemo(() => {
     if (!selectedProjectId)
       return { ...picker, connections: resolvedConnections };
@@ -195,6 +206,9 @@ export function ConnectionPickerCard({
     name: pieceName,
   });
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [reconnectProjectId, setReconnectProjectId] = useState<string | null>(
+    null,
+  );
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const [selectedConnection, setSelectedConnection] =
@@ -259,11 +273,16 @@ export function ConnectionPickerCard({
   const handleReconnect = (externalId: string) => {
     const fullConnection = fullConnections[externalId];
     if (!fullConnection) return;
+    setReconnectProjectId(
+      filteredPicker.connections.find((c) => c.externalId === externalId)
+        ?.projectId ?? null,
+    );
     setReconnectConnection(fullConnection);
     setConnectDialogOpen(true);
   };
 
   const handleNewConnection = () => {
+    setReconnectProjectId(null);
     setReconnectConnection(null);
     setConnectDialogOpen(true);
   };
@@ -300,13 +319,21 @@ export function ConnectionPickerCard({
   }
 
   const hasConnections = filteredPicker.connections.length > 0;
+  const { offersOtherAccounts, canContinue, emptyMessage } =
+    resolveConnectionCardState({
+      reconnectOnly,
+      connectionsFailed,
+      healthyCount: healthyConnections.length,
+    });
 
   return (
     <>
       <InteractiveCardShell
         onDismiss={() => onDismiss?.()}
         title={
-          hasConnections
+          reconnectOnly
+            ? t('Reconnect {name}', { name: filteredPicker.displayName })
+            : hasConnections
             ? t('Which {name} account should I use?', {
                 name: filteredPicker.displayName,
               })
@@ -315,9 +342,18 @@ export function ConnectionPickerCard({
       >
         {!hasConnections && (
           <div className="pb-2 text-sm text-muted-foreground">
-            {t('No {name} account connected yet', {
-              name: filteredPicker.displayName,
-            })}
+            {emptyMessage === 'loadFailed'
+              ? t('Could not load your accounts. Try again in a moment.')
+              : emptyMessage === 'pinnedAccountGone'
+              ? t(
+                  'The {name} account this agent uses is gone. Update the agent tools with a working account.',
+                  {
+                    name: filteredPicker.displayName,
+                  },
+                )
+              : t('No {name} account connected yet', {
+                  name: filteredPicker.displayName,
+                })}
           </div>
         )}
 
@@ -334,7 +370,7 @@ export function ConnectionPickerCard({
 
             const row = (
               <>
-                {healthy ? (
+                {healthy && !reconnectOnly ? (
                   <RadioGroupItem
                     value={conn.externalId}
                     id={`conn-${conn.externalId}`}
@@ -357,8 +393,8 @@ export function ConnectionPickerCard({
                       : `${conn.project} · ${connectionStatusLabel(status)}`}
                   </div>
                 </div>
-                {!healthy &&
-                  (status === AppConnectionStatus.MISSING ? (
+                {(!healthy || reconnectOnly) &&
+                  (status === AppConnectionStatus.MISSING && !reconnectOnly ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -384,7 +420,7 @@ export function ConnectionPickerCard({
               </>
             );
 
-            return healthy ? (
+            return healthy && !reconnectOnly ? (
               <label
                 key={conn.externalId}
                 htmlFor={`conn-${conn.externalId}`}
@@ -406,30 +442,32 @@ export function ConnectionPickerCard({
           })}
         </RadioGroup>
 
-        <div className="flex items-center gap-3 border-t py-3">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium">
-              {t('Use a different account')}
+        {offersOtherAccounts && (
+          <div className="flex items-center gap-3 border-t py-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium">
+                {t('Use a different account')}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t('Connect a new {name} account', {
+                  name: filteredPicker.displayName,
+                })}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {t('Connect a new {name} account', {
-                name: filteredPicker.displayName,
-              })}
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 gap-1.5"
+              disabled={isPieceLoading}
+              onClick={handleNewConnection}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              {t('Connect')}
+            </Button>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="shrink-0 gap-1.5"
-            disabled={isPieceLoading}
-            onClick={handleNewConnection}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('Connect')}
-          </Button>
-        </div>
+        )}
 
-        {hasConnections && (
+        {canContinue && (
           <div className="flex justify-end pt-1">
             <Button
               size="sm"
@@ -448,7 +486,7 @@ export function ConnectionPickerCard({
         <CreateOrEditConnectionDialog
           piece={pieceModel}
           open={connectDialogOpen}
-          projectId={selectedProjectId}
+          projectId={reconnectProjectId ?? selectedProjectId}
           setOpen={(open, createdConnection) => {
             setConnectDialogOpen(open);
             if (createdConnection) {

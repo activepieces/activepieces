@@ -7,6 +7,7 @@ import { searchGooglePlayOutputSchema } from '../output-schemas';
 export const searchGooglePlay = createAction({
   auth: serpApiAuth,
   name: 'search_google_play',
+  classification: 'SEARCH',
   displayName: 'Search Google Play',
   description: 'Search the Google Play store for apps, games, movies, or books.',
   audience: 'ai',
