@@ -50,11 +50,20 @@ export const agentsQueries = {
       enabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
-  useAgent: ({ id, enabled = true }: { id: string; enabled?: boolean }) =>
+  useAgent: ({
+    id,
+    enabled = true,
+    includeUsage = false,
+  }: {
+    id: string;
+    enabled?: boolean;
+    includeUsage?: boolean;
+  }) =>
     useQuery({
-      queryKey: [AGENTS_KEY, 'one', id],
-      queryFn: () => agentsApi.get(id),
+      queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
+      queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
+      meta: { showErrorDialog: !includeUsage, loadSubsetOptions: {} },
     }),
 };
 
