@@ -1,16 +1,18 @@
 import { apId } from '@activepieces/core-utils'
-import { OtpState, OtpType, PlatformRole, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { safeHttp } from '@activepieces/server-utils'
+import { ApFlagId, OtpState, OtpType, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { passwordHasher } from '../../../../src/app/authentication/lib/password-hasher'
+import { turnstile } from '../../../../src/app/authentication/lib/turnstile'
 import { otpService } from '../../../../src/app/authentication/otp/otp-service'
 import { userIdentityService } from '../../../../src/app/authentication/user-identity/user-identity-service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { distributedStore } from '../../../../src/app/database/redis-connections'
-import { passwordlessAuthService } from '../../../../src/app/authentication/passwordless-auth.service'
-import { platformService } from '../../../../src/app/platform/platform.service'
-import { createMockPlatform } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
+
+process.env.AP_TURNSTILE_SITE_KEY = 'test-site-key'
+process.env.AP_TURNSTILE_SECRET_KEY = 'test-secret-key'
 
 let app: FastifyInstance | null = null
 
@@ -35,6 +37,18 @@ async function verifyCode({ email, code }: { email: string, code: string }) {
         url: '/api/v1/authentication/otp/verify',
         body: { email, code },
     })
+}
+
+async function withZerobounceVerdict<T>({ status, subStatus, run }: WithZerobounceVerdictParams<T>): Promise<T> {
+    const answer = vi.spyOn(safeHttp.axios, 'get').mockResolvedValue({ data: { status, sub_status: subStatus } })
+    process.env.AP_ZEROBOUNCE_API_KEY = 'test-api-key'
+    try {
+        return await run()
+    }
+    finally {
+        delete process.env.AP_ZEROBOUNCE_API_KEY
+        answer.mockRestore()
+    }
 }
 
 function wrongCodeFor(code: string): string {
@@ -67,6 +81,7 @@ async function storedOtp(email: string) {
 }
 
 beforeAll(async () => {
+    vi.spyOn(turnstile, 'assertSolved').mockResolvedValue(undefined)
     app = await setupTestEnvironment()
 })
 
@@ -84,6 +99,13 @@ beforeEach(async () => {
 })
 
 describe('Passwordless Authentication API', () => {
+    it('tells the frontend the code flow is on', async () => {
+        const response = await app?.inject({ method: 'GET', url: '/api/v1/flags' })
+
+        expect(response?.statusCode).toBe(StatusCodes.OK)
+        expect(response?.json()[ApFlagId.EMAIL_CODE_AUTH_ENABLED]).toBe(true)
+    })
+
     describe('Request code endpoint', () => {
         it('creates an unverified identity and issues a 6 digit code', async () => {
             const statusCode = await requestCode(EMAIL)
@@ -108,21 +130,34 @@ describe('Passwordless Authentication API', () => {
             expect(identity?.lastName).toBe('')
         })
 
-        it('refuses a throwaway address and creates nothing', async () => {
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/otp/request',
-                body: { email: 'someone@mailinator.com' },
+        it('answers a refused address exactly like a served one, but sends and creates nothing', async () => {
+            const response = await withZerobounceVerdict({
+                status: 'do_not_mail',
+                subStatus: 'disposable',
+                run: async () => app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/otp/request',
+                    body: { email: 'someone@mailinator.com' },
+                }),
             })
 
-            expect(response?.statusCode).not.toBe(StatusCodes.NO_CONTENT)
-            expect(response?.json()?.code).toBe('DOMAIN_NOT_ALLOWED')
-            const identity = await databaseConnection().getRepository('user_identity')
-                .findOneBy({ email: 'someone@mailinator.com' })
-            expect(identity).toBeNull()
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response?.body).toBe('')
+            expect(await storedIdentity('someone@mailinator.com')).toBeNull()
+            expect(await storedOtpRow('someone@mailinator.com')).toBeNull()
         })
 
-        it('lets an invited member through even on a throwaway domain', async () => {
+        it('issues a code without asking zerobounce when no api key is set', async () => {
+            const answer = vi.spyOn(safeHttp.axios, 'get')
+
+            const statusCode = await requestCode('someone@mailinator.com')
+
+            expect(statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(answer).not.toHaveBeenCalled()
+            answer.mockRestore()
+        })
+
+        it('lets an invited member through even on a refused domain', async () => {
             const invited = 'guest@mailinator.com'
             await databaseConnection().getRepository('user_invitation').save({
                 id: apId(),
@@ -133,16 +168,22 @@ describe('Passwordless Authentication API', () => {
                 platformRole: PlatformRole.MEMBER,
             })
 
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/api/v1/authentication/otp/request',
-                body: { email: invited },
+            const response = await withZerobounceVerdict({
+                status: 'do_not_mail',
+                subStatus: 'disposable',
+                run: async () => app?.inject({
+                    method: 'POST',
+                    url: '/api/v1/authentication/otp/request',
+                    body: { email: invited },
+                }),
             })
 
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(await storedIdentity(invited)).not.toBeNull()
+            expect(await storedOtpRow(invited)).not.toBeNull()
         })
 
-        it('issues a code with no captcha token when no challenge is configured', async () => {
+        it('stores the issued code as six digits', async () => {
             const statusCode = await requestCode(EMAIL)
 
             expect(statusCode).toBe(StatusCodes.NO_CONTENT)
@@ -274,7 +315,7 @@ describe('Passwordless Authentication API', () => {
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
             expect(platform?.name).toBe('Example')
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
-            expect(project?.displayName).toBe("Example's Project")
+            expect(project?.displayName).toBe('Example\'s Project')
         })
 
         it('falls back to the person when the address is a consumer provider', async () => {
@@ -294,9 +335,9 @@ describe('Passwordless Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             const platform = await databaseConnection().getRepository('platform').findOneBy({ id: body?.platformId })
-            expect(platform?.name).toBe("Ahmad's Platform")
+            expect(platform?.name).toBe('Ahmad\'s Platform')
             const project = await databaseConnection().getRepository('project').findOneBy({ platformId: body?.platformId })
-            expect(project?.displayName).toBe("Ahmad's Project")
+            expect(project?.displayName).toBe('Ahmad\'s Project')
         })
 
         it('consumes one code exactly once, even when two confirmations race it', async () => {
@@ -444,3 +485,9 @@ describe('Passwordless Authentication API', () => {
         })
     })
 })
+
+type WithZerobounceVerdictParams<T> = {
+    status: string
+    subStatus: string
+    run: () => Promise<T>
+}

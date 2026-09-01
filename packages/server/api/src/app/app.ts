@@ -19,6 +19,7 @@ import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
+import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -325,6 +326,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(passwordlessAuthModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
