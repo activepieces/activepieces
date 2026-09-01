@@ -372,7 +372,6 @@
                         "admin-guide/guides/manage-pieces"
                       ]
                     },
-                    "admin-guide/guides/sso",
                     "admin-guide/guides/manage-oauth2",
                     {
                         "group": "Secret Managers",
@@ -394,6 +393,7 @@
                {
                   "group": "Security",
                   "pages": [
+                    "admin-guide/guides/sso",
                      "admin-guide/security/practices",
                      {
                         "group": "Audit Logs",
