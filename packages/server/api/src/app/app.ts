@@ -110,6 +110,7 @@ import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
 import { resumePageHooks } from './waitpoints/resume-page-hooks'
+import { sweepOverdueDeadlines } from './waitpoints/waitpoint-deadline-sweep'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -275,6 +276,21 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             name: SystemJobName.CHAT_STALE_SWEEP,
             data: {},
             jobId: SystemJobName.CHAT_STALE_SWEEP,
+        },
+        schedule: {
+            type: 'repeated',
+            cron: '* * * * *',
+        },
+    })
+
+    systemJobHandlers.registerJobHandler(SystemJobName.WAITPOINT_DEADLINE_SWEEP, async () => {
+        await sweepOverdueDeadlines({ log: app.log })
+    })
+    await systemJobsSchedule(app.log).upsertJob({
+        job: {
+            name: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
+            data: {},
+            jobId: SystemJobName.WAITPOINT_DEADLINE_SWEEP,
         },
         schedule: {
             type: 'repeated',

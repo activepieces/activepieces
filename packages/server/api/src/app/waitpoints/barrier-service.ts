@@ -12,6 +12,7 @@ import { barrierQueue } from './barrier-queue'
 import { resumeService } from './resume-service'
 import { WaitpointEntity } from './waitpoint-entity'
 import { WaitpointSignalEntity } from './waitpoint-signal-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { Waitpoint, WaitpointSignal, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -63,6 +64,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         })
 
         if (creation.inserted) {
+            if (!isNil(creation.barrier.resumeDateTime)) {
+                await waitpointTimeoutJob.schedule({
+                    flowRunId: params.flowRunId,
+                    projectId: params.projectId,
+                    waitpointId: creation.barrier.id,
+                    resumeDateTime: creation.barrier.resumeDateTime,
+                    log,
+                })
+            }
             await barrierQueue(log).enqueueEvaluation({ barrierId: creation.barrier.id, projectId: params.projectId })
         }
 
