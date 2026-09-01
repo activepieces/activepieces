@@ -13,6 +13,19 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }
     },
 
+    async putBatch(keyValuePairs: Array<{ key: string, value: unknown }>, ttlInSeconds: number): Promise<void> {
+        if (keyValuePairs.length === 0) return
+
+        const redisClient = await getRedisClient()
+        const multi = redisClient.multi()
+
+        for (const { key, value } of keyValuePairs) {
+            multi.setex(key, ttlInSeconds, JSON.stringify(value))
+        }
+
+        await multi.exec()
+    },
+
     async get<T>(key: string): Promise<T | null> {
         const redisClient = await getRedisClient()
         const value = await redisClient.get(key)

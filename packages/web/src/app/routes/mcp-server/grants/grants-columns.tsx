@@ -143,7 +143,7 @@ export function buildGrantsColumns({
             <ConfirmationDeleteDialog
               title={t('Revoke access')}
               message={t(
-                'Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.',
+                'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                 { entityName: clientLabel },
               )}
               entityName={clientLabel}
