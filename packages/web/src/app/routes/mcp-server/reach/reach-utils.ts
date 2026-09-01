@@ -17,12 +17,12 @@ const DEFAULT_CLASSIFICATION: ActionClassification = 'WRITE';
 
 function containsQuery({
   text,
-  query,
+  lowercaseQuery,
 }: {
   text: string | undefined;
-  query: string;
+  lowercaseQuery: string;
 }): boolean {
-  return (text ?? '').toLowerCase().includes(query);
+  return (text ?? '').toLowerCase().includes(lowercaseQuery);
 }
 
 function groupByClassification(actions: ActionBase[]): ActionGroup[] {
@@ -38,10 +38,10 @@ function groupByClassification(actions: ActionBase[]): ActionGroup[] {
 function orderPopularFirst(
   pieces: PieceMetadataModelSummary[],
 ): PieceMetadataModelSummary[] {
-  const popular = pieceSearchUtils.POPULAR_PIECES_NAMES;
+  const popularPieceNames = pieceSearchUtils.POPULAR_PIECES_NAMES;
   const rank = (piece: PieceMetadataModelSummary) => {
-    const index = popular.indexOf(piece.name);
-    return index === -1 ? popular.length : index;
+    const index = popularPieceNames.indexOf(piece.name);
+    return index === -1 ? popularPieceNames.length : index;
   };
   return [...pieces].sort(
     (a, b) => rank(a) - rank(b) || a.displayName.localeCompare(b.displayName),
@@ -76,13 +76,13 @@ function toReachablePieces({
   pieces: PieceMetadataModelSummary[];
   searchQuery: string;
 }): ReachablePiece[] {
-  const ordered = orderPopularFirst(
+  const orderedPieces = orderPopularFirst(
     pieces.filter((piece) => (piece.suggestedActions ?? []).length > 0),
   );
-  const query = searchQuery.trim().toLowerCase();
+  const lowercaseQuery = searchQuery.trim().toLowerCase();
 
-  if (query === '') {
-    return ordered.map((piece) =>
+  if (lowercaseQuery === '') {
+    return orderedPieces.map((piece) =>
       toReachablePiece({
         piece,
         actions: piece.suggestedActions ?? [],
@@ -91,18 +91,18 @@ function toReachablePieces({
     );
   }
 
-  return ordered.flatMap((piece) => {
+  return orderedPieces.flatMap((piece) => {
     const actions = piece.suggestedActions ?? [];
     const pieceMatches =
-      containsQuery({ text: piece.displayName, query }) ||
-      containsQuery({ text: piece.description, query });
+      containsQuery({ text: piece.displayName, lowercaseQuery }) ||
+      containsQuery({ text: piece.description, lowercaseQuery });
     if (pieceMatches) {
       return [toReachablePiece({ piece, actions, forceExpanded: false })];
     }
     const matchingActions = actions.filter(
       (action) =>
-        containsQuery({ text: action.displayName, query }) ||
-        containsQuery({ text: action.description, query }),
+        containsQuery({ text: action.displayName, lowercaseQuery }) ||
+        containsQuery({ text: action.description, lowercaseQuery }),
     );
     if (matchingActions.length === 0) {
       return [];

@@ -21,7 +21,7 @@ export function useMcpNav(): McpNav {
     showBrowse: () => setParams({ browse: '1' }),
     showClient: (key: string) => setParams({ client: key }),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
-    showProject: (projectId: string) => setParams({ project: projectId }),
+    selectProject: (projectId: string) => setParams({ project: projectId }),
   };
 }
 
@@ -38,5 +38,5 @@ export type McpNav = {
   showBrowse: () => void;
   showClient: (key: string) => void;
   showTab: (value: string) => void;
-  showProject: (projectId: string) => void;
+  selectProject: (projectId: string) => void;
 };

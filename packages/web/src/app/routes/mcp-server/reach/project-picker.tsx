@@ -22,18 +22,18 @@ type ProjectPickerProps = {
 
 export function ProjectPicker({ projectId, onSelect }: ProjectPickerProps) {
   const { data: projects = [] } = projectCollectionUtils.useAll();
-  const selected = projects.find((project) => project.id === projectId);
+  const selectedProject = projects.find((project) => project.id === projectId);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="h-9 gap-2 px-3">
           <span className="text-muted-foreground">{t('Project')}</span>
-          {selected ? (
+          {selectedProject ? (
             <ApProjectDisplay
-              title={getProjectName(selected)}
-              icon={selected.icon}
-              projectType={selected.type}
+              title={getProjectName(selectedProject)}
+              icon={selectedProject.icon}
+              projectType={selectedProject.type}
               iconClassName="size-[18px] text-[11px]"
               titleClassName="font-medium"
               maxLengthToNotShowTooltip={24}

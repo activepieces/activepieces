@@ -40,7 +40,7 @@ export default function McpServerPage() {
         {nav.tab === 'reach' ? (
           <ReachTab
             projectId={nav.projectId}
-            onSelectProject={nav.showProject}
+            onSelectProject={nav.selectProject}
           />
         ) : nav.tab === 'connections' ? (
           <GrantsTab />

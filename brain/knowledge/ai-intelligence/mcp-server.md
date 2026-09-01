@@ -11,6 +11,7 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 **Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants`.
 **Client** — one `mcp_oauth_client` registration row. Not a stable identity: Claude Code and Codex re-run DCR per sign-in, so one client-as-a-product yields many rows, and one user re-authenticating yields many grants. _Avoid_: using "client" for the thing being revoked.
 **Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the tab label "Connections" and the `/mcp-server/connections` URL are deliberate copy, not the domain term — the code under `app/routes/mcp-server/grants/` says grant.
+**Reach** — the piece actions a connected client can call in one project: the `/mcp-server/reach` tab, and the verb the Connect and Connections copy already uses ("what it can reach", "the project it can reach"). Scoped to piece actions only, never the flow, table or run tools. _Avoid_ as the label for this: "Tools" (means the locked/controllable list in project settings), "Capabilities" (over-promises — implies the non-piece tools too), "Actions" (means flow steps), "Pieces" (reads as the piece-set admin page this tab links out to), "Permissions" (RBAC, and nothing here is editable — the page is a mirror).
 
 ### Entities & services
 

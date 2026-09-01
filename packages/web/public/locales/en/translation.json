@@ -2647,7 +2647,7 @@
   "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.": "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.",
   "This project's pieces are controlled by a Piece Set.": "This project's pieces are controlled by a Piece Set.",
   "Review piece set": "Review piece set",
-  "destructiveActionCount": "{count, plural, =1 {1 destructive} other {# destructive}}",
+  "reachDestructiveActionCount": "{count, plural, =1 {1 destructive} other {# destructive}}",
   "reachActionCount": "{count, plural, =1 {1 action} other {# actions}}",
   "Opens Cursor and writes the server into ~/.cursor/mcp.json.": "Opens Cursor and writes the server into ~/.cursor/mcp.json.",
   "Paste the server URL as a custom connector. This client dials your server from the internet, so localhost will not reach it.": "Paste the server URL as a custom connector. This client dials your server from the internet, so localhost will not reach it.",

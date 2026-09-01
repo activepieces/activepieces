@@ -25,7 +25,7 @@ import { ReachPieceRow } from './reach-piece-row';
 import { reachUtils } from './reach-utils';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
-const COLLAPSED_PIECE_COUNT = 6;
+const COLLAPSED_ROW_LIMIT = 6;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
 
 export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
@@ -41,7 +41,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   });
   const isSearching = searchQuery.trim() !== '';
   const visibleRows =
-    isSearching || showAll ? rows : rows.slice(0, COLLAPSED_PIECE_COUNT);
+    isSearching || showAll ? rows : rows.slice(0, COLLAPSED_ROW_LIMIT);
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
@@ -79,7 +79,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
-          {Array.from({ length: COLLAPSED_PIECE_COUNT }).map((_, index) => (
+          {Array.from({ length: COLLAPSED_ROW_LIMIT }).map((_, index) => (
             <Skeleton key={index} className="h-16 w-full" />
           ))}
         </div>

@@ -16,13 +16,13 @@ import { cn } from '@/lib/utils';
 import { ReachablePiece } from './reach-utils';
 
 export function ReachPieceRow({ row }: { row: ReachablePiece }) {
-  const [open, setOpen] = useState(false);
-  const isOpen = row.forceExpanded || open;
+  const [isOpenedByUser, setIsOpenedByUser] = useState(false);
+  const isOpen = row.forceExpanded || isOpenedByUser;
 
   return (
     <Collapsible
       open={isOpen}
-      onOpenChange={setOpen}
+      onOpenChange={setIsOpenedByUser}
       className="border-b last:border-b-0"
     >
       <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/40">
@@ -49,7 +49,7 @@ export function ReachPieceRow({ row }: { row: ReachablePiece }) {
               variant="destructive"
               className="px-1.5 py-0 text-[10px] font-normal"
             >
-              {t('destructiveActionCount', {
+              {t('reachDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
             </Badge>
