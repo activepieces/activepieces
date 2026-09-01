@@ -1,10 +1,11 @@
 import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
-import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, PauseType, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
+import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, PauseType, ResumeReason } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { distributedLock, distributedStore } from '../database/redis-connections'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flows/flow-run/flow-run-service'
 import { flowRunSideEffects } from '../flows/flow-run/flow-run-side-effects'
+import { streamStepProgressUtils } from '../flows/flow-run/stream-step-progress'
 import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { redisMetadataKey, RunsMetadataUpsertData } from '../workers/job'
@@ -208,9 +209,7 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         platformId,
         workerHandlerId: workerHandlerId ?? waitpoint?.workerHandlerId ?? undefined,
         httpRequestId: httpRequestId ?? waitpoint?.httpRequestId ?? apId(),
-        streamStepProgress: flowRun.environment === RunEnvironment.TESTING
-            ? StreamStepProgress.WEBSOCKET
-            : StreamStepProgress.NONE,
+        streamStepProgress: await streamStepProgressUtils.forResume({ flowRun, log }),
         executionType: ExecutionType.RESUME,
         resumeReason: ResumeReason.WAITPOINT,
         jobId: `${flowRun.id}-resume-${waitpointId}`,

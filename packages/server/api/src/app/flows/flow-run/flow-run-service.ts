@@ -26,6 +26,7 @@ import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity, FlowRunWithDispatchIndex } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
+import { streamStepProgressUtils } from './stream-step-progress'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
 
@@ -188,7 +189,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                         flowRun: updatedFlowRun,
                         platformId,
                         payload: triggerPayload,
-                        streamStepProgress: StreamStepProgress.NONE,
+                        streamStepProgress: streamStepProgressUtils.forRun({ flowRun: updatedFlowRun, flowVersion }),
                         executeTrigger: true,
                         executionType: ExecutionType.BEGIN,
                         workerHandlerId: undefined,
@@ -198,7 +199,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 return addToQueue({
                     flowRun: updatedFlowRun,
                     platformId,
-                    streamStepProgress: StreamStepProgress.NONE,
+                    streamStepProgress: streamStepProgressUtils.forRun({ flowRun: updatedFlowRun, flowVersion }),
                     executionType: ExecutionType.RESUME,
                     resumeReason: ResumeReason.RETRY,
                     workerHandlerId: undefined,
@@ -217,7 +218,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     payload,
                     platformId: await projectService(log).getPlatformId(oldFlowRun.projectId),
                     executionType: ExecutionType.BEGIN,
-                    streamStepProgress: StreamStepProgress.NONE,
+                    streamStepProgress: streamStepProgressUtils.forRun({ flowRun: oldFlowRun, flowVersion: latestFlowVersion }),
                     workerHandlerId: undefined,
                     httpRequestId: undefined,
                     executeTrigger: triggerFailed,
@@ -476,13 +477,20 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
+        if (!streamStepProgressUtils.hasManualTrigger({ flowVersion })) {
+            const message = `Flow version ${flowVersionId} is not started by a manual trigger, so it cannot be run manually.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
         const triggerPayload = {}
         const platformId = await projectService(log).getPlatformId(projectId)
 
@@ -522,7 +530,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             httpRequestId: undefined,
             platformId,
             executeTrigger: false,
-            streamStepProgress: StreamStepProgress.WEBSOCKET,
+            streamStepProgress: streamStepProgressUtils.forRun({ flowRun, flowVersion }),
             sampleData: undefined,
         }, log)
     },
