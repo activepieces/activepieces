@@ -22,7 +22,7 @@ export class AddFlowApprovalWorkflow1840000000000 implements Migration {
                 "projectId" character varying(21) NOT NULL,
                 "platformId" character varying(21) NOT NULL,
                 "submitterId" character varying(21),
-                "submittedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "submittedAt" timestamp with time zone NOT NULL,
                 "approverId" character varying(21),
                 "decidedAt" timestamp with time zone,
                 "state" character varying NOT NULL,
