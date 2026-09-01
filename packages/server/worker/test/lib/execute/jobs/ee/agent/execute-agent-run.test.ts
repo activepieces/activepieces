@@ -1,7 +1,8 @@
+import { AIProviderName } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
-import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
+import { decideLoopAction, shouldRetryStream, shouldUseFastModel } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 describe('decideLoopAction', () => {
     it('finishes when a normal step produced visible output', () => {
@@ -43,6 +44,21 @@ describe('shouldRetryStream', () => {
 
     it('never retries once visible output was already streamed (avoids duplicate content)', () => {
         expect(shouldRetryStream({ producedVisibleOutput: true, streamRetries: 0 })).toBe(false)
+    })
+})
+
+describe('shouldUseFastModel', () => {
+    it('keeps the selected Azure model for the first step', () => {
+        expect(shouldUseFastModel({ provider: AIProviderName.AZURE, isFirstStep: true, fastModelAvailable: true })).toBe(false)
+    })
+
+    it('uses the fast model for the first step with other providers', () => {
+        expect(shouldUseFastModel({ provider: AIProviderName.OPENAI, isFirstStep: true, fastModelAvailable: true })).toBe(true)
+    })
+
+    it('does not use the fast model after the first step or when it is unavailable', () => {
+        expect(shouldUseFastModel({ provider: AIProviderName.OPENAI, isFirstStep: false, fastModelAvailable: true })).toBe(false)
+        expect(shouldUseFastModel({ provider: AIProviderName.OPENAI, isFirstStep: true, fastModelAvailable: false })).toBe(false)
     })
 })
 

@@ -42,6 +42,14 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
+export function shouldUseFastModel({ provider, isFirstStep, fastModelAvailable }: {
+    provider: AIProviderName
+    isFirstStep: boolean
+    fastModelAvailable: boolean
+}): boolean {
+    return provider !== AIProviderName.AZURE && isFirstStep && fastModelAvailable
+}
+
 export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
@@ -106,7 +114,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             // flips the phase to 'build', thinking comes back on for planning depth.
             const disableThinking = isFirstStep || phaseState.phase === 'discovery'
             return {
-                ...(isFirstStep && fastModel ? { model: fastModel } : {}),
+                ...(shouldUseFastModel({ provider, isFirstStep, fastModelAvailable: !isNil(fastModel) }) ? { model: fastModel } : {}),
                 activeTools: agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),
                 providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
                 ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
