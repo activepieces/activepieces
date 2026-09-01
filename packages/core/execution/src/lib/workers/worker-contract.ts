@@ -370,3 +370,10 @@ export type SendPersonalizationProgressRequest = {
     phase: string
     message: string
 }
+
+export const LONG_RUNNING_RPC_METHODS: readonly string[] = [
+    'executePieceTool',
+    'executeFlowTool',
+    'executeKnowledgeBaseTool',
+    'executeAgentTool',
+]

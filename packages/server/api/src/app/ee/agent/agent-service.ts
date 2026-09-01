@@ -6,9 +6,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
+import { publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -16,6 +17,7 @@ import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
 const DEFAULT_PAGE_SIZE = 20
+const MAX_NAMED_FLOWS_IN_USE = 3
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentAudit = { describePublished }
@@ -103,7 +105,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        await agentRepo().save({ ...omit(agent, ['published']), ...request, draft, published, visibility, sharedWithUserIds })
+        await agentRepo().save({ ...omit(agent, ['published']), ...omit(request, ['goLive']), draft, published, visibility, sharedWithUserIds })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -143,7 +145,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
     async unpublish({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
+        const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
         const unpublished = await agentRepo()
             .createQueryBuilder()
             .update()
@@ -157,7 +159,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
         const unpublishedRows: unknown[] = unpublished.raw ?? []
         if (unpublishedRows.length === 0) {
-            throw await stillUsedByFlows({ agent, blocking, verb: 'unpublishing it' })
+            throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await this.publishedFlowsUsing({ agent, projectId, userId }) })
         }
         return this.getOneOrThrow({ id, projectId, userId })
     },
@@ -185,9 +187,17 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+        const checker = await resolvePermissionChecker({ userId, projectId, log })
+        const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
+        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
+        return { total: usage.total, names: usage.names }
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
-        const blocking = flowsUsingAgent({ projectId, externalId: agent.externalId })
+        await assertMayDestroy({ agent, projectId, userId, log })
+        const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
         const deleted = await agentRepo()
             .createQueryBuilder()
             .delete()
@@ -199,42 +209,33 @@ export const agentService = (log: FastifyBaseLogger) => ({
 
         const deletedRows: unknown[] = deleted.raw ?? []
         if (deletedRows.length === 0) {
-            throw await stillUsedByFlows({ agent, blocking, verb: 'deleting it' })
+            throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await this.publishedFlowsUsing({ agent, projectId, userId }) })
         }
         return agent
     },
 })
 
-async function stillUsedByFlows({ agent, blocking, verb }: {
+function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
     agent: Agent
-    blocking: SelectQueryBuilder<FlowVersion>
-    verb: string
-}): Promise<ActivepiecesError> {
-    const names = unique((await blocking.getRawMany<{ displayName: string }>()).map((row) => `"${row.displayName}"`))
-    if (names.length === 0) {
+    flowsInUse: PublishedFlowsUsingAgent
+}): ActivepiecesError {
+    if (flowsInUse.total === 0) {
         return agentNotFound(agent.id)
     }
     return new ActivepiecesError({
         code: ErrorCode.VALIDATION,
-        params: { message: `"${agent.displayName}" is still used by ${names.join(', ')}. The reference is live, so ${verb} would break their next run — remove the step or point it elsewhere first.` },
+        params: { message: describeFlowsInUse(flowsInUse) },
     })
 }
 
-function flowsUsingAgent({ projectId, externalId }: { projectId: ProjectId, externalId: string }): SelectQueryBuilder<FlowVersion> {
-    const latestVersion = flowVersionRepo()
-        .createQueryBuilder('latest')
-        .select('latest.id')
-        .where('latest."flowId" = blocking_flow.id')
-        .orderBy('latest.created', 'DESC')
-        .addOrderBy('latest.id', 'DESC')
-        .limit(1)
-    return flowVersionRepo()
-        .createQueryBuilder('blocking_version')
-        .select('blocking_version."displayName"', 'displayName')
-        .innerJoin('flow', 'blocking_flow', 'blocking_flow.id = blocking_version."flowId"')
-        .where('blocking_flow."projectId" = :projectId', { projectId })
-        .andWhere(`(blocking_version.id = blocking_flow."publishedVersionId" OR blocking_version.id = (${latestVersion.getQuery()}))`)
-        .andWhere('blocking_version."agentIds" && :externalIds', { externalIds: [externalId] })
+function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+    const counted = total === 1 ? '1 published flow' : `${total} published flows`
+    if (names.length === 0) {
+        return `This agent is running in ${counted}. Remove it from them first.`
+    }
+    const listed = names.join(', ')
+    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
 }
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
@@ -308,6 +309,16 @@ async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log
     throw new ActivepiecesError({
         code: ErrorCode.AUTHORIZATION,
         params: { message: 'Only the person who created an agent, or a project admin, can change who sees it' },
+    })
+}
+
+async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
+    if (agent.ownerId === userId || await isProjectAdministrator({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Only the person who created an agent, or a project admin, can delete it and the conversations held with it' },
     })
 }
 
@@ -430,6 +441,13 @@ type VisibilityParams = {
     userId: UserId
     prefix: 'agent.' | ''
     isProjectAdmin: boolean
+}
+
+type AssertDestroyParams = {
+    agent: Agent
+    projectId: ProjectId
+    userId: UserId
+    log: FastifyBaseLogger
 }
 
 type AssertShareParams = {

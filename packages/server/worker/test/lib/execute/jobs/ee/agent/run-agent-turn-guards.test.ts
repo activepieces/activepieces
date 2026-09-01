@@ -61,6 +61,27 @@ describe('classifyAgentRunError', () => {
         expect(classify(apiError({ statusCode, message: 'the provider said no' }))).toBe(expected)
     })
 
+    it.each([
+        'Grok 4.1 Fast is deprecated',
+        'gemini-2.5-pro is no longer available',
+        'the model was decommissioned',
+    ])('blames the user for a 400 that names a retired model: %s', (message) => {
+        expect(classify(apiError({ statusCode: 400, message }))).toBe('user')
+    })
+
+    it('does not read the retired-model marker out of a response body, which carries error pages we did not write', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Bad Request', responseBody: '<html><footer>this endpoint is deprecated</footer></html>' }))).toBe('internal')
+    })
+
+    it('never blames the user for a retired model on the managed key, which we chose for them', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.OPENROUTER)).toBe('user')
+    })
+
+    it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
+        expect(classify(apiError({ statusCode: 400, message: "tools.0.name: should match pattern '^[a-zA-Z0-9_.-]{1,64}$'" }))).toBe('internal')
+    })
+
     it('never blames the user for the managed key, which is ours and fails everyone at once', () => {
         for (const statusCode of [401, 403]) {
             expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES)).toBe('internal')

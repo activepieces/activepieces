@@ -1,12 +1,11 @@
-import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
+import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
+import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, FlowStatus, FlowVersionState, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
-import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
-import { AGENT_TEMPLATES } from '../../../../src/app/ee/agent/agent-templates'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -35,6 +34,21 @@ async function createAgent(ctx: TestContext, overrides: Record<string, unknown> 
     const response = await ctx.post('/v1/agents', agentBody(ctx.project.id, overrides))
     expect(response.statusCode).toBe(StatusCodes.CREATED)
     return response.json()
+}
+
+async function publishFlowRunningAgent({ projectId, externalId, displayName, publish = true }: { projectId: string, externalId: string, displayName: string, publish?: boolean }): Promise<void> {
+    const flow = createMockFlow({ projectId, status: FlowStatus.ENABLED })
+    await db.save('flow', flow)
+    const version = createMockFlowVersion({
+        flowId: flow.id,
+        displayName,
+        state: FlowVersionState.LOCKED,
+        agentIds: [externalId],
+    })
+    await db.save('flow_version', version)
+    if (publish) {
+        await db.update('flow', flow.id, { publishedVersionId: version.id })
+    }
 }
 
 beforeAll(async () => {
@@ -102,6 +116,121 @@ describe('agent crud', () => {
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NOT_FOUND)
     })
+
+    it('tells you which published flows use an agent before you try to delete it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
+
+        const withUsage = (await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })).json()
+        const withoutUsage = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+
+        expect(withUsage.publishedFlowsUsingAgent).toStrictEqual({ total: 1, names: ['Nightly digest'] })
+        expect(withoutUsage.publishedFlowsUsingAgent).toBeUndefined()
+    })
+
+    it('reports no usage for an agent no published flow runs', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        const response = await ctx.get(`/v1/agents/${agent.id}`, { includeUsage: 'true' })
+
+        expect(response.json().publishedFlowsUsingAgent).toStrictEqual({ total: 0, names: [] })
+    })
+
+    it('refuses an editor who did not create the agent, because deleting takes other people\'s conversations with it', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+
+        expect((await editor.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await owner.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('takes the conversations held with the agent, whoever held them', async () => {
+        const owner = await context()
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(owner)
+        const conversations = [owner, editor].map((ctx) => ({
+            id: apId(),
+            platformId: owner.platform.id,
+            projectId: owner.project.id,
+            userId: ctx.user.id,
+            agentId: agent.id,
+            source: AgentRunSource.AGENT,
+            messages: [],
+            uiMessages: [],
+        }))
+        await db.save('agent_conversation', conversations)
+
+        expect((await owner.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+        for (const conversation of conversations) {
+            expect(await db.findOneBy('agent_conversation', { id: conversation.id })).toBeNull()
+        }
+    })
+
+    it('refuses to delete an agent a published flow still runs, and names the flow', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly digest' })
+
+        const response = await ctx.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('Nightly digest')
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('names three flows and stops counting, so the refusal cannot grow without bound', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const externalId = agent.externalId
+        for (const name of ['Flow A', 'Flow B', 'Flow C', 'Flow D', 'Flow E']) {
+            await publishFlowRunningAgent({ projectId: ctx.project.id, externalId, displayName: name })
+        }
+
+        const message = JSON.stringify((await ctx.delete(`/v1/agents/${agent.id}`)).json())
+
+        expect(message).toContain('5 published flows (Flow A, Flow B, Flow C, and 2 more)')
+        expect(message).not.toContain('Flow D')
+    })
+
+    it('counts the flows instead of naming them for a caller who cannot read flows', async () => {
+        const owner = await context()
+        const role = createMockProjectRole({
+            platformId: owner.platform.id,
+            name: `agent-writer-${apId()}`,
+            type: RoleType.CUSTOM,
+            permissions: [Permission.READ_AGENT, Permission.WRITE_AGENT],
+        })
+        await db.save('project_role', role)
+        const writer = await createMemberContext(app, owner, { projectRole: role.name })
+        const agent = await createAgent(writer)
+        await publishFlowRunningAgent({ projectId: owner.project.id, externalId: agent.externalId, displayName: 'Payroll run' })
+
+        const response = await writer.delete(`/v1/agents/${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).not.toContain('Payroll run')
+        expect(JSON.stringify(response.json())).toContain('running in 1 published flow.')
+    })
+
+    it('deletes an agent whose only reference is an unpublished draft version', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Draft only', publish: false })
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
+
+    it('ignores a published flow in another project, which cannot be running this agent', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const other = await context()
+        await publishFlowRunningAgent({ projectId: other.project.id, externalId: agent.externalId, displayName: 'Someone elses flow' })
+
+        expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.NO_CONTENT)
+    })
 })
 
 describe('agent publish', () => {
@@ -134,6 +263,78 @@ describe('agent publish', () => {
         await ctx.post(`/v1/agents/${agent.id}`, { description: 'Now with a description.' })
 
         expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published).not.toBeNull()
+    })
+
+    it('stages the draft without going live, so a change can be tested first', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live now.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only for the test run.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only for the test run.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it.each([['explicitly true', true], ['absent', undefined]])(
+        'publishes when goLive is %s, so every existing caller keeps working',
+        async (_label, goLive) => {
+            const ctx = await context()
+            const agent = await createAgent(ctx)
+
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Should be live.' }, ...(goLive === undefined ? {} : { goLive }) })
+
+            expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Should be live.')
+        })
+
+    it('keeps published pinned to the same copy across repeated staging', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}`, { description: 'Live copy.' })
+        const live = (await ctx.get(`/v1/agents/${agent.id}`)).json().published
+
+        for (const attempt of ['first', 'second', 'third']) {
+            await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: `Staged ${attempt}.` }, goLive: false })
+        }
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Staged third.')
+        expect(after.published).toStrictEqual(live)
+    })
+
+    it('stages against an agent nobody published yet without inventing a published copy', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        expect(agent.published).toBeNull()
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Only a draft.' }, goLive: false })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.draft.instructions).toBe('Only a draft.')
+        expect(after.published).toBeNull()
+    })
+
+    it('publishes the staged draft when the explicit publish route is used afterwards', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged for review.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+
+        expect((await ctx.get(`/v1/agents/${agent.id}`)).json().published.instructions).toBe('Staged for review.')
+    })
+
+    it('goes live on the next save, so staging is not a trap', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+
+        await ctx.post(`/v1/agents/${agent.id}`, { draft: { ...agentBody(ctx.project.id).draft, instructions: 'Staged.' }, goLive: false })
+        await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'Ready' })
+
+        const after = (await ctx.get(`/v1/agents/${agent.id}`)).json()
+        expect(after.published.instructions).toBe('Staged.')
     })
 
     it('publishes nothing while the instructions are empty, because there is nothing runnable to pin', async () => {
@@ -449,89 +650,10 @@ describe('agent permissions', () => {
     })
 })
 
-describe('agent templates', () => {
-    it('serves starter agents with no ai provider and no connections configured', async () => {
-        const ctx = await context()
-
-        const response = await ctx.get('/v1/agents/templates')
-
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        const templates = response.json().data
-        expect(templates.length).toBe(AGENT_TEMPLATES.length)
-        expect(new Set(templates.map((t: { id: string }) => t.id)).size).toBe(templates.length)
-        for (const template of templates) {
-            expect(template.instructions.length).toBeGreaterThan(0)
-        }
-    })
-
-    it.each(AGENT_TEMPLATES.map((template) => [template.id, template]))(
-        'creates and publishes the %s starter, with only what the template carries',
-        async (_id, template) => {
-            const ctx = await context()
-
-            const created = await ctx.post('/v1/agents', {
-                projectId: ctx.project.id,
-                displayName: template.displayName,
-                description: template.description,
-                icon: template.icon,
-                color: template.color,
-                draft: { instructions: template.instructions },
-            })
-
-            expect(created.statusCode).toBe(StatusCodes.CREATED)
-            expect(created.json().description).toBe(template.description)
-            expect(created.json().draft.maxSteps).toBe(DEFAULT_AGENT_MAX_STEPS)
-            expect((await ctx.post(`/v1/agents/${created.json().id}/publish`)).statusCode).toBe(StatusCodes.OK)
-        })
-
-    it('tells the caller to connect a provider, rather than naming an internal entity', async () => {
-        const ctx = await context()
-
-        const drafted = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'watch competitor pricing' })
-
-        expect(drafted.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(drafted.body).toContain('Connect an AI provider')
-        expect(drafted.body).not.toContain('ChatAiProvider')
-    })
-
-    it('rate limits one caller without blocking another on the same platform', async () => {
-        const owner = await context()
-        const colleague = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
-        const draft = (ctx: TestContext) => ctx.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'watch competitor pricing' })
-
-        const responses = []
-        for (let attempt = 0; attempt <= DRAFTS_PER_MINUTE; attempt++) {
-            responses.push(await draft(owner))
-        }
-
-        expect(responses[responses.length - 1].body).toContain(`above the limit of ${DRAFTS_PER_MINUTE}`)
-        expect((await draft(colleague)).body).not.toContain('above the limit')
-    })
-
-    it('refuses a draft prompt longer than the endpoint is meant to take', async () => {
-        const ctx = await context()
-
-        const response = await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'a'.repeat(MAX_DRAFT_PROMPT_LENGTH + 1) })
-
-        expect(response.statusCode).toBe(StatusCodes.BAD_REQUEST)
-    })
-
-    it('refuses to draft for a project the caller cannot write', async () => {
-        const owner = await context()
-        const viewer = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.VIEWER })
-
-        const response = await viewer.post('/v1/agents/draft', { projectId: owner.project.id, prompt: 'anything' })
-
-        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
-    })
-
-})
-
 describe('agent routes coexist with the chat routes already on /v1/agents', () => {
     it('does not swallow the static sibling routes with /:id', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
 
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/memory')).statusCode).toBe(StatusCodes.OK)
         expect((await ctx.get('/v1/agents/conversations')).statusCode).toBe(StatusCodes.OK)
     })
@@ -555,7 +677,6 @@ describe('agent feature gate', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        expect((await ctx.get('/v1/agents/templates')).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })

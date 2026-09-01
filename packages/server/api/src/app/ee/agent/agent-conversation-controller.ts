@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -22,7 +22,6 @@ import { findConnectionsForPiece } from './tools/agent-tools'
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
 
 // Tools configured before 0.87 stored the pin as a template rather than the bare id.
-const CONNECTION_TEMPLATE = /^\{\{connections\['([^']+)'\]\}\}$/
 
 export const agentConversationController: FastifyPluginAsyncZod = async (app) => {
 
@@ -341,7 +340,8 @@ async function pinnedAccounts({ conversation, pieceName, platformId, userId, log
             return []
         }
         const auth = tool.pieceMetadata.predefinedInput?.auth
-        return isNil(auth) ? [] : [auth.match(CONNECTION_TEMPLATE)?.[1] ?? auth]
+        const externalId = connectionTemplate.unwrapExternalId(auth)
+        return isNil(externalId) ? [] : [externalId]
     })
     return { externalIds, projectId: agent.projectId }
 }

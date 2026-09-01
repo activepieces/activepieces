@@ -23,6 +23,7 @@ import { agentPrompt } from '../prompt/agent-prompt'
 
 const AGENT_LIST_LIMIT = 50
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const ACCOUNT_CHOICE_LIMIT = 10
 const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
     AppConnectionType.OAUTH2,
     AppConnectionType.CLOUD_OAUTH2,
@@ -274,6 +275,37 @@ async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }:
     return afterDraftChange({ agent: updated, publish, projectId, userId, log })
 }
 
+async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
+    piece: { displayName: string }
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId: string } | { error: string, accounts?: { label: string, externalId: string }[] }> {
+    const { data } = await appConnectionService(log).list({
+        projectId,
+        platformId,
+        pieceName,
+        displayName: undefined,
+        status: undefined,
+        cursorRequest: null,
+        scope: undefined,
+        externalIds: undefined,
+        limit: ACCOUNT_CHOICE_LIMIT,
+    })
+    if (data.length === 0) {
+        return { error: `No ${piece.displayName} account is connected in this project. Call ap_show_connection_picker for ${piece.displayName} so they can connect one here, then call ap_add_agent_tool again with the connectionExternalId it gives you. Do not add the tool without an account: the agent would have to ask which account on every single run.` }
+    }
+    if (data.length === 1) {
+        return { externalId: data[0].externalId }
+    }
+    // The ids go in a field rather than the sentence, so the model does not read them out loud.
+    return {
+        error: `This project has ${data.length} ${piece.displayName} accounts. Call ap_show_connection_picker for ${piece.displayName} and let the person choose, then call ap_add_agent_tool again with connectionExternalId set to their pick. Do not choose for them.`,
+        accounts: data.map((connection) => ({ label: connection.displayName, externalId: connection.externalId })),
+    }
+}
+
 async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
@@ -293,9 +325,9 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     if (isNil(piece) || missing.length > 0) {
         return { error: `${normalizedPiece} has no action called ${missing.join(' or ')}. Look it up with ap_research_pieces before adding it.` }
     }
-    const connectionExternalId = nonEmpty(toolInput.connectionExternalId)
-    if (!isNil(connectionExternalId)) {
-        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: connectionExternalId })
+    const requested = nonEmpty(toolInput.connectionExternalId)
+    if (!isNil(requested)) {
+        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: requested })
         if (isNil(connection)) {
             return { error: 'No connection with that externalId in this project. Call ap_list_connections and pass one of those.' }
         }
@@ -303,6 +335,15 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
             return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
         }
     }
+    // The caller already holds the piece, so whether it needs an account is known here without
+    // asking the database again.
+    const resolved = !isNil(requested) || isNil(piece.auth)
+        ? { externalId: requested }
+        : await resolveConnectionToPin({ piece, pieceName: normalizedPiece, projectId, platformId, log })
+    if ('error' in resolved) {
+        return resolved
+    }
+    const connectionExternalId = resolved.externalId
     const added: AgentTool[] = actionNames.map((actionName) => ({
         type: AgentToolType.PIECE,
         toolName: mcpToolNameUtils.createPieceToolName(normalizedPiece, actionName),

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	fromObjectTypeAssociationDropdown,
@@ -49,7 +49,7 @@ export const createAssociationsAction = createAction({
 	async run(context) {
 		const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		if(context.propsValue.toObjectIds === undefined) {
 			throw new Error('Please provide To Object IDs');

@@ -2,7 +2,7 @@ import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowVersionId, isNi
 import { FlowOperationRequest, flowOperations, FlowOperationType, flowStructureUtil, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, Note } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, FindOneOptions } from 'typeorm'
+import { EntityManager, FindOneOptions, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -15,6 +15,26 @@ import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
 
 export const flowVersionRepo = repoFactory(FlowVersionEntity)
+
+export const publishedFlowVersionsUsingAgent = ({ projectId, agentExternalId, alias = 'flow_version' }: { projectId: ProjectId, agentExternalId: string, alias?: string }): SelectQueryBuilder<FlowVersion> => flowVersionRepo()
+    .createQueryBuilder(alias)
+    .innerJoin('flow', `${alias}_flow`, `${alias}_flow.id = ${alias}."flowId"`)
+    .where(`${alias}_flow."projectId" = :projectId`, { projectId })
+    .andWhere(`${alias}.id = ${alias}_flow."publishedVersionId"`)
+    .andWhere(`${alias}."agentIds" && :agentExternalIds`, { agentExternalIds: [agentExternalId] })
+
+export const publishedFlowsUsingAgent = async ({ projectId, agentExternalId, nameLimit }: { projectId: ProjectId, agentExternalId: string, nameLimit: number }): Promise<PublishedFlowsUsingAgent> => {
+    const referencing = () => publishedFlowVersionsUsingAgent({ projectId, agentExternalId })
+    const [total, named] = await Promise.all([
+        referencing().getCount(),
+        referencing()
+            .select('flow_version."displayName"', 'displayName')
+            .orderBy('flow_version."displayName"', 'ASC')
+            .limit(nameLimit)
+            .getRawMany<{ displayName: string }>(),
+    ])
+    return { total, names: named.map((row) => row.displayName) }
+}
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async applyOperation({
@@ -410,3 +430,7 @@ type ApplyOperationParams = {
     entityManager?: EntityManager
 }
 
+export type PublishedFlowsUsingAgent = {
+    total: number
+    names: string[]
+}
