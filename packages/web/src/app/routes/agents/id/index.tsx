@@ -211,7 +211,9 @@ const AgentDangerZone = ({
   return (
     <div className="mt-2 flex flex-col gap-3 rounded-lg border border-destructive/30 p-4">
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold">{t('Delete this agent')}</span>
+        <span className="text-[13px] font-semibold leading-4">
+          {t('Delete this agent')}
+        </span>
         <span className="text-[13px] leading-4 text-muted-foreground">
           {t(
             'Its instructions, its tools, and every conversation held with it go with it.',
@@ -243,16 +245,31 @@ const AgentDangerZone = ({
 
 const AgentIdentityPopover = ({
   form,
+  focus,
   children,
 }: {
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
+  focus?: 'description';
   children: React.ReactNode;
 }) => (
   <Popover>
     <PopoverTrigger asChild>{children}</PopoverTrigger>
-    <PopoverContent align="start" className="w-[340px]">
+    <PopoverContent
+      align="start"
+      className="w-[340px]"
+      onOpenAutoFocus={(event) => {
+        if (focus !== 'description') {
+          return;
+        }
+        event.preventDefault();
+        const field = event.currentTarget as HTMLElement | null;
+        field
+          ?.querySelector<HTMLTextAreaElement>('[name="description"]')
+          ?.focus();
+      }}
+    >
       <div className="flex flex-col gap-4">
         <FormField
           control={form.control}
@@ -830,8 +847,8 @@ const AgentEditScreen = ({
                 icon={form.watch('icon')}
                 color={form.watch('color')}
               />
-              <span className="absolute -bottom-1 -end-1 flex size-[18px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground/70 transition-colors group-hover:text-foreground">
-                <Pencil size={9} />
+              <span className="absolute -bottom-[3px] -end-[3px] flex size-[19px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/30 group-hover:bg-accent group-hover:text-foreground">
+                <Pencil size={11} strokeWidth={2.2} />
               </span>
             </button>
           </AgentIdentityPopover>
@@ -840,7 +857,7 @@ const AgentEditScreen = ({
               <button
                 type="button"
                 aria-label={t('Edit name and appearance')}
-                className="truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-w-0 truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {form.watch('displayName')}
               </button>
@@ -859,10 +876,10 @@ const AgentEditScreen = ({
               <span aria-hidden className="shrink-0 text-border">
                 &middot;
               </span>
-              <AgentIdentityPopover form={form}>
+              <AgentIdentityPopover form={form} focus="description">
                 <button
                   type="button"
-                  aria-label={t('Edit name and appearance')}
+                  aria-label={t('Edit the description')}
                   className="min-w-0 truncate rounded text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {describeAgent(form.watch('description'))}
@@ -910,7 +927,7 @@ const AgentEditScreen = ({
                   <TabsTrigger
                     value="edit"
                     variant="outline"
-                    className="h-full items-center gap-2"
+                    className="h-full items-center gap-2 text-[13px]"
                   >
                     <Sparkles size={14} />
                     {t('Edit with AI')}
@@ -918,7 +935,7 @@ const AgentEditScreen = ({
                   <TabsTrigger
                     value="test"
                     variant="outline"
-                    className="h-full items-center gap-2"
+                    className="h-full items-center gap-2 text-[13px]"
                     disabled={stageDraft.isPending || updateAgent.isPending}
                   >
                     {stageDraft.isPending ? (
@@ -967,7 +984,7 @@ const AgentEditScreen = ({
                   }}
                 />
                 {form.formState.errors.root?.serverError && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-[13px] leading-4 text-destructive">
                     {form.formState.errors.root.serverError.message}
                   </p>
                 )}
@@ -984,7 +1001,7 @@ const AgentBuilderWelcome = () => (
   <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
     <Sparkles size={22} className="text-primary" />
     <span className="text-base font-semibold">{t('Describe a change')}</span>
-    <span className="max-w-[320px] text-sm text-muted-foreground">
+    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
       {t('Try “Only reply to paying customers” or “Add Slack and Notion”.')}
     </span>
   </div>
@@ -1005,7 +1022,9 @@ const TestPane = ({
 }) =>
   !isNil(blockedReason) ? (
     <div className="flex min-h-0 grow flex-col items-center justify-center px-6 text-center">
-      <span className="text-sm font-semibold">{blockedReason}</span>
+      <span className="text-[13px] font-semibold leading-4">
+        {blockedReason}
+      </span>
     </div>
   ) : (
     <div className="flex min-h-0 grow flex-col">
@@ -1028,7 +1047,7 @@ const AgentTestWelcome = () => (
     <span className="text-base font-semibold">
       {t('Try it before it goes live')}
     </span>
-    <span className="max-w-[320px] text-sm text-muted-foreground">
+    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
       {t('Give it a real task. It runs on the settings beside you.')}
     </span>
   </div>
