@@ -420,7 +420,8 @@
                            "admin-guide/security/audit-logs/user-password-reset",
                            "admin-guide/security/audit-logs/signing-key-created"
                         ]
-                     }
+                    },
+                    "admin-guide/guides/event-streaming"
                   ]
                }
             ]
