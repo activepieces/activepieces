@@ -10,10 +10,12 @@ import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { chatDebug } from '@/lib/chat-debug-logger';
+export const CLOUD_HOSTNAME = 'cloud.activepieces.com';
+
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
 
 export const API_BASE_URL = isRunningCloudInDevMode
-  ? 'https://cloud.activepieces.com'
+  ? `https://${CLOUD_HOSTNAME}`
   : typeof window !== 'undefined'
   ? window.location.origin
   : '';

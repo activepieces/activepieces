@@ -34,6 +34,16 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
+### Product Telemetry
+
+Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.productAnalyticsEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
+
+Gotchas:
+- **Two independent PostHog paths exist and they are gated differently.** Product analytics obeys the per-platform switch; the license-key events (`total_runs_per_day`, `ai_usage_per_run`, `chat_message`, `platform_setup_report`) go through `captureBillingEvent` and deliberately do **not**, because PostHog is also the billing transport and a customer must not be able to switch off their own meter. Never "consistency-fix" that by routing a billing event through the gate.
+- **The worker container never reads the switch at all** — it has no path to `platform_configuration`.
+- **Legacy self-hosted versions emit `run.created` once per flow run, not once per flow per day.** Anything predating the Oct-2024 aggregation commit (`d6f9e31aba`) fires per run and its payload carries no `count` field — that absence is how to recognise one. Current versions fire once per (project, flow, environment) per day, on the `50 23 * * *` cron. So a raw `run.created` count is dominated by whatever old installs are still reporting and is not a measure of activity: split by `activepiecesVersion` before trusting any aggregate over it.
+- **Pre-login capture happens only on `cloud.activepieces.com`** — the browser cannot read a platform's row before a session exists, so that hostname is the whole of the exception (see the decision). `canary.activepieces.com` and the `*.preview.activepieces.dev` envs are therefore excluded, which means **the pre-login funnel cannot be exercised on canary or a preview environment** — verify it on `cloud.activepieces.com`, or add the host.
+
 ### Flow Failure Alerts (EE)
 
 Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis counter `flow_fail_count:<flowVersionId>` (1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.

@@ -1,3 +1,4 @@
+import { unique } from '@activepieces/core-utils'
 import { TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
@@ -8,6 +9,7 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
+import { platformConfigurationService } from '../../platform/platform-configuration.service'
 import { resumeController } from '../../waitpoints/resume-controller'
 import { handleResumeDelayWaitpoint } from '../../waitpoints/resume-delay-handler'
 import { waitpointController } from '../../waitpoints/waitpoint-controller'
@@ -24,9 +26,6 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     await app.register(resumeController, { prefix: '/v1/flow-runs' })
     await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
-        if (!telemetry(app.log).isEnabled()) {
-            return
-        }
         app.log.info({
             name: SystemJobName.RUN_TELEMETRY,
         }, 'Run telemetry started')
@@ -42,7 +41,15 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                 .groupBy('"projectId", "flowId", "environment"')
                 .getRawMany()
         })
+        const eligibleProjectIds = new Set(
+            await platformConfigurationService(app.log).filterProjectsWithProductTelemetryEnabled({
+                projectIds: unique(projectFlowCounts.map((row) => row.projectId)),
+            }),
+        )
         for (const { projectId, flowId, environment, count } of projectFlowCounts) {
+            if (!eligibleProjectIds.has(projectId)) {
+                continue
+            }
             app.log.info({
                 project: { id: projectId },
                 flow: { id: flowId },
@@ -50,13 +57,16 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                 count: parseInt(count, 10),
             }, 'Tracking flow run created')
             rejectedPromiseHandler(
-                telemetry(app.log).trackProject(projectId, {
-                    name: TelemetryEventName.FLOW_RUN_CREATED,
-                    payload: {
-                        projectId,
-                        flowId,
-                        environment,
-                        count: parseInt(count, 10),
+                telemetry(app.log).trackProject({
+                    projectId,
+                    event: {
+                        name: TelemetryEventName.FLOW_RUN_CREATED,
+                        payload: {
+                            projectId,
+                            flowId,
+                            environment,
+                            count: parseInt(count, 10),
+                        },
                     },
                 }),
                 app.log,

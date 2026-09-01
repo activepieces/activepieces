@@ -22,4 +22,8 @@ We value transparency in data collection and assure you that we do not collect a
 
 # Opting out?
 
-To opt out, set the environment variable `AP_TELEMETRY_ENABLED=false`
+Go to **Platform → Infrastructure → Configurations** and switch **Product analytics** off. The setting is stored per platform, so an instance hosting several platforms controls each one separately.
+
+`AP_TELEMETRY_ENABLED=false` still works as a starting value: each platform's setting is created the first time it is read and takes the variable's value, so a self-hosted instance with the variable set to `false` is opted out from the start and stays opted out through the upgrade. Once the setting exists, the toggle governs it and changing the variable has no further effect.
+
+Two events happen before any platform can be resolved — requesting and verifying an email sign-in code. On a self-hosted instance these are attributed to your platform whenever one exists, so the toggle governs them like everything else. Only on Activepieces Cloud, and only for an identity that belongs to no platform yet, is an event sent without a platform to consult.

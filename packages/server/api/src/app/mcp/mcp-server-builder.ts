@@ -147,9 +147,12 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
 
             const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: args, returnsResponse, log })
 
-            rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
-                name: TelemetryEventName.MCP_TOOL_CALLED,
-                payload: { mcpId: projectId, toolName },
+            rejectedPromiseHandler(telemetry(log).trackProject({
+                projectId,
+                event: {
+                    name: TelemetryEventName.MCP_TOOL_CALLED,
+                    payload: { mcpId: projectId, toolName },
+                },
             }), log)
 
             return result

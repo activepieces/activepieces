@@ -131,11 +131,14 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
     try {
         if (identity.type === McpServerType.PLATFORM) {
             if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
-                rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
-                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                    payload: {
-                        platformId: identity.platformId,
-                        userId: identity.userId,
+                rejectedPromiseHandler(telemetry(log).trackPlatform({
+                    platformId: identity.platformId,
+                    event: {
+                        name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                        payload: {
+                            platformId: identity.platformId,
+                            userId: identity.userId,
+                        },
                     },
                 }), log)
             }
@@ -143,11 +146,14 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
             return { mcp, userId: identity.userId }
         }
         if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
-            rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
-                name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                payload: {
-                    projectId: identity.projectId,
-                    userId: identity.userId,
+            rejectedPromiseHandler(telemetry(log).trackProject({
+                projectId: identity.projectId,
+                event: {
+                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                    payload: {
+                        projectId: identity.projectId,
+                        userId: identity.userId,
+                    },
                 },
             }), log)
         }

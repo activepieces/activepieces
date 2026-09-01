@@ -1,14 +1,13 @@
-import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
+import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
 import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
-
-const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 let posthogInstance: PostHog | null = null
 function getPostHog(): PostHog {
@@ -25,8 +24,8 @@ export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
 const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
-        if (!telemetryEnabled) {
+    async identify({ identity, platformId, user, projectId }: IdentifyParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
         getPostHog().identify({
@@ -44,43 +43,34 @@ export const telemetry = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
+    async trackPlatform({ platformId, event }: TrackPlatformParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
         const platform = await platformService(log).getOneOrThrow(platformId)
-        await this.trackUser(platform.ownerId, event, { platform: platformId })
+        await captureUserEvent({ userId: platform.ownerId, platformId, event, log })
     },
-    async trackProject(
-        projectId: ProjectId,
-        event: TelemetryEvent,
-    ): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
+    async trackProject({ projectId, event }: TrackProjectParams): Promise<void> {
         const project = await projectService(log).getOne(projectId)
-        return this.trackUser(project!.ownerId, event, { platform: project!.platformId })
-    },
-    async trackIdentity(identityId: string, event: TelemetryEvent): Promise<void> {
-        return this.trackUser(identityId, event)
-    },
-    isEnabled: () => telemetryEnabled,
-    async trackUser(userId: UserId, event: TelemetryEvent, groups?: Record<string, string>): Promise<void> {
-        if (!telemetryEnabled) {
+        if (isNil(project)) {
             return
         }
-        const payloadEvent = {
-            distinctId: userId,
-            event: event.name,
-            properties: {
-                ...event.payload,
-                ...(await getMetadata()),
-                datetime: new Date().toISOString(),
-            },
-            groups,
+        return this.trackUser({ userId: project.ownerId, platformId: project.platformId, event })
+    },
+    async trackIdentity({ identityId, platformId, event }: TrackIdentityParams): Promise<void> {
+        if (!isNil(platformId)) {
+            return this.trackUser({ userId: identityId, platformId, event })
         }
-        log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        getPostHog().capture(payloadEvent)
+        if (system.getEdition() !== ApEdition.CLOUD) {
+            return
+        }
+        await captureUserEvent({ userId: identityId, platformId, event, log })
+    },
+    async trackUser({ userId, platformId, event }: TrackUserParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
+            return
+        }
+        await captureUserEvent({ userId, platformId, event, log })
     },
 })
 
@@ -119,6 +109,21 @@ function onceToday(key: string): boolean {
 }
 
 export const telemetryDedupe = { onceToday }
+
+async function captureUserEvent({ userId, platformId, event, log }: CaptureUserEventParams): Promise<void> {
+    const payloadEvent = {
+        distinctId: userId,
+        event: event.name,
+        properties: {
+            ...event.payload,
+            ...(await getMetadata()),
+            datetime: new Date().toISOString(),
+        },
+        ...spreadIfDefined('groups', isNil(platformId) ? null : { platform: platformId }),
+    }
+    log.info(payloadEvent, '[Telemetry#captureUserEvent] sending event')
+    getPostHog().capture(payloadEvent)
+}
 
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()
@@ -171,3 +176,39 @@ export type BillingEventPayload =
     | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
 
 type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload
+
+type IdentifyParams = {
+    identity: UserIdentity
+    platformId: string
+    user?: User
+    projectId?: ProjectId
+}
+
+type TrackPlatformParams = {
+    platformId: string
+    event: TelemetryEvent
+}
+
+type TrackProjectParams = {
+    projectId: ProjectId
+    event: TelemetryEvent
+}
+
+type TrackIdentityParams = {
+    identityId: string
+    platformId: string | null
+    event: TelemetryEvent
+}
+
+type TrackUserParams = {
+    userId: UserId
+    platformId: string
+    event: TelemetryEvent
+}
+
+type CaptureUserEventParams = {
+    userId: UserId
+    platformId: string | null
+    event: TelemetryEvent
+    log: FastifyBaseLogger
+}
