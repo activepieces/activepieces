@@ -25,6 +25,12 @@ export const languageTranslationOutputSchema: OutputSchema = {
         { key: 'clean_up_tokenization_spaces', label: 'Clean Up Spaces', format: 'boolean' },
         { key: 'src_lang', label: 'Source Language Code' },
         { key: 'tgt_lang', label: 'Target Language Code' },
+        {
+          key: 'max_length',
+          label: 'Max Length',
+          format: 'number',
+          description: 'Only present when Max Translation Length is set.',
+        },
       ],
     },
     rawResultField('rawResult'),

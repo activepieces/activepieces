@@ -231,9 +231,7 @@ export const languageTranslation = createAction({
       clean_up_tokenization_spaces?: boolean;
       src_lang?: string;
       tgt_lang?: string;
-      generate_parameters?: {
-        max_length?: number;
-      };
+      max_length?: number;
     } = {};
 
     if (cleanUpSpaces !== undefined) {
@@ -249,9 +247,7 @@ export const languageTranslation = createAction({
     }
 
     if (maxLength !== undefined && maxLength > 0) {
-      parameters.generate_parameters = {
-        max_length: maxLength,
-      };
+      parameters.max_length = maxLength;
     }
 
     if (Object.keys(parameters).length > 0) {
