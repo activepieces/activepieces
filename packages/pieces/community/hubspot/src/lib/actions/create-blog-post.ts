@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { blogAuthorDropdown, blogUrlDropdown } from '../common/props';
 import { createBlogPostOutputSchema } from '../output-schemas';
@@ -62,7 +62,7 @@ export const createBlogPostAction = createAction({
 		const createdPost = await httpClient.sendRequest<Record<string, any>>({
 			method: HttpMethod.POST,
 			url: 'https://api.hubapi.com/content/api/v2/blog-posts',
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 			body: {
 				blog_author_id: authorId,
 				content_group_id: contentGroupId,
@@ -80,7 +80,7 @@ export const createBlogPostAction = createAction({
 			await httpClient.sendRequest({
 				method: HttpMethod.POST,
 				url: `https://api.hubapi.com/content/api/v2/blog-posts/${createdPost.body['id']}/publish-action`,
-				authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 				body: {
 					action: 'schedule-publish',
 				},
@@ -90,7 +90,7 @@ export const createBlogPostAction = createAction({
 		const postDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `https://api.hubapi.com/content/api/v2/blog-posts/${createdPost.body['id']}`,
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 		});
 
         return postDetails.body

@@ -1,9 +1,10 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   Agent,
+  AgentWithUsage,
+  GetAgentRequest,
   MAX_AGENT_PAGE_SIZE,
   AgentSummary,
-  AgentTemplate,
   CreateAgentRequest,
   DraftAgentRequest,
   DraftAgentResponse,
@@ -41,8 +42,10 @@ export const agentsApi = {
     }
     return { data: collected, next: cursor ?? null, previous: null };
   },
-  get(id: string): Promise<Agent> {
-    return api.get<Agent>(`/v1/agents/${id}`);
+  get(id: string, request?: GetAgentRequest): Promise<AgentWithUsage> {
+    return api.get<AgentWithUsage>(`/v1/agents/${id}`, {
+      ...(request?.includeUsage === true ? { includeUsage: 'true' } : {}),
+    });
   },
   create(request: CreateAgentRequest): Promise<Agent> {
     return api.post<Agent>('/v1/agents', request);
@@ -50,10 +53,10 @@ export const agentsApi = {
   update(id: string, request: UpdateAgentRequest): Promise<Agent> {
     return api.post<Agent>(`/v1/agents/${id}`, request);
   },
-  templates(): Promise<SeekPage<AgentTemplate>> {
-    return api.get<SeekPage<AgentTemplate>>('/v1/agents/templates');
-  },
   draft(request: DraftAgentRequest): Promise<DraftAgentResponse> {
     return api.post<DraftAgentResponse>('/v1/agents/draft', request);
+  },
+  delete(id: string): Promise<void> {
+    return api.delete<void>(`/v1/agents/${id}`);
   },
 };

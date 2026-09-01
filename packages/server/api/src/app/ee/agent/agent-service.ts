@@ -6,8 +6,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -15,6 +17,7 @@ import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
 const DEFAULT_PAGE_SIZE = 20
+const MAX_NAMED_FLOWS_IN_USE = 3
 export const agentRepo = repoFactory(AgentEntity)
 
 export const agentAudit = { describePublished }
@@ -165,12 +168,37 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+        const checker = await resolvePermissionChecker({ userId, projectId, log })
+        const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
+        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
+        return { total: usage.total, names: usage.names }
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
+        await assertMayDestroy({ agent, projectId, userId, log })
+        const flowsInUse = await this.publishedFlowsUsing({ agent, projectId, userId })
+        if (flowsInUse.total > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: describeFlowsInUse(flowsInUse) },
+            })
+        }
         await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+    const counted = total === 1 ? '1 published flow' : `${total} published flows`
+    if (names.length === 0) {
+        return `This agent is running in ${counted}. Remove it from them first.`
+    }
+    const listed = names.join(', ')
+    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
+}
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
     return agentRepo()
@@ -243,6 +271,16 @@ async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log
     throw new ActivepiecesError({
         code: ErrorCode.AUTHORIZATION,
         params: { message: 'Only the person who created an agent, or a project admin, can change who sees it' },
+    })
+}
+
+async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
+    if (agent.ownerId === userId || await isProjectAdministrator({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Only the person who created an agent, or a project admin, can delete it and the conversations held with it' },
     })
 }
 
@@ -365,6 +403,13 @@ type VisibilityParams = {
     userId: UserId
     prefix: 'agent.' | ''
     isProjectAdmin: boolean
+}
+
+type AssertDestroyParams = {
+    agent: Agent
+    projectId: ProjectId
+    userId: UserId
+    log: FastifyBaseLogger
 }
 
 type AssertShareParams = {

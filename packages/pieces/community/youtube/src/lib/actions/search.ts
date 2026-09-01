@@ -1,9 +1,12 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
+import { searchOutputSchema } from '../output-schemas';
 
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: searchOutputSchema,
   name: 'search',
   classification: 'SEARCH',
   displayName: 'Search',
@@ -373,7 +376,7 @@ export const youtubeSearchAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 0 || maxResultsNumber > 50) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 0 || maxResultsNumber > 50) {
         throw new Error('Max Results must be between 0 and 50.');
       }
     }

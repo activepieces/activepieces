@@ -10,6 +10,7 @@ import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-pro
 import { LanguageModel } from 'ai'
 
 const MISTRAL_BASE_URL = 'https://api.mistral.ai/v1'
+const AUTHORIZATION_HEADER = 'authorization'
 
 export function createLanguageModel({ provider, auth, config, modelId, options = {} }: CreateLanguageModelParams): LanguageModel {
     const observed = spreadIfDefined('fetch', observedProviderFetch(options.onOutcome))
@@ -39,11 +40,24 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders, apiStyle } = config as OpenAICompatibleProviderConfig
+            const headers = buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders })
+            if (apiStyle === 'responses') {
+                return createOpenAI({
+                    baseURL: baseUrl,
+                    apiKey,
+                    headers,
+                    ...observed,
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization({
+                        headers,
+                        delegate: observedProviderFetch(options.onOutcome),
+                    })),
+                }).responses(modelId)
+            }
             return createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
-                headers: buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders }),
+                headers,
                 ...observed,
             }).chatModel(modelId)
         }
@@ -79,6 +93,21 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
             const exhaustiveCheck: never = provider
             throw new Error(`Unsupported provider: ${exhaustiveCheck}`)
         }
+    }
+}
+
+function stripDefaultAuthorization({ headers, delegate }: {
+    headers: Record<string, string>
+    delegate?: typeof globalThis.fetch
+}): typeof globalThis.fetch | undefined {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
+        return undefined
+    }
+    return (input, init) => {
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return (delegate ?? globalThis.fetch)(input, { ...init, headers: sent })
     }
 }
 
