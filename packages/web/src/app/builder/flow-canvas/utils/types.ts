@@ -15,6 +15,7 @@ export enum ApNodeType {
   /**Used for calculating the loop graph width */
   LOOP_RETURN_NODE = 'LOOP_RETURN_NODE',
   NOTE = 'NOTE',
+  BATCH_REGION = 'BATCH_REGION',
 }
 export type ApBoundingBox = {
   width: number;
@@ -67,6 +68,7 @@ export type ApButtonData = {
       stepLocationRelativeToParent:
         | StepLocationRelativeToParent.AFTER
         | StepLocationRelativeToParent.INSIDE_LOOP
+        | StepLocationRelativeToParent.INSIDE_BATCH
         | StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH
         | StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH;
     }
@@ -102,11 +104,28 @@ export type ApGraphEndNode = {
   selectable?: boolean;
 };
 
+export type ApBatchRegionNode = {
+  id: string;
+  type: ApNodeType.BATCH_REGION;
+  position: {
+    x: number;
+    y: number;
+  };
+  data: {
+    stepName: string;
+    size: { width: number; height: number };
+  };
+  selectable: false;
+  draggable: false;
+  zIndex: number;
+};
+
 export type ApNode =
   | ApStepNode
   | ApGraphEndNode
   | ApBigAddButtonNode
   | ApLoopReturnNode
+  | ApBatchRegionNode
   | ApNoteNode;
 
 export enum ApEdgeType {
@@ -124,6 +143,7 @@ export type ApStraightLineEdge = Edge & {
     drawArrowHead: boolean;
     hideAddButton?: boolean;
     parentStepName: string;
+    stepLocationRelativeToParent?: StepLocationRelativeToParent.INSIDE_BATCH;
   };
 };
 
@@ -131,6 +151,7 @@ export type ApLoopStartEdge = Edge & {
   type: ApEdgeType.LOOP_START_EDGE;
   data: {
     isLoopEmpty: boolean;
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP;
   };
 };
 
