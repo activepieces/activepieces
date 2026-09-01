@@ -64,6 +64,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.record(z.string(), z.string()).optional(),
+    apiStyle: z.enum(['chat', 'responses']).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	getDefaultPropertiesForObject,
@@ -45,7 +45,7 @@ export const getCompanyAction = createAction({
 
 		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const companyDetails = await client.crm.companies.basicApi.getById(companyId, [
 			...defaultCompanyProperties,

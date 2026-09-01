@@ -28,6 +28,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             ownerId: actorUserId(request),
             templateId: request.body.templateId,
             ip: networkUtils.clientIp(request),
+            externalId: request.body.externalId,
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
