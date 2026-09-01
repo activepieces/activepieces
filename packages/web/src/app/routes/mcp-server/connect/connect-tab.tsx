@@ -18,12 +18,11 @@ export function ConnectTab({
   isReachableFromInternet: boolean;
 }) {
   const { view, clientKey } = useMcpNav();
-  const { websiteName } = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
   const clients = useMemo(
-    () => mcpClientCatalog.clients({ serverUrl, websiteName, isCloud }),
-    [serverUrl, websiteName, isCloud],
+    () => mcpClientCatalog.clients({ serverUrl, isCloud }),
+    [serverUrl, isCloud],
   );
   const selected = clients.find((client) => client.key === clientKey) ?? null;
 
@@ -42,5 +41,10 @@ export function ConnectTab({
     return <ClientPicker clients={clients} serverUrl={serverUrl} />;
   }
 
-  return <ConnectLanding clients={clients} serverUrl={serverUrl} />;
+  return (
+    <ConnectLanding
+      clients={clients}
+      isReachableFromInternet={isReachableFromInternet}
+    />
+  );
 }
