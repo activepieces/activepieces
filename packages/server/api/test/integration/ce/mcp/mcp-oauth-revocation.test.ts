@@ -128,6 +128,16 @@ describe('MCP OAuth revocation list', () => {
         expect((await callMcp(connection.accessToken)).statusCode).toBe(401)
     })
 
+    it('refuses to report a revoke as done when the revocation list write fails', async () => {
+        const connection = await connectClient({ userId: ctx.user.id, projectId: ctx.project.id, platformId: ctx.platform.id })
+        vi.spyOn(mcpOAuthRevocationList, 'revoke').mockRejectedValue(new Error('OOM command not allowed'))
+
+        const response = await ctx.post('/v1/mcp-oauth/grants/revoke', { ids: [connection.grantId] })
+
+        expect(response.statusCode).not.toBe(204)
+        expect(response.statusCode).toBeGreaterThanOrEqual(500)
+    })
+
     it('answers 503 rather than 401 when the revocation list cannot be read', async () => {
         const connection = await connectClient({ userId: ctx.user.id, projectId: ctx.project.id, platformId: ctx.platform.id })
         vi.spyOn(mcpOAuthRevocationList, 'isRevoked').mockRejectedValue(new Error('redis is unreachable'))

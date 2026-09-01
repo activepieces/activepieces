@@ -23,7 +23,7 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
             multi.setex(key, ttlInSeconds, JSON.stringify(value))
         }
 
-        await multi.exec()
+        assertEveryCommandApplied(await multi.exec())
     },
 
     async get<T>(key: string): Promise<T | null> {
@@ -79,7 +79,7 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
             multi.set(key, value ? '1' : '0')
         }
 
-        await multi.exec()
+        assertEveryCommandApplied(await multi.exec())
     },
 
     async hgetJson<T extends Record<string, unknown>>(key: string): Promise<T | null> {
@@ -132,5 +132,17 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         await redisClient.eval(lua, 1, key, field, serializedValue)
     },
 })
+
+function assertEveryCommandApplied(results: RedisTransactionResults): void {
+    if (isNil(results)) {
+        throw new Error('Redis transaction was discarded, no command was applied')
+    }
+    const failed = results.find(([error]) => !isNil(error))
+    if (!isNil(failed)) {
+        throw failed[0]
+    }
+}
+
+type RedisTransactionResults = [error: Error | null, result: unknown][] | null
 
 export type DistributedStore = ReturnType<typeof distributedStoreFactory>
