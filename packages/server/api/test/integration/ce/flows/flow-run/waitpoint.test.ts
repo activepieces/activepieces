@@ -567,7 +567,7 @@ describe('Waitpoint service', () => {
                 resumePayload: { body: { approved: true } },
             })
 
-            const result = await waitpointService(app.log).findPreCompletedByFlowRunId({ flowRunId: flowRun.id })
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
             expect(result?.id).toBe(pause.waitpoint.id)
         })
     })
