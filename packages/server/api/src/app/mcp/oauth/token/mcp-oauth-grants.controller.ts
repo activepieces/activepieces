@@ -1,19 +1,21 @@
+import { SeekPage } from '@activepieces/core-utils'
 import {
     ListMcpOAuthGrantsRequestQuery,
-    ListMcpOAuthGrantsResponse,
+    McpOAuthGrant,
     PrincipalType,
     RevokeMcpOAuthGrantsRequestBody,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { userService } from '../../../user/user-service'
 import { mcpOAuthTokenService } from './mcp-oauth-token.service'
 
 export const mcpOAuthGrantsController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get('/v1/mcp-oauth/grants', ListGrantsRequest, async (req): Promise<ListMcpOAuthGrantsResponse> => {
+    app.get('/v1/mcp-oauth/grants', ListGrantsRequest, async (req): Promise<SeekPage<McpOAuthGrant>> => {
         return mcpOAuthTokenService.listGrants({
             platformId: req.principal.platform.id,
             userId: await resolveUserIdFilter(req),
@@ -47,6 +49,9 @@ const ListGrantsRequest = {
     schema: {
         tags: ['mcp-oauth'],
         querystring: ListMcpOAuthGrantsRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(McpOAuthGrant),
+        },
     },
 }
 
@@ -57,5 +62,8 @@ const RevokeGrantsRequest = {
     schema: {
         tags: ['mcp-oauth'],
         body: RevokeMcpOAuthGrantsRequestBody,
+        response: {
+            [StatusCodes.NO_CONTENT]: z.never(),
+        },
     },
 }
