@@ -143,6 +143,10 @@ This affects the Tables piece's Find Records action and any direct API call that
 
 Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
+## 0.88.2
+
+### What has changed?
+
 #### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
 
 `/sign-in` and `/sign-up` now render the same card, and `/sign-up` redirects to `/sign-in` carrying its query string, so existing links — invitation URLs included — keep working.
