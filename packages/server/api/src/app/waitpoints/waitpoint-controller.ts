@@ -24,6 +24,7 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
                 policy: barrier?.policy,
                 signalLabels: barrier?.signals?.map((signal) => signal.label ?? null),
                 fanOut: barrier?.fanOut,
+                timeoutSeconds: barrier?.timeoutSeconds,
             })
             return reply.status(StatusCodes.CREATED).send({
                 id: created.barrier.id,

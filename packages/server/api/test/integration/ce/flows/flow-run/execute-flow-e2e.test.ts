@@ -1125,4 +1125,121 @@ describe('Execute Flow E2E', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual(expect.objectContaining({ echo: 'hello world' }))
     }, 180_000)
+
+    it('runs a process in batches step: one child run per batch, then resumes with the summary', async () => {
+        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+        const webhookPiece = createMockPieceMetadata({
+            name: '@activepieces/piece-webhook',
+            version: '0.1.29',
+            platformId: undefined,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+        await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+        const afterBatches = {
+            type: FlowActionType.CODE as const,
+            name: 'step_3',
+            displayName: 'Read the summary',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: 'export const code = async (inputs) => ({ succeeded: inputs.summary.succeeded, total: inputs.summary.total })',
+                    packageJson: '{}',
+                },
+                input: { summary: '{{step_1[\'output\']}}' },
+                errorHandlingOptions: {},
+            },
+        }
+
+        const batchBody = {
+            type: FlowActionType.CODE as const,
+            name: 'step_2',
+            displayName: 'Handle one batch',
+            valid: true,
+            settings: {
+                sourceCode: {
+                    code: 'export const code = async (inputs) => ({ received: inputs.items })',
+                    packageJson: '{}',
+                },
+                input: { items: '{{step_1[\'output\'].items}}' },
+                errorHandlingOptions: {},
+            },
+        }
+
+        const batchesAction = {
+            type: FlowActionType.PROCESS_IN_BATCHES as const,
+            name: 'step_1',
+            displayName: 'Process in Batches',
+            valid: true,
+            skip: false,
+            settings: {
+                items: '{{trigger[\'output\'].body.rows}}',
+                batchSize: 2,
+                errorHandlingOptions: {},
+            },
+            firstLoopAction: batchBody,
+            nextAction: afterBatches,
+        }
+
+        const mockFlow = createMockFlow({ projectId: mockProject.id })
+        await db.save('flow', mockFlow)
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.LOCKED,
+            trigger: {
+                type: FlowTriggerType.PIECE,
+                name: 'trigger',
+                displayName: 'Catch Webhook',
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-webhook',
+                    pieceVersion: '0.1.29',
+                    triggerName: 'catch_webhook',
+                    input: { authType: 'none' },
+                    propertySettings: {},
+                },
+                nextAction: batchesAction,
+            },
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: mockFlow.id,
+            payload: { body: { rows: [1, 2, 3, 4, 5] } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: mockFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+
+        expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
+        expect(result.steps.step_1.output).toEqual(
+            expect.objectContaining({
+                total: 3,
+                succeeded: 3,
+                failed: 0,
+                rejected: 0,
+                notDispatched: 0,
+                stillRunning: 0,
+                timedOut: false,
+            }),
+        )
+        expect(result.steps.step_3.output).toEqual({ succeeded: 3, total: 3 })
+
+        const children = await databaseConnection().getRepository('flow_run').findBy({ parentRunId: flowRun.id })
+        expect(children).toHaveLength(3)
+        expect(children.every((child) => child.status === FlowRunStatus.SUCCEEDED)).toBe(true)
+        expect(children.map((child) => child.dispatchIndex).sort()).toEqual([0, 1, 2])
+    }, 180_000)
 })

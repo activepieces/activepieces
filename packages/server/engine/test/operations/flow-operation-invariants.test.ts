@@ -149,19 +149,29 @@ function makeFlowVersionWithTwoApprovals(): FlowVersion {
     }
 }
 
-function makeFlowVersionWithContainerBody(): FlowVersion {
-    const loopAction = (name: string, items: unknown): FlowAction => ({
+function makeFlowVersionWithBatchBody(): FlowVersion {
+    const loopAction = (name: string): FlowAction => ({
         name,
         displayName: name,
         type: FlowActionType.LOOP_ON_ITEMS,
         skip: false,
         valid: true,
-        settings: { items },
+        settings: {
+            items: "{{ step_1['output'].items }}",
+        },
     })
-    const container: FlowAction = {
-        ...loopAction('step_1', []),
-        firstLoopAction: loopAction('step_2', [1, 2]),
-        nextAction: loopAction('step_3', []),
+    const batchStep: FlowAction = {
+        name: 'step_1',
+        displayName: 'Process in Batches',
+        type: FlowActionType.PROCESS_IN_BATCHES,
+        skip: false,
+        valid: true,
+        settings: {
+            items: "{{ step_1['output'].items }}",
+            batchSize: 2,
+        },
+        firstLoopAction: loopAction('step_2'),
+        nextAction: loopAction('step_3'),
     }
     return {
         ...makeFlowVersion(),
@@ -171,7 +181,7 @@ function makeFlowVersionWithContainerBody(): FlowVersion {
             displayName: 'Test Trigger',
             type: FlowTriggerType.EMPTY,
             settings: {},
-            nextAction: container,
+            nextAction: batchStep,
         },
     }
 }
@@ -491,7 +501,7 @@ describe('flow operation invariants', () => {
             mockSendUpdate.mockClear()
 
             await flowOperation.execute(makeBeginOperation({
-                flowVersion: makeFlowVersionWithContainerBody(),
+                flowVersion: makeFlowVersionWithBatchBody(),
                 entryStepName: 'step_2',
             }))
 
@@ -508,10 +518,10 @@ describe('flow operation invariants', () => {
                     executionState: {
                         steps: {
                             step_1: {
-                                type: FlowActionType.LOOP_ON_ITEMS,
+                                type: FlowActionType.PROCESS_IN_BATCHES,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
-                                output: { item: null, index: 0, iterations: [] },
+                                output: { items: [1, 2] },
                             },
                             step_2: {
                                 type: FlowActionType.LOOP_ON_ITEMS,
@@ -527,7 +537,7 @@ describe('flow operation invariants', () => {
             )
 
             await flowOperation.execute(makeResumeOperation({
-                flowVersion: makeFlowVersionWithContainerBody(),
+                flowVersion: makeFlowVersionWithBatchBody(),
                 resumePayload: {
                     type: 'inline',
                     value: { queryParams: { action: 'approve' }, body: {}, headers: {} },
@@ -537,12 +547,12 @@ describe('flow operation invariants', () => {
             expect(mockSendUpdate.mock.calls.filter((call) => !isNil(call[0].startTime))).toHaveLength(0)
         })
 
-        it('resumes a run entered mid-graph from its entry step instead of walking the flow from the trigger', async () => {
-            // A child run dispatched into a container's body starts at that body's entry step, with the
-            // parent's steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state
-            // log, so a resume re-enters the body. Without it the engine walks from the trigger: the
-            // paused body step is never re-entered (its BEGIN placeholder output sticks), and the step
-            // *after* the container runs inside the child.
+        it('resumes a batch child run from its entry step instead of walking the flow from the trigger', async () => {
+            // A Process in Batches child run starts at the batch body's entry step, with the parent's
+            // steps seeded as SUCCEEDED. entryStepName rides in the run's own execution-state log, so a
+            // resume re-enters the body. Without it the engine walks from the trigger: the paused body
+            // step is never re-entered (its BEGIN placeholder output sticks), and the step *after* the
+            // batch runs inside the child.
             mockDownload.mockReset()
             mockSendUpdate.mockClear()
 
@@ -551,10 +561,10 @@ describe('flow operation invariants', () => {
                     executionState: {
                         steps: {
                             step_1: {
-                                type: FlowActionType.LOOP_ON_ITEMS,
+                                type: FlowActionType.PROCESS_IN_BATCHES,
                                 status: StepOutputStatus.SUCCEEDED,
                                 input: {},
-                                output: { item: null, index: 0, iterations: [] },
+                                output: { items: [1, 2] },
                             },
                             step_2: {
                                 type: FlowActionType.LOOP_ON_ITEMS,
@@ -571,7 +581,7 @@ describe('flow operation invariants', () => {
 
             const operation: ResumeExecuteFlowOperation = {
                 ...makeResumeOperation(),
-                flowVersion: makeFlowVersionWithContainerBody(),
+                flowVersion: makeFlowVersionWithBatchBody(),
                 resumePayload: {
                     type: 'inline',
                     value: { queryParams: { action: 'approve' }, body: {}, headers: {} },

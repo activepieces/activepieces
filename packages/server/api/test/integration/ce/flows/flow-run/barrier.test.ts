@@ -6,6 +6,8 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { system } from '../../../../../src/app/helper/system/system'
+import { AppSystemProp } from '../../../../../src/app/helper/system/system-props'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
@@ -104,17 +106,19 @@ async function giveUp(barrierId: string) {
     })
 }
 
-async function createFanOutBarrier({ flowRunId, items, batchSize, stepName }: {
+async function createFanOutBarrier({ flowRunId, items, batchSize, stepName, timeoutSeconds }: {
     flowRunId: string
     items: unknown[]
     batchSize: number
     stepName?: string
+    timeoutSeconds?: number
 }) {
     return barrierService(app.log).create({
         flowRunId,
         projectId: ctx.project.id,
         stepName: stepName ?? 'fan_out',
         version: 'V1',
+        timeoutSeconds,
         fanOut: {
             entryStepName: 'trigger',
             batchSize,
@@ -447,6 +451,26 @@ describe('barrier deadline', () => {
 
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
         expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('brings the deadline forward when the step asks for a shorter timeout', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: 3600 })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(50, 'minute'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(70, 'minute'))).toBe(true)
+    })
+
+    it('clamps a timeout longer than the paused-flow limit down to the limit', async () => {
+        const { flowRun } = await createParentRun()
+        const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        const beyondCap = (maxDurationInDays + 10) * 24 * 60 * 60
+        const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2], batchSize: 1, timeoutSeconds: beyondCap })
+
+        const deadline = dayjs(barrier.resumeDateTime)
+        expect(deadline.isAfter(dayjs().add(maxDurationInDays, 'day').subtract(1, 'hour'))).toBe(true)
+        expect(deadline.isBefore(dayjs().add(maxDurationInDays, 'day').add(1, 'hour'))).toBe(true)
     })
 
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
