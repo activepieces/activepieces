@@ -14,6 +14,7 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 
 import { ConfigurationsFormValues } from './configurations-form';
+import { TrackedEventsDialog } from './tracked-events-dialog';
 
 export const TelemetrySection = ({
   control,
@@ -40,6 +41,7 @@ export const TelemetrySection = ({
               'Shares usage events so we can see which features are used and fix what breaks.',
             )}
           </ItemDescription>
+          <TrackedEventsDialog />
         </ItemContent>
         <ItemActions>
           <FormField
