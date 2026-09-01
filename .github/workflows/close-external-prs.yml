@@ -26,6 +26,7 @@ jobs:
   close:
     runs-on: ubuntu-latest
     # OWNER / MEMBER / COLLABORATOR are trusted; everyone else gets auto-closed.
+    # CONTRIBUTOR means they have a merged PR here before, so they keep their PRs open.
     # Bots (dependabot, AP automation) and the "keep-open" label are exempt.
     # Add the "keep-open" label to a PR to reopen it for review (selective reopen, tldraw-style).
     if: >
@@ -33,6 +34,7 @@ jobs:
       github.event.pull_request.author_association != 'OWNER' &&
       github.event.pull_request.author_association != 'MEMBER' &&
       github.event.pull_request.author_association != 'COLLABORATOR' &&
+      github.event.pull_request.author_association != 'CONTRIBUTOR' &&
       github.event.pull_request.user.type != 'Bot' &&
       !contains(github.event.pull_request.labels.*.name, 'keep-open')
     steps:

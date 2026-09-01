@@ -30,6 +30,7 @@ import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+        await assertExternalIdIsUnique({ projectId, externalId })
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -202,7 +203,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
-            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId)
+            const migratedVersion = await flowVersionMigrationService(log).migrate(flow.version, flow.projectId, platformId)
             return {
                 ...flow,
                 version: migratedVersion,
@@ -687,6 +688,21 @@ export const flowService = (log: FastifyBaseLogger) => ({
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
+
+    async getLastFlowUpdatedByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, string>> {
+        if (projectIds.length === 0) return new Map()
+
+        const result = await flowRepo()
+            .createQueryBuilder('flow')
+            .select('flow.projectId', 'projectId')
+            .addSelect('MAX(flow.updated)', 'lastUpdated')
+            .where('flow.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('flow.operationStatus != :deleting', { deleting: FlowOperationStatus.DELETING })
+            .groupBy('flow.projectId')
+            .getRawMany()
+
+        return new Map(result.map(r => [r.projectId, new Date(r.lastUpdated).toISOString()]))
+    },
 })
 
 
@@ -783,6 +799,19 @@ const assertFlowIsNotNull: <T extends Flow>(
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {},
+        })
+    }
+}
+
+async function assertExternalIdIsUnique({ projectId, externalId }: { projectId: ProjectId, externalId: string | undefined }): Promise<void> {
+    if (isNil(externalId)) {
+        return
+    }
+    const exists = await flowRepo().existsBy({ projectId, externalId })
+    if (exists) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS,
+            params: { externalId },
         })
     }
 }

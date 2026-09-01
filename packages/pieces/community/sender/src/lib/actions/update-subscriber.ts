@@ -7,6 +7,7 @@ import { subscribe } from 'diagnostics_channel';
 export const updateSubscriberAction = createAction({
   auth: senderAuth,
   name: 'update_subscriber',
+  classification: 'WRITE',
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber\'s data',
   audience: 'both',

@@ -26,6 +26,12 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_CREATED]: { label: t('Flow created') },
     [ApplicationEventName.FLOW_UPDATED]: { label: t('Flow updated') },
     [ApplicationEventName.FLOW_DELETED]: { label: t('Flow deleted') },
+    [ApplicationEventName.FLOW_PIECES_UPGRADED]: {
+      label: t('Flow pieces upgraded'),
+    },
+    [ApplicationEventName.FLOW_PIECES_REVERTED]: {
+      label: t('Flow pieces reverted'),
+    },
     [ApplicationEventName.FOLDER_CREATED]: { label: t('Folder created') },
     [ApplicationEventName.FOLDER_UPDATED]: { label: t('Folder updated') },
     [ApplicationEventName.FOLDER_DELETED]: { label: t('Folder deleted') },

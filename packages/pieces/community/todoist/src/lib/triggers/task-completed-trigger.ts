@@ -44,6 +44,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof todoistAuth>, { 
 export const todoistTaskCompletedTrigger = createTrigger({
 	auth: todoistAuth,
 	name: 'task_completed',
+	classification: 'READ',
 	displayName: 'Task Completed',
 	description: 'Triggers when a new task is completed',
 	aiMetadata: {

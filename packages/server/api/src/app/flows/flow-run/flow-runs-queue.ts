@@ -160,7 +160,7 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                 const parentRunId = savedFlowRun.parentRunId
                 const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                 if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
-                    await barrierService(log).receive({
+                    await barrierService(log).receiveSignal({
                         refId: savedFlowRun.id,
                         projectId: savedFlowRun.projectId,
                         status: toSignalStatus(savedFlowRun.status),
@@ -185,12 +185,12 @@ async function processRunsMetadataJob({ job, log }: ProcessRunsMetadataJobParams
                 }
 
                 if (savedFlowRun.status === FlowRunStatus.PAUSED) {
-                    const preCompleted = await waitpointService(log).findPreCompletedByFlowRunId({ flowRunId: savedFlowRun.id })
-                    if (!isNil(preCompleted)) {
-                        await resumeService(log).releaseBarrierWithoutLock({
+                    const undeliveredWaitpoint = await waitpointService(log).findUndeliveredCompletedWaitpoint({ flowRunId: savedFlowRun.id, projectId: savedFlowRun.projectId })
+                    if (!isNil(undeliveredWaitpoint)) {
+                        await resumeService(log).resumeTrustedWithoutLock({
                             flowRunId: savedFlowRun.id,
-                            waitpointId: preCompleted.id,
-                            resumePayload: preCompleted.resumePayload,
+                            waitpointId: undeliveredWaitpoint.id,
+                            resumePayload: undeliveredWaitpoint.resumePayload,
                         })
                     }
                 }
@@ -247,7 +247,7 @@ export async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).findNonBarrierByFlowRunId({ flowRunId: parentRunId, projectId: flowRun.projectId })
+    const existingWaitpoint = await waitpointService(log).findSubflowWaitpoint({ flowRunId: parentRunId, projectId: flowRun.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,

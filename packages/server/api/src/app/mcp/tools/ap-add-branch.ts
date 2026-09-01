@@ -24,7 +24,7 @@ export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBas
             branchName: z.string().describe('Display name for the new branch (e.g. "Branch 1")'),
             conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)

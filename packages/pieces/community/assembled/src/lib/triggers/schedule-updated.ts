@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const scheduleUpdated = createTrigger({
   auth: assembledAuth,
   name: 'schedule_updated',
+  classification: 'READ',
   displayName: 'Schedule Updated',
   description: 'Triggers when user schedule is modified.',
   aiMetadata: {

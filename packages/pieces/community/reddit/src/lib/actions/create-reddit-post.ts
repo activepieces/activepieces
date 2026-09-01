@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const createRedditPost = createAction({
   auth: redditAuth,
   name: 'createRedditPost',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Submit a new self (text) post to a subreddit.',
   audience: 'both',

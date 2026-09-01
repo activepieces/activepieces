@@ -7,6 +7,7 @@ import { taskIdDropdown } from '../common/props';
 export const deleteTaskAction = createAction({
 	auth: attioAuth,
 	name: 'delete_task',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Permanently delete a task by its ID.',
 	audience: 'both',

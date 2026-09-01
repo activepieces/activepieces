@@ -8,6 +8,7 @@ import { labelsArrayOutputSchema } from '../../output-schemas';
 export const githubSetIssueLabelsAction = createAction({
   auth: githubAuth,
   name: 'set_issue_labels',
+  classification: 'WRITE',
   displayName: 'Set Issue Labels (Agent)',
   description: 'Replaces the entire label set on an issue or pull request.',
   audience: 'ai',

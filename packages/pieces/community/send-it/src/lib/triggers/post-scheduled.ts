@@ -18,6 +18,7 @@ type ScheduledPayload = {
 export const postScheduled = createTrigger({
   auth: sendItAuth,
   name: 'post_scheduled',
+  classification: 'READ',
   displayName: 'Post Scheduled',
   description: 'Triggers when a post is scheduled for future publishing',
   aiMetadata: {

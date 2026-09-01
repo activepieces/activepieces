@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const deleteCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_delete_crm_contact',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete a CRM Contact',
   description: 'Permanently delete a contact from your WhatsScale CRM',
   audience: 'both',

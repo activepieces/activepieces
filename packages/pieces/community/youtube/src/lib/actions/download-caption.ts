@@ -8,6 +8,7 @@ import { youtubeAuth } from '../common/auth';
 export const youtubeDownloadCaptionAction = createAction({
   auth: youtubeAuth,
   name: 'download_caption',
+  classification: 'READ',
   displayName: 'Download Caption',
   description:
     'Returns a caption track text by caption ID using the YouTube captions.download endpoint. Requires permission to edit the video, so it only works for captions on videos the authenticated user owns. Auto-generated (asr) caption tracks cannot be downloaded and will return a 403.',

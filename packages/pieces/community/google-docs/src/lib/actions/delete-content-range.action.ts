@@ -7,6 +7,7 @@ import { deleteContentRangeActionOutputSchema } from '../output-schemas';
 export const deleteContentRange = createAction({
   auth: googleDocsAuth,
   name: 'delete_content_range',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Content Range',
   description: 'Delete a range of content from a Google Docs document',
   audience: 'ai',

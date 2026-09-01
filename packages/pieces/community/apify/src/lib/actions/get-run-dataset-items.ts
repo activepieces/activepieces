@@ -5,6 +5,7 @@ import { getRunDatasetItemsActionOutputSchema } from '../output-schemas';
 
 export const apifyGetRunDatasetItems = createAction({
   name: 'apify_get_run_dataset_items',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Run Dataset Items',
   description: 'Retrieves the dataset items of an Actor run directly by run ID.',

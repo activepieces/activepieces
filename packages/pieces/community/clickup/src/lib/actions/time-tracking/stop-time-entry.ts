@@ -7,6 +7,7 @@ import { timeEntryOutputSchema } from '../../output-schemas';
 export const clickupStopTimeEntry = createAction({
   auth: clickupAuth,
   name: 'clickup_stop_time_entry',
+  classification: 'WRITE',
   displayName: 'Stop Time Entry',
   description: 'Stop the currently running timer in a ClickUp workspace.',
   audience: 'ai',

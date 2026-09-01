@@ -8,11 +8,13 @@ import { openaiAuth } from '../auth';
 import { sleep } from '../common/common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { askAssistantActionOutputSchema } from '../output-schemas';
 
 export const askAssistant = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'ask_assistant',
+  classification: 'WRITE',
   displayName: 'Ask Assistant',
   description: 'Ask a GPT assistant anything you want!',
   aiMetadata: { description: 'Sends a question to a GPT Assistant that already exists in the connected OpenAI account, selected from the assistant dropdown, and waits for the Assistants run to finish before returning the assistant messages produced after that question. Two modes: with a memory key it reuses one stored thread across runs and flows so the assistant remembers earlier turns, without one it opens a throwaway thread each time. Prefer ask_chatgpt when there is no saved Assistant or when the model and sampling parameters must be chosen per call. Requires an assistant already configured on the OpenAI side; not idempotent: each call creates a thread message and a new run.', idempotent: false },
@@ -66,6 +68,7 @@ export const askAssistant = createAction({
       required: false,
     }),
   },
+  outputSchema: askAssistantActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       memoryKey: z.optional(z.string().check(z.maxLength(128))),

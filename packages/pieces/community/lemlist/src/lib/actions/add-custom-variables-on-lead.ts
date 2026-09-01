@@ -5,6 +5,7 @@ import { lemlistApiService } from '../common/requests';
 export const addCustomVariablesOnLead = createAction({
   auth: lemlistAuth,
   name: 'addCustomVariablesOnLead',
+  classification: 'WRITE',
   displayName: 'Add Custom Variables on Lead',
   description: 'Add new custom variables to a lead.',
   audience: 'both',

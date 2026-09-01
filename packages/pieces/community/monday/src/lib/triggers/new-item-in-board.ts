@@ -11,6 +11,7 @@ import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
 export const newItemInBoardTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_new_item_in_board',
+  classification: 'READ',
   displayName: 'New Item in Board',
   description: 'Triggers when a new item is created in board.',
   aiMetadata: {
