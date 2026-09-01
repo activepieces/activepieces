@@ -374,7 +374,6 @@
                         "untitled-page-5"
                       ]
                     },
-                    "admin-guide/guides/manage-oauth2",
                     {
                         "group": "Secret Managers",
                         "icon": "key",
@@ -421,7 +420,8 @@
                            "admin-guide/security/audit-logs/signing-key-created"
                         ]
                     },
-                    "admin-guide/guides/event-streaming"
+                    "admin-guide/guides/event-streaming",
+                    "admin-guide/guides/manage-oauth2"
                   ]
                }
             ]
