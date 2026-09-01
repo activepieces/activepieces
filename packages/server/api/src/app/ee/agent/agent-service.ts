@@ -230,10 +230,12 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await assertMayRemoveFromProject({ agent, projectId, userId, log })
         const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
         await assertMayWriteAgentsIn({ projectId: target.id, userId, log })
-        const sharedWithUserIds = await resolveShare({ visibility: agent.visibility, requested: undefined, stored: agent.sharedWithUserIds, projectId: target.id, log })
         await transaction(async (entityManager) => {
             const repo = entityManager.getRepository(AgentEntity)
-            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            // Who keeps access is decided from the locked row, never from the read above: a share
+            // removed while this move was being authorised must not come back with it.
+            const sharedWithUserIds = await resolveShare({ visibility: locked.visibility, requested: undefined, stored: locked.sharedWithUserIds, projectId: target.id, log })
             // Read inside the transaction: the unique index on (projectId, externalId) is the real
             // guard, and checking outside it turns a losing race into a 500 instead of this sentence.
             const clash = await repo.findOneBy({ projectId: target.id, externalId: agent.externalId })
