@@ -236,7 +236,11 @@
                         ]
                      }
                   ]
-               }
+              },
+              {
+                "group": "Observability",
+                "pages": []
+              }
             ]
          },
          {
@@ -375,10 +379,6 @@
                       ]
                     },
                     "admin-guide/guides/manage-oauth2",
-                    {
-                      "group": "Observability",
-                      "pages": []
-                    },
                     {
                         "group": "Secret Managers",
                         "icon": "key",
