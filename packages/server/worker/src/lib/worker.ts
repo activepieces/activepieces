@@ -101,7 +101,7 @@ export const worker = {
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
-            resetPollLoopLiveness({ loopCount: 1 })
+            resetPollLoopLiveness({ loopCount: 0 })
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
