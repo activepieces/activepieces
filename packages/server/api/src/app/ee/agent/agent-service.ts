@@ -8,7 +8,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flowService } from '../../flows/flow/flow.service'
-import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
+import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order, OrderByConfig } from '../../helper/pagination/paginator'
@@ -234,7 +234,22 @@ export const agentService = (log: FastifyBaseLogger) => ({
                     params: { message: `"${target.displayName}" already holds an agent with the same external id, so this one cannot move there.` },
                 })
             }
-            await repo.update({ id, projectId }, { projectId: target.id, sharedWithUserIds })
+            const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
+            const moved = await repo.createQueryBuilder()
+                .update()
+                .set({ projectId: target.id, sharedWithUserIds })
+                .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+                .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+                .setParameters(blocking.getParameters())
+                .returning('id')
+                .execute()
+            const movedRows: unknown[] = moved.raw ?? []
+            if (movedRows.length === 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: describeFlowsInUse(await agentService(log).publishedFlowsUsing({ agent, projectId, userId })) },
+                })
+            }
             await entityManager.getRepository(AgentConversationEntity).update(
                 { agentId: id, source: AgentRunSource.AGENT },
                 { projectId: target.id },
