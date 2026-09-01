@@ -71,7 +71,7 @@ describe('MCP activity recording', () => {
             projectId: ctx.project.id,
             userId: ctx.user.id,
             toolName: 'ap_run_action',
-            pieceName: 'doesnotexist',
+            pieceName: '@activepieces/piece-doesnotexist',
             actionName: 'do_nothing',
             connectionExternalId: 'conn-external-1',
         })
