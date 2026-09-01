@@ -1,18 +1,20 @@
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, chunk, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { PiecePackage } from '@activepieces/shared'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
 import {
-    CodeArtifact,
     ExecuteParams,
     PreWarmSandboxParams,
+    ProvisionInput,
+    Resolver,
     Runtime,
     RuntimeExecutionResult,
     RuntimeExecutorInfo,
     SandboxSettings,
 } from './types'
+
+const PREWARM_RESOLVE_CONCURRENCY = 10
 
 // One box per worker at the destination (concurrency 1), or N independent boxes in the transitional
 // compatibility mode that honors AP_WORKER_CONCURRENCY. Each box is its own manager, holding one
@@ -114,6 +116,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             if (isNil(apiClient) || isNil(publicApiUrl)) {
                 return
             }
+            const startedAt = Date.now()
             const { error } = await tryCatch(async () => {
                 const { flows, platformId, engineToken } = await apiClient.getPrewarmData({
                     workerGroupId: getSettings().WORKER_GROUP_ID,
@@ -121,22 +124,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     flow,
                 })
                 const resolver = createResolver({ apiClient, basePath, getSettings, log })
-                const pieces: PiecePackage[] = []
-                const codeSteps: CodeArtifact[] = []
-                for (const flow of flows) {
-                    const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
-                    if (flowError) {
-                        log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
-                        continue
-                    }
-                    if (resolved.kind !== 'ready') {
-                        continue
-                    }
-                    pieces.push(...resolved.provision.pieces)
-                    codeSteps.push(...resolved.provision.codes)
-                }
+                const provisions = await resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log })
+                const pieces = provisions.flatMap((provision) => provision.pieces)
+                const codeSteps = provisions.flatMap((provision) => provision.codes)
                 await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
-                log.info({ flowCount: flows.length, pieceCount: pieces.length }, 'Prewarmed sandbox cache')
+                log.info({ flowCount: flows.length, pieceCount: pieces.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {
                 log.warn({ error: String(error) }, 'Cache prewarm failed')
@@ -148,11 +140,37 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     }
 }
 
+async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ProvisionInput[]> {
+    const provisions: ProvisionInput[] = []
+    for (const batch of chunk(flows, PREWARM_RESOLVE_CONCURRENCY)) {
+        const resolvedBatch = await Promise.all(batch.map(async (flow) => {
+            const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
+            if (flowError) {
+                log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
+                return null
+            }
+            return resolved.kind === 'ready' ? resolved.provision : null
+        }))
+        provisions.push(...resolvedBatch.filter((provision) => !isNil(provision)))
+    }
+    return provisions
+}
+
+
 function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInSeconds: number, expiresAt?: number }): number {
     if (isNil(expiresAt)) {
         return timeoutInSeconds
     }
     return Math.min(timeoutInSeconds, Math.floor((expiresAt - Date.now()) / 1000))
+}
+
+type ResolveFlowsForPrewarmParams = {
+    resolver: Resolver
+    flows: { id: string, versionId: string, projectId: string }[]
+    platformId: string
+    publicApiUrl: string
+    engineToken: string
+    log: ApLogger
 }
 
 type CreateSandboxRuntimeParams = {
