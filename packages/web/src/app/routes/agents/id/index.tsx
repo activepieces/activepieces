@@ -484,15 +484,25 @@ const ConfigureFields = ({
           defaultProvider={form.watch('draft.provider') ?? undefined}
           defaultModel={form.watch('draft.modelName') ?? undefined}
           defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-          onChange={({ provider, model, configId }) => {
-            form.setValue('draft.provider', parseProvider(provider), {
-              shouldDirty: true,
-            });
-            form.setValue('draft.modelName', model ?? null, {
-              shouldDirty: true,
-            });
-            form.setValue('draft.providerConfigId', configId ?? null, {
-              shouldDirty: true,
+          onChange={({ provider, model, configId, picked: pickedBy }) => {
+            const picked = {
+              provider: parseProvider(provider) ?? null,
+              modelName: model ?? null,
+              providerConfigId: configId ?? null,
+            };
+            if (
+              !agentEditState.modelPickChanged({
+                picked,
+                current: form.getValues('draft'),
+              })
+            ) {
+              return;
+            }
+            const shouldDirty = pickedBy !== 'default';
+            form.setValue('draft.provider', picked.provider, { shouldDirty });
+            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
+            form.setValue('draft.providerConfigId', picked.providerConfigId, {
+              shouldDirty,
             });
           }}
         />
@@ -675,12 +685,9 @@ const AgentEditScreen = ({
   onEdited: () => void;
 }) => {
   const [mode, setMode] = useState('edit');
-  const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
-    formValuesOf(agent),
-  );
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: syncedDraft,
+    defaultValues: formValuesOf(agent),
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
@@ -702,10 +709,7 @@ const AgentEditScreen = ({
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
-  const unsavedTyping = !agentEditState.sameConfig({
-    left: values,
-    right: syncedDraft,
-  });
+  const unsavedTyping = form.formState.isDirty;
   const deletedRef = useRef(false);
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: unsavedTyping,
@@ -720,28 +724,37 @@ const AgentEditScreen = ({
   const writeSeq = useRef(0);
   const writeLock = useRef(agentEditState.createWriteLock());
 
+  const lastFromServer = useRef(formValuesOf(agent));
+
   useEffect(() => {
     const fromServer = formValuesOf(agent);
-    if (agentEditState.sameConfig({ left: fromServer, right: syncedDraft }))
+    if (
+      agentEditState.sameConfig({
+        left: fromServer,
+        right: lastFromServer.current,
+      })
+    ) {
       return;
+    }
     if (unsavedTyping) return;
+    lastFromServer.current = fromServer;
     form.reset(fromServer);
-    setSyncedDraft(fromServer);
-  }, [agent, syncedDraft, unsavedTyping, form]);
-
-  // The model selector picks a default the moment it mounts, so a screen nobody has touched would
-  // otherwise arm the leave guard. Adopting that pick as the baseline keeps Save armed, since that
-  // compares against what is live, while the guard only speaks for changes a person made.
-  useEffect(() => {
-    if (!agentEditState.adoptsPickedModel({ values, syncedDraft })) return;
-    setSyncedDraft(values);
-  }, [values, syncedDraft]);
+  }, [agent, unsavedTyping, form]);
 
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {
       type: 'manual',
       message: api.extractServerErrorMessage(error, fallback),
     });
+
+  const markSavedUnlessEditedSince = (written: ConfigureAgentInput) => {
+    if (
+      !agentEditState.sameConfig({ left: form.getValues(), right: written })
+    ) {
+      return;
+    }
+    form.reset(written);
+  };
 
   const releaseWrite = () => writeLock.current.release();
   const claimWrite = () => writeLock.current.claim();
@@ -753,7 +766,7 @@ const AgentEditScreen = ({
       {
         onSuccess: () => {
           if (seq !== writeSeq.current) return;
-          setSyncedDraft(values);
+          markSavedUnlessEditedSince(values);
           if (testRequested.current) setMode('test');
         },
         onError: (error) =>
@@ -787,7 +800,7 @@ const AgentEditScreen = ({
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         if (seq !== writeSeq.current) return;
-        setSyncedDraft(values);
+        markSavedUnlessEditedSince(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
