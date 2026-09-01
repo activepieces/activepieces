@@ -12,7 +12,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
-import { McpActivityEntity } from './mcp-activity.entity'
+import { McpActivityEntity } from './mcp-activity-entity'
 
 const repo = repoFactory(McpActivityEntity)
 
@@ -24,7 +24,7 @@ export function shouldRecord(tool: Pick<McpToolDefinition, 'title'>): boolean {
     return tool.title === RUN_ACTION_TOOL_NAME
 }
 
-export function withActivityRecording({ execute, tool, context, log }: WithActivityRecordingParams): McpToolDefinition['execute'] {
+export function withActivityRecording({ execute, tool, resolveContext, log }: WithActivityRecordingParams): McpToolDefinition['execute'] {
     if (!shouldRecord(tool)) {
         return execute
     }
@@ -32,7 +32,7 @@ export function withActivityRecording({ execute, tool, context, log }: WithActiv
         const startedAt = Date.now()
         const result = await execute(args)
         rejectedPromiseHandler(record({
-            context,
+            resolveContext,
             toolName: tool.title,
             ...runActionFieldsFrom(args),
             durationMs: Date.now() - startedAt,
@@ -46,16 +46,16 @@ export function withActivityRecording({ execute, tool, context, log }: WithActiv
 
 // Every branch is bounded by MCP_ACTIVITY_PAYLOAD_MAX_BYTES: a single oversized input
 // must not slip through by virtue of only the output being dropped.
-export function capPayload({ input, output }: { input: Record<string, unknown>, output: unknown }): { body: Buffer, truncated: boolean } {
-    const whole = Buffer.from(JSON.stringify({ input, output }), 'utf-8')
-    if (whole.length <= MCP_ACTIVITY_PAYLOAD_MAX_BYTES) {
-        return { body: whole, truncated: false }
+export function capPayload({ input, output }: { input: Record<string, unknown>, output: unknown }): { payloadBytes: Buffer, truncated: boolean } {
+    const wholePayload = Buffer.from(JSON.stringify({ input, output }), 'utf-8')
+    if (wholePayload.length <= MCP_ACTIVITY_PAYLOAD_MAX_BYTES) {
+        return { payloadBytes: wholePayload, truncated: false }
     }
-    const inputOnly = Buffer.from(JSON.stringify({ input, output: null }), 'utf-8')
-    if (inputOnly.length <= MCP_ACTIVITY_PAYLOAD_MAX_BYTES) {
-        return { body: inputOnly, truncated: true }
+    const inputOnlyPayload = Buffer.from(JSON.stringify({ input, output: null }), 'utf-8')
+    if (inputOnlyPayload.length <= MCP_ACTIVITY_PAYLOAD_MAX_BYTES) {
+        return { payloadBytes: inputOnlyPayload, truncated: true }
     }
-    return { body: Buffer.from(JSON.stringify({ input: null, output: null }), 'utf-8'), truncated: true }
+    return { payloadBytes: Buffer.from(JSON.stringify({ input: null, output: null }), 'utf-8'), truncated: true }
 }
 
 export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?: string, actionName?: string, connectionExternalId?: string } {
@@ -70,19 +70,19 @@ export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?
     }
 }
 
-async function record({ context, toolName, pieceName, actionName, connectionExternalId, durationMs, input, result, log }: RecordParams): Promise<void> {
-    const resolved = await context()
-    if (isNil(resolved)) {
+async function record({ resolveContext, toolName, pieceName, actionName, connectionExternalId, durationMs, input, result, log }: RecordParams): Promise<void> {
+    const activityContext = await resolveContext()
+    if (isNil(activityContext)) {
         return
     }
-    const payloadFile = await savePayload({ context: resolved, input, result, log })
+    const payloadFile = await savePayload({ context: activityContext, input, result, log })
     const activity: McpActivity = {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
-        platformId: resolved.platformId,
-        projectId: resolved.projectId,
-        userId: resolved.userId,
+        platformId: activityContext.platformId,
+        projectId: activityContext.projectId,
+        userId: activityContext.userId,
         toolName,
         status: result.isError === true ? 'FAILED' : 'SUCCEEDED',
         pieceName: pieceName ?? null,
@@ -98,8 +98,8 @@ async function record({ context, toolName, pieceName, actionName, connectionExte
 
 async function savePayload({ context, input, result, log }: SavePayloadParams): Promise<{ id: string, truncated: boolean } | null> {
     try {
-        const { body, truncated } = capPayload({ input, output: result.content })
-        const compressed = await fileCompressor.compress({ data: body, compression: FileCompression.ZSTD })
+        const { payloadBytes, truncated } = capPayload({ input, output: result.content })
+        const compressed = await fileCompressor.compress({ data: payloadBytes, compression: FileCompression.ZSTD })
         const file = await fileService(log).save({
             type: FileType.MCP_CALL_PAYLOAD,
             compression: FileCompression.ZSTD,
@@ -132,12 +132,12 @@ export type McpActivityContext = {
 type WithActivityRecordingParams = {
     execute: McpToolDefinition['execute']
     tool: Pick<McpToolDefinition, 'title'>
-    context: () => Promise<McpActivityContext | null>
+    resolveContext: () => Promise<McpActivityContext | null>
     log: FastifyBaseLogger
 }
 
 type RecordParams = {
-    context: () => Promise<McpActivityContext | null>
+    resolveContext: () => Promise<McpActivityContext | null>
     toolName: string
     pieceName?: string
     actionName?: string

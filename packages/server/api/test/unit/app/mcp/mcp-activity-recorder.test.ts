@@ -100,27 +100,27 @@ describe('MCP activity payload cap', () => {
     const over = { note: 'x'.repeat(200 * 1024) }
 
     it('keeps a small call whole', () => {
-        const { truncated, body } = capPayload({ input: under, output: under })
+        const { truncated, payloadBytes } = capPayload({ input: under, output: under })
         expect(truncated).toBe(false)
-        expect(JSON.parse(body.toString('utf-8')).output).toEqual(under)
+        expect(JSON.parse(payloadBytes.toString('utf-8')).output).toEqual(under)
     })
 
     it('drops the output when the pair is too big but the input fits', () => {
-        const { truncated, body } = capPayload({ input: under, output: over })
+        const { truncated, payloadBytes } = capPayload({ input: under, output: over })
         expect(truncated).toBe(true)
-        const parsed = JSON.parse(body.toString('utf-8'))
+        const parsed = JSON.parse(payloadBytes.toString('utf-8'))
         expect(parsed.input).toEqual(under)
         expect(parsed.output).toBeNull()
     })
 
     it('drops both when the input alone blows the cap', () => {
-        const { truncated, body } = capPayload({ input: over, output: over })
+        const { truncated, payloadBytes } = capPayload({ input: over, output: over })
         expect(truncated).toBe(true)
-        expect(JSON.parse(body.toString('utf-8'))).toEqual({ input: null, output: null })
+        expect(JSON.parse(payloadBytes.toString('utf-8'))).toEqual({ input: null, output: null })
     })
 
     it('never writes more than the cap', () => {
         const cases = [{ input: under, output: under }, { input: under, output: over }, { input: over, output: over }]
-        cases.forEach((payload) => expect(capPayload(payload).body.length).toBeLessThanOrEqual(MCP_ACTIVITY_PAYLOAD_MAX_BYTES))
+        cases.forEach((payload) => expect(capPayload(payload).payloadBytes.length).toBeLessThanOrEqual(MCP_ACTIVITY_PAYLOAD_MAX_BYTES))
     })
 })

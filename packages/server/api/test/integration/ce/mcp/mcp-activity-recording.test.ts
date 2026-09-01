@@ -38,7 +38,7 @@ async function callRunAction({ pieceName, connectionExternalId }: { pieceName?: 
     })
 }
 
-async function activityRows(): Promise<McpActivity[]> {
+async function findActivityRows(): Promise<McpActivity[]> {
     return databaseConnection()
         .getRepository('mcp_activity')
         .find({ where: { platformId: ctx.platform.id } }) as Promise<McpActivity[]>
@@ -59,7 +59,7 @@ describe('MCP activity recording', () => {
     it('records a tool call made against a project MCP server', async () => {
         await callRunAction({ connectionExternalId: 'conn-external-1' })
 
-        const rows = await activityRows()
+        const rows = await findActivityRows()
         expect(rows).toHaveLength(1)
         expect(rows[0]).toMatchObject({
             platformId: ctx.platform.id,
@@ -78,12 +78,12 @@ describe('MCP activity recording', () => {
     it('writes no row when the arguments fail schema validation', async () => {
         await callProjectTool('ap_run_action', { pieceName: 42, actionName: 'do_nothing' })
 
-        expect(await activityRows()).toHaveLength(0)
+        expect(await findActivityRows()).toHaveLength(0)
     })
 
     it('serves the recorded payload back', async () => {
         await callRunAction({ connectionExternalId: 'conn-external-1' })
-        const [activity] = await activityRows()
+        const [activity] = await findActivityRows()
 
         const response = await ctx.get(`/v1/mcp-activity/${activity.id}/payload`)
 
@@ -122,7 +122,7 @@ describe('MCP activity recording', () => {
     it('records no connection when the call carried none', async () => {
         await callRunAction({})
 
-        const rows = await activityRows()
+        const rows = await findActivityRows()
         expect(rows).toHaveLength(1)
         expect(rows[0].connectionExternalId).toBeNull()
     })
@@ -132,7 +132,7 @@ describe('MCP activity recording', () => {
     it('still writes the row when the arguments are hostile', async () => {
         await callRunAction({ pieceName: `does\u0000notexist${'x'.repeat(400)}`, connectionExternalId: 'c'.repeat(400) })
 
-        const rows = await activityRows()
+        const rows = await findActivityRows()
         expect(rows).toHaveLength(1)
         expect(rows[0].pieceName).not.toContain('\u0000')
         expect(rows[0].pieceName?.length).toBeLessThanOrEqual(256)
@@ -142,7 +142,7 @@ describe('MCP activity recording', () => {
     it('does not record a read-only tool', async () => {
         await callProjectTool('ap_list_flows', {})
 
-        expect(await activityRows()).toHaveLength(0)
+        expect(await findActivityRows()).toHaveLength(0)
     })
 
     // Recording used to follow annotations.readOnlyHint === false, which covered 26 tools.
@@ -151,7 +151,7 @@ describe('MCP activity recording', () => {
         await callProjectTool('ap_delete_flow', { flowId: 'doesnotexist000000000' })
         await callProjectTool('ap_create_flow', { flowName: 'built by mcp' })
 
-        expect(await activityRows()).toHaveLength(0)
+        expect(await findActivityRows()).toHaveLength(0)
     })
 
     // Postgres runs the ON DELETE SET NULL action per deleted file row, so without

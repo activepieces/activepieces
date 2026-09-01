@@ -11,11 +11,11 @@ export const agentRetention = (log: FastifyBaseLogger) => ({
         await executionDataRetention.sweep({
             repo: conversationRepo,
             alias: 'conversation',
-            extraWhere: {
+            scopeCondition: {
                 condition: 'conversation.source = :source',
                 parameters: { source: AgentRunSource.FLOW_STEP },
             },
-            label: 'agentRetention',
+            logLabel: 'agentRetention',
             log,
         })
     },

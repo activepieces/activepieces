@@ -3,10 +3,10 @@ import {
     FileType,
     ListMcpActivityResponse,
     McpActivity,
-    McpActivityEntry,
     McpActivityPayload,
     McpActivityStatus,
-    PLATFORM_WIDE_PROJECT_FILTER_VALUE,
+    PLATFORM_WIDE_PROJECT_FILTER,
+    PopulatedMcpActivity,
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,12 +19,11 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
-import { McpActivityEntity } from './mcp-activity.entity'
+import { ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
 
 const repo = repoFactory(McpActivityEntity)
 
 const DEFAULT_ACTIVITY_PAGE_SIZE = 20
-const ACTIVITY_ALIAS = 'mcp_activity'
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
     async list({ platformId, userId, projectIds, memberIds, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<ListMcpActivityResponse> {
@@ -55,7 +54,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         if (!isNil(createdBefore)) {
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."created" <= :createdBefore`, { createdBefore })
         }
-        applyProjectFilter(queryBuilder, projectIds)
+        applyProjectFilter({ queryBuilder, projectIds })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
@@ -65,8 +64,8 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
             findConnectionNames({ platformId, activities: data }),
         ])
 
-        const rows = data.map((activity) => toEntry({ activity, members, projectNames, connectionNames }))
-        return paginationHelper.createPage<McpActivityEntry>(rows, nextCursor)
+        const rows = data.map((activity) => toPopulatedMcpActivity({ activity, members, projectNames, connectionNames }))
+        return paginationHelper.createPage<PopulatedMcpActivity>(rows, nextCursor)
     },
 
     async getPayload({ id, platformId, userId }: GetPayloadParams): Promise<McpActivityPayload> {
@@ -86,17 +85,17 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
             type: FileType.MCP_CALL_PAYLOAD,
             ...(isNil(activity.projectId) ? {} : { projectId: activity.projectId }),
         })
-        const { input, output } = storedPayload.parse(JSON.parse(file.data.toString('utf-8')))
+        const { input, output } = StoredPayload.parse(JSON.parse(file.data.toString('utf-8')))
         return { input, output, truncated: activity.payloadTruncated }
     },
 })
 
-function toEntry({ activity, members, projectNames, connectionNames }: {
+function toPopulatedMcpActivity({ activity, members, projectNames, connectionNames }: {
     activity: McpActivity
     members: Map<string, UserWithMetaInformation>
     projectNames: Map<string, string>
     connectionNames: Map<string, string>
-}): McpActivityEntry {
+}): PopulatedMcpActivity {
     return {
         id: activity.id,
         created: activity.created,
@@ -119,11 +118,11 @@ function connectionKey({ projectId, connectionExternalId }: Pick<McpActivity, 'p
     return `${projectId}:${connectionExternalId}`
 }
 
-function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined): void {
+function applyProjectFilter<T extends ObjectLiteral>({ queryBuilder, projectIds }: { queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined }): void {
     if (isNil(projectIds)) {
         return
     }
-    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_PROJECT_FILTER_VALUE)
+    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_PROJECT_FILTER)
     const includesPlatformWide = projectIds.length !== scopedProjectIds.length
     queryBuilder.andWhere(new Brackets((qb) => {
         if (scopedProjectIds.length > 0) {
@@ -191,7 +190,7 @@ async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaI
     }))
 }
 
-const storedPayload = z.object({
+const StoredPayload = z.object({
     input: z.unknown(),
     output: z.unknown(),
 })

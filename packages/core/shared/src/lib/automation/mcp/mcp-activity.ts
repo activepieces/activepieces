@@ -24,7 +24,7 @@ export const McpActivity = z.object({
 
 export type McpActivity = z.infer<typeof McpActivity>
 
-export const McpActivityEntry = z.object({
+export const PopulatedMcpActivity = z.object({
     id: z.string(),
     created: z.string(),
     status: McpActivityStatus,
@@ -41,10 +41,10 @@ export const McpActivityEntry = z.object({
     hasPayload: z.boolean(),
 })
 
-export type McpActivityEntry = z.infer<typeof McpActivityEntry>
+export type PopulatedMcpActivity = z.infer<typeof PopulatedMcpActivity>
 
 export const ListMcpActivityResponse = z.object({
-    data: z.array(McpActivityEntry),
+    data: z.array(PopulatedMcpActivity),
     next: z.string().nullable(),
     previous: z.string().nullable(),
 })
@@ -79,4 +79,4 @@ export type GetMcpActivityPayloadParams = z.infer<typeof GetMcpActivityPayloadPa
 
 export const MCP_ACTIVITY_PAYLOAD_MAX_BYTES = 128 * 1024
 
-export const PLATFORM_WIDE_PROJECT_FILTER_VALUE = 'platform-wide'
+export const PLATFORM_WIDE_PROJECT_FILTER = 'platform-wide'

@@ -10,7 +10,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { userService } from '../../user/user-service'
-import { mcpActivityService } from './mcp-activity.service'
+import { mcpActivityService } from './mcp-activity-service'
 
 export const mcpActivityController: FastifyPluginAsyncZod = async (app) => {
 
