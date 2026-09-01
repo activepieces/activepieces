@@ -153,17 +153,17 @@ Nothing on upgrade. Re-check any flow or API integration that filters a Date col
 
 The card's primary path is a six-digit code emailed to the address typed into it. It is offered whenever the instance has SMTP configured and email auth is enabled, on every edition including Community, so a self-hosted instance that already sends transactional email gains a way to sign in that needs no password. An instance with no SMTP is unaffected: the card opens directly on the classic password form, with Google and SAML above it exactly as before.
 
-Two things change on an instance that does have SMTP. Password sign-in moves behind a **Use password** link on the card, and password sign-*up* is no longer reachable at all — a new member's first sign-in is the emailed code. Existing passwords are untouched: a verified identity keeps its password, and signing in with a code does not discard it.
+Two things change on an instance that does have SMTP. Password sign-in moves behind a **Use password** link on the card, and password sign-*up* is offered only where the card is in sign-up mode — the first account on a fresh instance, or an invitation link (`/sign-up?email=…`) — so someone who simply opens `/sign-in` on an instance that already has accounts is given the emailed code and no way to switch to a password sign-up form. Existing passwords are untouched: a verified identity keeps its password, and signing in with a code does not discard it.
 
-Who may get in does not change. A code is only sent to an address that may join the platform — `AP_ALLOW_OPEN_SIGN_UP=true`, an accepted invitation, or existing membership — and the platform's domain allow-list still applies. A request for an address that may not join answers exactly as an accepted one does and simply sends no code, so the endpoint reveals nothing about who has an account.
+Who may get in does not change, and the existing guards all run before a code is sent. Joining still requires `AP_ALLOW_OPEN_SIGN_UP=true`, an accepted invitation, or existing membership, and that refusal is silent — the response is identical to an accepted one and no code is sent, so the endpoint reveals nothing about who has an account. A platform's allowed-domains list still applies too, but it answers with an explicit domain-not-allowed error rather than silently, and like the platform's Email-auth setting it is inert on Community and on any platform whose plan does not include SSO. On a fresh install, before the first platform exists, there is no platform for either check to run against and both are skipped.
 
 #### What you need to do
 
-Nothing to configure or migrate, and no new environment variable — the presence of SMTP is the only switch.
+Nothing to configure or migrate, and no new environment variable: emailed-code sign-in turns itself on once SMTP is configured and Email is enabled as an authentication method.
 
 If you do not want emailed-code sign-in, turn off **Email** as an authentication method for the platform (Enterprise and Cloud, under SSO settings, and only where your plan includes SSO); that disables password sign-in along with it, since both are the same method. On Community that toggle is inert, so the only lever there is leaving SMTP unconfigured.
 
-If you script or end-to-end test the sign-in screen, re-check it: the same URL now renders a different form depending on whether SMTP is configured and whether any account exists yet, and resetting a password happens inside the card rather than by navigating to `/forget-password`.
+If you script or end-to-end test the sign-in screen, re-check it: the same URL now renders a different form depending on whether SMTP is configured and whether any account exists yet. Password reset moved inside the card wherever the emailed-code path is active; an instance without SMTP still sends people to `/forget-password`, and Community shows no reset control at all.
 
 #### Emailed sign-in codes allow ten wrong guesses per account per hour
 
