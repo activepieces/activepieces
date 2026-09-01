@@ -23,6 +23,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             },
         }
 
+        const firstLoopAction = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS || stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.firstLoopAction : undefined
 
         let updatedAction: FlowAction
         switch (request.type) {
@@ -52,11 +53,22 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             }
             case FlowActionType.LOOP_ON_ITEMS: {
                 const existingSampleData = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.settings.sampleData : undefined
-                const firstLoopAction = stepToUpdate.type === FlowActionType.LOOP_ON_ITEMS ? stepToUpdate.firstLoopAction : undefined
                 updatedAction = {
                     ...baseProps,
                     settings: { ...request.settings, sampleData: existingSampleData },
                     type: FlowActionType.LOOP_ON_ITEMS,
+                    firstLoopAction,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+
+            case FlowActionType.PROCESS_IN_BATCHES: {
+                const existingSampleData = stepToUpdate.type === FlowActionType.PROCESS_IN_BATCHES ? stepToUpdate.settings.sampleData : undefined
+                updatedAction = {
+                    ...baseProps,
+                    settings: { ...request.settings, sampleData: existingSampleData },
+                    type: FlowActionType.PROCESS_IN_BATCHES,
                     firstLoopAction,
                     nextAction: stepToUpdate.nextAction,
                 }

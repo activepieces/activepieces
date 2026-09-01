@@ -13,11 +13,11 @@ import { loopExecutor } from './loop-executor'
 import { pieceExecutor } from './piece-executor'
 import { routerExecuter } from './router-executor'
 
-let executors: Record<FlowActionType, BaseExecutor<FlowAction>> | null = null
+let executors: Partial<Record<FlowActionType, BaseExecutor<FlowAction>>> | null = null
 
 // ponytail: lazy because router-executor imports this module back; a module-level
 // const would hit the circular import in TDZ depending on bundle order.
-function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
+function getExecutors(): Partial<Record<FlowActionType, BaseExecutor<FlowAction>>> {
     executors ??= {
         [FlowActionType.CODE]: codeExecutor,
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,

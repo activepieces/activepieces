@@ -58,6 +58,7 @@ export const stepUtils = {
     switch (step.type) {
       case FlowActionType.ROUTER:
       case FlowActionType.LOOP_ON_ITEMS:
+      case FlowActionType.PROCESS_IN_BATCHES:
       case FlowActionType.CODE:
       case FlowTriggerType.EMPTY:
         return {
@@ -172,6 +173,15 @@ function buildCoreStepMetadata(): Record<
       logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
       description: t('Iterate over a list of items'),
       type: FlowActionType.LOOP_ON_ITEMS,
+    },
+    [FlowActionType.PROCESS_IN_BATCHES]: {
+      displayName: t('Process in Batches'),
+      logoUrl:
+        'https://cdn.activepieces.com/pieces/new-core/process-in-batches.svg',
+      description: t(
+        "Split a list into batches and run them in parallel. Batches don't finish in order.",
+      ),
+      type: FlowActionType.PROCESS_IN_BATCHES,
     },
     [FlowActionType.ROUTER]: {
       displayName: t('Router'),
