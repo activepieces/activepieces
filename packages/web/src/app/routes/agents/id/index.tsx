@@ -724,12 +724,22 @@ const AgentEditScreen = ({
   const writeSeq = useRef(0);
   const writeLock = useRef(agentEditState.createWriteLock());
 
+  const lastFromServer = useRef(formValuesOf(agent));
+
   useEffect(() => {
-    if (unsavedTyping) return;
     const fromServer = formValuesOf(agent);
-    if (agentEditState.sameConfig({ left: fromServer, right: values })) return;
+    if (
+      agentEditState.sameConfig({
+        left: fromServer,
+        right: lastFromServer.current,
+      })
+    ) {
+      return;
+    }
+    if (unsavedTyping) return;
+    lastFromServer.current = fromServer;
     form.reset(fromServer);
-  }, [agent, values, unsavedTyping, form]);
+  }, [agent, unsavedTyping, form]);
 
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {

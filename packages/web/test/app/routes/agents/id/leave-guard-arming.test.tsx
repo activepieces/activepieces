@@ -52,6 +52,17 @@ vi.mock('@/features/agents', () => ({
           })
         }
       />
+      <button
+        data-testid="model-filled-by-default"
+        onClick={() =>
+          onChange({
+            provider: 'openai',
+            model: 'gpt-5',
+            configId: undefined,
+            picked: 'default',
+          })
+        }
+      />
     </>
   ),
   AgentStructuredOutput: () => <div data-testid="structured" />,
@@ -152,6 +163,19 @@ describe('the leave guard only speaks for edits a person made', () => {
 
     expect(screen.queryByText('Leave without saving?')).toBeNull();
     expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a model the selector filled in for a blank agent', async () => {
+    renderScreen({ onExit: vi.fn() });
+    await settle();
+    expect(
+      screen.queryByText('Pick a model so this agent can answer.'),
+    ).toBeTruthy();
+
+    screen.getByTestId('model-filled-by-default').click();
+    await settle();
+
+    expect(screen.queryByText('Pick a model so this agent can answer.')).toBeNull();
   });
 
   it('still stops you when the model was picked by hand', async () => {
