@@ -835,6 +835,25 @@ describe('moving an agent to another project', () => {
         expect(new Date(after.updated).getTime()).toBeGreaterThanOrEqual(new Date(before.updated).getTime())
     })
 
+    it('refuses an edit aimed at the project the agent has left', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx, { displayName: 'Before the move' })
+        const target = await secondProjectOf(ctx)
+        expect((await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })).statusCode).toBe(StatusCodes.OK)
+
+        const stale = agentService(app.log).update({
+            id: agent.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            request: { displayName: 'Written by a request the target never authorised' },
+        })
+
+        await expect(stale).rejects.toThrow()
+        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { displayName: string, projectId: string }
+        expect(row.displayName).toBe('Before the move')
+        expect(row.projectId).toBe(target.id)
+    })
+
     it('refuses a move once the agent is no longer in the project it was asked from', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

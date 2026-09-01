@@ -115,7 +115,23 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        await agentRepo().save(agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }))
+        // The write is conditioned on the project this request was authorised for. An edit that
+        // overlaps a move would otherwise land by id alone, persisting changes into a project whose
+        // permissions were never checked, and the lock serialises it against the move itself.
+        await transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const locked = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id', { id })
+                .getOne()
+            if (isNil(locked) || locked.projectId !== projectId) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: 'That agent has just been moved somewhere else. Reload the page and try again.' },
+                })
+            }
+            await repo.save(agentUpdatePayload({ id, request, draft, published, visibility, sharedWithUserIds }))
+        })
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
@@ -173,7 +189,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
             if (isNil(tools)) {
                 return null
             }
-            await repo.save({ ...omit(agent, ['published']), draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            await repo.save({ id, draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
             return this.getOneOrThrow({ id, projectId, userId })
         })
     },
