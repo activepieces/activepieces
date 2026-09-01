@@ -8,7 +8,7 @@ import { transaction } from '../../core/db/transaction'
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import Paginator, { Order } from '../../helper/pagination/paginator'
+import Paginator, { CURSOR_SELECT_PREFIX, Order } from '../../helper/pagination/paginator'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -98,7 +98,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
         externalIds,
         versionState = FlowVersionState.DRAFT,
         includeTriggerSource = true,
+        sortBy,
+        order,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
+        assertSortIsNotCombinedWithCursor({ sortBy, cursor: cursorRequest })
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowEntity,
@@ -191,6 +194,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere('latest_version."agentIds" && :agentExternalIds', { agentExternalIds })
         }
 
+        if (!isNil(sortBy)) {
+            const nameSortAlias = `${CURSOR_SELECT_PREFIX}name`
+            const nameSortColumn = versionState === FlowVersionState.DRAFT ? 'latest_version."displayName"' : 'published_version."displayName"'
+            queryBuilder.addSelect(`LOWER(COALESCE(${nameSortColumn}, ''))`, nameSortAlias)
+            queryBuilder.addOrderBy(nameSortAlias, order ?? 'ASC')
+        }
+
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
 
         const populatedFlows = await Promise.all(paginationResult.data.map(async (flow) => {
@@ -214,7 +224,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     : undefined,
             }
         }))
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        return paginationHelper.createPage(populatedFlows, isNil(sortBy) ? paginationResult.cursor : null)
     },
     async exists(id: FlowId): Promise<boolean> {
         return flowRepo().existsBy({
@@ -803,6 +813,16 @@ const assertFlowIsNotNull: <T extends Flow>(
     }
 }
 
+function assertSortIsNotCombinedWithCursor({ sortBy, cursor }: { sortBy: 'NAME' | undefined, cursor: Cursor | undefined | null }): void {
+    if (isNil(sortBy) || isNil(cursor)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.GENERIC_ERROR,
+        params: { message: 'sortBy cannot be combined with cursor' },
+    })
+}
+
 async function assertExternalIdIsUnique({ projectId, externalId }: { projectId: ProjectId, externalId: string | undefined }): Promise<void> {
     if (isNil(externalId)) {
         return
@@ -837,6 +857,8 @@ type ListParamsBase = {
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
     includeTriggerSource?: boolean
+    sortBy?: 'NAME'
+    order?: 'ASC' | 'DESC'
 }
 
 type ListParams = ListParamsBase & (
