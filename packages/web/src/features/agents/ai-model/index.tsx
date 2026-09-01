@@ -33,6 +33,7 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
 
 type AIModelSelectorProps = {
   hideLabel?: boolean;
+  showEmbeddingNote?: boolean;
   defaultProvider?: AIProviderName;
   defaultModel?: string;
   defaultConfigId?: string;
@@ -55,6 +56,7 @@ const ALL_PROVIDERS = [...SUPPORTED_AI_PROVIDERS, ACTIVEPIECES_PROVIDER_CONFIG];
 
 export function AIModelSelector({
   hideLabel,
+  showEmbeddingNote = true,
   defaultProvider,
   defaultModel,
   defaultConfigId,
@@ -338,7 +340,7 @@ export function AIModelSelector({
         </Popover>
       </div>
 
-      {selectedProvider && (
+      {selectedProvider && showEmbeddingNote && (
         <p className="text-xs text-muted-foreground">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {

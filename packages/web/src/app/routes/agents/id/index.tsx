@@ -445,6 +445,7 @@ const ConfigureFields = ({
         )}
         <AIModelSelector
           hideLabel
+          showEmbeddingNote={knowledgeCount > 0}
           defaultProvider={form.watch('draft.provider') ?? undefined}
           defaultModel={form.watch('draft.modelName') ?? undefined}
           defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
