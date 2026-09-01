@@ -18,19 +18,19 @@ import {
   Compass,
   Lock,
   LogOut,
+  MessageCircleMore,
   PanelLeftClose,
   Search,
   Settings,
   Shield,
   SlidersHorizontal,
-  SquarePen,
-  Unplug,
   UserCogIcon,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ComponentType, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
@@ -122,7 +122,7 @@ export function PrimaryRail() {
               <RailNavButton
                 collapsed={collapsed}
                 to="/chat"
-                icon={SquarePen}
+                icon={MessageCircleMore}
                 label={t('Chat')}
                 isActive={({ pathname }) => pathname.startsWith('/chat')}
                 onClick={() =>
@@ -130,6 +130,16 @@ export function PrimaryRail() {
                 }
               />
             )}
+            {checkAccess(Permission.READ_MCP) && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/mcp-server"
+                icon={McpRailIcon}
+                label={t('MCP')}
+                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
+              />
+            )}
+            <div className="h-2 shrink-0" />
             {showAgents && (
               <RailNavButton
                 collapsed={collapsed}
@@ -143,7 +153,7 @@ export function PrimaryRail() {
               collapsed={collapsed}
               to="/templates"
               icon={Compass}
-              label={t('Explore')}
+              label={t('Templates')}
               isActive={({ pathname }) => pathname.startsWith('/templates')}
               onClick={() =>
                 templatesTelemetryApi.sendEvent({
@@ -159,15 +169,6 @@ export function PrimaryRail() {
               label={t('Impact')}
               isActive={({ pathname }) => pathname.startsWith('/impact')}
             />
-            {checkAccess(Permission.READ_MCP) && (
-              <RailNavButton
-                collapsed={collapsed}
-                to="/mcp-server"
-                icon={Unplug}
-                label={t('MCP')}
-                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
-              />
-            )}
           </div>
           <RailPinnedProjects collapsed={collapsed} />
         </div>
@@ -341,6 +342,10 @@ function RailPlatformAdminButton({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+function McpRailIcon({ className }: { className?: string }) {
+  return <McpSvg className={cn('w-4 h-4', className)} />;
+}
+
 function RailNavButton({
   collapsed,
   to,
@@ -368,12 +373,12 @@ function RailNavButton({
         onClick?.();
       }}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-        collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
+        'flex shrink-0 items-center gap-2.5 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        collapsed ? 'size-8 cursor-pointer justify-center' : 'h-8 px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
     >
-      <Icon className={cn('size-[18px] shrink-0', active && 'text-primary')} />
+      <Icon className={cn('size-4 shrink-0', active && 'text-primary')} />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
@@ -534,8 +539,8 @@ function ProjectRow({
       }}
       aria-label={name}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
-        collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
+        'flex shrink-0 items-center gap-2.5 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        collapsed ? 'size-8 cursor-pointer justify-center' : 'h-8 w-full px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
     >

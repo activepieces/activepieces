@@ -1,10 +1,10 @@
-import { slugify } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
 import { MCP_CLIENT_BRANDING } from './mcp-client-display';
 
 const GENERIC_ICON = MCP_CLIENT_BRANDING.unknown.icon;
-const FALLBACK_SLUG = 'activepieces';
+const BRAND_NAME = 'Activepieces';
+const BRAND_SLUG = 'activepieces';
 
 function claudeDeepLink({
   serverUrl,
@@ -87,13 +87,28 @@ function catalogEntries({
       setupHint: t('One command'),
       docsUrl: 'https://docs.claude.com/en/docs/claude-code/mcp',
       install: {
-        body: t('From the folder you want the tools available in.'),
+        body: t(
+          'Run this in your project folder. On the desktop app, just ask Claude to run it for you.',
+        ),
         command: `claude mcp add --transport http ${slug} ${url}`,
       },
       auth: t('Run /mcp inside Claude Code and pick Authenticate.'),
       config: {
         path: '.mcp.json',
         snippet: mcpServersJson({ slug, serverConfig: { type: 'http', url } }),
+      },
+      cloud: {
+        directoryUrl: CLOUD_LISTINGS.claude,
+        install: {
+          body: t(
+            'One click adds it to your Claude account, including the Code tab.',
+          ),
+          action: {
+            label: t('Add from the Claude directory'),
+            href: CLOUD_LISTINGS.claude,
+          },
+          command: `claude mcp add --transport http ${slug} ${url}`,
+        },
       },
     },
     {
@@ -170,7 +185,16 @@ function catalogEntries({
           href: cursorDeepLink({ serverUrl: url, slug }),
         },
       },
-      cloud: { docsUrl: CLOUD_LISTINGS.cursor },
+      cloud: {
+        directoryUrl: CLOUD_LISTINGS.cursor,
+        install: {
+          body: t('One click writes the server into Cursor.'),
+          action: {
+            label: t('Add to Cursor'),
+            href: cursorDeepLink({ serverUrl: url, slug }),
+          },
+        },
+      },
       config: {
         path: '~/.cursor/mcp.json',
         snippet: mcpServersJson({ slug, serverConfig: { url } }),
@@ -215,11 +239,9 @@ function catalogEntries({
         },
       },
       cloud: {
-        docsUrl: CLOUD_LISTINGS.claude,
+        directoryUrl: CLOUD_LISTINGS.claude,
         install: {
-          body: t(
-            'This server is already listed in Claude’s directory — add it there in one click.',
-          ),
+          body: t('One click covers Claude on web, desktop, and mobile.'),
           action: {
             label: t('Add from the Claude directory'),
             href: CLOUD_LISTINGS.claude,
@@ -348,6 +370,7 @@ function toCatalogClient({
     setupHint: entry.setupHint,
     subtitle: groupCopy.subtitle(),
     docsUrl: entry.docsUrl,
+    directoryUrl: entry.directoryUrl,
     setupVideoUrl: isCloud ? undefined : entry.selfHostedVideoUrl,
     config: entry.config && {
       label: configLabel(entry.config),
@@ -378,16 +401,14 @@ function toCatalogClient({
 export const mcpClientCatalog = {
   clients: ({
     serverUrl,
-    websiteName,
     isCloud,
   }: {
     serverUrl: string;
-    websiteName: string;
     isCloud: boolean;
   }): CatalogClient[] =>
     catalogEntries({
       url: serverUrl,
-      brand: { name: websiteName, slug: slugify(websiteName) || FALLBACK_SLUG },
+      brand: { name: BRAND_NAME, slug: BRAND_SLUG },
     })
       .map((entry) =>
         isCloud && entry.cloud ? { ...entry, ...entry.cloud } : entry,
@@ -396,7 +417,7 @@ export const mcpClientCatalog = {
         toCatalogClient({
           entry,
           url: serverUrl,
-          brandName: websiteName,
+          brandName: BRAND_NAME,
           isCloud,
         }),
       ),
@@ -435,6 +456,7 @@ export type CatalogClient = {
   setupHint: string;
   subtitle: string;
   docsUrl: string;
+  directoryUrl?: string;
   setupVideoUrl?: string;
   config?: {
     label: string;
@@ -482,5 +504,9 @@ type CatalogEntry = {
   auth?: string;
   selfHostedVideoUrl?: string;
   config?: ConfigSnippet;
-  cloud?: Pick<CatalogEntry, 'install'> & { docsUrl?: string };
+  directoryUrl?: string;
+  cloud?: Pick<CatalogEntry, 'install'> & {
+    docsUrl?: string;
+    directoryUrl?: string;
+  };
 };
