@@ -10,32 +10,19 @@ function sameConfig({
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function adoptsPickedModel({
-  values,
-  syncedDraft,
+function modelPickChanged({
+  picked,
+  current,
 }: {
-  values: AgentDraftShape;
-  syncedDraft: AgentDraftShape;
+  picked: ModelPick;
+  current: ModelPick;
 }): boolean {
-  const hadNoModel =
-    syncedDraft.draft.modelName === null ||
-    syncedDraft.draft.modelName === undefined ||
-    syncedDraft.draft.modelName === '';
-  if (!hadNoModel) {
-    return false;
-  }
-  const withoutModel = (shape: AgentDraftShape) => ({
-    ...shape,
-    draft: {
-      ...shape.draft,
-      provider: null,
-      modelName: null,
-      providerConfigId: null,
-    },
-  });
-  return (
-    values.draft.modelName !== syncedDraft.draft.modelName &&
-    sameConfig({ left: withoutModel(values), right: withoutModel(syncedDraft) })
+  const same = (left?: string | null, right?: string | null) =>
+    (left ?? null) === (right ?? null);
+  return !(
+    same(picked.provider, current.provider) &&
+    same(picked.modelName, current.modelName) &&
+    same(picked.providerConfigId, current.providerConfigId)
   );
 }
 
@@ -107,22 +94,18 @@ function createWriteLock(): WriteLock {
 
 export const agentEditState = {
   sameConfig,
-  adoptsPickedModel,
+  modelPickChanged,
   headerStatus,
   modeIntent,
   leaveGuard,
   createWriteLock,
 };
 
-export type AgentDraftShape = {
-  draft: {
-    provider?: unknown;
-    modelName?: string | null;
-    providerConfigId?: unknown;
-    [key: string]: unknown;
-  };
+export type ModelPick = {
+  provider?: string | null;
+  modelName?: string | null;
+  providerConfigId?: string | null;
 };
-
 export type HeaderStatus = 'needs-model' | 'live' | 'pending';
 export type ModeIntent = 'switch' | 'stage';
 export type LeaveGuard = {
