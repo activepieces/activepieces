@@ -1,11 +1,13 @@
 import path from 'path'
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
 import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
 import { SandboxSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
 import { isValidPackageName } from './piece-installer'
+
+const inFlightPieceReads = new Map<string, Promise<PiecePackage>>()
 
 export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePath: string, getSettings: () => SandboxSettings) => ({
     async getPiece({ pieceName, pieceVersion, platformId }: PieceCacheKey): Promise<PiecePackage> {
@@ -22,39 +24,50 @@ export const pieceCache = (log: ApLogger, apiClient: WorkerToApiContract, basePa
         }
 
         const cacheKey = `${pieceName}-${pieceVersion}-${platformId}`
-        const cache = cacheState(path.join(cacheUtils(basePath).getGlobalCachePiecesPath(), cacheKey))
-
-        const { state, cacheHit } = await cache.getOrSetCache({
-            key: cacheKey,
-            cacheMiss: (_: string) => {
-                const environment = getSettings().ENVIRONMENT
-                if (environment === ApEnvironment.TESTING) {
-                    return true
-                }
-                const devPieces = getSettings().DEV_PIECES
-                if (devPieces.includes(pieceName)) {
-                    return true
-                }
-                return false
-            },
-            installFn: async () => {
-                return wideEvent.timed({
-                    name: 'pieceFetch',
-                    fn: async () => {
-                        const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
-                        log.info({ piece: { name: pieceName, version: pieceVersion }, platform: { id: platformId } }, 'Cached piece')
-                        return JSON.stringify(piecePackage)
-                    },
-                })
-            },
-            skipSave: NO_SAVE_GUARD,
-        })
-
-        wideEvent.set({ pieceCacheHit: cacheHit })
-
-        return JSON.parse(state as string) as PiecePackage
+        const inFlight = inFlightPieceReads.get(cacheKey)
+        if (!isNil(inFlight)) {
+            return inFlight
+        }
+        const read = readPieceThroughCache({ cacheKey, pieceName, pieceVersion, platformId, log, apiClient, basePath, getSettings })
+            .finally(() => inFlightPieceReads.delete(cacheKey))
+        inFlightPieceReads.set(cacheKey, read)
+        return read
     },
 })
+
+async function readPieceThroughCache({ cacheKey, pieceName, pieceVersion, platformId, log, apiClient, basePath, getSettings }: ReadPieceThroughCacheParams): Promise<PiecePackage> {
+    const cache = cacheState(path.join(cacheUtils(basePath).getGlobalCachePiecesPath(), cacheKey))
+
+    const { state, cacheHit } = await cache.getOrSetCache({
+        key: cacheKey,
+        cacheMiss: (_: string) => {
+            const environment = getSettings().ENVIRONMENT
+            if (environment === ApEnvironment.TESTING) {
+                return true
+            }
+            const devPieces = getSettings().DEV_PIECES
+            if (devPieces.includes(pieceName)) {
+                return true
+            }
+            return false
+        },
+        installFn: async () => {
+            return wideEvent.timed({
+                name: 'pieceFetch',
+                fn: async () => {
+                    const piecePackage = await getPiecePackage({ pieceName, pieceVersion, platformId }, apiClient)
+                    log.info({ piece: { name: pieceName, version: pieceVersion }, platform: { id: platformId } }, 'Cached piece')
+                    return JSON.stringify(piecePackage)
+                },
+            })
+        },
+        skipSave: NO_SAVE_GUARD,
+    })
+
+    wideEvent.set({ pieceCacheHit: cacheHit })
+
+    return JSON.parse(state as string) as PiecePackage
+}
 
 async function getPiecePackage(query: PieceCacheKey, apiClient: WorkerToApiContract): Promise<PiecePackage> {
     const pieceMetadata = await apiClient.getPiece({
@@ -103,4 +116,12 @@ type PieceCacheKey = {
     pieceName: string
     pieceVersion: string
     platformId: string
+}
+
+type ReadPieceThroughCacheParams = PieceCacheKey & {
+    cacheKey: string
+    log: ApLogger
+    apiClient: WorkerToApiContract
+    basePath: string
+    getSettings: () => SandboxSettings
 }

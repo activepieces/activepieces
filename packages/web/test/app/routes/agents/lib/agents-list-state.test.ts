@@ -2,9 +2,11 @@ import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import {
+  acceptsDraftPrompt,
   showsAgentList,
   showsFirstRun,
   showsNoMatchNotice,
+  shownDestination,
 } from '@/app/routes/agents/lib/agents-list-state';
 
 const loaded = { listLoaded: true, hasAnyAgents: false, search: '' };
@@ -112,5 +114,119 @@ describe('the status the page reads as listLoaded', () => {
         search: '',
       }),
     ).toBe(false);
+  });
+});
+
+describe('showsNoMatchNotice with a project filter', () => {
+  it('explains an empty grid when a project hides everything and there is no search', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('stays quiet when the project filter is off and nothing was searched', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('still speaks for a search that matches nothing inside a project', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: 'nothing',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('showsFirstRun with a project filter', () => {
+  it('does not offer the first-run hero when a project simply has no agents', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('still offers it when nothing is filtered and the platform has none', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('acceptsDraftPrompt', () => {
+  const ready = {
+    prompt: 'summarise my inbox',
+    isBuilding: false,
+    readinessUnknown: false,
+  };
+
+  it('accepts a prompt once the destination is known to be ready', () => {
+    expect(acceptsDraftPrompt(ready)).toBe(true);
+  });
+
+  it('refuses while the destination project has not answered about its provider', () => {
+    expect(acceptsDraftPrompt({ ...ready, readinessUnknown: true })).toBe(
+      false,
+    );
+  });
+
+  it('refuses a second submit while one is already building', () => {
+    expect(acceptsDraftPrompt({ ...ready, isBuilding: true })).toBe(false);
+  });
+
+  it('refuses whitespace', () => {
+    expect(acceptsDraftPrompt({ ...ready, prompt: '   ' })).toBe(false);
+  });
+});
+
+describe('shownDestination', () => {
+  it('holds the project a build started in, even after the pick changes', () => {
+    expect(
+      shownDestination({
+        isBuilding: true,
+        buildingIn: 'project_a',
+        picked: 'project_b',
+      }),
+    ).toBe('project_a');
+  });
+
+  it('follows the pick again once the build is over', () => {
+    expect(
+      shownDestination({
+        isBuilding: false,
+        buildingIn: 'project_a',
+        picked: 'project_b',
+      }),
+    ).toBe('project_b');
+  });
+
+  it('falls back to the pick when nothing was captured', () => {
+    expect(
+      shownDestination({
+        isBuilding: true,
+        buildingIn: null,
+        picked: 'project_b',
+      }),
+    ).toBe('project_b');
   });
 });

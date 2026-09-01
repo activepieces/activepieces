@@ -1,5 +1,6 @@
 import {
   AgentIcon,
+  AgentListSort,
   AgentSummary,
   ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import {
@@ -27,6 +29,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/custom/empty';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,13 +49,15 @@ import {
 } from '@/features/agents/hooks/agents-hooks';
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
-import { projectCollectionUtils } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import {
+  acceptsDraftPrompt,
   showsAgentList,
+  shownDestination,
   showsFirstRun,
   showsNoMatchNotice,
 } from './lib/agents-list-state';
@@ -86,20 +91,13 @@ const TEMPLATE_STARTERS: TemplateStarter[] = [
   },
 ];
 
-const SORT_LABELS = {
-  updated: 'Recently updated',
-  created: 'Recently created',
-  name: 'Name',
-} as const;
-
-const SORT_COMPARATORS: Record<
-  AgentSort,
-  (left: AgentSummary, right: AgentSummary) => number
-> = {
-  updated: (left, right) => right.updated.localeCompare(left.updated),
-  created: (left, right) => right.created.localeCompare(left.created),
-  name: (left, right) => left.displayName.localeCompare(right.displayName),
+const SORT_LABELS: Record<AgentListSort, string> = {
+  [AgentListSort.UPDATED]: 'Recently updated',
+  [AgentListSort.CREATED]: 'Recently created',
+  [AgentListSort.NAME]: 'Name',
 };
+
+const ALL_PROJECTS = 'all';
 
 const AgentsPage = () => {
   const agentsAvailable = useAgentsAvailable();
@@ -118,27 +116,40 @@ const AgentsPage = () => {
 const AgentsPageContent = () => {
   const [search, setSearch] = useState('');
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
-  const [sort, setSort] = useState<AgentSort>('updated');
+  const [sort, setSort] = useState<AgentListSort>(AgentListSort.UPDATED);
   const [prompt, setPrompt] = useState('');
+  const [viewProjectId, setViewProjectId] = useState<string>(ALL_PROJECTS);
+  const [pickedProjectId, setPickedProjectId] = useState<string | null>(null);
+  const [buildingInProjectId, setBuildingInProjectId] = useState<string | null>(
+    null,
+  );
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
   const agentsAvailable = useAgentsAvailable();
   const isPlatformAdmin = useIsPlatformAdmin();
-  const { data, isLoading, isSuccess } = agentsQueries.useAgents({
+  const projectFiltered = viewProjectId !== ALL_PROJECTS;
+  const createInProjectId =
+    pickedProjectId ?? (projectFiltered ? viewProjectId : project.id);
+  const [debouncedSearch] = useDebounce(search.trim(), 300);
+  const {
+    data,
+    isLoading,
+    isSuccess,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = agentsQueries.useAgents({
+    ...(projectFiltered ? { projectId: viewProjectId } : {}),
+    ...(debouncedSearch.length > 0 ? { search: debouncedSearch } : {}),
+    sort,
     enabled: agentsAvailable,
   });
 
-  const agents = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const matching = (data?.data ?? []).filter(
-      (agent) =>
-        needle.length === 0 ||
-        agent.displayName.toLowerCase().includes(needle) ||
-        (agent.description ?? '').toLowerCase().includes(needle),
-    );
-    return [...matching].sort(SORT_COMPARATORS[sort]);
-  }, [data, search, sort]);
+  const agents = useMemo(
+    () => (data?.pages ?? []).flatMap((page) => page.data),
+    [data],
+  );
 
   const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
@@ -150,29 +161,54 @@ const AgentsPageContent = () => {
     data: chatProvider,
     isLoading: isLoadingProvider,
     isError: providerLookupFailed,
-  } = aiProviderQueries.useChatProvider();
-  const { data: projectProviders } = aiProviderQueries.useProjectAiProviders();
+  } = aiProviderQueries.useChatProvider(createInProjectId);
+  const { data: projectProviders } =
+    aiProviderQueries.useProjectAiProviders(createInProjectId);
   const needsProvider =
     !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
   const chatIsOffOnEveryProvider =
     needsProvider && (projectProviders?.length ?? 0) > 0;
   const isBuilding = draftAgent.isPending || createAgent.isPending;
+  const destinationReadinessUnknown = isLoadingProvider;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
+
+  const shownDestinationId = shownDestination({
+    isBuilding,
+    buildingIn: buildingInProjectId,
+    picked: createInProjectId,
+  });
+
+  const projectOptions = useMemo(
+    () =>
+      (allProjects ?? []).map((entry) => ({
+        value: entry.id,
+        label: getProjectName(entry),
+      })),
+    [allProjects],
+  );
 
   const buildAgent = (text?: string) => {
     const trimmed = (text ?? prompt).trim();
-    if (trimmed.length === 0 || isBuilding) {
+    if (
+      !acceptsDraftPrompt({
+        prompt: trimmed,
+        isBuilding,
+        readinessUnknown: destinationReadinessUnknown,
+      })
+    ) {
       return;
     }
     setPrompt(trimmed);
+    const destination = createInProjectId;
+    setBuildingInProjectId(destination);
     draftAgent.mutate(
-      { projectId: project.id, prompt: trimmed },
+      { projectId: destination, prompt: trimmed },
       {
         onSuccess: (draft) =>
           createAgent.mutate(
             createAgentUtils.buildCreateRequest({
               draft,
-              projectId: project.id,
+              projectId: destination,
             }),
           ),
       },
@@ -192,7 +228,7 @@ const AgentsPageContent = () => {
           color: ColorName.PURPLE,
           instructions: '',
         },
-        projectId: project.id,
+        projectId: createInProjectId,
       }),
     );
   };
@@ -204,8 +240,9 @@ const AgentsPageContent = () => {
 
   const firstRun = showsFirstRun({
     listLoaded: isSuccess,
-    hasAnyAgents: (data?.data.length ?? 0) > 0,
+    hasAnyAgents: agents.length > 0,
     search,
+    projectFiltered,
   });
 
   return (
@@ -335,7 +372,7 @@ const AgentsPageContent = () => {
           <div className={cn(firstRun && 'flex justify-end')}>
             <Button
               size="icon"
-              loading={isBuilding}
+              loading={isBuilding || destinationReadinessUnknown}
               onClick={() => buildAgent()}
               className={cn(
                 'size-10 shrink-0 rounded-full',
@@ -346,6 +383,20 @@ const AgentsPageContent = () => {
             </Button>
           </div>
         </div>
+        {!needsProvider && (allProjects ?? []).length > 1 && (
+          <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
+            <span>{t('New agents go to')}</span>
+            <SearchableSelect
+              value={shownDestinationId}
+              onChange={(value) => setPickedProjectId(value)}
+              options={projectOptions}
+              disabled={isBuilding}
+              placeholder={t('Search projects')}
+              contentWidth="260px"
+              triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
+            />
+          </div>
+        )}
         {buildError !== null && (
           <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
             {api.extractServerErrorMessage(
@@ -375,7 +426,7 @@ const AgentsPageContent = () => {
                     <button
                       key={starter.label}
                       type="button"
-                      disabled={isBuilding}
+                      disabled={isBuilding || destinationReadinessUnknown}
                       onClick={() => buildAgent(t(starter.prompt))}
                       className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent disabled:opacity-50"
                     >
@@ -391,7 +442,7 @@ const AgentsPageContent = () => {
                     <button
                       key={suggestion}
                       type="button"
-                      disabled={isBuilding}
+                      disabled={isBuilding || destinationReadinessUnknown}
                       onClick={() => buildAgent(t(suggestion))}
                       className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
                     >
@@ -417,9 +468,9 @@ const AgentsPageContent = () => {
               <span className="text-[15px] leading-[18px] text-muted-foreground">
                 {agents.length}
               </span>
-              {data?.next && (
+              {hasNextPage && (
                 <span className="text-[13px] leading-4 text-muted-foreground">
-                  {t('Showing the first {count}', { count: agents.length })}
+                  {t('Showing {count} so far', { count: agents.length })}
                 </span>
               )}
             </div>
@@ -433,6 +484,18 @@ const AgentsPageContent = () => {
                   className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-muted-foreground"
                 />
               </div>
+              {(allProjects ?? []).length > 1 && (
+                <SearchableSelect
+                  value={viewProjectId}
+                  onChange={(value) => setViewProjectId(value ?? ALL_PROJECTS)}
+                  options={[
+                    { value: ALL_PROJECTS, label: t('All projects') },
+                    ...projectOptions,
+                  ]}
+                  placeholder={t('Search projects')}
+                  triggerClassName="h-8 w-[170px] rounded-md text-[13px] font-normal"
+                />
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -449,7 +512,7 @@ const AgentsPageContent = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuRadioGroup
                     value={sort}
-                    onValueChange={(value) => setSort(value as AgentSort)}
+                    onValueChange={(value) => setSort(value as AgentListSort)}
                   >
                     {Object.entries(SORT_LABELS).map(([value, label]) => (
                       <DropdownMenuRadioItem key={value} value={value}>
@@ -499,8 +562,14 @@ const AgentsPageContent = () => {
               ))}
             </div>
           ) : agents.length === 0 ? (
-            showsNoMatchNotice({ matchCount: agents.length, search }) ? (
-              <AgentsEmptyState />
+            showsNoMatchNotice({
+              matchCount: agents.length,
+              search,
+              projectFiltered,
+            }) ? (
+              <AgentsEmptyState
+                narrowedByProject={search.trim().length === 0}
+              />
             ) : null
           ) : (
             <div
@@ -528,27 +597,46 @@ const AgentsPageContent = () => {
               ))}
             </div>
           )}
+          {hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                loading={isFetchingNextPage}
+                onClick={() => void fetchNextPage()}
+              >
+                {t('Load more')}
+              </Button>
+            </div>
+          )}
         </section>
       )}
     </div>
   );
 };
 
-const AgentsEmptyState = () => (
+const AgentsEmptyState = ({
+  narrowedByProject,
+}: {
+  narrowedByProject: boolean;
+}) => (
   <Empty className="min-h-[240px]">
     <EmptyHeader className="max-w-xl">
       <EmptyMedia variant="icon">
         <SearchX />
       </EmptyMedia>
-      <EmptyTitle>{t('No agents match that search')}</EmptyTitle>
+      <EmptyTitle>
+        {narrowedByProject
+          ? t('No agents in this project yet')
+          : t('No agents match that search')}
+      </EmptyTitle>
       <EmptyDescription>
-        {t('Try another name, or clear the search.')}
+        {narrowedByProject
+          ? t('Describe one above, or pick another project.')
+          : t('Try another name, or clear the search.')}
       </EmptyDescription>
     </EmptyHeader>
   </Empty>
 );
-
-type AgentSort = keyof typeof SORT_LABELS;
 
 type TemplateStarter = {
   label: string;
