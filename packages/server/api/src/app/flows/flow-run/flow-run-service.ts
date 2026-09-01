@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -45,10 +45,15 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             entity: FlowRunEntity,
             query: {
                 limit: params.limit,
-                orderBy: [
-                    { field: 'created', order: Order.DESC },
-                    { field: 'id', order: Order.DESC },
-                ],
+                orderBy: isNil(params.parentWaitpointId)
+                    ? [
+                        { field: 'created', order: Order.DESC },
+                        { field: 'id', order: Order.DESC },
+                    ]
+                    : [
+                        { field: 'dispatchIndex', order: Order.ASC },
+                        { field: 'id', order: Order.ASC },
+                    ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -61,7 +66,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (!isNil(params.environment)) {
             whereClause.environment = params.environment
         }
-        let query = queryBuilderForFlowRun(flowRunRepo()).where(whereClause)
+        let query = queryBuilderForFlowRun(flowRunRepo())
+            .where(whereClause)
+            .andWhere({ parentWaitpointId: params.parentWaitpointId ?? IsNull() })
+
+        if (!isNil(params.parentWaitpointId)) {
+            query = query.andWhere({ dispatchIndex: params.dispatchIndex ?? Not(IsNull()) })
+        }
 
         if (!params.includeArchived) {
             query = query.andWhere({
@@ -119,6 +130,14 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
+        if (!isNil(oldFlowRun.dispatchIndex)) {
+            const message = `The run ${flowRunId} started from a step inside its flow rather than from the trigger, so it cannot be retried. Retry the run that dispatched it instead.`
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message },
+            }, message)
+        }
+
         const project = await projectService(log).getOneOrThrow(oldFlowRun.projectId)
         const retentionDays = getEffectiveExecutionDataRetentionDays(project.executionDataRetentionDays)
         if (
@@ -149,6 +168,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
+                await waitpointService(log).deleteByFlowRunId(oldFlowRun.id)
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -462,6 +482,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 projectId: params.projectId,
                 environment: RunEnvironment.PRODUCTION,
                 archivedAt: IsNull(),
+                parentWaitpointId: IsNull(),
             })
             .groupBy('flow_run.status')
 
@@ -553,6 +574,7 @@ async function filterFlowRunsAndApplyFilters(
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
+        parentWaitpointId: IsNull(),
     })
 
     if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
@@ -636,6 +658,7 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
         stepNameToTest: params.flowRun.stepNameToTest ?? undefined,
         sampleData: params.sampleData,
         logsFileId,
+        parentWaitpointId: params.flowRun.parentWaitpointId ?? undefined,
     }
     const data: ExecuteFlowJobData = params.executionType === ExecutionType.RESUME
         ? {
@@ -673,8 +696,8 @@ export async function findFlowRunOrThrow(flowRunId: FlowRunId): Promise<FlowRun>
 
 function queryBuilderForFlowRun(repo: Repository<FlowRun>): SelectQueryBuilder<FlowRun> {
     return repo.createQueryBuilder('flow_run')
-        .leftJoinAndSelect('flow_run.flowVersion', 'flowVersion')
-        .addSelect(['"flowVersion"."displayName"'])
+        .leftJoin('flow_run.flowVersion', 'flowVersion')
+        .addSelect(['flowVersion.id', 'flowVersion.displayName'])
 }
 
 async function resolveStepOutput({ step, flowRun, log }: ResolveStepOutputParams): Promise<unknown> {
@@ -801,6 +824,8 @@ type ListParams = {
     flowRunIds?: FlowRunId[]
     includeArchived?: boolean
     environment?: RunEnvironment
+    parentWaitpointId?: ApId
+    dispatchIndex?: number
 }
 
 type GetOneParams = {

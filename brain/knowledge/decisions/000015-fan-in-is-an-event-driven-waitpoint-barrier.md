@@ -94,6 +94,14 @@ all, purely because child rows appear later than the dispatch that created them.
 - **`result` is the first place unauthenticated free text reaches a jsonb column.** Bounded to 2 000
   characters **server-side** (rejected at the page, never truncated), passed through
   `sanitizeObjectForPostgresql()` before the insert, stored as text and rendered escaped.
+- **A child run signals its barrier through `flow_run.parentWaitpointId`, and `dispatchIndex` is a separate
+  column rather than a reuse of it.** The terminal-run hook maps the run's status onto a
+  `BarrierSignalStatus` and calls `receive({ refId: runId })`, so the barrier never polls its children.
+  `parentWaitpointId` doubles as the discriminator that keeps children off the runs list, the status counts,
+  the billing daily count and the analytics rollup — and stays out of `healthMetricsService`, which counts
+  them by design. `dispatchIndex` exists because attribution can legitimately be dropped while the run is
+  still a child: it is the "started mid-graph" flag retry refuses on, and the ordering key for listing one
+  barrier's children.
 - **Accepted cost: ~30k row writes per 10 000-signal barrier** — insert, receive, delete — on top of the
   children themselves. Bounded, on a narrow table, and gone the moment the barrier resolves.
 - **A returning approver still sees a bare "already responded".** Signals die with the release, so there is
