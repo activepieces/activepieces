@@ -15,6 +15,7 @@ export class AddMcpActivity1840000000000 implements Migration {
                 "platformId" character varying(21) NOT NULL,
                 "projectId" character varying(21),
                 "userId" character varying(21) NOT NULL,
+                "clientKey" character varying(32),
                 "toolName" character varying(128) NOT NULL,
                 "status" character varying(32) NOT NULL,
                 "pieceName" character varying(256),
