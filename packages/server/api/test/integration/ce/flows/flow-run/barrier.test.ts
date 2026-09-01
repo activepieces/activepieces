@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { apId } from '@activepieces/core-utils'
 import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import { UnrecoverableError } from 'bullmq'
 import dayjs from 'dayjs'
@@ -445,7 +445,7 @@ describe('barrier deadline', () => {
             log: app.log,
         })
 
-        expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
         expect(await listSignals(barrier.id)).toHaveLength(0)
     })
 
@@ -503,7 +503,7 @@ describe('multi-approval confirm page', () => {
             })
         }
 
-        await waitFor(async () => isNil(await db.findOneBy('waitpoint', { id: created.barrier.id })))
+        await waitFor(async () => await readStatus(created.barrier.id) === WaitpointStatus.CONSUMED)
         expect(await listSignals(created.barrier.id)).toHaveLength(0)
     })
 
@@ -557,7 +557,7 @@ describe('multi-approval confirm page', () => {
                 payload: { reason: 'ok' },
             })
         }
-        await waitFor(async () => isNil(await db.findOneBy('waitpoint', { id: created.barrier.id })))
+        await waitFor(async () => await readStatus(created.barrier.id) === WaitpointStatus.CONSUMED)
 
         const response = await app.inject({
             method: 'GET',
