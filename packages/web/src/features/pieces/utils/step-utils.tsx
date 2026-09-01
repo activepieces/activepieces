@@ -30,6 +30,7 @@ export const stepUtils = {
     return [
       coreStepMetadata[FlowActionType.CODE],
       coreStepMetadata[FlowActionType.LOOP_ON_ITEMS],
+      coreStepMetadata[FlowActionType.PROCESS_IN_BATCHES],
       coreStepMetadata[FlowActionType.ROUTER],
     ];
   },

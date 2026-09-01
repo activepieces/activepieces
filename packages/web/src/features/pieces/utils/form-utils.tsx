@@ -17,7 +17,9 @@ import {
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
+  formErrors,
   LoopOnItemsActionSchema,
+  ProcessInBatchesActionSchema,
   PieceActionSchema,
   PieceActionSettings,
   PieceTrigger,
@@ -561,6 +563,18 @@ export const formUtils = {
           z.object({
             settings: z.object({
               items: z.string().min(1),
+            }),
+          }).shape,
+        );
+      case FlowActionType.PROCESS_IN_BATCHES:
+        return ProcessInBatchesActionSchema.omit({ settings: true }).extend(
+          z.object({
+            settings: z.object({
+              items: z.string().min(1, formErrors.required),
+              batchSize: z
+                .number({ message: 'batchSizeMustBeAWholeNumber' })
+                .int({ message: 'batchSizeMustBeAWholeNumber' })
+                .min(1, { message: 'batchSizeMustBeAtLeastOne' }),
             }),
           }).shape,
         );

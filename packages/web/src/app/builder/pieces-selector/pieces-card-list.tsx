@@ -39,9 +39,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   stepToReplacePieceDisplayName,
 }) => {
   const isMobile = useIsMobile();
-  const [selectedPieceMetadataInPieceSelector] = useBuilderStateContext(
-    (state) => [state.selectedPieceMetadataInPieceSelector],
-  );
+  const [selectedPieceMetadataInPieceSelector, flowVersion] =
+    useBuilderStateContext((state) => [
+      state.selectedPieceMetadataInPieceSelector,
+      state.flowVersion,
+    ]);
   const { isLoading: isLoadingPieces, data: categories } =
     piecesHooks.usePiecesSearch({
       shouldCaptureEvent: true,
@@ -50,6 +52,10 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         operation.type === FlowOperationType.UPDATE_TRIGGER
           ? 'trigger'
           : 'action',
+      excludeProcessInBatches: pieceSelectorUtils.isInsideBatch({
+        operation,
+        flowVersion,
+      }),
     });
 
   const noResultsFound = !isLoadingPieces && categories.length === 0;
@@ -218,6 +224,7 @@ const getItemHeight = (
   const isCoreAction =
     pieceMetadata.type === FlowActionType.CODE ||
     pieceMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
+    pieceMetadata.type === FlowActionType.PROCESS_IN_BATCHES ||
     pieceMetadata.type === FlowActionType.ROUTER;
   if (isCoreAction && showActionsOrTriggersInsidePiecesList) {
     return ACTION_OR_TRIGGER_ITEM_HEIGHT + PIECE_ITEM_HEIGHT;

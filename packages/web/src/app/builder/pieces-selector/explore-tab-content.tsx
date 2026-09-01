@@ -11,7 +11,10 @@ import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
   PieceSelectorOperation,
+  pieceSelectorUtils,
 } from '@/features/pieces';
+
+import { useBuilderStateContext } from '../builder-hooks';
 
 import { PieceActionsOrTriggersList } from './piece-actions-or-triggers-list';
 
@@ -22,6 +25,7 @@ const ExploreTabContent = ({
 }) => {
   const { selectedTab, selectedPieceInExplore, setSelectedPieceInExplore } =
     usePieceSelectorTabs();
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
   const { data: categories, isLoading: isLoadingPieces } =
     piecesHooks.usePiecesSearch({
       shouldCaptureEvent: false,
@@ -30,6 +34,10 @@ const ExploreTabContent = ({
         operation.type === FlowOperationType.UPDATE_TRIGGER
           ? 'trigger'
           : 'action',
+      excludeProcessInBatches: pieceSelectorUtils.isInsideBatch({
+        operation,
+        flowVersion,
+      }),
     });
   if (selectedTab !== PieceSelectorTabType.EXPLORE) {
     return null;

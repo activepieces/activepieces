@@ -15,6 +15,9 @@ const JAPANESE_BUNDLE = {
     'npm の強力な Node.js & TypeScript コード',
   'Loop on Items': 'アイテムでループ',
   'Iterate over a list of items': '項目のリストを反復処理します',
+  'Process in Batches': 'バッチで処理',
+  "Split a list into batches and run them in parallel. Batches don't finish in order.":
+    'リストをバッチに分割して並列に実行します。バッチの完了順序は保証されません。',
   Router: 'ルーター',
   'Split your flow into branches depending on condition(s)':
     '条件に応じてフローを分岐します',
@@ -65,7 +68,7 @@ describe('core step metadata translation', () => {
   it('translates every core action offered by the piece selector', () => {
     const coreActions = stepUtils.coreActionsMetadata();
 
-    expect(coreActions).toHaveLength(3);
+    expect(coreActions).toHaveLength(4);
     for (const step of coreActions) {
       expect(Object.values(JAPANESE_BUNDLE)).toContain(step.displayName);
       expect(Object.values(JAPANESE_BUNDLE)).toContain(step.description);
