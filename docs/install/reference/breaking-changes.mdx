@@ -176,18 +176,30 @@ codes.
 Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
 `/sign-in` and `/switch-platform`.
 
-**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts were created through the code flow.** Those
-accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
-sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
-`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
+**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts depend on the code flow.** Two groups do, and
+the second is easy to miss:
+
+- Accounts **created** by the code flow. They hold a random password nobody was ever shown, so taking the flow away
+  removes the only way in.
+- Accounts that signed up **with** a password but had not verified their email before their first code sign-in.
+  Verifying a code marks the identity verified and replaces the stored hash with a random one, so the password its
+  owner chose stopped working at that moment. They will remember setting a password, and it will still be refused.
+
+There is no reliable marker for either group in the database — a verified code deletes its `otp` row — so treat any
+`EMAIL`-provider account that cannot sign in with a password as one of them, whether or not its owner recalls
+setting one.
 
 On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
 you already have configured.
 
-On **Community** there is no way back in the product: password reset lives in the enterprise module, which Community
-does not register, so `/authn/local/forget-password` is not served and nothing else can write a password. Set one for
-each affected account directly — `UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and have
-the user change it after signing in. Do this **before** you upgrade if you can, so nobody is locked out in between.
+On **Community** there is no way back in the product. Password reset lives in the enterprise module, which Community
+does not register, so `POST /v1/authn/local/reset-password` is not served — and nothing else writes a password on any
+edition, as there is no change-password endpoint. Do not be misled by the first half of that flow appearing to work:
+`POST /v1/otp` **is** served on Community and answers `204`, but Community sends no OTP email of any type except a
+login code, so no reset mail ever arrives. Set a password for each affected account directly —
+`UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and hand it to its owner over a channel you
+trust, since they cannot change it themselves afterwards. Do this **before** you upgrade if you can, so nobody is
+locked out in between.
 
 If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
 answer `404`.
