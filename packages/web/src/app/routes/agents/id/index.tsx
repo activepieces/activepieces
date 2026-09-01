@@ -94,6 +94,8 @@ import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
+import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -192,6 +194,49 @@ const AgentEditorSkeleton = () => (
     </div>
   </div>
 );
+
+const AgentProjectRow = ({ agent }: { agent: Agent }) => {
+  const [moving, setMoving] = useState(false);
+  const navigate = useNavigate();
+  const { checkAccess } = useAuthorization(agent.projectId);
+  const { data: allProjects } = projectCollectionUtils.useAll();
+  const home = (allProjects ?? []).find(
+    (project) => project.id === agent.projectId,
+  );
+
+  if (!checkAccess(Permission.WRITE_AGENT) || (allProjects ?? []).length < 2) {
+    return null;
+  }
+
+  return (
+    <FormItem className="flex flex-col gap-[9px]">
+      <PanelSectionLabel label={t('Project')} />
+      <div className="flex items-center justify-between gap-3">
+        <span className="truncate text-[13px] leading-4 text-muted-foreground">
+          {home === undefined ? t('This project') : getProjectName(home)}
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setMoving(true)}
+        >
+          {t('Move')}
+        </Button>
+      </div>
+      <MoveAgentDialog
+        agent={agent}
+        open={moving}
+        onOpenChange={setMoving}
+        onMoved={(projectId) =>
+          navigate(`/projects/${projectId}/agents/${agent.id}`, {
+            replace: true,
+          })
+        }
+      />
+    </FormItem>
+  );
+};
 
 const AgentDangerZone = ({
   agent,
@@ -544,6 +589,7 @@ const ConfigureFields = ({
             </FormItem>
           )}
         />
+        <AgentProjectRow agent={agent} />
         <AgentDangerZone agent={agent} onDeleted={onDeleted} />
       </AdvancedSection>
     </>

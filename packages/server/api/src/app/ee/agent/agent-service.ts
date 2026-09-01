@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
-import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentListSort, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
+import { Agent, AgentConfig, AgentListSort, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
@@ -14,6 +15,7 @@ import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
+import { AgentConversationEntity } from './agent-conversation-entity'
 import { AgentEntity, AgentWithRelations } from './agent-entity'
 import { agentHelpers } from './agent-helpers'
 
@@ -183,6 +185,84 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return { total: usage.total, names: usage.names }
     },
 
+    async movePreview({ agent, projectId, userId, targetProjectId, platformId }: MoveParams & { agent: Agent }): Promise<AgentMovePreview> {
+        const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
+        const pinnedByPiece = agent.draft.tools.flatMap((tool) => {
+            if (tool.type !== AgentToolType.PIECE) {
+                return []
+            }
+            const pinned = connectionTemplate.unwrapExternalId(tool.pieceMetadata.predefinedInput?.auth)
+            return isNil(pinned) ? [] : [{ pieceName: tool.pieceMetadata.pieceName, externalId: pinned }]
+        })
+        const pinnedExternalIds = unique(pinnedByPiece.map((pin) => pin.externalId))
+        const [flowsInUse, connectionsInTarget, membersOfTarget] = await Promise.all([
+            this.publishedFlowsUsing({ agent, projectId, userId }),
+            pinnedExternalIds.length === 0 ? Promise.resolve([]) : appConnectionService(log).list({
+                projectId: target.id,
+                platformId,
+                externalIds: pinnedExternalIds,
+                limit: pinnedExternalIds.length,
+                cursorRequest: null,
+                pieceName: undefined,
+                scope: undefined,
+                displayName: undefined,
+                status: undefined,
+            }).then((page) => page.data),
+            listUsersWithProjectAccess({ projectId: target.id, log }),
+        ])
+        const availableExternalIds = new Set(connectionsInTarget.map((connection) => connection.externalId))
+        const toolsLosingConnection = unique(pinnedByPiece
+            .filter((pin) => !availableExternalIds.has(pin.externalId))
+            .map((pin) => pin.pieceName))
+        const membersLosingAccess = agent.visibility === AgentVisibility.RESTRICTED
+            ? agent.sharedWithUserIds.filter((userWithAccess) => !membersOfTarget.includes(userWithAccess)).length
+            : 0
+        return {
+            blockedByPublishedFlows: { total: flowsInUse.total, names: flowsInUse.names },
+            toolsLosingConnection,
+            membersLosingAccess,
+        }
+    },
+
+    async move({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        if (agent.projectId === targetProjectId) {
+            return agent
+        }
+        await assertMayDestroy({ agent, projectId, userId, log })
+        const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
+        await assertMayWriteAgentsIn({ projectId: target.id, userId, log })
+        const flowsInUse = await this.publishedFlowsUsing({ agent, projectId, userId })
+        if (flowsInUse.total > 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: describeFlowsInUse(flowsInUse) },
+            })
+        }
+        const clash = await agentRepo().findOneBy({ projectId: target.id, externalId: agent.externalId })
+        if (!isNil(clash)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `"${target.displayName}" already holds an agent with the same external id, so this one cannot move there.` },
+            })
+        }
+        const membersOfTarget = await listUsersWithProjectAccess({ projectId: target.id, log })
+        await transaction(async (entityManager) => {
+            await entityManager.getRepository(AgentEntity).update(
+                { id, projectId },
+                {
+                    projectId: target.id,
+                    sharedWithUserIds: agent.sharedWithUserIds.filter((sharedWith) => membersOfTarget.includes(sharedWith)),
+                },
+            )
+            await entityManager.getRepository(AgentConversationEntity).update(
+                { agentId: id, source: AgentRunSource.AGENT },
+                { projectId: target.id },
+            )
+        })
+        return this.getOneOrThrow({ id, projectId: target.id, userId })
+    },
+
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayDestroy({ agent, projectId, userId, log })
@@ -294,6 +374,28 @@ async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log
     })
 }
 
+async function readableProjectOrThrow({ platformId, userId, targetProjectId, log }: { platformId: PlatformId, userId: UserId, targetProjectId: ProjectId, log: FastifyBaseLogger }): Promise<Project> {
+    const [target] = await resolveReadableProjects({ platformId, userId, projectId: targetProjectId, log })
+    if (isNil(target)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'That project is not one you can move an agent into' },
+        })
+    }
+    return target
+}
+
+async function assertMayWriteAgentsIn({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<void> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    if (isNil(checker.check(Permission.WRITE_AGENT, '__move_agent_into_project'))) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Your role in that project cannot create or change agents there' },
+    })
+}
+
 async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
     if (agent.ownerId === userId || await isProjectAdministrator({ projectId, userId, log })) {
         return
@@ -383,6 +485,13 @@ type ListParams = {
     sort?: AgentListSort
     cursor?: Cursor
     limit?: number
+}
+
+type MoveParams = {
+    projectId: ProjectId
+    userId: UserId
+    targetProjectId: ProjectId
+    platformId: PlatformId
 }
 
 type EditDraftToolsParams = GetParams & {

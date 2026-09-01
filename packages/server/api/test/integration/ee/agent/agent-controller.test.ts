@@ -1,11 +1,10 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DEFAULT_AGENT_MAX_STEPS, DefaultProjectRole, FlowStatus, FlowVersionState, MAX_DRAFT_PROMPT_LENGTH } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
-import { createMockFlow, createMockFlowVersion, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
-import { DRAFTS_PER_MINUTE } from '../../../../src/app/ee/agent/agent-controller'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -682,6 +681,97 @@ describe('agent list across projects', () => {
 
         expect((await ctx.get('/v1/agents', { limit: '-1' })).statusCode).toBe(StatusCodes.BAD_REQUEST)
         expect((await ctx.get('/v1/agents', { limit: '1000000' })).statusCode).toBe(StatusCodes.BAD_REQUEST)
+    })
+})
+
+describe('moving an agent to another project', () => {
+    const secondProjectOf = async (ctx: TestContext) => {
+        const project = createMockProject({
+            ownerId: ctx.user.id,
+            platformId: ctx.platform.id,
+            displayName: 'Second project',
+        })
+        await db.save('project', project)
+        return project
+    }
+
+    it('moves the agent, its conversations, and nothing else', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        const conversationId = apId()
+        await db.save('agent_conversation', {
+            id: conversationId,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            platformId: ctx.platform.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            agentId: agent.id,
+            source: AgentRunSource.AGENT,
+            messages: [],
+            status: 'IDLE',
+        })
+
+        const moved = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect(moved.statusCode).toBe(StatusCodes.OK)
+        expect(moved.json().projectId).toBe(target.id)
+        const inTarget = (await ctx.get('/v1/agents', { projectId: target.id })).json().data
+        expect(inTarget.map((row: { id: string }) => row.id)).toStrictEqual([agent.id])
+        const inSource = (await ctx.get('/v1/agents', { projectId: ctx.project.id })).json().data
+        expect(inSource).toStrictEqual([])
+        const row = await db.findOneByOrFail('agent_conversation', { id: conversationId })
+        expect((row as { projectId: string }).projectId).toBe(target.id)
+    })
+
+    it('refuses a project the caller cannot reach', async () => {
+        const ctx = await context()
+        const stranger = await context()
+        const agent = await createAgent(ctx)
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: stranger.project.id })
+
+        expect(response.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect((await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }).projectId).toBe(ctx.project.id)
+    })
+
+    it('refuses while a published flow still runs it, and says which', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
+
+        const response = await ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('Nightly sweep')
+        expect((await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }).projectId).toBe(ctx.project.id)
+    })
+
+    it('says up front what the move would cost', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        await publishFlowRunningAgent({ projectId: ctx.project.id, externalId: agent.externalId, displayName: 'Nightly sweep' })
+
+        const preview = await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: target.id })
+
+        expect(preview.statusCode).toBe(StatusCodes.OK)
+        expect(preview.json().blockedByPublishedFlows.total).toBe(1)
+        expect(preview.json().blockedByPublishedFlows.names).toStrictEqual(['Nightly sweep'])
+        expect(preview.json().toolsLosingConnection).toStrictEqual([])
+    })
+
+    it('is not something a member can do to someone else\'s agent', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+
+        const response = await member.post(`/v1/agents/${agent.id}/move`, { projectId: target.id })
+
+        expect([StatusCodes.FORBIDDEN, StatusCodes.NOT_FOUND]).toContain(response.statusCode)
     })
 })
 

@@ -1,5 +1,5 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, GetAgentRequest, ListAgentsRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentMovePreview, AgentSummary, AgentWithUsage, ApplicationEventName, CreateAgentRequest, DraftAgentRequest, DraftAgentResponse, GetAgentRequest, ListAgentsRequest, MoveAgentRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -112,6 +112,34 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         })
         applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.AGENT_UNPUBLISHED,
+            data: { agent: { id: agent.id, displayName: agent.displayName } },
+        })
+        return agentRedaction.withoutToolSecrets(agent)
+    })
+
+    app.get('/:id/move-preview', MovePreviewRoute, async (request): Promise<AgentMovePreview> => {
+        const userId = await resolveUserId(request)
+        const service = agentService(request.log)
+        const agent = await service.getOneOrThrow({ id: request.params.id, projectId: request.projectId, userId })
+        return service.movePreview({
+            agent,
+            projectId: request.projectId,
+            userId,
+            targetProjectId: request.query.projectId,
+            platformId: request.principal.platform.id,
+        })
+    })
+
+    app.post('/:id/move', MoveAgentRoute, async (request): Promise<Agent> => {
+        const agent = await agentService(request.log).move({
+            id: request.params.id,
+            projectId: request.projectId,
+            userId: await resolveUserId(request),
+            targetProjectId: request.body.projectId,
+            platformId: request.principal.platform.id,
+        })
+        applicationEvents(request.log).sendUserEvent(request, {
+            action: ApplicationEventName.AGENT_UPDATED,
             data: { agent: { id: agent.id, displayName: agent.displayName } },
         })
         return agentRedaction.withoutToolSecrets(agent)
@@ -262,6 +290,46 @@ const UnpublishAgentRoute = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'Take an agent offline, so flow steps stop running it',
         params: z.object({ id: ApId }),
+        response: {
+            [StatusCodes.OK]: Agent,
+        },
+    },
+}
+
+const MovePreviewRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Report what moving an agent into another project would cost',
+        params: z.object({ id: ApId }),
+        querystring: MoveAgentRequest,
+        response: {
+            [StatusCodes.OK]: AgentMovePreview,
+        },
+    },
+}
+
+const MoveAgentRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_AGENT,
+            { type: ProjectResourceType.TABLE, tableName: AgentEntity },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Move an agent to another project',
+        params: z.object({ id: ApId }),
+        body: MoveAgentRequest,
         response: {
             [StatusCodes.OK]: Agent,
         },

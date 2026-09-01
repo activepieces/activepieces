@@ -129,6 +129,16 @@ enum AgentListSort {
     NAME = 'name',
 }
 
+const MoveAgentRequest = z.object({
+    projectId: ApId,
+})
+
+const AgentMovePreview = z.object({
+    blockedByPublishedFlows: z.object({ total: z.number(), names: z.array(z.string()) }),
+    toolsLosingConnection: z.array(z.string()),
+    membersLosingAccess: z.number(),
+})
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
     search: z.optional(z.string().max(MAX_AGENT_SEARCH_LENGTH)),
@@ -143,6 +153,8 @@ const agentUtils = {
 
 export {
     AgentListSort,
+    AgentMovePreview,
+    MoveAgentRequest,
     MAX_AGENT_SEARCH_LENGTH,
     Agent,
     AgentUsage,
@@ -183,5 +195,7 @@ export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
+export type AgentMovePreview = z.infer<typeof AgentMovePreview>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
+export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>
