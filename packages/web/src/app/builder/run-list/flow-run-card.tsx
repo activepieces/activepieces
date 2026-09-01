@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { CardListItem } from '@/components/custom/card-list';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { FormattedDate } from '@/components/custom/formatted-date';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/custom/spinner';
@@ -28,7 +29,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs';
-import { flowRunMutations } from '@/features/flow-runs/hooks/flow-run-hooks';
+import {
+  flowRunMutations,
+  flowRunQueries,
+} from '@/features/flow-runs/hooks/flow-run-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -52,12 +56,26 @@ const FlowRunCard = React.memo(
 
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
+    const [isBatchRetryDialogOpen, setIsBatchRetryDialogOpen] =
+      useState<boolean>(false);
+    const mayProcessInBatches = flowRunQueries.useMayProcessInBatches({
+      runs: [{ flowId: run.flowId, flowVersionId: run.flowVersionId }],
+      hasUnknownRuns: false,
+      enabled: isRetryDropdownOpen && isFailedState(run.status),
+    });
     const { mutate: retryRun, isPending: isRetryingRun } =
       flowRunMutations.useRetryRun({
         onSuccess: ({ run }) => {
           refetchRuns();
           navigate(`/runs/${run.id}`);
         },
+      });
+    const retryFromFailedStep = () =>
+      retryRun({
+        runId: run.id,
+        flowId: run.flowId,
+        projectId: projectId!,
+        retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
       });
     return (
       <CardListItem
@@ -192,14 +210,14 @@ const FlowRunCard = React.memo(
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (!isRetryingRun) {
-                          retryRun({
-                            runId: run.id,
-                            flowId: run.flowId,
-                            projectId: projectId!,
-                            retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                          });
+                        if (isRetryingRun) {
+                          return;
                         }
+                        if (mayProcessInBatches) {
+                          setIsBatchRetryDialogOpen(true);
+                          return;
+                        }
+                        retryFromFailedStep();
                       }}
                       className="cursor-pointer"
                     >
@@ -212,6 +230,18 @@ const FlowRunCard = React.memo(
               </DropdownMenu>
             </PermissionNeededTooltip>
           )}
+          <ConfirmationDeleteDialog
+            open={isBatchRetryDialogOpen}
+            onOpenChange={setIsBatchRetryDialogOpen}
+            title={t('Retry from failed step')}
+            message={t('Are you sure you want to retry from the failed step?')}
+            warning={t(
+              'This flow processes items in batches. Batches that already succeeded run again — anything they write to external systems happens twice.',
+            )}
+            buttonText={t('Retry')}
+            entityName={t('Run')}
+            mutationFn={async () => retryFromFailedStep()}
+          />
         </div>
       </CardListItem>
     );
