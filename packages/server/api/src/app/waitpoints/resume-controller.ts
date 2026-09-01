@@ -179,7 +179,7 @@ async function handleSignalDecision({ flowRunId, signalId, action, body, headers
         return
     }
 
-    await barrierService(log).receive({
+    await barrierService(log).receiveSignal({
         signalId,
         projectId: flowRun.projectId,
         status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,

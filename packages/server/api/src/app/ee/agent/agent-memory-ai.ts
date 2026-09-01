@@ -53,7 +53,7 @@ async function runMemoryLlm<T>({ platformId, instructions, prompt, schema, log }
     log: FastifyBaseLogger
 }): Promise<T | null> {
     const { data, error } = await tryCatch(async () => {
-        const { text: raw } = await generateText({ model: await agentHelpers.resolveFastModel({ platformId, log }), instructions, prompt, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
+        const { text: raw } = await generateText({ model: await agentHelpers.resolveFastModel({ platformId, scope: { type: 'platform' }, log }), instructions, prompt, telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-memory' }) })
         return parseJsonObject(raw, schema)
     })
     if (!isNil(error)) {

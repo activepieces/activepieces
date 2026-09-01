@@ -20,8 +20,8 @@
       ],
       "primary": {
          "type": "button",
-         "label": "Get Started",
-         "href": "https://www.activepieces.com/plans"
+         "label": "Sign Up",
+         "href": "https://cloud.activepieces.com/sign-up"
       }
    },
    "redirects": [
@@ -96,12 +96,22 @@
    "navigation": {
       "tabs": [
          {
-            "tab": "Overview",
+            "tab": "Get Started",
             "groups": [
                {
                   "group": "Overview",
                   "pages": [
                      "overview/welcome"
+                  ]
+               },
+               {
+                  "group": "Agents",
+                  "pages": [
+                     "agents/overview",
+                     "agents/create",
+                     "agents/tools",
+                     "agents/knowledge",
+                     "agents/in-flows"
                   ]
                },
                {
@@ -119,11 +129,20 @@
                   ]
                },
                {
-                  "group": "MCP Server",
+                  "group": "Tables",
                   "pages": [
-                     "mcp/overview",
-                     "mcp/tools",
-                     "mcp/tool-search"
+                     "tables/overview",
+                     "tables/fields",
+                     "tables/in-flows",
+                     "tables/with-agents",
+                     "tables/import-export"
+                  ]
+               },
+               {
+                  "group": "Build with AI",
+                  "pages": [
+                     "ai/chat",
+                     "mcp/overview"
                   ]
                },
                {
@@ -131,76 +150,90 @@
                   "pages": [
                      "about/i18n",
                      "about/changelog",
-                     "about/license"
-                  ]
-               }
-            ]
-         },
-         {
-            "tab": "Admin Guide",
-            "groups": [
-               {
-                  "group": "Guides",
-                  "pages": [
-                    "admin-guide/guides/structure-projects",
-                    "admin-guide/guides/manage-pieces",
-                    "admin-guide/guides/sso",
-                  {
-                     "group": "SCIM",
-                     "icon": "users",
-                     "pages": [
-                        "admin-guide/guides/scim/overview",
-                        "admin-guide/guides/scim/providers/okta",
-                        "admin-guide/guides/scim/providers/microsoft-entra-id"
-                     ]
-                  },
-                    "admin-guide/guides/manage-oauth2",
-                    "admin-guide/guides/setup-ai-providers",
-                    {
-                      "group": "Secret Managers",
-                      "icon": "key",
-                      "pages": [
-                        "admin-guide/guides/secret-managers/overview",
-                        "admin-guide/guides/secret-managers/aws",
-                        "admin-guide/guides/secret-managers/hashicorp",
-                        "admin-guide/guides/secret-managers/cyberark-conjur",
-                        "admin-guide/guides/secret-managers/onepassword"
-                      ]
-                    },
-                    "admin-guide/guides/permissions",
-                    "admin-guide/guides/event-streaming",
-                    "admin-guide/guides/project-releases",
-                    "admin-guide/guides/project-replace-cli",
-                    "admin-guide/guides/manage-concurrency"
-                  ]
-               },
-               {
-                  "group": "Security",
-                  "pages": [
-                     "admin-guide/security/practices",
+                     "about/license",
                      {
-                        "group": "Audit Logs",
+                        "group": "Company Handbook",
                         "icon": "book",
                         "pages": [
-                           "admin-guide/security/audit-logs/overview",
-                           "admin-guide/security/audit-logs/flow-created",
-                           "admin-guide/security/audit-logs/flow-updated",
-                           "admin-guide/security/audit-logs/flow-deleted",
-                           "admin-guide/security/audit-logs/flow-published",
-                           "admin-guide/security/audit-logs/flow-activated",
-                           "admin-guide/security/audit-logs/flow-deactivated",
-                           "admin-guide/security/audit-logs/connection-upserted",
-                           "admin-guide/security/audit-logs/connection-deleted",
-                           "admin-guide/security/audit-logs/flow-run-started",
-                           "admin-guide/security/audit-logs/flow-run-finished",
-                           "admin-guide/security/audit-logs/folder-created",
-                           "admin-guide/security/audit-logs/folder-updated",
-                           "admin-guide/security/audit-logs/folder-deleted",
-                           "admin-guide/security/audit-logs/user-signed-in",
-                           "admin-guide/security/audit-logs/user-signed-up",
-                           "admin-guide/security/audit-logs/user-email-verified",
-                           "admin-guide/security/audit-logs/user-password-reset",
-                           "admin-guide/security/audit-logs/signing-key-created"
+                           {
+                              "group": "Handbook",
+                              "pages": [
+                                 "handbook/overview",
+                                 "handbook/team"
+                              ]
+                           },
+                           {
+                              "group": "Hiring",
+                              "icon": "user",
+                              "pages": [
+                                 "handbook/hiring/hiring",
+                                 "handbook/hiring/levels",
+                                 "handbook/hiring/team",
+                                 "handbook/hiring/compensation"
+                              ]
+                           },
+                           {
+                              "group": "Customer Support",
+                              "icon": "hero",
+                              "pages": [
+                                 "handbook/customer-support/overview",
+                                 "handbook/customer-support/tone",
+                                 "handbook/customer-support/pylon",
+                                 "handbook/customer-support/handle-requests"
+                              ]
+                           },
+                           {
+                              "group": "Engineering Onboarding",
+                              "icon": "code",
+                              "pages": [
+                                 "handbook/engineering/overview",
+                                 "handbook/engineering/onboarding/onboarding-check-list",
+                                 "handbook/engineering/onboarding/how-we-work",
+                                 "handbook/engineering/onboarding/on-call",
+                                 "handbook/engineering/onboarding/downtime-incident",
+                                 "handbook/engineering/onboarding/stack",
+                                 "handbook/engineering/onboarding/release-cycle"
+                              ]
+                           },
+                           {
+                              "group": "Engineering Playbooks",
+                              "icon": "code",
+                              "pages": [
+                                 "handbook/engineering/playbooks/run-ee",
+                                 "handbook/engineering/playbooks/building-for-self-hosting",
+                                 "handbook/engineering/playbooks/setup-betterstack",
+                                 "handbook/engineering/playbooks/releases",
+                                 "handbook/engineering/playbooks/canary-deployment",
+                                 "handbook/engineering/playbooks/queue-metrics",
+                                 "handbook/engineering/playbooks/infrastructure",
+                                 "handbook/engineering/playbooks/database-migration",
+                                 "handbook/engineering/playbooks/structured-logging",
+                                 "handbook/engineering/playbooks/security-advisory-response",
+                                 "handbook/engineering/playbooks/product-announcement",
+                                 "handbook/engineering/playbooks/frontend-best-practices",
+                                 "handbook/engineering/playbooks/e2e-tests",
+                                 "handbook/engineering/playbooks/testing-strategy",
+                                 "handbook/engineering/playbooks/connect-claude-to-chrome",
+                                 "handbook/engineering/playbooks/ai-engineering-guide",
+                                 "handbook/engineering/playbooks/pr-review-sla",
+                                 {
+                                    "group": "Postmortems",
+                                    "icon": "triangle-exclamation",
+                                    "pages": [
+                                       "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
+                                       "handbook/engineering/postmortems/2026-03-redis-queue-events-overload",
+                                       "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
+                                    ]
+                                 }
+                              ]
+                           },
+                           {
+                              "group": "Product",
+                              "icon": "tool",
+                              "pages": [
+                                 "handbook/product/interface-design"
+                              ]
+                           }
                         ]
                      }
                   ]
@@ -208,18 +241,19 @@
             ]
          },
          {
-            "tab": "Deploy",
+            "tab": "Install Activepieces",
             "groups": [
                {
-                  "group": "Get Started",
+                  "group": "Install Activepieces",
                   "pages": [
                      "install/overview",
-                     "install/options/docker",
                      "install/options/docker-compose",
+                     "install/options/helm",
+                     "install/configure-operate/enterprise-license",
                      {
                         "group": "Other Options",
                         "pages": [
-                           "install/options/helm",
+                           "install/options/docker",
                            "install/options/easypanel",
                            "install/options/aws",
                            "install/options/gcp",
@@ -230,7 +264,7 @@
                   ]
                },
                {
-                  "group": "Configure & Operate",
+                  "group": "Self hosting",
                   "pages": [
                      "install/configure-operate/production-setup",
                      {
@@ -239,7 +273,6 @@
                         "pages": [
                            "install/configure-operate/separate-workers",
                            "install/configure-operate/sandboxing",
-                           "install/configure-operate/enterprise-license",
                            "install/configure-operate/setup-ssl",
                            "install/configure-operate/setup-s3"
                         ]
@@ -302,27 +335,79 @@
             ]
          },
          {
-            "tab": "Embedding",
+            "tab": "Enterprise Control",
+            "icon": "crown",
             "groups": [
                {
-                  "group": "Essentials",
+                  "group": "Overview",
                   "pages": [
-                     "embedding/overview",
-                     "embedding/configure-embedding",
-                     "embedding/provision-users",
-                     "embedding/embed-builder"
+                     "admin-guide/overview"
                   ]
                },
                {
-                  "group": "Misc",
+                  "group": "Guides",
                   "pages": [
-                     "embedding/customize-pieces",
-                     "embedding/embed-connections",
-                     "embedding/embeddable-mcp",
-                     "embedding/navigation",
-                     "embedding/predefined-connection",
-                     "embedding/sdk-changelog",
-                     "embedding/sdk-server-requests"
+                     "admin-guide/guides/structure-projects",
+                     "admin-guide/guides/manage-pieces",
+                     "admin-guide/guides/sso",
+                     {
+                        "group": "SCIM",
+                        "icon": "users",
+                        "pages": [
+                           "admin-guide/guides/scim/overview",
+                           "admin-guide/guides/scim/providers/okta",
+                           "admin-guide/guides/scim/providers/microsoft-entra-id"
+                        ]
+                     },
+                     "admin-guide/guides/manage-oauth2",
+                     "admin-guide/guides/setup-ai-providers",
+                     {
+                        "group": "Secret Managers",
+                        "icon": "key",
+                        "pages": [
+                           "admin-guide/guides/secret-managers/overview",
+                           "admin-guide/guides/secret-managers/aws",
+                           "admin-guide/guides/secret-managers/hashicorp",
+                           "admin-guide/guides/secret-managers/cyberark-conjur",
+                           "admin-guide/guides/secret-managers/onepassword"
+                        ]
+                     },
+                     "admin-guide/guides/permissions",
+                     "admin-guide/guides/event-streaming",
+                     "admin-guide/guides/project-releases",
+                     "admin-guide/guides/project-replace-cli",
+                     "admin-guide/guides/manage-concurrency"
+                  ]
+               },
+               {
+                  "group": "Security",
+                  "pages": [
+                     "admin-guide/security/practices",
+                     {
+                        "group": "Audit Logs",
+                        "icon": "book",
+                        "pages": [
+                           "admin-guide/security/audit-logs/overview",
+                           "admin-guide/security/audit-logs/flow-created",
+                           "admin-guide/security/audit-logs/flow-updated",
+                           "admin-guide/security/audit-logs/flow-deleted",
+                           "admin-guide/security/audit-logs/flow-published",
+                           "admin-guide/security/audit-logs/flow-activated",
+                           "admin-guide/security/audit-logs/flow-deactivated",
+                           "admin-guide/security/audit-logs/connection-upserted",
+                           "admin-guide/security/audit-logs/connection-deleted",
+                           "admin-guide/security/audit-logs/flow-run-started",
+                           "admin-guide/security/audit-logs/flow-run-finished",
+                           "admin-guide/security/audit-logs/folder-created",
+                           "admin-guide/security/audit-logs/folder-updated",
+                           "admin-guide/security/audit-logs/folder-deleted",
+                           "admin-guide/security/audit-logs/user-signed-in",
+                           "admin-guide/security/audit-logs/user-signed-up",
+                           "admin-guide/security/audit-logs/user-email-verified",
+                           "admin-guide/security/audit-logs/user-password-reset",
+                           "admin-guide/security/audit-logs/signing-key-created"
+                        ]
+                     }
                   ]
                }
             ]
@@ -400,12 +485,45 @@
             ]
          },
          {
+            "tab": "Embed SDK",
+            "groups": [
+               {
+                  "group": "Essentials",
+                  "pages": [
+                     "embedding/overview",
+                     "embedding/configure-embedding",
+                     "embedding/provision-users",
+                     "embedding/embed-builder"
+                  ]
+               },
+               {
+                  "group": "Misc",
+                  "pages": [
+                     "embedding/customize-pieces",
+                     "embedding/embed-connections",
+                     "embedding/embeddable-mcp",
+                     "embedding/navigation",
+                     "embedding/predefined-connection",
+                     "embedding/sdk-changelog",
+                     "embedding/sdk-server-requests"
+                  ]
+               }
+            ]
+         },
+         {
             "tab": "API Reference",
             "groups": [
                {
                   "group": "Get Started",
                   "pages": [
                      "endpoints/overview"
+                  ]
+               },
+               {
+                  "group": "MCP Tools",
+                  "pages": [
+                     "mcp/tools",
+                     "mcp/tool-search"
                   ]
                },
                {
@@ -562,90 +680,6 @@
                            "endpoints/embedding/add-allowed-embed-origins"
                         ]
                      }
-                  ]
-               }
-            ]
-         },
-         {
-            "tab": "Handbook",
-            "groups": [
-               {
-                  "group": "Handbook",
-                  "pages": [
-                     "handbook/overview",
-                     "handbook/team"
-                  ]
-               },
-               {
-                  "group": "Hiring",
-                  "icon": "user",
-                  "pages": [
-                     "handbook/hiring/hiring",
-                     "handbook/hiring/levels",
-                     "handbook/hiring/team",
-                     "handbook/hiring/compensation"
-                  ]
-               },
-               {
-                  "group": "Customer Support",
-                  "icon": "hero",
-                  "pages": [
-                     "handbook/customer-support/overview",
-                     "handbook/customer-support/tone",
-                     "handbook/customer-support/pylon",
-                     "handbook/customer-support/handle-requests"
-                  ]
-               },
-               {
-                  "group": "Engineering Onboarding",
-                  "icon": "code",
-                  "pages": [
-                     "handbook/engineering/overview",
-                     "handbook/engineering/onboarding/onboarding-check-list",
-                     "handbook/engineering/onboarding/how-we-work",
-                     "handbook/engineering/onboarding/on-call",
-                     "handbook/engineering/onboarding/downtime-incident",
-                     "handbook/engineering/onboarding/stack",
-                     "handbook/engineering/onboarding/release-cycle"
-                  ]
-               },
-               {
-                  "group": "Engineering Playbooks",
-                  "icon": "code",
-                  "pages": [
-                     "handbook/engineering/playbooks/run-ee",
-                     "handbook/engineering/playbooks/building-for-self-hosting",
-                     "handbook/engineering/playbooks/setup-betterstack",
-                     "handbook/engineering/playbooks/releases",
-                     "handbook/engineering/playbooks/canary-deployment",
-                     "handbook/engineering/playbooks/queue-metrics",
-                     "handbook/engineering/playbooks/infrastructure",
-                     "handbook/engineering/playbooks/database-migration",
-                     "handbook/engineering/playbooks/structured-logging",
-                     "handbook/engineering/playbooks/security-advisory-response",
-                     "handbook/engineering/playbooks/product-announcement",
-                     "handbook/engineering/playbooks/frontend-best-practices",
-                     "handbook/engineering/playbooks/e2e-tests",
-                     "handbook/engineering/playbooks/testing-strategy",
-                     "handbook/engineering/playbooks/connect-claude-to-chrome",
-                     "handbook/engineering/playbooks/ai-engineering-guide",
-                     "handbook/engineering/playbooks/pr-review-sla",
-                     {
-                        "group": "Postmortems",
-                        "icon": "triangle-exclamation",
-                        "pages": [
-                           "handbook/engineering/postmortems/2026-03-19-redis-and-delay-overload",
-                           "handbook/engineering/postmortems/2026-03-redis-queue-events-overload",
-                           "handbook/engineering/postmortems/2026-03-16-infrastructure-upgrade"
-                        ]
-                     }
-                  ]
-               },
-               {
-                  "group": "Product",
-                  "icon": "tool",
-                  "pages": [
-                     "handbook/product/interface-design"
                   ]
                }
             ]

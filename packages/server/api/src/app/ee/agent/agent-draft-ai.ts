@@ -2,9 +2,12 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan } from '@activepieces/shared'
+import { AgentDraftFields, AgentTool, AgentToolType, CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan, MAX_SUGGESTED_AGENT_TOOLS, mcpToolNameUtils } from '@activepieces/shared'
 import { APICallError, generateText, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { z } from 'zod'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -14,11 +17,16 @@ const DRAFT_TIMEOUT_MS = 30_000
 const REPLY_LOG_LIMIT = 500
 const REASON_LIMIT = 200
 const FAST_TIER_ID = 'fast'
+const CANDIDATE_PIECE_LIMIT = 8
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
 export const agentDraftAi = (log: FastifyBaseLogger) => ({
+    async candidatesForProject({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<Candidate[]> {
+        return connectedCandidates({ projectId, platformId, log })
+    },
+
     async draft({ platformId, projectId, prompt }: DraftParams): Promise<DraftAgentResponse> {
-        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: FAST_TIER_ID, log }))
+        const { data: resolved, error: modelError } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
         if (!isNil(modelError) || isNil(resolved)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -29,13 +37,14 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         // Drafting asks for the cheap tier, which is a different model from the one chat runs on, so
         // an account that can serve one and not the other has working chat and failing drafts. A
         // refused key will refuse again, but anything else is worth one attempt on chat's own model.
-        let attempt = await runDraft({ model: resolved.model, prompt })
+        const candidates = await connectedCandidates({ projectId, platformId, log })
+        let attempt = await runDraft({ model: resolved.model, prompt: withCandidates({ prompt, candidates }) })
         let usedModelId = resolved.modelId
         if (!isNil(attempt.error) && !rejectedCredentials(statusOf(attempt.error))) {
-            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, log }))
+            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
             if (!isNil(fallback) && fallback.modelId !== resolved.modelId) {
                 log.warn({ from: resolved.modelId, to: fallback.modelId, platform: { id: platformId } }, '[agentDraftAi] Retrying the draft on the model chat runs on')
-                attempt = await runDraft({ model: fallback.model, prompt })
+                attempt = await runDraft({ model: fallback.model, prompt: withCandidates({ prompt, candidates }) })
                 usedModelId = fallback.modelId
             }
         }
@@ -62,9 +71,69 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             })
         }
         await debitDraft({ platformId, projectId, log })
-        return parsed
+        return {
+            ...parsed,
+            tools: resolveToolPicks({ picks: parsed.tools, candidates }),
+            provider: resolved.provider,
+            modelName: agentHelpers.resolveModelIdForProvider({ provider: resolved.provider, selectedModel: DEFAULT_CHAT_TIER_ID }),
+        }
     },
 })
+
+// Only what the project already has a connection for is offered, so a drafted agent can run rather
+// than arriving with tools nobody has signed into. Everything the model names is looked up again
+// below: a piece or action it invented is dropped, never stored.
+async function connectedCandidates({ projectId, platformId, log }: { projectId: ProjectId, platformId: PlatformId, log: FastifyBaseLogger }): Promise<Candidate[]> {
+    const { data: connected } = await tryCatch(() => appConnectionService(log).listConnectedPieces({ projectId, platformId, limit: CANDIDATE_PIECE_LIMIT }))
+    const resolved = await Promise.all((connected ?? []).map(async ({ pieceName, externalId: connectionExternalId }) => {
+        const { data: piece } = await tryCatch(() => pieceMetadataService(log).get({ name: pieceName, projectId, platformId }))
+        if (isNil(piece)) {
+            return []
+        }
+        const candidate: Candidate = {
+            pieceName,
+            pieceVersion: piece.version,
+            connectionExternalId,
+            actionNames: Object.keys(piece.actions),
+        }
+        return [candidate]
+    }))
+    return resolved.flat().filter((candidate) => candidate.actionNames.length > 0)
+}
+
+function withCandidates({ prompt, candidates }: { prompt: string, candidates: Candidate[] }): string {
+    if (candidates.length === 0) {
+        return `${prompt}\n\nConnected apps: none. Return an empty tools list.`
+    }
+    const listed = candidates.map((candidate) => `${candidate.pieceName} (${candidate.actionNames.join(', ')})`).join('\n')
+    return `${prompt}\n\nConnected apps:\n${listed}`
+}
+
+function resolveToolPicks({ picks, candidates }: { picks: DraftReply['tools'], candidates: Candidate[] }): AgentTool[] {
+    const seen = new Set<string>()
+    return picks.flatMap((pick) => {
+        const candidate = candidates.find((entry) => entry.pieceName === pick.pieceName)
+        if (isNil(candidate) || !candidate.actionNames.includes(pick.actionName)) {
+            return []
+        }
+        const key = `${candidate.pieceName}:${pick.actionName}`
+        if (seen.has(key)) {
+            return []
+        }
+        seen.add(key)
+        const tool: AgentTool = {
+            type: AgentToolType.PIECE,
+            toolName: mcpToolNameUtils.createPieceToolName(candidate.pieceName, pick.actionName),
+            pieceMetadata: {
+                pieceName: candidate.pieceName,
+                pieceVersion: candidate.pieceVersion,
+                actionName: pick.actionName,
+                predefinedInput: { auth: candidate.connectionExternalId, fields: {} },
+            },
+        }
+        return [tool]
+    }).slice(0, MAX_SUGGESTED_AGENT_TOOLS)
+}
 
 // The telemetry sink renders the SDK's wrapped provider failure as "[object Object]".
 // 401 is the key itself being refused, and the body says so in terms written for whoever holds it
@@ -103,7 +172,7 @@ function describeError(error: unknown): string {
     return parts.filter((part) => part.length > 0).join(' | ')
 }
 
-function parseDraft(raw: string): DraftAgentResponse | null {
+function parseDraft(raw: string): DraftReply | null {
     const start = raw.indexOf('{')
     const end = raw.lastIndexOf('}')
     if (start === -1 || end <= start) {
@@ -113,13 +182,13 @@ function parseDraft(raw: string): DraftAgentResponse | null {
     if (!isNil(error)) {
         return null
     }
-    const parsed = DraftAgentResponse.safeParse(json)
+    const parsed = DraftReply.safeParse(json)
     return parsed.success ? parsed.data : null
 }
 
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {
-        const provider = await agentHelpers.resolveChatProviderName({ platformId, log })
+        const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
         const value = provider === AIProviderName.ACTIVEPIECES ? agentHelpers.resolveTier({ tierId: FAST_TIER_ID }).creditWeight : CHAT_BYOK_CREDIT_WEIGHT
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const usage = {
@@ -139,6 +208,21 @@ async function debitDraft({ platformId, projectId, log }: { platformId: Platform
     if (!isNil(error)) {
         log.warn({ error, platform: { id: platformId } }, '[agentDraftAi] Draft usage was not recorded')
     }
+}
+
+const DraftReply = AgentDraftFields.extend({
+    tools: z.array(z.object({ pieceName: z.string(), actionName: z.string() })).default([]),
+})
+
+export const agentDraftTools = { withCandidates, resolveToolPicks }
+
+type DraftReply = z.infer<typeof DraftReply>
+
+type Candidate = {
+    pieceName: string
+    pieceVersion: string
+    connectionExternalId: string
+    actionNames: string[]
 }
 
 type DraftParams = {

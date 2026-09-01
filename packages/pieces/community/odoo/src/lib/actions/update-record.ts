@@ -4,6 +4,7 @@ import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'update_record',
+    classification: 'WRITE',
     auth: odooAuth,
     displayName: 'Custom Update Record',
     description: 'Update an existing record in the specified model',

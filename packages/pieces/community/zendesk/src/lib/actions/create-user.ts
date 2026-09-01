@@ -16,6 +16,7 @@ import {
 export const createUserAction = createAction({
   auth: zendeskAuth,
   name: 'create-user',
+  classification: 'WRITE',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',
   audience: 'both',

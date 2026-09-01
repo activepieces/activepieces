@@ -7,6 +7,7 @@ import { searchProjectsActionOutputSchema } from '../output-schemas';
 export const todoistSearchProjectsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_search_projects',
+  classification: 'SEARCH',
   displayName: 'Search Projects',
   description: 'Search Todoist projects by name.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',
+    classification: 'READ',
     displayName: 'New Record Created',
     description: 'Triggers when a new record is added to the selected table.',
     aiMetadata: {

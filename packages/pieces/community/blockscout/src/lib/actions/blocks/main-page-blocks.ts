@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getMainPageBlocks = createAction({
   name: 'get_main_page_blocks',
+  classification: 'SEARCH',
   displayName: 'Get Main Page Blocks',
   description: 'Get blocks for main page display',
   audience: 'both',

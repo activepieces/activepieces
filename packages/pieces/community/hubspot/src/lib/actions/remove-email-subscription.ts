@@ -1,10 +1,11 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const removeEmailSubscriptionAction = createAction({
 	auth: hubspotAuth,
 	name: 'remove-email-subscription',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Remove Email Subscription',
 	description: 'Removes email subscription.',
 	audience: 'both',
@@ -24,7 +25,7 @@ export const removeEmailSubscriptionAction = createAction({
 			url: `https://api.hubapi.com/email/public/v1/subscriptions/${email}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: getHubspotAccessToken(context.auth),
 			},
 			body: {
 				unsubscribeFromAll: true,

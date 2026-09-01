@@ -6,6 +6,7 @@ import { BASE_URL } from '../common/constants';
 export const listProjectsAction = createAction({
   auth: deepgramAuth,
   name: 'list_projects',
+  classification: 'SEARCH',
   displayName: 'List Projects',
   description: 'Retrieves a list of all projects associated with the account.',
   audience: 'both',

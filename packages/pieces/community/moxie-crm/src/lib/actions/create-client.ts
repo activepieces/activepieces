@@ -5,6 +5,7 @@ import { moxieCRMAuth } from '../auth';
 export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_client',
+  classification: 'WRITE',
   displayName: 'Create a Client',
   description: 'Create a new client record in moxie CRM.',
   audience: 'both',
