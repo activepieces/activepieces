@@ -5,6 +5,7 @@ import { createMockConnection } from '../../../helpers/mocks'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { withActivityRecording } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
 import { mcpServerService } from '../../../../src/app/mcp/mcp-service'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
@@ -173,6 +174,51 @@ describe('MCP activity recording', () => {
         await callProjectTool({ name: 'ap_create_flow', args: { flowName: 'built by mcp' } })
 
         expect(await findActivityRows()).toHaveLength(0)
+    })
+
+    // ap_run_action catches everything itself, but on the platform path the project
+    // selection, the mcp lookup and the permission checker all resolve inside the
+    // recorded closure. A throw there used to lose the call entirely.
+    it('records a call whose execute threw, and still rethrows it', async () => {
+        const thrown = new Error('project selection is unavailable')
+        const recordedExecute = withActivityRecording({
+            execute: () => Promise.reject(thrown),
+            tool: { title: 'ap_run_action' },
+            resolveContext: () => Promise.resolve({
+                platformId: ctx.platform.id,
+                projectId: ctx.project.id,
+                userId: ctx.user.id,
+                clientKey: null,
+            }),
+            log: app!.log,
+        })
+
+        await expect(recordedExecute({ pieceName: 'slack', actionName: 'send_channel_message' })).rejects.toBe(thrown)
+        await new Promise((resolve) => setTimeout(resolve, RECORD_SETTLE_MS))
+
+        const rows = await findActivityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0]).toMatchObject({
+            status: 'FAILED',
+            toolName: 'ap_run_action',
+            pieceName: '@activepieces/piece-slack',
+            actionName: 'send_channel_message',
+        })
+        expect(rows[0].errorMessage).toContain('project selection is unavailable')
+        expect(rows[0].payloadFileId).not.toBeNull()
+    })
+
+    // The default retention pass filters on created with no projectId to narrow it,
+    // and an unprivileged member's listing filters on userId under platformId.
+    // Neither has a usable index without these two.
+    it('indexes the retention sweep and the per-member listing', async () => {
+        const indexes = await databaseConnection().query(
+            'SELECT indexname FROM pg_indexes WHERE tablename = \'mcp_activity\'',
+        )
+        const names = indexes.map((index: { indexname: string }) => index.indexname)
+
+        expect(names).toContain('idx_mcp_activity_created_id')
+        expect(names).toContain('idx_mcp_activity_platform_id_user_id_created_id')
     })
 
     // Postgres runs the ON DELETE SET NULL action per deleted file row, so without

@@ -75,8 +75,16 @@ export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
             columns: ['platformId', 'created', 'id'],
         },
         {
+            name: 'idx_mcp_activity_platform_id_user_id_created_id',
+            columns: ['platformId', 'userId', 'created', 'id'],
+        },
+        {
             name: 'idx_mcp_activity_project_id_created_id',
             columns: ['projectId', 'created', 'id'],
+        },
+        {
+            name: 'idx_mcp_activity_created_id',
+            columns: ['created', 'id'],
         },
         {
             name: 'idx_mcp_activity_payload_file_id',

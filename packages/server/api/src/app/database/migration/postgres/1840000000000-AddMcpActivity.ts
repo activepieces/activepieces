@@ -33,8 +33,16 @@ export class AddMcpActivity1840000000000 implements Migration {
             ON "mcp_activity" ("platformId", "created", "id")
         `)
         await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_mcp_activity_platform_id_user_id_created_id"
+            ON "mcp_activity" ("platformId", "userId", "created", "id")
+        `)
+        await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "idx_mcp_activity_project_id_created_id"
             ON "mcp_activity" ("projectId", "created", "id")
+        `)
+        await queryRunner.query(`
+            CREATE INDEX IF NOT EXISTS "idx_mcp_activity_created_id"
+            ON "mcp_activity" ("created", "id")
         `)
         await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "idx_mcp_activity_payload_file_id"
