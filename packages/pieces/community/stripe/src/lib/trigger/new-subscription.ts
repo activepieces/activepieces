@@ -9,6 +9,7 @@ import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeNewSubscription = createTrigger({
   auth: stripeAuth,
   name: 'new_subscription',
+  classification: 'READ',
   displayName: 'New Subscription',
   description: 'Triggers when a new subscription is made',
   aiMetadata: {

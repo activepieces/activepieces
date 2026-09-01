@@ -23,6 +23,7 @@ export const httpOauth2RequestAction = createAction({
   audience: 'both',
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
+  classification: 'WRITE',
   displayName: 'Send an OAuth2 Request',
   description:
     'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',

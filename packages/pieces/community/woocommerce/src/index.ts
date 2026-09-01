@@ -6,6 +6,16 @@ import {
 
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { wooAddOrderNote } from './lib/actions/add-order-note';
+import { wooCreateOrder } from './lib/actions/create-order';
+import { wooFindCoupon } from './lib/actions/find-coupon';
+import { wooFindOrders } from './lib/actions/find-orders';
+import { wooGetCustomer } from './lib/actions/get-customer';
+import { wooGetOrder } from './lib/actions/get-order';
+import { wooUpdateCoupon } from './lib/actions/update-coupon';
+import { wooUpdateCustomer } from './lib/actions/update-customer';
+import { wooUpdateOrder } from './lib/actions/update-order';
+import { wooUpdateProduct } from './lib/actions/update-product';
 import { wooCreateCoupon } from './lib/actions/create-coupon';
 import { wooCreateCustomer } from './lib/actions/create-customer';
 import { wooCreateProduct } from './lib/actions/create-product';
@@ -40,6 +50,16 @@ export const woocommerce = createPiece({
     wooCreateProduct,
     wooFindCustomer,
     wooFindProduct,
+    wooFindCoupon,
+    wooGetCustomer,
+    wooUpdateCustomer,
+    wooUpdateProduct,
+    wooUpdateCoupon,
+    wooGetOrder,
+    wooFindOrders,
+    wooCreateOrder,
+    wooUpdateOrder,
+    wooAddOrderNote,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth?.props.baseUrl ?? ''),
       auth: wooAuth,

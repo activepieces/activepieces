@@ -5,14 +5,17 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { searchOutputSchema } from '../output-schemas';
 
 export const dropboxSearch = createAction({
   auth: dropboxAuth,
   name: 'search_dropbox',
+  classification: 'SEARCH',
   description: 'Search for files and folders',
   audience: 'both',
   aiMetadata: { description: 'Searches a Dropbox account for files and folders whose name or content matches a query string (minimum 3 characters), optionally scoped to a path and filtered by file status, extensions, categories, or account. Use to locate items and obtain their paths/IDs before acting on them. Read-only; repeating the same search is safe and returns the same matches.', idempotent: true },
   displayName: 'Search',
+  outputSchema: searchOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

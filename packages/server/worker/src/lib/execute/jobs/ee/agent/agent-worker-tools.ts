@@ -339,6 +339,23 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             execute: blockingExecute({ dismissMessage: 'The user skipped these questions. Proceed with reasonable defaults where possible, and let the user know what assumptions you made.', successKey: 'answered', toolName: 'ap_show_questions' }),
         }),
 
+        ap_show_showcase: tool({
+            description: 'Render a designed "showcase" card to introduce yourself or show what is possible — your way to answer "what can you do?", "what is this?", "who are you?" and similar, or to spotlight what the user can do with their connected apps. Use this card, NOT prose and NOT a bullet list. Make it personal and use-case-led: pull the user\'s role and company from the "Who you\'re talking to" note when it is there. CRITICAL — the tile `title` is BOTH what the user reads AND the exact message sent to chat verbatim when they tap it, so write each title as the plain first-person instruction the user themselves would type, and when it runs on specific app(s), NAME them in it so the sent message keeps its context ("Track my competitors in AI", "Enrich HubSpot leads with Apollo", "Summarize my Gmail every morning") — 3-6 words, no marketing words ("supercharge", "unlock", "seamless", "effortless", "10x", "boost", "streamline"), no agent-voice ("I\'ll…", "Wake up to…"), no Title-Case headlines. The `description` is a short sub-line explaining the value (shown under the title, NEVER sent). 3-4 tiles, not a long list. EVERY tile MUST carry a visual — either an `app` (shows its logo) or an `icon` (a kebab-case Lucide name); `app` wins if both are set, and a tile with NEITHER renders broken, so never omit both. The tiles are themselves the clickable options, so do NOT also call ap_show_quick_replies in the same turn. Never hardcode an integration count — say "hundreds".',
+            inputSchema: z.object({
+                layout: z.enum(['grid', 'list']).optional().describe('Presentation. Defaults to "list" = full-width rows stacked vertically, one use case per line with larger type (the right choice for onboarding and almost always). "grid" = compact 2-up tiles, only for a dense many-app spotlight. Leave unset for the default list.'),
+                headline: z.string().optional().describe('OMIT in the default "list" layout — your one warm chat sentence right above the card is the introduction, and a headline inside the card just repeats it. Only for the compact "grid" layout give a short personal headline.'),
+                subhead: z.string().optional().describe('Optional one-line subhead under the headline — grid layout only, omit for list'),
+                tiles: z.array(z.object({
+                    title: z.string().describe('The EXACT message sent to chat verbatim when this tile is tapped — write it as the plain first-person instruction the user would type, 3-6 words, e.g. "Track my competitors in AI". Not a marketing sentence, not agent-voice. When the use case runs on specific app(s), NAME them in the title so the sent message carries its own context.'),
+                    description: z.string().describe('ONE short sub-line explaining the value (shown under the title, NEVER sent to chat) — aim for under 110 characters so it fits on a single line; anything longer gets visually cut off'),
+                    app: z.string().optional().describe('An app/integration name to show its real logo, e.g. "gmail", "hubspot", "@activepieces/piece-slack". Use for tiles about one of their connected apps. Omit for a generic capability tile.'),
+                    icon: z.string().optional().describe('kebab-case Lucide icon name for a generic capability tile. Prefer modern, evocative glyphs: "radar", "target", "orbit", "telescope", "workflow", "waypoints", "brain-circuit", "gauge", "scan-search", "chart-spline", "wand-sparkles", "compass", "timer", "goal", "notebook-pen", "presentation", "wallet", "rocket", "zap", "sparkles", "bot". Ignored when `app` is set.'),
+                })).describe('2-4 use-case tiles, personalised to this user (the UI renders at most 4)'),
+            }),
+            execute: async () => {
+                return { displayed: true }
+            },
+        }),
         ap_show_quick_replies: tool({
             description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
@@ -353,7 +370,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
 }
 
 function createLocalTools({ onSetProjectContext, projects }: {
-    onSetProjectContext: (projectId: string | null) => Promise<void>
+    onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
     projects: Array<{ id: string, displayName: string, type: string }>
 }): ToolSet {
     const availableProjectIds = new Set(projects.map((p) => p.id))
@@ -369,7 +386,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
                     return { success: false, error: `Project ${input.projectId} is not accessible.` }
                 }
                 const project = projects.find((p) => p.id === input.projectId)
-                await onSetProjectContext(input.projectId)
+                const outcome = await onSetProjectContext(input.projectId)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: `Now working in project ${project?.displayName ?? input.projectId}.` }
             },
         }),
@@ -378,7 +398,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
             description: 'Clear project context. Useful when working across multiple projects.',
             inputSchema: z.object({}),
             execute: async () => {
-                await onSetProjectContext(null)
+                const outcome = await onSetProjectContext(null)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: 'Project context cleared.' }
             },
         }),
@@ -674,6 +697,73 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             }),
             execute: async (toolInput) => {
                 return executeTool('ap_remember', toolInput)
+            },
+        }),
+    }
+}
+
+function createAgentSurfaceTools({ executeTool }: {
+    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+}): ToolSet {
+    return {
+        ap_list_agents: tool({
+            description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
+            inputSchema: z.object({}),
+            execute: async (toolInput) => {
+                return executeTool('ap_list_agents', toolInput)
+            },
+        }),
+
+        ap_add_agent_tool: tool({
+            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
+                pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+                actionNames: z.array(z.string()).describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
+                connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
+                publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_add_agent_tool', toolInput)
+            },
+        }),
+
+        ap_remove_agent_tool: tool({
+            description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call. If two of the agent\'s pieces share an action name, pass pieceName to say which one.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents'),
+                actionNames: z.array(z.string()).describe('Action names to remove, e.g. ["gmail_search_mail"]'),
+                pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
+                publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remove_agent_tool', toolInput)
+            },
+        }),
+
+        ap_update_agent: tool({
+            description: 'Change a saved agent\'s name, description or instructions, and publish it. Send the full new instructions, not a diff — they replace what is there. Pass publish: true whenever the user wants the result live, including when they only ask you to publish and change nothing else.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
+                displayName: z.string().optional(),
+                description: z.string().optional(),
+                instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
+                publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_update_agent', toolInput)
+            },
+        }),
+
+        ap_create_agent: tool({
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do.',
+            inputSchema: z.object({
+                displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
+                instructions: z.string().describe('The agent\'s standing brief, in second person'),
+                description: z.string().optional().describe('One line on what it is for'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_create_agent', toolInput)
             },
         }),
     }
@@ -1480,6 +1570,7 @@ function schemaForOutputField(field: AgentOutputField): z.ZodType {
 export const agentWorkerTools = {
     createEventEmitter,
     createDisplayTools,
+    createAgentSurfaceTools,
     createLocalTools,
     createCrossProjectTools,
     createWebTools,

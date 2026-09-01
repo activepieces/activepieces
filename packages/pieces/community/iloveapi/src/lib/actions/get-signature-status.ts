@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const getSignatureStatusAction = createAction({
   auth: iloveapiAuth,
   name: 'get_signature_status',
+  classification: 'READ',
   displayName: 'Get Signature Status',
   description:
     'Look up the current status of a signature request, including each signer.',

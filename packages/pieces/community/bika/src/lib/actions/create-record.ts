@@ -8,6 +8,7 @@ import { BikaAuth } from '../auth';
 export const createRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in database.',
   audience: 'both',

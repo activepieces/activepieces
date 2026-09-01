@@ -8,6 +8,7 @@ import { listAssigneesOutputSchema } from '../../output-schemas';
 export const githubListAssigneesAction = createAction({
   auth: githubAuth,
   name: 'list_assignees',
+  classification: 'SEARCH',
   displayName: 'List Assignees (Agent)',
   description: 'Lists users who can be assigned to issues in a repository.',
   audience: 'ai',
