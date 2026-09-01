@@ -1,4 +1,4 @@
-import { ApId, SeekPage } from '@activepieces/core-utils'
+import { ApId, assertNotNullOrUndefined, SeekPage } from '@activepieces/core-utils'
 import { ApplicationEventName, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../../../core/security/authorization/common'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
-import { platformService } from '../../../platform/platform.service'
+import { securityHelper } from '../../../helper/security-helper'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectReleaseService } from './project-release.service'
 
@@ -29,12 +29,12 @@ export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
-        const ownerId = platform.ownerId
+        const userId = await securityHelper.getUserIdFromRequest(req)
+        assertNotNullOrUndefined(userId, 'userId')
         const release = await projectReleaseService.create({
             platformId: req.principal.platform.id,
             projectId: req.projectId,
-            ownerId,
+            userId,
             params: req.body,
             log: req.log,
         })
@@ -49,11 +49,11 @@ export const projectReleaseController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
-        const platform = await platformService(req.log).getOneOrThrow(req.principal.platform.id)
-        const ownerId = platform.ownerId
+        const userId = await securityHelper.getUserIdFromRequest(req)
+        assertNotNullOrUndefined(userId, 'userId')
         return projectReleaseService.releasePlan({
             projectId: req.projectId,
-            userId: ownerId,
+            userId,
             platformId: req.principal.platform.id,
             params: req.body,
             log: req.log,
