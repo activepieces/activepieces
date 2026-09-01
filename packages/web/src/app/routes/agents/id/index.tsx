@@ -3,6 +3,7 @@ import {
   Agent,
   AgentConfig,
   AgentIcon,
+  AgentKnowledgeBaseTool,
   agentUtils,
   AgentToolType,
   ColorName,
@@ -17,10 +18,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronLeft,
+  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   FlaskConical,
   Loader2,
+  Pencil,
   Rocket,
   Settings2,
   Sparkles,
@@ -60,11 +63,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  KnowledgeBaseSection,
   AIModelSelector,
   AgentStructuredOutput,
   useAgentsAvailable,
@@ -222,206 +231,309 @@ const AgentDangerZone = ({
   );
 };
 
-const SettingsFields = ({
+const AgentIdentityPopover = ({
+  form,
+  children,
+}: {
+  form: ReturnType<
+    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
+  >;
+  children: React.ReactNode;
+}) => (
+  <Popover>
+    <PopoverTrigger asChild>{children}</PopoverTrigger>
+    <PopoverContent align="start" className="w-[340px]">
+      <div className="flex flex-col gap-4">
+        <FormField
+          control={form.control}
+          name="displayName"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Description')}</FormLabel>
+              <FormControl>
+                <Textarea {...field} minRows={2} maxRows={4} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Shape')}</FormLabel>
+              <div className="grid grid-cols-6 gap-2">
+                {Object.values(AgentIcon).map((iconName) => (
+                  <button
+                    key={iconName}
+                    type="button"
+                    aria-label={iconName}
+                    onClick={() => field.onChange(iconName)}
+                    className={cn(
+                      'flex items-center justify-center rounded-[10px] p-[3px]',
+                      field.value === iconName && 'ring-2 ring-foreground',
+                    )}
+                  >
+                    <AgentMark
+                      icon={iconName}
+                      color={form.watch('color')}
+                      size="sm"
+                    />
+                  </button>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <FormLabel>{t('Color')}</FormLabel>
+              <div className="grid grid-cols-6 gap-2">
+                {Object.values(ColorName).map((colorName) => (
+                  <button
+                    key={colorName}
+                    type="button"
+                    aria-label={colorName}
+                    onClick={() => field.onChange(colorName)}
+                    className={cn(
+                      'flex items-center justify-center rounded-full p-[3px]',
+                      field.value === colorName && 'ring-2 ring-foreground',
+                    )}
+                  >
+                    <span
+                      className="size-6 rounded-full"
+                      style={{
+                        backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </PopoverContent>
+  </Popover>
+);
+
+const ConfigureFields = ({
   agent,
   form,
+  needsModel,
   onDeleted,
 }: {
   agent: Agent;
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
-  onDeleted: () => void;
-}) => (
-  <>
-    <FormField
-      control={form.control}
-      name="displayName"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-          <FormControl>
-            <Input {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="description"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Description')}</FormLabel>
-          <FormControl>
-            <Textarea {...field} minRows={2} maxRows={4} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="icon"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Shape')}</FormLabel>
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(AgentIcon).map((iconName) => (
-              <button
-                key={iconName}
-                type="button"
-                aria-label={iconName}
-                onClick={() => field.onChange(iconName)}
-                className={cn(
-                  'flex items-center justify-center rounded-[10px] p-[3px]',
-                  field.value === iconName && 'ring-2 ring-foreground',
-                )}
-              >
-                <AgentMark
-                  icon={iconName}
-                  color={form.watch('color')}
-                  size="sm"
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="color"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Color')}</FormLabel>
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(ColorName).map((colorName) => (
-              <button
-                key={colorName}
-                type="button"
-                aria-label={colorName}
-                onClick={() => field.onChange(colorName)}
-                className={cn(
-                  'flex items-center justify-center rounded-full p-[3px]',
-                  field.value === colorName && 'ring-2 ring-foreground',
-                )}
-              >
-                <span
-                  className="size-6 rounded-full"
-                  style={{
-                    backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <AgentDangerZone agent={agent} onDeleted={onDeleted} />
-  </>
-);
-
-const ConfigureFields = ({
-  form,
-  needsModel,
-}: {
-  form: ReturnType<
-    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
-  >;
   needsModel: boolean;
-}) => (
-  <>
-    <FormField
-      control={form.control}
-      name="draft.instructions"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel showRequiredIndicator>{t('Instructions')}</FormLabel>
-          <FormControl>
-            <Textarea {...field} minRows={4} maxRows={12} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="draft.tools"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <AgentTools
-            toolsField={field}
-            selectedProvider={form.watch('draft.provider') ?? undefined}
-          />
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormItem className="flex flex-col gap-[9px]">
-      {needsModel && (
-        <p className="text-[13px] leading-4 text-destructive">
-          {t('Pick a model so this agent can answer.')}
-        </p>
-      )}
-      <AIModelSelector
-        defaultProvider={form.watch('draft.provider') ?? undefined}
-        defaultModel={form.watch('draft.modelName') ?? undefined}
-        defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-        onChange={({ provider, model, configId }) => {
-          form.setValue('draft.provider', parseProvider(provider), {
-            shouldDirty: true,
-          });
-          form.setValue('draft.modelName', model ?? null, {
-            shouldDirty: true,
-          });
-          form.setValue('draft.providerConfigId', configId ?? null, {
-            shouldDirty: true,
-          });
-        }}
+  onDeleted: () => void;
+}) => {
+  const tools = form.watch('draft.tools') ?? [];
+  const knowledgeCount = tools.filter(
+    (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
+  ).length;
+  const toolCount = tools.length - knowledgeCount;
+
+  return (
+    <>
+      <FormField
+        control={form.control}
+        name="draft.instructions"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <PanelSectionLabel label={t('Instructions')} required />
+            <FormControl>
+              <Textarea
+                {...field}
+                minRows={4}
+                maxRows={12}
+                className="rounded-[10px] px-[13px] py-3 text-[13px] leading-[155%]"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
       />
-    </FormItem>
-    <FormField
-      control={form.control}
-      name="draft.structuredOutput"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <AgentStructuredOutput
-            disabled={false}
-            structuredOutputField={field}
-          />
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="draft.maxSteps"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <FormLabel>{t('Max steps')}</FormLabel>
-          <FormControl>
-            <Input
-              type="number"
-              min={1}
-              max={MAX_AGENT_STEP_BUDGET}
-              value={field.value}
-              onChange={(event) =>
-                field.onChange(
-                  Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
-                )
+      <FormField
+        control={form.control}
+        name="draft.tools"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <PanelSectionLabel
+              label={t('Tools')}
+              meta={
+                toolCount > 0
+                  ? t('toolsAddedCount', { count: toolCount })
+                  : undefined
               }
             />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  </>
+            <AgentTools
+              layout="rows"
+              toolsField={field}
+              selectedProvider={form.watch('draft.provider') ?? undefined}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="draft.tools"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <PanelSectionLabel
+              label={t('Knowledge')}
+              meta={
+                knowledgeCount > 0
+                  ? t('knowledgeSourcesCount', { count: knowledgeCount })
+                  : undefined
+              }
+            />
+            <KnowledgeBaseSection
+              layout="rows"
+              tools={tools.filter(
+                (tool): tool is AgentKnowledgeBaseTool =>
+                  tool.type === AgentToolType.KNOWLEDGE_BASE,
+              )}
+              allTools={tools}
+              removeTool={(toolName: string) =>
+                field.onChange(
+                  tools.filter((tool) => tool.toolName !== toolName),
+                )
+              }
+              onToolsUpdate={field.onChange}
+              selectedProvider={form.watch('draft.provider') ?? undefined}
+            />
+          </FormItem>
+        )}
+      />
+      <FormItem className="flex flex-col gap-[9px]">
+        <PanelSectionLabel label={t('Model')} />
+        {needsModel && (
+          <p className="text-[13px] leading-4 text-destructive">
+            {t('Pick a model so this agent can answer.')}
+          </p>
+        )}
+        <AIModelSelector
+          defaultProvider={form.watch('draft.provider') ?? undefined}
+          defaultModel={form.watch('draft.modelName') ?? undefined}
+          defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
+          onChange={({ provider, model, configId }) => {
+            form.setValue('draft.provider', parseProvider(provider), {
+              shouldDirty: true,
+            });
+            form.setValue('draft.modelName', model ?? null, {
+              shouldDirty: true,
+            });
+            form.setValue('draft.providerConfigId', configId ?? null, {
+              shouldDirty: true,
+            });
+          }}
+        />
+      </FormItem>
+      <AdvancedSection>
+        <FormField
+          control={form.control}
+          name="draft.structuredOutput"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <AgentStructuredOutput
+                disabled={false}
+                structuredOutputField={field}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="draft.maxSteps"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <PanelSectionLabel label={t('Max steps')} />
+              <FormControl>
+                <Input
+                  type="number"
+                  min={1}
+                  max={MAX_AGENT_STEP_BUDGET}
+                  value={field.value}
+                  onChange={(event) =>
+                    field.onChange(
+                      Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
+                    )
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <AgentDangerZone agent={agent} onDeleted={onDeleted} />
+      </AdvancedSection>
+    </>
+  );
+};
+
+const PanelSectionLabel = ({
+  label,
+  meta,
+  required,
+}: {
+  label: string;
+  meta?: string;
+  required?: boolean;
+}) => (
+  <div className="flex items-baseline gap-2">
+    <FormLabel showRequiredIndicator={required} className="grow text-[13px]">
+      {label}
+    </FormLabel>
+    {meta !== undefined && (
+      <span className="text-xs leading-4 text-muted-foreground">{meta}</span>
+    )}
+  </div>
 );
+
+const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-fit items-center gap-1.5 text-[13px] font-semibold leading-4 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronRight
+          size={14}
+          className={cn('transition-transform', open && 'rotate-90')}
+        />
+        {t('Advanced')}
+      </button>
+      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
+    </div>
+  );
+};
 
 const useWarnBeforeLosingChanges = ({
   hasChanges,
@@ -509,7 +621,6 @@ const AgentEditScreen = ({
   onExit: () => void;
   onEdited: () => void;
 }) => {
-  const [tab, setTab] = useState('configure');
   const [mode, setMode] = useState('edit');
   const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
     formValuesOf(agent),
@@ -665,11 +776,30 @@ const AgentEditScreen = ({
           >
             <ChevronLeft size={16} />
           </button>
-          <AgentMark icon={agent.icon} color={agent.color} />
+          <AgentIdentityPopover form={form}>
+            <button
+              type="button"
+              aria-label={t('Edit name and appearance')}
+              className="group relative shrink-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <AgentMark
+                icon={form.watch('icon')}
+                color={form.watch('color')}
+              />
+              <span className="absolute -bottom-1 -end-1 flex size-[18px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                <Pencil size={9} />
+              </span>
+            </button>
+          </AgentIdentityPopover>
           <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
-            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
-              {agent.displayName}
-            </span>
+            <AgentIdentityPopover form={form}>
+              <button
+                type="button"
+                className="truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {form.watch('displayName')}
+              </button>
+            </AgentIdentityPopover>
             <span className="truncate text-[13px] leading-4 text-muted-foreground">
               {HEADER_STATUS_COPY[
                 agentEditState.headerStatus({
@@ -756,49 +886,27 @@ const AgentEditScreen = ({
           </div>
 
           <div className="flex w-[452px] shrink-0 flex-col">
-            <div className="flex h-[52px] shrink-0 items-stretch border-b border-border px-[18px]">
-              <Tabs
-                value={tab}
-                onValueChange={setTab}
-                className="flex h-full items-stretch"
-              >
-                <TabsList
-                  variant="outline"
-                  className="h-full items-stretch gap-[22px]"
-                >
-                  <TabsTrigger
-                    value="configure"
-                    variant="outline"
-                    className="h-full items-center gap-2"
-                  >
-                    {t('Configure')}
-                    {formNeedsModel && (
-                      <span className="size-[7px] rounded-full bg-destructive" />
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="settings"
-                    variant="outline"
-                    className="h-full items-center"
-                  >
-                    {t('Settings')}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-border px-[18px]">
+              <span className="text-[13px] font-semibold leading-4">
+                {t('Configure')}
+              </span>
+              {formNeedsModel && (
+                <span className="flex items-center gap-1.5 text-xs leading-4 text-destructive">
+                  <span className="size-[6px] rounded-full bg-destructive" />
+                  {t('Needs a model')}
+                </span>
+              )}
             </div>
             <ScrollArea className="min-h-0 grow">
               <div className="flex flex-col gap-5 p-[18px]">
-                {tab === 'configure' ? (
-                  <ConfigureFields form={form} needsModel={formNeedsModel} />
-                ) : (
-                  <SettingsFields
-                    agent={agent}
-                    form={form}
-                    onDeleted={() => {
-                      deletedRef.current = true;
-                    }}
-                  />
-                )}
+                <ConfigureFields
+                  agent={agent}
+                  form={form}
+                  needsModel={formNeedsModel}
+                  onDeleted={() => {
+                    deletedRef.current = true;
+                  }}
+                />
                 {form.formState.errors.root?.serverError && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.root.serverError.message}

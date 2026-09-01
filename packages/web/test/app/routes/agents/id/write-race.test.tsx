@@ -17,6 +17,7 @@ vi.mock('@/app/builder/step-settings/agent-settings/agent-tools', () => ({
 vi.mock('@/features/agents', () => ({
   AIModelSelector: () => <div data-testid="model" />,
   AgentStructuredOutput: () => <div data-testid="structured" />,
+  KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,
 }));
 vi.mock('@/features/agents/hooks/agents-hooks', () => ({
