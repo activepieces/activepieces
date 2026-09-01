@@ -57,6 +57,7 @@ import { cn } from '@/lib/utils';
 import {
   acceptsDraftPrompt,
   showsAgentList,
+  shownDestination,
   showsFirstRun,
   showsNoMatchNotice,
 } from './lib/agents-list-state';
@@ -119,6 +120,9 @@ const AgentsPageContent = () => {
   const [prompt, setPrompt] = useState('');
   const [viewProjectId, setViewProjectId] = useState<string>(ALL_PROJECTS);
   const [pickedProjectId, setPickedProjectId] = useState<string | null>(null);
+  const [buildingInProjectId, setBuildingInProjectId] = useState<string | null>(
+    null,
+  );
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
@@ -168,6 +172,12 @@ const AgentsPageContent = () => {
   const destinationReadinessUnknown = isLoadingProvider;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
+  const shownDestinationId = shownDestination({
+    isBuilding,
+    buildingIn: buildingInProjectId,
+    picked: createInProjectId,
+  });
+
   const projectOptions = useMemo(
     () =>
       (allProjects ?? []).map((entry) => ({
@@ -189,14 +199,16 @@ const AgentsPageContent = () => {
       return;
     }
     setPrompt(trimmed);
+    const destination = createInProjectId;
+    setBuildingInProjectId(destination);
     draftAgent.mutate(
-      { projectId: createInProjectId, prompt: trimmed },
+      { projectId: destination, prompt: trimmed },
       {
         onSuccess: (draft) =>
           createAgent.mutate(
             createAgentUtils.buildCreateRequest({
               draft,
-              projectId: createInProjectId,
+              projectId: destination,
             }),
           ),
       },
@@ -375,9 +387,10 @@ const AgentsPageContent = () => {
           <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
             <span>{t('New agents go to')}</span>
             <SearchableSelect
-              value={createInProjectId}
+              value={shownDestinationId}
               onChange={(value) => setPickedProjectId(value)}
               options={projectOptions}
+              disabled={isBuilding}
               placeholder={t('Search projects')}
               contentWidth="260px"
               triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"

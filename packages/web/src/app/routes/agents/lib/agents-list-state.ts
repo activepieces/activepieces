@@ -29,6 +29,18 @@ export function showsAgentList({
   return listLoading || (hasList && !firstRun);
 }
 
+export function shownDestination({
+  isBuilding,
+  buildingIn,
+  picked,
+}: {
+  isBuilding: boolean;
+  buildingIn: string | null;
+  picked: string;
+}): string {
+  return isBuilding && buildingIn !== null ? buildingIn : picked;
+}
+
 export function acceptsDraftPrompt({
   prompt,
   isBuilding,
