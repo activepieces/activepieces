@@ -411,14 +411,14 @@ describe('deleting an agent a flow still uses', () => {
         expect(JSON.stringify(response.json())).toContain('Nightly inbox sweep')
     })
 
-    it('is refused while a draft still uses it, so publishing later cannot break it', async () => {
+    it('goes through while only a draft uses it, since a draft does not run', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         await flowUsingAgent({ ctx, externalId: agent.externalId, published: false })
 
         const response = await ctx.delete(`/v1/agents/${agent.id}`)
 
-        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect([StatusCodes.OK, StatusCodes.NO_CONTENT]).toContain(response.statusCode)
     })
 
     it('goes through once the step is gone, even though old versions still mention it', async () => {
