@@ -3,6 +3,8 @@ import { Queue } from 'bullmq'
 import Redis from 'ioredis'
 import { QueueName } from '../workers/job'
 
+export const barrierSourceKey = (barrierId: string): string => `barrier_source:${barrierId}`
+
 export const evaluationDedupKey = (barrierId: string): string => `evaluate-${barrierId}`
 
 export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFactoryParams) => {
@@ -41,6 +43,12 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
             })
         },
 
+        async addFanOutDispatch(params: BarrierJobData): Promise<void> {
+            await requireQueue().add(BarrierJobName.FAN_OUT_DISPATCH, params, {
+                jobId: `dispatch-${params.barrierId}`,
+            })
+        },
+
         async clearEvaluationDedupKey(barrierId: string): Promise<void> {
             await requireQueue().removeDeduplicationKey(evaluationDedupKey(barrierId))
         },
@@ -57,6 +65,7 @@ export const barrierQueueFactory = ({ createRedisConnection }: BarrierQueueFacto
 
 export enum BarrierJobName {
     EVALUATE = 'evaluate-barrier',
+    FAN_OUT_DISPATCH = 'fan-out-dispatch',
 }
 
 export type BarrierJobData = {
@@ -67,6 +76,12 @@ export type BarrierJobData = {
 export type BarrierQueueConfig = {
     redisFailedJobRetentionDays: number
     redisFailedJobRetentionMaxCount: number
+}
+
+export type BarrierFanOutPayload = {
+    entryStepName: string
+    seedSteps: Record<string, unknown>
+    batches: unknown[][]
 }
 
 type BarrierQueueFactoryParams = {

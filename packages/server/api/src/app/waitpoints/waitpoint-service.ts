@@ -4,6 +4,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { distributedStore } from '../database/redis-connections'
+import { barrierSourceKey } from './barrier-queue-factory'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
@@ -203,6 +205,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         for (const waitpoint of waitpoints) {
             await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
         }
+        const barrierSourceKeys = waitpoints.filter((waitpoint) => waitpoint.type === PauseType.BARRIER).map((waitpoint) => barrierSourceKey(waitpoint.id))
+        await distributedStore.delete(barrierSourceKeys)
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })

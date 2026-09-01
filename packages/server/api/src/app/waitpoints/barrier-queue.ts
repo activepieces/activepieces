@@ -1,12 +1,15 @@
+import { isNil } from '@activepieces/core-utils'
 import { createLogger, wideEvent } from '@activepieces/server-utils'
 import { Job, Queue, Worker } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../database/redis-connections'
+import { exceptionHandler } from '../helper/exception-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { QueueName } from '../workers/job'
 import { BarrierJobData, BarrierJobName, BarrierQueueConfig, barrierQueueFactory } from './barrier-queue-factory'
 import { barrierService } from './barrier-service'
+import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from './fan-out-dispatcher-job'
 
 let barrierWorker: Worker<BarrierJobData> | undefined = undefined
 
@@ -43,11 +46,28 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
                 autorun: true,
             },
         )
+        barrierWorker.on('failed', (job, error) => {
+            if (isNil(job) || job.name !== BarrierJobName.FAN_OUT_DISPATCH) {
+                return
+            }
+            const reason = fanOutDispatchGaveUp({ attemptsMade: job.attemptsMade, attempts: job.opts.attempts, error })
+            if (isNil(reason)) {
+                return
+            }
+            handleFanOutDispatchGaveUp({ data: job.data, error, reason, log }).catch((handlerError: unknown) => {
+                exceptionHandler.handle(handlerError, log)
+            })
+        })
+
         await barrierWorker.waitUntilReady()
     },
 
     async enqueueEvaluation(params: BarrierJobData): Promise<void> {
         await barrierQueueInstance.enqueueEvaluation(params)
+    },
+
+    async addFanOutDispatch(params: BarrierJobData): Promise<void> {
+        await barrierQueueInstance.addFanOutDispatch(params)
     },
 
     async clearEvaluationDedupKey(barrierId: string): Promise<void> {
@@ -73,6 +93,9 @@ async function processBarrierJob({ job, log }: ProcessBarrierJobParams): Promise
         case BarrierJobName.EVALUATE:
             await barrierQueueInstance.clearEvaluationDedupKey(job.data.barrierId)
             await barrierService(log).releaseIfReady({ barrierId: job.data.barrierId, projectId: job.data.projectId })
+            return
+        case BarrierJobName.FAN_OUT_DISPATCH:
+            await handleFanOutDispatch({ data: job.data, log })
             return
         default:
             log.warn({ job: { id: job.id, type: job.name } }, '[barrierQueue#worker] Unknown barrier job name, dropping it')
