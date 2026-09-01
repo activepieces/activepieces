@@ -295,6 +295,7 @@ export const objectDetection = createAction({
 
     // Build detection arguments
     const args: ObjectDetectionInput = {
+      model: model,
       inputs: imageBlob,
       parameters: {
         threshold: actualThreshold,

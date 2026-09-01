@@ -378,12 +378,8 @@ export const textSummarization = createAction({
         | 'longest_first'
         | 'only_first'
         | 'only_second';
-      generate_parameters?: {
-        min_length?: number;
-        max_length?: number;
-        do_sample?: boolean;
-        temperature?: number;
-      };
+      min_length?: number;
+      max_length?: number;
     } = {};
 
     if (cleanUpSpaces !== undefined) {
@@ -400,13 +396,8 @@ export const textSummarization = createAction({
       parameters.truncation = truncationStrategy;
     }
 
-    // Add generation parameters
-    parameters.generate_parameters = {
-      min_length: minLength,
-      max_length: maxLength,
-      do_sample: false, // Use greedy decoding for consistent summaries
-      temperature: 0.7, // Slight randomness for more natural summaries
-    };
+    parameters.min_length = minLength;
+    parameters.max_length = maxLength;
 
     if (Object.keys(parameters).length > 0) {
       args.parameters = parameters;

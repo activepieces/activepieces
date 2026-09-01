@@ -445,6 +445,7 @@ export const imageClassification = createAction({
           : [String(customCategories).trim()].filter(Boolean);
 
         const zeroShotArgs: ZeroShotImageClassificationInput = {
+          model: model,
           inputs: imageBlob,
           parameters: {
             candidate_labels: candidateLabels,
@@ -460,6 +461,7 @@ export const imageClassification = createAction({
         );
       } else {
         const standardArgs: ImageClassificationInput = {
+          model: model,
           inputs: imageBlob,
           parameters: {
             top_k: topK || 5,
