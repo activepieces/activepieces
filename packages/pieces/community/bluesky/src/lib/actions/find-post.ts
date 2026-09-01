@@ -7,6 +7,7 @@ import { postUrlProperty, extractPostInfoFromUrl } from '../common/props';
 export const findPost = createAction({
   auth: blueskyAuth,
   name: 'findPost',
+  classification: 'READ',
   displayName: 'Find Post',
   description: 'Get detailed information about a specific post',
   audience: 'both',

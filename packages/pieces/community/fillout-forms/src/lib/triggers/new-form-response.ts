@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-form-response-trigger';
 export const newFormResponse = createTrigger({
   auth: filloutFormsAuth,
   name: 'new-form-response',
+  classification: 'READ',
   displayName: 'New Form Response',
   description:
     'Triggers when a new submission is received for a selected Fillout form.',

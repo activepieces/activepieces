@@ -122,9 +122,11 @@ These are deliberate, not bugs. They are the price of running batches as indepen
 5. **A wedged batch parks the parent paused for up to the paused-run timeout** (30 days by default) rather
    than surfacing within the hour. The recourse is to cancel the parent, which is paused and therefore
    cancellable.
-6. **Nesting depth is unbounded, and nothing bounds the total across levels.** The per-step child cap
-   applies to one step's batches only, so retrying an outer Process in Batches multiplies re-execution by
-   whatever depth and width you built.
+6. **A batch body cannot hold another Process in Batches, but it can call a flow that does.** Activepieces
+   refuses to place the step inside another Process in Batches. Depth is still unbounded through a callable
+   flow: a batch body that calls a flow whose own step processes in batches fans out again, and the per-step
+   cap applies to one step's batches only, so nothing bounds the total across levels. Retrying the outer
+   flow multiplies re-execution by whatever depth and width you built.
 7. **A failure alert can name a batch instead of its parent.** Failure emails are deduplicated per flow
    version for a day, and batches share their parent's flow version — so whichever fails first claims the
    alert and the other is silent for 24 hours. The link resolves to a real run, but a batch's run is not

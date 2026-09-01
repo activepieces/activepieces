@@ -10,6 +10,10 @@ import { youtubeListPlaylistItemsAction } from './lib/actions/list-playlist-item
 import { youtubeSearchAction } from './lib/actions/search';
 import { youtubeListCaptionsAction } from './lib/actions/list-captions';
 import { youtubeDownloadCaptionAction } from './lib/actions/download-caption';
+import { youtubeGetVideoAction } from './lib/actions/get-video';
+import { youtubeGetChannelAction } from './lib/actions/get-channel';
+import { youtubeListPlaylistsAction } from './lib/actions/list-playlists';
+import { youtubeListCommentsAction } from './lib/actions/list-comments';
 
 export const youtube = createPiece({
   displayName: 'YouTube',
@@ -32,6 +36,10 @@ export const youtube = createPiece({
     youtubeListCaptionsAction,
     youtubeSearchAction,
     youtubeListPlaylistItemsAction,
+    youtubeGetVideoAction,
+    youtubeGetChannelAction,
+    youtubeListPlaylistsAction,
+    youtubeListCommentsAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',
       auth: youtubeAuth,

@@ -6,6 +6,7 @@ import { updateRecordAiActionOutputSchema } from '../output-schemas';
 export const airtableUpdateRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'update_record_ai',
+  classification: 'WRITE',
   displayName: 'Update Record (Agent)',
   description: 'Update fields on an existing Airtable record by its ID.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const createLead = createAction({
   name: 'createLead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Creates a new lead in Bookedin AI',
   audience: 'both',

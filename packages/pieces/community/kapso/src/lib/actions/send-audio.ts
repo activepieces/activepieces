@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const sendAudio = createAction({
   auth: kapsoAuth,
   name: 'send_audio',
+  classification: 'WRITE',
   displayName: 'Send Audio',
   description: 'Send an audio message via WhatsApp.',
   audience: 'both',

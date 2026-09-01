@@ -4,6 +4,8 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
@@ -12,7 +14,6 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLAT
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
-const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
@@ -139,7 +140,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
         const toolName = mcpToolNameUtils.createToolName(baseName)
 
         const flowPermissionError = permissionChecker.check(Permission.WRITE_RUN, toolName)
-        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema }, async (args: Record<string, unknown>) => {
+        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema, annotations: FLOW_TOOL_ANNOTATIONS }, async (args: Record<string, unknown>) => {
             if (flowPermissionError) {
                 return flowPermissionError
             }
@@ -188,7 +189,7 @@ export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsR
         payload,
         execute: true,
         failParentOnFailure: false,
-        timeoutMs: MCP_TIMEOUT_MS,
+        timeoutMs: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000,
     })
     const isOkay = Math.floor(response.status / 100) === 2
 
@@ -211,11 +212,13 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
 }
 
 function registerPlaceholderTools(server: McpServer): void {
+    const lockedToolSet = new Set<string>(LOCKED_TOOL_NAMES)
     const allToolNames = [...LOCKED_TOOL_NAMES, ...ALL_CONTROLLABLE_TOOL_NAMES]
     allToolNames.forEach((toolName) => {
         server.registerTool(toolName, {
             title: toolName,
             description: `${toolName} — requires a project to be selected first.`,
+            annotations: lockedToolSet.has(toolName) ? LOCKED_PLACEHOLDER_ANNOTATIONS : CONTROLLABLE_PLACEHOLDER_ANNOTATIONS,
         }, async () => ({
             content: [{ type: 'text' as const, text: `No project selected. Please select a project from the dropdown in the chat input area before using ${toolName}.` }],
         }))
@@ -264,6 +267,10 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
         annotations: tool.annotations,
     }
 }
+
+const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
+const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 type RegisterToolsParams = {
     server: McpServer

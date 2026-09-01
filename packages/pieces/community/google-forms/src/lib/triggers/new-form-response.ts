@@ -17,6 +17,7 @@ import { newResponseTriggerOutputSchema } from '../output-schemas';
 export const newResponse = createTrigger({
   auth: googleFormsAuth,
   name: 'new_response',
+  classification: 'READ',
   displayName: 'New Response',
   description: 'Triggers when there is new response',
   aiMetadata: {

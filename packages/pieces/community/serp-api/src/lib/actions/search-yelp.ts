@@ -7,6 +7,7 @@ import { searchYelpOutputSchema } from '../output-schemas';
 export const searchYelp = createAction({
   auth: serpApiAuth,
   name: 'search_yelp',
+  classification: 'SEARCH',
   displayName: 'Search Yelp',
   description: 'Find businesses and reviews on Yelp for a category and location.',
   audience: 'ai',

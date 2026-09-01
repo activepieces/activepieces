@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { eventListOutputSchema } from '../output-schemas';
 export const stripeListEvents = createAction({
   name: 'list_events',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Events (Agent)',
   description: 'List Stripe account events.',

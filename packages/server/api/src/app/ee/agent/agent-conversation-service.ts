@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -16,13 +16,17 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
+        const builder = request.builder === true
+        const builderProjectId = builder
+            ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
+            : null
         const conversation = await agentHelpers.conversationRepo().save({
             id: id ?? apId(),
             platformId,
-            projectId: agent?.projectId ?? null,
+            projectId: agent?.projectId ?? builderProjectId,
             userId,
             agentId: agent?.id ?? null,
-            source: isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
+            source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
@@ -82,7 +86,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (![AgentRunSource.CHAT, AgentRunSource.AGENT].includes(conversation.source)) {
+        if (![AgentRunSource.CHAT, AgentRunSource.AGENT, AgentRunSource.AGENT_BUILDER].includes(conversation.source)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         return conversation
@@ -164,6 +168,32 @@ type ListConversationsParams = {
     cursor?: string
     limit: number
     agentId?: string
+}
+
+async function resolveBuilderProject({ agent, requestedProjectId, platformId, userId, log }: {
+    agent: Agent | null
+    requestedProjectId?: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<string> {
+    if (!isNil(agent)) {
+        return agent.projectId
+    }
+    if (isNil(requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'A builder conversation needs either an agentId to change or a projectId to build in' },
+        })
+    }
+    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    if (!projects.some((project) => project.id === requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: requestedProjectId, entityType: 'Project' },
+        })
+    }
+    return requestedProjectId
 }
 
 type ConversationIdentifier = {

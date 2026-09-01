@@ -12,6 +12,7 @@ import { getKeyValueStoreRecordActionOutputSchema } from '../output-schemas';
 
 export const getKeyValueStoreRecord = createAction({
   name: 'getKeyValueStoreRecord',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Key-Value Store Record',
   description: 'Retrieves a value stored in the key-value store under a specific key',

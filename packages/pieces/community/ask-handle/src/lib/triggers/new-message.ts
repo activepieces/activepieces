@@ -10,6 +10,7 @@ const BASE_URL = 'https://dashboard.askhandle.com/api/v1';
 export const newMessageTrigger = createTrigger({
   auth: askHandleAuth,
   name: 'new_message',
+  classification: 'READ',
   displayName: 'New Message',
   description: 'Triggers when a new message is received',
   aiMetadata: {

@@ -3,7 +3,6 @@ import {
   Agent,
   MAX_AGENT_PAGE_SIZE,
   AgentSummary,
-  AgentTemplate,
   CreateAgentRequest,
   DraftAgentRequest,
   DraftAgentResponse,
@@ -49,9 +48,6 @@ export const agentsApi = {
   },
   update(id: string, request: UpdateAgentRequest): Promise<Agent> {
     return api.post<Agent>(`/v1/agents/${id}`, request);
-  },
-  templates(): Promise<SeekPage<AgentTemplate>> {
-    return api.get<SeekPage<AgentTemplate>>('/v1/agents/templates');
   },
   draft(request: DraftAgentRequest): Promise<DraftAgentResponse> {
     return api.post<DraftAgentResponse>('/v1/agents/draft', request);

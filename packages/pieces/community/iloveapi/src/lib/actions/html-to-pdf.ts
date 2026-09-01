@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const htmlToPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'html_to_pdf',
+  classification: 'READ',
   displayName: 'HTML to PDF',
   description: 'Convert a publicly accessible web page URL into a PDF.',
   audience: 'both',

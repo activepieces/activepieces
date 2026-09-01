@@ -27,6 +27,7 @@ export const registerWebhooks = ({
   createTrigger({
     auth: calcomAuth,
     name,
+    classification: 'READ',
     description,
     displayName,
     aiMetadata,

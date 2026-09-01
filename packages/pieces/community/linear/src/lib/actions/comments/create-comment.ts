@@ -7,6 +7,7 @@ import { LinearDocument } from '@linear/sdk';
 export const linearCreateComment = createAction({
   auth: linearAuth,
   name: 'linear_create_comment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Create a new comment on an issue in Linear workspace',
   audience: 'both',

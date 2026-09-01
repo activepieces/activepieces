@@ -5,10 +5,13 @@ import { filterIdProp } from '../common/props';
 import { pipedriveApiCall, pipedrivePaginatedV2ApiCall } from '../common';
 import { LeadListResponse } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
+import { activityMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 export const activityMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'activity-matching-filter',
+	outputSchema: activityMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Activity Matching Filter',
 	description: 'Trigges when an activity newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {
