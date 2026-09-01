@@ -17,7 +17,7 @@ import { agentHistory } from './history/agent-history'
 async function projectHoldingAgent({ agentId, entityManager }: { agentId: string, entityManager: EntityManager }): Promise<string> {
     const locked = await entityManager.getRepository(AgentEntity)
         .createQueryBuilder('agent')
-        .setLock('pessimistic_read')
+        .setLock('pessimistic_write')
         .where('agent.id = :agentId', { agentId })
         .getOne()
     if (isNil(locked)) {
