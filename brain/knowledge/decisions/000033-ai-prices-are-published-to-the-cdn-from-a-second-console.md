@@ -60,3 +60,4 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
 - Publishing is blocked whenever the live file cannot be read, so a CDN outage can never overwrite
   prices nobody can see.
 - Config features from now on go in `config-console`, not the billing console.
+- **Internal tools deploy to a DigitalOcean droplet, not a PaaS.** Nothing in `console` or `config-console` says so — the pattern has to be read out of `activepieces/discover`'s `.github/workflows/deploy.yml`: Actions builds, SSHes in as `deploy`, restarts, with nginx and certbot in front. `config-console` follows it but ships a Docker image from GHCR instead of an rsynced build, because a bun + Nx monorepo is slow to build on a small droplet. Its runbook is `DEPLOYMENT.md` in that repo.
