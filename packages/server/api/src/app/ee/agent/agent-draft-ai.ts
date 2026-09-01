@@ -14,6 +14,7 @@ import { platformPlanService } from '../platform/platform-plan/platform-plan.ser
 import { agentHelpers } from './agent-helpers'
 
 const DRAFT_TIMEOUT_MS = 30_000
+const DRAFT_TEMPERATURE = 0
 const REPLY_LOG_LIMIT = 500
 const REASON_LIMIT = 200
 const FAST_TIER_ID = 'fast'
@@ -145,6 +146,9 @@ async function runDraft({ model, prompt }: { model: LanguageModel, prompt: strin
             model,
             instructions: DRAFT_SYSTEM_PROMPT,
             prompt,
+            // Drafting is extraction, not writing: at the provider default temperature the same
+            // sentence picked a different number of tools between runs.
+            temperature: DRAFT_TEMPERATURE,
             telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-draft' }),
             abortSignal: AbortSignal.timeout(DRAFT_TIMEOUT_MS),
         })
