@@ -24,6 +24,22 @@ export const gmailNewEmailTrigger = createTrigger({
     description:
       'Fires when a new email arrives in the connected Gmail account, optionally narrowed by sender, recipient, subject, label, or category filters. Each event represents one newly received message with its parsed contents and thread.',
   },
+  propertyGroups: [
+    {
+      key: 'people',
+      display: 'builder',
+      label: 'People',
+      icon: 'users',
+      props: ['from', 'to'],
+    },
+    {
+      key: 'filters',
+      display: 'builder',
+      label: 'Filters',
+      icon: 'filter',
+      props: ['subject', 'label', 'category'],
+    },
+  ],
   props: {
     subject: GmailProps.subject,
     from: GmailProps.from,

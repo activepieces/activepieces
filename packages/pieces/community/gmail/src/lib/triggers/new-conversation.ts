@@ -150,6 +150,7 @@ export const gmailNewConversationTrigger = createTrigger({
       description:
         'Only trigger for conversations containing this text in the subject (optional)',
       required: false,
+      icon: 'type',
     }),
     maxAgeHours: Property.Number({
       displayName: 'Maximum Age (Hours)',
@@ -157,6 +158,9 @@ export const gmailNewConversationTrigger = createTrigger({
         'Only trigger for conversations started within this many hours',
       required: false,
       defaultValue: 24,
+      display: 'stepper',
+      icon: 'calendar',
+      min: 1,
     }),
   },
   sampleData: {},
