@@ -25,7 +25,13 @@ Everything crossing the feature boundary goes through `index.ts`. See `features/
 
 API client: `features/tables/api/tables-api.ts`. Hooks: `features/tables/hooks/table-hooks.ts`.
 
-On any query that fetches a page's **primary** data — the table rows, the list, the thing the page exists to show — set `meta: { showErrorToast: true }`. `QueryCache.onError` in `app/query-client.ts` turns that into a red toast — but only while the query still has an active observer, and only once per outage: the hash is remembered until `QueryCache.onSuccess` sees that query recover. A Sonner `id` alone coalesces only a *live* toast, so retries, focus refetches and `refetchInterval` polls each raise a fresh one once the old has expired, on whatever page the user has reached by then (the runs table polls every 15s, so any finite cooldown just slows that down). Leave it off for auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details) — those should fail silently.
+On any query that fetches a page's **primary** data — the table rows, the list, the thing the page exists to show — set `meta: { showErrorToast: true }`. `QueryCache.onError` in `app/query-client.ts` turns that into a red toast — one toast, once per outage, and only while the query still has an active observer. Three guards, and each one is there because the obvious version of it leaks:
+
+- **`query.isActive()`** — React Query retries a failed fetch three times by default, so a failure the user walked away from otherwise lands its toast on whatever page they reached next. No observer means nobody is looking at that data.
+- **A `WeakSet` keyed on the `Query` object**, cleared in `QueryCache.onSuccess` — a Sonner `id` coalesces only a *live* toast, so once it expires the next `refetchInterval` poll raises a fresh one (the runs table polls every 15s, which is why no finite cooldown works). Key it on the query *object*, never on `queryHash`: a `gcTime: 0` query that fails and unmounts is dropped from the cache, and a hash-keyed marker would then suppress the first toast of the next, unrelated outage. The WeakSet entry dies with the query it belongs to.
+- **One shared toast `id`** — a page whose three primary queries all fail should say "Failed to load data" once, not three times.
+
+The error payload goes to `console.error`, never into the toast. Leave it off for auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details) — those should fail silently.
 
 ## Route
 
