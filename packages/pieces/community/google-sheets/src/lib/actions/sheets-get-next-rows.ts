@@ -97,6 +97,7 @@ async function getRows(
 export const sheetsGetNextRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_get_next_rows',
+	classification: 'READ',
 	displayName: 'Get Next Rows (Paginated)',
 	description: 'Get the next group of rows from a worksheet, advancing a stored cursor.',
 	audience: 'ai',

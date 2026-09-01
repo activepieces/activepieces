@@ -10,9 +10,9 @@ const InputWithIcon = React.forwardRef<
   React.InputHTMLAttributes<HTMLInputElement> & {
     icon: React.ReactNode;
   }
->(({ className, ...props }, ref) => (
+>(({ className, icon, ...props }, ref) => (
   <div className={cn(inputClass, className, 'items-center gap-2')}>
-    {props.icon}
+    {icon}
     <input
       ref={ref}
       className={cn(

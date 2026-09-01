@@ -49,6 +49,7 @@ const parseBoolean = (value: unknown, fieldName: string): boolean => {
 
 export const onFormSubmission = createTrigger({
   name: 'form_submission',
+  classification: 'READ',
   displayName: 'Web Form',
   description: 'Trigger the flow by submitting a form.',
   aiMetadata: {

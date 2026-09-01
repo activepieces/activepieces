@@ -19,6 +19,7 @@ import { chatPostMessageOutputSchema } from '../output-schemas';
 export const slackSendMessageAction = createAction({
   auth: slackAuth,
   name: 'send_channel_message',
+  classification: 'WRITE',
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   audience: 'human',

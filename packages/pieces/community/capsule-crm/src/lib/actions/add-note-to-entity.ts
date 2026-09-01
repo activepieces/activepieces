@@ -10,6 +10,7 @@ import { CreateEntryParams } from '../common/types';
 export const addNoteToEntityAction = createAction({
   auth: capsuleCrmAuth,
   name: 'add_note_to_entity',
+  classification: 'WRITE',
   displayName: 'Add Note to Entity',
   description:
     'Add a comment/note to an entity (e.g., contact, opportunity, project).',

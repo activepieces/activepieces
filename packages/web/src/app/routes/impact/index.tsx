@@ -107,7 +107,6 @@ export default function ImpactPage() {
     >
       <div className="flex flex-col gap-4 w-full">
         <PageHeader
-          showSidebarToggle={true}
           title={
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium">{t('Impact')}</span>

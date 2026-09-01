@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const unsubscribe = createAction({
   name: 'unsubscribe',
+  classification: 'DESTRUCTIVE',
   auth: sendfoxAuth,
   displayName: 'Unsubscribe Contact',
   description: 'Unsubscribe a contact',

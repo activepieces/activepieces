@@ -10,6 +10,7 @@ export const jsonToAsciiTable = createAction({
   },
   displayName: 'List to Text Table',
   name: 'json_to_ascii_table',
+  classification: 'READ',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

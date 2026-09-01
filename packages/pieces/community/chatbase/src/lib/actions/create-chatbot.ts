@@ -6,6 +6,7 @@ import { makeRequest } from '../common';
 export const createChatbotAction = createAction({
 	auth: chatbaseAuth,
 	name: 'create_chatbot',
+	classification: 'WRITE',
 	displayName: 'Create Chatbot',
 	description: 'Creates a new chatbot.',
 	audience: 'both',

@@ -11,6 +11,7 @@ import { BASE_URL, commonProps } from '../common/props';
 
 export const addImageToPdf = createAction({
 	name: 'add_image_to_pdf',
+	classification: 'WRITE',
 	displayName: 'Add Image to PDF',
 	description: 'Add image to a PDF document.',
 	audience: 'both',

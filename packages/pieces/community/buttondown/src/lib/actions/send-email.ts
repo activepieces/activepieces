@@ -13,6 +13,7 @@ import {
 export const sendEmail = createAction({
   auth: buttondownAuth,
   name: 'sendEmail',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Send an email to your Buttondown subscribers.',
   audience: 'both',

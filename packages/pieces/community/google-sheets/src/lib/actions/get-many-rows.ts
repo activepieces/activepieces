@@ -5,6 +5,7 @@ import { getManyRowsActionOutputSchema } from '../output-schemas';
 
 export const getManyRowsAction = createAction({
     name: 'get-many-rows',
+    classification: 'SEARCH',
     auth: googleSheetsAuth,
     displayName: 'Get All Rows',
     description: 'Get all the rows from a specific sheet.',

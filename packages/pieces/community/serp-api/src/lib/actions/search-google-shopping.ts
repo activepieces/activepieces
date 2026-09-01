@@ -7,6 +7,7 @@ import { searchGoogleShoppingOutputSchema } from '../output-schemas';
 export const searchGoogleShopping = createAction({
   auth: serpApiAuth,
   name: 'search_google_shopping',
+  classification: 'SEARCH',
   displayName: 'Search Google Shopping',
   description: 'Find products on Google Shopping for a query.',
   audience: 'ai',

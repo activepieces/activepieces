@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const fetchTopStories = createAction({
   name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'SEARCH',
   displayName: 'Fetch Top Stories',
   description: 'Fetch top stories from hackernews',
   audience: 'both',

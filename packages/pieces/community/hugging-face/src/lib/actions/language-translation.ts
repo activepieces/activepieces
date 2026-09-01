@@ -6,6 +6,7 @@ import { huggingFaceAuth } from '../auth';
 export const languageTranslation = createAction({
   audience: 'both',
   name: 'language_translation',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Language Translation',
   description:

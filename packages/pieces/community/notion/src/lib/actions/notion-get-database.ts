@@ -12,6 +12,7 @@ import { notionGetDatabaseActionOutputSchema } from '../output-schemas';
 export const notionGetDatabase = createAction({
   auth: notionAuth,
   name: 'notion_get_database',
+  classification: 'READ',
   displayName: 'Get Database Schema',
   description:
     "Retrieves a Notion database's schema: its property names, field types, and select/status/relation options.",

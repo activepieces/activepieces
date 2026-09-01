@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const saveBlogPostAction = createAction({
   name: 'save_blog_post',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Blog Post',
   description: 'Save blog content to Total CMS',

@@ -20,6 +20,7 @@ import {
 import {
   QueryClient,
   useMutation,
+  usePrefetchQuery,
   useQueries,
   useQuery,
 } from '@tanstack/react-query';
@@ -80,6 +81,9 @@ type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
   isTableQuery?: boolean;
+  skipProjectFilter?: boolean;
+};
+type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
 };
 type UsePiecesSearchProps = {
@@ -182,26 +186,14 @@ export const piecesHooks = {
     skipProjectFilter = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
-    const projectId = skipProjectFilter
-      ? undefined
-      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: [
-        isTableQuery ? 'pieces-table' : 'pieces',
+      ...piecesQueryOptions({
         searchQuery,
         includeHidden,
+        isTableQuery,
         skipProjectFilter,
-        projectId,
-        i18n.language,
-      ],
-      queryFn: () =>
-        piecesApi.list({
-          projectId,
-          searchQuery,
-          includeHidden,
-          locale: i18n.language as LocalesEnum,
-        }),
-      staleTime: searchQuery ? 0 : Infinity,
+        locale: i18n.language as LocalesEnum,
+      }),
       meta: isTableQuery
         ? { showErrorDialog: true, loadSubsetOptions: {} }
         : undefined,
@@ -211,6 +203,19 @@ export const piecesHooks = {
       isLoading: query.isLoading,
       refetch: query.refetch,
     };
+  },
+  usePrefetchPieces: ({
+    skipProjectFilter = false,
+  }: UsePrefetchPiecesProps) => {
+    const { i18n } = useTranslation();
+    usePrefetchQuery(
+      piecesQueryOptions({
+        includeHidden: false,
+        isTableQuery: false,
+        skipProjectFilter,
+        locale: i18n.language as LocalesEnum,
+      }),
+    );
   },
   usePiecesSearch: (
     props: UsePiecesSearchProps,
@@ -593,3 +598,34 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 }
 
 export const pieceCacheUtils = { invalidatePieceCaches };
+
+function piecesQueryOptions({
+  searchQuery,
+  includeHidden,
+  isTableQuery,
+  skipProjectFilter,
+  locale,
+}: {
+  searchQuery?: string;
+  includeHidden: boolean;
+  isTableQuery: boolean;
+  skipProjectFilter: boolean;
+  locale: LocalesEnum;
+}) {
+  const projectId = skipProjectFilter
+    ? undefined
+    : authenticationSession.getProjectId()!;
+  return {
+    queryKey: [
+      isTableQuery ? 'pieces-table' : 'pieces',
+      searchQuery,
+      includeHidden,
+      skipProjectFilter,
+      projectId,
+      locale,
+    ],
+    queryFn: () =>
+      piecesApi.list({ projectId, searchQuery, includeHidden, locale }),
+    staleTime: searchQuery ? 0 : Infinity,
+  };
+}

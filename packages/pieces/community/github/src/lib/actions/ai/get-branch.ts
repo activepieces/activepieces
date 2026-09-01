@@ -8,6 +8,7 @@ import { branchBodyOutputSchema } from '../../output-schemas';
 export const githubGetBranchAction = createAction({
   auth: githubAuth,
   name: 'get_branch',
+  classification: 'READ',
   displayName: 'Get Branch (Agent)',
   description: 'Fetches a single branch including its tip commit.',
   audience: 'ai',

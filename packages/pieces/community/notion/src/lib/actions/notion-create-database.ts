@@ -7,6 +7,7 @@ import { notionCreateDatabaseActionOutputSchema } from '../output-schemas';
 export const notionCreateDatabase = createAction({
   auth: notionAuth,
   name: 'notion_create_database',
+  classification: 'WRITE',
   displayName: 'Create Database',
   description:
     'Creates a new inline Notion database under a parent page, with a title and a property-schema object defining its columns.',

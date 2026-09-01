@@ -11,6 +11,7 @@ import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 export const postInputsAction = createAction({
   auth: clarifaiAuth,
   name: 'post_inputs',
+  classification: 'WRITE',
   description: 'Add inputs to your clarifai app',
   audience: 'both',
   aiMetadata: {

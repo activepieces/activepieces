@@ -7,6 +7,7 @@ import { findUserActionOutputSchema } from '../output-schemas';
 export const githubFindUserAction = createAction({
   auth: githubAuth,
   name: 'find_user',
+  classification: 'READ',
   displayName: 'Find User',
   description: 'Finds a user by their login name.',
   audience: 'both',
