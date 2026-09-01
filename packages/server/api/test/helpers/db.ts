@@ -10,6 +10,10 @@ export const db = {
         return databaseConnection().getRepository(entity).update(id, data)
     },
 
+    delete(entity: string, id: string): Promise<unknown> {
+        return databaseConnection().getRepository(entity).delete(id)
+    },
+
     findOneByOrFail<T>(entity: string, where: Record<string, unknown>): Promise<T> {
         return databaseConnection().getRepository(entity).findOneByOrFail(where) as Promise<T>
     },
