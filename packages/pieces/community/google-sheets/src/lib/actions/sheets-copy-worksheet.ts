@@ -6,6 +6,7 @@ import { sheetsCopyWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsCopyWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_copy_worksheet',
+	classification: 'WRITE',
 	displayName: 'Copy Worksheet',
 	description: 'Create a new worksheet by copying an existing one.',
 	audience: 'ai',

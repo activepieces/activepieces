@@ -67,6 +67,7 @@ const polling: Polling<
 export const readNewRows = createTrigger({
   auth: excelAuth,
   name: 'new_row',
+  classification: 'READ',
   displayName: 'New Row',
   description:
     'Trigger when a new row is added, and it can include existing rows as well.',

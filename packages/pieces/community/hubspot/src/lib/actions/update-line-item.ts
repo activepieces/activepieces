@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -10,14 +10,17 @@ import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateLineItemAction = createAction({
     auth: hubspotAuth,
     name: 'update-line-item',
+    classification: 'WRITE',
     displayName: 'Update Line Item',
     description: 'Updates a line item in Hubspot.',
     audience: 'both',
     aiMetadata: { description: 'Update properties (product, quantity, price, etc.) on an existing HubSpot line item identified by Line Item ID; only supplied fields change. Applying the same values repeatedly is idempotent. Use a find action to obtain the line item ID first.', idempotent: true },
+    outputSchema: crmObjectOutputSchema,
     props: {
         lineItemId: Property.ShortText({
             displayName: 'Line Item ID',
@@ -68,7 +71,7 @@ export const updateLineItemAction = createAction({
             lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const createdLineItem = await client.crm.lineItems.basicApi.update(lineItemId, {
             properties: lineItemProperties,

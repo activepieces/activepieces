@@ -8,6 +8,7 @@ import { chatUpdateOutputSchema } from '../output-schemas';
 export const slackUpdateMessageAiAction = createAction({
   auth: slackAuth,
   name: 'slack_update_message',
+  classification: 'WRITE',
   displayName: 'Update Message',
   description: 'Edit an existing Slack message in place.',
   audience: 'ai',

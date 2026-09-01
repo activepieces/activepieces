@@ -23,6 +23,7 @@ function getResourceType(extension: string, filename: string): 'image' | 'video'
 export const uploadResource = createAction({
   auth: cloudinaryAuth,
   name: 'uploadResource',
+  classification: 'WRITE',
   displayName: 'Upload Resource',
   description: 'Upload a new image, video, or file to Cloudinary.',
   audience: 'both',

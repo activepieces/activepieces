@@ -9,6 +9,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendVideoToCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_video_to_crm_contact',
+  classification: 'WRITE',
   displayName: 'Send a Video to a CRM Contact',
   description: 'Send a video to a WhatsScale CRM contact selected from the dropdown.',
   audience: 'both',

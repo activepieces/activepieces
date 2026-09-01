@@ -13,7 +13,7 @@ export class StepExecutionPath {
         return new StepExecutionPath([])
     }
 
-    toWaitpointKey(stepName: string): string {
+    waitpointKeyFor({ stepName }: { stepName: string }): string {
         return [...this.path.map(([loopName, iteration]) => `${loopName}:${iteration}`), stepName].join('/')
     }
 

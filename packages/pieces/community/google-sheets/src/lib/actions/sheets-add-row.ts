@@ -22,6 +22,7 @@ import { sheetsAddRowActionOutputSchema } from '../output-schemas';
 export const sheetsAddRow = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_add_row',
+	classification: 'WRITE',
 	displayName: 'Add Row',
 	description: 'Append a single new row to the end of a worksheet.',
 	audience: 'ai',

@@ -7,6 +7,7 @@ import { getFoldersOutputSchema } from '../../output-schemas';
 export const clickupGetFolders = createAction({
   auth: clickupAuth,
   name: 'clickup_get_folders',
+  classification: 'SEARCH',
   description: 'List all folders in a ClickUp space',
   audience: 'ai',
   aiMetadata: {

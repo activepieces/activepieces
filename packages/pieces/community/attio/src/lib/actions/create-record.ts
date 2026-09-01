@@ -6,6 +6,7 @@ import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common
 
 export const createRecordAction = createAction({
 	name: 'create_record',
+	classification: 'WRITE',
 	displayName: 'Create Record',
 	description: 'Creates a new record such as peron,company or deal.',
 	audience: 'both',

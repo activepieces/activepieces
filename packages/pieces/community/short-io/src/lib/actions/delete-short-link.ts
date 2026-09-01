@@ -6,6 +6,7 @@ import { shortIoAuth } from '../common/auth';
 export const deleteShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'delete-short-link',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Short Link',
   description: 'Permanently delete a short link by its unique link ID.',
   audience: 'both',

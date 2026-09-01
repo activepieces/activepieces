@@ -1,11 +1,12 @@
 import { staticListsDropdown } from '../common/props';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const hubSpotListsAddContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'add_contact_to_list',
+	classification: 'WRITE',
 	displayName: 'Add contact To List',
 	description: 'Add contact to list',
 	audience: 'both',
@@ -29,7 +30,7 @@ export const hubSpotListsAddContactAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: getHubspotAccessToken(context.auth),
 			},
 		})
 

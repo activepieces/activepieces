@@ -142,14 +142,6 @@ async function assertProjectIsSafeToDelete(projectId: string, callerPlatformId: 
             },
         })
     }
-    if (project.type === ProjectType.PERSONAL) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'Personal projects cannot be deleted',
-            },
-        })
-    }
 }
 
 async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string, log: FastifyBaseLogger): Promise<void> {

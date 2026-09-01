@@ -17,6 +17,7 @@ import { newPostTriggerOutputSchema } from '../output-schemas';
 export const wordpressNewPost = createTrigger({
   auth: wordpressAuth,
   name: 'new_post',
+  classification: 'READ',
   displayName: 'New Post',
   outputSchema: newPostTriggerOutputSchema,
   sampleData: {

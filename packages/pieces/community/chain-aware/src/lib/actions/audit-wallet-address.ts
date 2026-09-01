@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const auditWalletAddress = createAction({
   auth: chainAwareAuth,
   name: 'auditWalletAddress',
+  classification: 'READ',
   displayName: 'Audit Wallet Address',
   description: 'Audit a wallet address for fraud risk',
   audience: 'both',

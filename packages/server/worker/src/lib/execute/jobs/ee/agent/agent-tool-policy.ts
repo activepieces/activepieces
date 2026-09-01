@@ -1,8 +1,28 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
-const AGENT_CONNECTION_TOOLS = ['ap_discover_action_auth', 'ap_revalidate_connection']
+const BUILT_IN_TOOL_PREFIX = 'ap_'
+
+function withValidNames<T extends { toolName: string }>({ tools, reserved = [] }: { tools: T[], reserved?: string[] }): T[] {
+    const taken = new Set<string>(reserved)
+    return tools.map((tool) => {
+        const claimable = toClaimableName(tool.toolName)
+        let name = claimable
+        for (let attempt = 1; taken.has(name); attempt++) {
+            name = toClaimableName(`${claimable}_${attempt}`)
+        }
+        taken.add(name)
+        return name === tool.toolName ? tool : { ...tool, toolName: name }
+    })
+}
+
+function toClaimableName(name: string): string {
+    const valid = mcpToolNameUtils.toValidToolName(name)
+    return valid.startsWith(BUILT_IN_TOOL_PREFIX) || valid === TASK_COMPLETION_TOOL_NAME
+        ? mcpToolNameUtils.createToolName(`tool_${valid}`)
+        : valid
+}
 
 // Listed, never subtracted: a group missing from a branch is unreachable, so a group added
 // elsewhere cannot leak into a surface that should not have it.
@@ -21,6 +41,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
             ...groups.phase,
             ...groups.buildPlan,
             ...groups.email,
+            ...groups.agentSurface,
             ...groups.mcp,
         }
     }
@@ -29,12 +50,18 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
         ...groups.configuredFlow,
         ...groups.knowledgeBase,
     }
-    // Connection discovery is in the list because the connection card renders empty without it.
+    if (source === AgentRunSource.AGENT_BUILDER) {
+        return {
+            ...groups.agentSurface,
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_connection_picker', 'ap_show_connection_required'] }),
+            ...pick({ tools: groups.mcp, names: ['ap_research_pieces', 'ap_list_connections'] }),
+            ...groups.thinking,
+        }
+    }
     if (source === AgentRunSource.AGENT) {
         return {
             ...configured,
-            ...pick({ tools: groups.crossProject, names: AGENT_CONNECTION_TOOLS }),
-            ...groups.display,
+            ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker'] }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,
@@ -48,7 +75,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
     }
 }
 
-export const agentToolPolicy = { selectToolsForSource }
+export const agentToolPolicy = { selectToolsForSource, withValidNames }
 export { UNATTENDED_WEB_TOOLS }
 
 export type AgentToolGroups = {
@@ -60,6 +87,7 @@ export type AgentToolGroups = {
     phase: ToolSet
     buildPlan: ToolSet
     email: ToolSet
+    agentSurface: ToolSet
     mcp: ToolSet
     configuredPiece: ToolSet
     configuredFlow: ToolSet

@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { invoiceListOutputSchema } from '../output-schemas';
 export const stripeListInvoices = createAction({
   name: 'list_invoices',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Invoices (Agent)',
   description: 'List Stripe invoices.',

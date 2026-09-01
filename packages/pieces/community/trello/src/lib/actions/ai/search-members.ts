@@ -13,6 +13,7 @@ import { searchMembersActionOutputSchema } from '../../output-schemas';
 export const searchMembers = createAction({
   auth: trelloAuth,
   name: 'search_members',
+  classification: 'SEARCH',
   displayName: 'Search Members (Agent)',
   description: 'Find Trello members by name or username.',
   audience: 'ai',

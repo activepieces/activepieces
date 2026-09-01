@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { searchEmbeddingsActionOutputSchema } from '../output-schemas';
 
 export const searchEmbeddings = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'search_embeddings',
+  classification: 'READ',
   displayName: 'Search Embeddings',
   description:
     'Matches a query string to a list of document strings for best results.',
@@ -41,6 +43,7 @@ export const searchEmbeddings = createAction({
       required: false,
     }),
   },
+  outputSchema: searchEmbeddingsActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, query, topK } = context.propsValue;

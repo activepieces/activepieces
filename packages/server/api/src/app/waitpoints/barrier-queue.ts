@@ -13,7 +13,7 @@ import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp 
 
 let barrierWorker: Worker<BarrierJobData> | undefined = undefined
 
-const queue = barrierQueueFactory({ createRedisConnection: redisConnections.create })
+const barrierQueueInstance = barrierQueueFactory({ createRedisConnection: redisConnections.create })
 
 export const barrierQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -21,9 +21,9 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
             redisFailedJobRetentionDays: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
             redisFailedJobRetentionMaxCount: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
         }
-        await queue.init(config)
+        await barrierQueueInstance.init(config)
         barrierWorker = new Worker<BarrierJobData>(
-            QueueName.BARRIER_JOBS,
+            QueueName.BARRIER_EVALUATION,
             async (job) => {
                 const jobLogger = createLogger({
                     event: 'barrier.job',
@@ -62,25 +62,25 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
         await barrierWorker.waitUntilReady()
     },
 
-    async addEvaluation(params: BarrierJobData): Promise<void> {
-        await queue.addEvaluation(params)
+    async enqueueEvaluation(params: BarrierJobData): Promise<void> {
+        await barrierQueueInstance.enqueueEvaluation(params)
     },
 
     async addFanOutDispatch(params: BarrierJobData): Promise<void> {
-        await queue.addFanOutDispatch(params)
+        await barrierQueueInstance.addFanOutDispatch(params)
     },
 
-    async clearEvaluationDeduplication(barrierId: string): Promise<void> {
-        await queue.clearEvaluationDeduplication(barrierId)
+    async clearEvaluationDedupKey(barrierId: string): Promise<void> {
+        await barrierQueueInstance.clearEvaluationDedupKey(barrierId)
     },
 
     get(): Queue<BarrierJobData> {
-        return queue.get()
+        return barrierQueueInstance.get()
     },
 
     async close(): Promise<void> {
-        if (queue.isInitialized()) {
-            await queue.get().close()
+        if (barrierQueueInstance.isInitialized()) {
+            await barrierQueueInstance.get().close()
         }
         if (barrierWorker) {
             await barrierWorker.close()
@@ -91,8 +91,8 @@ export const barrierQueue = (log: FastifyBaseLogger) => ({
 async function processBarrierJob({ job, log }: ProcessBarrierJobParams): Promise<void> {
     switch (job.name) {
         case BarrierJobName.EVALUATE:
-            await queue.clearEvaluationDeduplication(job.data.barrierId)
-            await barrierService(log).evaluate({ barrierId: job.data.barrierId, projectId: job.data.projectId })
+            await barrierQueueInstance.clearEvaluationDedupKey(job.data.barrierId)
+            await barrierService(log).releaseIfReady({ barrierId: job.data.barrierId, projectId: job.data.projectId })
             return
         case BarrierJobName.FAN_OUT_DISPATCH:
             await handleFanOutDispatch({ data: job.data, log })

@@ -6,6 +6,7 @@ import { props } from '../../generated/list-transcript/props';
 
 export const listTranscripts = createAction({
   name: 'listTranscripts',
+  classification: 'SEARCH',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'List transcripts',

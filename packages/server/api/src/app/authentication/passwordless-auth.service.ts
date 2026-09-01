@@ -12,9 +12,9 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { authenticationService } from './authentication.service'
-import { disposableEmail } from './lib/disposable-email'
 import { signupNames } from './lib/signup-names'
 import { turnstile } from './lib/turnstile'
+import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 
@@ -23,7 +23,10 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         await turnstile.assertSolved({ token: captchaToken, remoteIp, log })
         const existingIdentity = await userIdentityService(log).getIdentityByEmail(email)
         if (isNil(existingIdentity)) {
-            await disposableEmail.assertMaySignUp({ email, log })
+            const maySignUp = await zerobounce.maySignUp({ email, log })
+            if (!maySignUp) {
+                return
+            }
         }
         if (!isNil(platformId)) {
             await assertPlatformAuthIsOpenTo({ email, platformId, log })
@@ -117,7 +120,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                 projectId: null,
             })
         }
-        return authenticationUtils(log).getOnboardingResponse({ identityId: verifiedIdentity.id })
+        return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
     },
 
     async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
@@ -128,7 +131,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }
         const { response, provisioned } = await platformService(log).createPlatformWithProject({
             identityId,
-            name: signupNames.platformNameFromPerson({ firstName, email: identity.email }),
+            name: signupNames.platformNameFromSignup({ firstName, email: identity.email }),
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,

@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generatePresentations = createAction({
   auth: presentonAuth,
   name: 'generate_presentations',
+  classification: 'WRITE',
   displayName: 'Generate Presentations (async)',
   description:
     'Create an asynchronous presentation generation task at Presenton and return the created task.',

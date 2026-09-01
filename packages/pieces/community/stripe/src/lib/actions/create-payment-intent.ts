@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeCreatePaymentIntent = createAction({
   name: 'create_payment_intent',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Payment (Payment Intent)',
   description: 'Creates a new payment intent to start a payment flow.',

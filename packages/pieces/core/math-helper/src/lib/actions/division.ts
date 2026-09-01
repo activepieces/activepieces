@@ -10,6 +10,7 @@ import { divisionActionOutputSchema } from '../output-schemas';
 export const division = createAction({
   audience: 'both',
   name: 'division_math',
+  classification: 'READ',
   outputSchema: divisionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Division',
