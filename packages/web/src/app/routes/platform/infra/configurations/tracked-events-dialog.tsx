@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ExternalLinkIcon, Info } from 'lucide-react';
+import { ExternalLinkIcon, Info, List } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +28,7 @@ export const TrackedEventsDialog = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button type="button" variant="ghost" size="sm" className="w-fit">
-          {t('See the events we track')} <ExternalLinkIcon className="size-4" />
+          <List className="size-4" /> {t('See the events we track')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
@@ -46,7 +46,7 @@ export const TrackedEventsDialog = () => {
               <Info className="mt-0.5 size-4 shrink-0" />
               <p>
                 {t(
-                  'Each event records that the action happened, plus your account and project ids and which environment you are on. We also count page views. Never flow contents, step data, credentials, or anything from your connections.',
+                  'Each event records that the action happened, the account it came from, and your version and environment. Some also carry the id of the project or flow involved, and the step-picker search carries what you typed. We also count page views. Never flow contents, step data, credentials, or anything from your connections.',
                 )}
               </p>
             </div>
@@ -63,9 +63,10 @@ export const TrackedEventsDialog = () => {
             href={TELEMETRY_DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
             {t('Read the telemetry docs')}
+            <ExternalLinkIcon className="size-3.5" />
           </a>
         </DialogFooter>
       </DialogContent>
