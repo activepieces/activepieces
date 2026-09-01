@@ -32,6 +32,7 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
 };
 
 type AIModelSelectorProps = {
+  hideLabel?: boolean;
   defaultProvider?: AIProviderName;
   defaultModel?: string;
   defaultConfigId?: string;
@@ -53,6 +54,7 @@ const ACTIVEPIECES_PROVIDER_CONFIG = {
 const ALL_PROVIDERS = [...SUPPORTED_AI_PROVIDERS, ACTIVEPIECES_PROVIDER_CONFIG];
 
 export function AIModelSelector({
+  hideLabel,
   defaultProvider,
   defaultModel,
   defaultConfigId,
@@ -182,7 +184,9 @@ export function AIModelSelector({
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      {hideLabel !== true && (
+        <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      )}
 
       <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>

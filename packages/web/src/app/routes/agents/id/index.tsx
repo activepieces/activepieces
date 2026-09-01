@@ -353,7 +353,15 @@ const ConfigureFields = ({
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
-  const toolCount = tools.length - knowledgeCount;
+  const toolCount = unique(
+    tools
+      .filter((tool) => tool.type !== AgentToolType.KNOWLEDGE_BASE)
+      .map((tool) =>
+        tool.type === AgentToolType.PIECE
+          ? tool.pieceMetadata?.pieceName ?? tool.toolName
+          : tool.type,
+      ),
+  ).length;
 
   return (
     <>
@@ -436,6 +444,7 @@ const ConfigureFields = ({
           </p>
         )}
         <AIModelSelector
+          hideLabel
           defaultProvider={form.watch('draft.provider') ?? undefined}
           defaultModel={form.watch('draft.modelName') ?? undefined}
           defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
