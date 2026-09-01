@@ -221,25 +221,18 @@ that method is no longer served where the captcha is not there.
 
 On Cloud the same rule now applies: the routes exist only when both `AP_TURNSTILE_SITE_KEY` and
 `AP_TURNSTILE_SECRET_KEY` are set. Without them the instance starts normally and simply does not offer emailed
-codes.
+codes. Activepieces Cloud has both configured, so nothing changes for it — the code step stays on the sign-in card
+and accounts that use it keep signing in exactly as before.
 
 #### What you need to do
 
 Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
 `/sign-in` and `/switch-platform`.
 
-**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts depend on the code flow.** Two groups do, and
-the second is easy to miss:
-
-- Accounts **created** by the code flow. They hold a random password nobody was ever shown, so taking the flow away
-  removes the only way in.
-- Accounts that signed up **with** a password but had not verified their email before their first code sign-in.
-  Verifying a code marks the identity verified and replaces the stored hash with a random one, so the password its
-  owner chose stopped working at that moment. They will remember setting a password, and it will still be refused.
-
-There is no reliable marker for either group in the database — a verified code deletes its `otp` row — so treat any
-`EMAIL`-provider account that cannot sign in with a password as one of them, whether or not its owner recalls
-setting one.
+**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts were created through the code flow.** Those
+accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
+sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
+`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
 
 On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
 you already have configured.
