@@ -26,7 +26,6 @@ const mcp: ProjectScopedMcpServer = {
     type: McpServerType.PROJECT,
     token: apId(),
     disabledTools: [],
-    flows: [],
 }
 
 describe('MCP activity recording predicate', () => {

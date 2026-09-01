@@ -2,7 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { DefaultProjectRole, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { mcpActivityRetention } from '../../../../src/app/mcp/activity/mcp-activity-retention'
+import { mcpActivityService } from '../../../../src/app/mcp/activity/mcp-activity-service'
 import { db } from '../../../helpers/db'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
@@ -208,7 +208,7 @@ describe('MCP activity', () => {
             const stale = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(45) })
             const fresh = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
-            await mcpActivityRetention(app!.log).deleteStale()
+            await mcpActivityService(app!.log).deleteStale()
 
             const response = await ctx.get('/v1/mcp-activity')
             const ids = response.json().data.map((row: { id: string }) => row.id)
@@ -224,7 +224,7 @@ describe('MCP activity', () => {
                 const stale = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
                 const fresh = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
-                await mcpActivityRetention(app!.log).deleteStale()
+                await mcpActivityService(app!.log).deleteStale()
 
                 const response = await ctx.get('/v1/mcp-activity')
                 const ids = response.json().data.map((row: { id: string }) => row.id)
@@ -247,7 +247,7 @@ describe('MCP activity', () => {
             await db.update('project', ctx.project.id, { executionDataRetentionDays: 3 })
             const insideTheFloor = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
 
-            await mcpActivityRetention(app!.log).deleteStale()
+            await mcpActivityService(app!.log).deleteStale()
 
             const response = await ctx.get('/v1/mcp-activity')
             expect(response.json().data.map((row: { id: string }) => row.id)).toContain(insideTheFloor)

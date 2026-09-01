@@ -1,23 +1,23 @@
+import { SeekPage } from '@activepieces/core-utils'
 import {
     GetMcpActivityPayloadParams,
     ListMcpActivityRequestQuery,
-    ListMcpActivityResponse,
     McpActivityPayload,
+    PopulatedMcpActivity,
     PrincipalType,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { userService } from '../../user/user-service'
+import { mcpListingUtils } from '../mcp-listing-utils'
 import { mcpActivityService } from './mcp-activity-service'
 
 export const mcpActivityController: FastifyPluginAsyncZod = async (app) => {
 
-    app.get('/v1/mcp-activity', ListActivityRequest, async (req): Promise<ListMcpActivityResponse> => {
+    app.get('/v1/mcp-activity', ListActivityRequest, async (req): Promise<SeekPage<PopulatedMcpActivity>> => {
         return mcpActivityService(req.log).list({
             platformId: req.principal.platform.id,
-            userId: await resolveUserIdFilter(req),
+            userId: await mcpListingUtils.resolveUserIdFilter(req),
             projectIds: req.query.projectIds,
             memberIds: req.query.memberIds,
             clientKeys: req.query.clientKeys,
@@ -33,14 +33,9 @@ export const mcpActivityController: FastifyPluginAsyncZod = async (app) => {
         return mcpActivityService(req.log).getPayload({
             id: req.params.id,
             platformId: req.principal.platform.id,
-            userId: await resolveUserIdFilter(req),
+            userId: await mcpListingUtils.resolveUserIdFilter(req),
         })
     })
-}
-
-async function resolveUserIdFilter(req: FastifyRequest): Promise<string | null> {
-    const user = await userService(req.log).getOneOrFail({ id: req.principal.id })
-    return userService(req.log).isUserPrivileged(user) ? null : req.principal.id
 }
 
 const ListActivityRequest = {
@@ -51,7 +46,7 @@ const ListActivityRequest = {
         tags: ['mcp-activity'],
         querystring: ListMcpActivityRequestQuery,
         response: {
-            [StatusCodes.OK]: ListMcpActivityResponse,
+            [StatusCodes.OK]: SeekPage(PopulatedMcpActivity),
         },
     },
 }

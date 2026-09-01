@@ -46,14 +46,6 @@ export const PopulatedMcpActivity = z.object({
 
 export type PopulatedMcpActivity = z.infer<typeof PopulatedMcpActivity>
 
-export const ListMcpActivityResponse = z.object({
-    data: z.array(PopulatedMcpActivity),
-    next: z.string().nullable(),
-    previous: z.string().nullable(),
-})
-
-export type ListMcpActivityResponse = z.infer<typeof ListMcpActivityResponse>
-
 export const ListMcpActivityRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
@@ -82,5 +74,3 @@ export const GetMcpActivityPayloadParams = z.object({
 export type GetMcpActivityPayloadParams = z.infer<typeof GetMcpActivityPayloadParams>
 
 export const MCP_ACTIVITY_PAYLOAD_MAX_BYTES = 128 * 1024
-
-export const PLATFORM_WIDE_PROJECT_FILTER = 'platform-wide'

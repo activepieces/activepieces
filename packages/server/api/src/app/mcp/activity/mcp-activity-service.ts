@@ -1,25 +1,23 @@
-import { ActivepiecesError, ErrorCode, isNil, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, SeekPage, unique } from '@activepieces/core-utils'
 import {
     FileType,
-    ListMcpActivityResponse,
     McpActivity,
     McpActivityPayload,
     McpActivityStatus,
     McpOAuthClientKey,
-    PLATFORM_WIDE_PROJECT_FILTER,
     PopulatedMcpActivity,
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { In } from 'typeorm'
 import { z } from 'zod'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { projectRepo } from '../../project/project-repo'
-import { userRepo } from '../../user/user-service'
+import { executionDataRetention } from '../../helper/retention/execution-data-retention'
+import { mcpListingUtils } from '../mcp-listing-utils'
 import { ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
 
 const repo = repoFactory(McpActivityEntity)
@@ -27,7 +25,7 @@ const repo = repoFactory(McpActivityEntity)
 const DEFAULT_ACTIVITY_PAGE_SIZE = 20
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
-    async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<ListMcpActivityResponse> {
+    async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<SeekPage<PopulatedMcpActivity>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: McpActivityEntity,
@@ -58,13 +56,13 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         if (!isNil(createdBefore)) {
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."created" <= :createdBefore`, { createdBefore })
         }
-        applyProjectFilter({ queryBuilder, projectIds })
+        mcpListingUtils.applyProjectFilter({ queryBuilder, alias: ACTIVITY_ALIAS, projectIds })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
         const [members, projectNames, connectionNames] = await Promise.all([
-            findMembers(data.map((activity) => activity.userId)),
-            findProjectNames(data.map((activity) => activity.projectId)),
+            mcpListingUtils.findMembers({ userIds: data.map((activity) => activity.userId), platformId }),
+            mcpListingUtils.findProjectNames({ projectIds: data.map((activity) => activity.projectId), platformId }),
             findConnectionNames({ platformId, activities: data }),
         ])
 
@@ -91,6 +89,10 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         })
         const { input, output } = StoredPayload.parse(JSON.parse(file.data.toString('utf-8')))
         return { input, output, truncated: activity.payloadTruncated }
+    },
+
+    async deleteStale(): Promise<void> {
+        await executionDataRetention.sweep({ repo, alias: ACTIVITY_ALIAS, logLabel: 'mcpActivityRetention', log })
     },
 })
 
@@ -123,31 +125,6 @@ function connectionKey({ projectId, connectionExternalId }: Pick<McpActivity, 'p
     return `${projectId}:${connectionExternalId}`
 }
 
-function applyProjectFilter<T extends ObjectLiteral>({ queryBuilder, projectIds }: { queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined }): void {
-    if (isNil(projectIds)) {
-        return
-    }
-    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_PROJECT_FILTER)
-    const includesPlatformWide = projectIds.length !== scopedProjectIds.length
-    queryBuilder.andWhere(new Brackets((qb) => {
-        if (scopedProjectIds.length > 0) {
-            qb.orWhere(`${ACTIVITY_ALIAS}."projectId" IN (:...scopedProjectIds)`, { scopedProjectIds })
-        }
-        if (includesPlatformWide) {
-            qb.orWhere(`${ACTIVITY_ALIAS}."projectId" IS NULL`)
-        }
-    }))
-}
-
-async function findProjectNames(projectIds: (string | null)[]): Promise<Map<string, string>> {
-    const distinct = unique(projectIds.filter((projectId): projectId is string => !isNil(projectId)))
-    if (distinct.length === 0) {
-        return new Map()
-    }
-    const projects = await projectRepo().findBy({ id: In(distinct) })
-    return new Map(projects.map((project) => [project.id, project.displayName]))
-}
-
 async function findConnectionNames({ platformId, activities }: { platformId: string, activities: McpActivity[] }): Promise<Map<string, string>> {
     const externalIds = unique(activities
         .filter((activity) => !isNil(activity.projectId))
@@ -163,36 +140,6 @@ async function findConnectionNames({ platformId, activities }: { platformId: str
     return new Map(connections.flatMap((connection) => connection.projectIds.map((projectId) =>
         [connectionKey({ projectId, connectionExternalId: connection.externalId }), connection.displayName] as const,
     )))
-}
-
-async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaInformation>> {
-    const distinct = unique(userIds)
-    if (distinct.length === 0) {
-        return new Map()
-    }
-    // One batched fetch with the identity joined, mapped in memory. userService.getMetaInformation
-    // re-queries per user, so calling it per row would be an N+1 across the page.
-    const users = await userRepo().find({ where: { id: In(distinct) }, relations: { identity: true } })
-    return new Map(users.flatMap((user) => {
-        if (isNil(user.identity)) {
-            return []
-        }
-        const member: UserWithMetaInformation = {
-            id: user.id,
-            email: user.identity.email,
-            firstName: user.identity.firstName,
-            lastName: user.identity.lastName,
-            platformId: user.platformId,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            created: user.created,
-            updated: user.updated,
-            lastActiveDate: user.lastActiveDate,
-            imageUrl: user.identity.imageUrl,
-        }
-        return [[user.id, member] as const]
-    }))
 }
 
 const StoredPayload = z.object({

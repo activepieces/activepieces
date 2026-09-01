@@ -70,7 +70,7 @@ export async function buildMcpServer({ mcp, userId, platformId, clientKey, selec
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        const activityContext = buildProjectActivityContext({ platformId, projectId, userId, clientKey })
+        const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
     }
@@ -165,13 +165,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 return flowPermissionError
             }
 
-            const result = await runFlowAsTool({
-                flowId: flow.id,
-                flowDisplayName: flow.version.displayName,
-                payload: args,
-                returnsResponse,
-                log,
-            })
+            const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: args, returnsResponse, log })
 
             rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.MCP_TOOL_CALLED,
@@ -236,18 +230,6 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
         const recordedExecute = withActivityRecording({ execute, tool, resolveContext: () => Promise.resolve(activityContext), log })
         server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => recordedExecute(args))
     })
-}
-
-function buildProjectActivityContext({ platformId, projectId, userId, clientKey }: {
-    platformId?: string
-    projectId: string
-    userId?: string
-    clientKey: McpOAuthClientKey | null
-}): McpActivityContext | null {
-    if (isNil(platformId) || isNil(userId)) {
-        return null
-    }
-    return { platformId, projectId, userId, clientKey }
 }
 
 function registerPlaceholderTools(server: McpServer): void {
