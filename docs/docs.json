@@ -368,11 +368,11 @@
                       "pages": [
                         "untitled-page-2",
                         "admin-guide/guides/setup-ai-providers",
-                        "untitled-page-3"
+                        "untitled-page-3",
+                        "admin-guide/guides/manage-pieces"
                       ]
                     },
-                    "admin-guide/guides/manage-pieces",
-                     "admin-guide/guides/sso",
+                    "admin-guide/guides/sso",
                     "admin-guide/guides/manage-oauth2",
                     {
                         "group": "Secret Managers",
