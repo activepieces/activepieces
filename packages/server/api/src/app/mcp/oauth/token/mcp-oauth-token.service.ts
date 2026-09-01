@@ -40,6 +40,7 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
             projectId: params.projectId,
             platformId: params.platformId,
             clientId: params.clientId,
+            clientKey: params.clientKey,
             scopes: params.scopes,
             type: 'mcp_oauth',
         },
@@ -58,12 +59,13 @@ export const mcpOAuthTokenService = {
 
         const rawRefreshToken = generateRefreshToken()
         const hashedRefreshToken = hashRefreshToken(rawRefreshToken)
+        const clientKey = mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
 
         const tokenRecord: McpOAuthToken = {
             id: apId(),
             refreshToken: hashedRefreshToken,
             clientId: params.clientId,
-            clientKey: mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }),
+            clientKey,
             userId: params.userId,
             projectId: params.projectId,
             platformId: params.platformId,
@@ -81,6 +83,7 @@ export const mcpOAuthTokenService = {
             projectId: params.projectId,
             platformId: params.platformId,
             clientId: params.clientId,
+            clientKey,
             scopes: params.scopes,
         })
 
@@ -102,9 +105,10 @@ export const mcpOAuthTokenService = {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
 
+        const clientKey = record.clientKey ?? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
         await repo().update({ id: record.id }, {
             lastUsedAt: new Date().toISOString(),
-            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }) : undefined),
+            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? clientKey : undefined),
         })
 
         const accessToken = await issueAccessToken({
@@ -112,6 +116,7 @@ export const mcpOAuthTokenService = {
             projectId: record.projectId,
             platformId: record.platformId,
             clientId: record.clientId,
+            clientKey,
             scopes: record.scopes ?? [],
         })
 
@@ -195,7 +200,7 @@ export const mcpOAuthTokenService = {
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, scopes: ['mcp'] })
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, clientKey: null, scopes: ['mcp'] })
     },
 }
 
@@ -269,6 +274,7 @@ type IssueAccessTokenParams = {
     projectId: string | null
     platformId: string
     clientId: string
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
 }
 
@@ -324,6 +330,7 @@ export type McpOAuthAccessTokenPayload = {
     projectId: string | null
     platformId: string
     clientId: string
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
     type: 'mcp_oauth'
     iat: number
