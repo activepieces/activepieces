@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto'
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ListMcpOAuthGrantsResponse, McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_PROJECT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
+import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_PROJECT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
 import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -145,7 +145,7 @@ export const mcpOAuthTokenService = {
         await repo().update({ refreshToken: hashRefreshToken(refreshToken), clientId }, { revoked: true })
     },
 
-    async listGrants({ platformId, userId, projectIds, memberIds, clientKeys, cursor, limit }: ListGrantsParams): Promise<ListMcpOAuthGrantsResponse> {
+    async listGrants({ platformId, userId, projectIds, memberIds, clientKeys, cursor, limit }: ListGrantsParams): Promise<SeekPage<McpOAuthGrant>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: McpOAuthTokenEntity,
@@ -169,9 +169,9 @@ export const mcpOAuthTokenService = {
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
         const [clientNames, members, projectNames] = await Promise.all([
-            findClientNames(data.filter((token) => isNil(token.clientKey) || token.clientKey === UNKNOWN_CLIENT_KEY).map((token) => token.clientId)),
-            findMembers(data.map((token) => token.userId)),
-            findProjectNames(data.map((token) => token.projectId)),
+            findClientNames({ clientIds: data.filter((token) => isNil(token.clientKey) || token.clientKey === UNKNOWN_CLIENT_KEY).map((token) => token.clientId) }),
+            findMembers({ userIds: data.map((token) => token.userId), platformId }),
+            findProjectNames({ projectIds: data.map((token) => token.projectId), platformId }),
         ])
 
         const rows = data.map((token) => ({
@@ -230,7 +230,7 @@ function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBu
     }))
 }
 
-async function findClientNames(clientIds: string[]): Promise<Map<string, string | null>> {
+async function findClientNames({ clientIds }: FindClientNamesParams): Promise<Map<string, string | null>> {
     const distinct = unique(clientIds)
     if (distinct.length === 0) {
         return new Map()
@@ -239,21 +239,21 @@ async function findClientNames(clientIds: string[]): Promise<Map<string, string 
     return new Map(clients.map((client) => [client.clientId, client.clientName]))
 }
 
-async function findProjectNames(projectIds: (string | null)[]): Promise<Map<string, string>> {
+async function findProjectNames({ projectIds, platformId }: FindProjectNamesParams): Promise<Map<string, string>> {
     const distinct = unique(projectIds.filter((projectId): projectId is string => !isNil(projectId)))
     if (distinct.length === 0) {
         return new Map()
     }
-    const projects = await projectRepo().findBy({ id: In(distinct) })
+    const projects = await projectRepo().findBy({ id: In(distinct), platformId })
     return new Map(projects.map((project) => [project.id, project.displayName]))
 }
 
-async function findMembers(userIds: string[]): Promise<Map<string, UserWithMetaInformation>> {
+async function findMembers({ userIds, platformId }: FindMembersParams): Promise<Map<string, UserWithMetaInformation>> {
     const distinct = unique(userIds)
     if (distinct.length === 0) {
         return new Map()
     }
-    const users = await userRepo().find({ where: { id: In(distinct) }, relations: { identity: true } })
+    const users = await userRepo().find({ where: { id: In(distinct), platformId }, relations: { identity: true } })
     return new Map(users.flatMap((user) => {
         const member = mapToUserWithMetaInformation(user)
         return isNil(member) ? [] : [[user.id, member] as const]
@@ -293,6 +293,20 @@ type ExchangeCodeParams = {
 type RevokeRefreshTokenParams = {
     refreshToken: string
     clientId: string
+}
+
+type FindClientNamesParams = {
+    clientIds: string[]
+}
+
+type FindProjectNamesParams = {
+    projectIds: (string | null)[]
+    platformId: string
+}
+
+type FindMembersParams = {
+    userIds: string[]
+    platformId: string
 }
 
 type GrantScope = {

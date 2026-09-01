@@ -67,14 +67,6 @@ export const McpOAuthGrant = z.object({
 
 export type McpOAuthGrant = z.infer<typeof McpOAuthGrant>
 
-export const ListMcpOAuthGrantsResponse = z.object({
-    data: z.array(McpOAuthGrant),
-    next: z.string().nullable(),
-    previous: z.string().nullable(),
-})
-
-export type ListMcpOAuthGrantsResponse = z.infer<typeof ListMcpOAuthGrantsResponse>
-
 export const ListMcpOAuthGrantsRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
