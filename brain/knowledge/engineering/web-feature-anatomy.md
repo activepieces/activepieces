@@ -25,7 +25,7 @@ Everything crossing the feature boundary goes through `index.ts`. See `features/
 
 API client: `features/tables/api/tables-api.ts`. Hooks: `features/tables/hooks/table-hooks.ts`.
 
-On any query that fetches a page's **primary** data — the table rows, the list, the thing the page exists to show — set `meta: { showErrorToast: true }`. `QueryCache.onError` in `app/query-client.ts` turns that into a red toast, deduped on `query.queryHash` so a retrying query cannot stack. Leave it off for auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details) — those should fail silently.
+On any query that fetches a page's **primary** data — the table rows, the list, the thing the page exists to show — set `meta: { showErrorToast: true }`. `QueryCache.onError` in `app/query-client.ts` turns that into a red toast, but only while the query still has an active observer, and at most once per `query.queryHash` every 30s — a Sonner `id` alone coalesces only a *live* toast, so retries, focus refetches and `refetchInterval` polls would each raise a fresh one after the old expired, on whatever page the user had reached by then. Leave it off for auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details) — those should fail silently.
 
 ## Route
 
