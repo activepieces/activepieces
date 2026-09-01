@@ -21,6 +21,11 @@ export const telegramSendDocumentAction = createAction({
   description: 'Send a generic file (document) to a Telegram chat',
   audience: 'human',
   aiMetadata: { description: 'Uploads and sends a generic file (up to 50 MB) as a document to a Telegram chat, supplied as a file or a previously uploaded Telegram file_id. Use for arbitrary attachments (PDFs, archives, spreadsheets) rather than media shown inline. Not idempotent: each call sends a new document.', idempotent: false },
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
+    { key: 'document', display: 'section', label: 'Document', icon: 'file', props: ['document', 'document_id'] },
+    { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'instructions_format', 'caption'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -36,13 +41,13 @@ export const telegramSendDocumentAction = createAction({
         'Reuse a document previously uploaded to Telegram by passing its file_id. Either provide a document or a document id.',
       required: false,
     }),
+    format: telegramCommons.parseModeProp(),
+    instructions_format: telegramCommons.formatLinkInstructions(),
     caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption to display below the document (0–1024 chars).',
       required: false,
     }),
-    format: telegramCommons.parseModeProp(),
-    instructions_format: telegramCommons.formatLinkInstructions(),
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),

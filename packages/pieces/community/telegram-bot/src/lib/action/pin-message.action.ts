@@ -25,6 +25,7 @@ export const telegramPinMessageAction = createAction({
       description: 'Pass True if it is not necessary to send a notification to all chat members.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: pinMessageActionOutputSchema,

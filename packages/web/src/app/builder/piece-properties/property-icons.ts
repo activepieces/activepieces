@@ -7,6 +7,7 @@ import {
   Hash,
   Inbox,
   LucideIcon,
+  MapPin,
   Paperclip,
   Reply,
   ReplyAll,
@@ -43,6 +44,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   filter: Filter,
   sliders: SlidersHorizontal,
   blank: SquareDashed,
+  location: MapPin,
 };
 
 export const propertyIcons = { get: getPropertyIcon };
