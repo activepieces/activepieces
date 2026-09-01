@@ -146,3 +146,27 @@ describe('showsNoMatchNotice with a project filter', () => {
     ).toBe(true);
   });
 });
+
+describe('showsFirstRun with a project filter', () => {
+  it('does not offer the first-run hero when a project simply has no agents', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('still offers it when nothing is filtered and the platform has none', () => {
+    expect(
+      showsFirstRun({
+        listLoaded: true,
+        hasAnyAgents: false,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(true);
+  });
+});

@@ -130,7 +130,11 @@ const AgentsPageContent = () => {
   const { data: allProjects } = projectCollectionUtils.useAll();
   const agentsAvailable = useAgentsAvailable();
   const isPlatformAdmin = useIsPlatformAdmin();
+  const projectFiltered = viewProjectId !== ALL_PROJECTS;
+  const createInProjectId =
+    pickedProjectId ?? (projectFiltered ? viewProjectId : project.id);
   const { data, isLoading, isSuccess } = agentsQueries.useAgents({
+    ...(projectFiltered ? { projectId: viewProjectId } : {}),
     enabled: agentsAvailable,
   });
 
@@ -138,13 +142,12 @@ const AgentsPageContent = () => {
     const needle = search.trim().toLowerCase();
     const matching = (data?.data ?? []).filter(
       (agent) =>
-        (viewProjectId === ALL_PROJECTS || agent.projectId === viewProjectId) &&
-        (needle.length === 0 ||
-          agent.displayName.toLowerCase().includes(needle) ||
-          (agent.description ?? '').toLowerCase().includes(needle)),
+        needle.length === 0 ||
+        agent.displayName.toLowerCase().includes(needle) ||
+        (agent.description ?? '').toLowerCase().includes(needle),
     );
     return [...matching].sort(SORT_COMPARATORS[sort]);
-  }, [data, search, sort, viewProjectId]);
+  }, [data, search, sort]);
 
   const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
@@ -156,8 +159,9 @@ const AgentsPageContent = () => {
     data: chatProvider,
     isLoading: isLoadingProvider,
     isError: providerLookupFailed,
-  } = aiProviderQueries.useChatProvider();
-  const { data: projectProviders } = aiProviderQueries.useProjectAiProviders();
+  } = aiProviderQueries.useChatProvider(createInProjectId);
+  const { data: projectProviders } =
+    aiProviderQueries.useProjectAiProviders(createInProjectId);
   const needsProvider =
     !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
   const chatIsOffOnEveryProvider =
@@ -165,9 +169,6 @@ const AgentsPageContent = () => {
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
-  const createInProjectId =
-    pickedProjectId ??
-    (viewProjectId === ALL_PROJECTS ? project.id : viewProjectId);
   const projectOptions = useMemo(
     () =>
       (allProjects ?? []).map((entry) => ({
@@ -224,6 +225,7 @@ const AgentsPageContent = () => {
     listLoaded: isSuccess,
     hasAnyAgents: (data?.data.length ?? 0) > 0,
     search,
+    projectFiltered,
   });
 
   return (
@@ -545,7 +547,7 @@ const AgentsPageContent = () => {
             showsNoMatchNotice({
               matchCount: agents.length,
               search,
-              projectFiltered: viewProjectId !== ALL_PROJECTS,
+              projectFiltered,
             }) ? (
               <AgentsEmptyState
                 narrowedByProject={search.trim().length === 0}
