@@ -14,9 +14,6 @@ import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from 
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
 
-// The conversation is stamped with the project the caller was authorised against, or nothing is
-// stamped at all. Following the agent into a project the caller was never checked for would hand a
-// non-member that project's connections through the conversation's own projectId.
 async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityManager }: { agentId: string, authorisedProjectId: string, entityManager: EntityManager }): Promise<string> {
     const locked = await entityManager.getRepository(AgentEntity)
         .createQueryBuilder('agent')

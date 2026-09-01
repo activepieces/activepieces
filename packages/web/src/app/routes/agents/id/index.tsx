@@ -239,8 +239,6 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
         open={moving}
         onOpenChange={setMoving}
         onMoved={(projectId) =>
-          // A full jump on purpose: every project-scoped query in cache — connections, flows,
-          // knowledge — belongs to the project the agent just left.
           projectCollectionUtils.setCurrentProject(
             projectId,
             `/projects/${agent.projectId}/agents/${agent.id}`,

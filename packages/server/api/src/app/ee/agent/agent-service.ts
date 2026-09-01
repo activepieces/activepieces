@@ -119,13 +119,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
         const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
-        // The write is conditioned on the project this request was authorised for. An edit that
-        // overlaps a move would otherwise land by id alone, persisting changes into a project whose
-        // permissions were never checked, and the lock serialises it against the move itself.
         await transaction(async (entityManager) => {
             await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
-            // Only what an edit owns: projectId, ownerId and externalId belong to creation or to a
-            // move, and saving the whole row put a stale project back on the wire.
             await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
         })
         return this.getOneOrThrow({ id, projectId, userId })
@@ -205,8 +200,6 @@ export const agentService = (log: FastifyBaseLogger) => ({
             this.publishedFlowsUsing({ agent, projectId, userId }),
             mayWriteAgentsIn({ projectId: target.id, userId, log }),
         ])
-        // Nothing about the target is reported to someone who could not move the agent there, the
-        // same way flow names stay behind READ_FLOW above.
         if (!mayCreateAgentsThere) {
             return { blockedByPublishedFlows: flowsInUse, mayCreateAgentsThere, toolsThatStopWorking: [], membersLosingAccess: 0 }
         }
@@ -233,11 +226,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         await transaction(async (entityManager) => {
             const repo = entityManager.getRepository(AgentEntity)
             const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
-            // Who keeps access is decided from the locked row, never from the read above: a share
-            // removed while this move was being authorised must not come back with it.
             const sharedWithUserIds = await resolveShare({ visibility: locked.visibility, requested: undefined, stored: locked.sharedWithUserIds, projectId: target.id, log })
-            // Read inside the transaction: the unique index on (projectId, externalId) is the real
-            // guard, and checking outside it turns a losing race into a 500 instead of this sentence.
             const clash = await repo.findOneBy({ projectId: target.id, externalId: agent.externalId })
             if (!isNil(clash)) {
                 throw new ActivepiecesError({
@@ -390,8 +379,6 @@ async function assertMayRemoveFromProject({ agent, projectId, userId, log }: Ass
     }
 }
 
-// One home for "this agent is still the one I was authorised for". Every write that must not land
-// after a move takes it, so the wording and the lock mode cannot drift apart.
 async function lockedAgentInProjectOrThrow({ entityManager, id, projectId }: { entityManager: EntityManager, id: string, projectId: ProjectId }): Promise<Agent> {
     const locked = await entityManager.getRepository(AgentEntity)
         .createQueryBuilder('agent')
@@ -412,8 +399,6 @@ async function mayWriteAgentsIn({ projectId, userId, log }: { projectId: Project
     return isNil(checker.check(Permission.WRITE_AGENT, '__move_agent_into_project'))
 }
 
-// Everything a tool needs lives in one project, so a move can leave a tool with nothing to reach.
-// The checks mirror what the run path resolves, so the warning and the failure agree.
 async function toolsBrokenBy({ agent, targetProjectId, log }: { agent: Agent, targetProjectId: ProjectId, log: FastifyBaseLogger }): Promise<AgentMoveLoss[]> {
     const pinned = agent.draft.tools.flatMap((tool) => {
         if (tool.type !== AgentToolType.PIECE) {
