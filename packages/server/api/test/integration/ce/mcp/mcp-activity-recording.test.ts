@@ -87,7 +87,7 @@ describe('MCP activity recording', () => {
         expect(rows[0].clientKey).toBe('claude-code')
     })
 
-    it('leaves the client null when the token carried none', async () => {
+    it('stores no client when the token carried none', async () => {
         await callRunAction({ connectionExternalId: 'conn-external-1' })
 
         const rows = await findActivityRows()

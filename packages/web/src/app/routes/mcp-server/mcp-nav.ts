@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 function toTab(value: string | undefined): McpTab {
-  return value === 'connections' ? value : 'connect';
+  return value === 'connections' || value === 'activity' ? value : 'connect';
 }
 
 export function useMcpNav(): McpNav {
@@ -21,7 +21,7 @@ export function useMcpNav(): McpNav {
   };
 }
 
-export type McpTab = 'connect' | 'connections';
+export type McpTab = 'connect' | 'connections' | 'activity';
 
 export type McpView = 'landing' | 'browse' | 'client';
 

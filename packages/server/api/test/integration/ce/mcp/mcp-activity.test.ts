@@ -143,7 +143,17 @@ describe('MCP activity', () => {
             const response = await ctx.get('/v1/mcp-activity')
 
             const { data } = response.json()
-            expect(data.find((row: { id: string }) => row.id === beforeTheColumn).clientKey).toBeNull()
+            expect(data.find((row: { id: string }) => row.id === beforeTheColumn).clientKey).toBe('unknown')
+        })
+
+        it('matches a row with no recorded client on the unknown client filter', async () => {
+            const beforeTheColumn = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: null })
+            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'cursor' })
+
+            const response = await ctx.get('/v1/mcp-activity?clientKeys=unknown')
+
+            const { data } = response.json()
+            expect(data.map((row: { id: string }) => row.id)).toEqual([beforeTheColumn])
         })
 
         it('filters by created window', async () => {

@@ -31,7 +31,7 @@ export const PopulatedMcpActivity = z.object({
     created: z.string(),
     status: McpActivityStatus,
     toolName: z.string(),
-    clientKey: McpOAuthClientKey.nullable(),
+    clientKey: McpOAuthClientKey,
     member: UserWithMetaInformation.nullable(),
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),

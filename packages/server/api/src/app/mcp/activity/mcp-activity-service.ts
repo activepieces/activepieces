@@ -25,6 +25,7 @@ import { ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
 const repo = repoFactory(McpActivityEntity)
 
 const DEFAULT_ACTIVITY_PAGE_SIZE = 20
+const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
     async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<ListMcpActivityResponse> {
@@ -47,7 +48,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
         }
         if (!isNil(clientKeys)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."clientKey" IN (:...clientKeys)`, { clientKeys })
+            queryBuilder.andWhere(`COALESCE(${ACTIVITY_ALIAS}."clientKey", :unknownClientKey) IN (:...clientKeys)`, { clientKeys, unknownClientKey: UNKNOWN_CLIENT_KEY })
         }
         if (!isNil(statuses)) {
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."status" IN (:...statuses)`, { statuses })
@@ -105,7 +106,7 @@ function toPopulatedMcpActivity({ activity, members, projectNames, connectionNam
         created: activity.created,
         status: activity.status,
         toolName: activity.toolName,
-        clientKey: activity.clientKey,
+        clientKey: activity.clientKey ?? UNKNOWN_CLIENT_KEY,
         member: members.get(activity.userId) ?? null,
         projectId: activity.projectId,
         projectName: isNil(activity.projectId) ? null : projectNames.get(activity.projectId) ?? null,
