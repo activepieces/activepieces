@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole } from '@activepieces/shared'
+import { DefaultProjectRole, McpOAuthGrant, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { mcpOAuthClientIdentity } from '../../../../src/app/mcp/oauth/client/mcp-oauth-client-identity'
@@ -208,6 +208,42 @@ describe('MCP OAuth connected clients', () => {
 
             expect(data).toHaveLength(1)
             expect(data[0].id).toBe(platformWide)
+        })
+    })
+
+    describe('GET /v1/mcp-oauth/grants pagination', () => {
+        it('walks every grant exactly once across pages', async () => {
+            const seeded = [
+                await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] }),
+                await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] }),
+                await grantAccess({ userId: ctx.user.id, projectId: null, redirectUris: [CODEX_REDIRECT] }),
+            ]
+
+            const firstPage = (await ctx.get('/v1/mcp-oauth/grants', { limit: 2 })).json()
+            expect(firstPage.data).toHaveLength(2)
+            expect(firstPage.next).not.toBeNull()
+
+            const secondPage = (await ctx.get('/v1/mcp-oauth/grants', { limit: 2, cursor: firstPage.next })).json()
+            expect(secondPage.data).toHaveLength(1)
+            expect(secondPage.next).toBeNull()
+
+            const walked = [...firstPage.data, ...secondPage.data].map((grant: McpOAuthGrant) => grant.id)
+            expect(new Set(walked)).toEqual(new Set(seeded))
+        })
+
+        it('carries the filters onto the next page', async () => {
+            await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CURSOR_REDIRECT] })
+            const claude = [
+                await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] }),
+                await grantAccess({ userId: ctx.user.id, projectId: ctx.project.id, redirectUris: [CLAUDE_REDIRECT] }),
+            ]
+
+            const firstPage = (await ctx.get('/v1/mcp-oauth/grants', { limit: 1, clientKeys: ['claude'] })).json()
+            const secondPage = (await ctx.get('/v1/mcp-oauth/grants', { limit: 1, clientKeys: ['claude'], cursor: firstPage.next })).json()
+
+            const walked = [...firstPage.data, ...secondPage.data].map((grant: McpOAuthGrant) => grant.id)
+            expect(new Set(walked)).toEqual(new Set(claude))
+            expect(secondPage.next).toBeNull()
         })
     })
 
