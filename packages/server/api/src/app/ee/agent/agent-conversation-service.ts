@@ -2,14 +2,32 @@ import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql,
 import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
+import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
+
+async function projectHoldingAgent({ agentId, entityManager }: { agentId: string, entityManager: EntityManager }): Promise<string> {
+    const locked = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .setLock('pessimistic_read')
+        .where('agent.id = :agentId', { agentId })
+        .getOne()
+    if (isNil(locked)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'agent', entityId: agentId },
+        })
+    }
+    return locked.projectId
+}
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
@@ -20,17 +38,19 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
-        const conversation = await agentHelpers.conversationRepo().save({
+        const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,
-            projectId: agent?.projectId ?? builderProjectId,
+            projectId: isNil(agent)
+                ? builderProjectId
+                : await projectHoldingAgent({ agentId: agent.id, entityManager }),
             userId,
             agentId: agent?.id ?? null,
             source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
-        })
+        }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
         return conversation
     },

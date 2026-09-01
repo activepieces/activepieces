@@ -2,10 +2,11 @@ import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-u
 import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
+import { agentService } from '../../../../src/app/ee/agent/agent-service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowVersion, createMockProject, createMockProjectRole, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
-import { agentService } from '../../../../src/app/ee/agent/agent-service'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -794,6 +795,26 @@ describe('moving an agent to another project', () => {
         const conversation = await db.findOneByOrFail('agent_conversation', { id: conversationId }) as { projectId: string }
         expect(conversation.projectId).toBe(row.projectId)
         expect([left.id, right.id]).toContain(row.projectId)
+    })
+
+    it('never files a new conversation in the project the agent just left', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const target = await secondProjectOf(ctx)
+
+        const [moved] = await Promise.all([
+            ctx.post(`/v1/agents/${agent.id}/move`, { projectId: target.id }),
+            agentConversationService(app.log).createConversation({
+                platformId: ctx.platform.id,
+                userId: ctx.user.id,
+                request: { agentId: agent.id },
+            }),
+        ])
+
+        expect(moved.statusCode).toBe(StatusCodes.OK)
+        const row = await db.findOneByOrFail('agent', { id: agent.id }) as { projectId: string }
+        const conversation = await db.findOneByOrFail('agent_conversation', { agentId: agent.id }) as { projectId: string }
+        expect(conversation.projectId).toBe(row.projectId)
     })
 
     it('refuses a move once the agent is no longer in the project it was asked from', async () => {
