@@ -22,11 +22,13 @@ time, so no process ever holds the whole file. The transfer is transparent: ther
 extra "chunk" steps in your flow; a streaming action looks and behaves like any other.
 
 <Warning>
-**Requires S3 file storage.** Full streaming only works when file storage is set to S3
-(`AP_FILE_STORAGE_LOCATION=S3`). With the default database (`DB`) storage a stream **can't**
-be written into a column incrementally, so the server buffers the whole file in memory
-before saving it, which defeats the memory savings and means very large files can still
-fail. Self-hosted installs default to `DB`; set S3 to get the benefit. See
+**Reading a *stored* file as a stream requires S3 file storage.** Moving bytes from one
+third-party service to another — the common case — never touches Activepieces storage and
+works on any backend. But when the file being read already lives in Activepieces storage,
+only S3 (`AP_FILE_STORAGE_LOCATION=S3`) serves it incrementally: with the default database
+(`DB`) storage the bytes cannot be read out of a column a chunk at a time, so the server
+loads the whole row into memory before sending it to your action, which defeats the memory
+savings. Self-hosted installs default to `DB`; set S3 to get the benefit. See
 [Set up S3](/install/configure-operate/setup-s3).
 </Warning>
 
@@ -94,9 +96,12 @@ input file as a stream, and write an output file as a stream.
 ### Writing a file as a stream
 
 `ctx.files.write` accepts a `Buffer` **or** a `Readable`. Pass a `Readable`, such as an S3
-object body or a streaming HTTP response, and it streams straight to storage instead of
-being buffered. It returns a file reference string you return from the action, exactly like
-the buffered form (see [Files](./files)).
+object body or a streaming HTTP response, and the engine drains it for you, counting the
+bytes against `AP_MAX_FILE_SIZE_MB` as they arrive. Your action never builds a `Buffer`
+itself, though the write is not streamed end-to-end: that cap sits far below the sandbox's
+memory budget, so the upload declares a real `Content-Length` — which is what makes it
+retryable. It returns a file reference string you return from the action, exactly like the
+buffered form (see [Files](./files)).
 
 ```ts
 async run(context) {
@@ -203,22 +208,22 @@ advertised length. Don't require it: prefer pattern 1 or 2, which never need it.
 
 ## Limits & storage
 
-- **Writing into storage is capped.** A stream passed to `ctx.files.write` is counted against
-  `AP_MAX_FILE_SIZE_MB` (Cloud: 10&nbsp;MB, self-hosted default: 25&nbsp;MB) *while* the bytes
-  flow; exceeding it aborts the transfer and fails the step. See
-  [Limits](/install/reference/limits).
+- **Writing into storage is capped, and buffered by the engine.** A stream passed to
+  `ctx.files.write` is counted against `AP_MAX_FILE_SIZE_MB` (Cloud: 10&nbsp;MB, self-hosted
+  default: 25&nbsp;MB) *while* the bytes flow; crossing it aborts the transfer and fails the
+  step before anything is uploaded. See [Limits](/install/reference/limits).
 - **Reading a streamed input is not capped.** A `streaming: true` file input has no
   `AP_MAX_FILE_SIZE_MB` ceiling; that is deliberate, since the point of the feature is to move
   files larger than the cap out to an external service.
-- **Storage backend.** Streaming end-to-end requires S3 file storage; see the callout at
-  the top of this page.
+- **Storage backend.** Streaming a file *out of* Activepieces storage requires S3; see the
+  callout at the top of this page. Writes are capped and engine-buffered on every backend.
 
 <Warning>
 - **Individual parts retry, the whole transfer doesn't.** A multipart uploader buffers each
   ~5&nbsp;MB part before sending it, so it can replay *that part* on a transient error. But the
-  source `Readable` can be read only once, so there is no retry of the transfer as a whole: a
-  streamed `ctx.files.write` gets no S3-error fallback to database storage, and a step that
-  fails after its stream is drained cannot simply be re-run against the same stream.
+  source `Readable` can be read only once, so there is no retry of the transfer as a whole,
+  and an action that fails after its stream is drained cannot be re-run against the same
+  stream — it has to fetch the source again.
 - **`httpClient` does not retry a stream body at all.** The retry loop in `pieces-common`
   reuses the body it serialized before the first attempt, and a stream is one-shot, so retrying
   would replay a drained stream and send a truncated body. So a request whose body is a

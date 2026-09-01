@@ -2,6 +2,7 @@ import { apId, isNil } from '@activepieces/core-utils'
 import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
@@ -9,7 +10,7 @@ import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/re
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
-import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
+import { Waitpoint, WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -77,6 +78,18 @@ async function receiveSignal({ signalId, status, result }: { signalId: string, s
 
 async function releaseIfReady(barrierId: string) {
     return barrierService(app.log).releaseIfReady({ barrierId, projectId: ctx.project.id })
+}
+
+async function releaseNow(barrier: Waitpoint) {
+    return barrierService(app.log).release({ barrier, timedOut: false, releaseReason: 'predicate' })
+}
+
+async function completeWithoutConsuming(barrierId: string) {
+    await databaseConnection().getRepository('waitpoint').update({ id: barrierId }, {
+        status: WaitpointStatus.COMPLETED,
+        resumePayload: { body: { total: 1 }, headers: {}, queryParams: {} },
+    })
+    await databaseConnection().getRepository('waitpoint_signal').delete({ waitpointId: barrierId })
 }
 
 async function waitFor(condition: () => Promise<boolean>): Promise<void> {
@@ -278,7 +291,74 @@ describe('resume guards', () => {
         await receiveSignal({ signalId: signal.id, status: BarrierSignalStatus.SUCCEEDED })
         await releaseIfReady(barrier.id)
 
-        expect(await db.findOneBy('waitpoint', { id: barrier.id })).toBeNull()
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+        expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('refuses a by-run resume between the barrier closing and the trusted resume consuming it', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await completeWithoutConsuming(barrier.id)
+
+        const { stale } = await resumeService(app.log).legacyResume({
+            flowRunId: flowRun.id,
+            resumePayload: { body: { forged: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(true)
+    })
+
+    it('refuses a by-run resume after the barrier was released while the run is still PAUSED', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+
+        await releaseNow(barrier)
+
+        const run = await db.findOneByOrFail<{ status: FlowRunStatus }>('flow_run', { id: flowRun.id })
+        expect(run.status).toBe(FlowRunStatus.PAUSED)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+
+        const { stale } = await resumeService(app.log).legacyResume({
+            flowRunId: flowRun.id,
+            resumePayload: { body: { forged: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(true)
+    })
+
+    it('refuses a by-run sync resume through both barrier windows', async () => {
+        const { flowRun: closedRun } = await createParentRun()
+        const { barrier: closedBarrier } = await createBarrier({ flowRunId: closedRun.id, signalLabels: ['a@example.com'] })
+        await completeWithoutConsuming(closedBarrier.id)
+
+        const closedResponse = await resumeService(app.log).legacySyncResume({
+            runId: closedRun.id,
+            payload: { body: { forged: true }, headers: {}, queryParams: {} },
+            correlationId: apId(),
+        })
+        expect(closedResponse.status).toBe(StatusCodes.GONE)
+
+        const { flowRun: releasedRun } = await createParentRun()
+        const { barrier: releasedBarrier } = await createBarrier({ flowRunId: releasedRun.id, signalLabels: ['a@example.com'] })
+        await releaseNow(releasedBarrier)
+
+        const releasedResponse = await resumeService(app.log).legacySyncResume({
+            runId: releasedRun.id,
+            payload: { body: { forged: true }, headers: {}, queryParams: {} },
+            correlationId: apId(),
+        })
+        expect(releasedResponse.status).toBe(StatusCodes.GONE)
+    })
+
+    it('still resumes a paused run that never held a waitpoint at all', async () => {
+        const { flowRun } = await createParentRun()
+
+        const { stale } = await resumeService(app.log).legacyResume({
+            flowRunId: flowRun.id,
+            resumePayload: { body: { approved: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(false)
     })
 
     it('leaves a non-barrier waitpoint resumable', async () => {

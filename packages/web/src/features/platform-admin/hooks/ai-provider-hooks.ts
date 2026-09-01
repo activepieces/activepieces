@@ -46,6 +46,12 @@ export const aiProviderQueries = {
 };
 
 export const aiProviderMutations = {
+  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
+      onSuccess,
+    });
+  },
   useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.delete(providerId),

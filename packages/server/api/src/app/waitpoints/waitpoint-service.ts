@@ -1,7 +1,7 @@
 import { apId, isNil } from '@activepieces/core-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Not } from 'typeorm'
+import { EntityManager, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { WaitpointEntity } from './waitpoint-entity'
@@ -108,7 +108,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     return null
                 }
                 await onReady(found)
-                await repo.delete({ id: found.id })
+                await this.consume({ waitpoint: found, entityManager })
                 return found
             })
             if (isNil(waitpoint)) {
@@ -144,19 +144,34 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
     },
 
-    async findCompletedWaitpointIfRunIsIdle({ flowRunId }: FindCompletedWaitpointIfRunIsIdleParams): Promise<Waitpoint | null> {
-        const latest = await waitpointRepo().findOne({
-            where: { flowRunId },
-            order: { created: 'DESC' },
-        })
-        if (isNil(latest) || latest.status !== WaitpointStatus.COMPLETED) {
+    async findUndeliveredCompletedWaitpoint({ flowRunId, projectId }: FindUndeliveredCompletedWaitpointParams): Promise<Waitpoint | null> {
+        const barrierPending = await this.hasPendingBarrier({ flowRunId, projectId })
+        if (barrierPending) {
             return null
         }
-        return latest
+        return waitpointRepo().findOne({
+            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+            order: { created: 'DESC' },
+        })
     },
 
     async hasPendingBarrier({ flowRunId, projectId }: HasPendingBarrierParams): Promise<boolean> {
         return waitpointRepo().existsBy({ flowRunId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+    },
+
+    async hasBarrier({ flowRunId, projectId }: HasBarrierParams): Promise<boolean> {
+        return waitpointRepo().existsBy({ flowRunId, projectId, type: PauseType.BARRIER })
+    },
+
+    async consume({ waitpoint, entityManager }: ConsumeParams): Promise<void> {
+        const repo = waitpointRepo(entityManager)
+        if (waitpoint.type === PauseType.BARRIER) {
+            await repo.save({ ...waitpoint, status: WaitpointStatus.CONSUMED })
+            log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: waitpoint.flowRunId } }, '[waitpointService#consume] Barrier kept as CONSUMED so the run stays barrier-owned until it ends')
+            return
+        }
+        await repo.delete({ id: waitpoint.id })
+        log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: waitpoint.flowRunId } }, '[waitpointService#consume] Waitpoint consumed and deleted')
     },
 
     async findSubflowWaitpoint({ flowRunId, projectId }: FindSubflowWaitpointParams): Promise<Waitpoint | null> {
@@ -197,8 +212,19 @@ type HasPendingBarrierParams = {
     projectId: string
 }
 
-type FindCompletedWaitpointIfRunIsIdleParams = {
+type HasBarrierParams = {
     flowRunId: string
+    projectId: string
+}
+
+type ConsumeParams = {
+    waitpoint: Waitpoint
+    entityManager?: EntityManager
+}
+
+type FindUndeliveredCompletedWaitpointParams = {
+    flowRunId: string
+    projectId: string
 }
 
 type FindSubflowWaitpointParams = {
