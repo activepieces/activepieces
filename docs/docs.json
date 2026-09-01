@@ -374,17 +374,6 @@
                         "untitled-page-5"
                       ]
                     },
-                    {
-                        "group": "Secret Managers",
-                        "icon": "key",
-                        "pages": [
-                           "admin-guide/guides/secret-managers/overview",
-                           "admin-guide/guides/secret-managers/aws",
-                           "admin-guide/guides/secret-managers/hashicorp",
-                           "admin-guide/guides/secret-managers/cyberark-conjur",
-                           "admin-guide/guides/secret-managers/onepassword"
-                        ]
-                     },
                     "admin-guide/guides/project-releases",
                      "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
@@ -394,6 +383,17 @@
                   "group": "Security",
                   "pages": [
                     "admin-guide/guides/sso",
+                    {
+                      "group": "Secret Managers",
+                      "icon": "key",
+                      "pages": [
+                        "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
+                        "admin-guide/guides/secret-managers/hashicorp",
+                        "admin-guide/guides/secret-managers/cyberark-conjur",
+                        "admin-guide/guides/secret-managers/onepassword"
+                      ]
+                    },
                      "admin-guide/security/practices",
                      {
                         "group": "Audit Logs",
