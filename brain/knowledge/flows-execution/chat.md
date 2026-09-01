@@ -61,3 +61,5 @@ Entry point: `agentModule`, the Fastify plugin registered in `packages/server/ap
 - `packages/web/src/features/chat/` — API client, Zustand store, `use-chat.ts`, `chunk-reducer.ts`, streaming and voice hooks
 
 Paths verified 2026-08-19 against main. An earlier version pointed at `ee/chat/chat-model-factory.ts` and `ee/chat/chat-history-hygiene.ts`; both were folded into `packages/server/utils/src/agent-ai-utils.ts`. Every `ee/chat/` path on this page before that date is dead — see the chat-to-agent rename gotcha above.
+
+- **`setConversationId` is a reload, not a setter.** It calls `stopStream()`, resets the interaction stores and refetches history, so handing it the id of a conversation the hook is *already in* destroys the turn in flight. `AIChatBox` seeds it from the `conversationId` prop in an effect, which makes the obvious wiring — feed `onConversationCreated` back into that prop — kill the very turn that created the conversation: the pane goes blank while the reply completes fine on the server. It now early-returns when the id is unchanged, so re-seeding is a no-op, but the shape is worth knowing before adding another caller.

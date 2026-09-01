@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
@@ -41,7 +41,7 @@ export const getLineItemAction = createAction({
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
 		const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const lineItemDetails = await client.crm.lineItems.basicApi.getById(lineItemId, [
 			...defaultLineItemProperties,
