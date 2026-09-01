@@ -210,18 +210,23 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
-            await telemetry(log).identify(identity, user)
-            await telemetry(log).trackProject(projectId, {
-                name: TelemetryEventName.SIGNED_UP,
-                payload: {
-                    userId: user.id,
-                    projectId,
-                    ...pickTelemetryPii({
-                        edition: system.getEdition(),
-                        email: identity.email,
-                        firstName: identity.firstName,
-                        lastName: identity.lastName,
-                    }),
+            if (!isNil(user.platformId)) {
+                await telemetry(log).identify({ identity, platformId: user.platformId, user })
+            }
+            await telemetry(log).trackProject({
+                projectId,
+                event: {
+                    name: TelemetryEventName.SIGNED_UP,
+                    payload: {
+                        userId: user.id,
+                        projectId,
+                        ...pickTelemetryPii({
+                            edition: system.getEdition(),
+                            email: identity.email,
+                            firstName: identity.firstName,
+                            lastName: identity.lastName,
+                        }),
+                    },
                 },
             })
         }

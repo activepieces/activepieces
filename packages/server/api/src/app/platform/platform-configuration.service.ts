@@ -1,4 +1,4 @@
-import { apId, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
+import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
 import { PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
@@ -10,6 +10,7 @@ import { PlatformConfigurationEntity } from './platform-configuration.entity'
 const platformConfigurationRepo = repoFactory(PlatformConfigurationEntity)
 
 const CREATE_LOCK_TIMEOUT_SECONDS = 60
+const CONFIGURATION_FILTER_BATCH_SIZE = 1_000
 
 export const platformConfigurationService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
@@ -29,6 +30,31 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
                 return createInitialConfiguration({ platformId })
             },
         })
+    },
+
+    async isProductTelemetryEnabled({ platformId }: GetOrCreateParams): Promise<boolean> {
+        const configuration = await this.getOrCreateForPlatform({ platformId })
+        return configuration.isProductTelemetryEnabled
+    },
+
+    async filterProjectsWithProductTelemetryEnabled({ projectIds }: FilterProjectsParams): Promise<string[]> {
+        if (projectIds.length === 0) {
+            return []
+        }
+        const fallback = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true
+        const enabled: string[] = []
+        for (const batch of chunk(projectIds, CONFIGURATION_FILTER_BATCH_SIZE)) {
+            const rows: { id: string }[] = await platformConfigurationRepo().manager
+                .createQueryBuilder()
+                .select('project.id', 'id')
+                .from('project', 'project')
+                .leftJoin('platform_configuration', 'configuration', 'configuration."platformId" = project."platformId"')
+                .where('project.id IN (:...projectIds)', { projectIds: batch })
+                .andWhere('COALESCE(configuration."isProductTelemetryEnabled", :fallback) = true', { fallback })
+                .getRawMany()
+            enabled.push(...rows.map((row) => row.id))
+        }
+        return enabled
     },
 
     async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled }: UpdateParams): Promise<PlatformConfiguration> {
@@ -58,3 +84,7 @@ type GetOrCreateParams = {
 }
 
 type UpdateParams = GetOrCreateParams & UpdatePlatformConfigurationRequestBody
+
+type FilterProjectsParams = {
+    projectIds: string[]
+}

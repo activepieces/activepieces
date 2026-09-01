@@ -153,9 +153,9 @@ describe('First platform provisioning', () => {
 
         const response = await createFirstPlatform(identityId)
 
-        const signedUp = trackProject.mock.calls.filter(([, event]) => event.name === TelemetryEventName.SIGNED_UP)
+        const signedUp = trackProject.mock.calls.filter(([{ event }]) => event.name === TelemetryEventName.SIGNED_UP)
         expect(signedUp).toHaveLength(1)
-        expect(signedUp[0][0]).toBe(response.projectId)
+        expect(signedUp[0][0].projectId).toBe(response.projectId)
     })
 
     it('repairs a platform left without a project instead of wedging the identity', async () => {
