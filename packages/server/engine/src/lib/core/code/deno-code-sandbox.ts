@@ -39,7 +39,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
             return deno.run({
                 body: `
     Object.assign(globalThis, ${JSON.stringify(scriptContext)});
-    const result = await (0, eval)(${JSON.stringify(`${serializedFunctions}\n${script}`)});
+    const result = await (0, eval)(${JSON.stringify(`${serializedFunctions}\n(${script})`)});
 `,
                 permissions: [],
                 cwd: tmpdir(),

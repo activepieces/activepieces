@@ -53,8 +53,9 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             // code-cache sink guard already block this upstream; this is the runtime backstop.
             throw new ExecutionError('InvalidStepName', `Invalid code step name: "${action.name}"`, ExecutionErrorType.USER)
         }
-        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/index.ts`)
-        const codeSandbox = await initCodeSandbox()
+        const useDeno = action.settings.useDeno === true
+        const artifactPath = path.resolve(`${constants.baseCodeDirectory}/${constants.flowVersionId}/${action.name}/${useDeno ? 'index.ts' : 'index.js'}`)
+        const codeSandbox = await initCodeSandbox({ useDeno })
 
         const output = await codeSandbox.runCodeModule({
             codeFilePath: artifactPath,
