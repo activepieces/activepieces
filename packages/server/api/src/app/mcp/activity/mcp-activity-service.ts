@@ -18,11 +18,11 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { executionDataRetention } from '../../helper/retention/execution-data-retention'
 import { mcpListingUtils } from '../mcp-listing-utils'
-import { ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
+import { MCP_ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
 
 const repo = repoFactory(McpActivityEntity)
 
-const DEFAULT_ACTIVITY_PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 20
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
     async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<SeekPage<PopulatedMcpActivity>> {
@@ -30,33 +30,33 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         const paginator = buildPaginator({
             entity: McpActivityEntity,
             query: {
-                limit: limit ?? DEFAULT_ACTIVITY_PAGE_SIZE,
+                limit: limit ?? DEFAULT_PAGE_SIZE,
                 order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo().createQueryBuilder(ACTIVITY_ALIAS)
-            .where(`${ACTIVITY_ALIAS}."platformId" = :platformId`, { platformId })
+        const queryBuilder = repo().createQueryBuilder(MCP_ACTIVITY_ALIAS)
+            .where(`${MCP_ACTIVITY_ALIAS}."platformId" = :platformId`, { platformId })
         if (!isNil(userId)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."userId" = :userId`, { userId })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."userId" = :userId`, { userId })
         }
         if (!isNil(memberIds)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
         }
         if (!isNil(clientKeys)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."clientKey" IN (:...clientKeys)`, { clientKeys })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."clientKey" IN (:...clientKeys)`, { clientKeys })
         }
         if (!isNil(statuses)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."status" IN (:...statuses)`, { statuses })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."status" IN (:...statuses)`, { statuses })
         }
         if (!isNil(createdAfter)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."created" >= :createdAfter`, { createdAfter })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."created" >= :createdAfter`, { createdAfter })
         }
         if (!isNil(createdBefore)) {
-            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."created" <= :createdBefore`, { createdBefore })
+            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."created" <= :createdBefore`, { createdBefore })
         }
-        mcpListingUtils.applyProjectFilter({ queryBuilder, alias: ACTIVITY_ALIAS, projectIds })
+        mcpListingUtils.applyProjectFilter({ queryBuilder, alias: MCP_ACTIVITY_ALIAS, projectIds })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
@@ -92,7 +92,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
     },
 
     async deleteStale(): Promise<void> {
-        await executionDataRetention.sweep({ repo, alias: ACTIVITY_ALIAS, logLabel: 'mcpActivityRetention', log })
+        await executionDataRetention.sweep({ repo, alias: MCP_ACTIVITY_ALIAS, logLabel: 'mcpActivityRetention', log })
     },
 })
 

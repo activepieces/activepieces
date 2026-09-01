@@ -20,7 +20,7 @@ const repo = repoFactory(McpActivityEntity)
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action'
 const ERROR_MESSAGE_MAX_LENGTH = 2000
-const NAME_MAX_LENGTH = 256
+const RUN_ACTION_FIELD_MAX_LENGTH = 256
 
 export function shouldRecord(tool: Pick<McpToolDefinition, 'title'>): boolean {
     return tool.title === RUN_ACTION_TOOL_NAME
@@ -71,9 +71,9 @@ export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?
         : (typeof inlineAuth === 'string' ? inlineAuth : undefined)
     const pieceName = typeof args.pieceName === 'string' ? mcpUtils.normalizePieceName(args.pieceName) : undefined
     return {
-        ...(isNil(pieceName) ? {} : { pieceName: pieceName.slice(0, NAME_MAX_LENGTH) }),
-        ...(typeof args.actionName === 'string' ? { actionName: args.actionName.slice(0, NAME_MAX_LENGTH) } : {}),
-        ...(isNil(connectionExternalId) ? {} : { connectionExternalId: connectionExternalId.slice(0, NAME_MAX_LENGTH) }),
+        ...(isNil(pieceName) ? {} : { pieceName: pieceName.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) }),
+        ...(typeof args.actionName === 'string' ? { actionName: args.actionName.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) } : {}),
+        ...(isNil(connectionExternalId) ? {} : { connectionExternalId: connectionExternalId.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) }),
     }
 }
 

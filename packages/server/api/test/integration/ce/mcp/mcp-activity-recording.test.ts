@@ -215,10 +215,10 @@ describe('MCP activity recording', () => {
         const indexes = await databaseConnection().query(
             'SELECT indexname FROM pg_indexes WHERE tablename = \'mcp_activity\'',
         )
-        const names = indexes.map((index: { indexname: string }) => index.indexname)
+        const indexNames = indexes.map((index: { indexname: string }) => index.indexname)
 
-        expect(names).toContain('idx_mcp_activity_created_id')
-        expect(names).toContain('idx_mcp_activity_platform_id_user_id_created_id')
+        expect(indexNames).toContain('idx_mcp_activity_created_id')
+        expect(indexNames).toContain('idx_mcp_activity_platform_id_user_id_created_id')
     })
 
     // Postgres runs the ON DELETE SET NULL action per deleted file row, so without

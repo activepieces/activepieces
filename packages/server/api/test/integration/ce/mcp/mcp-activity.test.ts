@@ -12,7 +12,7 @@ let ctx: TestContext
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-async function recordActivity({ userId, projectId, platformId, status = 'SUCCEEDED', clientKey = null, created = new Date().toISOString() }: {
+async function insertActivityRow({ userId, projectId, platformId, status = 'SUCCEEDED', clientKey = null, created = new Date().toISOString() }: {
     userId: string
     projectId: string | null
     platformId?: string
@@ -58,8 +58,8 @@ describe('MCP activity', () => {
     describe('GET /v1/mcp-activity scope', () => {
         it('lists every members activity on the platform for a platform admin', async () => {
             const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            const mine = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
-            const theirs = await recordActivity({ userId: other.user.id, projectId: ctx.project.id })
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const theirs = await insertActivityRow({ userId: other.user.id, projectId: ctx.project.id })
 
             const response = await ctx.get('/v1/mcp-activity')
 
@@ -71,8 +71,8 @@ describe('MCP activity', () => {
         it('lists every members activity for a platform operator', async () => {
             const operator = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.VIEWER })
             await promoteToOperator(operator)
-            const mine = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
-            const theirs = await recordActivity({ userId: operator.user.id, projectId: ctx.project.id })
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const theirs = await insertActivityRow({ userId: operator.user.id, projectId: ctx.project.id })
 
             const response = await operator.get('/v1/mcp-activity')
 
@@ -83,8 +83,8 @@ describe('MCP activity', () => {
 
         it('narrows an unprivileged member to their own activity', async () => {
             const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
-            const theirs = await recordActivity({ userId: member.user.id, projectId: ctx.project.id })
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const theirs = await insertActivityRow({ userId: member.user.id, projectId: ctx.project.id })
 
             const response = await member.get('/v1/mcp-activity')
 
@@ -95,8 +95,8 @@ describe('MCP activity', () => {
 
         it('never leaks activity from another platform', async () => {
             const otherPlatform = await createTestContext(app!)
-            await recordActivity({ userId: otherPlatform.user.id, projectId: otherPlatform.project.id, platformId: otherPlatform.platform.id })
-            const mine = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
+            await insertActivityRow({ userId: otherPlatform.user.id, projectId: otherPlatform.project.id, platformId: otherPlatform.platform.id })
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
 
             const response = await ctx.get('/v1/mcp-activity')
 
@@ -107,8 +107,8 @@ describe('MCP activity', () => {
 
     describe('GET /v1/mcp-activity filters', () => {
         it('filters by status', async () => {
-            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, status: 'SUCCEEDED' })
-            const failed = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, status: 'FAILED' })
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, status: 'SUCCEEDED' })
+            const failed = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, status: 'FAILED' })
 
             const response = await ctx.get('/v1/mcp-activity?statuses=FAILED')
 
@@ -118,8 +118,8 @@ describe('MCP activity', () => {
 
         it('filters by member', async () => {
             const other = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
-            const theirs = await recordActivity({ userId: other.user.id, projectId: ctx.project.id })
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const theirs = await insertActivityRow({ userId: other.user.id, projectId: ctx.project.id })
 
             const response = await ctx.get(`/v1/mcp-activity?memberIds=${other.user.id}`)
 
@@ -128,8 +128,8 @@ describe('MCP activity', () => {
         })
 
         it('filters by client', async () => {
-            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'cursor' })
-            const fromClaudeCode = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'claude-code' })
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'cursor' })
+            const fromClaudeCode = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'claude-code' })
 
             const response = await ctx.get('/v1/mcp-activity?clientKeys=claude-code')
 
@@ -138,7 +138,7 @@ describe('MCP activity', () => {
         })
 
         it('reads a row written before the client was known as an unknown client', async () => {
-            const beforeTheColumn = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: null })
+            const beforeTheColumn = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: null })
 
             const response = await ctx.get('/v1/mcp-activity')
 
@@ -147,8 +147,8 @@ describe('MCP activity', () => {
         })
 
         it('filters by created window', async () => {
-            const old = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(10) })
-            const recent = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
+            const old = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(10) })
+            const recent = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
             const response = await ctx.get(`/v1/mcp-activity?createdAfter=${encodeURIComponent(daysAgo(7))}`)
 
@@ -158,8 +158,8 @@ describe('MCP activity', () => {
         })
 
         it('matches platform-server activity on the platform-wide project filter', async () => {
-            const scoped = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
-            const platformWide = await recordActivity({ userId: ctx.user.id, projectId: null })
+            const scoped = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const platformWide = await insertActivityRow({ userId: ctx.user.id, projectId: null })
 
             const platformWideOnly = await ctx.get('/v1/mcp-activity?projectIds=platform-wide')
             expect(platformWideOnly.json().data.map((row: { id: string }) => row.id)).toEqual([platformWide])
@@ -171,9 +171,9 @@ describe('MCP activity', () => {
 
     describe('GET /v1/mcp-activity pagination', () => {
         it('pages newest first and follows the cursor', async () => {
-            const oldest = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(3) })
-            const middle = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(2) })
-            const newest = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
+            const oldest = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(3) })
+            const middle = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(2) })
+            const newest = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
             const first = await ctx.get('/v1/mcp-activity?limit=2')
             const firstPage = first.json()
@@ -186,7 +186,7 @@ describe('MCP activity', () => {
 
     describe('GET /v1/mcp-activity/:id/payload', () => {
         it('404s when the activity stored no payload', async () => {
-            const id = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
+            const id = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
 
             const response = await ctx.get(`/v1/mcp-activity/${id}/payload`)
 
@@ -195,7 +195,7 @@ describe('MCP activity', () => {
 
         it('404s on another members activity for an unprivileged member', async () => {
             const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            const mine = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id })
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
 
             const response = await member.get(`/v1/mcp-activity/${mine}/payload`)
 
@@ -205,8 +205,8 @@ describe('MCP activity', () => {
 
     describe('retention', () => {
         it('deletes activity past the retention boundary and spares what is inside it', async () => {
-            const stale = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(45) })
-            const fresh = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
+            const stale = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(45) })
+            const fresh = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
             await mcpActivityService(app!.log).deleteStale()
 
@@ -221,8 +221,8 @@ describe('MCP activity', () => {
             process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS = '2'
             try {
                 await db.update('project', ctx.project.id, { executionDataRetentionDays: 3 })
-                const stale = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
-                const fresh = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
+                const stale = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
+                const fresh = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
 
                 await mcpActivityService(app!.log).deleteStale()
 
@@ -245,7 +245,7 @@ describe('MCP activity', () => {
         // so with both defaults at 30 a shorter per-project setting deletes nothing earlier.
         it('floors a projects window at the paused-flow timeout', async () => {
             await db.update('project', ctx.project.id, { executionDataRetentionDays: 3 })
-            const insideTheFloor = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
+            const insideTheFloor = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(5) })
 
             await mcpActivityService(app!.log).deleteStale()
 

@@ -114,7 +114,7 @@ describe('MCP activity run-action fields', () => {
             .toEqual({ pieceName: '@activepieces/piece-slack', connectionExternalId: 'conn-legacy' })
     })
 
-    it('prefers connectionExternalId over input.auth', () => {
+    it('prefers connectionExternalId oversizedPayload input.auth', () => {
         expect(runActionFieldsFrom({ connectionExternalId: 'conn-1', input: { auth: 'conn-legacy' } }))
             .toEqual({ connectionExternalId: 'conn-1' })
     })
@@ -152,31 +152,31 @@ describe('MCP activity run-action fields', () => {
 })
 
 describe('MCP activity payload cap', () => {
-    const under = { note: 'small' }
-    const over = { note: 'x'.repeat(200 * 1024) }
+    const smallPayload = { note: 'small' }
+    const oversizedPayload = { note: 'x'.repeat(200 * 1024) }
 
     it('keeps a small call whole', () => {
-        const { truncated, payloadBytes } = capPayload({ input: under, output: under })
+        const { truncated, payloadBytes } = capPayload({ input: smallPayload, output: smallPayload })
         expect(truncated).toBe(false)
-        expect(JSON.parse(payloadBytes.toString('utf-8')).output).toEqual(under)
+        expect(JSON.parse(payloadBytes.toString('utf-8')).output).toEqual(smallPayload)
     })
 
     it('drops the output when the pair is too big but the input fits', () => {
-        const { truncated, payloadBytes } = capPayload({ input: under, output: over })
+        const { truncated, payloadBytes } = capPayload({ input: smallPayload, output: oversizedPayload })
         expect(truncated).toBe(true)
         const parsed = JSON.parse(payloadBytes.toString('utf-8'))
-        expect(parsed.input).toEqual(under)
+        expect(parsed.input).toEqual(smallPayload)
         expect(parsed.output).toBeNull()
     })
 
     it('drops both when the input alone blows the cap', () => {
-        const { truncated, payloadBytes } = capPayload({ input: over, output: over })
+        const { truncated, payloadBytes } = capPayload({ input: oversizedPayload, output: oversizedPayload })
         expect(truncated).toBe(true)
         expect(JSON.parse(payloadBytes.toString('utf-8'))).toEqual({ input: null, output: null })
     })
 
     it('never writes more than the cap', () => {
-        const cases = [{ input: under, output: under }, { input: under, output: over }, { input: over, output: over }]
+        const cases = [{ input: smallPayload, output: smallPayload }, { input: smallPayload, output: oversizedPayload }, { input: oversizedPayload, output: oversizedPayload }]
         cases.forEach((payload) => expect(capPayload(payload).payloadBytes.length).toBeLessThanOrEqual(MCP_ACTIVITY_PAYLOAD_MAX_BYTES))
     })
 })

@@ -150,7 +150,7 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterFlowToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -293,7 +293,7 @@ const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, ope
 const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
 const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
-type RegisterFlowToolsParams = {
+type RegisterToolsParams = {
     server: McpServer
     mcp: PopulatedMcpServer
     projectId: string
@@ -301,7 +301,7 @@ type RegisterFlowToolsParams = {
     log: FastifyBaseLogger
 }
 
-type RegisterStaticToolsParams = RegisterFlowToolsParams & {
+type RegisterStaticToolsParams = RegisterToolsParams & {
     userId?: string
     activityContext: McpActivityContext | null
 }

@@ -8,10 +8,10 @@ type McpActivityWithSchema = McpActivity & {
     file: File
 }
 
-export const ACTIVITY_ALIAS = 'mcp_activity'
+export const MCP_ACTIVITY_ALIAS = 'mcp_activity'
 
 export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
-    name: ACTIVITY_ALIAS,
+    name: MCP_ACTIVITY_ALIAS,
     columns: {
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
