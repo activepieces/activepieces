@@ -236,10 +236,6 @@
                         ]
                      }
                   ]
-              },
-              {
-                "group": "Observability",
-                "pages": []
               }
             ]
          },
@@ -390,12 +386,17 @@
                            "admin-guide/guides/secret-managers/onepassword"
                         ]
                      },
-                    "admin-guide/guides/event-streaming",
-                     "admin-guide/guides/project-releases",
+                    "admin-guide/guides/project-releases",
                      "admin-guide/guides/project-replace-cli",
                     "admin-guide/guides/manage-concurrency"
                   ]
-               },
+              },
+              {
+                "group": "Observability",
+                "pages": [
+                  "admin-guide/guides/event-streaming"
+                ]
+              },
                {
                   "group": "Security",
                   "pages": [
