@@ -12,6 +12,7 @@ import {
 } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
+import { newApiEventTriggerOutputSchema } from '../output-schemas';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 interface WebAPILog {
@@ -126,6 +127,7 @@ export const newApiEvent = createTrigger({
   aiMetadata: {
     description: 'Fires when a new Web API event is logged in Cryptolens, such as a license activation, deactivation, validation, or key creation. Polls the audit log on an interval and can optionally be scoped to a specific product, a specific key, or particular event-state codes.',
   },
+  outputSchema: newApiEventTriggerOutputSchema,
   props,
   sampleData: {
     id: 2280434406,
