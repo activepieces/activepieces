@@ -31,8 +31,9 @@ export const updateMessage = createAction({
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The updated text of your message',
-      required: true,
+      description:
+        'The updated text of the message. When Block Kit blocks are provided, this is used only as the notification fallback and is NOT rendered as a section (so it never duplicates your blocks).',
+      required: false,
     }),
     mentionOriginFlow,
     blocks,
@@ -45,7 +46,15 @@ export const updateMessage = createAction({
     }
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
+    const blockList: (KnownBlock | Block)[] = [];
+
+    // Only render `text` as a section when it's actually provided. When the caller
+    // supplies `blocks`, `text` is used solely as the notification fallback (standard
+    // Slack semantics) instead of being duplicated as a section on top of the blocks —
+    // matching the Send/Post Message action.
+    if (propsValue.text) {
+      blockList.push(...textToSectionBlocks(propsValue.text));
+    }
 
     if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
@@ -55,10 +64,14 @@ export const updateMessage = createAction({
       blockList.push(buildFlowOriginContextBlock(context));
     }
 
+    if (blockList.length === 0) {
+      throw new Error('Provide a Message and/or Block Kit blocks to update.');
+    }
+
     return await client.chat.update({
       channel: propsValue.channel,
       ts: messageTimestamp,
-      text: propsValue.text,
+      text: propsValue.text || undefined,
       blocks: blockList,
     });
   },
