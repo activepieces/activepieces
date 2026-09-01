@@ -409,7 +409,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
@@ -418,7 +418,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
         const available = Object.keys(componentMap)
         const suggestion = available.find((name) => name.includes(componentName))
         const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
     }
     return { piece, component, pieceName: normalized }
 }
@@ -561,7 +561,7 @@ async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
 }
