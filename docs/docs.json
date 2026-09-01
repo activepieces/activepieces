@@ -358,7 +358,8 @@
                       "group": "Setup",
                       "pages": [
                         "untitled-page-2",
-                        "admin-guide/guides/setup-ai-providers"
+                        "admin-guide/guides/setup-ai-providers",
+                        "untitled-page-3"
                       ]
                     },
                     "admin-guide/guides/manage-pieces",
