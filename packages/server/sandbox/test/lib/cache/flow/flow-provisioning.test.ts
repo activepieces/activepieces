@@ -61,8 +61,15 @@ afterEach(async () => {
 })
 
 describe('flowProvisioning.resolve', () => {
-    it('bundle hit → ready with no codeSteps and no publish (zero flow/piece resolution)', async () => {
-        const manifest = { flowVersion: flowWithPiece(), pieces: [httpPiece], codes: [] }
+    it('bundle hit → ready with codeSteps extracted from the bundled flowVersion and no publish (zero flow/piece resolution)', async () => {
+        const bundledFlowVersion = flowWithPiece()
+        const codeStep = {
+            name: 'code_1', type: FlowActionType.CODE, displayName: 'Code', valid: true,
+            settings: { sourceCode: { code: 'export const code = async () => 1', packageJson: '{}' }, input: {}, inputUiInfo: {} },
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(bundledFlowVersion.trigger.nextAction as any).nextAction = codeStep
+        const manifest = { formatVersion: 2, flowVersion: bundledFlowVersion, pieces: [httpPiece] }
         const getFlowVersion = vi.fn()
         const getPiece = vi.fn()
         const apiClient = {
@@ -74,7 +81,12 @@ describe('flowProvisioning.resolve', () => {
 
         expect(resolved.kind).toBe('ready')
         if (resolved.kind === 'ready') {
-            expect(resolved.code).toEqual({ kind: 'materialized' })
+            expect(resolved.codeSteps).toEqual([{
+                name: 'code_1',
+                sourceCode: { code: 'export const code = async () => 1', packageJson: '{}' },
+                flowVersionId: 'fv1',
+                flowVersionState: FlowVersionState.LOCKED,
+            }])
             expect(resolved.publishBundle).toBeNull()
             expect(resolved.pieces).toEqual([httpPiece])
         }
@@ -118,7 +130,7 @@ describe('flowProvisioning.resolve', () => {
         expect(resolved.kind).toBe('ready')
         if (resolved.kind === 'ready') {
             expect(resolved.publishBundle).not.toBeNull()
-            expect(resolved.code.kind).toBe('source')
+            expect(resolved.codeSteps).toEqual([])
             expect(resolved.pieces).toHaveLength(1)
             expect(resolved.pieces[0].pieceVersion).toBe('1.0.5')
         }

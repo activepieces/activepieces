@@ -619,7 +619,11 @@ async function sweepActionRunCache(): Promise<void> {
     }
     // Reclaims the directories left by earlier LATEST_CACHE_VERSION values. It rides the periodic
     // sweep rather than startup because it can only run once the rollout grace period has passed,
-    // which is long after a worker boots.
+    // which is long after a worker boots. Canary workers never reclaim: they run ahead of prod for
+    // days, and deleting the previous version's cache there would make a rollback start cold.
+    if (system.getBoolean(WorkerSystemProp.IS_CANARY_WORKER) ?? false) {
+        return
+    }
     await cacheUtils(sandboxConfig.getCacheBasePath()).deleteStaleCache(logger)
 }
 

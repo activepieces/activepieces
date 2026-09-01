@@ -62,8 +62,7 @@ ENV AP_DENO_PATH=/usr/local/bin/deno
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
     node-gyp \
-    npm@11.11.0 \
-    esbuild@0.25.0
+    npm@11.11.0
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \

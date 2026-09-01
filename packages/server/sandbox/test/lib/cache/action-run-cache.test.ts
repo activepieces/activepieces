@@ -62,7 +62,7 @@ async function seedStepDir({ basePath, namespace, ageMs = 0, extraFiles = 0 }: S
     const dirPath = join(cacheUtils(basePath).getGlobalCodeCachePath(), namespace)
     const stepPath = join(dirPath, 'step_1')
     await mkdir(stepPath, { recursive: true })
-    await writeFile(join(stepPath, 'index.js'), 'exports.code = async () => 42', 'utf8')
+    await writeFile(join(stepPath, 'index.ts'), 'export const code = async () => 42', 'utf8')
     await Promise.all(Array.from({ length: extraFiles }, (_, index) =>
         writeFile(join(stepPath, `dep_${index}.js`), 'module.exports = {}', 'utf8'),
     ))

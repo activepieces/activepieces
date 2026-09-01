@@ -1,4 +1,4 @@
-import { readFile, realpath } from 'node:fs/promises'
+import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -12,19 +12,24 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
         async runCodeModule({ codeFilePath, inputs }) {
             // Deno compares permission paths after resolving symlinks (e.g. macOS
             // /var -> /private/var), so the grant must be on the real path.
-            const stepDir = await realpath(dirname(codeFilePath))
-            const source = await readFile(codeFilePath, 'utf8')
+            const realCodePath = await realpath(codeFilePath)
+            const stepDir = dirname(realCodePath)
+            const entryUrl = pathToFileURL(realCodePath).href
 
             return deno.run({
                 body: `
     const { createRequire } = await import('node:module');
-    const require = createRequire(${JSON.stringify(pathToFileURL(codeFilePath).href)});
-    const module = { exports: Object.create(null) };
-    new Function('exports', 'module', 'require', ${JSON.stringify(source)})(module.exports, module, require);
-    const result = await module.exports.code(${JSON.stringify(inputs)});
+    globalThis.require = createRequire(${JSON.stringify(entryUrl)});
+    const mod = await import(${JSON.stringify(entryUrl)});
+    if (typeof mod.code !== 'function') {
+        throw new Error('Code step must export a "code" function');
+    }
+    const result = await mod.code(${JSON.stringify(inputs)});
 `,
                 permissions,
                 cwd: stepDir,
+                allowReadPaths: [stepDir],
+                resolveNodeModules: true,
             })
         },
 

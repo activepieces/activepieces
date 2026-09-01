@@ -2,7 +2,7 @@
 # resolves, and forks the engine child in-process (SANDBOX_CODE_ONLY: node child + isolated-vm); scale
 # is horizontal (more replicas, each capped at 0.5 CPU / 1 GB). The worker entry is esbuild-bundled into
 # a single file (like the engine), so the final image carries NO workspace node_modules — just node +
-# bun + isolated-vm + esbuild + two bundles. The heavy ai-sdk graph behind the chat agent is bundled but
+# bun + isolated-vm + two bundles. The heavy ai-sdk graph behind the chat agent is bundled but
 # lazy (dynamic import), so it never evaluates unless a chat job runs. Kept small on purpose.
 
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
@@ -57,9 +57,6 @@ FROM node:24.14.0-bullseye-slim AS run
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates procps && \
     rm -rf /var/lib/apt/lists/*
-
-# esbuild compiles CODE steps; the code-builder spawns it by name from PATH.
-RUN npm install -g --no-fund --no-audit esbuild@0.25.0 && npm cache clean --force
 
 WORKDIR /app
 
