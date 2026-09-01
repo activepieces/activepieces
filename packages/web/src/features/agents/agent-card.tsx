@@ -4,6 +4,7 @@ import {
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Lock } from 'lucide-react';
 
 import { AgentActionsMenu } from './agent-actions-menu';
 import { AgentMark } from './agent-mark';
@@ -59,8 +60,17 @@ export const AgentCard = ({
         <div className="relative flex items-center gap-[14px]">
           <AgentMark icon={agent.icon} color={agent.color} />
           <div className="flex min-w-0 grow basis-0 flex-col gap-[3px]">
-            <span className="truncate text-base font-semibold leading-5">
-              {agent.displayName}
+            <span className="flex min-w-0 items-center gap-[6px]">
+              <span className="truncate text-base font-semibold leading-5">
+                {agent.displayName}
+              </span>
+              {agent.visibility === AgentVisibility.RESTRICTED && (
+                <Lock
+                  size={12}
+                  className="shrink-0 text-muted-foreground"
+                  aria-label={t('Only you and the people you shared it with')}
+                />
+              )}
             </span>
             <span className="line-clamp-2 text-[13px] leading-4 text-muted-foreground">
               {agent.description ?? t('No description yet')}
@@ -73,16 +83,18 @@ export const AgentCard = ({
             toolPieceNames={agent.toolPieceNames}
           />
           <div className="ms-auto">
-            {agent.visibility === AgentVisibility.RESTRICTED ||
-            agent.projectIsPrivate ? (
-              <AgentChip label={t('Private')} dotColor={PRIVATE_DOT_COLOR} />
-            ) : (
-              agent.projectDisplayName.length > 0 && (
-                <AgentChip
-                  label={agent.projectDisplayName}
-                  dotColor={projectDotColor}
-                />
-              )
+            {(agent.projectIsPrivate ||
+              agent.projectDisplayName.length > 0) && (
+              <AgentChip
+                label={
+                  agent.projectIsPrivate
+                    ? t('Personal Project')
+                    : agent.projectDisplayName
+                }
+                dotColor={
+                  agent.projectIsPrivate ? PRIVATE_DOT_COLOR : projectDotColor
+                }
+              />
             )}
           </div>
         </div>

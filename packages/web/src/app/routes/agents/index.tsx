@@ -27,6 +27,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/custom/empty';
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,7 +47,7 @@ import {
 } from '@/features/agents/hooks/agents-hooks';
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
-import { projectCollectionUtils } from '@/features/projects';
+import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -92,6 +93,8 @@ const SORT_LABELS = {
   name: 'Name',
 } as const;
 
+const ALL_PROJECTS = 'all';
+
 const SORT_COMPARATORS: Record<
   AgentSort,
   (left: AgentSummary, right: AgentSummary) => number
@@ -120,6 +123,8 @@ const AgentsPageContent = () => {
   const [layout, setLayout] = useState<'grid' | 'list'>('grid');
   const [sort, setSort] = useState<AgentSort>('updated');
   const [prompt, setPrompt] = useState('');
+  const [viewProjectId, setViewProjectId] = useState<string>(ALL_PROJECTS);
+  const [pickedProjectId, setPickedProjectId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
@@ -133,12 +138,13 @@ const AgentsPageContent = () => {
     const needle = search.trim().toLowerCase();
     const matching = (data?.data ?? []).filter(
       (agent) =>
-        needle.length === 0 ||
-        agent.displayName.toLowerCase().includes(needle) ||
-        (agent.description ?? '').toLowerCase().includes(needle),
+        (viewProjectId === ALL_PROJECTS || agent.projectId === viewProjectId) &&
+        (needle.length === 0 ||
+          agent.displayName.toLowerCase().includes(needle) ||
+          (agent.description ?? '').toLowerCase().includes(needle)),
     );
     return [...matching].sort(SORT_COMPARATORS[sort]);
-  }, [data, search, sort]);
+  }, [data, search, sort, viewProjectId]);
 
   const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
@@ -159,6 +165,18 @@ const AgentsPageContent = () => {
   const isBuilding = draftAgent.isPending || createAgent.isPending;
   const buildError = draftAgent.error ?? createAgent.error ?? null;
 
+  const createInProjectId =
+    pickedProjectId ??
+    (viewProjectId === ALL_PROJECTS ? project.id : viewProjectId);
+  const projectOptions = useMemo(
+    () =>
+      (allProjects ?? []).map((entry) => ({
+        value: entry.id,
+        label: getProjectName(entry),
+      })),
+    [allProjects],
+  );
+
   const buildAgent = (text?: string) => {
     const trimmed = (text ?? prompt).trim();
     if (trimmed.length === 0 || isBuilding) {
@@ -166,13 +184,13 @@ const AgentsPageContent = () => {
     }
     setPrompt(trimmed);
     draftAgent.mutate(
-      { projectId: project.id, prompt: trimmed },
+      { projectId: createInProjectId, prompt: trimmed },
       {
         onSuccess: (draft) =>
           createAgent.mutate(
             createAgentUtils.buildCreateRequest({
               draft,
-              projectId: project.id,
+              projectId: createInProjectId,
             }),
           ),
       },
@@ -192,7 +210,7 @@ const AgentsPageContent = () => {
           color: ColorName.PURPLE,
           instructions: '',
         },
-        projectId: project.id,
+        projectId: createInProjectId,
       }),
     );
   };
@@ -346,6 +364,19 @@ const AgentsPageContent = () => {
             </Button>
           </div>
         </div>
+        {!needsProvider && (allProjects ?? []).length > 1 && (
+          <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
+            <span>{t('New agents go to')}</span>
+            <SearchableSelect
+              value={createInProjectId}
+              onChange={(value) => setPickedProjectId(value)}
+              options={projectOptions}
+              placeholder={t('Search projects')}
+              contentWidth="260px"
+              triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
+            />
+          </div>
+        )}
         {buildError !== null && (
           <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
             {api.extractServerErrorMessage(
@@ -433,6 +464,18 @@ const AgentsPageContent = () => {
                   className="w-full bg-transparent text-xs leading-4 outline-none placeholder:text-muted-foreground"
                 />
               </div>
+              {(allProjects ?? []).length > 1 && (
+                <SearchableSelect
+                  value={viewProjectId}
+                  onChange={(value) => setViewProjectId(value ?? ALL_PROJECTS)}
+                  options={[
+                    { value: ALL_PROJECTS, label: t('All projects') },
+                    ...projectOptions,
+                  ]}
+                  placeholder={t('Search projects')}
+                  triggerClassName="h-8 w-[170px] rounded-md text-[13px] font-normal"
+                />
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -499,8 +542,14 @@ const AgentsPageContent = () => {
               ))}
             </div>
           ) : agents.length === 0 ? (
-            showsNoMatchNotice({ matchCount: agents.length, search }) ? (
-              <AgentsEmptyState />
+            showsNoMatchNotice({
+              matchCount: agents.length,
+              search,
+              projectFiltered: viewProjectId !== ALL_PROJECTS,
+            }) ? (
+              <AgentsEmptyState
+                narrowedByProject={search.trim().length === 0}
+              />
             ) : null
           ) : (
             <div
@@ -534,15 +583,25 @@ const AgentsPageContent = () => {
   );
 };
 
-const AgentsEmptyState = () => (
+const AgentsEmptyState = ({
+  narrowedByProject,
+}: {
+  narrowedByProject: boolean;
+}) => (
   <Empty className="min-h-[240px]">
     <EmptyHeader className="max-w-xl">
       <EmptyMedia variant="icon">
         <SearchX />
       </EmptyMedia>
-      <EmptyTitle>{t('No agents match that search')}</EmptyTitle>
+      <EmptyTitle>
+        {narrowedByProject
+          ? t('No agents in this project yet')
+          : t('No agents match that search')}
+      </EmptyTitle>
       <EmptyDescription>
-        {t('Try another name, or clear the search.')}
+        {narrowedByProject
+          ? t('Describe one above, or pick another project.')
+          : t('Try another name, or clear the search.')}
       </EmptyDescription>
     </EmptyHeader>
   </Empty>

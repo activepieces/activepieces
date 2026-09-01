@@ -114,3 +114,35 @@ describe('the status the page reads as listLoaded', () => {
     ).toBe(false);
   });
 });
+
+describe('showsNoMatchNotice with a project filter', () => {
+  it('explains an empty grid when a project hides everything and there is no search', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('stays quiet when the project filter is off and nothing was searched', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: '',
+        projectFiltered: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('still speaks for a search that matches nothing inside a project', () => {
+    expect(
+      showsNoMatchNotice({
+        matchCount: 0,
+        search: 'nothing',
+        projectFiltered: true,
+      }),
+    ).toBe(true);
+  });
+});

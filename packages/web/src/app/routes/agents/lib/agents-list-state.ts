@@ -25,9 +25,11 @@ export function showsAgentList({
 export function showsNoMatchNotice({
   matchCount,
   search,
+  projectFiltered = false,
 }: {
   matchCount: number;
   search: string;
+  projectFiltered?: boolean;
 }): boolean {
-  return matchCount === 0 && search.trim().length > 0;
+  return matchCount === 0 && (search.trim().length > 0 || projectFiltered);
 }
