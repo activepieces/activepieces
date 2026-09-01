@@ -6,6 +6,7 @@ import type {
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
+import { objectDetectionOutputSchema } from '../output-schemas';
 
 export const objectDetection = createAction({
   audience: 'both',
@@ -20,6 +21,7 @@ export const objectDetection = createAction({
       'Locates the individual objects in an uploaded image with a DETR or YOLOS-style detection model, returning each one with a label, a confidence score, and bounding-box coordinates; a filter preset chooses the confidence cut-off (high, balanced, all, or a custom threshold) and a cap limits how many detections come back. Choose it when the positions or counts of objects matter - prefer image_classification for a single whole-image label, and document_question_answering to read a value out of a document scan. Requires an uploaded image file; read-only and idempotent, as it only analyses the image.',
     idempotent: true,
   },
+  outputSchema: objectDetectionOutputSchema,
   props: {
     useCase: Property.StaticDropdown({
       displayName: 'Use Case',

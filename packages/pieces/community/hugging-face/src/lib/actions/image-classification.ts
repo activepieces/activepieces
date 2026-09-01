@@ -8,6 +8,7 @@ import type {
 } from '@huggingface/tasks';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
+import { imageClassificationOutputSchema } from '../output-schemas';
 
 export const imageClassification = createAction({
   audience: 'both',
@@ -22,6 +23,7 @@ export const imageClassification = createAction({
       'Assigns category labels to a whole image, supplied either as an uploaded file or as a URL the action fetches, in one of two modes: standard mode returns labels from the set the pre-trained model was trained on, while zero-shot mode scores the image against custom candidate categories you supply. Pick it for whole-image tagging or moderation; use object_detection when the positions or counts of individual objects matter, and document_question_answering to read a specific value out of a scanned document. Zero-shot mode requires a non-empty category list; read-only and idempotent, as it only analyses the image.',
     idempotent: true,
   },
+  outputSchema: imageClassificationOutputSchema,
   props: {
     classificationMode: Property.StaticDropdown({
       displayName: 'Classification Mode',
