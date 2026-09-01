@@ -392,10 +392,6 @@
                   ]
               },
               {
-                "group": "Observability",
-                "pages": []
-              },
-               {
                   "group": "Security",
                   "pages": [
                     "admin-guide/guides/sso",
