@@ -10,6 +10,35 @@ function sameConfig({
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function adoptsPickedModel({
+  values,
+  syncedDraft,
+}: {
+  values: AgentDraftShape;
+  syncedDraft: AgentDraftShape;
+}): boolean {
+  const hadNoModel =
+    syncedDraft.draft.modelName === null ||
+    syncedDraft.draft.modelName === undefined ||
+    syncedDraft.draft.modelName === '';
+  if (!hadNoModel) {
+    return false;
+  }
+  const withoutModel = (shape: AgentDraftShape) => ({
+    ...shape,
+    draft: {
+      ...shape.draft,
+      provider: null,
+      modelName: null,
+      providerConfigId: null,
+    },
+  });
+  return (
+    values.draft.modelName !== syncedDraft.draft.modelName &&
+    sameConfig({ left: withoutModel(values), right: withoutModel(syncedDraft) })
+  );
+}
+
 function headerStatus({
   needsModel,
   justLaunched,
@@ -78,10 +107,20 @@ function createWriteLock(): WriteLock {
 
 export const agentEditState = {
   sameConfig,
+  adoptsPickedModel,
   headerStatus,
   modeIntent,
   leaveGuard,
   createWriteLock,
+};
+
+export type AgentDraftShape = {
+  draft: {
+    provider?: unknown;
+    modelName?: string | null;
+    providerConfigId?: unknown;
+    [key: string]: unknown;
+  };
 };
 
 export type HeaderStatus = 'needs-model' | 'live' | 'pending';

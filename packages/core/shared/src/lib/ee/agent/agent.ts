@@ -66,6 +66,15 @@ const Agent = z.object({
     published: Nullable(AgentConfig),
 })
 
+const AgentUsage = z.object({
+    total: z.number().int().nonnegative(),
+    names: z.array(z.string()),
+})
+
+const AgentWithUsage = Agent.extend({
+    publishedFlowsUsingAgent: AgentUsage.optional(),
+})
+
 const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
@@ -109,6 +118,10 @@ const DraftAgentRequest = z.object({
     prompt: z.string().min(1, formErrors.required).max(MAX_DRAFT_PROMPT_LENGTH),
 })
 
+const GetAgentRequest = z.object({
+    includeUsage: z.coerce.boolean().optional(),
+})
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
     cursor: z.string().optional(),
@@ -121,6 +134,9 @@ const agentUtils = {
 
 export {
     Agent,
+    AgentUsage,
+    AgentWithUsage,
+    GetAgentRequest,
     AgentSummary,
     agentUtils,
     AgentConfig,
@@ -148,6 +164,9 @@ export {
 
 export type Agent = z.infer<typeof Agent>
 export type AgentSummary = z.infer<typeof AgentSummary>
+export type AgentUsage = z.infer<typeof AgentUsage>
+export type AgentWithUsage = z.infer<typeof AgentWithUsage>
+export type GetAgentRequest = z.infer<typeof GetAgentRequest>
 export type AgentConfig = z.infer<typeof AgentConfig>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
