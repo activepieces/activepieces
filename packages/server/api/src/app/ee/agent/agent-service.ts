@@ -377,7 +377,7 @@ export async function assertAgentsResolveInProject({ projectId, agentExternalIds
     if (missing.length > 0) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `This flow runs an agent that is not in this project any more. Point the step at an agent here, then publish.` },
+            params: { message: 'This flow runs an agent that is not in this project any more. Point the step at an agent here, then publish.' },
         })
     }
 }
