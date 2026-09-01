@@ -3,13 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { quizellAuth } from '../../';
 import { quizellApiCall } from '../common/client';
 
-export const createProduct = createAction({
+export const createCatalogProduct = createAction({
   auth: quizellAuth,
-  name: 'create_product',
-  displayName: 'Create Product',
+  name: 'create_catalog_product',
+  displayName: 'Create Catalog Product',
   description: 'Adds a new product to your Quizell product catalog.',
-  audience: 'human',
-  aiMetadata: { description: 'Adds a new product to the Quizell catalog so it can appear in quiz recommendations. Use when introducing a product not yet in Quizell; requires title, price, and active/inactive status. Not idempotent — each call creates another product, so guard against duplicates if syncing from an external store.', idempotent: false },
+  audience: 'ai',
+  aiMetadata: { description: 'Adds a new product to the Quizell catalog so it can appear in quiz recommendations. Use when a product is not yet in Quizell; requires title, price, and active/inactive status. Not idempotent — each call creates another product, so guard against duplicates via Find Products if syncing from an external store.', idempotent: false },
   props: {
     title: Property.ShortText({
       displayName: 'Product Title',
