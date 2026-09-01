@@ -123,6 +123,7 @@
                      "flows/formula-reference",
                      "flows/project-variables",
                      "flows/publishing-flows",
+                     "flows/flow-approvals",
                      "flows/debugging-runs",
                      "flows/versioning"
                   ]
@@ -393,6 +394,10 @@
                            "admin-guide/security/audit-logs/flow-published",
                            "admin-guide/security/audit-logs/flow-activated",
                            "admin-guide/security/audit-logs/flow-deactivated",
+                           "admin-guide/security/audit-logs/flow-approval-requested",
+                           "admin-guide/security/audit-logs/flow-approval-granted",
+                           "admin-guide/security/audit-logs/flow-approval-rejected",
+                           "admin-guide/security/audit-logs/flow-approval-withdrawn",
                            "admin-guide/security/audit-logs/connection-upserted",
                            "admin-guide/security/audit-logs/connection-deleted",
                            "admin-guide/security/audit-logs/flow-run-started",

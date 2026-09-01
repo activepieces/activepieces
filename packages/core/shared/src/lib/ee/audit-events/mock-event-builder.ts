@@ -7,6 +7,7 @@ import {
     AuthenticationEvent,
     ConnectionEvent,
     FlowActivatedEvent,
+    FlowApprovalEvent,
     FlowCreatedEvent,
     FlowDeactivatedEvent,
     FlowDeletedEvent,
@@ -328,6 +329,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     failedCount: 0,
                     outcome: 'SUCCESS',
                     durationMs: 1234,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+            const mock: FlowApprovalEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    approvalRequestId: apId(),
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    flowDisplayName: flowVersion.displayName,
+                    rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
                 },
             }
             return mock

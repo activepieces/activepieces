@@ -21,6 +21,7 @@ import { flowVersionMigrationService } from '../flow-version/flow-version-migrat
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
+import { publishHooksFactory } from './flow-publish-hooks'
 import { flowPublishUtils } from './flow-publish-utils'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
@@ -357,6 +358,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
+                const flow = await this.getOneOrThrow({ id, projectId })
+                const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
+                const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
+                if (route === 'NEEDS_APPROVAL') {
+                    await publishHooksFactory.get(log).submitForApproval({
+                        flow,
+                        userId,
+                        projectId,
+                        platformId,
+                        requestedStatus,
+                    })
+                    break
+                }
                 const publishedFlow = await this.updatedPublishedVersionId({
                     id,
                     userId,
@@ -367,7 +381,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     published: previouslyPublishedVersion.trigger,
                     toPublish: publishedFlow.version.trigger,
                 })
-                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED, isRepublish }, log)
+                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
             }
 
@@ -497,20 +511,33 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
                 log,
             })
-
-            flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.DISABLED
-            const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).invalidate(updatedFlow.id)
+            await this.setPublishedVersion({
+                flow: flowToUpdate,
+                lockedVersion: lockedFlowVersion,
+                entityManager,
+            })
+            await flowExecutionCache(log).invalidate(flowToUpdate.id)
             return {
-                ...updatedFlow,
+                ...flowToUpdate,
+                publishedVersionId: lockedFlowVersion.id,
+                status: FlowStatus.DISABLED,
                 version: lockedFlowVersion,
             }
         })
-        // a static import here closes a circular graph (→ websockets → mcp/tools → mcp-utils → back here) that crashes module load.
         const { websocketService } = await import('../../core/websockets.service')
         websocketService.notifyWorkers().flowPublished({ flowId: publishedFlow.id, flowVersionId: publishedFlow.version.id, projectId: publishedFlow.projectId })
         return publishedFlow
+    },
+
+    async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
+        await flowRepo(entityManager).update({ id: flow.id }, {
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
+        })
+    },
+
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -883,6 +910,12 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
+}
+
+type SetPublishedVersionParams = {
+    flow: Flow
+    lockedVersion: FlowVersion
+    entityManager?: EntityManager
 }
 
 type DeleteParams = EventEmissionParams & {

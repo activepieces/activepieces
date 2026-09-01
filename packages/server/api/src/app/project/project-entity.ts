@@ -100,6 +100,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: Number,
             nullable: true,
         },
+        sensitive: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
     },
     indices: [
         {

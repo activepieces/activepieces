@@ -189,6 +189,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         }
         return lockedVersion
     },
+
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService(log).getOne(id)
 
