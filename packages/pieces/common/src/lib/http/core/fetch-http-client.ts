@@ -22,7 +22,7 @@ export class FetchHttpClient extends BaseHttpClient {
     super(baseUrl, authenticationConverter);
   }
 
-  async sendRequest<ResponseBody extends HttpMessageBody = any>(
+  async sendRequest<ResponseBody extends HttpMessageBody = HttpMessageBody>(
     request: HttpRequest<HttpRequestBody>,
     options?: SendRequestOptions
   ): Promise<HttpResponse<ResponseBody>> {
@@ -125,9 +125,43 @@ function serializeBody(
   }
   const contentType = headers['Content-Type'] ?? headers['content-type'] ?? '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
-    return { body: new URLSearchParams(body as Record<string, string>).toString(), extraHeaders: {}, isStream: false };
+    if (!isPlainObject(body)) {
+      return { body: String(body), extraHeaders: {}, isStream: false };
+    }
+    return { body: serializeFormUrlEncodedBody(body), extraHeaders: {}, isStream: false };
   }
   return { body: JSON.stringify(body), extraHeaders: {}, isStream: false };
+}
+
+function serializeFormUrlEncodedBody(body: Record<string, unknown>): string {
+  const params = new URLSearchParams();
+  appendFormUrlEncoded(params, body);
+  return params.toString();
+}
+
+function appendFormUrlEncoded(params: URLSearchParams, value: unknown, prefix?: string): void {
+  if (isNil(value)) {
+    return;
+  }
+  if (Array.isArray(value)) {
+    if (prefix === undefined) {
+      return;
+    }
+    for (const item of value) {
+      appendFormUrlEncoded(params, item, `${prefix}[]`);
+    }
+    return;
+  }
+  if (isPlainObject(value)) {
+    for (const [key, nestedValue] of Object.entries(value)) {
+      appendFormUrlEncoded(params, nestedValue, prefix === undefined ? key : `${prefix}[${key}]`);
+    }
+    return;
+  }
+  if (prefix === undefined) {
+    return;
+  }
+  params.append(prefix, String(value));
 }
 
 async function parseResponseBody(response: Response, responseType: ResponseType): Promise<unknown> {
@@ -214,6 +248,10 @@ function isNodeFormData(body: unknown): body is NodeFormData {
 
 function isNil(value: unknown): value is null | undefined {
   return value === null || value === undefined;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Object.prototype.toString.call(value) === '[object Object]';
 }
 
 type NodeFormData = {
