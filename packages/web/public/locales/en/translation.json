@@ -2770,5 +2770,7 @@
   "Telemetry": "Telemetry",
   "Product analytics": "Product analytics",
   "Shares usage events so we can see which features are used and fix what breaks.": "Shares usage events so we can see which features are used and fix what breaks.",
-  "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.": "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys."
+  "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.": "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.",
+  "Deployment setup": "Deployment setup",
+  "Sends a snapshot of your Workers and Health pages, without IPs or hostnames, so we can answer your support questions faster.": "Sends a snapshot of your Workers and Health pages, without IPs or hostnames, so we can answer your support questions faster."
 }

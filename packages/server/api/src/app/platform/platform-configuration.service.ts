@@ -1,6 +1,7 @@
 import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
 import { ApEdition, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
 import { system } from '../helper/system/system'
@@ -63,6 +64,22 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return enabled
     },
 
+    async filterPlatformsWithInfraSetupTelemetryEnabled({ platformIds }: FilterPlatformsParams): Promise<string[]> {
+        if (platformIds.length === 0) {
+            return []
+        }
+        const optedOut: string[] = []
+        for (const batch of chunk(platformIds, CONFIGURATION_FILTER_BATCH_SIZE)) {
+            const rows = await platformConfigurationRepo().find({
+                where: { platformId: In(batch), isInfraSetupTelemetryEnabled: false },
+                select: ['platformId'],
+            })
+            optedOut.push(...rows.map((row) => row.platformId))
+        }
+        const optedOutIds = new Set(optedOut)
+        return platformIds.filter((platformId) => !optedOutIds.has(platformId))
+    },
+
     async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled }: UpdateParams): Promise<PlatformConfiguration> {
         await this.getOrCreateForPlatform({ platformId })
         const patch = {
@@ -93,4 +110,8 @@ type UpdateParams = GetOrCreateParams & UpdatePlatformConfigurationRequestBody
 
 type FilterProjectsParams = {
     projectIds: string[]
+}
+
+type FilterPlatformsParams = {
+    platformIds: string[]
 }
