@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getAnInvoice = createAction({
   auth: bokioAuth,
   name: 'getAnInvoice',
+  classification: 'READ',
   displayName: 'Get an invoice',
   description: 'Retrieve a specific invoice by its ID',
   audience: 'both',

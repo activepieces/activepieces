@@ -6,6 +6,7 @@ import { docIdDropdown, tableIdDropdown } from '../common/props';
 export const getRowAction = createAction({
 	auth: codaAuth,
 	name: 'get-row',
+	classification: 'READ',
 	displayName: 'Get Row',
 	description: 'Retrieves a single row by specified ID.',
 	audience: 'both',

@@ -9,6 +9,7 @@ import { ticketFormDropdown } from '../common/props';
 export const ticketNewComment = createTrigger({
   auth: aidbaseAuth,
   name: 'ticket_new_comment',
+  classification: 'READ',
   displayName: 'Ticket New Comment',
   description: 'Fires when a new comment is added to an existing ticket.',
   aiMetadata: {

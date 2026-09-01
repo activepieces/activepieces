@@ -8,6 +8,7 @@ import { BikaAuth } from '../auth';
 export const deleteRecordAction = createAction({
   auth: BikaAuth,
   name: 'bika_delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes a record in database by ID.',
   audience: 'both',

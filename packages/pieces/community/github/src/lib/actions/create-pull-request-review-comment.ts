@@ -7,6 +7,7 @@ import { createPullRequestReviewCommentActionOutputSchema } from '../output-sche
 export const githubCreatePullRequestReviewCommentAction = createAction({
   auth: githubAuth,
   name: 'github_create_pull_request_review_comment',
+  classification: 'WRITE',
   displayName: 'Create Pull Request Review Comment',
   description:
     'Creates a review comment on a pull request in a GitHub repository',

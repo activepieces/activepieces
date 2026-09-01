@@ -24,6 +24,7 @@ interface CalendarResource {
 export const aiGetCalendar = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_calendar',
+  classification: 'READ',
   displayName: 'Get Calendar',
   description:
     'Fetch one calendar\'s metadata (summary, time zone, description, location) by its calendar ID.',

@@ -1,18 +1,21 @@
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
+import { ticketSearchOutputSchema } from '../output-schemas';
 
 export const findTicketAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-ticket',
+	classification: 'SEARCH',
 	displayName: 'Find Ticket',
 	description: 'Finds a ticket by searching.',
 	audience: 'both',
 	aiMetadata: { description: 'Searches support tickets via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching tickets. Use to locate a ticket by subject or another property before reading or updating it; prefer Get Ticket when you already have the ticket ID. Read-only and idempotent.', idempotent: true },
+	outputSchema: ticketSearchOutputSchema,
 	props: {
 		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
@@ -80,7 +83,7 @@ export const findTicketAction = createAction({
 			});
 		}
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
 

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { priceOutputSchema } from '../output-schemas';
 export const stripeCreatePrice = createAction({
   name: 'create_price',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Price',
   description:

@@ -25,6 +25,10 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
+const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+    mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+}))
+
 const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
     mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
     mockKbSearch: vi.fn().mockResolvedValue([]),
@@ -92,6 +96,7 @@ type QueryBuilderMock = {
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
+        assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         resolveFastModel: () => ({}),
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
@@ -287,6 +292,8 @@ async function callUpdateProjectContext(input: { conversationId: string, runId?:
 describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
     beforeEach(() => {
         mockSet.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockResolvedValue(undefined)
     })
 
     it('refuses to move a flow-step run to another project', async () => {
@@ -310,6 +317,14 @@ describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its
         await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
 
         expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('keeps a chat run out of a project its running key excludes', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own', platformId: 'plat-1' })
+        mockAssertProjectSwitchKeepsKey.mockRejectedValue(new Error('key not available there'))
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
     })
 })
 

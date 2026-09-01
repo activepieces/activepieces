@@ -5,6 +5,7 @@ import { TeableAuth, TeableAuthValue } from '../auth';
 export const deleteRecordAction = createAction({
   auth: TeableAuth,
   name: 'teable_delete_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record',
   description: 'Deletes a record from a Teable table by its ID.',
   audience: 'both',

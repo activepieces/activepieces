@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addUser = createAction({
   auth: appfollowAuth,
   name: 'addUser',
+  classification: 'WRITE',
   displayName: 'Add user',
   description: 'Adds a new user to the Appfollow account',
   audience: 'both',

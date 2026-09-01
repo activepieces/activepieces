@@ -12,6 +12,7 @@ import { archiveListActionOutputSchema } from '../../output-schemas';
 export const archiveList = createAction({
   auth: trelloAuth,
   name: 'archive_list',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive List (Agent)',
   description: 'Archive or unarchive a Trello list.',
   audience: 'ai',

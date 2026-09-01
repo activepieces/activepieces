@@ -95,7 +95,7 @@ sequenceDiagram
 A callback can arrive before the flow run has finished writing `PAUSED` to disk. The protocol absorbs the race:
 
 - Completing a waitpoint takes a write lock on the `PENDING` row. If it exists, it flips to `COMPLETED` and stores the `resumePayload`. If it does not, a **pre-completed** row is inserted instead.
-- When the flow run transitions to `PAUSED`, the server checks for a matching `COMPLETED` waitpoint and enqueues the resume job immediately.
+- When the flow run transitions to `PAUSED`, the server checks for a `COMPLETED` waitpoint on the run and enqueues the resume job immediately — but only once **no** waitpoint for that run is still `PENDING`. A run holding a pause per loop iteration can carry a completed leftover and an open pause at the same time, and resuming off the leftover would skip the open one.
 
 Duplicate callbacks are absorbed by the uniqueness constraint; the engine never processes a resume twice.
 

@@ -6,6 +6,7 @@ import { deleteAudienceOutputSchema } from '../output-schemas';
 
 export const deleteAudience = createAction({
   name: 'delete_audience',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Delete Audience',
   outputSchema: deleteAudienceOutputSchema,

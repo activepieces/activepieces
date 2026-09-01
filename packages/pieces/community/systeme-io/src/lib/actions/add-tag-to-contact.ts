@@ -7,6 +7,7 @@ import { systemeIoProps } from '../common/props';
 export const addTagToContact = createAction({
   auth: systemeIoAuth,
   name: 'addTagToContact',
+  classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Assign a tag to an existing contact - select an existing tag or create a new one',
   audience: 'both',

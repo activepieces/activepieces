@@ -1,13 +1,11 @@
-import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { useMcpServerUrl } from '@/app/routes/mcp-server/mcp-server-url';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 export function McpCredentials() {
-  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const serverUrl = `${(publicUrl ?? '').replace(/\/$/, '')}/mcp`;
+  const { serverUrl } = useMcpServerUrl();
 
   const jsonConfiguration = {
     mcpServers: {

@@ -9,6 +9,7 @@ import { customerOutputSchema } from '../output-schemas';
 export const stripeNewCustomer = createTrigger({
   auth: stripeAuth,
   name: 'new_customer',
+  classification: 'READ',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
   aiMetadata: {

@@ -12,6 +12,7 @@ import { listCardMembersActionOutputSchema } from '../../output-schemas';
 export const listCardMembers = createAction({
   auth: trelloAuth,
   name: 'list_card_members',
+  classification: 'SEARCH',
   displayName: 'List Card Members (Agent)',
   description: 'List the members assigned to a Trello card.',
   audience: 'ai',

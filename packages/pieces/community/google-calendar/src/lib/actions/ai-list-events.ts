@@ -6,6 +6,7 @@ import { getEventsActionOutputSchema } from '../output-schemas';
 export const aiListEvents = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_list_events',
+  classification: 'SEARCH',
   displayName: 'List Events',
   description:
     'List events from one Google Calendar, optionally filtered by date range, free-text search, and event types.',
