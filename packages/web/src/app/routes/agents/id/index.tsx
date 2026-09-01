@@ -485,13 +485,26 @@ const ConfigureFields = ({
           defaultModel={form.watch('draft.modelName') ?? undefined}
           defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
           onChange={({ provider, model, configId }) => {
-            form.setValue('draft.provider', parseProvider(provider), {
+            const picked = {
+              provider: parseProvider(provider) ?? null,
+              modelName: model ?? null,
+              providerConfigId: configId ?? null,
+            };
+            if (
+              !agentEditState.modelPickChanged({
+                picked,
+                current: form.getValues('draft'),
+              })
+            ) {
+              return;
+            }
+            form.setValue('draft.provider', picked.provider, {
               shouldDirty: true,
             });
-            form.setValue('draft.modelName', model ?? null, {
+            form.setValue('draft.modelName', picked.modelName, {
               shouldDirty: true,
             });
-            form.setValue('draft.providerConfigId', configId ?? null, {
+            form.setValue('draft.providerConfigId', picked.providerConfigId, {
               shouldDirty: true,
             });
           }}
@@ -675,12 +688,9 @@ const AgentEditScreen = ({
   onEdited: () => void;
 }) => {
   const [mode, setMode] = useState('edit');
-  const [syncedDraft, setSyncedDraft] = useState<ConfigureAgentInput>(() =>
-    formValuesOf(agent),
-  );
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: syncedDraft,
+    defaultValues: formValuesOf(agent),
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
@@ -702,10 +712,7 @@ const AgentEditScreen = ({
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
-  const unsavedTyping = !agentEditState.sameConfig({
-    left: values,
-    right: syncedDraft,
-  });
+  const unsavedTyping = form.formState.isDirty;
   const deletedRef = useRef(false);
   const leaveBlocker = useWarnBeforeLosingChanges({
     hasChanges: unsavedTyping,
@@ -721,21 +728,11 @@ const AgentEditScreen = ({
   const writeLock = useRef(agentEditState.createWriteLock());
 
   useEffect(() => {
-    const fromServer = formValuesOf(agent);
-    if (agentEditState.sameConfig({ left: fromServer, right: syncedDraft }))
-      return;
     if (unsavedTyping) return;
+    const fromServer = formValuesOf(agent);
+    if (agentEditState.sameConfig({ left: fromServer, right: values })) return;
     form.reset(fromServer);
-    setSyncedDraft(fromServer);
-  }, [agent, syncedDraft, unsavedTyping, form]);
-
-  // The model selector picks a default the moment it mounts, so a screen nobody has touched would
-  // otherwise arm the leave guard. Adopting that pick as the baseline keeps Save armed, since that
-  // compares against what is live, while the guard only speaks for changes a person made.
-  useEffect(() => {
-    if (!agentEditState.adoptsPickedModel({ values, syncedDraft })) return;
-    setSyncedDraft(values);
-  }, [values, syncedDraft]);
+  }, [agent, values, unsavedTyping, form]);
 
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {
@@ -753,7 +750,7 @@ const AgentEditScreen = ({
       {
         onSuccess: () => {
           if (seq !== writeSeq.current) return;
-          setSyncedDraft(values);
+          form.reset(values);
           if (testRequested.current) setMode('test');
         },
         onError: (error) =>
@@ -787,7 +784,7 @@ const AgentEditScreen = ({
     updateAgent.mutate(toUpdateRequest(values), {
       onSuccess: () => {
         if (seq !== writeSeq.current) return;
-        setSyncedDraft(values);
+        form.reset(values);
         setJustLaunched(true);
         window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
