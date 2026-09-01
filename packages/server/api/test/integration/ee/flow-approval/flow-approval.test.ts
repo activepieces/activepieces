@@ -194,6 +194,7 @@ describe('flow-approval — submitForApproval supersession', () => {
             flowId: flow.id,
             state: FlowVersionState.DRAFT,
             valid: true,
+            created: new Date(Date.now() + 60_000).toISOString(),
         })
         await db.save('flow_version', newDraft)
 
