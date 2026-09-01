@@ -198,7 +198,7 @@ const NewProjectForm = ({
             <FormField
               name="sensitive"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                <FormItem className="flex items-center justify-between gap-3">
                   <div className="space-y-1">
                     <Label htmlFor="sensitive">{t('Sensitive Project')}</Label>
                     <FormDescription>
