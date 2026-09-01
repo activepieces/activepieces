@@ -1,10 +1,16 @@
+import os from 'node:os'
 import path from 'node:path'
 import { tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration, fileSystemUtils } from '@activepieces/server-utils'
 import { type ApLogger } from '@activepieces/server-utils'
+import { Semaphore } from 'async-mutex'
 import { type BuildFailure, build as esbuildBuild, type Message } from 'esbuild'
 import { stepFolderResolvePlugin } from './esbuild-build-options'
 import { CommandOutput, spawnWithKill } from './exec'
+
+// Each bun install is a subprocess that can hold 100-300MB RSS; callers (prewarm resolves,
+// concurrent jobs) may request many at once, so cap them globally to bound the memory spike.
+const bunProcessSemaphore = new Semaphore(Math.min(4, Math.max(1, os.availableParallelism() - 1)))
 
 export const bunRunner = (log: ApLogger) => ({
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
@@ -18,7 +24,7 @@ export const bunRunner = (log: ApLogger) => ({
         ]
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args }, '[bunRunner#install]')
-        const { error, data } = await tryCatch(async () => spawnWithKill({
+        const { error, data } = await tryCatch(async () => bunProcessSemaphore.runExclusive(() => spawnWithKill({
             cmd: 'bun',
             args,
             options: {
@@ -26,7 +32,7 @@ export const bunRunner = (log: ApLogger) => ({
             },
             printOutput: false,
             timeoutMs: apDayjsDuration(10, 'minutes').asMilliseconds(),
-        }))
+        })))
         if (error) {
             log.error({ error }, '[bunRunner#install] Failed to install dependencies')
             throw error
