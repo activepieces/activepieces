@@ -20,6 +20,11 @@ export const McpActivityEntity = new EntitySchema<McpActivityWithSchema>({
             nullable: true,
         },
         userId: ApIdSchema,
+        clientKey: {
+            type: String,
+            length: 32,
+            nullable: true,
+        },
         toolName: {
             type: String,
             length: 128,

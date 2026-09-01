@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpOAuthClientKey, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -34,10 +34,11 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, platformId, selectionScope, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, clientKey, selectionScope, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
     platformId?: string
+    clientKey: McpOAuthClientKey | null
     selectionScope: ProjectSelectionScope | null
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
@@ -69,12 +70,12 @@ export async function buildMcpServer({ mcp, userId, platformId, selectionScope, 
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        const activityContext = buildProjectActivityContext({ platformId, projectId, userId })
+        const activityContext = buildProjectActivityContext({ platformId, projectId, userId, clientKey })
         registerFlowTools({ server, mcp, projectId, permissionChecker, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
+        registerPlatformTools({ server, mcp, userId, clientKey, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -84,10 +85,11 @@ export async function buildMcpServer({ mcp, userId, platformId, selectionScope, 
     return server
 }
 
-function registerPlatformTools({ server, mcp, userId, selectionScope, resolveProjectMcp, log }: {
+function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope, resolveProjectMcp, log }: {
     server: McpServer
     mcp: PopulatedMcpServer
     userId: string
+    clientKey: McpOAuthClientKey | null
     selectionScope: ProjectSelectionScope
     resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
     log: FastifyBaseLogger
@@ -105,6 +107,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
         platformId,
         projectId: await mcpProjectSelection.get(selectionScope),
         userId,
+        clientKey,
     })
 
     tools.forEach((tool) => {
@@ -235,15 +238,16 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
     })
 }
 
-function buildProjectActivityContext({ platformId, projectId, userId }: {
+function buildProjectActivityContext({ platformId, projectId, userId, clientKey }: {
     platformId?: string
     projectId: string
     userId?: string
+    clientKey: McpOAuthClientKey | null
 }): McpActivityContext | null {
     if (isNil(platformId) || isNil(userId)) {
         return null
     }
-    return { platformId, projectId, userId }
+    return { platformId, projectId, userId, clientKey }
 }
 
 function registerPlaceholderTools(server: McpServer): void {

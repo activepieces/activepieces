@@ -12,11 +12,12 @@ let ctx: TestContext
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-async function recordActivity({ userId, projectId, platformId, status = 'SUCCEEDED', created = new Date().toISOString() }: {
+async function recordActivity({ userId, projectId, platformId, status = 'SUCCEEDED', clientKey = null, created = new Date().toISOString() }: {
     userId: string
     projectId: string | null
     platformId?: string
     status?: string
+    clientKey?: string | null
     created?: string
 }): Promise<string> {
     const id = apId()
@@ -25,6 +26,7 @@ async function recordActivity({ userId, projectId, platformId, status = 'SUCCEED
         platformId: platformId ?? ctx.platform.id,
         projectId,
         userId,
+        clientKey,
         toolName: 'ap_run_action',
         status,
         pieceName: '@activepieces/piece-slack',
@@ -123,6 +125,25 @@ describe('MCP activity', () => {
 
             const { data } = response.json()
             expect(data.map((row: { id: string }) => row.id)).toEqual([theirs])
+        })
+
+        it('filters by client', async () => {
+            await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'cursor' })
+            const fromClaudeCode = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'claude-code' })
+
+            const response = await ctx.get('/v1/mcp-activity?clientKeys=claude-code')
+
+            const { data } = response.json()
+            expect(data.map((row: { id: string }) => row.id)).toEqual([fromClaudeCode])
+        })
+
+        it('reads a row written before the client was known as an unknown client', async () => {
+            const beforeTheColumn = await recordActivity({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: null })
+
+            const response = await ctx.get('/v1/mcp-activity')
+
+            const { data } = response.json()
+            expect(data.find((row: { id: string }) => row.id === beforeTheColumn).clientKey).toBeNull()
         })
 
         it('filters by created window', async () => {

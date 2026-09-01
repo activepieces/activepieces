@@ -5,6 +5,7 @@ import {
     McpActivity,
     McpActivityPayload,
     McpActivityStatus,
+    McpOAuthClientKey,
     PLATFORM_WIDE_PROJECT_FILTER,
     PopulatedMcpActivity,
     UserWithMetaInformation,
@@ -26,7 +27,7 @@ const repo = repoFactory(McpActivityEntity)
 const DEFAULT_ACTIVITY_PAGE_SIZE = 20
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
-    async list({ platformId, userId, projectIds, memberIds, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<ListMcpActivityResponse> {
+    async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<ListMcpActivityResponse> {
         const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
         const paginator = buildPaginator({
             entity: McpActivityEntity,
@@ -44,6 +45,9 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         }
         if (!isNil(memberIds)) {
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
+        }
+        if (!isNil(clientKeys)) {
+            queryBuilder.andWhere(`${ACTIVITY_ALIAS}."clientKey" IN (:...clientKeys)`, { clientKeys })
         }
         if (!isNil(statuses)) {
             queryBuilder.andWhere(`${ACTIVITY_ALIAS}."status" IN (:...statuses)`, { statuses })
@@ -101,6 +105,7 @@ function toPopulatedMcpActivity({ activity, members, projectNames, connectionNam
         created: activity.created,
         status: activity.status,
         toolName: activity.toolName,
+        clientKey: activity.clientKey,
         member: members.get(activity.userId) ?? null,
         projectId: activity.projectId,
         projectName: isNil(activity.projectId) ? null : projectNames.get(activity.projectId) ?? null,
@@ -200,6 +205,7 @@ type ListParams = {
     userId: string | null
     projectIds?: string[]
     memberIds?: string[]
+    clientKeys?: McpOAuthClientKey[]
     statuses?: McpActivityStatus[]
     createdAfter?: string
     createdBefore?: string

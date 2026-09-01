@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { McpActivity } from '@activepieces/shared'
+import { McpActivity, McpOAuthClientKey } from '@activepieces/shared'
 import { createMockConnection } from '../../../helpers/mocks'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
@@ -14,12 +14,13 @@ let ctx: TestContext
 
 const RECORD_SETTLE_MS = 1500
 
-async function callProjectTool(name: string, args: Record<string, unknown>): Promise<void> {
+async function callProjectTool({ name, args, clientKey = null }: { name: string, args: Record<string, unknown>, clientKey?: McpOAuthClientKey | null }): Promise<void> {
     const mcp = await mcpServerService(app!.log).getPopulatedByProjectId(ctx.project.id)
     const server = await mcpServerService(app!.log).buildServer({
         mcp,
         userId: ctx.user.id,
         platformId: ctx.platform.id,
+        clientKey,
     })
 
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
@@ -30,11 +31,15 @@ async function callProjectTool(name: string, args: Record<string, unknown>): Pro
     await client.close()
 }
 
-async function callRunAction({ pieceName, connectionExternalId }: { pieceName?: string, connectionExternalId?: string }): Promise<void> {
-    await callProjectTool('ap_run_action', {
-        pieceName: pieceName ?? 'doesnotexist',
-        actionName: 'do_nothing',
-        ...(connectionExternalId === undefined ? {} : { connectionExternalId }),
+async function callRunAction({ pieceName, connectionExternalId, clientKey }: { pieceName?: string, connectionExternalId?: string, clientKey?: McpOAuthClientKey | null }): Promise<void> {
+    await callProjectTool({
+        name: 'ap_run_action',
+        args: {
+            pieceName: pieceName ?? 'doesnotexist',
+            actionName: 'do_nothing',
+            ...(connectionExternalId === undefined ? {} : { connectionExternalId }),
+        },
+        clientKey: clientKey ?? null,
     })
 }
 
@@ -73,10 +78,26 @@ describe('MCP activity recording', () => {
         expect(rows[0].payloadFileId).not.toBeNull()
     })
 
+    // The client is only knowable from the access token that authenticated the call,
+    // so it has to survive buildServer -> the activity context -> the row.
+    it('names the client that made the call', async () => {
+        await callRunAction({ connectionExternalId: 'conn-external-1', clientKey: 'claude-code' })
+
+        const rows = await findActivityRows()
+        expect(rows[0].clientKey).toBe('claude-code')
+    })
+
+    it('leaves the client null when the token carried none', async () => {
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+
+        const rows = await findActivityRows()
+        expect(rows[0].clientKey).toBeNull()
+    })
+
     // The SDK validates tools/call against inputSchema before execute runs, so a
     // schema-invalid call never reaches the recorder and writes no row.
     it('writes no row when the arguments fail schema validation', async () => {
-        await callProjectTool('ap_run_action', { pieceName: 42, actionName: 'do_nothing' })
+        await callProjectTool({ name: 'ap_run_action', args: { pieceName: 42, actionName: 'do_nothing' } })
 
         expect(await findActivityRows()).toHaveLength(0)
     })
@@ -140,7 +161,7 @@ describe('MCP activity recording', () => {
     })
 
     it('does not record a read-only tool', async () => {
-        await callProjectTool('ap_list_flows', {})
+        await callProjectTool({ name: 'ap_list_flows', args: {} })
 
         expect(await findActivityRows()).toHaveLength(0)
     })
@@ -148,8 +169,8 @@ describe('MCP activity recording', () => {
     // Recording used to follow annotations.readOnlyHint === false, which covered 26 tools.
     // Only ap_run_action reaches a third-party system, so only it earns a row.
     it('does not record the mutating tools it used to', async () => {
-        await callProjectTool('ap_delete_flow', { flowId: 'doesnotexist000000000' })
-        await callProjectTool('ap_create_flow', { flowName: 'built by mcp' })
+        await callProjectTool({ name: 'ap_delete_flow', args: { flowId: 'doesnotexist000000000' } })
+        await callProjectTool({ name: 'ap_create_flow', args: { flowName: 'built by mcp' } })
 
         expect(await findActivityRows()).toHaveLength(0)
     })

@@ -1,6 +1,7 @@
 import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
+import { McpOAuthClientKey } from './mcp-oauth'
 
 export const McpActivityStatus = z.enum(['SUCCEEDED', 'FAILED'])
 
@@ -11,6 +12,7 @@ export const McpActivity = z.object({
     platformId: z.string(),
     projectId: z.string().nullable(),
     userId: z.string(),
+    clientKey: McpOAuthClientKey.nullable(),
     toolName: z.string(),
     status: McpActivityStatus,
     pieceName: z.string().nullable(),
@@ -29,6 +31,7 @@ export const PopulatedMcpActivity = z.object({
     created: z.string(),
     status: McpActivityStatus,
     toolName: z.string(),
+    clientKey: McpOAuthClientKey.nullable(),
     member: UserWithMetaInformation.nullable(),
     projectId: z.string().nullable(),
     projectName: z.string().nullable(),
@@ -56,6 +59,7 @@ export const ListMcpActivityRequestQuery = z.object({
     limit: z.coerce.number().int().min(1).max(100).optional(),
     projectIds: OptionalArrayFromQuery(z.string()),
     memberIds: OptionalArrayFromQuery(ApId),
+    clientKeys: OptionalArrayFromQuery(McpOAuthClientKey),
     statuses: OptionalArrayFromQuery(McpActivityStatus),
     createdAfter: z.string().optional(),
     createdBefore: z.string().optional(),

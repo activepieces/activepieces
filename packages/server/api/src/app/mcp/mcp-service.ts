@@ -1,5 +1,5 @@
 import { apId, isNil, tryCatch } from '@activepieces/core-utils'
-import { FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer } from '@activepieces/shared'
+import { FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpOAuthClientKey, McpServer as McpServerSchema, McpServerType, PopulatedFlow, PopulatedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
@@ -63,11 +63,12 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId, platformId, selectionScope }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, selectionScope?: ProjectSelectionScope | null }) => {
+    buildServer: async ({ mcp, userId, platformId, clientKey, selectionScope }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, selectionScope?: ProjectSelectionScope | null }) => {
         return buildMcpServer({
             mcp,
             userId,
             platformId,
+            clientKey: clientKey ?? null,
             selectionScope: selectionScope ?? null,
             log,
             resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),

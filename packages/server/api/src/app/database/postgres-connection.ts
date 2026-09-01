@@ -433,6 +433,7 @@ import { AddAiProviderStatus1837000000000 } from './migration/postgres/183700000
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
 import { AddMcpActivity1840000000000 } from './migration/postgres/1840000000000-AddMcpActivity'
+import { AddMcpActivityClientKey1841000000000 } from './migration/postgres/1841000000000-AddMcpActivityClientKey'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -881,6 +882,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
         AddFlowProjectIdExternalIdUniqueIndex1839000000000,
         AddMcpActivity1840000000000,
+        AddMcpActivityClientKey1841000000000,
     ]
     return migrations
 }

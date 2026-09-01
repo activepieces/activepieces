@@ -20,6 +20,7 @@ export const mcpActivityController: FastifyPluginAsyncZod = async (app) => {
             userId: await resolveUserIdFilter(req),
             projectIds: req.query.projectIds,
             memberIds: req.query.memberIds,
+            clientKeys: req.query.clientKeys,
             statuses: req.query.statuses,
             createdAfter: req.query.createdAfter,
             createdBefore: req.query.createdBefore,

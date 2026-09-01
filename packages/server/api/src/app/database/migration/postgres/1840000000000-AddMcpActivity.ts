@@ -41,11 +41,23 @@ export class AddMcpActivity1840000000000 implements Migration {
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp_activity"
+            DROP CONSTRAINT IF EXISTS "fk_mcp_activity_platform_id"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "mcp_activity"
             ADD CONSTRAINT "fk_mcp_activity_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp_activity"
+            DROP CONSTRAINT IF EXISTS "fk_mcp_activity_project_id"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "mcp_activity"
             ADD CONSTRAINT "fk_mcp_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "mcp_activity"
+            DROP CONSTRAINT IF EXISTS "fk_mcp_activity_payload_file_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "mcp_activity"

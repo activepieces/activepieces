@@ -4,6 +4,7 @@ import {
     FileType,
     MCP_ACTIVITY_PAYLOAD_MAX_BYTES,
     McpActivity,
+    McpOAuthClientKey,
     McpToolDefinition,
     McpToolResult,
 } from '@activepieces/shared'
@@ -83,6 +84,7 @@ async function record({ resolveContext, toolName, pieceName, actionName, connect
         platformId: activityContext.platformId,
         projectId: activityContext.projectId,
         userId: activityContext.userId,
+        clientKey: activityContext.clientKey,
         toolName,
         status: result.isError === true ? 'FAILED' : 'SUCCEEDED',
         pieceName: pieceName ?? null,
@@ -127,6 +129,7 @@ export type McpActivityContext = {
     platformId: string
     projectId: string | null
     userId: string
+    clientKey: McpOAuthClientKey | null
 }
 
 type WithActivityRecordingParams = {
