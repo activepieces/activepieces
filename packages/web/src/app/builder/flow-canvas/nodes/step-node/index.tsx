@@ -1,4 +1,5 @@
 import {
+  FlowActionType,
   FlowOperationType,
   FlowTriggerType,
   Step,
@@ -151,7 +152,9 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <TriggerWidget isSelected={isSelected} />}
-        <LoopIterationInput stepName={step.name} />
+        {step.type === FlowActionType.LOOP_ON_ITEMS && (
+          <LoopIterationInput stepName={step.name} />
+        )}
         <ApStepNodeStatusInRun stepName={step.name} />
         <ApStepNodeSkippedStatus stepName={step.name} />
         <ApStepNodeStatusInDraft stepName={step.name} />

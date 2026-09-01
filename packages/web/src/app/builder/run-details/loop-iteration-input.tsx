@@ -3,7 +3,6 @@ import {
   FlowActionType,
   StepOutput,
   StepOutputStatus,
-  flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -16,26 +15,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs';
 import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { useStepOutputInRun } from './use-batch-logs';
+
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
-    useBuilderStateContext((state) => [
-      state.setLoopIndex,
-      state.loopsIndexes[stepName] ?? 0,
-      state.run,
-      state.flowVersion,
-      state.loopsIndexes,
-      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
-    ]);
-  const stepOutput = useMemo(() => {
-    return run && run.steps
-      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
-      : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+  const [setLoopIndex, currentIndex] = useBuilderStateContext((state) => [
+    state.setLoopIndex,
+    state.loopsIndexes[stepName] ?? 0,
+  ]);
+  const { stepOutput, steps } = useStepOutputInRun(stepName);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -69,10 +60,10 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
       1,
       Math.min(parseInt(value) ?? 1, totalIterations),
     );
-    setLoopIndex(stepName, parsedValue - 1);
+    setLoopIndex({ stepName, index: parsedValue - 1, steps: steps ?? {} });
   }
 
-  if (isNil(run) || stepType !== FlowActionType.LOOP_ON_ITEMS) {
+  if (totalIterations === 0) {
     return <></>;
   }
 
@@ -135,7 +126,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setLoopIndex(stepName, index);
+                      setLoopIndex({ stepName, index, steps: steps ?? {} });
                     }}
                     className={cn(
                       'size-2.5 shrink-0 rounded-full border border-background transition-transform hover:scale-125',

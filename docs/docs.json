@@ -121,6 +121,7 @@
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
+                     "flows/process-in-batches",
                      "flows/project-variables",
                      "flows/publishing-flows",
                      "flows/debugging-runs",
