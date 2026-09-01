@@ -16,7 +16,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { agentsApi } from '../api/agents';
 
 const AGENTS_KEY = 'agents';
-const AGENT_TEMPLATES_KEY = 'agent-templates';
 
 export const useAgentsEnabled = (): boolean => {
   const { data: agentsEnabled } = flagsHooks.useFlag<boolean>(
@@ -56,12 +55,6 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id],
       queryFn: () => agentsApi.get(id),
       enabled,
-    }),
-  useAgentTemplates: () =>
-    useQuery({
-      queryKey: [AGENT_TEMPLATES_KEY],
-      queryFn: () => agentsApi.templates(),
-      staleTime: Infinity,
     }),
 };
 
