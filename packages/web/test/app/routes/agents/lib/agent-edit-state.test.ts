@@ -13,15 +13,18 @@ const config = (over: Record<string, unknown> = {}) => ({
 
 describe('sameConfig', () => {
   it('treats an identical shape as unchanged', () => {
-    expect(
-      agentEditState.sameConfig({ left: config(), right: config() }),
-    ).toBe(true);
+    expect(agentEditState.sameConfig({ left: config(), right: config() })).toBe(
+      true,
+    );
   });
 
   it.each([
     ['a changed instruction', { draft: { instructions: 'Other.' } }],
     ['a changed name', { displayName: 'Renamed' }],
-    ['a changed model', { draft: { instructions: 'Sort it.', modelName: 'x' } }],
+    [
+      'a changed model',
+      { draft: { instructions: 'Sort it.', modelName: 'x' } },
+    ],
   ])('sees %s as changed', (_label, over) => {
     expect(
       agentEditState.sameConfig({ left: config(), right: config(over) }),
@@ -45,7 +48,10 @@ describe('sameConfig', () => {
 
   it('is order-sensitive on arrays, because tool order is meaningful', () => {
     expect(
-      agentEditState.sameConfig({ left: { tools: ['a', 'b'] }, right: { tools: ['b', 'a'] } }),
+      agentEditState.sameConfig({
+        left: { tools: ['a', 'b'] },
+        right: { tools: ['b', 'a'] },
+      }),
     ).toBe(false);
   });
 });
@@ -156,7 +162,11 @@ describe('modeIntent', () => {
     'never stages when moving to %s, because only test needs the draft persisted',
     (next) => {
       expect(
-        agentEditState.modeIntent({ next, unsavedTyping: true, blockedReason: null }),
+        agentEditState.modeIntent({
+          next,
+          unsavedTyping: true,
+          blockedReason: null,
+        }),
       ).toBe('switch');
     },
   );
@@ -206,7 +216,9 @@ describe('createWriteLock', () => {
 
   it('admits exactly one of many simultaneous writers', () => {
     const lock = agentEditState.createWriteLock();
-    const admitted = Array.from({ length: 25 }, () => lock.claim()).filter(Boolean);
+    const admitted = Array.from({ length: 25 }, () => lock.claim()).filter(
+      Boolean,
+    );
     expect(admitted).toHaveLength(1);
   });
 });
@@ -214,25 +226,37 @@ describe('createWriteLock', () => {
 describe('leaveGuard', () => {
   it('stays closed when nothing is trying to leave', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: false }),
+      agentEditState.leaveGuard({
+        blockerState: 'unblocked',
+        exitRequested: false,
+      }),
     ).toStrictEqual({ open: false, discardAction: 'none' });
   });
 
   it('opens for a blocked router navigation and lets the router proceed', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: false }),
+      agentEditState.leaveGuard({
+        blockerState: 'blocked',
+        exitRequested: false,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'proceed' });
   });
 
   it('opens for the back arrow and exits in-app, since no navigation is pending', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'unblocked', exitRequested: true }),
+      agentEditState.leaveGuard({
+        blockerState: 'unblocked',
+        exitRequested: true,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'exit' });
   });
 
   it('prefers the router when both are pending, so the queued navigation is not dropped', () => {
     expect(
-      agentEditState.leaveGuard({ blockerState: 'blocked', exitRequested: true }),
+      agentEditState.leaveGuard({
+        blockerState: 'blocked',
+        exitRequested: true,
+      }),
     ).toStrictEqual({ open: true, discardAction: 'proceed' });
   });
 
@@ -244,4 +268,49 @@ describe('leaveGuard', () => {
       ).toBe(false);
     },
   );
+});
+
+describe('agentEditState.adoptsPickedModel', () => {
+  const withModel = (modelName: string | null) => ({
+    draft: { provider: 'openai', modelName, providerConfigId: 'cfg' },
+  });
+
+  it('adopts the model the selector picked for an agent that had none', () => {
+    expect(
+      agentEditState.adoptsPickedModel({
+        values: withModel('gpt-5'),
+        syncedDraft: {
+          draft: { provider: null, modelName: null, providerConfigId: null },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('leaves a model the person chose themselves alone, so Save still warns on exit', () => {
+    expect(
+      agentEditState.adoptsPickedModel({
+        values: withModel('gpt-5'),
+        syncedDraft: withModel('claude-sonnet-4-5'),
+      }),
+    ).toBe(false);
+  });
+
+  it("refuses when anything else changed too, since that edit is the person's", () => {
+    expect(
+      agentEditState.adoptsPickedModel({
+        values: {
+          ...withModel('gpt-5'),
+          draft: { ...withModel('gpt-5').draft, instructions: 'new' },
+        },
+        syncedDraft: {
+          draft: {
+            provider: null,
+            modelName: null,
+            providerConfigId: null,
+            instructions: 'old',
+          },
+        },
+      }),
+    ).toBe(false);
+  });
 });

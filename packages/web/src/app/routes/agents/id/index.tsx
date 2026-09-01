@@ -2,6 +2,7 @@ import { isNil, Permission, unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
+  ApFlagId,
   AgentIcon,
   AgentKnowledgeBaseTool,
   agentUtils,
@@ -25,6 +26,7 @@ import {
   Loader2,
   Pencil,
   Rocket,
+  SearchX,
   Settings2,
   Sparkles,
   Trash2,
@@ -45,6 +47,13 @@ import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-too
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -86,6 +95,7 @@ import {
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -353,6 +363,9 @@ const ConfigureFields = ({
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
   ).length;
+  const { data: knowledgeAvailable } = flagsHooks.useFlag<boolean>(
+    ApFlagId.PGVECTOR_AVAILABLE,
+  );
   const toolCount = unique(
     tools
       .filter((tool) => tool.type !== AgentToolType.KNOWLEDGE_BASE)
@@ -376,6 +389,9 @@ const ConfigureFields = ({
                 {...field}
                 minRows={4}
                 maxRows={12}
+                placeholder={t(
+                  'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
+                )}
                 className="rounded-[10px] px-[13px] py-3 text-[13px] leading-[155%]"
               />
             </FormControl>
@@ -405,37 +421,39 @@ const ConfigureFields = ({
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="draft.tools"
-        render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
-            <PanelSectionLabel
-              label={t('Knowledge')}
-              meta={
-                knowledgeCount > 0
-                  ? t('knowledgeSourcesCount', { count: knowledgeCount })
-                  : undefined
-              }
-            />
-            <KnowledgeBaseSection
-              layout="rows"
-              tools={tools.filter(
-                (tool): tool is AgentKnowledgeBaseTool =>
-                  tool.type === AgentToolType.KNOWLEDGE_BASE,
-              )}
-              allTools={tools}
-              removeTool={(toolName: string) =>
-                field.onChange(
-                  tools.filter((tool) => tool.toolName !== toolName),
-                )
-              }
-              onToolsUpdate={field.onChange}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-            />
-          </FormItem>
-        )}
-      />
+      {knowledgeAvailable !== false && (
+        <FormField
+          control={form.control}
+          name="draft.tools"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-[9px]">
+              <PanelSectionLabel
+                label={t('Knowledge')}
+                meta={
+                  knowledgeCount > 0
+                    ? t('knowledgeSourcesCount', { count: knowledgeCount })
+                    : undefined
+                }
+              />
+              <KnowledgeBaseSection
+                layout="rows"
+                tools={tools.filter(
+                  (tool): tool is AgentKnowledgeBaseTool =>
+                    tool.type === AgentToolType.KNOWLEDGE_BASE,
+                )}
+                allTools={tools}
+                removeTool={(toolName: string) =>
+                  field.onChange(
+                    tools.filter((tool) => tool.toolName !== toolName),
+                  )
+                }
+                onToolsUpdate={field.onChange}
+                selectedProvider={form.watch('draft.provider') ?? undefined}
+              />
+            </FormItem>
+          )}
+        />
+      )}
       <FormItem className="flex flex-col gap-[9px]">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
@@ -505,6 +523,11 @@ const ConfigureFields = ({
   );
 };
 
+const describeAgent = (description?: string | null): string =>
+  isNil(description) || description.trim().length === 0
+    ? t('Add a description')
+    : description;
+
 const PanelSectionLabel = ({
   label,
   meta,
@@ -515,7 +538,10 @@ const PanelSectionLabel = ({
   required?: boolean;
 }) => (
   <div className="flex items-baseline gap-2">
-    <FormLabel showRequiredIndicator={required} className="grow text-[13px]">
+    <FormLabel
+      showRequiredIndicator={required}
+      className="grow text-[13px] font-semibold"
+    >
       {label}
     </FormLabel>
     {meta !== undefined && (
@@ -686,6 +712,14 @@ const AgentEditScreen = ({
     setSyncedDraft(fromServer);
   }, [agent, syncedDraft, unsavedTyping, form]);
 
+  // The model selector picks a default the moment it mounts, so a screen nobody has touched would
+  // otherwise arm the leave guard. Adopting that pick as the baseline keeps Save armed, since that
+  // compares against what is live, while the guard only speaks for changes a person made.
+  useEffect(() => {
+    if (!agentEditState.adoptsPickedModel({ values, syncedDraft })) return;
+    setSyncedDraft(values);
+  }, [values, syncedDraft]);
+
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {
       type: 'manual',
@@ -796,7 +830,7 @@ const AgentEditScreen = ({
                 icon={form.watch('icon')}
                 color={form.watch('color')}
               />
-              <span className="absolute -bottom-1 -end-1 flex size-[18px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="absolute -bottom-1 -end-1 flex size-[18px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground/70 transition-colors group-hover:text-foreground">
                 <Pencil size={9} />
               </span>
             </button>
@@ -805,20 +839,35 @@ const AgentEditScreen = ({
             <AgentIdentityPopover form={form}>
               <button
                 type="button"
+                aria-label={t('Edit name and appearance')}
                 className="truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {form.watch('displayName')}
               </button>
             </AgentIdentityPopover>
-            <span className="truncate text-[13px] leading-4 text-muted-foreground">
-              {HEADER_STATUS_COPY[
-                agentEditState.headerStatus({
-                  needsModel: formNeedsModel,
-                  justLaunched,
-                  live,
-                  hasChanges,
-                })
-              ]()}
+            <span className="flex min-w-0 items-center gap-2 text-[13px] leading-4 text-muted-foreground">
+              <span className="truncate">
+                {HEADER_STATUS_COPY[
+                  agentEditState.headerStatus({
+                    needsModel: formNeedsModel,
+                    justLaunched,
+                    live,
+                    hasChanges,
+                  })
+                ]()}
+              </span>
+              <span aria-hidden className="shrink-0 text-border">
+                &middot;
+              </span>
+              <AgentIdentityPopover form={form}>
+                <button
+                  type="button"
+                  aria-label={t('Edit name and appearance')}
+                  className="min-w-0 truncate rounded text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {describeAgent(form.watch('description'))}
+                </button>
+              </AgentIdentityPopover>
             </span>
           </div>
           <Button
@@ -1005,6 +1054,7 @@ const EditWithAIPane = ({
 );
 
 const AgentEditorContent = () => {
+  const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
   const queryClient = useQueryClient();
   const agentsAvailable = useAgentsAvailable();
@@ -1035,13 +1085,42 @@ const AgentEditorContent = () => {
     setFreshConversations((count) => count + 1);
     writeConversationParam(null);
   };
-  const { data: agent, isLoading } = agentsQueries.useAgent({
+  const {
+    data: agent,
+    isLoading,
+    isError,
+  } = agentsQueries.useAgent({
     id: agentId ?? '',
     enabled: agentId !== undefined && agentsAvailable,
   });
 
-  if (isLoading || agent === undefined) {
+  if (isLoading) {
     return <AgentEditorSkeleton />;
+  }
+
+  if (agent === undefined) {
+    return (
+      <Empty className="h-full">
+        <EmptyHeader className="max-w-md">
+          <EmptyMedia variant="icon">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyTitle>
+            {isError
+              ? t('That agent could not be loaded')
+              : t('That agent is gone')}
+          </EmptyTitle>
+          <EmptyDescription>
+            {isError
+              ? t('It may have been deleted, or the connection dropped.')
+              : t('It may have been deleted by someone else on the project.')}
+          </EmptyDescription>
+        </EmptyHeader>
+        <Button variant="outline" onClick={() => navigate('/agents')}>
+          {t('Back to agents')}
+        </Button>
+      </Empty>
+    );
   }
 
   const requirements = requirementsFor(agent);

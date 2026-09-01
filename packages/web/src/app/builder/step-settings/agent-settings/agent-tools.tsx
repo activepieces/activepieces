@@ -118,7 +118,9 @@ export const AgentTools = ({
             </Accordion>
             <AddToolDropdown disabled={disabled} align="start">
               {asRows ? (
-                <AddRow label={t('Add tool')} disabled={disabled} />
+                <div className="mt-[7px]">
+                  <AddRow label={t('Add tool')} disabled={disabled} />
+                </div>
               ) : (
                 <Button variant="outline" className="mt-2">
                   <Plus className="size-4 mr-2" />

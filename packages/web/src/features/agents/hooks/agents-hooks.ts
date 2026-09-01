@@ -63,6 +63,7 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
+      meta: { showErrorDialog: !includeUsage, loadSubsetOptions: {} },
     }),
 };
 
