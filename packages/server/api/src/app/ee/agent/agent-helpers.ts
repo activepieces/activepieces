@@ -81,17 +81,7 @@ function runScopeOrThrow({ projectId }: { projectId: string | null }): ProviderS
 // The project a chat turn runs in: the conversation's own if the user still reaches it, else the
 // first they can see. Admission and the run both read it, so a message is accepted against the
 // same project whose credentials will serve it.
-function selectRunProject({ conversationProjectId, agentProjectId, projects }: { conversationProjectId: string | null, agentProjectId?: string | null, projects: Project[] }): string | null {
-    // A saved agent owns the project its turns run in, and a conversation only records where it was
-    // held. The two can disagree after the agent moves, so the agent wins wherever the caller can
-    // still reach that project. Never widen: an agent readable across the platform must not pull a
-    // run into a project the caller is not in.
-    const agentHome = !isNil(agentProjectId) && projects.some((project) => project.id === agentProjectId)
-        ? agentProjectId
-        : null
-    if (!isNil(agentHome)) {
-        return agentHome
-    }
+function selectRunProject({ conversationProjectId, projects }: { conversationProjectId: string | null, projects: Project[] }): string | null {
     const stillReachable = !isNil(conversationProjectId) && projects.some((project) => project.id === conversationProjectId)
     return stillReachable ? conversationProjectId : projects[0]?.id ?? null
 }

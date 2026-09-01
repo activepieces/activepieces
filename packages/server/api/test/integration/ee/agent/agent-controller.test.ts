@@ -1,5 +1,5 @@
 import { AIProviderName, apId, Permission, RoleType } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentToolType, KnowledgeBaseSourceType, AgentVisibility, ColorName, DefaultProjectRole, FlowStatus, FlowVersionState } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { agentConversationService } from '../../../../src/app/ee/agent/agent-conversation-service'
@@ -762,7 +762,9 @@ describe('moving an agent to another project', () => {
         expect(preview.statusCode).toBe(StatusCodes.OK)
         expect(preview.json().blockedByPublishedFlows.total).toBe(1)
         expect(preview.json().blockedByPublishedFlows.names).toStrictEqual(['Nightly sweep'])
-        expect(preview.json().toolsLosingConnection).toStrictEqual([])
+        expect(preview.json().mayCreateAgentsThere).toBe(true)
+        expect(preview.json().toolsThatStopWorking).toStrictEqual([])
+        expect(preview.json().membersLosingAccess).toBe(0)
     })
 
     it('keeps the agent and its conversations together when two moves race', async () => {
@@ -852,6 +854,48 @@ describe('moving an agent to another project', () => {
         const row = await db.findOneByOrFail('agent', { id: agent.id }) as { displayName: string, projectId: string }
         expect(row.displayName).toBe('Before the move')
         expect(row.projectId).toBe(target.id)
+    })
+
+    it('names every kind of tool that would stop working, not only connections', async () => {
+        const ctx = await context()
+        const target = await secondProjectOf(ctx)
+        const agent = await createAgent(ctx, {
+            draft: {
+                ...agentBody(ctx.project.id).draft,
+                tools: [
+                    {
+                        type: AgentToolType.FLOW,
+                        toolName: 'run_the_intake_flow',
+                        externalFlowId: apId(),
+                        flowDisplayName: 'Client intake',
+                    },
+                    {
+                        type: AgentToolType.KNOWLEDGE_BASE,
+                        toolName: 'search_the_handbook',
+                        sourceType: KnowledgeBaseSourceType.FILE,
+                        sourceId: apId(),
+                        sourceName: 'Handbook.pdf',
+                    },
+                ],
+            },
+        })
+
+        const preview = (await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: target.id })).json()
+
+        expect(preview.toolsThatStopWorking).toStrictEqual([
+            { kind: 'flow', label: 'Client intake' },
+            { kind: 'knowledge', label: 'Handbook.pdf' },
+        ])
+    })
+
+    it('tells someone who cannot create agents there, and reveals nothing about that project', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const stranger = await context()
+
+        const preview = await ctx.get(`/v1/agents/${agent.id}/move-preview`, { projectId: stranger.project.id })
+
+        expect(preview.statusCode).toBe(StatusCodes.FORBIDDEN)
     })
 
     it('refuses a move once the agent is no longer in the project it was asked from', async () => {

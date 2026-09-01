@@ -133,10 +133,22 @@ const MoveAgentRequest = z.object({
     projectId: ApId,
 })
 
+enum AgentMoveLossKind {
+    CONNECTION = 'connection',
+    FLOW = 'flow',
+    KNOWLEDGE = 'knowledge',
+}
+
+const AgentMoveLoss = z.object({
+    kind: z.enum(AgentMoveLossKind),
+    label: z.string(),
+})
+
 const AgentMovePreview = z.object({
-    blockedByPublishedFlows: z.object({ total: z.number(), names: z.array(z.string()) }),
-    toolsLosingConnection: z.array(z.string()),
-    membersLosingAccess: z.number(),
+    blockedByPublishedFlows: AgentUsage,
+    mayCreateAgentsThere: z.boolean(),
+    toolsThatStopWorking: z.array(AgentMoveLoss),
+    membersLosingAccess: z.number().int().nonnegative(),
 })
 
 const ListAgentsRequest = z.object({
@@ -153,6 +165,8 @@ const agentUtils = {
 
 export {
     AgentListSort,
+    AgentMoveLoss,
+    AgentMoveLossKind,
     AgentMovePreview,
     MoveAgentRequest,
     MAX_AGENT_SEARCH_LENGTH,
@@ -195,6 +209,7 @@ export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
+export type AgentMoveLoss = z.infer<typeof AgentMoveLoss>
 export type AgentMovePreview = z.infer<typeof AgentMovePreview>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>

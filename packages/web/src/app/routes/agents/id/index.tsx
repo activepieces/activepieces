@@ -95,7 +95,11 @@ import {
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
 import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
-import { getProjectName, projectCollectionUtils } from '@/features/projects';
+import {
+  ApProjectDisplay,
+  getProjectName,
+  projectCollectionUtils,
+} from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -197,14 +201,17 @@ const AgentEditorSkeleton = () => (
 
 const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   const [moving, setMoving] = useState(false);
-  const navigate = useNavigate();
   const { checkAccess } = useAuthorization(agent.projectId);
   const { data: allProjects } = projectCollectionUtils.useAll();
   const home = (allProjects ?? []).find(
     (project) => project.id === agent.projectId,
   );
 
-  if (!checkAccess(Permission.WRITE_AGENT) || (allProjects ?? []).length < 2) {
+  if (
+    !checkAccess(Permission.WRITE_AGENT) ||
+    (allProjects ?? []).length < 2 ||
+    home === undefined
+  ) {
     return null;
   }
 
@@ -212,9 +219,12 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
     <FormItem className="flex flex-col gap-[9px]">
       <PanelSectionLabel label={t('Project')} />
       <div className="flex items-center justify-between gap-3">
-        <span className="truncate text-[13px] leading-4 text-muted-foreground">
-          {home === undefined ? t('This project') : getProjectName(home)}
-        </span>
+        <ApProjectDisplay
+          title={getProjectName(home)}
+          icon={home.icon}
+          projectType={home.type}
+          titleClassName="text-[13px] leading-4 text-muted-foreground"
+        />
         <Button
           type="button"
           variant="outline"
@@ -229,9 +239,12 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
         open={moving}
         onOpenChange={setMoving}
         onMoved={(projectId) =>
-          navigate(`/projects/${projectId}/agents/${agent.id}`, {
-            replace: true,
-          })
+          // A full jump on purpose: every project-scoped query in cache — connections, flows,
+          // knowledge — belongs to the project the agent just left.
+          projectCollectionUtils.setCurrentProject(
+            projectId,
+            `/projects/${agent.projectId}/agents/${agent.id}`,
+          )
         }
       />
     </FormItem>

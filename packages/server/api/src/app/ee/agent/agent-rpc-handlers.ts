@@ -130,10 +130,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         // "No project selected" on the first data tool. The chat MCP server resolves its project
         // from conversation.projectId per request, so persist it below (the user can switch via the
         // dropdown / ap_select_project, which overwrites this).
-        const agentHomeProjectId = conversation.source === AgentRunSource.AGENT && !isNil(conversation.agentId)
-            ? (await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })).projectId
-            : null
-        const selectedProjectId = agentHelpers.selectRunProject({ conversationProjectId: conversation.projectId ?? null, agentProjectId: agentHomeProjectId, projects: scopedProjects })
+        const selectedProjectId = agentHelpers.selectRunProject({ conversationProjectId: conversation.projectId ?? null, projects: scopedProjects })
 
         // Settled before the provider is resolved: the turn runs inside this project, so the
         // credential has to be chosen for it. Resolving earlier, while the project was still

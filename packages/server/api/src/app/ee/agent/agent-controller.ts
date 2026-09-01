@@ -118,13 +118,10 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
     })
 
     app.get('/:id/move-preview', MovePreviewRoute, async (request): Promise<AgentMovePreview> => {
-        const userId = await resolveUserId(request)
-        const service = agentService(request.log)
-        const agent = await service.getOneOrThrow({ id: request.params.id, projectId: request.projectId, userId })
-        return service.movePreview({
-            agent,
+        return agentService(request.log).movePreview({
+            id: request.params.id,
             projectId: request.projectId,
-            userId,
+            userId: await resolveUserId(request),
             targetProjectId: request.query.projectId,
             platformId: request.principal.platform.id,
         })
