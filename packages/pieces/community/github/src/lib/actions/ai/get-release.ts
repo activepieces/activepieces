@@ -8,6 +8,7 @@ import { releaseBodyOutputSchema } from '../../output-schemas';
 export const githubGetReleaseAction = createAction({
   auth: githubAuth,
   name: 'get_release',
+  classification: 'READ',
   displayName: 'Get Release (Agent)',
   description: 'Fetches a single release by its id.',
   audience: 'ai',

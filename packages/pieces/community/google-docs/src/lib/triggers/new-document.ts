@@ -66,6 +66,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof googleDocsAuth>,
 export const newDocumentTrigger = createTrigger({
 	auth: googleDocsAuth,
 	name: 'new-document',
+	classification: 'READ',
 	displayName: 'New Document',
 	description: 'Triggers when a new document is added to a specific folder(optional).',
 	aiMetadata: {

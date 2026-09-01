@@ -40,6 +40,7 @@ const polling: Polling<
 export const newTaskTrigger = createTrigger({
   auth: googleTasksAuth,
   name: 'new_task',
+  classification: 'READ',
   displayName: 'New Task',
   description: 'Triggers when a task is created',
   aiMetadata: {

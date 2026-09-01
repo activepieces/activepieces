@@ -9,6 +9,7 @@ import { ticketFormDropdown } from '../common/props';
 export const ticketStatusChanged = createTrigger({
   auth: aidbaseAuth,
   name: 'ticket_status_changed',
+  classification: 'READ',
   displayName: 'Ticket Status Changed',
   description: 'Fires when a ticket’s overall status changes.',
   aiMetadata: {

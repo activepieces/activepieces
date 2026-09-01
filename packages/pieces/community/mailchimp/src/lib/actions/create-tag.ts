@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const createTag = createAction({
   auth: mailchimpAuth,
   name: 'create_tag',
+  classification: 'WRITE',
   displayName: 'Create Tag',
   description: 'Create a new tag in a Mailchimp audience',
   audience: 'both',

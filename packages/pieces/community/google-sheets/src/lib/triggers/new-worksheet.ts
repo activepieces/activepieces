@@ -9,6 +9,7 @@ import { newWorksheetTriggerOutputSchema } from '../output-schemas';
 export const newWorksheetTrigger = createTrigger({
 	auth: googleSheetsAuth,
 	name: 'new-worksheet',
+	classification: 'READ',
 	displayName: 'New Worksheet',
 	description: 'Triggers when a worksheet is created in a spreadsheet.',
 	aiMetadata: {

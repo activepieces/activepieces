@@ -1,5 +1,6 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
+  AgentMessageSource,
   type AgentFeedbackReason,
   type AgentHistoryMessage,
   type PersistedAgentMessage,
@@ -65,15 +66,17 @@ async function sendMessage({
   content,
   runId,
   files,
+  messageSource,
 }: {
   conversationId: string;
   content: string;
   runId?: string;
   files?: Array<{ name: string; mimeType: string; data: string }>;
+  messageSource?: AgentMessageSource;
 }): Promise<{ conversationId: string; runId?: string }> {
   return api.post<{ conversationId: string; runId?: string }>(
     `/v1/agents/conversations/${conversationId}/messages`,
-    { content, runId, files },
+    { content, runId, files, messageSource },
   );
 }
 
@@ -121,7 +124,7 @@ async function getPickerConnections({
 }: {
   conversationId: string;
   pieceName: string;
-}): Promise<ConnectionOption[]> {
+}): Promise<{ connections: ConnectionOption[]; reconnectOnly: boolean }> {
   return api.get(`/v1/agents/conversations/${conversationId}/connections`, {
     pieceName,
   });

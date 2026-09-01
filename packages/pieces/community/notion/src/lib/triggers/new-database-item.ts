@@ -18,6 +18,7 @@ import { newDatabaseItemTriggerOutputSchema } from '../output-schemas';
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,
   name: 'new_database_item',
+  classification: 'READ',
   displayName: 'New Database Item',
   description: 'Triggers when an item is added to a database.',
   aiMetadata: {

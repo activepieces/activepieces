@@ -8,6 +8,7 @@ import { accountId, fromAddress } from '../common/props';
 export const sendEmailAction = createAction({
 	auth: zohoMailAuth,
 	name: 'send_email',
+	classification: 'WRITE',
 	displayName: 'Send Email',
 	description: 'Sends an email.',
 	audience: 'both',

@@ -18,6 +18,7 @@ import { sendMediaActionOutputSchema } from '../output-schemas';
 export const telegramSendMediaAction = createAction({
   auth: telegramBotAuth,
   name: 'send_media',
+  classification: 'WRITE',
   description: 'Send a media message (photo, video, sticker, GIF) through a Telegram bot',
   audience: 'human',
   aiMetadata: { description: 'Sends a single photo, video, sticker, or animated GIF to a Telegram chat, supplied either as an uploaded file or a previously uploaded Telegram file_id. Use when delivering one rich-media item with an optional caption; for multiple items in one album use Send Media Group. Not idempotent: each call posts a new message.', idempotent: false },

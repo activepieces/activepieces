@@ -98,6 +98,22 @@ function cleanMcpToolName(raw: string): string {
   return formatUtils.convertEnumToHumanReadable(mcpMatch[1]);
 }
 
+function labelForRawToolName(raw: string, variant: 'active' | 'done'): string {
+  if (raw.startsWith('mcp__')) {
+    return cleanMcpToolName(raw);
+  }
+  const generated = /^(.+)_[a-z0-9]{6}_mcp$/.exec(raw);
+  if (generated) {
+    return formatUtils.convertEnumToHumanReadable(
+      generated[1].replace(/-/g, '_').replace(/^(.+)_\1(?=_|$)/, '$1'),
+    );
+  }
+  return (
+    TOOL_LABELS[raw]?.[variant] ??
+    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
+  );
+}
+
 function formatToolName({
   part,
   includeContext = true,
@@ -112,14 +128,7 @@ function formatToolName({
   }
 
   const raw = chatPartUtils.getToolPartName(part);
-
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-
-  const baseName =
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''));
+  const baseName = labelForRawToolName(raw, 'active');
 
   if (!includeContext) return baseName;
   const context = extractToolContext({ input });
@@ -357,13 +366,7 @@ function formatToolActiveTitle({ part }: { part: AnyToolPart }): string {
     return input.activeTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.active ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'active');
 }
 
 function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
@@ -372,13 +375,7 @@ function formatToolDoneTitle({ part }: { part: AnyToolPart }): string {
     return input.doneTitle;
   }
   const raw = chatPartUtils.getToolPartName(part);
-  if (raw.startsWith('mcp__')) {
-    return cleanMcpToolName(raw);
-  }
-  return (
-    TOOL_LABELS[raw]?.done ??
-    formatUtils.convertEnumToHumanReadable(raw.replace(/^ap_/, ''))
-  );
+  return labelForRawToolName(raw, 'done');
 }
 
 function extractReceiptsFromHistory(
@@ -570,8 +567,19 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
+function reopensSameConversation({
+  current,
+  next,
+}: {
+  current: string | null;
+  next: string;
+}): boolean {
+  return current === next;
+}
+
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
+  reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>
     formatToolName({ part }),

@@ -5,6 +5,7 @@ import { emailInboxDropdown } from '../common/props';
 export const emailReceived = createTrigger({
   auth: aidbaseAuth,
   name: 'email_received',
+  classification: 'READ',
   displayName: 'Email Received',
   description: 'Fires when a new email is received in an Aidbase inbox.',
   aiMetadata: {

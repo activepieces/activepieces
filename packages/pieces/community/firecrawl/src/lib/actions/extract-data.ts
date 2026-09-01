@@ -7,6 +7,7 @@ import { extractDataActionOutputSchema } from '../output-schemas';
 export const extractData = createAction({
   auth: firecrawlAuth,
   name: 'extract_data',
+  classification: 'READ',
   displayName: 'Extract Data',
   description: 'Extract structured data from one or more known URLs using AI.',
   audience: 'ai',

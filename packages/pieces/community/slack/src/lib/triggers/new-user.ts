@@ -56,6 +56,7 @@ const sampleData = {
 export const newUserTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-user',
+	classification: 'READ',
 	displayName: 'New User',
 	description: 'Triggers when a new user is created / first joins your org.',
 	aiMetadata: {

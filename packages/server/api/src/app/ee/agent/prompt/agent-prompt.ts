@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { Project, ProjectType } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { Agent, AgentConfig, AgentToolType, Project, ProjectType } from '@activepieces/shared'
 
 function loadPromptTemplate(filename: string): string {
     return readFileSync(path.resolve(`packages/server/api/src/assets/prompts/${filename}`), 'utf8')
@@ -10,6 +11,7 @@ const GUIDE_TOPICS = ['build_flow', 'one_time_task', 'error_handling', 'http_fal
 
 const PROMPT_TEMPLATES = {
     system: loadPromptTemplate('chat-system-prompt.md'),
+    builder: loadPromptTemplate('agent-builder-prompt.md'),
     projectSelected: loadPromptTemplate('chat-project-context-selected.md'),
     noProject: loadPromptTemplate('chat-project-context-none.md'),
 }
@@ -72,8 +74,31 @@ function buildAgentSystemPrompt({ projects, currentProjectId, frontendUrl, templ
         .replaceAll('{{FRONTEND_URL}}', frontendUrl)
 }
 
+function buildBuilderSystemPrompt({ agent }: { agent: Agent | null }): string {
+    const state = isNil(agent)
+        ? 'No agent yet. Create one as soon as you know what job it should do, then keep changing that one.'
+        : [
+            `Agent: ${agent.displayName} (id ${agent.id})`,
+            `Description: ${agent.description ?? 'none yet'}`,
+            `Instructions: ${agent.draft.instructions.length > 0 ? agent.draft.instructions : 'none yet'}`,
+            `Tools: ${describeTools(agent.draft.tools)}`,
+            'Your changes land as pending edits the person reviews. They go live when the person hits Save and go live, which is the only way anything is published, so say the change is ready for them to review rather than telling them to publish it.',
+        ].join('\n')
+    return PROMPT_TEMPLATES.builder.replace('{{AGENT_STATE}}', state)
+}
+
+function describeTools(tools: AgentConfig['tools']): string {
+    if (tools.length === 0) {
+        return 'none'
+    }
+    return tools.map((tool) => tool.type === AgentToolType.PIECE
+        ? `${tool.pieceMetadata.actionName} (${tool.pieceMetadata.pieceName})`
+        : tool.toolName).join(', ')
+}
+
 export const agentPrompt = {
     buildSystemPrompt: buildAgentSystemPrompt,
+    buildBuilderSystemPrompt,
     guides: GUIDES,
     projectDisplayName,
     sources: {
