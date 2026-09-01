@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 import { getOwnerByIdOutputSchema } from '../output-schemas';
 
@@ -20,7 +20,7 @@ export const getOwnerByIdAction = createAction({
 	},
 	async run(context) {
 		const { ownerId } = context.propsValue;
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const response = await client.crm.owners.ownersApi.getById(Number(ownerId));
 		return response;

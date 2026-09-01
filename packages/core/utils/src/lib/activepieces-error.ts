@@ -68,6 +68,7 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
+    | FlowExternalIdAlreadyExistsParams
     | SandboxMemoryIssueParams
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
@@ -426,6 +427,10 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
+export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -523,6 +528,7 @@ export enum ErrorCode {
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
+    FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',

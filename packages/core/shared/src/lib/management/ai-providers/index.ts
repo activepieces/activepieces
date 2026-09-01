@@ -1,4 +1,4 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export enum AIProviderModelType {
@@ -64,6 +64,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.record(z.string(), z.string()).optional(),
+    apiStyle: z.enum(['chat', 'responses']).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -258,6 +259,9 @@ export const AIProviderWithoutSensitiveData = z.object({
     modelIds: z.array(z.string()),
     projectScope: AiProviderProjectScope,
     projectIds: z.array(z.string()),
+    status: AiProviderKeyStatus,
+    statusReason: z.string().nullable(),
+    statusUpdated: z.string().nullable(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
 

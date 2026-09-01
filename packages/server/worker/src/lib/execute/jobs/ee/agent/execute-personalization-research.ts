@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { AIProviderName, isNil, slugify, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, safeHttp } from '@activepieces/server-utils'
 import { CHAT_SUGGESTION_CARD_IMAGE_IDS, EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { generateObject, generateText, LanguageModel, stepCountIs } from 'ai'
@@ -745,10 +745,6 @@ function editDistance(a: string, b: string): number {
         }
     }
     return previous[b.length]
-}
-
-function slugify(value: string): string {
-    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
 function stripControlChars(value: string): string {

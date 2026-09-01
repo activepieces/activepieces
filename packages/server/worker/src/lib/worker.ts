@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
-import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -79,6 +79,9 @@ const SERVER_PING_TIMEOUT_MS = 5_000
 const MACHINE_INFO_TIMEOUT_MS = 15_000
 const POLL_LIVENESS_TIMEOUT_MS = 180_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
+const RPC_TIMEOUT_MS = 60_000
+const LONG_RUNNING_RPC_MARGIN_MS = 120_000
+const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
@@ -98,7 +101,7 @@ export const worker = {
             reconnection: true,
         })
 
-        const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
+        const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
@@ -331,6 +334,22 @@ function abortInFlightRuntime(): void {
             logger.error({ error }, 'Failed to shut down runtime')
         }
     })
+}
+
+function flowTimeoutMs(): number {
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
+}
+
+function rpcTimeoutMsFor(method: string): number {
+    if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
+        return RPC_TIMEOUT_MS
+    }
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    if (isNil(settings)) {
+        logger.warn({ rpc: { method } }, 'Worker settings have not arrived, timing a long-running RPC by the default flow timeout')
+    }
+    return flowTimeoutMs() + LONG_RUNNING_RPC_MARGIN_MS
 }
 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
@@ -619,7 +638,11 @@ function stopCacheSweeper(): void {
 }
 
 async function sweepActionRunCache(): Promise<void> {
-    const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
+    const { error } = await tryCatch(() => actionRunCache.sweep({
+        basePath: sandboxConfig.getCacheBasePath(),
+        log: logger,
+        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
+    }))
     if (error) {
         logger.warn({ error }, 'Action-run code cache sweep failed')
     }

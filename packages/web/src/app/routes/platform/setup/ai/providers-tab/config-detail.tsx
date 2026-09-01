@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
+import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -28,9 +28,11 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
 
+import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
 import { ModelSelectionPanel } from './model-selection-panel';
 import { ProjectSelectionPanel } from './project-selection-panel';
@@ -45,6 +47,8 @@ export function ConfigDetail({
   onSave,
   onDelete,
   onReplaceCredentials,
+  isRechecking,
+  onRecheck,
   onBack,
 }: {
   config: AIProviderWithoutSensitiveData;
@@ -54,6 +58,8 @@ export function ConfigDetail({
   onSave: (request: UpdateAIProviderRequest) => void;
   onDelete: () => void;
   onReplaceCredentials: () => void;
+  isRechecking: boolean;
+  onRecheck: () => void;
   onBack: () => void;
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
@@ -78,6 +84,15 @@ export function ConfigDetail({
       })),
   ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const statusDetail = [
+    config.statusReason,
+    config.statusUpdated &&
+      t('Last checked {when}', {
+        when: formatUtils.formatDateTime(new Date(config.statusUpdated)),
+      }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
   const enabledModelCount =
     !manualModels && draft.modelScope === 'all'
@@ -145,6 +160,7 @@ export function ConfigDetail({
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>{info.name}</span>
+              <KeyStatusBadge status={config.status} />
             </div>
           </div>
         </div>
@@ -189,6 +205,31 @@ export function ConfigDetail({
             </div>
             <Button variant="outline" size="sm" onClick={onReplaceCredentials}>
               {t('Replace')}
+            </Button>
+          </div>
+          <div className="flex items-center justify-between gap-3 p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                <Activity className="size-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium leading-none">
+                  {t('Status')}
+                </p>
+                {statusDetail && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {statusDetail}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              loading={isRechecking}
+              onClick={onRecheck}
+            >
+              {t('Recheck')}
             </Button>
           </div>
         </div>
