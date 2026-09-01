@@ -1,7 +1,5 @@
 import { httpClient, HttpMethod, HttpMessageBody, HttpResponse } from '@activepieces/pieces-common';
 
-const BASE_URL = 'https://api.clay.com/public/v0';
-
 export async function clayApiCall<T extends HttpMessageBody>({
     apiKey,
     method,
@@ -90,6 +88,8 @@ export async function runClayFiltersModeSearch({
         period_quota: results.body.period_quota,
     };
 }
+
+const BASE_URL = 'https://api.clay.com/public/v0';
 
 export const CLAY_TABLE_FILTER_OPERATORS = [
     { label: 'Equals', value: '=' },

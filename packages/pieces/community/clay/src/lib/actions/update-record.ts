@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendClayWebhookRecord } from '../common';
 
 export const updateRecordAction = createAction({
+    requireAuth: false,
     name: 'update_record',
     classification: 'WRITE',
     displayName: 'Update Record in Table',
