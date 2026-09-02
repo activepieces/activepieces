@@ -1,7 +1,9 @@
+import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
 import { ProjectSettingsDialog } from '@/app/components/project-settings';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
@@ -12,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { pieceSetQueries } from '@/features/piece-sets';
+import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -20,26 +23,37 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { PageBand } from '../page-band';
 
 import { ProjectPicker } from './project-picker';
-import { reachQueries } from './reach-hooks';
 import { ReachPieceRow } from './reach-piece-row';
 import { reachUtils } from './reach-utils';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
+const SEARCH_DEBOUNCE_MS = 300;
 
 export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery] = useDebounce(
+    searchQuery.trim(),
+    SEARCH_DEBOUNCE_MS,
+  );
   const [showAll, setShowAll] = useState(false);
 
-  const { pieces, isLoading } = reachQueries.useReachablePieces(projectId);
+  const isSearching = debouncedSearchQuery !== '';
+  const { pieces, isLoading } = piecesHooks.usePieces({
+    projectId: projectId ?? undefined,
+    searchQuery: isSearching ? debouncedSearchQuery : undefined,
+    suggestionType: SuggestionType.ACTION,
+    enabled: !isNil(projectId),
+    keepPreviousResults: true,
+    showErrorDialog: true,
+  });
   const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
   const rows = reachUtils.toReachablePieces({
     pieces: pieces ?? [],
-    searchQuery,
+    isSearching,
   });
-  const isSearching = searchQuery.trim() !== '';
   const visibleRows =
     isSearching || showAll ? rows : rows.slice(0, COLLAPSED_ROW_LIMIT);
   const hiddenCount = rows.length - visibleRows.length;
@@ -47,7 +61,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   return (
     <PageBand className="flex flex-col gap-6 py-8">
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-[22px] font-bold leading-7 tracking-[-0.02em]">
+        <h2 className="text-xl font-bold leading-7 tracking-tight">
           {t(
             'Every piece a connected client can reach, and every action inside it.',
           )}

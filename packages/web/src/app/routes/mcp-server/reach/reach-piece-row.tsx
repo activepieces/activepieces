@@ -45,10 +45,7 @@ export function ReachPieceRow({ row }: { row: ReachablePiece }) {
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {row.destructiveActionCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="px-1.5 py-0 text-[10px] font-normal"
-            >
+            <Badge variant="destructive" className="py-0 text-xss font-normal">
               {t('reachDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
@@ -73,7 +70,7 @@ export function ReachPieceRow({ row }: { row: ReachablePiece }) {
               <div className="flex items-center gap-1.5">
                 <span
                   className={cn(
-                    'text-[11px] font-semibold uppercase tracking-wide',
+                    'text-xss font-semibold uppercase tracking-wide',
                     group.classification === 'DESTRUCTIVE'
                       ? 'text-destructive'
                       : 'text-muted-foreground',
@@ -81,7 +78,7 @@ export function ReachPieceRow({ row }: { row: ReachablePiece }) {
                 >
                   {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xss text-muted-foreground">
                   {group.actions.length}
                 </span>
               </div>

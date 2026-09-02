@@ -34,7 +34,7 @@ export function ProjectPicker({ projectId, onSelect }: ProjectPickerProps) {
               title={getProjectName(selectedProject)}
               icon={selectedProject.icon}
               projectType={selectedProject.type}
-              iconClassName="size-[18px] text-[11px]"
+              iconClassName="size-4.5 text-xss"
               titleClassName="font-medium"
               maxLengthToNotShowTooltip={24}
             />
@@ -55,7 +55,7 @@ export function ProjectPicker({ projectId, onSelect }: ProjectPickerProps) {
               title={getProjectName(project)}
               icon={project.icon}
               projectType={project.type}
-              iconClassName="size-[18px] text-[11px]"
+              iconClassName="size-4.5 text-xss"
               maxLengthToNotShowTooltip={24}
             />
             <Check

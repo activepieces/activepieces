@@ -56,7 +56,7 @@ describe('reachUtils.toReachablePieces', () => {
   it('returns every piece collapsed when there is no query', () => {
     const rows = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
-      searchQuery: '',
+      isSearching: false,
     });
 
     expect(rows).toHaveLength(2);
@@ -67,7 +67,7 @@ describe('reachUtils.toReachablePieces', () => {
   it('counts destructive actions per piece', () => {
     const [slackRow, gmailRow] = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
-      searchQuery: '',
+      isSearching: false,
     });
 
     expect(slackRow.destructiveActionCount).toBe(1);
@@ -77,7 +77,7 @@ describe('reachUtils.toReachablePieces', () => {
   it('groups actions in READ, SEARCH, WRITE, DESTRUCTIVE order and omits empty groups', () => {
     const [slackRow, gmailRow] = reachUtils.toReachablePieces({
       pieces: [slack, gmail],
-      searchQuery: '',
+      isSearching: false,
     });
 
     expect(slackRow.groups.map((group) => group.classification)).toEqual([
@@ -100,7 +100,7 @@ describe('reachUtils.toReachablePieces', () => {
 
     const [row] = reachUtils.toReachablePieces({
       pieces: [unknown],
-      searchQuery: '',
+      isSearching: false,
     });
 
     expect(row.groups).toEqual([
@@ -109,40 +109,48 @@ describe('reachUtils.toReachablePieces', () => {
     expect(row.destructiveActionCount).toBe(0);
   });
 
-  it('keeps a piece collapsed with all its actions when the piece name matches', () => {
+  it('keeps the server relevance order and expands every row while searching', () => {
     const rows = reachUtils.toReachablePieces({
-      pieces: [slack, gmail],
-      searchQuery: 'slack',
+      pieces: [gmail, slack],
+      isSearching: true,
     });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0].piece.displayName).toBe('Slack');
-    expect(rows[0].forceExpanded).toBe(false);
-    expect(rows[0].actionCount).toBe(4);
+    expect(rows.map((row) => row.piece.displayName)).toEqual([
+      'Gmail',
+      'Slack',
+    ]);
+    expect(rows.every((row) => row.forceExpanded)).toBe(true);
   });
 
-  it('auto-expands and narrows to matching actions on an action-level match', () => {
+  it('orders popular pieces first only when not searching', () => {
     const rows = reachUtils.toReachablePieces({
-      pieces: [slack, gmail],
-      searchQuery: 'archive channel',
+      pieces: [gmail, slack],
+      isSearching: false,
     });
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0].piece.displayName).toBe('Slack');
-    expect(rows[0].forceExpanded).toBe(true);
-    expect(rows[0].actionCount).toBe(1);
-    expect(rows[0].groups).toEqual([
-      expect.objectContaining({ classification: 'DESTRUCTIVE' }),
+    expect(rows.map((row) => row.piece.displayName)).toEqual([
+      'Slack',
+      'Gmail',
     ]);
   });
 
-  it('drops pieces that match neither by name nor by any action', () => {
-    expect(
-      reachUtils.toReachablePieces({
-        pieces: [slack, gmail],
-        searchQuery: 'zzzz',
-      })
-    ).toEqual([]);
+  it('reports what the server returned for a piece, not its whole catalogue', () => {
+    const narrowedSlack = piece({
+      name: '@activepieces/piece-slack',
+      displayName: 'Slack',
+      suggestedActions: [action('Archive Channel', 'DESTRUCTIVE')],
+    });
+
+    const [row] = reachUtils.toReachablePieces({
+      pieces: [narrowedSlack],
+      isSearching: true,
+    });
+
+    expect(row.actionCount).toBe(1);
+    expect(row.destructiveActionCount).toBe(1);
+    expect(row.groups).toEqual([
+      expect.objectContaining({ classification: 'DESTRUCTIVE' }),
+    ]);
   });
 
   it('drops pieces that expose no actions at all', () => {
@@ -153,7 +161,7 @@ describe('reachUtils.toReachablePieces', () => {
     });
 
     expect(
-      reachUtils.toReachablePieces({ pieces: [actionless], searchQuery: '' })
+      reachUtils.toReachablePieces({ pieces: [actionless], isSearching: false })
     ).toEqual([]);
   });
 });

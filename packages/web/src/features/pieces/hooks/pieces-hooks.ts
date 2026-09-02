@@ -15,9 +15,11 @@ import {
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  SuggestionType,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
+  keepPreviousData,
   QueryClient,
   useMutation,
   usePrefetchQuery,
@@ -78,10 +80,15 @@ type UseMultiplePiecesProps = {
 };
 
 type UsePiecesProps = {
+  projectId?: string;
   searchQuery?: string;
   includeHidden?: boolean;
   isTableQuery?: boolean;
   skipProjectFilter?: boolean;
+  suggestionType?: SuggestionType;
+  enabled?: boolean;
+  keepPreviousResults?: boolean;
+  showErrorDialog?: boolean;
 };
 type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
@@ -179,23 +186,33 @@ export const piecesHooks = {
     return { summary, isLoading };
   },
   usePieces: ({
+    projectId,
     searchQuery,
     includeHidden = false,
     isTableQuery = false,
     skipProjectFilter = false,
+    suggestionType,
+    enabled = true,
+    keepPreviousResults = false,
+    showErrorDialog,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       ...piecesQueryOptions({
+        projectId,
         searchQuery,
         includeHidden,
         isTableQuery,
         skipProjectFilter,
+        suggestionType,
         locale: i18n.language as LocalesEnum,
       }),
-      meta: isTableQuery
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
-        : undefined,
+      enabled,
+      ...(keepPreviousResults ? { placeholderData: keepPreviousData } : {}),
+      meta:
+        showErrorDialog ?? isTableQuery
+          ? { showErrorDialog: true, loadSubsetOptions: {} }
+          : undefined,
     });
     return {
       pieces: query.data,
@@ -585,32 +602,43 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 export const pieceCacheUtils = { invalidatePieceCaches };
 
 function piecesQueryOptions({
+  projectId,
   searchQuery,
   includeHidden,
   isTableQuery,
   skipProjectFilter,
+  suggestionType,
   locale,
 }: {
+  projectId?: string;
   searchQuery?: string;
   includeHidden: boolean;
   isTableQuery: boolean;
   skipProjectFilter: boolean;
+  suggestionType?: SuggestionType;
   locale: LocalesEnum;
 }) {
-  const projectId = skipProjectFilter
+  const queriedProjectId = skipProjectFilter
     ? undefined
-    : authenticationSession.getProjectId() ?? undefined;
+    : projectId ?? authenticationSession.getProjectId() ?? undefined;
   return {
     queryKey: [
       isTableQuery ? 'pieces-table' : 'pieces',
       searchQuery,
       includeHidden,
       skipProjectFilter,
-      projectId,
+      suggestionType,
+      queriedProjectId,
       locale,
     ],
     queryFn: () =>
-      piecesApi.list({ projectId, searchQuery, includeHidden, locale }),
+      piecesApi.list({
+        projectId: queriedProjectId,
+        searchQuery,
+        includeHidden,
+        suggestionType,
+        locale,
+      }),
     staleTime: searchQuery ? 0 : Infinity,
   };
 }
