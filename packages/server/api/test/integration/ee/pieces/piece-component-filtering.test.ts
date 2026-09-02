@@ -623,6 +623,14 @@ describe('Piece Component Filtering (EE)', () => {
             expect(response.statusCode).toBe(200)
         })
 
+        it('an empty projectId is no project at all', async () => {
+            const { token } = await setupMemberOfOneProject()
+
+            const response = await app!.inject({ method: 'GET', url: '/api/v1/pieces?projectId=', headers: { authorization: `Bearer ${token}` } })
+
+            expect(response.statusCode).toBe(200)
+        })
+
         it('a non-member cannot list another project pieces', async () => {
             const { token, otherProject } = await setupMemberOfOneProject()
 

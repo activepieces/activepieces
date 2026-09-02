@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, LocalesEnum } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isEmpty, isNil, LocalesEnum } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { ALL_PRINCIPAL_TYPES, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApEdition, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -11,6 +11,7 @@ import { rbacService } from '../../ee/authentication/project-role/rbac-service'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
+import { system } from '../../helper/system/system'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
@@ -157,7 +158,10 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
 }
 
 async function assertProjectAccess({ principal, projectId, log }: AssertProjectAccessParams): Promise<void> {
-    if (isNil(projectId) || isNil(getPlatformId(principal))) {
+    if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(system.getEdition())) {
+        return
+    }
+    if (isNil(projectId) || isEmpty(projectId) || isNil(getPlatformId(principal))) {
         return
     }
     await rbacService(log).assertPrinicpalAccessToProject({

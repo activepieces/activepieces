@@ -599,7 +599,7 @@ function piecesQueryOptions({
 }) {
   const projectId = skipProjectFilter
     ? undefined
-    : authenticationSession.getProjectId()!;
+    : authenticationSession.getProjectId() ?? undefined;
   return {
     queryKey: [
       isTableQuery ? 'pieces-table' : 'pieces',
