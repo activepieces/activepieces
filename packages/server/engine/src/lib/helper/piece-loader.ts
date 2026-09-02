@@ -137,8 +137,9 @@ const loadedPieceEntries = new Map<string, true>()
 const baselineModuleIds = new Set(Object.keys(engineRequire.cache))
 
 function loadAndCapPieces(piecePath: string): Record<string, unknown> {
-    const resolvedEntry = engineRequire.resolve(piecePath)
-    const loadedModule: Record<string, unknown> = engineRequire(resolvedEntry)
+    const disposableRequire = createRequire(__filename)
+    const resolvedEntry = disposableRequire.resolve(piecePath)
+    const loadedModule: Record<string, unknown> = disposableRequire(resolvedEntry)
     loadedPieceEntries.delete(resolvedEntry)
     loadedPieceEntries.set(resolvedEntry, true)
     if (loadedPieceEntries.size > MAX_LOADED_PIECES) {
