@@ -509,6 +509,9 @@
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
       ],
+      "@activepieces/piece-formio": [
+        "packages/pieces/community/formio/src/index.ts"
+      ],
       "@activepieces/piece-forms": ["packages/pieces/core/forms/src/index.ts"],
       "@activepieces/piece-formstack": [
         "packages/pieces/community/formstack/src/index.ts"
