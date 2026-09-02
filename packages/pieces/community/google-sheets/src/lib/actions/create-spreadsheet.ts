@@ -96,6 +96,7 @@ export const createSpreadsheetAction = createAction({
 					}),
 				};
 			},
+			advanced: true,
 		}),
 	},
 	outputSchema: createSpreadsheetActionOutputSchema,

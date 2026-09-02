@@ -41,12 +41,14 @@ export const findRowsAction = createAction({
 			displayName: 'Starting Row',
 			description: 'Start searching from this row number.',
 			required: false,
+			advanced: true,
 		}),
 		numberOfRows: Property.Number({
 			displayName: 'Number of Rows',
 			description: 'How many matching rows to return.',
 			required: false,
 			defaultValue: 1,
+			advanced: true,
 		}),
 		headerRow: Property.Number({
 			displayName: 'Header Row',
@@ -59,6 +61,7 @@ export const findRowsAction = createAction({
 			description: 'Use column names as keys instead of A, B, C.',
 			required: false,
 			defaultValue: false,
+			advanced: true,
 		}),
 	},
 	outputSchema: findRowsActionOutputSchema,

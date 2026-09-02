@@ -129,13 +129,14 @@ export const getRowsAction = createAction({
       defaultValue: 1,
     }),
     useHeaderNames: Property.Checkbox({
-    displayName: 'Use header names for keys',
-    description: 'Map A/B/C… to the actual column headers (row specified above).',
-    required: false,
-    defaultValue: false,
+      displayName: 'Use Header Names',
+      description: 'Map A/B/C… to the actual column headers.',
+      required: false,
+      defaultValue: false,
+      advanced: true,
     }),
     markdown: Property.MarkDown({
-      value: notes
+      value: notes,
     }),
     memKey: Property.ShortText({
       displayName: 'Memory Key',

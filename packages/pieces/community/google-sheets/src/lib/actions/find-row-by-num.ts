@@ -35,6 +35,7 @@ export const findRowByNumAction = createAction({
 			description: 'Use column names as keys instead of A, B, C.',
 			required: false,
 			defaultValue: true,
+			advanced: true,
 		}),
 	},
 	outputSchema: findRowByNumActionOutputSchema,

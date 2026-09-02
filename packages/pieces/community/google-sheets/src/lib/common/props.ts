@@ -21,10 +21,11 @@ const createEmptyOptionList = (message: string) => {
 
 export const includeTeamDrivesProp = () =>
 	Property.Checkbox({
-		displayName: 'Include shared drives',
+		displayName: 'Include Shared Drives',
 		description: 'Also list spreadsheets stored in shared drives.',
 		defaultValue: false,
 		required: false,
+		advanced: true,
 	});
 
 export const spreadsheetIdProp = (displayName: string, description: string, required = true) =>
@@ -133,9 +134,9 @@ export const sheetIdProp = (displayName: string, description: string, required =
 	});
 
 export const commonProps = {
-	includeTeamDrives: includeTeamDrivesProp(),
 	spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to work in.'),
 	sheetId: sheetIdProp('Worksheet', 'The tab inside that spreadsheet.'),
+	includeTeamDrives: includeTeamDrivesProp(),
 };
 
 export const rowValuesProp = () =>
@@ -268,7 +269,9 @@ export const columnNameProp = () =>
 
 export const isFirstRowHeaderProp = () =>
 	Property.Checkbox({
-		displayName: 'First row contains headers',
-		required: true,
+		displayName: 'First Row Contains Headers',
+		description:
+			"Map values to your sheet's column names. Turn off to enter values positionally, left to right.",
+		required: false,
 		defaultValue: false,
 	});

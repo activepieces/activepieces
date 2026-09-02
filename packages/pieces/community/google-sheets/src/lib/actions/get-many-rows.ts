@@ -35,7 +35,7 @@ export const getManyRowsAction = createAction({
             headerRow: 1,
           });
 
-        const useHeaderNames = first_row_headers;
+        const useHeaderNames = first_row_headers ?? false;
 
         const result = await mapRowsToHeaderNames(
             rows,

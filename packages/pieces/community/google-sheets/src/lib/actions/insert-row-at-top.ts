@@ -34,6 +34,7 @@ export const insertRowAtTopAction = createAction({
 			description:
 				'Inserted values that are dates and formulas will be entered as strings and have no effect.',
 			required: false,
+			advanced: true,
 		}),
 		insertAfterRow: Property.Number({
 			displayName: 'Insert After Row',

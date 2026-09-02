@@ -156,14 +156,14 @@ export const insertMultipleRowsAction = createAction({
 			},
 		}),
 		overwrite: Property.Checkbox({
-			displayName: 'Overwrite existing data',
+			displayName: 'Overwrite Existing Data',
 			description:
 				'Enable this option to replace all existing data in the sheet with new data from your input. This will clear any extra rows beyond the updated range.',
 			required: false,
 			defaultValue: false,
 		}),
 		check_for_duplicate: Property.Checkbox({
-			displayName: 'Skip duplicate rows',
+			displayName: 'Skip Duplicate Rows',
 			description:
 				'Enable this option to check for duplicate values before inserting data into the sheet. Only unique rows will be added based on the selected column.',
 			required: false,
@@ -236,6 +236,7 @@ export const insertMultipleRowsAction = createAction({
 			description:
 				'Inserted values that are dates and formulas will be entered as strings and have no effect',
 			required: false,
+			advanced: true,
 		}),
 		headerRow: Property.Number({
 			displayName: 'Header Row',

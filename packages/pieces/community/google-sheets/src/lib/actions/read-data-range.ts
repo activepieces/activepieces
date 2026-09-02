@@ -32,7 +32,7 @@ export const readDataRangeAction = createAction({
 			required: false,
 		}),
 		majorDimension: Property.StaticDropdown({
-			displayName: 'Return data as',
+			displayName: 'Return Data As',
 			description: 'Group the results one array per row, or one array per column.',
 			required: true,
 			defaultValue: Dimension.ROWS,
@@ -45,7 +45,7 @@ export const readDataRangeAction = createAction({
 			},
 		}),
 		valueRenderOption: Property.StaticDropdown({
-			displayName: 'Cell values',
+			displayName: 'Cell Values',
 			description: 'Return cells the way the sheet displays them, the underlying raw values, or the formulas behind them.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
