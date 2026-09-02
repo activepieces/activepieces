@@ -155,21 +155,36 @@ function gateNoResponseMessage(step: string): string {
     return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    accountAlreadyChosenFor?: (pieceName: string) => boolean
 }): ToolSet {
-    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
+    function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
+        const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+        if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
+            return undefined
+        }
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
+    }
+
+    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
         successKey?: string
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
+        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
+            const refusal = refuseWhen?.(input)
+            if (!isNil(refusal)) {
+                return refusal
+            }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -203,6 +218,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_required',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -252,6 +268,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -1476,6 +1493,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, tai
                         toolInput: {
                             pieceName: configured.pieceMetadata.pieceName,
                             actionName: configured.pieceMetadata.actionName,
+                            ...spreadIfDefined('connectionLabel', prepared.connectionLabel),
                             input: prepared.input,
                         },
                     }))

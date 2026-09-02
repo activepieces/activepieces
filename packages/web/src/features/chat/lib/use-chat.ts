@@ -108,6 +108,10 @@ function buildToolCallMetaFromGate(
       pieceName,
       actionName,
       actionDisplayName: gate.displayName,
+      connectionLabel:
+        typeof gateInput.connectionLabel === 'string'
+          ? gateInput.connectionLabel
+          : undefined,
       input:
         typeof gateInput.input === 'object' && gateInput.input !== null
           ? (gateInput.input as Record<string, unknown>)
