@@ -116,8 +116,11 @@ export const worker = {
             // For any other reason the socket dropped while a job may still be running locally; the app
             // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
             // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
+            // Also close the health server so orchestrators stop routing/keeping traffic on a worker
+            // that can't consume jobs; the reconnect path brings it back up after prewarm completes.
             if (reason !== 'io client disconnect') {
                 abortInFlightRuntime()
+                stopHealthServer()
             }
             // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
             // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
@@ -157,8 +160,7 @@ export const worker = {
         }
         socket?.disconnect()
         socket = null
-        healthServerInstance?.close()
-        healthServerInstance = null
+        stopHealthServer()
         logger.info('Worker stopped')
     },
 }
@@ -206,7 +208,10 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
     }
 
-    if (shouldStartHealthServer && isNil(healthServerInstance)) {
+    // The generation check keeps a disconnect that landed mid-prewarm from re-opening the health
+    // server for a connection that no longer exists — the reconnect's own run brings it back up.
+    const stillCurrentConnection = polling && connectionGeneration === generation
+    if (shouldStartHealthServer && stillCurrentConnection && isNil(healthServerInstance)) {
         healthServerInstance = startHealthServer()
     }
 
@@ -634,6 +639,18 @@ function startHealthServer(): ReturnType<typeof createServer> {
         logger.info({ port }, 'Health server listening')
     })
     return server
+}
+
+// closeAllConnections drops kubelet keep-alive sockets too, so the next probe is refused
+// immediately instead of riding an already-open connection until it happens to close.
+function stopHealthServer(): void {
+    if (isNil(healthServerInstance)) {
+        return
+    }
+    healthServerInstance.closeAllConnections()
+    healthServerInstance.close()
+    healthServerInstance = null
+    logger.info('Health server stopped, probes will fail until reconnect and prewarm complete')
 }
 
 type WorkerStartParams = {

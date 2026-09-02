@@ -627,6 +627,22 @@ describe('worker integration', () => {
             const res = await fetch(`http://127.0.0.1:${healthPort}/unknown`)
             expect(res.status).toBe(404)
         }, 15_000)
+
+        it('closes the health server when the socket disconnects', async () => {
+            await startWithHealthServer()
+            await new Promise<void>((resolve) => ioServer.close(() => resolve()))
+            for (let i = 0; i < 50; i++) {
+                try {
+                    const res = await fetch(`http://127.0.0.1:${healthPort}/v1/health`)
+                    void res.body?.cancel()
+                }
+                catch {
+                    return
+                }
+                await new Promise<void>((resolve) => setTimeout(resolve, 100))
+            }
+            throw new Error('Health server still reachable after disconnect')
+        }, 15_000)
     })
 })
 
