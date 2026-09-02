@@ -8,7 +8,7 @@ import {
 } from '../common/client';
 import { submissionTriggerOutputSchema } from '../common/output-schemas';
 import { formioProps } from '../common/props';
-import { submissionPolling, SubmissionTimestamp } from './submission-polling';
+import { submissionSample, SubmissionTimestamp } from './submission-sample';
 
 function submissionFromWebhook(body: unknown): FormioSubmission | undefined {
   if (typeof body !== 'object' || body === null || !('submission' in body)) {
@@ -39,7 +39,7 @@ export function registerSubmissionTrigger({
   events: FormioActionMethod[];
   timestampField: SubmissionTimestamp;
 }) {
-  const polling = submissionPolling(timestampField);
+  const sample = submissionSample(timestampField);
   const storeKey = `formio_${name}`;
 
   return createTrigger({
@@ -107,7 +107,7 @@ export function registerSubmissionTrigger({
     },
 
     async test(context) {
-      return await pollingHelper.test(polling, {
+      return await pollingHelper.test(sample, {
         auth: context.auth,
         propsValue: context.propsValue,
         store: context.store,
