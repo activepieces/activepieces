@@ -112,6 +112,17 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   }, [telemetryEnabled, edition, embedState.isEmbedded]);
 
   useEffect(() => {
+    if (!posthogInitialized.current) {
+      return;
+    }
+    if (telemetryEnabled) {
+      posthog.opt_in_capturing();
+    } else {
+      posthog.opt_out_capturing();
+    }
+  }, [telemetryEnabled]);
+
+  useEffect(() => {
     errorReporting.init();
     errorReporting.flushBuffered();
   }, []);

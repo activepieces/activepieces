@@ -1,10 +1,7 @@
-import { UpdatePlatformConfigurationRequestBody } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity } from 'lucide-react';
-import { toast } from 'sonner';
+import { Control } from 'react-hook-form';
 
-import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import {
   Item,
   ItemMedia,
@@ -13,34 +10,15 @@ import {
   ItemDescription,
   ItemActions,
 } from '@/components/custom/item';
-import { Skeleton } from '@/components/ui/skeleton';
+import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 
-export const TelemetrySection = () => {
-  const queryClient = useQueryClient();
+import { ConfigurationsFormValues } from './configurations-form';
 
-  const { data: configuration, isLoading } = useQuery({
-    queryKey: platformConfigurationHooks.queryKey,
-    queryFn: platformConfigurationApi.get,
-    refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
-  });
-
-  const { mutate: updateConfiguration, isPending } = useMutation({
-    mutationFn: (request: UpdatePlatformConfigurationRequestBody) =>
-      platformConfigurationApi.update(request),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: platformConfigurationHooks.queryKey,
-      });
-      toast.success(t('Your changes have been saved.'), { duration: 3000 });
-    },
-    onError: () => {
-      toast.error(t('Failed to save changes. Please try again.'));
-    },
-  });
-
+export const TelemetrySection = ({
+  control,
+  disabled,
+}: TelemetrySectionProps) => {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -64,19 +42,27 @@ export const TelemetrySection = () => {
           </ItemDescription>
         </ItemContent>
         <ItemActions>
-          {isLoading ? (
-            <Skeleton className="h-5 w-9" />
-          ) : (
-            <Switch
-              checked={configuration?.isProductTelemetryEnabled ?? false}
-              onCheckedChange={(checked) =>
-                updateConfiguration({ isProductTelemetryEnabled: checked })
-              }
-              disabled={isPending}
-            />
-          )}
+          <FormField
+            control={control}
+            name="isProductTelemetryEnabled"
+            render={({ field }) => (
+              <FormItem>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </ItemActions>
       </Item>
     </div>
   );
+};
+
+type TelemetrySectionProps = {
+  control: Control<ConfigurationsFormValues>;
+  disabled: boolean;
 };
