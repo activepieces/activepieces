@@ -21,6 +21,7 @@ import { flowVersionMigrationService } from '../flow-version/flow-version-migrat
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
+import { flowPublishHooks } from './flow-publish-hooks'
 import { flowPublishUtils } from './flow-publish-utils'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
@@ -499,6 +500,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         const publishedFlow = await transaction(async (entityManager) => {
+            await flowPublishHooks.get(log).assertReferencesResolve({
+                projectId,
+                agentExternalIds: flowVersionToPublish.agentIds ?? [],
+                entityManager,
+            })
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
