@@ -3324,6 +3324,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/formio": {
+      "name": "@activepieces/piece-formio",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/formitable": {
       "name": "@activepieces/piece-formitable",
       "version": "0.0.8",
@@ -11575,6 +11589,8 @@
     "@activepieces/piece-foreplay-co": ["@activepieces/piece-foreplay-co@workspace:packages/pieces/community/foreplay-co"],
 
     "@activepieces/piece-formbricks": ["@activepieces/piece-formbricks@workspace:packages/pieces/community/formbricks"],
+
+    "@activepieces/piece-formio": ["@activepieces/piece-formio@workspace:packages/pieces/community/formio"],
 
     "@activepieces/piece-formitable": ["@activepieces/piece-formitable@workspace:packages/pieces/community/formitable"],
 
