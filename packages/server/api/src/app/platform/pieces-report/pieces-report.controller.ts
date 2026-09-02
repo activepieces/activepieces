@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream'
-import { FlowActionType, flowStructureUtil, FlowTrigger, FlowTriggerType, PrincipalType } from '@activepieces/shared'
+import { FlowActionType, FlowStatus, flowStructureUtil, FlowTrigger, FlowTriggerType, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
@@ -12,7 +12,6 @@ const CSV_HEADER = [
     'projectName',
     'flowId',
     'flowName',
-    'flowStatus',
     'flowVersionId',
     'versionCreatedAt',
     'stepName',
@@ -54,7 +53,6 @@ async function* csvStream(platformId: string): AsyncIterable<string> {
                     row.projectName,
                     row.flowId,
                     row.flowName,
-                    row.flowStatus,
                     row.flowVersionId,
                     toIso(row.versionCreatedAt),
                     step.name,
@@ -74,12 +72,12 @@ async function fetchBatch({ platformId, cursor, limit }: FetchBatchParams): Prom
         .innerJoin('project', 'p', 'p.id = flow."projectId"')
         .where('p."platformId" = :platformId', { platformId })
         .andWhere('flow."publishedVersionId" IS NOT NULL')
+        .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
         .select([
             'flow."projectId" AS "projectId"',
             'p."displayName" AS "projectName"',
             'flow.id AS "flowId"',
             'fv."displayName" AS "flowName"',
-            'flow.status AS "flowStatus"',
             'fv.id AS "flowVersionId"',
             'fv.created AS "versionCreatedAt"',
             'fv.trigger AS "trigger"',
@@ -117,7 +115,6 @@ type FlowRow = {
     projectName: string
     flowId: string
     flowName: string
-    flowStatus: string
     flowVersionId: string
     versionCreatedAt: Date | string
     trigger: FlowTrigger

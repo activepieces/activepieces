@@ -22,7 +22,7 @@ beforeEach(async () => {
 })
 
 describe('GET /v1/platform/pieces-report.csv', () => {
-    it('streams a CSV of PIECE actions and triggers on published flows across the platform, excluding drafts and other platforms', async () => {
+    it('streams a CSV of PIECE actions and triggers on ENABLED published flows across the platform, excluding disabled, drafts and other platforms', async () => {
         const enabledFlow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
         await db.save('flow', enabledFlow)
         const enabledVersion = createMockFlowVersion({
@@ -77,22 +77,20 @@ describe('GET /v1/platform/pieces-report.csv', () => {
         expect(response.headers['content-disposition']).toContain(`pieces-report-${ctx.platform.id}-`)
 
         const rows = response.body.trim().split('\n')
-        expect(rows[0]).toBe('projectId,projectName,flowId,flowName,flowStatus,flowVersionId,versionCreatedAt,stepName,stepType,pieceName,pieceVersion')
+        expect(rows[0]).toBe('projectId,projectName,flowId,flowName,flowVersionId,versionCreatedAt,stepName,stepType,pieceName,pieceVersion')
 
         const body = rows.slice(1).map((line) => line.split(','))
         const cells = body.map((cols) => ({
             flowId: cols[2],
-            flowStatus: cols[4],
-            stepName: cols[7],
-            stepType: cols[8],
-            pieceName: cols[9],
-            pieceVersion: cols[10],
+            stepName: cols[6],
+            stepType: cols[7],
+            pieceName: cols[8],
+            pieceVersion: cols[9],
         }))
 
-        expect(cells).toHaveLength(3)
+        expect(cells).toHaveLength(2)
         expect(cells).toContainEqual({
             flowId: enabledFlow.id,
-            flowStatus: FlowStatus.ENABLED,
             stepName: 'trigger',
             stepType: FlowTriggerType.PIECE,
             pieceName: 'gmail',
@@ -100,21 +98,14 @@ describe('GET /v1/platform/pieces-report.csv', () => {
         })
         expect(cells).toContainEqual({
             flowId: enabledFlow.id,
-            flowStatus: FlowStatus.ENABLED,
             stepName: 'step_1',
             stepType: FlowActionType.PIECE,
             pieceName: 'slack',
             pieceVersion: '0.3.4',
         })
-        expect(cells).toContainEqual({
-            flowId: disabledFlow.id,
-            flowStatus: FlowStatus.DISABLED,
-            stepName: 'trigger',
-            stepType: FlowTriggerType.PIECE,
-            pieceName: 'notion',
-            pieceVersion: '1.2.0',
-        })
         for (const c of cells) {
+            expect(c.flowId).not.toBe(disabledFlow.id)
+            expect(c.pieceName).not.toBe('notion')
             expect(c.pieceName).not.toBe('openai')
             expect(c.pieceName).not.toBe('other-piece')
         }
