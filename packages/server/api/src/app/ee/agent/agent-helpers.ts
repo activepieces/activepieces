@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -332,6 +332,18 @@ async function saveUserMemory({ platformId, userId, instructions, memories, base
     })
 }
 
+function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfigFields {
+    return {
+        tools: config.tools,
+        structuredOutput: config.structuredOutput,
+        maxSteps: config.maxSteps,
+        modelName: config.modelName ?? null,
+        ...spreadIfDefined('provider', config.provider ?? undefined),
+        ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        promptOverride: { system: config.instructions },
+    }
+}
+
 async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
     if (system.getBoolean(AppSystemProp.AGENTS_ENABLED) !== true) {
         return false
@@ -345,6 +357,7 @@ async function agentsSurfaceAvailable({ platformId, log }: { platformId: string,
 }
 
 export const agentHelpers = {
+    jobFieldsFromConfig,
     agentsSurfaceAvailable,
     getConversationOrThrow,
     getUserProjects,
@@ -369,4 +382,14 @@ export const agentHelpers = {
     capMemories,
     mergeMemories,
     saveUserMemory,
+}
+
+type AgentJobConfigFields = {
+    tools: AgentConfig['tools']
+    structuredOutput: AgentConfig['structuredOutput']
+    maxSteps: number
+    modelName: string | null
+    provider?: AIProviderName
+    providerConfigId?: string
+    promptOverride: { system: string }
 }

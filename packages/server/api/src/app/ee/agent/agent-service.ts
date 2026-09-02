@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
+import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order, OrderByConfig } from '../../helper/pagination/paginator'
@@ -125,6 +125,12 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 params: { message: 'An agent needs instructions before it can be published' },
             })
         }
+        if (!isNil(agent.draft.providerConfigId) && isNil(agent.draft.provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'This agent pins an AI provider key without naming its provider, so a run would resolve a different one. Pick the provider that key belongs to.' },
+            })
+        }
         const published = await agentRepo()
             .createQueryBuilder()
             .update()
@@ -146,15 +152,28 @@ export const agentService = (log: FastifyBaseLogger) => ({
     },
 
     async unpublish({ id, projectId, userId }: GetParams): Promise<Agent> {
-        await this.getOneOrThrow({ id, projectId, userId })
-        await agentRepo()
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
+        const unpublished = await agentRepo()
             .createQueryBuilder()
             .update()
             .set({ published: null })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
             .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
             .execute()
+
+        const unpublishedRows: unknown[] = unpublished.raw ?? []
+        if (unpublishedRows.length === 0) {
+            throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await this.publishedFlowsUsing({ agent, projectId, userId }) })
+        }
         return this.getOneOrThrow({ id, projectId, userId })
+    },
+
+    async getOneByExternalId({ projectId, externalId, visibility }: { projectId: ProjectId, externalId: string, visibility: AgentVisibility }): Promise<Agent | null> {
+        return agentRepo().findOneBy({ projectId, externalId, visibility })
     },
 
     async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
@@ -186,17 +205,36 @@ export const agentService = (log: FastifyBaseLogger) => ({
     async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayDestroy({ agent, projectId, userId, log })
-        const flowsInUse = await this.publishedFlowsUsing({ agent, projectId, userId })
-        if (flowsInUse.total > 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: describeFlowsInUse(flowsInUse) },
-            })
+        const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
+        const deleted = await agentRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+            .setParameters(blocking.getParameters())
+            .returning('id')
+            .execute()
+
+        const deletedRows: unknown[] = deleted.raw ?? []
+        if (deletedRows.length === 0) {
+            throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await this.publishedFlowsUsing({ agent, projectId, userId }) })
         }
-        await agentRepo().delete({ id, projectId })
         return agent
     },
 })
+
+function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
+    agent: Agent
+    flowsInUse: PublishedFlowsUsingAgent
+}): ActivepiecesError {
+    if (flowsInUse.total === 0) {
+        return agentNotFound(agent.id)
+    }
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: describeFlowsInUse(flowsInUse) },
+    })
+}
 
 function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
     const counted = total === 1 ? '1 published flow' : `${total} published flows`
