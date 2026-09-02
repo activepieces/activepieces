@@ -123,6 +123,25 @@ describe('automations name sort', () => {
     ]);
   });
 
+  it('pins the collation locale so every browser agrees', () => {
+    const folders = [
+      folder({
+        id: 'z',
+        displayName: 'zebra',
+        updated: '2020-01-01T00:00:00.000Z',
+      }),
+      folder({
+        id: 'a-ring',
+        displayName: 'äpple',
+        updated: '2020-01-01T00:00:00.000Z',
+      }),
+    ];
+    expect(sortedNames({ folders, sort: 'name-asc' })).toEqual([
+      'äpple',
+      'zebra',
+    ]);
+  });
+
   it('keeps pinned items first in both directions', () => {
     const folders = [zebra, apple, mango];
     expect(
