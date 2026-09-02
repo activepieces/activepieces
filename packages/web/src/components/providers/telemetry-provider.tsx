@@ -36,13 +36,16 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
 
+  const isCloud = edition === ApEdition.CLOUD;
   const isPreLoginCloudFunnel =
     isNil(currentUser) &&
-    edition === ApEdition.CLOUD &&
+    isCloud &&
     window.location.hostname === CLOUD_HOSTNAME;
+  const isSignedInWithAnalyticsOn =
+    !isNil(currentUser) &&
+    (isCloud || configuration?.isProductTelemetryEnabled === true);
   const telemetryEnabled =
-    (isPreLoginCloudFunnel ||
-      configuration?.isProductTelemetryEnabled === true) &&
+    (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) &&
     !isRunningCloudInDevMode;
 
   const posthogInitialized = useRef(false);
@@ -57,8 +60,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       return;
     }
     posthogInitialized.current = true;
-
-    const isCloud = edition === ApEdition.CLOUD;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
@@ -102,7 +103,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
-  }, [telemetryEnabled, embedState.isEmbedded, edition]);
+  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud]);
 
   useEffect(() => {
     if (!posthogInitialized.current) {
@@ -110,17 +111,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
     posthog.register({ activepiecesEdition: edition ?? ApEdition.COMMUNITY });
   }, [telemetryEnabled, edition, embedState.isEmbedded]);
-
-  useEffect(() => {
-    if (!posthogInitialized.current) {
-      return;
-    }
-    if (telemetryEnabled) {
-      posthog.opt_in_capturing();
-    } else {
-      posthog.opt_out_capturing();
-    }
-  }, [telemetryEnabled]);
 
   useEffect(() => {
     errorReporting.init();

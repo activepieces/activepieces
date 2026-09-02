@@ -61,10 +61,17 @@ const ConfigurationsContent = ({
     mutationFn: (values: ConfigurationsFormValues) =>
       platformConfigurationApi.update(values),
     onSuccess: async (saved) => {
+      const productAnalyticsChanged =
+        form.formState.defaultValues?.isProductTelemetryEnabled !==
+        saved.isProductTelemetryEnabled;
       form.reset(configurationsForm.toFormValues(saved));
       await queryClient.invalidateQueries({
         queryKey: platformConfigurationHooks.queryKey,
       });
+      if (productAnalyticsChanged) {
+        window.location.reload();
+        return;
+      }
       toast.success(t('Your changes have been saved.'), { duration: 3000 });
     },
     onError: () => {
