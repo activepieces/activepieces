@@ -1,7 +1,7 @@
 import type { ActionClassification } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,10 @@ import { cn } from '@/lib/utils';
 
 import { ActionGroup, ReachablePiece } from './pieces-utils';
 
-export function PieceRow({ row }: { row: ReachablePiece }) {
+export const PieceRow = memo(function PieceRow({
+  row,
+  isLastRow,
+}: PieceRowProps) {
   const [isOpenedByUser, setIsOpenedByUser] = useState(false);
   const isOpen = row.forceExpanded || isOpenedByUser;
 
@@ -24,7 +27,7 @@ export function PieceRow({ row }: { row: ReachablePiece }) {
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpenedByUser}
-      className="border-b last:border-b-0"
+      className={cn({ 'border-b': !isLastRow })}
     >
       <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/40">
         <PieceIcon
@@ -65,7 +68,7 @@ export function PieceRow({ row }: { row: ReachablePiece }) {
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-7 border-t bg-muted/60 pt-4 pr-5 pb-5 pl-4 sm:grid-cols-2 lg:grid-cols-4 lg:pl-14.5">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-7 border-t bg-muted/60 pt-4 pr-5 pb-5 pl-2 sm:grid-cols-2 lg:grid-cols-4 lg:pl-12.5">
           {row.groups.map((group) => (
             <ActionGroupColumn
               key={group.classification}
@@ -77,7 +80,7 @@ export function PieceRow({ row }: { row: ReachablePiece }) {
       </CollapsibleContent>
     </Collapsible>
   );
-}
+});
 
 function ActionGroupColumn({
   group,
@@ -86,8 +89,8 @@ function ActionGroupColumn({
   const tone = CLASSIFICATION_TONES[group.classification];
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex items-center gap-2 px-2">
         <span
           className={cn(
             'text-xs font-semibold tracking-wider uppercase',
@@ -100,7 +103,7 @@ function ActionGroupColumn({
           {group.actions.length}
         </Badge>
       </div>
-      <div className={cn('-mx-2 flex flex-col', tone.frame)}>
+      <div className={cn('flex min-w-0 flex-col', tone.frame)}>
         {group.actions.map((action) => (
           <TextWithTooltip
             key={action.name}
@@ -147,4 +150,9 @@ type ClassificationTone = {
 type ActionGroupColumnProps = {
   group: ActionGroup;
   pieceDisplayName: string;
+};
+
+type PieceRowProps = {
+  row: ReachablePiece;
+  isLastRow: boolean;
 };

@@ -641,6 +641,8 @@ function piecesQueryOptions({
         suggestionType,
         locale,
       }),
-    staleTime: searchQuery ? 0 : Infinity,
+    staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
   };
 }
+
+const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;

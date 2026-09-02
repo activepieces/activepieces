@@ -2,7 +2,7 @@ import { ErrorCode } from '@activepieces/core-utils';
 import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -14,6 +14,7 @@ import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VirtualizedList } from '@/components/ui/virtualized-list';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
@@ -30,6 +31,7 @@ import { ProjectPicker } from './project-picker';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
+const COLLAPSED_ROW_HEIGHT = 50;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -51,12 +53,18 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
   });
   const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
-  const rows = piecesUtils.toReachablePieces({
-    pieces: pieces ?? [],
-    isSearching,
-  });
-  const visibleRows =
-    isSearching || showAll ? rows : rows.slice(0, COLLAPSED_ROW_LIMIT);
+  const rows = useMemo(
+    () =>
+      piecesUtils.toReachablePieces({
+        pieces: pieces ?? [],
+        isSearching,
+      }),
+    [pieces, isSearching],
+  );
+  const visibleRows = useMemo(
+    () => (isSearching || showAll ? rows : rows.slice(0, COLLAPSED_ROW_LIMIT)),
+    [rows, isSearching, showAll],
+  );
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
@@ -108,9 +116,17 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
         </div>
       ) : (
         <div className="rounded-lg border">
-          {visibleRows.map((row) => (
-            <PieceRow key={row.piece.name} row={row} />
-          ))}
+          <VirtualizedList
+            items={visibleRows}
+            estimateSize={COLLAPSED_ROW_HEIGHT}
+            getItemKey={(index) => visibleRows[index].piece.name}
+            renderItem={(row, index) => (
+              <PieceRow
+                row={row}
+                isLastRow={index === visibleRows.length - 1}
+              />
+            )}
+          />
           {hiddenCount > 0 && (
             <button
               type="button"
