@@ -68,7 +68,7 @@ top. `AP_DEV_AUTH_BYPASS` + `VITE_DEV_AUTH_BYPASS` disables all admin auth for l
   typechecks and tests. Where it runs is configured elsewhere — the org's pattern for internal
   tools is a DigitalOcean droplet driven by Actions over SSH, which you have to read out of
   `activepieces/discover`'s `deploy.yml`.
-- **The Dockerfile sets `PORT`, which the server never reads** (it reads `AP_PORT`, default 5858).
+- **The server reads `AP_PORT` and ignores `PORT`, which breaks it on any PaaS.** Its Dockerfile even sets `ENV PORT=3000`, a line that does nothing. This is harmless on a droplet, where you choose the port, and fatal on DigitalOcean App Platform, Railway or Render: they inject `PORT` and health-check it, the app listens somewhere else, and the deploy fails with nothing but 'health check failed'. `config-console` hit exactly this and fixed it by defaulting `PORT` into the prop (`AP_PORT` -> `PORT` -> a local default) and pinning nothing in the image. Do the same here before moving the console off a droplet.
   That line is dead unless the platform injects `AP_PORT` separately.
 - **Config features belong in `config-console`, not here** — see decision
   [000033](../decisions/000033-ai-prices-are-published-to-the-cdn-from-a-second-console.md).
