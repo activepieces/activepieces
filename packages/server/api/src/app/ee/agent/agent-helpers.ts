@@ -154,18 +154,25 @@ function resolveTier({ tierId }: { tierId: string | null }) {
     return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
 }
 
-function configuredTextModelIds({ config }: { config?: AIProviderConfig }): string[] | undefined {
+// An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
+// serves no text model - not that we may fall back to a curated id it was never configured for.
+function manualTextModelCatalog({ config }: { config?: AIProviderConfig }): string[] | undefined {
     if (isNil(config) || !('models' in config)) {
         return undefined
     }
-    const textModels = config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
-    return textModels.length === 0 ? undefined : textModels
+    return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
 }
 
 function resolveModelIdForProvider({ provider, selectedModel, config }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig }): string {
-    const configuredModels = configuredTextModelIds({ config })
-    if (!isNil(configuredModels)) {
-        return selectedModel && configuredModels.includes(selectedModel) ? selectedModel : configuredModels[0]
+    const catalog = manualTextModelCatalog({ config })
+    if (!isNil(catalog)) {
+        if (catalog.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+            }, 'this AI provider key lists no text model, so a chat turn has none to run on')
+        }
+        return selectedModel && catalog.includes(selectedModel) ? selectedModel : catalog[0]
     }
     const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
     if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
