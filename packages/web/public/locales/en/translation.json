@@ -2650,6 +2650,7 @@
   "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.": "Every piece below is reachable by any connected client. Restricting the list to a chosen set is an enterprise feature.",
   "This project's pieces are controlled by a Piece Set.": "This project's pieces are controlled by a Piece Set.",
   "Review piece set": "Review piece set",
+  "Can delete or overwrite data in {pieceName}.": "Can delete or overwrite data in {pieceName}.",
   "pieceDestructiveActionCount": "{count, plural, =1 {1 destructive} other {# destructive}}",
   "pieceActionCount": "{count, plural, =1 {1 action} other {# actions}}",
   "Opens Cursor and writes the server into ~/.cursor/mcp.json.": "Opens Cursor and writes the server into ~/.cursor/mcp.json.",

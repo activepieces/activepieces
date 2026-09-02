@@ -1,3 +1,4 @@
+import type { ActionClassification } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
@@ -13,7 +14,7 @@ import { PieceIcon } from '@/features/pieces';
 import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 
-import { ReachablePiece } from './pieces-utils';
+import { ActionGroup, ReachablePiece } from './pieces-utils';
 
 export function PieceRow({ row }: { row: ReachablePiece }) {
   const [isOpenedByUser, setIsOpenedByUser] = useState(false);
@@ -64,36 +65,86 @@ export function PieceRow({ row }: { row: ReachablePiece }) {
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="grid grid-cols-1 gap-6 bg-muted/40 px-4 py-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-7 border-t bg-muted/60 pt-4 pr-5 pb-5 pl-4 sm:grid-cols-2 lg:grid-cols-4 lg:pl-14.5">
           {row.groups.map((group) => (
-            <div key={group.classification} className="flex flex-col gap-2">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={cn(
-                    'text-xss font-semibold uppercase tracking-wide',
-                    group.classification === 'DESTRUCTIVE'
-                      ? 'text-destructive'
-                      : 'text-muted-foreground',
-                  )}
-                >
-                  {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
-                </span>
-                <span className="text-xss text-muted-foreground">
-                  {group.actions.length}
-                </span>
-              </div>
-              {group.actions.map((action) => (
-                <TextWithTooltip
-                  key={action.name}
-                  tooltipMessage={action.displayName}
-                >
-                  <div className="text-sm">{action.displayName}</div>
-                </TextWithTooltip>
-              ))}
-            </div>
+            <ActionGroupColumn
+              key={group.classification}
+              group={group}
+              pieceDisplayName={row.piece.displayName}
+            />
           ))}
         </div>
       </CollapsibleContent>
     </Collapsible>
   );
 }
+
+function ActionGroupColumn({
+  group,
+  pieceDisplayName,
+}: ActionGroupColumnProps) {
+  const tone = CLASSIFICATION_TONES[group.classification];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            'text-xs font-semibold tracking-wider uppercase',
+            tone.label,
+          )}
+        >
+          {ACTION_CLASSIFICATION_BADGES[group.classification].label()}
+        </span>
+        <Badge variant={tone.count} className="px-1.5 text-xss">
+          {group.actions.length}
+        </Badge>
+      </div>
+      <div className={cn('-mx-2 flex flex-col', tone.frame)}>
+        {group.actions.map((action) => (
+          <TextWithTooltip
+            key={action.name}
+            tooltipMessage={action.displayName}
+          >
+            <div className="rounded-sm px-2 py-0.5 text-sm leading-5 hover:bg-muted">
+              {action.displayName}
+            </div>
+          </TextWithTooltip>
+        ))}
+        {group.classification === 'DESTRUCTIVE' && (
+          <p className="px-2 pt-1.5 text-xs text-destructive-700 dark:text-destructive-300">
+            {t('Can delete or overwrite data in {pieceName}.', {
+              pieceName: pieceDisplayName,
+            })}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
+  READ: { label: 'text-foreground', count: 'accent' },
+  SEARCH: { label: 'text-foreground', count: 'accent' },
+  WRITE: {
+    label: 'text-warning-700 dark:text-warning-300',
+    count: 'warning',
+  },
+  DESTRUCTIVE: {
+    label: 'text-destructive-700 dark:text-destructive-300',
+    count: 'destructive',
+    frame:
+      'gap-0.5 rounded-md border border-destructive-200 bg-destructive-50 py-1.5 dark:border-destructive-900 dark:bg-destructive-950/30',
+  },
+};
+
+type ClassificationTone = {
+  label: string;
+  count: 'accent' | 'warning' | 'destructive';
+  frame?: string;
+};
+
+type ActionGroupColumnProps = {
+  group: ActionGroup;
+  pieceDisplayName: string;
+};
