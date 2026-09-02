@@ -347,9 +347,6 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
-        async preparePieceTool(input) {
-            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).preparePieceTool(input)
-        },
         async executePieceTool(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
         },

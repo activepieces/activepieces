@@ -94,7 +94,6 @@ export type WorkerToApiContract = {
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
-    preparePieceTool(input: PreparePieceToolRequest): Promise<PreparePieceToolResponse>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
     executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
     executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
@@ -217,23 +216,10 @@ export type ExecuteAgentToolRequest = {
     conversationId?: string
 }
 
-export type PreparePieceToolRequest = Omit<ExecutePieceToolRequest, 'preparedId'> & {
-    preparedId: string
-    tainted: boolean
-}
-
-export type PreparePieceToolResponse = {
-    input: Record<string, unknown>
-    actionDisplayName: string
-    needsApproval: boolean
-    connectionLabel?: string
-}
-
 export type ExecutePieceToolRequest = {
     conversationId: string
     toolName: string
     instruction: string
-    preparedId?: string
     provider?: AIProviderName
     providerConfigId?: string
     piece: AgentPieceToolMetadata
@@ -241,6 +227,9 @@ export type ExecutePieceToolRequest = {
 
 export type ExecutePieceToolResponse = {
     result: unknown
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
+    connectionLabel?: string
 }
 
 export type ExecuteKnowledgeBaseToolRequest = {
@@ -386,7 +375,6 @@ export type SendPersonalizationProgressRequest = {
 }
 
 export const LONG_RUNNING_RPC_METHODS: readonly string[] = [
-    'preparePieceTool',
     'executePieceTool',
     'executeFlowTool',
     'executeKnowledgeBaseTool',

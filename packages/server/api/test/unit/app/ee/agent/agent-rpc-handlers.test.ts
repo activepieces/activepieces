@@ -47,20 +47,8 @@ vi.mock('ai', async (importOriginal) => ({
     embed: () => mockEmbed(),
 }))
 
-const { mockTakePreparedTool, mockCheckDecision, mockGetSelectedConnection, mockStorePreparedTool } = vi.hoisted(() => ({
-    mockTakePreparedTool: vi.fn(),
-    mockCheckDecision: vi.fn(),
-    mockGetSelectedConnection: vi.fn().mockResolvedValue(null),
-    mockStorePreparedTool: vi.fn(),
-}))
-
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
-    agentApprovalGate: {
-        takePreparedTool: mockTakePreparedTool,
-        checkDecision: mockCheckDecision,
-        getSelectedConnection: mockGetSelectedConnection,
-        storePreparedTool: mockStorePreparedTool,
-    },
+    agentApprovalGate: {},
 }))
 
 const { mockGetOneWithoutValue } = vi.hoisted(() => ({
@@ -406,83 +394,44 @@ describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a
     })
 })
 
-describe('agentRpcHandlers.executePieceTool — a configured action runs only the input that was approved', () => {
+describe('agentRpcHandlers.executePieceTool — a configured action runs in its own project', () => {
     const GMAIL_SEND = { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' }
 
-    async function runPieceTool({ conversation, prepared, decision }: {
-        conversation: unknown
-        prepared?: unknown
-        decision?: unknown
-    }) {
+    async function runPieceTool(conversation: unknown) {
         mockRunResolved.mockClear()
+        mockResolveInput.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
-        mockTakePreparedTool.mockResolvedValue(prepared ?? null)
-        mockCheckDecision.mockResolvedValue(decision ?? 'pending')
+        mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
-            preparedId: 'call-1',
-            piece: GMAIL_SEND,
+            piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
         })
     }
 
-    const agentChat = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
-    const flowStep = { id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' }
-    const approvedSend = { input: { to: 'jane@customer.com' }, piece: GMAIL_SEND, needsApproval: true }
-
-    it('runs the action in the conversation\'s own project, on the prepared input', async () => {
-        await runPieceTool({ conversation: flowStep, prepared: { input: { to: 'ops@acme.com' }, piece: GMAIL_SEND, needsApproval: false } })
+    it('runs the action in the conversation\'s own project', async () => {
+        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' })
 
         expect(mockRunResolved).toHaveBeenCalledTimes(1)
-        const call = mockRunResolved.mock.calls[0][0]
-        expect(call.projectId).toBe('proj-1')
-        expect(call.resolvedInput).toEqual({ to: 'ops@acme.com' })
+        expect(mockRunResolved.mock.calls[0][0].projectId).toBe('proj-1')
     })
 
-    it('runs the piece and action the input was prepared for, not the one the caller asks for', async () => {
-        await runPieceTool({
-            conversation: agentChat,
-            prepared: { input: { url: '/messages' }, piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' }, needsApproval: true },
-            decision: { approved: true },
-        })
+    it('names the account it ran as, so the receipt can say whose it was', async () => {
+        const response = await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' })
 
-        expect(mockRunResolved.mock.calls[0][0].piece).toEqual({ pieceName: '@activepieces/piece-slack', actionName: 'send_message' })
-    })
-
-    it('refuses when nothing was prepared, so skipping the preview does not skip the gate', async () => {
-        await expect(runPieceTool({ conversation: agentChat })).rejects.toThrow()
-
-        expect(mockRunResolved).not.toHaveBeenCalled()
-    })
-
-    it('refuses an action awaiting approval that no one has answered yet', async () => {
-        await expect(runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: 'pending' })).rejects.toThrow()
-
-        expect(mockRunResolved).not.toHaveBeenCalled()
-    })
-
-    it('refuses an action the person declined', async () => {
-        await expect(runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: { approved: false } })).rejects.toThrow()
-
-        expect(mockRunResolved).not.toHaveBeenCalled()
-    })
-
-    it('runs an action the person approved', async () => {
-        await runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: { approved: true } })
-
-        expect(mockRunResolved).toHaveBeenCalledTimes(1)
+        expect(response.connectionLabel).toBe('Sales Inbox')
     })
 
     it('refuses when the conversation is a chat', async () => {
-        await expect(runPieceTool({ conversation: { id: 'conv-1', source: 'CHAT', projectId: 'proj-1' } })).rejects.toThrow()
+        await expect(runPieceTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
 
         expect(mockRunResolved).not.toHaveBeenCalled()
     })
 
     it('refuses a flow-step run with no project, so the action is never run unscoped', async () => {
-        await expect(runPieceTool({ conversation: { id: 'conv-1', source: 'FLOW_STEP', projectId: null } })).rejects.toThrow()
+        await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
         expect(mockRunResolved).not.toHaveBeenCalled()
     })
@@ -670,53 +619,46 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
     })
 })
 
-describe('agentRpcHandlers.preparePieceTool — which account a configured action runs as', () => {
+describe('agentRpcHandlers.executePieceTool — which account a configured action runs as', () => {
     const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
     const PINNED = 'conn-author-pinned'
 
-    async function prepare({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
+    async function run({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
         mockResolveInput.mockClear()
+        mockGetOneWithoutValue.mockClear()
         mockFindOneBy.mockResolvedValue(AGENT_CHAT)
         mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
-        const response = await agentRpcHandlers(noopLogger as never).preparePieceTool({
+        const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'gmail-send_email',
             instruction: 'email the summary',
-            preparedId: 'call-1',
-            tainted: false,
             piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email', predefinedInput: { auth: pinnedAuth, fields: {} } },
         })
         return { call: mockResolveInput.mock.calls[0][0], response, lookup: mockGetOneWithoutValue.mock.calls[0]?.[0] }
     }
 
-    it('runs as the account the author pinned, and hands it to dynamic property resolution', async () => {
-        const { call } = await prepare({ pinnedExists: true })
+    it('hands the pinned account to dynamic property resolution, so a dropdown has one to list options with', async () => {
+        const { call } = await run({ pinnedExists: true })
 
         expect(call.connectionExternalId).toBe(PINNED)
     })
 
-    it('names the account on the approval card, so approving says whose it is', async () => {
-        const { response } = await prepare({ pinnedExists: true })
-
-        expect(response.connectionLabel).toBe('Sales Inbox')
-    })
-
     it('looks the account up inside the conversation project only', async () => {
-        const { lookup } = await prepare({ pinnedExists: true })
+        const { lookup } = await run({ pinnedExists: true })
 
         expect(lookup).toMatchObject({ projectId: 'proj-1', platformId: 'plat-1', externalId: PINNED })
     })
 
     it('still runs as the pinned account when it cannot be named, rather than picking another one', async () => {
-        const { call, response } = await prepare({ pinnedExists: false })
+        const { call, response } = await run({ pinnedExists: false })
 
         expect(call.connectionExternalId).toBe(PINNED)
         expect(response.connectionLabel).toBeUndefined()
     })
 
     it('asks for no account when the author pinned none', async () => {
-        const { call } = await prepare({ pinnedExists: false, pinnedAuth: '' })
+        const { call } = await run({ pinnedExists: false, pinnedAuth: '' })
 
         expect(call.connectionExternalId).toBeUndefined()
     })
