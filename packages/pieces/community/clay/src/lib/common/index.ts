@@ -24,38 +24,15 @@ export async function clayApiCall<T extends HttpMessageBody>({
     });
 }
 
-export async function sendClayWebhookRecord({
-    webhookUrl,
-    authToken,
-    fields,
-}: {
-    webhookUrl: string;
-    authToken: string | undefined;
-    fields: Record<string, unknown>;
-}): Promise<HttpResponse<HttpMessageBody>> {
-    return await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: webhookUrl,
-        headers: authToken ? { 'x-clay-webhook-auth': authToken } : undefined,
-        body: fields,
-    });
-}
-
-export function flattenClayTableRow(row: Record<string, { value?: unknown } | undefined>): Record<string, unknown> {
-    return Object.fromEntries(
-        Object.entries(row).map(([field, cell]) => [field, cell?.value ?? null]),
-    );
-}
-
-export async function runClayFiltersModeSearch({
+export async function runClayQueryModeSearch({
     apiKey,
     sourceType,
-    filters,
+    query,
     limit,
 }: {
     apiKey: string;
     sourceType: 'people' | 'companies';
-    filters: Record<string, unknown>;
+    query: string;
     limit: number;
 }): Promise<{
     search_id: string;
@@ -63,12 +40,18 @@ export async function runClayFiltersModeSearch({
     has_more: boolean;
     period_quota: { limit: number; used: number; remaining: number; resets_at: string };
 }> {
-    const created = await clayApiCall<{ search_id: string }>({
+    const created = await clayApiCall<{ search_id: string; source_type: 'people' | 'companies' }>({
         apiKey,
         method: HttpMethod.POST,
-        path: '/search/filters-mode',
-        body: { source_type: sourceType, filters },
+        path: '/search/query-mode',
+        body: { query },
     });
+
+    if (created.body.source_type !== sourceType) {
+        throw new Error(
+            `Query resolved to a "${created.body.source_type}" search, but this action searches "${sourceType}". Rephrase the query to describe ${sourceType} instead.`,
+        );
+    }
 
     const results = await clayApiCall<{
         data: unknown[];
@@ -77,7 +60,7 @@ export async function runClayFiltersModeSearch({
     }>({
         apiKey,
         method: HttpMethod.POST,
-        path: `/search/filters-mode/${created.body.search_id}/run`,
+        path: `/search/query-mode/${created.body.search_id}/run`,
         body: { limit },
     });
 
@@ -89,19 +72,22 @@ export async function runClayFiltersModeSearch({
     };
 }
 
-const BASE_URL = 'https://api.clay.com/public/v0';
+export function escapeClayQueryValue(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
 
-export const CLAY_TABLE_FILTER_OPERATORS = [
-    { label: 'Equals', value: '=' },
-    { label: 'Not equals', value: '!=' },
-    { label: 'Greater than', value: '>' },
-    { label: 'Greater than or equal to', value: '>=' },
-    { label: 'Less than', value: '<' },
-    { label: 'Less than or equal to', value: '<=' },
-    { label: 'Contains', value: 'contains' },
-    { label: 'Does not contain', value: 'not_contains' },
-    { label: 'Starts with', value: 'starts_with' },
-    { label: 'Ends with', value: 'ends_with' },
-    { label: 'Is empty', value: 'is_empty' },
-    { label: 'Is not empty', value: 'is_not_empty' },
-];
+export function buildClayInClause({
+    field,
+    values,
+}: {
+    field: string;
+    values: string[];
+}): string | undefined {
+    if (values.length === 0) {
+        return undefined;
+    }
+    const list = values.map((value) => `"${escapeClayQueryValue(value)}"`).join(', ');
+    return `${field} in (${list})`;
+}
+
+const BASE_URL = 'https://api.clay.com/public/v0';
