@@ -15,6 +15,7 @@ import { platformConfigurationService } from '../../platform/platform-configurat
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
 import { WorkerMachine, workerMachineCache } from '../../workers/machine/machine-cache'
+import { workerLiveness } from '../../workers/machine/worker-liveness'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 
 dayjs.extend(utc)
@@ -22,7 +23,6 @@ dayjs.extend(utc)
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 const EXECUTIONS_CHUNK_DELAY_MS = 1000
 const SETUP_REPORT_WORKERS_LIMIT = 50
-const WORKER_OFFLINE_AFTER_SECONDS = 60
 
 export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
     /**
@@ -287,8 +287,7 @@ async function collectSetupInfo({ edition, platformIds, log }: {
 
 async function queryOnlineWorkers(): Promise<WorkerMachine[]> {
     const allWorkers = await workerMachineCache().find()
-    const offlineThreshold = dayjs().subtract(WORKER_OFFLINE_AFTER_SECONDS, 'seconds').utc()
-    return allWorkers.filter((worker) => dayjs(worker.updated).isAfter(offlineThreshold))
+    return workerLiveness.partitionByLiveness(allWorkers).online
 }
 
 async function groupDedicatedWorkersByPlatform({ platformIds, onlineWorkers }: {

@@ -68,6 +68,9 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         if (platformIds.length === 0) {
             return []
         }
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return platformIds
+        }
         const optedOut: string[] = []
         for (const batch of chunk(platformIds, CONFIGURATION_FILTER_BATCH_SIZE)) {
             const rows = await platformConfigurationRepo().find({
