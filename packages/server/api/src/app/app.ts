@@ -29,6 +29,7 @@ import { authorizationMiddleware } from './core/security/v2/authz/authorization-
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
 import { agentHelpers } from './ee/agent/agent-helpers'
+import { assertAgentsResolveInProject } from './ee/agent/agent-service'
 import { agentModule } from './ee/agent/agent.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -71,6 +72,7 @@ import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
+import { flowPublishHooks } from './flows/flow/flow-publish-hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -349,6 +351,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -385,6 +388,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
