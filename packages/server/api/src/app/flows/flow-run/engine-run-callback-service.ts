@@ -11,15 +11,6 @@ import { projectService } from '../../project/project-service'
 import { RunsMetadataUpsertData } from '../../workers/job'
 import { runsMetadataQueue } from './flow-runs-queue'
 
-const FAILED_RUN_SYNC_STATUSES = [
-    FlowRunStatus.FAILED,
-    FlowRunStatus.INTERNAL_ERROR,
-    FlowRunStatus.TIMEOUT,
-    FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
-    FlowRunStatus.LOG_SIZE_EXCEEDED,
-]
-const FAILED_RUN_SYNC_MESSAGE = 'The flow has failed and there is no response returned'
-
 export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
     updateRunProgress({ projectId, request }: UpdateRunProgressParams): void {
         websocketService.to(projectId).emit(WebsocketClientEvent.UPDATE_RUN_PROGRESS, request)
@@ -90,6 +81,15 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+const FAILED_RUN_SYNC_STATUSES = [
+    FlowRunStatus.FAILED,
+    FlowRunStatus.INTERNAL_ERROR,
+    FlowRunStatus.TIMEOUT,
+    FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+    FlowRunStatus.LOG_SIZE_EXCEEDED,
+]
+const FAILED_RUN_SYNC_MESSAGE = 'The flow has failed and there is no response returned'
 
 async function ensureLogsFileExists({ log, projectId, logsFileId, internalError }: EnsureLogsFileParams): Promise<void> {
     const { error } = await tryCatch(async () => {
