@@ -46,7 +46,7 @@ export const TrackedEventsDialog = () => {
               <Info className="mt-0.5 size-4 shrink-0" />
               <p>
                 {t(
-                  'Each event records that the action happened, the account it came from, and your version and environment. Some also carry the id of the project or flow involved, and the step-picker search carries what you typed. We also count page views. Never flow contents, step data, credentials, or anything from your connections.',
+                  'Each event records that the action happened, the account it might have come from, and your version and environment. Some also carry the id of the project or flow involved, and the step-picker search carries what you typed. We also count page views. Never flow contents, step data, credentials, or anything from your connections.',
                 )}
               </p>
             </div>
