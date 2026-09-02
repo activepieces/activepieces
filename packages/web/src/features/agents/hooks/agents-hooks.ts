@@ -4,6 +4,7 @@ import {
   ApFlagId,
   CreateAgentRequest,
   DraftAgentRequest,
+  MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
 } from '@activepieces/shared';
@@ -76,6 +77,20 @@ export const agentsQueries = {
       enabled,
       meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
+  useMovePreview: ({
+    id,
+    targetProjectId,
+    enabled,
+  }: {
+    id: string;
+    targetProjectId: string | null;
+    enabled: boolean;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'move-preview', id, targetProjectId],
+      queryFn: () => agentsApi.movePreview(id, targetProjectId ?? ''),
+      enabled: enabled && targetProjectId !== null,
+    }),
   useAgent: ({
     id,
     enabled = true,
@@ -120,6 +135,22 @@ export const agentsMutations = {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
       },
       onError: internalErrorToast,
+    });
+  },
+  useMoveAgent: ({
+    id,
+    onSuccess,
+  }: {
+    id: string;
+    onSuccess?: (agent: Agent) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: MoveAgentRequest) => agentsApi.move(id, request),
+      onSuccess: async (agent) => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+        onSuccess?.(agent);
+      },
     });
   },
   useDraftAgent: () =>

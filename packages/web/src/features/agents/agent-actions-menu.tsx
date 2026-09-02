@@ -1,7 +1,7 @@
 import { Permission } from '@activepieces/core-utils';
 import { AgentSummary } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MoreHorizontal, Trash2 } from 'lucide-react';
+import { FolderInput, MoreHorizontal, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
+import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
+import { projectCollectionUtils } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
   const [deleting, setDeleting] = useState(false);
+  const [moving, setMoving] = useState(false);
   const { checkAccess } = useAuthorization(agent.projectId);
+  const { data: allProjects } = projectCollectionUtils.useAll();
+  const canMove = (allProjects ?? []).length > 1;
 
   if (!checkAccess(Permission.WRITE_AGENT)) {
     return null;
@@ -36,6 +41,12 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {canMove && (
+            <DropdownMenuItem onSelect={() => setMoving(true)}>
+              <FolderInput />
+              {t('Move to another project')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             variant="destructive"
             onSelect={() => setDeleting(true)}
@@ -50,6 +61,7 @@ export const AgentActionsMenu = ({ agent }: AgentActionsMenuProps) => {
         open={deleting}
         onOpenChange={setDeleting}
       />
+      <MoveAgentDialog agent={agent} open={moving} onOpenChange={setMoving} />
     </>
   );
 };
