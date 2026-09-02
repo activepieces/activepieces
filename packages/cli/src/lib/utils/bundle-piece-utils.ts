@@ -90,6 +90,7 @@ async function bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, in
         if (issues.length > 0) {
             throw new Error(`[bundlePiece] ${piecePath} forked entry "${entry}" failed the safety gate:\n  - ${issues.join('\n  - ')}`)
         }
+        assertZodDeclared({ piecePath: `${piecePath} (${entry})`, metafile: pass.result.metafile, manifest })
         enforceSizeGate({ piecePath: `${piecePath} (${entry})`, bundleBytes: statSync(outfile).size })
         files.push(outRel)
         for (const dep of pass.externalized) {

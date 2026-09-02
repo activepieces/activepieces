@@ -211,6 +211,30 @@ describe('bundlePiece — zod gate', () => {
             .rejects.toThrow(/bundles zod through first-party code that does not declare it/)
     })
 
+    it('gates a forked entry bundle, not just the main one', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        writeZodPackage()
+
+        const contractsDir = join(root, 'contracts')
+        mkdirSync(contractsDir, { recursive: true })
+        writeFileSync(join(contractsDir, 'index.ts'), 'import * as z from \'zod\'\nexport const Contract = z.object({})\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src', 'lib'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({
+            name: 'piece-forked-zod',
+            version: '0.0.1',
+            bundleForkedEntries: ['src/lib/runner.ts'],
+        }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'export const piece = { name: \'forked\' }\n')
+        writeFileSync(join(piecePath, 'src', 'lib', 'runner.ts'), 'import { Contract } from \'../../../contracts\'\nconsole.log(Contract)\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        await expect(bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root }))
+            .rejects.toThrow(/bundles zod through first-party code that does not declare it/)
+    })
+
     it('allows zod that only a third-party dependency brings in', async () => {
         root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
         writeZodPackage()
