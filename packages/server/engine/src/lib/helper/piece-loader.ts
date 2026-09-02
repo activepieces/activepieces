@@ -131,7 +131,7 @@ export const pieceLoader = {
     },
 }
 
-const MAX_LOADED_PIECES = 10
+const MAX_LOADED_PIECES = 5
 const engineRequire = createRequire(__filename)
 const loadedPieceEntries = new Map<string, true>()
 const baselineModuleIds = new Set(Object.keys(engineRequire.cache))
