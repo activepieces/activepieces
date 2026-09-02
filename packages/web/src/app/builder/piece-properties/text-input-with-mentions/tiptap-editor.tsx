@@ -65,6 +65,7 @@ import {
 import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
+  id?: string;
   className?: string;
   wrapperClassName?: string;
   initialValue?: unknown;
@@ -224,6 +225,7 @@ function RichTextToolbar({
 }
 
 export const TiptapEditor = ({
+  id,
   className,
   wrapperClassName,
   initialValue,
@@ -455,6 +457,9 @@ export const TiptapEditor = ({
         return true;
       },
       attributes: {
+        ...(id ? { id } : {}),
+        role: 'textbox',
+        'aria-multiline': 'true',
         class: cn(
           isHtml
             ? 'block min-h-20 max-h-72 overflow-y-auto px-2.5 py-2 outline-none'
