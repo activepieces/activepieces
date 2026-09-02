@@ -388,7 +388,7 @@ export function ConfigDetail({
             <Button
               size="sm"
               loading={isSaving}
-              disabled={nameMissing}
+              disabled={nameMissing || isSaving}
               keyboardShortcut="S"
               onKeyboardShortcut={save}
               onClick={save}
