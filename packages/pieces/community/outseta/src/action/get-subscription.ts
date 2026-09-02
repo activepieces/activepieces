@@ -2,33 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-// Every key of the success payload, emptied out. Returned instead of throwing
-// when "Fail if not found" is unchecked, so a flow can branch on `found`
-// rather than on a failed step.
-const NOT_FOUND_RESULT = {
-  found: false,
-  uid: null,
-  account_uid: null,
-  account_name: null,
-  subscription_status: null,
-  plan_uid: null,
-  plan_name: null,
-  plan_family_name: null,
-  billing_renewal_term: null,
-  quantity: null,
-  rate: null,
-  discount_code: null,
-  start_date: null,
-  end_date: null,
-  expiration_date: null,
-  renewal_date: null,
-  validity_date: null,
-  created: null,
-  updated: null,
-  add_ons: [],
-  add_ons_names: null,
-};
-
 export const getSubscriptionAction = createAction({
   name: 'get_subscription',
   auth: outsetaAuth,
@@ -181,3 +154,30 @@ export const getSubscriptionAction = createAction({
     };
   },
 });
+
+// Every key of the success payload, emptied out. Returned instead of throwing
+// when "Fail if not found" is unchecked, so a flow can branch on `found`
+// rather than on a failed step.
+const NOT_FOUND_RESULT = {
+  found: false,
+  uid: null,
+  account_uid: null,
+  account_name: null,
+  subscription_status: null,
+  plan_uid: null,
+  plan_name: null,
+  plan_family_name: null,
+  billing_renewal_term: null,
+  quantity: null,
+  rate: null,
+  discount_code: null,
+  start_date: null,
+  end_date: null,
+  expiration_date: null,
+  renewal_date: null,
+  validity_date: null,
+  created: null,
+  updated: null,
+  add_ons: [],
+  add_ons_names: null,
+};

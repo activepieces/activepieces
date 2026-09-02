@@ -2,48 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 
-// Every key of the success payload, emptied out. Returned instead of throwing
-// when "Fail if not found" is unchecked, so a flow can branch on `found`
-// rather than on a failed step.
-const NOT_FOUND_RESULT = {
-  found: false,
-  uid: null,
-  name: null,
-  account_stage: null,
-  account_stage_label: null,
-  client_identifier: null,
-  invoice_notes: null,
-  has_logged_in: null,
-  is_demo: null,
-  lifetime_revenue: null,
-  created: null,
-  updated: null,
-  billing_address_line1: null,
-  billing_address_line2: null,
-  billing_address_city: null,
-  billing_address_state: null,
-  billing_address_postal_code: null,
-  billing_address_country: null,
-  primary_contact_uid: null,
-  primary_contact_email: null,
-  primary_contact_first_name: null,
-  primary_contact_last_name: null,
-  current_subscription_uid: null,
-  subscription_status: null,
-  plan_uid: null,
-  plan_name: null,
-  plan_family_name: null,
-  billing_renewal_term: null,
-  quantity: null,
-  renewal_date: null,
-  start_date: null,
-  end_date: null,
-  expiration_date: null,
-  validity_date: null,
-  add_ons: [],
-  add_ons_names: null,
-};
-
 export const getAccountAction = createAction({
   name: 'get_account',
   auth: outsetaAuth,
@@ -216,3 +174,45 @@ export const getAccountAction = createAction({
     };
   },
 });
+
+// Every key of the success payload, emptied out. Returned instead of throwing
+// when "Fail if not found" is unchecked, so a flow can branch on `found`
+// rather than on a failed step.
+const NOT_FOUND_RESULT = {
+  found: false,
+  uid: null,
+  name: null,
+  account_stage: null,
+  account_stage_label: null,
+  client_identifier: null,
+  invoice_notes: null,
+  has_logged_in: null,
+  is_demo: null,
+  lifetime_revenue: null,
+  created: null,
+  updated: null,
+  billing_address_line1: null,
+  billing_address_line2: null,
+  billing_address_city: null,
+  billing_address_state: null,
+  billing_address_postal_code: null,
+  billing_address_country: null,
+  primary_contact_uid: null,
+  primary_contact_email: null,
+  primary_contact_first_name: null,
+  primary_contact_last_name: null,
+  current_subscription_uid: null,
+  subscription_status: null,
+  plan_uid: null,
+  plan_name: null,
+  plan_family_name: null,
+  billing_renewal_term: null,
+  quantity: null,
+  renewal_date: null,
+  start_date: null,
+  end_date: null,
+  expiration_date: null,
+  validity_date: null,
+  add_ons: [],
+  add_ons_names: null,
+};
