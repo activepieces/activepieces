@@ -369,7 +369,11 @@ export function ConfigDetail({
           showToast={true}
           mutationFn={async () => {
             leavingOnPurpose.current = true;
-            await onDelete();
+            try {
+              await onDelete();
+            } finally {
+              leavingOnPurpose.current = false;
+            }
           }}
         />
       </section>
