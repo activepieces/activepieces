@@ -9,6 +9,8 @@ import { getSubmission } from './lib/actions/get-submission';
 import { listForms } from './lib/actions/list-forms';
 import { updateSubmission } from './lib/actions/update-submission';
 import { formioCommon } from './lib/common/client';
+import { newSubmission } from './lib/triggers/new-submission';
+import { updatedSubmission } from './lib/triggers/updated-submission';
 
 export const formio = createPiece({
   displayName: 'Form.io',
@@ -36,5 +38,5 @@ export const formio = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [newSubmission, updatedSubmission],
 });
