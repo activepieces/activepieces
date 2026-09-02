@@ -1,0 +1,48 @@
+---
+title: "Manage an agent"
+sidebarTitle: "Manage an agent"
+description: "Where an agent lives, how to move it, and how to delete it safely"
+icon: "folder-tree"
+---
+
+## The project is the boundary
+
+An agent belongs to one project, and that decides what it can reach: the connections it authenticates with, the flows it can call, the tables and files it looks things up in. Two projects with the same Gmail connection name are two different mailboxes.
+
+The **Agents** page spans every project you can see, so the card tells you which project each agent belongs to. Use the project filter beside the search box to narrow the list, and new agents then go to that project.
+
+## Move it to another project
+
+From the `...` menu on a card, or from **Project** in the agent's own Advanced section, pick **Move to another project**.
+
+The agent takes its instructions, tools and conversations with it. Before you confirm, the dialog says what the move costs:
+
+<CardGroup cols={1}>
+  <Card title="Tools that stop working" icon="plug-circle-xmark" color="#F59E0B" horizontal>
+    A pinned connection is matched by name in the new project. Anything without a counterpart there stops working until you connect it, and the same is true for a flow or a file the new project does not have.
+  </Card>
+  <Card title="Accounts change under it" icon="right-left" color="#0EA5E9" horizontal>
+    Tools that keep working now use the new project's accounts. Moving an agent between two clients points it at the second client's data.
+  </Card>
+  <Card title="People who lose access" icon="user-minus" color="#EC4899" horizontal>
+    An agent shared with someone who is not in the new project loses that share, and moving it back does not restore it.
+  </Card>
+</CardGroup>
+
+Two things refuse the move outright: a **published flow still running the agent**, because the reference is live and that flow would break, and a project you cannot create agents in.
+
+<Note>
+Only the person who created the agent, or a project admin, can move or delete it. Everyone else in the project can use and edit it.
+</Note>
+
+## Delete it
+
+**Delete** sits in the same `...` menu, and in a danger zone at the bottom of the agent's Advanced section.
+
+Deleting is permanent: the instructions, the tools and every conversation held with the agent go with it. A draft flow step pointing at the agent will break, and the dialog says so.
+
+If a **published flow** still runs the agent, deleting is refused and the flows are named. Take the agent out of those flows first.
+
+## Who can see it
+
+An agent is visible to everyone in its project by default. Restrict it to yourself and named colleagues from the pencil beside its icon; a restricted agent shows a lock next to its name in the list.
