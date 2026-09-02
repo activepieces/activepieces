@@ -18,7 +18,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function conversationWithPendingGate(ctx: TestContext): Promise<string> {
+async function conversation(ctx: TestContext): Promise<string> {
     const conversationId = apId()
     await db.save('agent_conversation', {
         id: conversationId,
@@ -32,11 +32,20 @@ async function conversationWithPendingGate(ctx: TestContext): Promise<string> {
         messages: [],
         uiMessages: [],
     })
-    const gateId = `gate-${conversationId}`
+    return conversationId
+}
+
+async function openGate({ conversationId, gateId, actionName }: { conversationId: string, gateId: string, actionName: string }): Promise<void> {
     await agentApprovalGate.storePendingGate({
         conversationId,
-        gate: { gateId, toolName: 'gmail-send_email', displayName: 'Send email', toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { to: 'jane@customer.com' } } },
+        gate: { gateId, toolName: `slack-${actionName}`, displayName: actionName, toolInput: { pieceName: '@activepieces/piece-slack', actionName, input: { to: 'jane@customer.com' } } },
     })
+}
+
+async function conversationWithPendingGate(ctx: TestContext): Promise<string> {
+    const conversationId = await conversation(ctx)
+    const gateId = `gate-${conversationId}`
+    await openGate({ conversationId, gateId, actionName: 'send_email' })
     return gateId
 }
 
@@ -59,5 +68,35 @@ describe('approving an agent action belongs to the person it was shown to', () =
 
         expect(response.statusCode).not.toBe(StatusCodes.OK)
         expect(await agentApprovalGate.checkDecision({ gateId })).toBe('pending')
+    })
+})
+
+describe('a turn that opens several actions at once keeps a card for each', () => {
+    it('hands over the second action once the first has been answered', async () => {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        const conversationId = await conversation(ctx)
+        await openGate({ conversationId, gateId: 'gate-first', actionName: 'set_user_status' })
+        await openGate({ conversationId, gateId: 'gate-second', actionName: 'send_channel_message' })
+
+        const both = await agentApprovalGate.getPendingGates({ conversationId })
+        expect(both.map((gate) => gate.gateId).sort()).toEqual(['gate-first', 'gate-second'])
+
+        await agentApprovalGate.resolveGate({ gateId: 'gate-first', approved: true })
+
+        const left = await agentApprovalGate.getPendingGates({ conversationId })
+        expect(left.map((gate) => gate.gateId)).toEqual(['gate-second'])
+    })
+
+    it('binds each decision to the action it was shown for, not to the other one', async () => {
+        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
+        const conversationId = await conversation(ctx)
+        await openGate({ conversationId, gateId: 'gate-status', actionName: 'set_user_status' })
+        await openGate({ conversationId, gateId: 'gate-message', actionName: 'send_channel_message' })
+
+        await agentApprovalGate.resolveGate({ gateId: 'gate-status', approved: true })
+        const decision = await agentApprovalGate.checkDecision({ gateId: 'gate-status' })
+
+        expect(decision !== 'pending' && decision.approvedInput?.actionName).toBe('set_user_status')
+        expect(await agentApprovalGate.checkDecision({ gateId: 'gate-message' })).toBe('pending')
     })
 })

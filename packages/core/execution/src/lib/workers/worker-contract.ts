@@ -385,6 +385,7 @@ export type SendPersonalizationProgressRequest = {
 }
 
 export const LONG_RUNNING_RPC_METHODS: readonly string[] = [
+    'preparePieceTool',
     'executePieceTool',
     'executeFlowTool',
     'executeKnowledgeBaseTool',

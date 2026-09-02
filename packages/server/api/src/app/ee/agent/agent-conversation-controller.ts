@@ -263,12 +263,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const gate = await agentApprovalGate.getPendingGate({ conversationId })
-        // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
-        // the gate when it belongs to the run that currently owns the conversation.
-        const gateRunId = gate?.runId
-        const staleGate = !isNil(gateRunId) && !isNil(conversation.activeRunId) && gateRunId !== conversation.activeRunId
-        return reply.status(StatusCodes.OK).send(staleGate ? null : gate)
+        const gates = await agentApprovalGate.getPendingGates({ conversationId })
+        // A preempted run can leave (or race in) a pending gate; only surface one that belongs to
+        // the run that currently owns the conversation. A turn can open several at once, so the
+        // client is handed one at a time and asks again once it has been answered.
+        const ownedByThisRun = gates.filter((gate) => isNil(gate.runId) || isNil(conversation.activeRunId) || gate.runId === conversation.activeRunId)
+        return reply.status(StatusCodes.OK).send(ownedByThisRun[0] ?? null)
     })
 
     app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {

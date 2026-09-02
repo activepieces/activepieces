@@ -11,7 +11,7 @@ const CHANNEL_PREFIX = 'tool-approval:'
 const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
-const PENDING_GATE_PREFIX = 'chat-pending-gate:'
+const PENDING_GATE_PREFIX = 'chat-pending-gate:v2:'
 const PREPARED_TOOL_PREFIX = 'agent-prepared-tool:'
 
 function decisionKey(gateId: string): string {
@@ -26,8 +26,8 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
     // Bind the decision to the exact inputs the user saw in the preview, so a consumer can verify
     // the action it's about to run matches what was approved (not a different payload reusing the id).
     const conversationId = await distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
-    const pendingGate = conversationId ? await distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`) : null
-    const approvedInput = pendingGate?.gateId === gateId ? pendingGate.toolInput : undefined
+    const pendingGate = conversationId ? (await readPendingGates({ conversationId }))[gateId] : undefined
+    const approvedInput = pendingGate?.toolInput
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
@@ -35,7 +35,7 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
             await discardPreparedTool({ conversationId, preparedId: gateId })
         }
         if (conversationId) {
-            await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
+            await distributedStore.removeField(`${PENDING_GATE_PREFIX}${conversationId}`, gateId)
             await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
         }
         log?.info({ gate: { id: gateId }, decision: approved ? 'approved' : 'denied' }, '[agentApprovalGate] Gate decided')
@@ -168,17 +168,21 @@ async function storePendingGate({ conversationId, gate }: {
     gate: PendingGate
 }): Promise<void> {
     await Promise.all([
-        distributedStore.put(`${PENDING_GATE_PREFIX}${conversationId}`, gate, GATE_TTL_SECONDS),
+        distributedStore.merge(`${PENDING_GATE_PREFIX}${conversationId}`, { [gate.gateId]: gate }, GATE_TTL_SECONDS),
         distributedStore.put(`${PENDING_GATE_PREFIX}gate:${gate.gateId}`, conversationId, GATE_TTL_SECONDS),
     ])
 }
 
-async function conversationIdForGate({ gateId }: { gateId: string }): Promise<string | null> {
-    return distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
+async function readPendingGates({ conversationId }: { conversationId: string }): Promise<Record<string, PendingGate>> {
+    return await distributedStore.hgetJson<Record<string, PendingGate>>(`${PENDING_GATE_PREFIX}${conversationId}`) ?? {}
 }
 
-async function getPendingGate({ conversationId }: { conversationId: string }): Promise<PendingGate | null> {
-    return distributedStore.get<PendingGate>(`${PENDING_GATE_PREFIX}${conversationId}`)
+async function getPendingGates({ conversationId }: { conversationId: string }): Promise<PendingGate[]> {
+    return Object.values(await readPendingGates({ conversationId }))
+}
+
+async function conversationIdForGate({ gateId }: { gateId: string }): Promise<string | null> {
+    return distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
 }
 
 async function clearPendingGate({ conversationId }: { conversationId: string }): Promise<void> {
@@ -197,11 +201,11 @@ export const agentApprovalGate = {
     storeSelectedConnection,
     getSelectedConnection,
     storePendingGate,
+    getPendingGates,
     conversationIdForGate,
     storePreparedTool,
     takePreparedTool,
     discardPreparedTool,
-    getPendingGate,
     clearPendingGate,
 }
 
