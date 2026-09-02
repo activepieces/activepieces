@@ -10,7 +10,9 @@ import { listForms } from './lib/actions/list-forms';
 import { updateSubmission } from './lib/actions/update-submission';
 import { formioCommon } from './lib/common/client';
 import { newSubmission } from './lib/triggers/new-submission';
+import { newSubmissionPolling } from './lib/triggers/new-submission-polling';
 import { updatedSubmission } from './lib/triggers/updated-submission';
+import { updatedSubmissionPolling } from './lib/triggers/updated-submission-polling';
 
 export const formio = createPiece({
   displayName: 'Form.io',
@@ -38,5 +40,10 @@ export const formio = createPiece({
       }),
     }),
   ],
-  triggers: [newSubmission, updatedSubmission],
+  triggers: [
+    newSubmission,
+    updatedSubmission,
+    newSubmissionPolling,
+    updatedSubmissionPolling,
+  ],
 });
