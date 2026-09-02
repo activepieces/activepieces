@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, PreparePieceToolResponse, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apErrorOf, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, PreparePieceToolResponse, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
@@ -1455,8 +1455,9 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, tai
                 const preparedId = options.toolCallId
                 const { data: prepared, error: prepareError } = await tryCatch(() => preparePieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata, preparedId, tainted: taintState.tainted }))
                 if (prepareError || isNil(prepared)) {
+                    const reason = apErrorOf(prepareError)?.message ?? String(prepareError)
                     log.warn({ error: prepareError, tool: { name: configured.toolName } }, '[configuredPieceTool] Could not work out what this action would do')
-                    return { content: [{ type: 'text', text: `That action could not be prepared, so nothing ran: ${String(prepareError)}` }] }
+                    return { content: [{ type: 'text', text: `That action could not be prepared, so nothing ran, and this is not a connection problem: ${reason}` }] }
                 }
                 if (prepared.needsApproval) {
                     eventEmitter.emitActionPreview({
@@ -1488,7 +1489,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, tai
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
                     return { content: [{ type: 'text', text: reachedTheServer
-                        ? `That action failed: ${String(error)}`
+                        ? `That action failed, and this is not a connection problem: ${apErrorOf(error)?.message ?? String(error)}`
                         : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
                 }
                 const succeeded = isSuccessResult(data.result)
