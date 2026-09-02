@@ -31,6 +31,9 @@ async function resolveGate({ gateId, approved, payload, log }: { gateId: string,
     const wasSet = await distributedStore.putIfAbsent(decisionKey(gateId), { approved, payload, approvedInput }, GATE_TTL_SECONDS)
     if (wasSet) {
         await pubsub.publish(channelName(gateId), JSON.stringify({ approved, payload }))
+        if (conversationId && !approved) {
+            await discardPreparedTool({ conversationId, preparedId: gateId })
+        }
         if (conversationId) {
             await distributedStore.delete(`${PENDING_GATE_PREFIX}${conversationId}`)
             await distributedStore.delete(`${PENDING_GATE_PREFIX}gate:${gateId}`)
@@ -134,22 +137,30 @@ async function getSelectedConnection({ conversationId, pieceName }: {
     return distributedStore.get<SelectedConnection>(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`)
 }
 
-async function storePreparedToolInput({ conversationId, preparedId, input }: {
-    conversationId: string
-    preparedId: string
-    input: Record<string, unknown>
-}): Promise<void> {
-    await distributedStore.put(`${PREPARED_TOOL_PREFIX}${conversationId}:${preparedId}`, input, GATE_TTL_SECONDS)
+function preparedToolKey({ conversationId, preparedId }: { conversationId: string, preparedId: string }): string {
+    return `${PREPARED_TOOL_PREFIX}${conversationId}:${preparedId}`
 }
 
-async function takePreparedToolInput({ conversationId, preparedId }: {
+async function storePreparedTool({ conversationId, preparedId, prepared }: {
     conversationId: string
     preparedId: string
-}): Promise<Record<string, unknown> | null> {
-    const key = `${PREPARED_TOOL_PREFIX}${conversationId}:${preparedId}`
-    const input = await distributedStore.get<Record<string, unknown>>(key)
-    await distributedStore.delete(key)
-    return input
+    prepared: PreparedTool
+}): Promise<void> {
+    await distributedStore.put(preparedToolKey({ conversationId, preparedId }), prepared, GATE_TTL_SECONDS)
+}
+
+async function takePreparedTool({ conversationId, preparedId }: {
+    conversationId: string
+    preparedId: string
+}): Promise<PreparedTool | null> {
+    return distributedStore.take<PreparedTool>(preparedToolKey({ conversationId, preparedId }))
+}
+
+async function discardPreparedTool({ conversationId, preparedId }: {
+    conversationId: string
+    preparedId: string
+}): Promise<void> {
+    await distributedStore.delete(preparedToolKey({ conversationId, preparedId }))
 }
 
 async function storePendingGate({ conversationId, gate }: {
@@ -160,6 +171,10 @@ async function storePendingGate({ conversationId, gate }: {
         distributedStore.put(`${PENDING_GATE_PREFIX}${conversationId}`, gate, GATE_TTL_SECONDS),
         distributedStore.put(`${PENDING_GATE_PREFIX}gate:${gate.gateId}`, conversationId, GATE_TTL_SECONDS),
     ])
+}
+
+async function conversationIdForGate({ gateId }: { gateId: string }): Promise<string | null> {
+    return distributedStore.get<string>(`${PENDING_GATE_PREFIX}gate:${gateId}`)
 }
 
 async function getPendingGate({ conversationId }: { conversationId: string }): Promise<PendingGate | null> {
@@ -182,10 +197,18 @@ export const agentApprovalGate = {
     storeSelectedConnection,
     getSelectedConnection,
     storePendingGate,
-    storePreparedToolInput,
-    takePreparedToolInput,
+    conversationIdForGate,
+    storePreparedTool,
+    takePreparedTool,
+    discardPreparedTool,
     getPendingGate,
     clearPendingGate,
+}
+
+export type PreparedTool = {
+    input: Record<string, unknown>
+    piece: { pieceName: string, actionName: string, pieceVersion?: string }
+    needsApproval: boolean
 }
 
 type GateDecision = {

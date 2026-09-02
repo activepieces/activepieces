@@ -101,22 +101,21 @@ describe('agentToolClassification.requiresActionPreview — taint (untrusted con
     })
 })
 
-describe('agentToolClassification.configuredToolNeedsApproval', () => {
-    it('asks before a write when someone is there to answer', () => {
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'send_email', attended: true })).toBe(true)
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'delete_email', attended: true })).toBe(true)
+describe('agentToolClassification.requiresActionPreview: an action whose name proves nothing', () => {
+    const UNMATCHED_WRITES = ['refund_payment', 'capture_payment_intent', 'cancel_subscription', 'add_row_to_sheet', 'upload_file', 'deactivate_user', 'archive_email', 'run_workflow']
+
+    it.each(UNMATCHED_WRITES)('asks before %s, which carries no write verb in its name', (actionName) => {
+        expect(agentToolClassification.requiresActionPreview({ actionName })).toBe(true)
     })
 
-    it('never asks on an unattended run, because nobody can answer', () => {
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'send_email', attended: false })).toBe(false)
+    it('asks before a custom api call that is not a provably safe method', () => {
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'DELETE' } })).toBe(true)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: {} })).toBe(true)
     })
 
-    it('lets a read through without asking', () => {
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'gmail_search_mail', attended: true })).toBe(false)
-    })
-
-    it('asks about anything unproven once the turn has read untrusted content', () => {
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'run_report', attended: true, tainted: true })).toBe(true)
-        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'gmail_search_mail', attended: true, tainted: true })).toBe(false)
+    it('still lets a read through, so the asking stays worth reading', () => {
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'gmail_search_mail' })).toBe(false)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'get_row' })).toBe(false)
+        expect(agentToolClassification.requiresActionPreview({ actionName: 'custom_api_call', input: { method: 'GET' } })).toBe(false)
     })
 })

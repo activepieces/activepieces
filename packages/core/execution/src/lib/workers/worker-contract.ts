@@ -217,18 +217,15 @@ export type ExecuteAgentToolRequest = {
     conversationId?: string
 }
 
-export type PreparePieceToolRequest = {
-    conversationId: string
-    toolName: string
-    instruction: string
+export type PreparePieceToolRequest = Omit<ExecutePieceToolRequest, 'preparedId'> & {
     preparedId: string
-    provider?: AIProviderName
-    providerConfigId?: string
-    piece: AgentPieceToolMetadata
+    tainted: boolean
 }
 
 export type PreparePieceToolResponse = {
     input: Record<string, unknown>
+    actionDisplayName: string
+    needsApproval: boolean
 }
 
 export type ExecutePieceToolRequest = {

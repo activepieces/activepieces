@@ -22,7 +22,7 @@ import { userService } from '../../user/user-service'
 import { resumeService } from '../../waitpoints/resume-service'
 import { smtpEmailSender } from '../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../helper/email/email-service'
-import { agentApprovalGate } from './agent-approval-gate'
+import { agentApprovalGate, PreparedTool } from './agent-approval-gate'
 import { agentCompaction } from './agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from './agent-file-utils'
 import { agentHelpers } from './agent-helpers'
@@ -43,6 +43,7 @@ const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
 const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
+const ATTENDED_SOURCES: AgentRunSource[] = [AgentRunSource.CHAT, AgentRunSource.AGENT]
 const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
@@ -479,42 +480,34 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async preparePieceTool(input: PreparePieceToolRequest): Promise<PreparePieceToolResponse> {
-        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const { projectId, platformId, attended } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
-        const resolvedInput = await pieceToolRunner.resolveInput({
+        const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
+        const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
             model,
-            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
+            piece,
             instruction: input.instruction,
             projectId,
             platformId,
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
         })
-        await agentApprovalGate.storePreparedToolInput({ conversationId: input.conversationId, preparedId: input.preparedId, input: resolvedInput })
-        return { input: pieceToolRunner.withoutCredential(resolvedInput) }
+        const needsApproval = attended && agentToolClassification.requiresActionPreview({
+            actionName: input.piece.actionName,
+            input: resolvedInput,
+            tainted: input.tainted,
+        })
+        await agentApprovalGate.storePreparedTool({ conversationId: input.conversationId, preparedId: input.preparedId, prepared: { input: resolvedInput, piece, needsApproval } })
+        return { input: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, needsApproval }
     },
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const prepared = isNil(input.preparedId)
+        const { projectId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const stored = isNil(input.preparedId)
             ? null
-            : await agentApprovalGate.takePreparedToolInput({ conversationId: input.conversationId, preparedId: input.preparedId })
-        if (!isNil(input.preparedId) && isNil(prepared)) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The approved input for this action has expired. Ask the agent to try again.' } })
-        }
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
-        const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion }
-        const { data: run, error: runError } = await tryCatch(() => isNil(prepared)
-            ? pieceToolRunner.runFromInstruction({
-                model,
-                piece,
-                instruction: input.instruction,
-                projectId,
-                platformId,
-                log,
-                ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
-            })
-            : pieceToolRunner.runResolved({ piece, resolvedInput: prepared, projectId, log }))
+            : await agentApprovalGate.takePreparedTool({ conversationId: input.conversationId, preparedId: input.preparedId })
+        const prepared = await approvedPreparedToolOrThrow({ prepared: stored, preparedId: input.preparedId, toolName: input.toolName, log })
+        const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runResolved({ piece: prepared.piece, resolvedInput: prepared.input, projectId, log }))
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
@@ -809,12 +802,28 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
 }
 
-async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
+async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string, attended: boolean }> {
     const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
     }
-    return { projectId: conversation.projectId, platformId: conversation.platformId }
+    return { projectId: conversation.projectId, platformId: conversation.platformId, attended: ATTENDED_SOURCES.includes(conversation.source) }
+}
+
+async function approvedPreparedToolOrThrow({ prepared, preparedId, toolName, log }: { prepared: PreparedTool | null, preparedId?: string, toolName: string, log: FastifyBaseLogger }): Promise<PreparedTool> {
+    if (isNil(prepared)) {
+        log.warn({ tool: { name: toolName }, prepared: { id: preparedId ?? null } }, '[agentRpc#executePieceTool] Refused an action with no prepared input')
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This action was not prepared for review, or the review expired. Ask the agent to try again.' } })
+    }
+    if (!prepared.needsApproval) {
+        return prepared
+    }
+    const decision = isNil(preparedId) ? 'pending' : await agentApprovalGate.checkDecision({ gateId: preparedId })
+    if (decision === 'pending' || !decision.approved) {
+        log.warn({ tool: { name: toolName }, prepared: { id: preparedId ?? null }, piece: { name: prepared.piece.pieceName }, action: { name: prepared.piece.actionName } }, '[agentRpc#executePieceTool] Blocked an action the user never approved')
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This action needs your approval before it can run.' } })
+    }
+    return prepared
 }
 
 async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {

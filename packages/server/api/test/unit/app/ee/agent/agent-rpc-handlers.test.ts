@@ -47,12 +47,17 @@ vi.mock('ai', async (importOriginal) => ({
     embed: () => mockEmbed(),
 }))
 
-vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
-    agentApprovalGate: {},
+const { mockTakePreparedTool, mockCheckDecision } = vi.hoisted(() => ({
+    mockTakePreparedTool: vi.fn(),
+    mockCheckDecision: vi.fn(),
 }))
 
-const { mockRunFromInstruction, mockUpdateStepProgress } = vi.hoisted(() => ({
-    mockRunFromInstruction: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
+    agentApprovalGate: { takePreparedTool: mockTakePreparedTool, checkDecision: mockCheckDecision },
+}))
+
+const { mockRunResolved, mockUpdateStepProgress } = vi.hoisted(() => ({
+    mockRunResolved: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
     mockUpdateStepProgress: vi.fn(),
 }))
 
@@ -61,7 +66,7 @@ vi.mock('../../../../../src/app/flows/flow-run/engine-run-callback-service', () 
 }))
 
 vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
-    pieceToolRunner: { runFromInstruction: mockRunFromInstruction },
+    pieceToolRunner: { runResolved: mockRunResolved },
 }))
 
 const { mockGetOnePopulated } = vi.hoisted(() => ({
@@ -385,38 +390,85 @@ describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a
     })
 })
 
-describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a configured action', () => {
-    async function runPieceTool(conversation: unknown) {
-        mockRunFromInstruction.mockClear()
+describe('agentRpcHandlers.executePieceTool — a configured action runs only the input that was approved', () => {
+    const GMAIL_SEND = { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' }
+
+    async function runPieceTool({ conversation, prepared, decision }: {
+        conversation: unknown
+        prepared?: unknown
+        decision?: unknown
+    }) {
+        mockRunResolved.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
+        mockTakePreparedTool.mockResolvedValue(prepared ?? null)
+        mockCheckDecision.mockResolvedValue(decision ?? 'pending')
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
-            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+            preparedId: 'call-1',
+            piece: GMAIL_SEND,
         })
     }
 
-    it('runs the action in the conversation\'s own project', async () => {
-        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' })
+    const agentChat = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
+    const flowStep = { id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' }
+    const approvedSend = { input: { to: 'jane@customer.com' }, piece: GMAIL_SEND, needsApproval: true }
 
-        expect(mockRunFromInstruction).toHaveBeenCalledTimes(1)
-        const call = mockRunFromInstruction.mock.calls[0][0]
+    it('runs the action in the conversation\'s own project, on the prepared input', async () => {
+        await runPieceTool({ conversation: flowStep, prepared: { input: { to: 'ops@acme.com' }, piece: GMAIL_SEND, needsApproval: false } })
+
+        expect(mockRunResolved).toHaveBeenCalledTimes(1)
+        const call = mockRunResolved.mock.calls[0][0]
         expect(call.projectId).toBe('proj-1')
-        expect(call.piece).toEqual({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' })
+        expect(call.resolvedInput).toEqual({ to: 'ops@acme.com' })
+    })
+
+    it('runs the piece and action the input was prepared for, not the one the caller asks for', async () => {
+        await runPieceTool({
+            conversation: agentChat,
+            prepared: { input: { url: '/messages' }, piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' }, needsApproval: true },
+            decision: { approved: true },
+        })
+
+        expect(mockRunResolved.mock.calls[0][0].piece).toEqual({ pieceName: '@activepieces/piece-slack', actionName: 'send_message' })
+    })
+
+    it('refuses when nothing was prepared, so skipping the preview does not skip the gate', async () => {
+        await expect(runPieceTool({ conversation: agentChat })).rejects.toThrow()
+
+        expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    it('refuses an action awaiting approval that no one has answered yet', async () => {
+        await expect(runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: 'pending' })).rejects.toThrow()
+
+        expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    it('refuses an action the person declined', async () => {
+        await expect(runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: { approved: false } })).rejects.toThrow()
+
+        expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    it('runs an action the person approved', async () => {
+        await runPieceTool({ conversation: agentChat, prepared: approvedSend, decision: { approved: true } })
+
+        expect(mockRunResolved).toHaveBeenCalledTimes(1)
     })
 
     it('refuses when the conversation is a chat', async () => {
-        await expect(runPieceTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
+        await expect(runPieceTool({ conversation: { id: 'conv-1', source: 'CHAT', projectId: 'proj-1' } })).rejects.toThrow()
 
-        expect(mockRunFromInstruction).not.toHaveBeenCalled()
+        expect(mockRunResolved).not.toHaveBeenCalled()
     })
 
     it('refuses a flow-step run with no project, so the action is never run unscoped', async () => {
-        await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
+        await expect(runPieceTool({ conversation: { id: 'conv-1', source: 'FLOW_STEP', projectId: null } })).rejects.toThrow()
 
-        expect(mockRunFromInstruction).not.toHaveBeenCalled()
+        expect(mockRunResolved).not.toHaveBeenCalled()
     })
 })
 

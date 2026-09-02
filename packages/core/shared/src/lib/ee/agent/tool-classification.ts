@@ -57,23 +57,6 @@ function isReadOnlyActionCall({ actionName, input }: { actionName: string, input
     return false
 }
 
-// A tool the author configured on the agent is pre-authorised in the sense that someone chose it,
-// but choosing Gmail's send action is not the same as approving a particular email. Ask when the
-// action writes and somebody is there to answer; never ask on an unattended run, where nobody is.
-function configuredToolNeedsApproval({ actionName, attended, tainted }: {
-    actionName: string
-    attended: boolean
-    tainted?: boolean
-}): boolean {
-    if (!attended) {
-        return false
-    }
-    if (isWriteActionName(actionName)) {
-        return true
-    }
-    return tainted === true && !isReadActionName(actionName)
-}
-
 function isWriteActionName(actionName: string): boolean {
     return actionNameMatchesPatterns({ actionName, patterns: WRITE_ACTION_PATTERNS })
 }
@@ -90,7 +73,6 @@ export const agentToolClassification = {
     isReadActionName,
     isReadOnlyActionCall,
     isWriteActionName,
-    configuredToolNeedsApproval,
     readOnlyRejection,
     hasFailureTextPrefix,
 }

@@ -32,9 +32,14 @@ function metadataWith(props: Record<string, unknown>) {
     return { version: '1.4.0', actions: { send_message: { props } } }
 }
 
-async function run(overrides: Record<string, unknown> = {}) {
+async function prepareAndRun(params: Record<string, unknown>) {
     const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
-    return pieceToolRunner.runFromInstruction({
+    const { resolvedInput } = await pieceToolRunner.resolveInput(params as never)
+    return pieceToolRunner.runResolved({ piece: params.piece as never, resolvedInput, projectId: params.projectId as string, log: log as never })
+}
+
+async function run(overrides: Record<string, unknown> = {}) {
+    return prepareAndRun({
         piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' },
         instruction: 'say hello in general',
         model: {} as never,
@@ -45,7 +50,7 @@ async function run(overrides: Record<string, unknown> = {}) {
     } as never)
 }
 
-describe('pieceToolRunner.runFromInstruction', () => {
+describe('pieceToolRunner: preparing then running a configured action', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetOrThrow.mockResolvedValue(metadataWith({ text: { displayName: 'Text', required: true, type: PropertyType.SHORT_TEXT } }))
@@ -124,7 +129,7 @@ describe('pieceToolRunner.runFromInstruction', () => {
     })
 })
 
-describe('pieceToolRunner.runFromInstruction — a custom API call stays on the connection\'s own host', () => {
+describe('pieceToolRunner: a custom API call stays on the connection\'s own host', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetOrThrow.mockResolvedValue({ version: '1.4.0', actions: { custom_api_call: { props: { url: { displayName: 'URL', required: true, type: PropertyType.SHORT_TEXT } } } } })
@@ -133,8 +138,7 @@ describe('pieceToolRunner.runFromInstruction — a custom API call stays on the 
 
     async function callWithUrl(url: unknown) {
         mockCompleter.mockResolvedValue({ url })
-        const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
-        return pieceToolRunner.runFromInstruction({
+        return prepareAndRun({
             piece: { pieceName: '@activepieces/piece-slack', actionName: 'custom_api_call' },
             instruction: 'call the api',
             model: {} as never,

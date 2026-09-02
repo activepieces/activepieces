@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, PreparePieceToolResponse, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
@@ -1428,15 +1428,14 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
-function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, attended, taintState, eventEmitter, waitForApproval, onGateOpened, log }: {
+function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, taintState, eventEmitter, waitForApproval, onGateOpened, log }: {
     tools: AgentPieceTool[]
-    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata, preparedId?: string }) => Promise<{ result: unknown }>
-    preparePieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata, preparedId: string }) => Promise<{ input: Record<string, unknown> }>
-    attended: boolean
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata, preparedId: string }) => Promise<{ result: unknown }>
+    preparePieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata, preparedId: string, tainted: boolean }) => Promise<PreparePieceToolResponse>
     taintState: TaintState
-    eventEmitter: ReturnType<typeof createEventEmitter>
+    eventEmitter: AgentEventEmitter
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
-    onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    onGateOpened: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -1453,43 +1452,38 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, att
                     log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
-                const needsApproval = agentToolClassification.configuredToolNeedsApproval({
-                    actionName: configured.pieceMetadata.actionName,
-                    attended,
-                    tainted: taintState.tainted,
-                })
-                let preparedId: string | undefined = undefined
-                if (needsApproval) {
-                    const gateId = options.toolCallId
-                    const { data: prepared, error: prepareError } = await tryCatch(() => preparePieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata, preparedId: gateId }))
-                    if (prepareError || isNil(prepared)) {
-                        log.warn({ error: prepareError, tool: { name: configured.toolName } }, '[configuredPieceTool] Could not work out what this action would do')
-                        return { content: [{ type: 'text', text: `That action could not be prepared for review, so nothing ran: ${String(prepareError)}` }] }
-                    }
+                const preparedId = options.toolCallId
+                const { data: prepared, error: prepareError } = await tryCatch(() => preparePieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata, preparedId, tainted: taintState.tainted }))
+                if (prepareError || isNil(prepared)) {
+                    log.warn({ error: prepareError, tool: { name: configured.toolName } }, '[configuredPieceTool] Could not work out what this action would do')
+                    return { content: [{ type: 'text', text: `That action could not be prepared, so nothing ran: ${String(prepareError)}` }] }
+                }
+                if (prepared.needsApproval) {
                     eventEmitter.emitActionPreview({
-                        toolCallId: gateId,
+                        toolCallId: preparedId,
                         pieceName: configured.pieceMetadata.pieceName,
                         actionName: configured.pieceMetadata.actionName,
-                        actionDisplayName: configured.toolName,
+                        actionDisplayName: prepared.actionDisplayName,
                         input: prepared.input,
                         isBatch: false,
                     })
-                    if (onGateOpened) {
-                        await tryCatch(() => onGateOpened({
-                            gateId,
-                            toolName: configured.toolName,
-                            displayName: configured.pieceMetadata.actionName,
-                            toolInput: prepared.input,
-                        }))
-                    }
-                    const decision = await waitForApproval({ gateId })
+                    await tryCatch(() => onGateOpened({
+                        gateId: preparedId,
+                        toolName: configured.toolName,
+                        displayName: prepared.actionDisplayName,
+                        toolInput: {
+                            pieceName: configured.pieceMetadata.pieceName,
+                            actionName: configured.pieceMetadata.actionName,
+                            input: prepared.input,
+                        },
+                    }))
+                    const decision = await waitForApproval({ gateId: preparedId })
                     if (decision.outcome !== 'approved') {
                         const text = decision.outcome === 'timeout' ? gateNoResponseMessage('action approval') : 'Action cancelled by user.'
                         return { content: [{ type: 'text', text }] }
                     }
-                    preparedId = gateId
                 }
-                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata, ...(isNil(preparedId) ? {} : { preparedId }) }))
+                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata, preparedId }))
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
@@ -1497,7 +1491,19 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, att
                         ? `That action failed: ${String(error)}`
                         : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
                 }
-                if (!isSuccessResult(data.result)) {
+                const succeeded = isSuccessResult(data.result)
+                taintState.tainted = true
+                if (!agentToolClassification.isReadOnlyActionCall({ actionName: configured.pieceMetadata.actionName, input: prepared.input })) {
+                    eventEmitter.emitActionReceipt({
+                        toolCallId: preparedId,
+                        actionDisplayName: prepared.actionDisplayName,
+                        pieceName: configured.pieceMetadata.pieceName,
+                        status: succeeded ? 'success' : 'failed',
+                        output: data.result,
+                        timestamp: new Date().toISOString(),
+                    })
+                }
+                if (!succeeded) {
                     log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
                     return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
                 }

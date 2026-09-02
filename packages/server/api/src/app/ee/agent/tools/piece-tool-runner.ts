@@ -8,8 +8,8 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
 
-async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: RunFromInstructionParams): Promise<Record<string, unknown>> {
-    const { properties, pieceVersion } = await resolveAction({ piece, platformId, log })
+async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: ResolveInputParams): Promise<ResolvedPieceInput> {
+    const { properties, pieceVersion, actionDisplayName } = await resolveAction({ piece, platformId, log })
     const resolvedInput = await pieceInputFiller.fillInput({
         action: { name: piece.actionName, properties, ...(isNil(connectionExternalId) ? {} : { connectionExternalId }) },
         instruction,
@@ -22,7 +22,7 @@ async function resolveInput({ piece, instruction, predefinedInput, model, projec
 
     assertUrlStaysOnThePieceHost({ actionName: piece.actionName, input: resolvedInput })
 
-    return resolvedInput
+    return { resolvedInput, actionDisplayName }
 }
 
 function withoutCredential(input: Record<string, unknown>): Record<string, unknown> {
@@ -48,17 +48,6 @@ async function runResolved({ piece, resolvedInput, projectId, connectionExternal
     return { result, resolvedInput: withoutCredential(resolvedInput) }
 }
 
-async function runFromInstruction(params: RunFromInstructionParams): Promise<PieceToolRun> {
-    const resolvedInput = await resolveInput(params)
-    return runResolved({
-        piece: params.piece,
-        resolvedInput,
-        projectId: params.projectId,
-        log: params.log,
-        ...(isNil(params.connectionExternalId) ? {} : { connectionExternalId: params.connectionExternalId }),
-    })
-}
-
 async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef, platformId: string, log: FastifyBaseLogger }) {
     const metadata = await pieceMetadataService(log).getOrThrow({
         platformId,
@@ -72,7 +61,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
             params: { entityType: 'PieceAction', entityId: `${piece.pieceName}:${piece.actionName}` },
         })
     }
-    return { properties: action.props, pieceVersion: metadata.version }
+    return { properties: action.props, pieceVersion: metadata.version, actionDisplayName: action.displayName }
 }
 
 function propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }: {
@@ -117,7 +106,6 @@ const ABSOLUTE_URL = /^https?:\/\//i
 const REDACTED_AUTH = 'Redacted'
 
 export const pieceToolRunner = {
-    runFromInstruction,
     resolveInput,
     runResolved,
     withoutCredential,
@@ -129,7 +117,7 @@ export type PieceActionRef = {
     pieceVersion?: string
 }
 
-export type RunFromInstructionParams = {
+export type ResolveInputParams = {
     piece: PieceActionRef
     instruction: string
     predefinedInput?: PredefinedInputsStructure
@@ -138,6 +126,11 @@ export type RunFromInstructionParams = {
     platformId: string
     connectionExternalId?: string
     log: FastifyBaseLogger
+}
+
+export type ResolvedPieceInput = {
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
 }
 
 export type PieceToolRun = {

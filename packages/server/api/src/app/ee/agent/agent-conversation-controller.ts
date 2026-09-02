@@ -219,6 +219,14 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
         request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[agentConversationController] Tool approval received')
+        const gateConversationId = await agentApprovalGate.conversationIdForGate({ gateId: request.params.gateId })
+        if (!isNil(gateConversationId)) {
+            await agentConversationService(request.log).getConversationOrThrow({
+                id: gateConversationId,
+                platformId: request.principal.platform.id,
+                userId: request.principal.id,
+            })
+        }
         await agentApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
