@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url'
 import { isNil, isObject } from '@activepieces/core-utils'
 import { Piece } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
@@ -37,7 +38,7 @@ async function handleParentMessage(message: ParentMessage): Promise<void> {
 }
 
 async function loadPiece({ piecePath, pieceName, pieceVersion }: { piecePath: string, pieceName: string, pieceVersion: string }): Promise<Piece> {
-    const pieceModule = await import(piecePath)
+    const pieceModule = await import(pathToFileURL(piecePath).href)
     return extractPieceFromModule<Piece>({ module: pieceModule, pieceName, pieceVersion })
 }
 
