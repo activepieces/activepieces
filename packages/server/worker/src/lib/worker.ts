@@ -1,9 +1,9 @@
 import { createServer } from 'http'
 import os from 'os'
-import { ActivepiecesError, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
+import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
 import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
+import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
 import { createApiToWorkerHandlers } from './api-notify-service'
@@ -59,6 +59,8 @@ const workerHostname = os.hostname()
 
 let healthServerInstance: ReturnType<typeof createServer> | null = null
 
+let shouldStartHealthServer = false
+
 let runtime: Runtime | null = null
 
 // Jobs executing across all poll loops. stop() waits for these to finish + report before tearing
@@ -77,8 +79,11 @@ let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
 const SERVER_PING_TIMEOUT_MS = 5_000
 const MACHINE_INFO_TIMEOUT_MS = 15_000
-const POLL_LIVENESS_TIMEOUT_MS = 180_000
+const POLL_LIVENESS_TIMEOUT_MS = 600_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
+const RPC_TIMEOUT_MS = 60_000
+const LONG_RUNNING_RPC_MARGIN_MS = 120_000
+const FALLBACK_FLOW_TIMEOUT_SECONDS = 600
 
 let pollLoopLiveness: PollLoopLiveness[] = []
 let pollWatchdogInterval: NodeJS.Timeout | null = null
@@ -98,11 +103,11 @@ export const worker = {
             reconnection: true,
         })
 
-        const apiClient = createRpcClient<WorkerToApiContract>(socket, 60_000)
+        const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
-            resetPollLoopLiveness({ loopCount: 1 })
+            resetPollLoopLiveness({ loopCount: 0 })
             await fetchAndStoreSettings(socket!)
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
@@ -117,8 +122,11 @@ export const worker = {
             // For any other reason the socket dropped while a job may still be running locally; the app
             // reclaims that job on disconnect, so kill the runtime now or the original keeps executing
             // to completion and double-runs the requeued copy. (The reconnect path recreates it.)
+            // Also close the health server so orchestrators stop routing/keeping traffic on a worker
+            // that can't consume jobs; the reconnect path brings it back up after prewarm completes.
             if (reason !== 'io client disconnect') {
                 abortInFlightRuntime()
+                stopHealthServer()
             }
             // Socket.IO does NOT auto-reconnect when the server initiates the disconnect
             // (reason 'io server disconnect' — e.g. the API process restarts/hot-reloads).
@@ -140,9 +148,7 @@ export const worker = {
             log: logger,
         }), logger)
 
-        if (withHealthServer) {
-            healthServerInstance = startHealthServer()
-        }
+        shouldStartHealthServer = withHealthServer
         startSandboxInfoSampling()
         startPollWatchdog()
         startCacheSweeper()
@@ -162,8 +168,7 @@ export const worker = {
         }
         socket?.disconnect()
         socket = null
-        healthServerInstance?.close()
-        healthServerInstance = null
+        stopHealthServer()
         logger.info('Worker stopped')
     },
 }
@@ -193,29 +198,40 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
     // a deploy disconnects every worker at once, so reuse turned that into mass stalls.
     abortInFlightRuntime()
 
-    runtime = createSandboxRuntime({
+    const createdRuntime = createSandboxRuntime({
         concurrency,
         basePath: sandboxConfig.getCacheBasePath(),
         getSettings: () => sandboxConfig.getSandboxSettings(),
     })
+    runtime = createdRuntime
 
-    // Fire-and-forget: warm the piece cache for this platform's flows without blocking the poll loop.
     // Opt-in via AP_PREWARM_CACHE_ON_STARTUP: the warm-up resolves and compiles every enabled flow,
     // so its startup memory/CPU spike grows with flow count and can OOM small workers on large instances.
+    // When enabled it is awaited so the health server only comes up once the cache is warm and
+    // orchestrators don't route/keep traffic on a cold worker; when disabled it is skipped entirely.
     if (system.getBoolean(WorkerSystemProp.PREWARM_CACHE_ON_STARTUP) ?? false) {
-        void runtime.prewarm({
+        const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
             log: logger,
             apiClient,
             publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
-        })
+        }))
+        if (prewarmError) {
+            logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')
+        }
+    }
+
+    // The generation check keeps a disconnect that landed mid-prewarm from re-opening the health
+    // server for a connection that no longer exists — the reconnect's own run brings it back up.
+    const stillCurrentConnection = polling && connectionGeneration === generation
+    if (shouldStartHealthServer && stillCurrentConnection && isNil(healthServerInstance)) {
+        healthServerInstance = startHealthServer()
     }
 
     logger.info({ concurrency }, 'Starting poll loops')
 
     resetPollLoopLiveness({ loopCount: concurrency })
-    const activeRuntime = runtime
     await Promise.all(Array.from({ length: concurrency }, (_, workerIndex) =>
-        pollAndExecute(apiClient, activeRuntime, workerIndex, generation),
+        pollAndExecute(apiClient, createdRuntime, workerIndex, generation),
     ))
 }
 
@@ -331,6 +347,22 @@ function abortInFlightRuntime(): void {
             logger.error({ error }, 'Failed to shut down runtime')
         }
     })
+}
+
+function flowTimeoutMs(): number {
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    return (settings?.FLOW_TIMEOUT_SECONDS ?? FALLBACK_FLOW_TIMEOUT_SECONDS) * 1000
+}
+
+function rpcTimeoutMsFor(method: string): number {
+    if (!LONG_RUNNING_RPC_METHODS.includes(method)) {
+        return RPC_TIMEOUT_MS
+    }
+    const { data: settings } = tryCatchSync(() => workerSettings.getSettings())
+    if (isNil(settings)) {
+        logger.warn({ rpc: { method } }, 'Worker settings have not arrived, timing a long-running RPC by the default flow timeout')
+    }
+    return flowTimeoutMs() + LONG_RUNNING_RPC_MARGIN_MS
 }
 
 async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest, runtime: Runtime, workerIndex: number): Promise<JobResult> {
@@ -619,7 +651,11 @@ function stopCacheSweeper(): void {
 }
 
 async function sweepActionRunCache(): Promise<void> {
-    const { error } = await tryCatch(() => actionRunCache.sweep({ basePath: sandboxConfig.getCacheBasePath(), log: logger }))
+    const { error } = await tryCatch(() => actionRunCache.sweep({
+        basePath: sandboxConfig.getCacheBasePath(),
+        log: logger,
+        activeWindowMs: Math.max(ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, flowTimeoutMs()),
+    }))
     if (error) {
         logger.warn({ error }, 'Action-run code cache sweep failed')
     }
@@ -670,6 +706,18 @@ function startHealthServer(): ReturnType<typeof createServer> {
         logger.info({ port }, 'Health server listening')
     })
     return server
+}
+
+// closeAllConnections drops kubelet keep-alive sockets too, so the next probe is refused
+// immediately instead of riding an already-open connection until it happens to close.
+function stopHealthServer(): void {
+    if (isNil(healthServerInstance)) {
+        return
+    }
+    healthServerInstance.closeAllConnections()
+    healthServerInstance.close()
+    healthServerInstance = null
+    logger.info('Health server stopped, probes will fail until reconnect and prewarm complete')
 }
 
 type WorkerStartParams = {

@@ -181,7 +181,7 @@ const applyLogSizeLimitIfExceeded = async (
         status: FlowRunStatus.LOG_SIZE_EXCEEDED,
         failedStep: {
             name: action.name,
-            displayName: action.displayName,
+            displayName: action.displayName ?? action.name,
             message: 'Flow run logs size exceeded',
         },
     })

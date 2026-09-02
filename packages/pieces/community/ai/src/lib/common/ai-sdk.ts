@@ -11,11 +11,12 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, spreadIfDefined, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
+const AUTHORIZATION_HEADER = 'authorization'
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
 
@@ -156,15 +157,24 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders, apiStyle } = config as OpenAICompatibleProviderConfig
+            const headers = {
+                ...metadataHeaders,
+                ...(defaultHeaders ?? {}),
+                [apiKeyHeader]: apiKey,
+            }
+            if (apiStyle === 'responses') {
+                return createOpenAI({
+                    baseURL: baseUrl,
+                    apiKey,
+                    headers,
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization(headers)),
+                }).responses(modelId)
+            }
             return createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
-                headers: {
-                    ...metadataHeaders,
-                    ...(defaultHeaders ?? {}),
-                    [apiKeyHeader]: apiKey,
-                },
+                headers,
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL: {
@@ -221,6 +231,18 @@ function parseServiceAccount(serviceAccountJson: string): { client_email?: strin
     return {
         client_email: typeof clientEmail === 'string' ? clientEmail : undefined,
         private_key: typeof privateKey === 'string' ? privateKey.replace(/\\n/g, '\n') : undefined,
+    }
+}
+
+function stripDefaultAuthorization(headers: Record<string, string>): typeof globalThis.fetch | undefined {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
+        return undefined
+    }
+    return (input, init) => {
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return fetch(input, { ...init, headers: sent })
     }
 }
 

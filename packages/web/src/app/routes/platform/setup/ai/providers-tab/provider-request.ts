@@ -72,6 +72,7 @@ function buildCreateRequest({
         config: {
           baseUrl: value('baseUrl'),
           apiKeyHeader: value('apiKeyHeader'),
+          apiStyle: value('apiStyle') === 'responses' ? 'responses' : undefined,
           defaultHeaders: Object.keys(headers).length > 0 ? headers : undefined,
           models,
         },

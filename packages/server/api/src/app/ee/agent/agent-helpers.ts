@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -154,7 +154,19 @@ function resolveTier({ tierId }: { tierId: string | null }) {
     return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
 }
 
-function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
+function configuredTextModelIds({ config }: { config?: AIProviderConfig }): string[] | undefined {
+    if (isNil(config) || !('models' in config)) {
+        return undefined
+    }
+    const textModels = config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
+    return textModels.length === 0 ? undefined : textModels
+}
+
+function resolveModelIdForProvider({ provider, selectedModel, config }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig }): string {
+    const configuredModels = configuredTextModelIds({ config })
+    if (!isNil(configuredModels)) {
+        return selectedModel && configuredModels.includes(selectedModel) ? selectedModel : configuredModels[0]
+    }
     const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
     if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
         return selectedModel
@@ -198,7 +210,7 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
 
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,

@@ -144,6 +144,18 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
       placeholder: 'Authorization',
     },
     {
+      key: 'apiStyle',
+      label: t('API style'),
+      optional: true,
+      description: t(
+        'Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.',
+      ),
+      options: [
+        { value: 'chat', label: t('Chat completions') },
+        { value: 'responses', label: t('Responses') },
+      ],
+    },
+    {
       key: 'defaultHeaders',
       label: t('Custom headers'),
       type: 'dictionary',
