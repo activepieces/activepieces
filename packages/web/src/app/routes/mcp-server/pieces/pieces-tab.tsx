@@ -22,16 +22,16 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 import { PageBand } from '../page-band';
 
+import { PieceRow } from './piece-row';
+import { piecesUtils } from './pieces-utils';
 import { ProjectPicker } from './project-picker';
-import { ReachPieceRow } from './reach-piece-row';
-import { reachUtils } from './reach-utils';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
+export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(
     searchQuery.trim(),
@@ -50,7 +50,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
   });
   const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
-  const rows = reachUtils.toReachablePieces({
+  const rows = piecesUtils.toReachablePieces({
     pieces: pieces ?? [],
     isSearching,
   });
@@ -106,7 +106,7 @@ export function ReachTab({ projectId, onSelectProject }: ReachTabProps) {
       ) : (
         <div className="rounded-lg border">
           {visibleRows.map((row) => (
-            <ReachPieceRow key={row.piece.name} row={row} />
+            <PieceRow key={row.piece.name} row={row} />
           ))}
           {hiddenCount > 0 && (
             <button
@@ -212,7 +212,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   );
 }
 
-type ReachTabProps = {
+type PiecesTabProps = {
   projectId: string | null;
   onSelectProject: (projectId: string) => void;
 };

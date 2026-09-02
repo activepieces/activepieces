@@ -13,9 +13,9 @@ import { PieceIcon } from '@/features/pieces';
 import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 
-import { ReachablePiece } from './reach-utils';
+import { ReachablePiece } from './pieces-utils';
 
-export function ReachPieceRow({ row }: { row: ReachablePiece }) {
+export function PieceRow({ row }: { row: ReachablePiece }) {
   const [isOpenedByUser, setIsOpenedByUser] = useState(false);
   const isOpen = row.forceExpanded || isOpenedByUser;
 
@@ -46,13 +46,13 @@ export function ReachPieceRow({ row }: { row: ReachablePiece }) {
         <div className="ml-auto flex shrink-0 items-center gap-3">
           {row.destructiveActionCount > 0 && (
             <Badge variant="destructive" className="py-0 text-xss font-normal">
-              {t('reachDestructiveActionCount', {
+              {t('pieceDestructiveActionCount', {
                 count: row.destructiveActionCount,
               })}
             </Badge>
           )}
           <span className="text-sm text-muted-foreground">
-            {t('reachActionCount', {
+            {t('pieceActionCount', {
               count: row.actionCount,
             })}
           </span>

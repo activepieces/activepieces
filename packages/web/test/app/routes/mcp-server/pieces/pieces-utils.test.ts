@@ -4,7 +4,7 @@ import type {
 } from '@activepieces/pieces-framework';
 import { describe, expect, it } from 'vitest';
 
-import { reachUtils } from '@/app/routes/mcp-server/reach/reach-utils';
+import { piecesUtils } from '@/app/routes/mcp-server/pieces/pieces-utils';
 
 function action(
   displayName: string,
@@ -52,9 +52,9 @@ const gmail = piece({
   suggestedActions: [action('Send Email', 'WRITE')],
 });
 
-describe('reachUtils.toReachablePieces', () => {
+describe('piecesUtils.toReachablePieces', () => {
   it('returns every piece collapsed when there is no query', () => {
-    const rows = reachUtils.toReachablePieces({
+    const rows = piecesUtils.toReachablePieces({
       pieces: [slack, gmail],
       isSearching: false,
     });
@@ -65,7 +65,7 @@ describe('reachUtils.toReachablePieces', () => {
   });
 
   it('counts destructive actions per piece', () => {
-    const [slackRow, gmailRow] = reachUtils.toReachablePieces({
+    const [slackRow, gmailRow] = piecesUtils.toReachablePieces({
       pieces: [slack, gmail],
       isSearching: false,
     });
@@ -75,7 +75,7 @@ describe('reachUtils.toReachablePieces', () => {
   });
 
   it('groups actions in READ, SEARCH, WRITE, DESTRUCTIVE order and omits empty groups', () => {
-    const [slackRow, gmailRow] = reachUtils.toReachablePieces({
+    const [slackRow, gmailRow] = piecesUtils.toReachablePieces({
       pieces: [slack, gmail],
       isSearching: false,
     });
@@ -98,7 +98,7 @@ describe('reachUtils.toReachablePieces', () => {
       suggestedActions: [action('Do Something', undefined)],
     });
 
-    const [row] = reachUtils.toReachablePieces({
+    const [row] = piecesUtils.toReachablePieces({
       pieces: [unknown],
       isSearching: false,
     });
@@ -110,7 +110,7 @@ describe('reachUtils.toReachablePieces', () => {
   });
 
   it('keeps the server relevance order and expands every row while searching', () => {
-    const rows = reachUtils.toReachablePieces({
+    const rows = piecesUtils.toReachablePieces({
       pieces: [gmail, slack],
       isSearching: true,
     });
@@ -123,7 +123,7 @@ describe('reachUtils.toReachablePieces', () => {
   });
 
   it('orders popular pieces first only when not searching', () => {
-    const rows = reachUtils.toReachablePieces({
+    const rows = piecesUtils.toReachablePieces({
       pieces: [gmail, slack],
       isSearching: false,
     });
@@ -141,7 +141,7 @@ describe('reachUtils.toReachablePieces', () => {
       suggestedActions: [action('Archive Channel', 'DESTRUCTIVE')],
     });
 
-    const [row] = reachUtils.toReachablePieces({
+    const [row] = piecesUtils.toReachablePieces({
       pieces: [narrowedSlack],
       isSearching: true,
     });
@@ -161,7 +161,7 @@ describe('reachUtils.toReachablePieces', () => {
     });
 
     expect(
-      reachUtils.toReachablePieces({ pieces: [actionless], isSearching: false })
+      piecesUtils.toReachablePieces({ pieces: [actionless], isSearching: false })
     ).toEqual([]);
   });
 });

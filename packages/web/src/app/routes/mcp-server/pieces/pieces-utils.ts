@@ -73,7 +73,7 @@ function toReachablePieces({
   return orderedPieces.map((piece) => toReachablePiece({ piece, isSearching }));
 }
 
-export const reachUtils = { toReachablePieces };
+export const piecesUtils = { toReachablePieces };
 
 export type ActionGroup = {
   classification: ActionClassification;
