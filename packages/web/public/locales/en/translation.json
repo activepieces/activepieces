@@ -88,6 +88,8 @@
   "Copied to clipboard": "Copied to clipboard",
   "Copy to clipboard": "Copy to clipboard",
   "Download JSON": "Download JSON",
+  "Download Report": "Download Report",
+  "Failed to download pieces report": "Failed to download pieces report",
   "Response from {pieceDisplayName}": "Response from {pieceDisplayName}",
   "What the service said": "What the service said",
   "Error message": "Error message",
