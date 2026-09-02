@@ -145,7 +145,7 @@ function spawnAndWait(cmd: string, args: string[]): Promise<void> {
         const child = spawn(cmd, args, {
             cwd: process.cwd(),
             stdio: 'inherit',
-            shell: false,
+            shell: process.platform === 'win32',
         })
         child.on('close', (code) => {
             if (code === 0) {
