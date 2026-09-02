@@ -32,6 +32,12 @@ export const scrape = createAction({
       required: false,
       defaultValue: 60000,
     }),
+    storeInCache: Property.Checkbox({
+      displayName: 'Store In Cache',
+      description: 'If enabled, the page will be stored in the Firecrawl index and cache. Disabling this is useful if your scraping activity may have data protection concerns.',
+      required: false,
+      defaultValue: false,
+    }),
     useActions: Property.Checkbox({
       displayName: 'Perform Actions Before Scraping',
       description: 'Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.',
@@ -238,8 +244,13 @@ export const scrape = createAction({
     const body: Record<string, any> = {
       url: propsValue.url,
       timeout: propsValue.timeout,
+      storeInCache: propsValue.storeInCache,
     };
-    
+
+    if (!propsValue.storeInCache){
+      body['maxAge'] = 0;
+    }
+
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
