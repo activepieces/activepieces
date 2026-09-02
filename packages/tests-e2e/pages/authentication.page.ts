@@ -1,6 +1,8 @@
 import { BasePage } from './base';
 import { faker } from '@faker-js/faker';
 
+const AUTH_STEP_TIMEOUT = 20000;
+
 export class AuthenticationPage extends BasePage {
   url = `/sign-in`;
   signUpUrl = `/sign-up`;
@@ -60,13 +62,13 @@ export class AuthenticationPage extends BasePage {
     const nameField = this.page.getByTestId('auth-full-name');
 
     const nameStepShown = nameField
-      .waitFor({ timeout: 30000 })
+      .waitFor({ timeout: AUTH_STEP_TIMEOUT })
       .catch(() => undefined);
     const leftOnboarding = this.page
       .waitForURL(
         (url) =>
           !ONBOARDING_PATHS.some((path) => url.pathname.startsWith(path)),
-        { timeout: 30000 },
+        { timeout: AUTH_STEP_TIMEOUT },
       )
       .catch(() => undefined);
     await Promise.race([nameStepShown, leftOnboarding]);
@@ -92,7 +94,7 @@ export class AuthenticationPage extends BasePage {
     await this.passwordFormField()
       .or(usePasswordLink)
       .first()
-      .waitFor({ timeout: 30000 });
+      .waitFor({ timeout: AUTH_STEP_TIMEOUT });
 
     if (await usePasswordLink.count()) {
       await usePasswordLink.first().click();

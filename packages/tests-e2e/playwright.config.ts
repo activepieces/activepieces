@@ -24,6 +24,8 @@ const editionConfig = editionConfigs[AP_EDITION as keyof typeof editionConfigs];
 const config: PlaywrightTestConfig = {
   testDir: editionConfig.testDir,
   testMatch: '**/*.spec.ts',
+  /* Signing in happens in a fixture, so a test needs more than the 30s default to reach its own assertions */
+  timeout: 120000,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

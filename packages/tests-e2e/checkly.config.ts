@@ -32,6 +32,9 @@ const config = defineConfig({
     alertEscalationPolicy: AlertEscalationBuilder.runBasedEscalation(1),
     /* Global configuration option for Playwright-powered checks. See https://www.checklyhq.com/docs/browser-checks/playwright-test/#global-configuration */
     playwrightConfig: {
+      /* Checkly does not read playwright.config.ts, so the per-test budget has to be repeated here.
+       * Signing in happens in a fixture, so the 30s default leaves nothing for the test's own assertions. */
+      timeout: 120000,
       use: {
         baseURL: 'https://cloud.activepieces.com',
         viewport: { width: 1280, height: 720 },
