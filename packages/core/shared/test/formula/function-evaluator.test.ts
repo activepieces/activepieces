@@ -320,6 +320,12 @@ describe('get_day / get_month / get_year', () => {
         expect(result('get_day("2024-03-15")')).toBe(15))
     it('get_year returns year', () =>
         expect(result('get_year("2024-03-15")')).toBe(2024))
+    it('get_year treats bare date literals as dates', () =>
+        expect(result('get_year(2025-01-15)')).toBe(2025))
+    it('start_of_day accepts a bare date literal', () =>
+        expect(result('format_date(start_of_day(2025-01-15))')).toBe('2025-01-15'))
+    it('to_date accepts a bare date literal', () =>
+        expect(result('format_date(to_date(2025-01-15))')).toBe('2025-01-15'))
     it('get_month returns month name', () => {
         const r = result('get_month("2024-03-15")') as string
         expect(r.toLowerCase()).toContain('march')

@@ -4,12 +4,6 @@ import { AP_FUNCTIONS } from './function-registry'
 const CURRENT_FORMULA_VERSION = 1
 const FORMULA_PREFIX = `ap-formula-v${CURRENT_FORMULA_VERSION}::{`
 const FORMULA_SUFFIX = `}::ap-formula-v${CURRENT_FORMULA_VERSION}`
-// Mirrored close marker means tokenization is a plain regex split — no
-// brace-counting or string-literal tracking needed at the wrapper level.
-// `[\s\S]*?` matches any character including newlines, non-greedy so adjacent
-// formulas don't merge into one capture. The `v(\d+)` lets us route saved
-// flows from older format versions to the right evaluator after we ship v2,
-// without a data migration.
 const FORMULA_REGEX = /ap-formula-v(\d+)::\{([\s\S]*?)\}::ap-formula-v\1/g
 
 function wrap(expression: string): string {
@@ -210,8 +204,13 @@ function wrapStringArgs(expr: string): string {
             const inner = wrapStringArgs(arg)
             if (!fn) return inner
             const expectedSpec = fn.argTypes[Math.min(i, fn.argTypes.length - 1)]
-            const shouldQuote = expectedSpec === 'string' ||
-                (Array.isArray(expectedSpec) && (expectedSpec as string[]).includes('string'))
+            const shouldQuote =
+                expectedSpec === 'string' ||
+                expectedSpec === 'date' ||
+                (Array.isArray(expectedSpec) && (
+                    expectedSpec.includes('string') ||
+                    expectedSpec.includes('date')
+                ))
             return shouldQuote ? quoteIfBare(inner) : inner
         })
 
