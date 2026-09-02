@@ -647,7 +647,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId }),
+        runPieceTool: ({ toolName, instruction, piece, preparedId }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId, ...(isNil(preparedId) ? {} : { preparedId }) }),
+        preparePieceTool: ({ toolName, instruction, piece, preparedId }) => ctx.apiClient.preparePieceTool({ conversationId, toolName, instruction, piece, preparedId, provider, providerConfigId }),
+        attended: source !== AgentRunSource.FLOW_STEP,
+        taintState,
+        eventEmitter,
+        waitForApproval,
+        onGateOpened: storePendingGate,
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({

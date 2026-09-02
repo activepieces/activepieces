@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PreparePieceToolRequest, PreparePieceToolResponse, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { embed, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -478,14 +478,10 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         log.info(resumeFields, '[agentRpc#resumeFlowStep] Handed the result back to the flow')
     },
 
-    async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
-        }
-        const { projectId, platformId } = conversation
+    async preparePieceTool(input: PreparePieceToolRequest): Promise<PreparePieceToolResponse> {
+        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
-        const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
+        const resolvedInput = await pieceToolRunner.resolveInput({
             model,
             piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
             instruction: input.instruction,
@@ -493,7 +489,32 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId,
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
-        }))
+        })
+        await agentApprovalGate.storePreparedToolInput({ conversationId: input.conversationId, preparedId: input.preparedId, input: resolvedInput })
+        return { input: pieceToolRunner.withoutCredential(resolvedInput) }
+    },
+
+    async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
+        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const prepared = isNil(input.preparedId)
+            ? null
+            : await agentApprovalGate.takePreparedToolInput({ conversationId: input.conversationId, preparedId: input.preparedId })
+        if (!isNil(input.preparedId) && isNil(prepared)) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The approved input for this action has expired. Ask the agent to try again.' } })
+        }
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion }
+        const { data: run, error: runError } = await tryCatch(() => isNil(prepared)
+            ? pieceToolRunner.runFromInstruction({
+                model,
+                piece,
+                instruction: input.instruction,
+                projectId,
+                platformId,
+                log,
+                ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
+            })
+            : pieceToolRunner.runResolved({ piece, resolvedInput: prepared, projectId, log }))
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
@@ -786,6 +807,14 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
+
+async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
+    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
+    }
+    return { projectId: conversation.projectId, platformId: conversation.platformId }
 }
 
 async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {

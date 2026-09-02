@@ -12,6 +12,7 @@ const CANCEL_KEY_PREFIX = 'chat-cancel:'
 const AVAILABLE_CONNECTIONS_PREFIX = 'chat-conn-avail:'
 const SELECTED_CONNECTION_PREFIX = 'chat-conn-sel:'
 const PENDING_GATE_PREFIX = 'chat-pending-gate:'
+const PREPARED_TOOL_PREFIX = 'agent-prepared-tool:'
 
 function decisionKey(gateId: string): string {
     return `${KEY_PREFIX}${gateId}`
@@ -133,6 +134,24 @@ async function getSelectedConnection({ conversationId, pieceName }: {
     return distributedStore.get<SelectedConnection>(`${SELECTED_CONNECTION_PREFIX}${conversationId}:${pieceName}`)
 }
 
+async function storePreparedToolInput({ conversationId, preparedId, input }: {
+    conversationId: string
+    preparedId: string
+    input: Record<string, unknown>
+}): Promise<void> {
+    await distributedStore.put(`${PREPARED_TOOL_PREFIX}${conversationId}:${preparedId}`, input, GATE_TTL_SECONDS)
+}
+
+async function takePreparedToolInput({ conversationId, preparedId }: {
+    conversationId: string
+    preparedId: string
+}): Promise<Record<string, unknown> | null> {
+    const key = `${PREPARED_TOOL_PREFIX}${conversationId}:${preparedId}`
+    const input = await distributedStore.get<Record<string, unknown>>(key)
+    await distributedStore.delete(key)
+    return input
+}
+
 async function storePendingGate({ conversationId, gate }: {
     conversationId: string
     gate: PendingGate
@@ -163,6 +182,8 @@ export const agentApprovalGate = {
     storeSelectedConnection,
     getSelectedConnection,
     storePendingGate,
+    storePreparedToolInput,
+    takePreparedToolInput,
     getPendingGate,
     clearPendingGate,
 }

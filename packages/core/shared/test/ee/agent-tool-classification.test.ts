@@ -100,3 +100,23 @@ describe('agentToolClassification.requiresActionPreview — taint (untrusted con
         expect(agentToolClassification.requiresActionPreview({ actionName: 'send_channel_message', tainted: true })).toBe(true)
     })
 })
+
+describe('agentToolClassification.configuredToolNeedsApproval', () => {
+    it('asks before a write when someone is there to answer', () => {
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'send_email', attended: true })).toBe(true)
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'delete_email', attended: true })).toBe(true)
+    })
+
+    it('never asks on an unattended run, because nobody can answer', () => {
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'send_email', attended: false })).toBe(false)
+    })
+
+    it('lets a read through without asking', () => {
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'gmail_search_mail', attended: true })).toBe(false)
+    })
+
+    it('asks about anything unproven once the turn has read untrusted content', () => {
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'run_report', attended: true, tainted: true })).toBe(true)
+        expect(agentToolClassification.configuredToolNeedsApproval({ actionName: 'gmail_search_mail', attended: true, tainted: true })).toBe(false)
+    })
+})

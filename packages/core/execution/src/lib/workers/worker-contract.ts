@@ -94,6 +94,7 @@ export type WorkerToApiContract = {
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
+    preparePieceTool(input: PreparePieceToolRequest): Promise<PreparePieceToolResponse>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
     executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
     executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse>
@@ -216,10 +217,25 @@ export type ExecuteAgentToolRequest = {
     conversationId?: string
 }
 
+export type PreparePieceToolRequest = {
+    conversationId: string
+    toolName: string
+    instruction: string
+    preparedId: string
+    provider?: AIProviderName
+    providerConfigId?: string
+    piece: AgentPieceToolMetadata
+}
+
+export type PreparePieceToolResponse = {
+    input: Record<string, unknown>
+}
+
 export type ExecutePieceToolRequest = {
     conversationId: string
     toolName: string
     instruction: string
+    preparedId?: string
     provider?: AIProviderName
     providerConfigId?: string
     piece: AgentPieceToolMetadata

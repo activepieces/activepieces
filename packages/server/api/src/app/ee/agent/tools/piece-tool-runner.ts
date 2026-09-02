@@ -8,7 +8,7 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
 
-async function runFromInstruction({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: RunFromInstructionParams): Promise<PieceToolRun> {
+async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: RunFromInstructionParams): Promise<Record<string, unknown>> {
     const { properties, pieceVersion } = await resolveAction({ piece, platformId, log })
     const resolvedInput = await pieceInputFiller.fillInput({
         action: { name: piece.actionName, properties, ...(isNil(connectionExternalId) ? {} : { connectionExternalId }) },
@@ -22,6 +22,20 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
 
     assertUrlStaysOnThePieceHost({ actionName: piece.actionName, input: resolvedInput })
 
+    return resolvedInput
+}
+
+function withoutCredential(input: Record<string, unknown>): Record<string, unknown> {
+    return { ...input, ...(isNil(input.auth) ? {} : { auth: REDACTED_AUTH }) }
+}
+
+async function runResolved({ piece, resolvedInput, projectId, connectionExternalId, log }: {
+    piece: PieceActionRef
+    resolvedInput: Record<string, unknown>
+    projectId: string
+    connectionExternalId?: string
+    log: FastifyBaseLogger
+}): Promise<PieceToolRun> {
     const result = await executePieceActionRun({
         projectId,
         pieceName: piece.pieceName,
@@ -31,7 +45,18 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
         ...(isNil(connectionExternalId) ? {} : { connectionExternalId }),
     })
 
-    return { result, resolvedInput: { ...resolvedInput, ...(isNil(resolvedInput.auth) ? {} : { auth: REDACTED_AUTH }) } }
+    return { result, resolvedInput: withoutCredential(resolvedInput) }
+}
+
+async function runFromInstruction(params: RunFromInstructionParams): Promise<PieceToolRun> {
+    const resolvedInput = await resolveInput(params)
+    return runResolved({
+        piece: params.piece,
+        resolvedInput,
+        projectId: params.projectId,
+        log: params.log,
+        ...(isNil(params.connectionExternalId) ? {} : { connectionExternalId: params.connectionExternalId }),
+    })
 }
 
 async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef, platformId: string, log: FastifyBaseLogger }) {
@@ -93,6 +118,9 @@ const REDACTED_AUTH = 'Redacted'
 
 export const pieceToolRunner = {
     runFromInstruction,
+    resolveInput,
+    runResolved,
+    withoutCredential,
 }
 
 export type PieceActionRef = {
