@@ -81,7 +81,7 @@
     "papaparse": "5.5.3",
     "posthog-js": "1.393.5",
     "pretty-bytes": "7.1.0",
-    "qs": "6.15.2",
+    "qs": "6.16.0",
     "radix-ui": "1.4.3",
     "react": "19",
     "react-colorful": "5.6.1",
