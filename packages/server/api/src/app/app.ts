@@ -1,5 +1,4 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { PieceMetadata } from '@activepieces/pieces-framework'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
@@ -521,7 +520,6 @@ function registerOpenApiSchemas() {
     globalRegistry.add(Flow, { id: 'flow' })
     globalRegistry.add(FlowRun, { id: 'flow-run' })
     globalRegistry.add(AppConnectionWithoutSensitiveData, { id: 'app-connection' })
-    globalRegistry.add(PieceMetadata, { id: 'piece' })
     globalRegistry.add(GitRepoWithoutSensitiveData, { id: 'git-repo' })
     globalRegistry.add(ProjectRelease, { id: 'project-release' })
     globalRegistry.add(AddAllowedEmbedOriginsRequestBody, { id: 'embedding' })

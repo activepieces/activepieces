@@ -1,17 +1,8 @@
-import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { PropertyType } from "../property-type";
 
-export const StaticDropdownDisplay = z.enum(['cards'])
-export type StaticDropdownDisplay = z.infer<typeof StaticDropdownDisplay>
-
-export const StaticDropdownProperty = z.object({
-    ...BasePropertySchema.shape,
-    options: DropdownState,
-    display: z.optional(StaticDropdownDisplay),
-    ...TPropertyValue(z.unknown(), PropertyType.STATIC_DROPDOWN).shape,
-})
+export type StaticDropdownDisplay = 'cards'
 
 export type StaticDropdownProperty<
     T,
@@ -20,13 +11,6 @@ export type StaticDropdownProperty<
     options: DropdownState<T>;
     display?: StaticDropdownDisplay;
 } & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
-
-
-export const StaticMultiSelectDropdownProperty = z.object({
-    ...BasePropertySchema.shape,
-    options: DropdownState,
-    ...TPropertyValue(z.array(z.unknown()), PropertyType.STATIC_MULTI_SELECT_DROPDOWN).shape,
-})
 
 export type StaticMultiSelectDropdownProperty<
     T,

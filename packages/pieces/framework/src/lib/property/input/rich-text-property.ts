@@ -1,14 +1,5 @@
-import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
-
-
-export const RichTextProperty = z.object({
-    ...BasePropertySchema.shape,
-    formatProperty: z.optional(z.string()),
-    ...TPropertyValue(z.string(), PropertyType.RICH_TEXT).shape,
-})
-
 
 export type RichTextProperty<R extends boolean> = BasePropertySchema & {
     /**

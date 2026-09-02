@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ActionClassification, AiMetadata, Audience, ErrorHandlingOptionsParam, type OutputSchema, PieceMetadata, PieceMetadataModel, PropertyGroup, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { type OutputSchema, type PieceMetadata, type PieceMetadataModel, WebhookRenewStrategy } from '@activepieces/pieces-framework'
 import { AdminRetryRunsRequestBody, AgentConversation, AgentRunSource, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -166,6 +166,45 @@ const IncreaseAICreditsForPlatformRequest = {
     },
 }
 
+
+const PropertyGroup = z.object({
+    key: z.string(),
+    display: z.enum(['tabs', 'section', 'summary', 'builder', 'footer']),
+    label: z.optional(z.string()),
+    description: z.optional(z.string()),
+    icon: z.optional(z.string()),
+    props: z.array(z.string()),
+})
+
+const ErrorHandlingOptionsParam = z.object({
+    retryOnFailure: z.object({
+        defaultValue: z.optional(z.boolean()),
+        hide: z.optional(z.boolean()),
+    }),
+    continueOnFailure: z.object({
+        defaultValue: z.optional(z.boolean()),
+        hide: z.optional(z.boolean()),
+    }),
+})
+
+const AiMetadata = z.object({
+    description: z.optional(z.string()),
+    idempotent: z.optional(z.boolean()),
+})
+
+const Audience = z.enum(['human', 'ai', 'both'])
+
+const ActionClassification = z.enum(['READ', 'SEARCH', 'WRITE', 'DESTRUCTIVE'])
+
+const WebhookRenewConfiguration = z.union([
+    z.object({
+        strategy: z.literal(WebhookRenewStrategy.CRON),
+        cronExpression: z.string(),
+    }),
+    z.object({
+        strategy: z.literal(WebhookRenewStrategy.NONE),
+    }),
+])
 
 const Action = z.object({
     name: z.string(),

@@ -1,5 +1,3 @@
-
-import * as z from "zod/mini";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { OIDCProperty, OIDCAuthProps } from "./oidc-prop";
@@ -8,14 +6,6 @@ import { PropertyType } from "../input/property-type";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 import { isNil } from "@activepieces/core-utils";
 import { AppConnectionType } from "@activepieces/core-piece-types";
-
-export const PieceAuthProperty = z.union([
-  BasicAuthProperty,
-  CustomAuthProperty,
-  OIDCProperty,
-  OAuth2Property,
-  SecretTextProperty,
-])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PieceAuthProperty = BasicAuthProperty | CustomAuthProperty<any> | OIDCProperty<any> | OAuth2Property<any> | SecretTextProperty<boolean>;

@@ -1,17 +1,20 @@
 {
   "name": "@activepieces/piece-oracle-database",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
-  "bundleForkedEntries": ["src/lib/common/oracle-runner.ts"],
+  "bundleForkedEntries": [
+    "src/lib/common/oracle-runner.ts"
+  ],
   "dependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
     "oracledb": "^6.10.0",
-    "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@types/oracledb": "6.10.1",

@@ -20,5 +20,6 @@
     "typescript": "5.5.4",
     "vitest": "3.2.6"
   },
-  "typings": "./dist/src/index.d.ts"
+  "typings": "./dist/src/index.d.ts",
+  "sideEffects": false
 }

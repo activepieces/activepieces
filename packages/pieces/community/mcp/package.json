@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-mcp",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
@@ -9,11 +9,12 @@
     "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
+    "@activepieces/core-piece-types": "workspace:*",
+    "@activepieces/core-utils": "workspace:*",
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "http-status-codes": "2.2.0",
-    "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "tslib": "2.6.2"
