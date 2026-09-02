@@ -1,53 +1,28 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  AppConnectionValueForAuthProperty,
-  createTrigger,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import {
   FormioActionMethod,
-  FormioWebhookPayload,
+  FormioSubmission,
   formioCommon,
 } from '../common/client';
 import { submissionTriggerOutputSchema } from '../common/output-schemas';
 import { formioProps } from '../common/props';
+import { submissionPolling, SubmissionTimestamp } from './submission-polling';
 
-type FormioAuthValue = AppConnectionValueForAuthProperty<typeof formioAuth>;
-
-const polling = (
-  timestampField: 'created' | 'modified'
-): Polling<FormioAuthValue, { formPath: string }> => ({
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const queryParams: Record<string, string> = {
-      sort: `-${timestampField}`,
-      limit: '50',
-    };
-    if (lastFetchEpochMS) {
-      queryParams[`${timestampField}__gt`] = new Date(
-        lastFetchEpochMS
-      ).toISOString();
-    }
-
-    const { submissions } = await formioCommon.findSubmissions({
-      auth: auth.props,
-      formPath: propsValue.formPath,
-      queryParams,
-    });
-
-    return submissions.map((submission) => ({
-      epochMilliSeconds: new Date(
-        submission[timestampField] ?? submission.created ?? 0
-      ).getTime(),
-      data: submission,
-    }));
-  },
-});
+function submissionFromWebhook(body: unknown): FormioSubmission | undefined {
+  if (typeof body !== 'object' || body === null || !('submission' in body)) {
+    return undefined;
+  }
+  const { submission } = body;
+  if (typeof submission !== 'object' || submission === null) {
+    return undefined;
+  }
+  if (!('_id' in submission) || !('data' in submission)) {
+    return undefined;
+  }
+  return submission as FormioSubmission;
+}
 
 export function registerSubmissionTrigger({
   name,
@@ -62,9 +37,10 @@ export function registerSubmissionTrigger({
   description: string;
   aiDescription: string;
   events: FormioActionMethod[];
-  timestampField: 'created' | 'modified';
+  timestampField: SubmissionTimestamp;
 }) {
-  const submissionPolling = polling(timestampField);
+  const polling = submissionPolling(timestampField);
+  const storeKey = `formio_${name}`;
 
   return createTrigger({
     auth: formioAuth,
@@ -78,6 +54,20 @@ export function registerSubmissionTrigger({
     sampleData: SAMPLE_SUBMISSION,
 
     async onEnable(context) {
+      const stale = await context.store.get<WebhookRegistration>(storeKey);
+      if (stale) {
+        try {
+          await formioCommon.deleteWebhookAction({
+            auth: context.auth.props,
+            formId: stale.formId,
+            actionId: stale.actionId,
+          });
+        } catch (error) {
+          await context.store.delete(storeKey);
+        }
+        await context.store.delete(storeKey);
+      }
+
       const formId = await formioCommon.findFormId({
         auth: context.auth.props,
         formPath: context.propsValue.formPath,
@@ -90,7 +80,7 @@ export function registerSubmissionTrigger({
         events,
       });
 
-      await context.store.put<WebhookRegistration>(`formio_${name}`, {
+      await context.store.put<WebhookRegistration>(storeKey, {
         formId,
         actionId,
       });
@@ -98,7 +88,7 @@ export function registerSubmissionTrigger({
 
     async onDisable(context) {
       const registration = await context.store.get<WebhookRegistration>(
-        `formio_${name}`
+        storeKey
       );
       if (!registration) {
         return;
@@ -108,17 +98,16 @@ export function registerSubmissionTrigger({
         formId: registration.formId,
         actionId: registration.actionId,
       });
-      await context.store.delete(`formio_${name}`);
+      await context.store.delete(storeKey);
     },
 
     async run(context) {
-      const payload = context.payload.body as FormioWebhookPayload;
-      const submission = payload?.submission;
+      const submission = submissionFromWebhook(context.payload.body);
       return submission ? [submission] : [];
     },
 
     async test(context) {
-      return await pollingHelper.test(submissionPolling, {
+      return await pollingHelper.test(polling, {
         auth: context.auth,
         propsValue: context.propsValue,
         store: context.store,

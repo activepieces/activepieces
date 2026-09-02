@@ -92,7 +92,6 @@ export const findSubmissionsOutputSchema: OutputSchema = {
     {
       key: 'submissions',
       label: 'Submissions',
-      labelKey: '_id',
       listItems: submissionFields,
     },
     {
