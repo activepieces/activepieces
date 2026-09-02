@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
 import { ActivepiecesError, ApId, apId, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, UserId } from '@activepieces/core-utils'
-import { Agent, AgentConfig, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
+import { Agent, AgentConfig, AgentListSort, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Brackets, In, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -9,6 +9,7 @@ import { transaction } from '../../core/db/transaction'
 import { publishedFlowsUsingAgent, PublishedFlowsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order, OrderByConfig } from '../../helper/pagination/paginator'
 import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -44,7 +45,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async list({ platformId, userId, projectId, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
         const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
         const readableProjectIds = readableProjects.map((project) => project.id)
         if (readableProjectIds.length === 0) {
@@ -57,15 +58,22 @@ export const agentService = (log: FastifyBaseLogger) => ({
             entity: AgentEntity,
             query: {
                 limit: limit ?? DEFAULT_PAGE_SIZE,
-                order: 'DESC',
+                orderBy: orderByForSort(sort),
                 afterCursor: nextCursor,
                 beforeCursor: previousCursor,
             },
         })
 
-        const { data, cursor: newCursor } = await paginator.paginate(
-            visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) }),
-        )
+        const query = visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) })
+        const needle = search?.trim().toLowerCase()
+        if (!isNil(needle) && needle.length > 0) {
+            query.andWhere(new Brackets((qb) => {
+                qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
+                    .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
+            }))
+        }
+
+        const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage(data.map((agent) => toSummary(agent, projectById.get(agent.projectId))), newCursor)
     },
 
@@ -198,6 +206,18 @@ function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string 
     const listed = names.join(', ')
     const tail = total > names.length ? `, and ${total - names.length} more` : ''
     return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
+}
+
+function orderByForSort(sort?: AgentListSort): OrderByConfig[] {
+    switch (sort) {
+        case AgentListSort.NAME:
+            return [{ field: 'displayName', order: Order.ASC }]
+        case AgentListSort.CREATED:
+            return [{ field: 'created', order: Order.DESC }]
+        case AgentListSort.UPDATED:
+        default:
+            return [{ field: 'updated', order: Order.DESC }]
+    }
 }
 
 function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
@@ -359,6 +379,8 @@ type ListParams = {
     platformId: PlatformId
     userId: UserId
     projectId?: ProjectId
+    search?: string
+    sort?: AgentListSort
     cursor?: Cursor
     limit?: number
 }

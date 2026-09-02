@@ -629,6 +629,54 @@ describe('agent list across projects', () => {
         expect(foreign).toStrictEqual([])
     })
 
+    it('searches by name and by description, and leaves the rest out', async () => {
+        const ctx = await context()
+        const inbox = await createAgent(ctx, { displayName: 'Inbox triage' })
+        const pricing = await createAgent(ctx, { displayName: 'Rival watch', description: 'Reads competitor pricing pages.' })
+        await createAgent(ctx, { displayName: 'Meeting notes', description: 'Turns notes into follow-ups.' })
+
+        const byName = (await ctx.get('/v1/agents', { search: 'inbox' })).json().data
+        expect(byName.map((row: { id: string }) => row.id)).toStrictEqual([inbox.id])
+
+        const byDescription = (await ctx.get('/v1/agents', { search: 'competitor' })).json().data
+        expect(byDescription.map((row: { id: string }) => row.id)).toStrictEqual([pricing.id])
+
+        const noMatch = (await ctx.get('/v1/agents', { search: 'nothing here' })).json().data
+        expect(noMatch).toStrictEqual([])
+    })
+
+    it('sorts by name when asked, rather than by when it was touched', async () => {
+        const ctx = await context()
+        const apple = await createAgent(ctx, { displayName: 'Apple duty' })
+        const zebra = await createAgent(ctx, { displayName: 'Zebra duty' })
+
+        const byName = (await ctx.get('/v1/agents', { sort: 'name' })).json().data
+        expect(byName.map((row: { id: string }) => row.id)).toStrictEqual([apple.id, zebra.id])
+
+        // The newest first, which is the opposite order, so the two cannot both pass by accident.
+        const byUpdated = (await ctx.get('/v1/agents', { sort: 'updated' })).json().data
+        expect(byUpdated.map((row: { id: string }) => row.id)).toStrictEqual([zebra.id, apple.id])
+    })
+
+    it('walks every page with a cursor, so nothing is out of reach', async () => {
+        const ctx = await context()
+        const created = []
+        for (const name of ['One', 'Two', 'Three']) {
+            created.push((await createAgent(ctx, { displayName: `Page ${name}` })).id)
+        }
+
+        const seen: string[] = []
+        let cursor: string | undefined = undefined
+        for (let page = 0; page < 5; page++) {
+            const body = (await ctx.get('/v1/agents', { limit: '1', ...(cursor === undefined ? {} : { cursor }) })).json()
+            seen.push(...body.data.map((row: { id: string }) => row.id))
+            if (!body.next) break
+            cursor = body.next
+        }
+
+        expect(seen.sort()).toStrictEqual([...created].sort())
+    })
+
     it('refuses a page size that would disable pagination', async () => {
         const ctx = await context()
 

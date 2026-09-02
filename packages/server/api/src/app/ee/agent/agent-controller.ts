@@ -37,6 +37,8 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             userId: await resolveUserId(request),
             projectId: request.query.projectId,
+            search: request.query.search,
+            sort: request.query.sort,
             cursor: request.query.cursor,
             limit: request.query.limit,
         })
