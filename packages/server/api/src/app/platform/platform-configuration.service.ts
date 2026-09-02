@@ -1,5 +1,5 @@
 import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
-import { PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
+import { ApEdition, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
@@ -33,6 +33,9 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
     },
 
     async isProductTelemetryEnabled({ platformId }: GetOrCreateParams): Promise<boolean> {
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return true
+        }
         const configuration = await this.getOrCreateForPlatform({ platformId })
         return configuration.isProductTelemetryEnabled
     },
@@ -40,6 +43,9 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
     async filterProjectsWithProductTelemetryEnabled({ projectIds }: FilterProjectsParams): Promise<string[]> {
         if (projectIds.length === 0) {
             return []
+        }
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return projectIds
         }
         const fallback = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true
         const enabled: string[] = []
