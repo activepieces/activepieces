@@ -94,6 +94,12 @@ import {
   agentsMutations,
   agentsQueries,
 } from '@/features/agents/hooks/agents-hooks';
+import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
+import {
+  ApProjectDisplay,
+  getProjectName,
+  projectCollectionUtils,
+} from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -192,6 +198,56 @@ const AgentEditorSkeleton = () => (
     </div>
   </div>
 );
+
+const AgentProjectRow = ({ agent }: { agent: Agent }) => {
+  const [moving, setMoving] = useState(false);
+  const { checkAccess } = useAuthorization(agent.projectId);
+  const { data: allProjects } = projectCollectionUtils.useAll();
+  const home = (allProjects ?? []).find(
+    (project) => project.id === agent.projectId,
+  );
+
+  if (
+    !checkAccess(Permission.WRITE_AGENT) ||
+    (allProjects ?? []).length < 2 ||
+    home === undefined
+  ) {
+    return null;
+  }
+
+  return (
+    <FormItem className="flex flex-col gap-[9px]">
+      <PanelSectionLabel label={t('Project')} />
+      <div className="flex items-center justify-between gap-3">
+        <ApProjectDisplay
+          title={getProjectName(home)}
+          icon={home.icon}
+          projectType={home.type}
+          titleClassName="text-[13px] leading-4 text-muted-foreground"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setMoving(true)}
+        >
+          {t('Move')}
+        </Button>
+      </div>
+      <MoveAgentDialog
+        agent={agent}
+        open={moving}
+        onOpenChange={setMoving}
+        onMoved={(projectId) =>
+          projectCollectionUtils.setCurrentProject(
+            projectId,
+            `/projects/${agent.projectId}/agents/${agent.id}`,
+          )
+        }
+      />
+    </FormItem>
+  );
+};
 
 const AgentDangerZone = ({
   agent,
@@ -544,6 +600,7 @@ const ConfigureFields = ({
             </FormItem>
           )}
         />
+        <AgentProjectRow agent={agent} />
         <AgentDangerZone agent={agent} onDeleted={onDeleted} />
       </AdvancedSection>
     </>

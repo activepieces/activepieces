@@ -70,16 +70,17 @@ export const flowRunProgressReporter = {
             })
         })
     },
-    createOutputContext: ({ internalApiUrl, engineToken, projectId, flowRunId }: CreateOutputContextParams): OutputContext => {
+    createOutputContext: (params: CreateOutputContextParams): OutputContext => {
+        const { engineConstants } = params
         return {
             update: async (params: { data: unknown }) => {
                 // Streaming output is best-effort — a failed push must never fail the run.
                 const { error } = await tryCatch(() => engineRunApi.updateStepProgress({
-                    apiUrl: internalApiUrl,
-                    engineToken,
+                    apiUrl: engineConstants.internalApiUrl,
+                    engineToken: engineConstants.engineToken,
                     request: {
-                        projectId,
-                        runId: flowRunId,
+                        projectId: engineConstants.projectId,
+                        runId: engineConstants.flowRunId,
                         output: params.data,
                     },
                 }))
@@ -243,10 +244,7 @@ type UpdateStepProgressParams = {
 }
 
 type CreateOutputContextParams = {
-    internalApiUrl: string
-    engineToken: string
-    projectId: string
-    flowRunId: string
+    engineConstants: EngineConstants
 }
 
 type ExtractStepResponse = {

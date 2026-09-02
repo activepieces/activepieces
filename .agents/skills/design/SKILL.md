@@ -50,12 +50,12 @@ Read `README.md` in this folder **first** — it is the canonical reference. Thi
 ## Hard rules (never violate)
 
 1. **Primary is purple `hsl(257 74% 57%)` / `#8142E3`** — the shipping value from `packages/web/src/styles.css`. Not the `#9747FF` swatch some Figma files show. **Primary stays purple in dark mode** too (brand continuity) — use `.dark.blue-primary` to opt back into the repo's blue-in-dark behaviour.
-2. **Body text is 14px (`text-sm`), not 16**. Activepieces feels dense and tool-like. Headings use `-0.01em` to `-0.02em` tracking.
+2. **Body text is 14px (`text-sm`), not 16**. Activepieces feels dense and tool-like. Headings use `-0.01em` to `-0.02em` tracking. The **agent editor's Configure panel** pairs 15px controls with 13px labels and meta, one step up from `text-sm` so a settings column reads at arm's length; treat that pair as local to that panel, not as a second ramp.
 3. **Sentence case everywhere**: headings, buttons, menu items, page titles. Proper nouns only for feature names (Flows, Runs, Pieces, MCP, Agents, Connections).
 4. **Lucide icons only**, 1.5–2px stroke, rounded caps. Default size `16` (`size-4`). Icon + text → `gap-2` (8px). No emoji in the product UI. No Unicode glyphs (✓ × ←) — always a Lucide component.
 5. **Borders are 1px**, color `neutral-200` (light) / `white/14` (dark). Never thicker. (Note: repo ships `white/10` in dark — we bump to `14%` so dividers stay readable against `neutral-900` surfaces.)
 6. **No negative margins.** Use `gap-*`, `p-*`, `space-*`. Explicitly banned in the repo's AGENTS.md.
-7. **Cards: white fill, 1px border, `radius-lg` (10px), NO shadow by default.** Shadows only on floating surfaces (popovers, menus, dialogs).
+7. **Cards: white fill, 1px border, `radius-lg` (10px), NO shadow by default.** Shadows only on floating surfaces (popovers, menus, dialogs). One named exception: the **agents list and its first-run hero** use a 19px radius and a two-layer lift (`0 1px 2px` + `0 4px 12px -2px`, deepening on hover), because that surface is a showcase rather than a dense tool view. It is the only place that does, and new cards elsewhere stay 10px and flat.
 8. **Main content is a floating card**: the sidebar blends with the outer shell (`neutral-50` in light, `neutral-950` in dark); the content area sits inside with `radius-xl` (12px), 1px border, `shadow-xs`, and 8px inset from the viewport edges. Matches the shipping app layout.
 9. **Builder canvas has the dotted look** — background `#FBFBFB` (light) / `#171717` (dark), radial-gradient dots `#b2b2b2 1px` at `16px 16px`. This is signature.
 10. **Hover states darken only** — primary buttons go to `/90`, secondary `/80`, ghost `bg-gray-300/30`. No scale, no translate, no elevation change on hover or press.
