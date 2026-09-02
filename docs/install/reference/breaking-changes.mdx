@@ -143,6 +143,18 @@ This affects the Tables piece's Find Records action and any direct API call that
 
 Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
+#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
+
+A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
+
+A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. This restores the behaviour from before 0.80.0, where the same statuses answered `500` (and `TIMEOUT` answered `504`; it is `500` now, like the rest).
+
+Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
+
+#### What you need to do
+
+Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
+
 ## 0.88.2
 
 ### What has changed?
