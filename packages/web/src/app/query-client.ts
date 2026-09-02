@@ -1,13 +1,11 @@
 import { ErrorCode, isNil } from '@activepieces/core-utils';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { toast } from 'sonner';
 
+import { showQueryErrorToast } from '@/components/custom/query-error-toast';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useManagePlanDialogStore } from '@/features/billing';
 import { api } from '@/lib/api';
 
-const QUERY_ERROR_TOAST_ID = 'query-error';
 const toastedQueries = new WeakSet<object>();
 
 export const queryClient = new QueryClient({
@@ -21,11 +19,7 @@ export const queryClient = new QueryClient({
         return;
       }
       toastedQueries.add(query);
-      toast.error(t('Failed to load data'), {
-        id: QUERY_ERROR_TOAST_ID,
-        description: t('Please refresh the page to try again.'),
-        duration: 5000,
-      });
+      showQueryErrorToast({ queryKey: query.queryKey, error });
     },
     onSuccess: (_data, query) => {
       toastedQueries.delete(query);
