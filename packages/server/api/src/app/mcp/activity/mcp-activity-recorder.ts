@@ -1,4 +1,4 @@
-import { apId, isNil, isObject, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { apId, isNil, sanitizeObjectForPostgresql, truncateString, tryCatch } from '@activepieces/core-utils'
 import {
     FileCompression,
     FileType,
@@ -65,15 +65,12 @@ export function capPayload({ input, output }: { input: Record<string, unknown>, 
 }
 
 export function runActionFieldsFrom(args: Record<string, unknown>): { pieceName?: string, actionName?: string, connectionExternalId?: string } {
-    const inlineAuth = isObject(args.input) ? args.input.auth : undefined
-    const connectionExternalId = typeof args.connectionExternalId === 'string'
-        ? args.connectionExternalId
-        : (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+    const connectionExternalId = mcpUtils.resolveConnectionExternalId({ connectionExternalId: args.connectionExternalId, input: args.input })
     const pieceName = typeof args.pieceName === 'string' ? mcpUtils.normalizePieceName(args.pieceName) : undefined
     return {
-        ...(isNil(pieceName) ? {} : { pieceName: pieceName.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) }),
-        ...(typeof args.actionName === 'string' ? { actionName: args.actionName.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) } : {}),
-        ...(isNil(connectionExternalId) ? {} : { connectionExternalId: connectionExternalId.slice(0, RUN_ACTION_FIELD_MAX_LENGTH) }),
+        ...(isNil(pieceName) ? {} : { pieceName: capRunActionField(pieceName) }),
+        ...(typeof args.actionName === 'string' ? { actionName: capRunActionField(args.actionName) } : {}),
+        ...(isNil(connectionExternalId) ? {} : { connectionExternalId: capRunActionField(connectionExternalId) }),
     }
 }
 
@@ -128,7 +125,11 @@ function errorMessageFrom(result: McpToolResult): string | null {
         return null
     }
     const text = result.content.map((part) => part.text).join('\n').trim()
-    return text.length === 0 ? null : text.slice(0, ERROR_MESSAGE_MAX_LENGTH)
+    return text.length === 0 ? null : truncateString({ value: text, maxLength: ERROR_MESSAGE_MAX_LENGTH, suffix: '' })
+}
+
+function capRunActionField(value: string): string {
+    return truncateString({ value, maxLength: RUN_ACTION_FIELD_MAX_LENGTH, suffix: '' })
 }
 
 export type McpActivityContext = {

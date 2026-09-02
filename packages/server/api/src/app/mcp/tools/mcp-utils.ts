@@ -496,6 +496,14 @@ function publishedFlowWarning(publishedVersionId: string | null | undefined): st
     return '\n⚠️ This flow is published. Changes apply to the draft only — use ap_lock_and_publish to push them live.'
 }
 
+function resolveConnectionExternalId({ connectionExternalId, input }: { connectionExternalId: unknown, input: unknown }): string | undefined {
+    if (typeof connectionExternalId === 'string') {
+        return connectionExternalId
+    }
+    const inlineAuth = isObject(input) ? input.auth : undefined
+    return typeof inlineAuth === 'string' ? inlineAuth : undefined
+}
+
 function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
         return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
@@ -790,6 +798,7 @@ export const mcpUtils = {
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
+    resolveConnectionExternalId,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,
