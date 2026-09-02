@@ -1,4 +1,4 @@
-import { Permission } from '@activepieces/core-utils';
+import { isNil, Permission } from '@activepieces/core-utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -66,12 +66,14 @@ export const BuilderHeader = () => {
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
+    run,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
+    state.run,
   ]);
 
   const { embedState } = useEmbedding();
@@ -149,6 +151,7 @@ export const BuilderHeader = () => {
                       setRightSidebar(RightSideBarType.VERSIONS);
                     }}
                     insideBuilder={true}
+                    viewingRun={!isNil(run)}
                     flow={flow}
                     flowVersion={flowVersion}
                     readonly={!isLatestVersion}
