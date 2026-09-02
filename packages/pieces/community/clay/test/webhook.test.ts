@@ -164,17 +164,69 @@ describe('webhook URL handling', () => {
     test('a URL without a scheme is refused rather than guessed at', () => {
         expect(() =>
             clayWebhook.normalizeSourceUrl('api.clay.com/v3/sources/webhook/x'),
-        ).toThrow(/http/i);
+        ).toThrow(/not a valid URL/i);
     });
 
     test('a blank URL is refused', () => {
         expect(() => clayWebhook.normalizeSourceUrl('   ')).toThrow(/required/i);
     });
 
-    test('http is accepted, since a source may be proxied', () => {
-        expect(clayWebhook.normalizeSourceUrl('http://localhost:3001/hook')).toBe(
-            'http://localhost:3001/hook',
-        );
+    test('a Clay subdomain is accepted, so their infrastructure can move', () => {
+        expect(
+            clayWebhook.normalizeSourceUrl('https://eu.api.clay.com/v3/sources/webhook/x'),
+        ).toBe('https://eu.api.clay.com/v3/sources/webhook/x');
+    });
+});
+
+describe('the destination is constrained to Clay, because the token travels with the row', () => {
+    test('a non-Clay host is refused and named in the error', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('https://evil.example.com/collect'),
+        ).toThrow(/evil\.example\.com/);
+    });
+
+    test('a lookalike domain is refused', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('https://notclay.com/v3/sources/webhook/x'),
+        ).toThrow(/must point at Clay/i);
+    });
+
+    test('a domain that merely ends in the brand name is refused', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('https://evil-clay.com/v3/sources/webhook/x'),
+        ).toThrow(/must point at Clay/i);
+    });
+
+    test('Clay as a prefix of another domain is refused', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('https://clay.com.evil.example/collect'),
+        ).toThrow(/must point at Clay/i);
+    });
+
+    test('plain http is refused even on a Clay host', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('http://api.clay.com/v3/sources/webhook/x'),
+        ).toThrow(/https/i);
+    });
+
+    test('a loopback address is refused, so the token cannot be pointed inward', () => {
+        expect(() =>
+            clayWebhook.normalizeSourceUrl('https://127.0.0.1/collect'),
+        ).toThrow(/must point at Clay/i);
+    });
+
+    test('no request is attempted when the destination is refused', async () => {
+        sendRequest.mockReset();
+
+        await expect(
+            clayWebhook.sendRow({
+                webhookUrl: 'https://evil.example.com/collect',
+                authToken: 'a-token',
+                row: { Domain: 'activepieces.com' },
+            }),
+        ).rejects.toThrow(/must point at Clay/i);
+
+        expect(sendRequest).not.toHaveBeenCalled();
     });
 });
 

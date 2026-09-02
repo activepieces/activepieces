@@ -100,12 +100,39 @@ function normalizeSourceUrl(webhookUrl: string): string {
     if (trimmed.length === 0) {
         throw new Error('Webhook URL is required');
     }
-    if (!/^https?:\/\//i.test(trimmed)) {
+
+    const parsed = parsedUrlOf(trimmed);
+    if (isNil(parsed)) {
         throw new Error(
-            'Webhook URL must start with http:// or https://. Copy it from the Webhook URL panel on your Clay table source.',
+            `Webhook URL is not a valid URL. ${COPY_FROM_CLAY}`,
         );
     }
+    if (parsed.protocol !== 'https:') {
+        throw new Error(
+            `Webhook URL must use https, because the row and the source token are sent to it. ${COPY_FROM_CLAY}`,
+        );
+    }
+    if (!isClayHost(parsed.hostname)) {
+        throw new Error(
+            `Webhook URL must point at Clay, but this one points at ${parsed.hostname}. The row and the source token are sent to this address, so anywhere else is refused. ${COPY_FROM_CLAY}`,
+        );
+    }
+
     return trimmed;
+}
+
+function parsedUrlOf(value: string): URL | undefined {
+    try {
+        return new URL(value);
+    }
+    catch {
+        return undefined;
+    }
+}
+
+function isClayHost(hostname: string): boolean {
+    const host = hostname.toLowerCase();
+    return host === CLAY_DOMAIN || host.endsWith(`.${CLAY_DOMAIN}`);
 }
 
 function sendFailureMessage({
@@ -152,6 +179,9 @@ export const clayWebhook = {
 export const WEBHOOK_AUTH_HEADER = 'x-clay-webhook-auth';
 export const SIGNATURE_HEADER = 'x-clay-signature';
 export const SIGNATURE_PREFIX = 'sha256=';
+export const CLAY_DOMAIN = 'clay.com';
+export const COPY_FROM_CLAY =
+    'Copy it from the Webhook URL panel on your Clay table source.';
 
 export type ClayWebhookResult = {
     success: boolean;
