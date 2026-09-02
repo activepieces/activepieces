@@ -59,7 +59,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Query Error Handling
 
-- **Global error toast via `meta`** — `query-client.ts` has a `QueryCache.onError` handler that shows a red error toast when `query.meta?.showErrorToast` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorToast: true }` to the query options.
+- **Global error toast via `meta`** — `query-client.ts` has a `QueryCache.onError` handler that shows a red error toast when `query.meta?.showErrorToast` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorToast: true, loadSubsetOptions: {} }` to the query options — `meta` is typed as `QueryCollectionMeta`, so TypeScript rejects the flag on its own.
 - **Do NOT add** `showErrorToast` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
 - Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorToast: true }`.
 
