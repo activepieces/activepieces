@@ -29,6 +29,22 @@ describe('resolveModelIdForProvider', () => {
         expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'gemini-2.5-flash', config })).toBe('gemini-2.5-flash')
     })
 
+    it('honours the key model allow-list over the curated default', () => {
+        const scoped = { modelScope: 'selected' as const, modelIds: ['gemini-2.5-flash'] }
+
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'smart', ...scoped })).toBe('gemini-2.5-flash')
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'gemini-2.5-pro', ...scoped })).toBe('gemini-2.5-flash')
+    })
+
+    it('refuses when the allow-list excludes every candidate', () => {
+        expect(() => agentHelpers.resolveModelIdForProvider({
+            provider: AIProviderName.GOOGLE,
+            selectedModel: 'smart',
+            modelScope: 'selected',
+            modelIds: ['a-model-this-provider-does-not-offer'],
+        })).toThrow()
+    })
+
     it('refuses a key that lists no text model rather than falling back to one it never offered', () => {
         const imageOnly = vertexConfig([{ modelId: 'imagen-4.0-generate-001', modelType: AIProviderModelType.IMAGE }])
 

@@ -343,6 +343,8 @@ export const GetProviderConfigResponse = z.object({
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
     platformId: z.string(),
+    modelScope: AiProviderModelScope,
+    modelIds: z.array(z.string()),
 })
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 

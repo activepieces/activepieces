@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AIProviderModelType, aiProviderUtils, AiProviderModelScope, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -163,30 +163,33 @@ function manualTextModelCatalog({ config }: { config?: AIProviderConfig }): stri
     return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
 }
 
-function resolveModelIdForProvider({ provider, selectedModel, config }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig }): string {
+function pickAllowedModel({ provider, selectedModel, candidates, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, candidates: string[], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+    const allowed = modelScope === 'selected' && !isNil(modelIds)
+        ? candidates.filter((candidate) => modelIds.includes(candidate))
+        : candidates
+    if (allowed.length === 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+        }, 'this AI provider key allows no text model a chat turn can run on')
+    }
+    return selectedModel && allowed.includes(selectedModel) ? selectedModel : allowed[0]
+}
+
+function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
-        if (catalog.length === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
-            }, 'this AI provider key lists no text model, so a chat turn has none to run on')
-        }
-        return selectedModel && catalog.includes(selectedModel) ? selectedModel : catalog[0]
+        return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
     }
     const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
-    if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
-        return selectedModel
-    }
     const tierModelId = resolveTier({ tierId: selectedModel }).modelId
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tierModelId
     }
     const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
-    if (isNil(curatedModels)) {
-        return nativeModelId
-    }
-    return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
+    const candidates = isNil(curatedModels) ? [nativeModelId] : curatedModels.map((model) => model.id)
+    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelId
+    return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
 // Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
@@ -217,7 +220,7 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
 
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config })
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
