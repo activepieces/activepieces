@@ -34,12 +34,7 @@ import {
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import {
-  unstable_useBlocker,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -54,15 +49,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/custom/empty';
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  LeaveWithoutSavingDialog,
+  useWarnBeforeLosingChanges,
+} from '@/components/custom/leave-without-saving';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -654,70 +645,6 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
     </div>
   );
 };
-
-const useWarnBeforeLosingChanges = ({
-  hasChanges,
-  standDown,
-}: {
-  hasChanges: boolean;
-  standDown: React.RefObject<boolean>;
-}) => {
-  const blocker = unstable_useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges &&
-      standDown.current !== true &&
-      currentLocation.pathname !== nextLocation.pathname,
-  );
-
-  useEffect(() => {
-    if (!hasChanges) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      if (standDown.current === true) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [hasChanges]);
-
-  return blocker;
-};
-
-const LeaveWithoutSavingDialog = ({
-  open,
-  onKeepEditing,
-  onDiscard,
-}: {
-  open: boolean;
-  onKeepEditing: () => void;
-  onDiscard: () => void;
-}) => (
-  <Dialog
-    open={open}
-    onOpenChange={(next) => {
-      if (!next) onKeepEditing();
-    }}
-  >
-    <DialogContent className="max-w-[420px]">
-      <DialogHeader>
-        <DialogTitle>{t('Leave without saving?')}</DialogTitle>
-        <DialogDescription>
-          {t(
-            'These edits have not gone live yet. Leave now and they are discarded.',
-          )}
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter>
-        <Button variant="outline" onClick={onKeepEditing}>
-          {t('Keep editing')}
-        </Button>
-        <Button variant="destructive" onClick={onDiscard}>
-          {t('Discard changes')}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
 
 const formValuesOf = (agent: Agent): ConfigureAgentInput => ({
   displayName: agent.displayName,
@@ -1335,4 +1262,4 @@ const AgentEditorPage = () => {
   );
 };
 
-export { AgentEditorPage, AgentEditScreen, LeaveWithoutSavingDialog, TestPane };
+export { AgentEditorPage, AgentEditScreen, TestPane };

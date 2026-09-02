@@ -14,10 +14,12 @@ import { pageSlice, TablePagination } from '../components/table-pagination';
 export function ModelSelectionPanel({
   models,
   selectedIds,
+  isLoading,
   onChange,
 }: {
   models: AIProviderModel[];
   selectedIds: string[];
+  isLoading: boolean;
   onChange: (modelIds: string[]) => void;
 }) {
   const [search, setSearch] = useState('');
@@ -106,7 +108,7 @@ export function ModelSelectionPanel({
         <DataTable
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
-          isLoading={false}
+          isLoading={isLoading}
           hidePagination={true}
           onRowClick={(row) => toggleModel(row.id)}
           emptyStateTextTitle={t('No models found')}
