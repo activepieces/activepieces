@@ -230,6 +230,11 @@ The challenge is only served when **both** Turnstile variables are set. With
 either missing, the sign-in page renders no widget and the server verifies
 nothing, so a self-hosted instance needs no Cloudflare account.
 
+Signing in with an emailed code depends on that pair. It is served on
+Activepieces Cloud only, and there only when both variables are set — without
+them the endpoints are not registered and the sign-in card opens on the
+password form.
+
 ### Email (SMTP)
 
 Outbound mail for invitations, notifications, and password resets.
