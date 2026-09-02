@@ -109,8 +109,18 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (!posthogInitialized.current) {
       return;
     }
-    posthog.register({ activepiecesEdition: edition ?? ApEdition.COMMUNITY });
-  }, [telemetryEnabled, edition, embedState.isEmbedded]);
+    posthog.register({
+      activepiecesEdition: edition ?? ApEdition.COMMUNITY,
+      activepiecesVersion: flagCurrentVersion ?? UNKNOWN_FLAG_VALUE,
+      activepiecesEnvironment: flagEnvironment ?? UNKNOWN_FLAG_VALUE,
+    });
+  }, [
+    telemetryEnabled,
+    edition,
+    embedState.isEmbedded,
+    flagCurrentVersion,
+    flagEnvironment,
+  ]);
 
   useEffect(() => {
     errorReporting.init();
@@ -133,8 +143,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isNil(currentUser)) {
       return;
     }
-    const currentVersion = flagCurrentVersion || '0.0.0';
-    const environment = flagEnvironment || '0.0.0';
+    const currentVersion = flagCurrentVersion || UNKNOWN_FLAG_VALUE;
+    const environment = flagEnvironment || UNKNOWN_FLAG_VALUE;
 
     posthog.identify(
       currentUser.id,
@@ -173,6 +183,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     </TelemetryContext.Provider>
   );
 };
+
+const UNKNOWN_FLAG_VALUE = '0.0.0';
 
 const RECORDING_SAMPLE_RATE = 0.1;
 
