@@ -78,6 +78,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 runtime: buildRuntime({ constants, pieceName, contextVersion }),
                 actionName,
                 stepName: action.name,
+                waitpointKey: executionState.currentPath.waitpointKeyFor({ stepName: action.name }),
                 resolvedInput,
                 propertySettings,
                 executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,

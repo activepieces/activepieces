@@ -92,6 +92,7 @@ export type ActionContextRequest = {
     runtime: PieceRuntime
     actionName: string
     stepName: string
+    waitpointKey: string
     resolvedInput: Record<string, unknown>
     propertySettings: Record<string, PropertySettings>
     executionType: ExecutionType

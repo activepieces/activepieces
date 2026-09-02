@@ -10,7 +10,6 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { resumeService } from '../../waitpoints/resume-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
-import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
@@ -119,14 +118,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {
-                                const latestWaitpoint = await waitpointService(log).getByFlowRunId(savedFlowRun.id)
-                                const isPreCompleted = !isNil(latestWaitpoint)
-                                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
-                                if (isPreCompleted) {
-                                    await resumeService(log).resumeFromWaitpointWithoutLock({
+                                const undeliveredWaitpoint = await waitpointService(log).findUndeliveredCompletedWaitpoint({ flowRunId: savedFlowRun.id, projectId: savedFlowRun.projectId })
+                                if (!isNil(undeliveredWaitpoint)) {
+                                    await resumeService(log).resumeTrustedWithoutLock({
                                         flowRunId: savedFlowRun.id,
-                                        waitpointId: latestWaitpoint.id,
-                                        resumePayload: latestWaitpoint.resumePayload,
+                                        waitpointId: undeliveredWaitpoint.id,
+                                        resumePayload: undeliveredWaitpoint.resumePayload,
                                     })
                                 }
                             }
@@ -216,7 +213,7 @@ export async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
+    const existingWaitpoint = await waitpointService(log).findSubflowWaitpoint({ flowRunId: parentRunId, projectId: flowRun.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,

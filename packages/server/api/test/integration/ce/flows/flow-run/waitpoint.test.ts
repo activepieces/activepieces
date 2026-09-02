@@ -382,25 +382,82 @@ describe('Waitpoint service', () => {
         })
     })
 
-    describe('getByFlowRunId', () => {
+    describe('findUndeliveredCompletedWaitpoint', () => {
         it('should return null when no waitpoint exists', async () => {
-            const result = await waitpointService(app.log).getByFlowRunId(apId())
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: apId(), projectId: ctx.project.id })
             expect(result).toBeNull()
         })
 
-        it('should return the waitpoint when it exists', async () => {
-            const { flowRun } = await createFlowRun()
+        it('should return the COMPLETED waitpoint when it is the only one left', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
 
-            await waitpointService(app.log).createForPause({
+            const pause = await waitpointService(app.log).createForPause({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
                 stepName: 'approval',
                 type: PauseType.WEBHOOK,
             })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { ok: true } },
+            })
 
-            const result = await waitpointService(app.log).getByFlowRunId(flowRun.id)
-            expect(result).not.toBeNull()
-            expect(result!.flowRunId).toBe(flowRun.id)
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result?.id).toBe(pause.waitpoint.id)
+        })
+
+        it('should return the COMPLETED waitpoint even while another step of the same run is still PENDING', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const minted = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'create_approval_links',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: minted.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'wait_for_approval',
+                type: PauseType.WEBHOOK,
+            })
+
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result?.id).toBe(minted.waitpoint.id)
+        })
+
+        it('should return null while the run holds a PENDING barrier', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+
+            const webhook = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: webhook.waitpoint.id,
+                resumePayload: { body: { ok: true } },
+            })
+            await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'fan_out',
+                type: PauseType.BARRIER,
+            })
+
+            const result = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId: flowRun.id, projectId: ctx.project.id })
+            expect(result).toBeNull()
         })
     })
 
