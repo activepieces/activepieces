@@ -49,6 +49,7 @@ export type ApErrorParams =
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
     | UserNotFoundOnPlatformErrorParams
@@ -316,6 +317,14 @@ ErrorCode.VALIDATION,
 }
 >
 
+export type FileTooLargeErrorParams = BaseErrorParams<
+ErrorCode.FILE_TOO_LARGE,
+{
+    message: string
+    maxBytes: number
+}
+>
+
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
@@ -567,6 +576,7 @@ export enum ErrorCode {
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
