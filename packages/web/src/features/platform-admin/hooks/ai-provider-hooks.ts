@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AIProviderAuthConfig,
+  AiProviderKeyStatus,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
@@ -46,7 +47,11 @@ export const aiProviderQueries = {
 };
 
 export const aiProviderMutations = {
-  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+  useRecheckAiProvider: ({
+    onSuccess,
+  }: {
+    onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+  }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,
