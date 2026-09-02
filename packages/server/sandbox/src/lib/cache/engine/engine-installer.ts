@@ -1,5 +1,5 @@
 import { PathLike } from 'fs'
-import { copyFile, rename } from 'node:fs/promises'
+import { copyFile, readFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
@@ -50,10 +50,19 @@ async function atomicCopy({ src, dest }: AtomicCopyParams): Promise<void> {
         return
     }
     await tryCatch(() => fileSystemUtils.deleteFile(tempPath))
-    const destAlreadyInstalled = isContendedRenameError(error) && await fileSystemUtils.fileExists(dest.toString())
-    if (!destAlreadyInstalled) {
+    const destMatchesSource = isContendedRenameError(error) && await hasSameContent({ src, dest })
+    if (!destMatchesSource) {
         throw error
     }
+}
+
+async function hasSameContent({ src, dest }: HasSameContentParams): Promise<boolean> {
+    const { data, error } = await tryCatch(() => Promise.all([readFile(src), readFile(dest)]))
+    if (!isNil(error) || isNil(data)) {
+        return false
+    }
+    const [srcContent, destContent] = data
+    return srcContent.equals(destContent)
 }
 
 async function renameWithRetry({ tempPath, dest }: RenameWithRetryParams): Promise<void> {
@@ -89,6 +98,11 @@ type AtomicCopyParams = {
 
 type RenameWithRetryParams = {
     tempPath: string
+    dest: PathLike
+}
+
+type HasSameContentParams = {
+    src: PathLike
     dest: PathLike
 }
 
