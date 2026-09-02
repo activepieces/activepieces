@@ -19,8 +19,8 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
-  keepPreviousData,
   QueryClient,
+  QueryKey,
   useMutation,
   usePrefetchQuery,
   useQueries,
@@ -206,9 +206,9 @@ export const piecesHooks = {
         skipProjectFilter,
         suggestionType,
         locale: i18n.language as LocalesEnum,
+        keepPreviousResults,
       }),
       enabled,
-      ...(keepPreviousResults ? { placeholderData: keepPreviousData } : {}),
       meta:
         showErrorDialog ?? isTableQuery
           ? { showErrorDialog: true, loadSubsetOptions: {} }
@@ -611,6 +611,7 @@ function piecesQueryOptions({
   skipProjectFilter,
   suggestionType,
   locale,
+  keepPreviousResults = false,
 }: {
   projectId?: string;
   searchQuery?: string;
@@ -619,6 +620,7 @@ function piecesQueryOptions({
   skipProjectFilter: boolean;
   suggestionType?: SuggestionType;
   locale: LocalesEnum;
+  keepPreviousResults?: boolean;
 }) {
   const queriedProjectId = skipProjectFilter
     ? undefined
@@ -626,11 +628,11 @@ function piecesQueryOptions({
   return {
     queryKey: [
       isTableQuery ? 'pieces-table' : 'pieces',
+      queriedProjectId,
       searchQuery,
       includeHidden,
       skipProjectFilter,
       suggestionType,
-      queriedProjectId,
       locale,
     ],
     queryFn: () =>
@@ -642,7 +644,19 @@ function piecesQueryOptions({
         locale,
       }),
     staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
+    ...(keepPreviousResults
+      ? {
+          placeholderData: (
+            previousPieces: PieceMetadataModelSummary[] | undefined,
+            previousQuery: { queryKey: QueryKey } | undefined,
+          ) =>
+            previousQuery?.queryKey[PROJECT_ID_KEY_INDEX] === queriedProjectId
+              ? previousPieces
+              : undefined,
+        }
+      : {}),
   };
 }
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
+const PROJECT_ID_KEY_INDEX = 1;
