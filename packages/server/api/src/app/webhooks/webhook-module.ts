@@ -3,18 +3,23 @@ import { buffer as streamToBuffer } from 'node:stream/consumers'
 import { XMLParser } from 'fast-xml-parser'
 import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import { webhookController } from './webhook-controller'
-import { isBinaryContentType, isMultipartContentType } from './webhook-request-converter'
+import { captureRawBodyWhileStreaming, isBinaryContentType, isMultipartContentType } from './webhook-request-converter'
 
 export const webhookModule: FastifyPluginAsync = async (app) => {
-    // Capture rawBody (for signature verification) only for the small, string-parsed content
-    // types. Streamed types (multipart, binary files) are consumed straight to storage and get
-    // no rawBody — this replaces fastify-raw-body, which buffered the whole body and defeated streaming.
+    // Capture rawBody so signature-verifying triggers can check it. String-parsed types are
+    // buffered whole; binary bodies keep streaming to storage and retain only a capped copy, so a
+    // large upload is never held in memory. Multipart is tapped in webhook-request-converter
+    // instead: @fastify/multipart pipes request.raw itself, so consuming the payload here would
+    // starve busboy of the parts.
     app.addHook('preParsing', async (request, _reply, payload) => {
         // isMultipart() isn't set this early (it's flagged during content-type parsing), so
-        // detect streamed types from the header directly and leave their stream untouched.
+        // detect streamed types from the header directly.
         const contentType = request.headers['content-type']
-        if (isMultipartContentType(contentType) || isBinaryContentType(contentType)) {
+        if (isMultipartContentType(contentType)) {
             return payload
+        }
+        if (isBinaryContentType(contentType)) {
+            return captureRawBodyWhileStreaming({ request, payload })
         }
         const raw = await streamToBuffer(payload)
         request.rawBody = raw.toString('utf8')
