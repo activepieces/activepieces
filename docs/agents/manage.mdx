@@ -9,7 +9,7 @@ icon: "folder-tree"
 
 An agent belongs to one project, and that decides what it can reach: the connections it authenticates with, the flows it can call, the tables and files it looks things up in. Two projects with the same Gmail connection name are two different mailboxes.
 
-The **Agents** page spans every project you can see, so the card tells you which project each agent belongs to. Use the project filter beside the search box to narrow the list, and new agents then go to that project.
+The **Agents** page spans every project you can see, so the card tells you which project each agent belongs to. The project filter beside the search box narrows the list, and it also moves the destination under the prompt box to that project. Whatever you pick in **New agents go to** wins, so check that line before you create anything.
 
 ## Move it to another project
 
@@ -45,4 +45,8 @@ If a **published flow** still runs the agent, deleting is refused and the flows 
 
 ## Who can see it
 
-An agent is visible to everyone in its project by default. Restrict it to yourself and named colleagues from the pencil beside its icon; a restricted agent shows a lock next to its name in the list.
+An agent is visible to everyone in its project. A restricted agent, shared with you and named colleagues instead, shows a lock beside its name in the list.
+
+<Note>
+There is no screen for restricting an agent yet. Visibility is set through the API, with `visibility` and `sharedWithUserIds` on the agent create and update calls, and only the creator or a project admin can change who can see one. Everyone you share it with has to be a member of its project already, and a [move](#move-it-to-another-project) drops the shares that do not hold in the new project.
+</Note>
