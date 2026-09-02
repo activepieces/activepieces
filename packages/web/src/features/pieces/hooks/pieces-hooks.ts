@@ -217,6 +217,8 @@ export const piecesHooks = {
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
+      error: query.error,
       refetch: query.refetch,
     };
   },

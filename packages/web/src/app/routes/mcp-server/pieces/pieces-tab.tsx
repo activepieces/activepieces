@@ -1,3 +1,4 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
@@ -18,6 +19,7 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { PageBand } from '../page-band';
@@ -40,13 +42,12 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
   const [showAll, setShowAll] = useState(false);
 
   const isSearching = debouncedSearchQuery !== '';
-  const { pieces, isLoading } = piecesHooks.usePieces({
+  const { pieces, isLoading, isError, error, refetch } = piecesHooks.usePieces({
     projectId: projectId ?? undefined,
     searchQuery: isSearching ? debouncedSearchQuery : undefined,
     suggestionType: SuggestionType.ACTION,
     enabled: !isNil(projectId),
     keepPreviousResults: true,
-    showErrorDialog: true,
   });
   const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
 
@@ -97,6 +98,8 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
             <Skeleton key={index} className="h-16 w-full" />
           ))}
         </div>
+      ) : isError ? (
+        <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
         <div className="rounded-lg border px-4 py-10 text-sm text-muted-foreground">
           {isSearching
@@ -120,6 +123,45 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
         </div>
       )}
     </PageBand>
+  );
+}
+
+function PiecesUnavailableAlert({
+  error,
+  onRetry,
+}: PiecesUnavailableAlertProps) {
+  if (isProjectAccessError(error)) {
+    return (
+      <Alert variant="destructive">
+        <TriangleAlert />
+        <AlertTitle>{t('You cannot see this project')}</AlertTitle>
+        <AlertDescription>
+          {t(
+            'Pick another project above, or ask a platform admin for access to this one.',
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert variant="destructive">
+      <TriangleAlert />
+      <AlertTitle>{t('The pieces failed to load')}</AlertTitle>
+      <AlertDescription>
+        {t(
+          'Nothing is listed below because the request failed, not because the project is empty.',
+        )}
+      </AlertDescription>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-3 w-fit"
+        onClick={() => onRetry()}
+      >
+        {t('Try again')}
+      </Button>
+    </Alert>
   );
 }
 
@@ -211,6 +253,19 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
     </Alert>
   );
 }
+
+function isProjectAccessError(error: Error | null): boolean {
+  return (
+    api.isApError(error, ErrorCode.AUTHORIZATION) ||
+    api.isApError(error, ErrorCode.PERMISSION_DENIED) ||
+    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+  );
+}
+
+type PiecesUnavailableAlertProps = {
+  error: Error | null;
+  onRetry: () => void;
+};
 
 type PiecesTabProps = {
   projectId: string | null;
