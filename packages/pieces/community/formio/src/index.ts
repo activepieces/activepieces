@@ -1,6 +1,11 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { formioAuth } from './lib/auth';
+import { createSubmission } from './lib/actions/create-submission';
+import { deleteSubmission } from './lib/actions/delete-submission';
+import { findSubmissions } from './lib/actions/find-submissions';
+import { getSubmission } from './lib/actions/get-submission';
+import { updateSubmission } from './lib/actions/update-submission';
 import { formioCommon } from './lib/common/client';
 
 export const formio = createPiece({
@@ -13,6 +18,11 @@ export const formio = createPiece({
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ['odaithalji'],
   actions: [
+    createSubmission,
+    getSubmission,
+    findSubmissions,
+    updateSubmission,
+    deleteSubmission,
     createCustomApiCallAction({
       auth: formioAuth,
       baseUrl: (auth) =>
