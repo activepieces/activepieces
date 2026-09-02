@@ -56,7 +56,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					return {
 						disabled: true,
 						options: [],
-						placeholder: `Please select sheet first`,
+						placeholder: `Select a worksheet first`,
 					};
 				}
 

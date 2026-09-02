@@ -32,9 +32,8 @@ export const readDataRangeAction = createAction({
 			required: false,
 		}),
 		majorDimension: Property.StaticDropdown({
-			displayName: 'Major Dimension',
-			description:
-				'Whether to return rows (default) or columns. "ROWS" returns one array per row; "COLUMNS" returns one array per column.',
+			displayName: 'Return data as',
+			description: 'Group the results one array per row, or one array per column.',
 			required: true,
 			defaultValue: Dimension.ROWS,
 			options: {
@@ -46,16 +45,16 @@ export const readDataRangeAction = createAction({
 			},
 		}),
 		valueRenderOption: Property.StaticDropdown({
-			displayName: 'Value Render Option',
-			description: 'How values should be represented in the output.',
+			displayName: 'Cell values',
+			description: 'Return cells the way the sheet displays them, the underlying raw values, or the formulas behind them.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
 			options: {
 				disabled: false,
 				options: [
-					{ label: 'Formatted Value', value: 'FORMATTED_VALUE' },
-					{ label: 'Unformatted Value', value: 'UNFORMATTED_VALUE' },
-					{ label: 'Formula', value: 'FORMULA' },
+					{ label: 'As displayed', value: 'FORMATTED_VALUE' },
+					{ label: 'Raw values', value: 'UNFORMATTED_VALUE' },
+					{ label: 'Formulas', value: 'FORMULA' },
 				],
 			},
 		}),

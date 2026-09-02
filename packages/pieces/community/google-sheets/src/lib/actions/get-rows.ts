@@ -99,32 +99,32 @@ async function getRows(
 const notes = `
 **Notes:**
 
-- Memory key is used to remember where last row was processed and will be used in the following runs.
-- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.
+- The memory key remembers which row was processed last, and is reused on the following runs.
+- Republishing the flow **keeps** the memory key value. To start over, **change** the memory key.
 `
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
   classification: 'READ',
-  description: 'Get next group of rows from a specifiec workheet',
+  description: 'Read the next batch of rows from a worksheet, continuing where the last run left off.',
   audience: 'human',
   aiMetadata: {
     description:
       'Reads the next batch of rows from a worksheet, advancing a cursor stored under a memory key so successive calls walk through the sheet without reprocessing rows. Use to iterate a sheet in chunks across runs. Not idempotent — each non-test call moves the stored cursor forward and returns a different batch.',
     idempotent: false,
   },
-  displayName: 'Get next row(s)',
+  displayName: 'Get Next Rows',
   props: {
     ...commonProps,
     startRow: Property.Number({
       displayName: 'Start Row',
-      description: 'Which row to start from?',
+      description: 'The row to start reading from on the first run.',
       required: true,
       defaultValue: 1,
     }),
     headerRow: Property.Number({
       displayName: 'Header Row',
-      description: 'Which row contains the headers?',
+      description: 'The row that contains the column names.',
       required: true,
       defaultValue: 1,
     }),

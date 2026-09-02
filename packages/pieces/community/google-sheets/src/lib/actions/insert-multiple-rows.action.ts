@@ -128,7 +128,7 @@ export const insertMultipleRowsAction = createAction({
 						//check for empty headers
 						if (Object.keys(firstRow).length === 0) {
 							fields['markdown'] = Property.MarkDown({
-								value: `We couldn't find any headers in the selected spreadsheet or worksheet. Please add headers to the sheet and refresh the page to reflect the columns.`,
+								value: `No headers found in this worksheet. Add a header row, then reselect the worksheet to load its columns.`,
 								variant: MarkdownVariant.INFO,
 							});
 						} else {
@@ -156,14 +156,14 @@ export const insertMultipleRowsAction = createAction({
 			},
 		}),
 		overwrite: Property.Checkbox({
-			displayName: 'Overwrite Existing Data?',
+			displayName: 'Overwrite existing data',
 			description:
 				'Enable this option to replace all existing data in the sheet with new data from your input. This will clear any extra rows beyond the updated range.',
 			required: false,
 			defaultValue: false,
 		}),
 		check_for_duplicate: Property.Checkbox({
-			displayName: 'Avoid Duplicates?',
+			displayName: 'Skip duplicate rows',
 			description:
 				'Enable this option to check for duplicate values before inserting data into the sheet. Only unique rows will be added based on the selected column.',
 			required: false,
@@ -203,7 +203,7 @@ export const insertMultipleRowsAction = createAction({
 					//check for empty headers
 					if (Object.keys(firstRow).length === 0) {
 						fields['markdown'] = Property.MarkDown({
-							value: `No headers were found in the selected spreadsheet or worksheet. Please ensure that headers are added to the sheet and refresh the page to display the available columns.`,
+							value: `No headers found in this worksheet. Add a header row, then reselect the worksheet to load its columns.`,
 							variant: MarkdownVariant.INFO,
 						});
 					} else {
@@ -238,7 +238,7 @@ export const insertMultipleRowsAction = createAction({
 			required: false,
 		}),
 		headerRow: Property.Number({
-			displayName: 'Header Row Number',
+			displayName: 'Header Row',
 			description: 'Enter the row number where your column headers are located (usually row 1).',
 			required: true,
 			defaultValue: 1,

@@ -15,7 +15,7 @@ export const findRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find_rows',
 	classification: 'SEARCH',
-description: 'Look up rows in a worksheet based on a column value.',
+	description: 'Look up rows in a worksheet based on a column value.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -44,7 +44,7 @@ description: 'Look up rows in a worksheet based on a column value.',
 		}),
 		numberOfRows: Property.Number({
 			displayName: 'Number of Rows',
-			description: 'How many rows to return. Defaults to 1 if not specified.',
+			description: 'How many matching rows to return.',
 			required: false,
 			defaultValue: 1,
 		}),

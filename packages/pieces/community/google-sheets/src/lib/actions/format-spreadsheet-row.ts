@@ -10,7 +10,7 @@ export const formatRowAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'format-row',
 	classification: 'WRITE',
-	description: 'Format one or multiple rows in specific spreadsheet.',
+	description: 'Apply colour and text styling to one or more rows.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -21,12 +21,12 @@ export const formatRowAction = createAction({
 	props: {
 		...commonProps,
 		startingRow: Property.Number({
-			displayName: 'Starting row',
+			displayName: 'Starting Row',
 			description: 'The first row number where formatting should begin.',
 			required: true,
 		}),
 		endingRow: Property.Number({
-			displayName: 'Ending row',
+			displayName: 'Ending Row',
 			description:
 				'The last row number where formatting should stop (leave empty to format only the starting row).',
 			required: false,
@@ -42,15 +42,15 @@ export const formatRowAction = createAction({
 			required: false,
 		}),
 		bold: Property.Checkbox({
-			displayName: 'Make text bold',
+			displayName: 'Bold',
 			required: false,
 		}),
 		italic: Property.Checkbox({
-			displayName: 'Make text Italic',
+			displayName: 'Italic',
 			required: false,
 		}),
 		strikethrough: Property.Checkbox({
-			displayName: 'Make text Strikethrough',
+			displayName: 'Strikethrough',
 			required: false,
 		}),
 	},

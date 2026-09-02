@@ -10,7 +10,7 @@ export const findWorksheetAction = createAction({
 	name: 'find-worksheet',
 	classification: 'SEARCH',
 	displayName: 'Find Worksheet(s)',
-	description: 'Finds a worksheet(s) by title.',
+	description: 'Find worksheets in a spreadsheet by title.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -19,9 +19,10 @@ export const findWorksheetAction = createAction({
 	},
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
-		spreadsheetId: spreadsheetIdProp('Spreadsheet', ''),
+		spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to search in.'),
 		title: Property.ShortText({
 			displayName: 'Title',
+			description: 'The worksheet title to search for.',
 			required: true,
 		}),
 		exact_match: Property.Checkbox({
