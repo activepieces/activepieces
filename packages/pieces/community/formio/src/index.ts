@@ -4,7 +4,9 @@ import { formioAuth } from './lib/auth';
 import { createSubmission } from './lib/actions/create-submission';
 import { deleteSubmission } from './lib/actions/delete-submission';
 import { findSubmissions } from './lib/actions/find-submissions';
+import { getForm } from './lib/actions/get-form';
 import { getSubmission } from './lib/actions/get-submission';
+import { listForms } from './lib/actions/list-forms';
 import { updateSubmission } from './lib/actions/update-submission';
 import { formioCommon } from './lib/common/client';
 
@@ -23,6 +25,8 @@ export const formio = createPiece({
     findSubmissions,
     updateSubmission,
     deleteSubmission,
+    listForms,
+    getForm,
     createCustomApiCallAction({
       auth: formioAuth,
       baseUrl: (auth) =>
