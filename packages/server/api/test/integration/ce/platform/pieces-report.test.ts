@@ -77,7 +77,7 @@ describe('GET /v1/platform/pieces-report.csv', () => {
         expect(response.headers['content-disposition']).toContain(`pieces-report-${ctx.platform.id}-`)
 
         const rows = response.body.trim().split('\n')
-        expect(rows[0]).toBe('projectId,projectName,flowId,flowName,flowStatus,flowVersionId,publishedAt,stepName,stepType,pieceName,pieceVersion')
+        expect(rows[0]).toBe('projectId,projectName,flowId,flowName,flowStatus,flowVersionId,versionCreatedAt,stepName,stepType,pieceName,pieceVersion')
 
         const body = rows.slice(1).map((line) => line.split(','))
         const cells = body.map((cols) => ({
@@ -118,6 +118,32 @@ describe('GET /v1/platform/pieces-report.csv', () => {
             expect(c.pieceName).not.toBe('openai')
             expect(c.pieceName).not.toBe('other-piece')
         }
+    })
+
+    it('disarms CSV formula prefixes in flow and project names', async () => {
+        const project = await db.findOneByOrFail<{ id: string, displayName: string }>('project', { id: ctx.project.id })
+        project.displayName = '=cmd|"/c calc"!A1'
+        await db.save('project', project)
+
+        const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
+        await db.save('flow', flow)
+        const version = createMockFlowVersion({
+            flowId: flow.id,
+            state: FlowVersionState.LOCKED,
+            trigger: pieceTrigger({ name: 'trigger', pieceName: 'gmail', pieceVersion: '0.7.0', triggerName: 'new_email' }),
+            displayName: '@SUM(1+1)',
+        })
+        await db.save('flow_version', version)
+        flow.publishedVersionId = version.id
+        await db.save('flow', flow)
+
+        const response = await ctx.get('/v1/platform/pieces-report.csv')
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.body).toContain('"\'=cmd|""/c calc""!A1"')
+        expect(response.body).toContain('\'@SUM(1+1)')
+        expect(response.body).not.toMatch(/(^|,)=cmd/)
+        expect(response.body).not.toMatch(/(^|,)@SUM/)
     })
 
 })

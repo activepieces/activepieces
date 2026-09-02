@@ -14,7 +14,7 @@ const CSV_HEADER = [
     'flowName',
     'flowStatus',
     'flowVersionId',
-    'publishedAt',
+    'versionCreatedAt',
     'stepName',
     'stepType',
     'pieceName',
@@ -56,7 +56,7 @@ async function* csvStream(platformId: string): AsyncIterable<string> {
                     row.flowName,
                     row.flowStatus,
                     row.flowVersionId,
-                    toIso(row.publishedAt),
+                    toIso(row.versionCreatedAt),
                     step.name,
                     step.type,
                     step.settings.pieceName,
@@ -81,7 +81,7 @@ async function fetchBatch({ platformId, cursor, limit }: FetchBatchParams): Prom
             'fv."displayName" AS "flowName"',
             'flow.status AS "flowStatus"',
             'fv.id AS "flowVersionId"',
-            'fv.created AS "publishedAt"',
+            'fv.created AS "versionCreatedAt"',
             'fv.trigger AS "trigger"',
         ])
         .orderBy('fv.id', 'ASC')
@@ -100,10 +100,13 @@ function csvField(value: string | null | undefined): string {
     if (value === null || value === undefined) {
         return ''
     }
-    const needsQuoting = /[",\r\n]/.test(value)
-    const escaped = value.replace(/"/g, '""')
+    const disarmed = CSV_FORMULA_LEADS.has(value[0]) ? `'${value}` : value
+    const needsQuoting = /[",\r\n]/.test(disarmed)
+    const escaped = disarmed.replace(/"/g, '""')
     return needsQuoting ? `"${escaped}"` : escaped
 }
+
+const CSV_FORMULA_LEADS = new Set(['=', '+', '-', '@', '\t', '\r'])
 
 function toIso(value: Date | string): string {
     return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
@@ -116,7 +119,7 @@ type FlowRow = {
     flowName: string
     flowStatus: string
     flowVersionId: string
-    publishedAt: Date | string
+    versionCreatedAt: Date | string
     trigger: FlowTrigger
 }
 
