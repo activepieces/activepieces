@@ -62,9 +62,9 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
             const edition = system.getEdition()
             const setupReportPlatformIds = await platformConfigurationService(log).filterPlatformsWithInfraSetupTelemetryEnabled({ platformIds })
             const setupReportPlatforms = new Set(setupReportPlatformIds)
-            const setupSource = setupReportPlatformIds.length === 0
+            const setupInfo = setupReportPlatformIds.length === 0
                 ? {}
-                : await collectSetupSource({ edition, platformIds: setupReportPlatformIds, log })
+                : await collectSetupInfo({ edition, platformIds: setupReportPlatformIds, log })
 
             for (const platformBatch of chunk([...licenseKeysByPlatform], LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE)) {
                 for (const [platformId, licenseKey] of platformBatch) {
@@ -87,7 +87,7 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
                         captureLicenseKeyEvent({
                             licenseKey,
                             event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT,
-                            properties: buildSetupReportBody({ platformId, edition, reportedAt, setupSource }),
+                            properties: buildSetupReportBody({ platformId, edition, reportedAt, setupInfo }),
                         })
                     }
                 }
@@ -248,11 +248,11 @@ function buildSnapshotBody({
     }
 }
 
-async function collectSetupSource({ edition, platformIds, log }: {
+async function collectSetupInfo({ edition, platformIds, log }: {
     edition: ApEdition
     platformIds: string[]
     log: FastifyBaseLogger
-}): Promise<SetupSource> {
+}): Promise<SetupInfo> {
     const { data, error } = await tryCatch(async () => {
         const onlineWorkers = await queryOnlineWorkers()
         if (edition === ApEdition.CLOUD) {
@@ -279,7 +279,7 @@ async function collectSetupSource({ edition, platformIds, log }: {
         }
     })
     if (error !== null) {
-        log.warn({ error }, '[licenseKeyUsageReport#collectSetupSource] Failed to collect the deployment setup, reporting edition only')
+        log.warn({ error }, '[licenseKeyUsageReport#collectSetupInfo] Failed to collect the deployment setup, reporting edition only')
         return {}
     }
     return data
@@ -330,21 +330,21 @@ function toWorkerSetup(workers: WorkerMachine[]): WorkerSetup {
     }
 }
 
-function buildSetupReportBody({ platformId, edition, reportedAt, setupSource }: {
+function buildSetupReportBody({ platformId, edition, reportedAt, setupInfo }: {
     platformId: string
     edition: ApEdition
     reportedAt: string
-    setupSource: SetupSource
+    setupInfo: SetupInfo
 }): SetupReportProperties {
-    const workerSetup = setupSource.workersByPlatform?.get(platformId) ?? setupSource.deploymentWorkers
+    const workerSetup = setupInfo.workersByPlatform?.get(platformId) ?? setupInfo.deploymentWorkers
     return {
         platformId,
         edition,
         reportedAt,
-        ...spreadIfDefined('apps', setupSource.apps),
+        ...spreadIfDefined('apps', setupInfo.apps),
         ...spreadIfDefined('workers', workerSetup?.workers),
         ...spreadIfDefined('workersTotal', workerSetup?.workersTotal),
-        ...spreadIfDefined('health', setupSource.health),
+        ...spreadIfDefined('health', setupInfo.health),
     }
 }
 
@@ -367,7 +367,7 @@ type WorkerSetup = {
     workersTotal: number
 }
 
-type SetupSource = {
+type SetupInfo = {
     apps?: SetupReportApp[]
     health?: SetupReportHealth
     deploymentWorkers?: WorkerSetup
