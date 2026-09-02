@@ -31,14 +31,31 @@ function submission({
   };
 }
 
+function fakeStore(initial: Record<string, unknown> = {}) {
+  const kept: Record<string, unknown> = { ...initial };
+  return {
+    kept,
+    get: async (key: string) => kept[key],
+    put: async (key: string, value: unknown) => {
+      kept[key] = value;
+      return value;
+    },
+    delete: async (key: string) => {
+      delete kept[key];
+    },
+  };
+}
+
 async function poll({
   timestampField,
   lastFetchEpochMS,
   rows,
+  store = fakeStore(),
 }: {
   timestampField: 'created' | 'modified';
   lastFetchEpochMS: number;
   rows: ReturnType<typeof submission>[];
+  store?: ReturnType<typeof fakeStore>;
 }) {
   findSubmissions.mockResolvedValueOnce({ submissions: rows, total: rows.length });
   const polling = submissionPolling(timestampField);
@@ -46,9 +63,9 @@ async function poll({
     auth,
     propsValue,
     lastFetchEpochMS,
-    store: undefined,
+    store,
   } as never);
-  return { items, query: findSubmissions.mock.calls.at(-1)?.[0]?.queryParams };
+  return { items, store, query: findSubmissions.mock.calls.at(-1)?.[0]?.queryParams };
 }
 
 describe('submission polling', () => {
@@ -154,9 +171,133 @@ describe('submission polling', () => {
       auth,
       propsValue: { formPath: 'permit-renewal' },
       lastFetchEpochMS: 0,
-      store: undefined,
+      store: fakeStore(),
     } as never);
 
     expect(findSubmissions.mock.calls.at(-1)?.[0]?.formPath).toBe('permit-renewal');
+  });
+});
+
+describe('cursor progress when a page is filtered away', () => {
+  beforeEach(() => findSubmissions.mockReset());
+
+  test('a page of never-edited rows still advances the cursor, so polling cannot stall', async () => {
+    const cursor = Date.parse('2026-09-02T08:00:00.000Z');
+    const untouched = Array.from({ length: 5 }, (_, i) =>
+      submission({ id: `u${i}`, created: `2026-09-02T09:0${i}:00.000Z` })
+    );
+
+    const { items, store } = await poll({
+      timestampField: 'modified',
+      lastFetchEpochMS: cursor,
+      rows: untouched,
+    });
+
+    expect(items).toHaveLength(0);
+    const marks = Object.values(store.kept);
+    expect(marks).toHaveLength(1);
+    expect(marks[0]).toBe(Date.parse('2026-09-02T09:04:00.000Z'));
+    expect(Number(marks[0])).toBeGreaterThan(cursor);
+  });
+
+  test('the next poll asks past the discarded page rather than fetching it again', async () => {
+    const cursor = Date.parse('2026-09-02T08:00:00.000Z');
+    const untouched = Array.from({ length: 3 }, (_, i) =>
+      submission({ id: `u${i}`, created: `2026-09-02T09:0${i}:00.000Z` })
+    );
+
+    const first = await poll({
+      timestampField: 'modified',
+      lastFetchEpochMS: cursor,
+      rows: untouched,
+    });
+    expect(first.query['modified__gt']).toBe('2026-09-02T08:00:00.000Z');
+
+    const second = await poll({
+      timestampField: 'modified',
+      lastFetchEpochMS: cursor,
+      rows: [],
+      store: first.store,
+    });
+
+    expect(second.query['modified__gt']).toBe('2026-09-02T09:02:00.000Z');
+  });
+
+  test('an edit sitting behind a page of untouched rows is eventually delivered', async () => {
+    const cursor = Date.parse('2026-09-02T08:00:00.000Z');
+    const untouched = Array.from({ length: 3 }, (_, i) =>
+      submission({ id: `u${i}`, created: `2026-09-02T09:0${i}:00.000Z` })
+    );
+    const edited = submission({
+      id: 'edited',
+      created: '2026-09-01T07:00:00.000Z',
+      modified: '2026-09-02T09:30:00.000Z',
+    });
+
+    const first = await poll({ timestampField: 'modified', lastFetchEpochMS: cursor, rows: untouched });
+    expect(first.items).toHaveLength(0);
+
+    const second = await poll({
+      timestampField: 'modified',
+      lastFetchEpochMS: cursor,
+      rows: [edited],
+      store: first.store,
+    });
+
+    expect(second.items.map((i) => (i.data as { _id: string })._id)).toEqual(['edited']);
+  });
+
+  test('the helper cursor wins when it is ahead, so re-enabling does not replay old rows', async () => {
+    const store = fakeStore({
+      'formio_high_water_mark_created_citizen-intake': Date.parse('2026-09-01T00:00:00.000Z'),
+    });
+    const reEnabledAt = Date.parse('2026-09-02T12:00:00.000Z');
+
+    const { query } = await poll({
+      timestampField: 'created',
+      lastFetchEpochMS: reEnabledAt,
+      rows: [],
+      store,
+    });
+
+    expect(query['created__gt']).toBe('2026-09-02T12:00:00.000Z');
+  });
+
+  test('a sample run ignores the stored cursor and leaves it untouched', async () => {
+    const store = fakeStore({
+      'formio_high_water_mark_created_citizen-intake': Date.parse('2026-09-02T09:00:00.000Z'),
+    });
+
+    const { query, store: after } = await poll({
+      timestampField: 'created',
+      lastFetchEpochMS: 0,
+      rows: [submission({ id: 'a', created: '2026-09-02T10:00:00.000Z' })],
+      store,
+    });
+
+    expect(query['created__gt']).toBeUndefined();
+    expect(query.sort).toBe('-created');
+    expect(after.kept['formio_high_water_mark_created_citizen-intake']).toBe(
+      Date.parse('2026-09-02T09:00:00.000Z')
+    );
+  });
+
+  test('each form keeps its own high-water mark', async () => {
+    const store = fakeStore();
+    findSubmissions.mockResolvedValueOnce({
+      submissions: [submission({ id: 'a', created: '2026-09-02T10:00:00.000Z' })],
+      total: 1,
+    });
+    const polling = submissionPolling('created');
+    await polling.items({
+      auth,
+      propsValue: { formPath: 'permit-renewal' },
+      lastFetchEpochMS: 1,
+      store,
+    } as never);
+
+    expect(Object.keys(store.kept)).toEqual([
+      'formio_high_water_mark_created_permit-renewal',
+    ]);
   });
 });

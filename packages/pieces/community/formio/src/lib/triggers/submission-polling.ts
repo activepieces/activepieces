@@ -1,5 +1,8 @@
 import { DedupeStrategy, Polling } from '@activepieces/pieces-common';
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import {
+  AppConnectionValueForAuthProperty,
+  Store,
+} from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import { FormioSubmission, formioCommon } from '../common/client';
 
@@ -10,17 +13,26 @@ export function submissionPolling(
 ): Polling<FormioAuthValue, { formPath: string }> {
   return {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-      const hasCursor = !!lastFetchEpochMS && lastFetchEpochMS > 0;
+    items: async ({ auth, propsValue, lastFetchEpochMS, store }) => {
+      const isSampleRun = !lastFetchEpochMS || lastFetchEpochMS <= 0;
+      const cursorKey = highWaterMarkKey({
+        timestampField,
+        formPath: propsValue.formPath,
+      });
+
+      const storedHighWaterMark = isSampleRun
+        ? 0
+        : (await store.get<number>(cursorKey)) ?? 0;
+      const cursor = isSampleRun
+        ? 0
+        : Math.max(storedHighWaterMark, lastFetchEpochMS);
 
       const queryParams: Record<string, string> = {
         limit: String(PAGE_SIZE),
-        sort: hasCursor ? timestampField : `-${timestampField}`,
+        sort: cursor > 0 ? timestampField : `-${timestampField}`,
       };
-      if (hasCursor) {
-        queryParams[`${timestampField}__gt`] = new Date(
-          lastFetchEpochMS
-        ).toISOString();
+      if (cursor > 0) {
+        queryParams[`${timestampField}__gt`] = new Date(cursor).toISOString();
       }
 
       const { submissions } = await formioCommon.findSubmissions({
@@ -28,6 +40,17 @@ export function submissionPolling(
         formPath: propsValue.formPath,
         queryParams,
       });
+
+      if (!isSampleRun && submissions.length > 0) {
+        const pageHighWaterMark = Math.max(
+          ...submissions.map((submission) =>
+            timestampOf(submission, timestampField)
+          )
+        );
+        if (pageHighWaterMark > cursor) {
+          await store.put(cursorKey, pageHighWaterMark);
+        }
+      }
 
       return submissions
         .filter((submission) => wasEdited(submission, timestampField))
@@ -37,6 +60,16 @@ export function submissionPolling(
         }));
     },
   };
+}
+
+function highWaterMarkKey({
+  timestampField,
+  formPath,
+}: {
+  timestampField: SubmissionTimestamp;
+  formPath: string;
+}): string {
+  return `formio_high_water_mark_${timestampField}_${formPath}`;
 }
 
 function wasEdited(
@@ -65,3 +98,5 @@ export type SubmissionTimestamp = 'created' | 'modified';
 export type FormioAuthValue = AppConnectionValueForAuthProperty<
   typeof formioAuth
 >;
+
+export type SubmissionPollingStore = Store;
