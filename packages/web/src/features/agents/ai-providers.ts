@@ -25,6 +25,20 @@ export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
 5. In the [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/), go to **Model access** and request access to the models you want to use.`),
   },
   {
+    provider: AIProviderName.VERTEX,
+    name: 'Google Vertex AI',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-vertexai.png',
+    markdown:
+      t(`Connect a Google Cloud service account to call Vertex AI models inside your own GCP project.
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com) and select the project you want to bill.
+2. Enable the **Vertex AI API** under *APIs & Services > Enabled APIs*.
+3. Go to **IAM & Admin > Service Accounts** and create a service account, granting it the **Vertex AI User** role. Avoid broader roles — follow least-privilege so a leaked key has limited blast radius.
+4. Open the service account, go to **Keys > Add Key > Create new key**, choose **JSON**, and download it.
+5. Paste the entire contents of that JSON file below, then set the project ID and the region your models are served from.
+6. Add the model ids you want to expose — Vertex model availability depends on your project, region and Model Garden access, so we cannot list them for you.`),
+  },
+  {
     provider: AIProviderName.AZURE,
     name: 'Azure',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',

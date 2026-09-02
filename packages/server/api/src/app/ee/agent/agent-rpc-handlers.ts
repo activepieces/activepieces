@@ -181,7 +181,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? modelName
-            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
+            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -299,7 +299,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
+            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,

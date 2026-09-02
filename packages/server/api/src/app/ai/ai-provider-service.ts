@@ -162,7 +162,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return null
         }
         const auth = await decryptRowAuth({ aiProvider: chatProvider, platformId })
-        return { provider: chatProvider.provider, configId: chatProvider.id, auth, config: chatProvider.config, platformId }
+        return { provider: chatProvider.provider, configId: chatProvider.id, auth, config: chatProvider.config, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
@@ -240,7 +240,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async getConfigOrThrow({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<GetProviderConfigResponse> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         const auth = await decryptRowAuth({ aiProvider, platformId })
-        return { provider: aiProvider.provider, configId: aiProvider.id, auth, config: aiProvider.config, platformId }
+        return { provider: aiProvider.provider, configId: aiProvider.id, auth, config: aiProvider.config, platformId, modelScope: aiProvider.modelScope, modelIds: aiProvider.modelIds }
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         await ensureManagedProviderRow({ platformId })
@@ -490,7 +490,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
     })
-    return { provider: savedAiProvider.provider, configId: savedAiProvider.id, auth: rawAuth, config: savedAiProvider.config, platformId }
+    return { provider: savedAiProvider.provider, configId: savedAiProvider.id, auth: rawAuth, config: savedAiProvider.config, platformId, modelScope: savedAiProvider.modelScope, modelIds: savedAiProvider.modelIds }
 }
 
 
