@@ -29,7 +29,7 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   },
   [TelemetryEventName.FEDERATED_LOGIN_STARTED]: {
     group: 'accounts',
-    label: t('Signed in with a federated provider'),
+    label: t('Started signing in with a federated provider'),
   },
   [TelemetryEventName.EMAIL_VERIFICATION_COMPLETED]: {
     group: 'accounts',
